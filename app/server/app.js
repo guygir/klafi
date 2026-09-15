@@ -773,6 +773,114 @@ export async function createKalpiApp({
     quizEnabled,
   });
   const stateFor = (session) => publicState(session, now(), allCards, runtimeProgression());
+
+  function publicGameConfig() {
+    return {
+      revealTiming: normalizeRevealTiming(studioContent?.gameConfig?.revealTiming),
+      visual: normalizeVisualConfig(studioContent?.gameConfig?.visual),
+      progression: progressionConfig(studioContent?.gameConfig?.progression),
+      releaseSets: studioContent?.gameConfig?.releaseSets || [],
+      parties: publicPartyRegister(studioContent, cards),
+      achievements: achievementCatalog.achievements || [],
+      avatars: avatarCatalog.avatars || [],
+    };
+  }
+
+  function publicEditorial(debugRequest) {
+    return {
+      advocacy,
+      sources: debugRequest ? sources : [],
+      sequences: debugRequest ? sequences : [],
+      samples: debugRequest ? samples : [],
+      debugEnabled: debugRequest,
+    };
+  }
+
+  function publicEvents(session, current = now()) {
+    const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(current));
+    return events.events.map((event) => ({
+      ...event,
+      active: event.status !== "blocked"
+        && Date.parse(event.opensAt) <= current
+        && current <= Date.parse(event.closesAt),
+      claimedToday: Boolean(session.eventClaims?.[event.id]?.[dayKey]),
+      cards: event.cardIds.map((id) => cardsById.get(id)).filter(Boolean),
+    }));
+  }
+
+  async function settleIdle(token) {
+    const currentMs = now();
+    const pool = activeIdleCards(cards, currentMs);
+    if (!pool.length) return { error: "NO_ACTIVE_RELEASE" };
+    const result = await store.withSession(token, (current) => {
+      current.unseenPulls ??= [];
+      current.idleDuplicateStreak ??= 0;
+      current.idlePullCount ??= 0;
+      const fallbackAnchor = Date.parse(current.idleAnchorAt || current.createdAt);
+      const nextAtMs = current.nextIdleAt
+        ? Date.parse(current.nextIdleAt)
+        : Number.isFinite(fallbackAnchor) ? fallbackAnchor : currentMs;
+      const dueIntervals = currentMs >= nextAtMs
+        ? Math.floor((currentMs - nextAtMs) / IDLE_INTERVAL_MS) + 1
+        : 0;
+      const freeSlots = Math.max(0, IDLE_BACKLOG_CAP - current.unseenPulls.length);
+      const grantCount = Math.min(dueIntervals, freeSlots);
+      const granted = [];
+      for (let index = 0; index < grantCount; index += 1) {
+        const pull = generateIdlePull({
+          cards: pool,
+          inventory: current.inventory,
+          duplicateStreak: current.idleDuplicateStreak,
+          rng,
+        });
+        const pulledAt = new Date(Math.min(currentMs, nextAtMs + (index * IDLE_INTERVAL_MS))).toISOString();
+        const instance = grantCard(current, pull, { acquiredBy: "idle", pulledAt });
+        current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
+        current.idlePullCount += 1;
+        current.packs.push({
+          packId: `idle-${instance.instanceId}`,
+          mode: "idle",
+          pulledAt,
+          nextDailyAt: null,
+          cards: [instance],
+        });
+        granted.push(instance);
+      }
+      if (dueIntervals) {
+        current.nextIdleAt = new Date(nextAtMs + (dueIntervals * IDLE_INTERVAL_MS)).toISOString();
+      } else if (!current.nextIdleAt) {
+        current.nextIdleAt = new Date(nextAtMs).toISOString();
+      }
+      current.idleAnchorAt ??= new Date(nextAtMs).toISOString();
+      current.packs = current.packs.slice(-100);
+      current.instances = current.instances.slice(-500);
+      syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
+      const unseen = new Set(current.unseenPulls);
+      return {
+        granted,
+        queue: current.instances.filter(({ instanceId }) => unseen.has(instanceId)),
+      };
+    });
+    if (result.granted.length) {
+      await store.incrementFaction(store.getSession(token)?.factionId, result.granted.length);
+      await store.recordEvent({
+        eventId: randomUUID(),
+        type: "idle_settled",
+        sessionToken: token,
+        cardId: null,
+        packId: null,
+        referralCode: null,
+        count: result.granted.length,
+        recordedAt: new Date(currentMs).toISOString(),
+      });
+    }
+    return {
+      mode: "idle-return",
+      newlySettledCount: result.granted.length,
+      cards: result.queue,
+      state: stateFor(store.getSession(token)),
+    };
+  }
   function grantCard(session, pull, { acquiredBy, pulledAt }) {
     const isNew = !session.inventory[pull.cardId];
     session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
@@ -838,13 +946,7 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/editorial") {
-        json(response, 200, {
-          advocacy,
-          sources: debugRequest ? sources : [],
-          sequences: debugRequest ? sequences : [],
-          samples: debugRequest ? samples : [],
-          debugEnabled: debugRequest,
-        });
+        json(response, 200, publicEditorial(debugRequest));
         return;
       }
 
@@ -858,15 +960,7 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/game-config") {
-        json(response, 200, {
-          revealTiming: normalizeRevealTiming(studioContent?.gameConfig?.revealTiming),
-          visual: normalizeVisualConfig(studioContent?.gameConfig?.visual),
-          progression: progressionConfig(studioContent?.gameConfig?.progression),
-          releaseSets: studioContent?.gameConfig?.releaseSets || [],
-          parties: publicPartyRegister(studioContent, cards),
-          achievements: achievementCatalog.achievements || [],
-          avatars: avatarCatalog.avatars || [],
-        });
+        json(response, 200, publicGameConfig());
         return;
       }
 
@@ -903,6 +997,27 @@ export async function createKalpiApp({
             json(response, 429, { error: "RATE_LIMITED" });
             return;
           }
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/bootstrap") {
+          const settled = await settleIdle(token);
+          const idleReturn = settled.error
+            ? { mode: "idle-return", newlySettledCount: 0, cards: [], state: stateFor(store.getSession(token)) }
+            : settled;
+          await store.expireTrades(new Date(now()).toISOString());
+          json(response, 200, {
+            catalog: { cards: allCards },
+            editorial: publicEditorial(debugRequest),
+            activity: store.activitySummary(),
+            studioContent: debugRequest && studioContent ? { ...studioContent, debugEnabled: true } : null,
+            gameConfig: publicGameConfig(),
+            leaderboards: store.leaderboardSummary(cards, now(), token),
+            specials,
+            idleReturn,
+            trades: store.listTrades(token),
+            events: publicEvents(store.getSession(token)),
+          });
+          return;
         }
 
         if (request.method === "GET" && url.pathname === "/api/state") {
@@ -955,81 +1070,12 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/idle/settle") {
-          const currentMs = now();
-          const pool = activeIdleCards(cards, currentMs);
-          if (!pool.length) {
-            json(response, 503, { error: "NO_ACTIVE_RELEASE" });
+          const idleReturn = await settleIdle(token);
+          if (idleReturn.error) {
+            json(response, 503, { error: idleReturn.error });
             return;
           }
-          const result = await store.withSession(token, (current) => {
-            current.unseenPulls ??= [];
-            current.idleDuplicateStreak ??= 0;
-            current.idlePullCount ??= 0;
-            const fallbackAnchor = Date.parse(current.idleAnchorAt || current.createdAt);
-            const nextAtMs = current.nextIdleAt
-              ? Date.parse(current.nextIdleAt)
-              : Number.isFinite(fallbackAnchor) ? fallbackAnchor : currentMs;
-            const dueIntervals = currentMs >= nextAtMs
-              ? Math.floor((currentMs - nextAtMs) / IDLE_INTERVAL_MS) + 1
-              : 0;
-            const freeSlots = Math.max(0, IDLE_BACKLOG_CAP - current.unseenPulls.length);
-            const grantCount = Math.min(dueIntervals, freeSlots);
-            const granted = [];
-            for (let index = 0; index < grantCount; index += 1) {
-              const pull = generateIdlePull({
-                cards: pool,
-                inventory: current.inventory,
-                duplicateStreak: current.idleDuplicateStreak,
-                rng,
-              });
-              const pulledAt = new Date(Math.min(currentMs, nextAtMs + (index * IDLE_INTERVAL_MS))).toISOString();
-              const instance = grantCard(current, pull, { acquiredBy: "idle", pulledAt });
-              current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
-              current.idlePullCount += 1;
-              const pack = {
-                packId: `idle-${instance.instanceId}`,
-                mode: "idle",
-                pulledAt,
-                nextDailyAt: null,
-                cards: [instance],
-              };
-              current.packs.push(pack);
-              granted.push(instance);
-            }
-            if (dueIntervals) {
-              current.nextIdleAt = new Date(nextAtMs + (dueIntervals * IDLE_INTERVAL_MS)).toISOString();
-            } else if (!current.nextIdleAt) {
-              current.nextIdleAt = new Date(nextAtMs).toISOString();
-            }
-            current.idleAnchorAt ??= new Date(nextAtMs).toISOString();
-            current.packs = current.packs.slice(-100);
-            current.instances = current.instances.slice(-500);
-            syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
-            const unseen = new Set(current.unseenPulls);
-            return {
-              granted,
-              queue: current.instances.filter(({ instanceId }) => unseen.has(instanceId)),
-            };
-          });
-          if (result.granted.length) {
-            await store.incrementFaction(store.getSession(token)?.factionId, result.granted.length);
-            await store.recordEvent({
-              eventId: randomUUID(),
-              type: "idle_settled",
-              sessionToken: token,
-              cardId: null,
-              packId: null,
-              referralCode: null,
-              count: result.granted.length,
-              recordedAt: new Date(currentMs).toISOString(),
-            });
-          }
-          json(response, 200, {
-            mode: "idle-return",
-            newlySettledCount: result.granted.length,
-            cards: result.queue,
-            state: stateFor(store.getSession(token)),
-          });
+          json(response, 200, idleReturn);
           return;
         }
 
@@ -1169,18 +1215,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "GET" && url.pathname === "/api/events") {
-          const current = now();
-          const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(current));
-          json(response, 200, {
-            events: events.events.map((event) => ({
-              ...event,
-              active: event.status !== "blocked"
-                && Date.parse(event.opensAt) <= current
-                && current <= Date.parse(event.closesAt),
-              claimedToday: Boolean(session.eventClaims?.[event.id]?.[dayKey]),
-              cards: event.cardIds.map((id) => cardsById.get(id)).filter(Boolean),
-            })),
-          });
+          json(response, 200, { events: publicEvents(session) });
           return;
         }
 

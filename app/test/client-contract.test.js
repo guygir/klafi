@@ -81,7 +81,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /"01 \/ 04 · quote"/);
   assert.match(javascript, /"04 \/ 04 · portrait"/);
   assert.doesNotMatch(javascript, /REVEAL_TIMING_KEY/);
-  assert.match(javascript, /\/api\/game-config/);
+  assert.match(javascript, /\/api\/bootstrap/);
   assert.match(javascript, /\/api\/studio\/config/);
   assert.match(javascript, /updateStudioCardPreview/);
   assert.match(javascript, /\["quote\.displayText", "art\.artKey"\]/);

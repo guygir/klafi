@@ -733,6 +733,12 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   const created = await api(running.base, "/api/session", { method: "POST" });
   assert.equal((await api(running.base, "/api/studio/content")).status, 404);
   assert.equal((await api(running.base, "/api/presentation/content")).status, 404);
+  const boot = await api(running.base, "/api/bootstrap", { token: created.body.token });
+  assert.equal(boot.status, 200);
+  assert.equal(boot.body.studioContent, null);
+  assert.equal(boot.body.gameConfig.parties.find(({ id }) => id === "RZ").displayNameHe, "הציונות הדתית וזהות");
+  assert.ok(boot.body.catalog.cards.length);
+  assert.ok(boot.body.idleReturn.state);
   const publicConfig = await api(running.base, "/api/game-config");
   assert.equal(publicConfig.status, 200);
   const rz = publicConfig.body.parties.find(({ id }) => id === "RZ");

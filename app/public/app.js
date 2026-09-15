@@ -306,33 +306,22 @@ async function bootstrap() {
   showView("loading");
   try {
     await ensureSession();
-    const [{ cards }, editorial, activity, studioContent, gameConfig, leaderboards, specials, idleReturn] = await Promise.all([
-      request("/api/catalog"),
-      request("/api/editorial"),
-      request("/api/activity"),
-      request("/api/studio/content").catch((error) => {
-        if (error.status === 404) return null;
-        throw error;
-      }),
-      request("/api/game-config"),
-      request("/api/leaderboards"),
-      request("/api/specials"),
-      request("/api/idle/settle", { method: "POST" }),
-    ]);
-    model.editorial = editorial;
-    model.activity = activity;
-    model.studioContent = studioContent;
-    model.gameConfig = gameConfig;
+    const boot = await request("/api/bootstrap");
+    const { cards } = boot.catalog;
+    model.editorial = boot.editorial;
+    model.activity = boot.activity;
+    model.studioContent = boot.studioContent;
+    model.gameConfig = boot.gameConfig;
     document.querySelectorAll("[data-debug-only]").forEach((element) => {
-      element.hidden = !studioContent?.debugEnabled;
+      element.hidden = !boot.studioContent?.debugEnabled;
     });
     applyVisualConfig();
-    model.leaderboards = leaderboards;
-    model.specials = specials;
-    model.serverState = idleReturn.state;
-    model.idleQueue = idleReturn.cards || [];
-    model.trades = (await request("/api/trades")).trades;
-    model.events = (await request("/api/events")).events;
+    model.leaderboards = boot.leaderboards;
+    model.specials = boot.specials;
+    model.serverState = boot.idleReturn.state;
+    model.idleQueue = boot.idleReturn.cards || [];
+    model.trades = boot.trades || [];
+    model.events = boot.events || [];
     model.catalog = cards;
     model.byId = new Map(cards.map((card) => [card.id, card]));
     populateRevealTimingInputs();
