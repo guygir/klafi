@@ -1,0 +1,7 @@
+.cursor
+.env
+.env.*
+app/.runtime
+app/node_modules
+**/*.log
+**/*.tiff

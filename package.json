@@ -1,0 +1,8 @@
+{
+  "name": "klafi",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "vercel-build": "node scripts/prepare-vercel-static.mjs"
+  }
+}

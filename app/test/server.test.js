@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { createKalpiApp, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES } from "../server/app.js";
+import { createRuntimeHandler } from "../server/runtime.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
@@ -64,6 +65,14 @@ async function api(base, route, { token, method = "GET", body } = {}) {
   });
   return { status: response.status, body: await response.json() };
 }
+
+test("runtime factory builds the same Node handler Vercel uses", async () => {
+  const previous = process.env.NODE_ENV;
+  process.env.NODE_ENV = "development";
+  const handler = await createRuntimeHandler({ loadDotEnv: false });
+  process.env.NODE_ENV = previous;
+  assert.equal(typeof handler, "function");
+});
 
 test("idle settlement caps unseen cards and acknowledges reveals safely", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-idle-test-"));

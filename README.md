@@ -19,7 +19,7 @@ npm install
 npm run poc
 ```
 
-Open **http://127.0.0.1:4173**. `/api/health` should report `"backend":"postgres"`. Quiz extra-packs are off (`QUIZ_ENABLED=0`). Run `npm test` for generated content audits plus pack/server/client tests. JSON file fallback remains only when `DATABASE_URL` is unset.
+Open **http://127.0.0.1:4173**. `/api/health` should report `"backend":"postgres"`. Quiz extra-packs are off (`QUIZ_ENABLED=0`). Public host: Vercel Hobby + Supabase (session pooler `:5432`). Run `npm test` in `app/` for generated content audits plus pack/server/client tests. JSON file fallback remains only when `DATABASE_URL` is unset.
 
 Use the bottom navigation: **Today** for the pack, **Binder** for the collection, **Growth** for trading/creator links/funnel activity, and **Studio** for sponsor configuration status, card review, walkout replay, and debug reset. Full implementation map: [docs/product/poc-implementation-review.md](docs/product/poc-implementation-review.md).
 
@@ -89,8 +89,8 @@ Keep this list current. Check a box only when it is actually done.
 Reorder in the Cursor implementation-plan canvas. After every step: verify on phone + desktop before starting the next.
 
 **Mandatory / production first**
-1. [x] Private GitHub repo https://github.com/guygir/klafi + local PostgreSQL store (`DATABASE_URL`, docker-compose, persist-across-restart test). Hosted production instance is the next deploy step.
-2. One-container deploy, HTTPS, secrets, `DATABASE_URL`.
+1. [x] Private GitHub repo https://github.com/guygir/klafi + local PostgreSQL store (`DATABASE_URL`, docker-compose, persist-across-restart test).
+2. Vercel Hobby project `klafi` + Supabase free Postgres created on supabase.com (session pooler `:5432`). In progress — needs `DATABASE_URL` in Vercel env.
 3. Production advocacy identity configured for live.
 4. CEC / rights / likeness / source approval (release blockers).
 5. Account recovery, moderation, public rate limits.
