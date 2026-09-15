@@ -56,11 +56,16 @@ export async function createRuntimeHandler({ loadDotEnv = false } = {}) {
     throw new Error("DATABASE_URL is required in production.");
   }
   const paths = runtimePaths();
+  const debugEnabled = process.env.KALPI_DEBUG === "1" && process.env.NODE_ENV !== "production";
   return createKalpiApp({
     ...paths,
+    sourcesPath: debugEnabled ? paths.sourcesPath : null,
+    sequencesPath: debugEnabled ? paths.sequencesPath : null,
+    samplesPath: debugEnabled ? paths.samplesPath : null,
+    presentationContentPath: debugEnabled ? paths.presentationContentPath : null,
     databaseUrl: process.env.DATABASE_URL || null,
     databaseSsl: process.env.DATABASE_SSL === "1",
-    debugEnabled: process.env.KALPI_DEBUG === "1" && process.env.NODE_ENV !== "production",
+    debugEnabled,
     quizEnabled: process.env.QUIZ_ENABLED === "1",
   });
 }

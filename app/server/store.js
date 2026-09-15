@@ -353,10 +353,11 @@ export class JsonStore {
     const dailyParty = allDailyParty.slice(0, 8);
     const currentDaily = allDailyParty.find(({ current }) => current);
     if (currentDaily && !dailyParty.some(({ current }) => current)) dailyParty.splice(7, 1, currentDaily);
+    const targetPartyNameHe = cards.find((card) => card.set === targetPartyId)?.setNameHe || targetPartyId;
     return {
       collectors,
       factions,
-      dailyChallenge: { day, targetPartyId, leaders: dailyParty },
+      dailyChallenge: { day, targetPartyId, targetPartyNameHe, leaders: dailyParty },
       fixture: false,
       label: "Real activity in this local PoC",
     };

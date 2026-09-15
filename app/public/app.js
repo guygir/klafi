@@ -775,16 +775,42 @@ function renderSiteCardPeeks() {
   queueCardTextFit(elements.siteCardPeeks);
 }
 
+function partyRegister() {
+  if (model.studioContent?.parties?.length) return model.studioContent.parties;
+  if (model.gameConfig?.parties?.length) return model.gameConfig.parties;
+  const parties = new Map();
+  for (const card of model.catalog || []) {
+    if (!card.set || card.set === "SYS" || String(card.set).startsWith("special-")) continue;
+    if (parties.has(card.set)) continue;
+    parties.set(card.set, {
+      id: card.set,
+      displayNameHe: card.setNameHe || card.set,
+      displayNameEn: card.setName || card.set,
+      requestedLetters: card.letters ? [card.letters] : [],
+      pip: card.pip || null,
+    });
+  }
+  return [...parties.values()];
+}
+
+function partyDisplayName(partyId, fallback = "הסיעה היומית") {
+  if (!partyId) return fallback;
+  const fromRegister = partyRegister().find(({ id }) => id === partyId)?.displayNameHe;
+  if (fromRegister) return fromRegister;
+  const challenge = model.leaderboards?.dailyChallenge;
+  if (challenge?.targetPartyId === partyId && challenge.targetPartyNameHe) return challenge.targetPartyNameHe;
+  const fromCatalog = model.catalog.find((card) => card.set === partyId)?.setNameHe;
+  return fromCatalog || partyId;
+}
+
 function renderTodayDocket() {
   if (!elements.todayChallengeHook) return;
-  const partyNames = Object.fromEntries((model.studioContent?.parties || [])
-    .map((party) => [party.id, party.displayNameHe]));
   const challenge = model.leaderboards?.dailyChallenge;
-  const challengeParty = partyNames[challenge?.targetPartyId] || challenge?.targetPartyId || "הסיעה היומית";
+  const challengeParty = partyDisplayName(challenge?.targetPartyId);
   const challengeLeaders = challenge?.leaders?.slice(0, 3) || [];
   const challengeLeader = challengeLeaders[0];
   const challengeCurrent = challenge?.leaders?.find(({ current }) => current);
-  const party = model.studioContent?.parties.find(({ id }) => id === challenge?.targetPartyId);
+  const party = partyRegister().find(({ id }) => id === challenge?.targetPartyId);
   const challengeCard = model.catalog.find((card) => card.set === challenge?.targetPartyId && card.artKey)
     || {
       id: `${party?.id || "SYS"}-TODAY`,
@@ -1681,16 +1707,16 @@ function renderGrowth() {
   }).join("") : '<p class="work-note">אין כרגע הצעות פתוחות.</p>';
 
   const selectedFaction = model.serverState.factionId;
+  const parties = partyRegister();
   elements.factionSelect.innerHTML = [
     '<option value="">ללא סיעה</option>',
-    ...(model.studioContent?.parties || []).map((party) => `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml(party.displayNameHe)} · ${escapeHtml(party.requestedLetters.join(" / "))}</option>`),
+    ...parties.map((party) => `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml(party.displayNameHe)} · ${escapeHtml((party.requestedLetters || []).join(" / "))}</option>`),
   ].join("");
-  const factionNames = Object.fromEntries((model.studioContent?.parties || []).map((party) => [party.id, party.displayNameHe]));
   const factionEntries = model.leaderboards?.factions?.slice(0, 6) || [];
   const factionMaximum = Math.max(1, ...factionEntries.map(({ packs }) => packs));
   elements.factionBoard.innerHTML = factionEntries.length
     ? factionEntries.map((entry, index) => `<div class="faction-chart-row">
-        <span>${index + 1}. ${escapeHtml(factionNames[entry.partyId] || entry.partyId)}</span>
+        <span>${index + 1}. ${escapeHtml(partyDisplayName(entry.partyId, entry.partyId))}</span>
         <i aria-hidden="true"><b style="width:${Math.max(4, Math.round((entry.packs / factionMaximum) * 100))}%"></b></i>
         <strong>${entry.packs}</strong>
       </div>`).join("")
@@ -1709,7 +1735,7 @@ function renderGrowth() {
     card.set === challenge?.targetPartyId && card.releaseSetId === "party-leaders");
   elements.dailyChallengeLeaderArt.innerHTML = challengeLeaderCard ? artMarkup(challengeLeaderCard, true) : "";
   elements.dailyChallengeLeaderArt.style.setProperty("--pip", challengeLeaderCard?.pip || "#1f4f4a");
-  elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${factionNames[challenge?.targetPartyId] || challenge?.targetPartyId || "הסיעה היומית"}?`;
+  elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
   elements.dailyChallengeBoard.innerHTML = challenge?.leaders?.length
     ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="${entry.current ? "current-player" : ""}"><span>${index + 1}. ${escapeHtml(entry.label)}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
     : '<p class="work-note">עוד אין משיכות מהסיעה היומית.</p>';

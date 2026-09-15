@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { createKalpiApp, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES } from "../server/app.js";
+import { createKalpiApp, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES, publicPartyRegister } from "../server/app.js";
 import { createRuntimeHandler } from "../server/runtime.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -72,6 +72,24 @@ test("runtime factory builds the same Node handler Vercel uses", async () => {
   const handler = await createRuntimeHandler({ loadDotEnv: false });
   process.env.NODE_ENV = previous;
   assert.equal(typeof handler, "function");
+});
+
+test("public party register keeps Hebrew names without opening Studio", () => {
+  const fromStudio = publicPartyRegister({
+    parties: [{ id: "RZ", displayNameHe: "הציונות הדתית וזהות", displayNameEn: "RZ", requestedLetters: ["ט"], pip: "#6B4A8B" }],
+  });
+  assert.equal(fromStudio[0].displayNameHe, "הציונות הדתית וזהות");
+  const fromCatalog = publicPartyRegister(null, [
+    { set: "SYS", setNameHe: "יסודות" },
+    { set: "RZ", setNameHe: "הציונות הדתית וזהות", setName: "Religious Zionism–Zehut", letters: "ט", pip: "#6B4A8B" },
+  ]);
+  assert.deepEqual(fromCatalog, [{
+    id: "RZ",
+    displayNameHe: "הציונות הדתית וזהות",
+    displayNameEn: "Religious Zionism–Zehut",
+    requestedLetters: ["ט"],
+    pip: "#6B4A8B",
+  }]);
 });
 
 test("idle settlement caps unseen cards and acknowledges reveals safely", async (t) => {
@@ -445,6 +463,8 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(leaderboards.status, 200);
   assert.equal(leaderboards.body.factions.find(({ partyId }) => partyId === "LIK").packs, 1);
   assert.equal(leaderboards.body.dailyChallenge.day, "2026-09-03");
+  assert.equal(leaderboards.body.dailyChallenge.targetPartyNameHe, catalog.body.cards.find(({ set }) => set === leaderboards.body.dailyChallenge.targetPartyId)?.setNameHe);
+  assert.match(leaderboards.body.dailyChallenge.targetPartyNameHe, /[א-ת]/);
   const currentChallengeEntry = leaderboards.body.dailyChallenge.leaders.find(({ current }) => current);
   assert.equal(currentChallengeEntry.label, "גיא בדיקה");
   const expectedChallengeCards = pull.body.cards
@@ -713,6 +733,13 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   const created = await api(running.base, "/api/session", { method: "POST" });
   assert.equal((await api(running.base, "/api/studio/content")).status, 404);
   assert.equal((await api(running.base, "/api/presentation/content")).status, 404);
+  const publicConfig = await api(running.base, "/api/game-config");
+  assert.equal(publicConfig.status, 200);
+  const rz = publicConfig.body.parties.find(({ id }) => id === "RZ");
+  assert.equal(rz.displayNameHe, "הציונות הדתית וזהות");
+  const publicBoards = await api(running.base, "/api/leaderboards", { token: created.body.token });
+  assert.match(publicBoards.body.dailyChallenge.targetPartyNameHe, /[א-ת]/);
+  assert.notEqual(publicBoards.body.dailyChallenge.targetPartyNameHe, publicBoards.body.dailyChallenge.targetPartyId);
   assert.equal((await fetch(`${running.base}/project-docs/presentation/poc-response/index.html`)).status, 404);
   const health = await fetch(`${running.base}/api/health`);
   assert.equal(health.status, 200);

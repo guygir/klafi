@@ -4,8 +4,21 @@ let handlerPromise;
 
 export const config = {
   maxDuration: 10,
-  memory: 1024,
-  includeFiles: ["app/data/**", "app/server/**"],
+  includeFiles: [
+    "app/data/cards.json",
+    "app/data/advocacy.json",
+    "app/data/studio-content.json",
+    "app/data/specials-content.json",
+    "app/data/demo-pack.json",
+    "app/data/events.json",
+    "app/data/achievements.json",
+    "app/data/avatars.json",
+    "app/data/sources.json",
+    "app/data/editorial-sequences.json",
+    "app/data/editorial-samples.json",
+    "app/data/presentation-content.json",
+    "app/server/**",
+  ],
 };
 
 function restoreRequestUrl(request) {

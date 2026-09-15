@@ -81,6 +81,45 @@ function json(response, status, value) {
   response.end(JSON.stringify(value));
 }
 
+const STATELESS_API_PATHS = new Set([
+  "/api/catalog",
+  "/api/specials",
+  "/api/editorial",
+  "/api/studio/content",
+  "/api/game-config",
+  "/api/presentation/content",
+]);
+
+export function publicPartyRegister(studioContent, cards = []) {
+  if (studioContent?.parties?.length) {
+    return studioContent.parties.map(({ id, displayNameHe, displayNameEn, requestedLetters, pip }) => ({
+      id,
+      displayNameHe,
+      displayNameEn,
+      requestedLetters: requestedLetters || [],
+      pip,
+    }));
+  }
+  const parties = new Map();
+  for (const card of cards) {
+    if (!card.set || card.set === "SYS" || String(card.set).startsWith("special-")) continue;
+    if (parties.has(card.set)) continue;
+    parties.set(card.set, {
+      id: card.set,
+      displayNameHe: card.setNameHe || card.set,
+      displayNameEn: card.setName || card.set,
+      requestedLetters: card.letters ? [card.letters] : [],
+      pip: card.pip || null,
+    });
+  }
+  return [...parties.values()];
+}
+
+async function readJsonFile(filePath, fallback) {
+  if (!filePath) return fallback;
+  return JSON.parse(await readFile(filePath, "utf8"));
+}
+
 function bearer(request) {
   const match = request.headers.authorization?.match(/^Bearer\s+(.+)$/i);
   return match?.[1] ?? null;
@@ -604,12 +643,12 @@ export async function createKalpiApp({
 } = {}) {
   const cards = JSON.parse(await readFile(cardsPath, "utf8"));
   const advocacy = JSON.parse(await readFile(advocacyPath, "utf8"));
-  const sources = JSON.parse(await readFile(sourcesPath, "utf8"));
-  const sequences = JSON.parse(await readFile(sequencesPath, "utf8"));
-  const samples = samplesPath ? JSON.parse(await readFile(samplesPath, "utf8")) : [];
-  const demoPack = demoPackPath ? JSON.parse(await readFile(demoPackPath, "utf8")) : null;
-  let studioContent = studioContentPath ? JSON.parse(await readFile(studioContentPath, "utf8")) : null;
-  const specials = specialsPath ? JSON.parse(await readFile(specialsPath, "utf8")) : { sets: [] };
+  const sources = await readJsonFile(sourcesPath, []);
+  const sequences = await readJsonFile(sequencesPath, []);
+  const samples = await readJsonFile(samplesPath, []);
+  const demoPack = await readJsonFile(demoPackPath, null);
+  let studioContent = await readJsonFile(studioContentPath, null);
+  const specials = await readJsonFile(specialsPath, { sets: [] });
   let presentationContent = presentationContentPath
     ? JSON.parse(await readFile(presentationContentPath, "utf8"))
     : { schemaVersion: 1, deckId: "poc-response", updatedAt: null, fields: {} };
@@ -764,7 +803,9 @@ export async function createKalpiApp({
           "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
         );
       }
-      if (databaseUrl && url.pathname.startsWith("/api/")) await store.refresh();
+      if (databaseUrl && url.pathname.startsWith("/api/") && !STATELESS_API_PATHS.has(url.pathname)) {
+        await store.refresh();
+      }
 
       if (request.method === "GET" && url.pathname === "/api/health") {
         const health = await store.health();
@@ -822,6 +863,7 @@ export async function createKalpiApp({
           visual: normalizeVisualConfig(studioContent?.gameConfig?.visual),
           progression: progressionConfig(studioContent?.gameConfig?.progression),
           releaseSets: studioContent?.gameConfig?.releaseSets || [],
+          parties: publicPartyRegister(studioContent, cards),
           achievements: achievementCatalog.achievements || [],
           avatars: avatarCatalog.avatars || [],
         });
