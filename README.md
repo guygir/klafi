@@ -85,7 +85,7 @@ Keep this list current. Check a box only when it is actually done.
 Reorder in the Cursor implementation-plan canvas. After every step: verify on phone + desktop before starting the next.
 
 **Mandatory / production first**
-1. Private GitHub repo (so the project moves between machines) + PostgreSQL as the live store (retire the JSON file store).
+1. Private GitHub repo https://github.com/guygir/klafi (so the project moves between machines) + PostgreSQL as the live store (retire the JSON file store).
 2. One-container deploy, HTTPS, secrets, `DATABASE_URL`.
 3. Production advocacy identity configured for live.
 4. CEC / rights / likeness / source approval (release blockers).
