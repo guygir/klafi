@@ -82,16 +82,31 @@ Keep this list current. Check a box only when it is actually done.
 
 ### Next extensions — in this order
 
-1. Timed quiz on an owned card → one extra pack.
-2. Anonymous faction tally (no reward; not a currency).
-3. Verified real-life party / kalpi work → pack bundle.
-4. Disclosed survey + published scoring table → matched-list party pack.
-5. Hebrew content pass.
-6. Weavy / Figma Weave promo and rip assets; seed where 18–24 already are.
+Reorder in the Cursor implementation-plan canvas. After every step: verify on phone + desktop before starting the next.
+
+**Mandatory / production first**
+1. Private GitHub repo (so the project moves between machines) + PostgreSQL as the live store (retire the JSON file store).
+2. One-container deploy, HTTPS, secrets, `DATABASE_URL`.
+3. Production advocacy identity configured for live.
+4. CEC / rights / likeness / source approval (release blockers).
+5. Account recovery, moderation, public rate limits.
+6. Remaining KALPI pack art → KLAFI.
+
+**Then product polish**
+7. Unified card pipeline, taller cards, no fake social counts. **In progress.**
+8. Quiz polish: two questions on an owned card, 5:00, one extra pack per Jerusalem day. **Shipped as first slice; UI/server bugs being closed.**
+9. Hebrew content / copy pass.
+10. Recurring phone QA after each slice.
+
+**Later — not next**
+11. Anonymous faction tally (scoreboard only; no pack reward).
+12. Verified real-life party / kalpi work → pack bundle.
+13. Disclosed survey + published scoring table → matched-list party pack.
+14. Numbered holos / streaks / CEC pulse (no live polls in our voice).
+15. Weavy / Figma Weave promo and rip assets; seed where 18–24 already are.
 
 ### Later (designed, not Alpha)
 
-- Faction board, set race, list-slot numbered holos, streaks, CEC pulse (no live polls in our voice).
 - Legal pass if a 10k NIS prize ever becomes real.
 - Artist pass if a partner funds it. Do not wait.
 

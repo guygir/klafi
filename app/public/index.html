@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=hebrew-quality-5" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=1" />
+  <link rel="stylesheet" href="/styles.css?v=hebrew-quality-13" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=9" />
 </head>
 <body>
   <div class="paper-noise" aria-hidden="true"></div>
@@ -21,9 +21,13 @@
         <b>קְלָפִי</b>
       </button>
       <div class="masthead-meta">
-        <button id="player-name" class="player-name" type="button" aria-haspopup="dialog">השם שלי</button>
+        <button id="player-name" class="player-name" type="button" aria-haspopup="dialog">
+          <img id="player-avatar" class="player-avatar" alt="" hidden />
+          <span id="player-name-label">השם שלי</span>
+        </button>
         <span class="live-mark" aria-hidden="true"></span>
         <span id="header-status">טוענים…</span>
+        <span class="localhost-debug-chip" hidden data-debug-only>localhost</span>
         <button id="header-debug-reset" class="header-debug-reset" type="button" hidden>איפוס</button>
         <button class="header-debug-reset" type="button" data-nav="studio" data-debug-only>Studio</button>
         <a class="header-debug-reset presentation-link" href="/project-docs/presentation/poc-response/index.html" target="_blank" rel="noopener" data-debug-only>Presentation</a>
@@ -33,14 +37,19 @@
     <section class="level-strip" aria-label="התקדמות">
       <p id="level-teaser" class="level-teaser">האם תגיעו לדרגת ראש הממשלה?</p>
       <div class="level-identity">
-        <strong id="level-number" aria-label="רמה 1">רמה 1/10</strong>
+        <button type="button" id="level-avatar-button" class="level-avatar-button" aria-haspopup="dialog" aria-label="הפרופיל והאווטאר">
+          <img id="level-avatar" class="level-avatar" alt="" />
+        </button>
         <span id="level-rank">אזרח סקרן</span>
+        <strong id="level-number" hidden>רמה 1/5</strong>
       </div>
       <div class="level-progress-block">
-        <div class="level-track"><span id="level-progress"></span><b id="level-progress-count">0/5</b></div>
-        <small id="level-next">עוד 5 קלפים שונים לחבילה חינם</small>
+        <div class="level-track">
+          <span id="level-progress"></span>
+          <b id="level-progress-count">0/3</b>
+          <small id="level-next">גלה עוד 3 קלפים חדשים כדי להתקדם לרמה הבאה</small>
+        </div>
       </div>
-      <img class="level-pack-icon" src="/design-assets/pack-wrapper-transparent.png" alt="חבילה חינם" />
     </section>
 
     <main id="main" tabindex="-1">
@@ -73,9 +82,11 @@
           </div>
         </div>
         <div class="action-dock">
-          <button id="open-pack" class="primary-action" type="button">לראות מה נאסף</button>
+          <button id="open-pack" class="primary-action" type="button">פתיחת קלף</button>
           <button id="open-pack-fancy" class="secondary-action" type="button" hidden>פתיחת וידאו</button>
           <button id="open-bibi-pack" class="debug-pack-action" type="button" hidden>פתיחת חבילת ביבי</button>
+          <button id="open-quiz" class="secondary-action" type="button" hidden>חידון על קלף מהאוסף · חבילה נוספת</button>
+          <button id="open-pending-level" class="secondary-action" type="button" hidden>פרס רמה מחכה</button>
           <p id="cooldown-copy" class="action-note">הקלף הבא בעוד 03:00:00</p>
         </div>
         <section class="today-docket" aria-labelledby="today-docket-title">
@@ -86,24 +97,24 @@
           <div class="today-docket-list">
             <button type="button" class="today-docket-row" data-today-nav="growth">
               <span id="today-challenge-visual" class="today-docket-visual" aria-hidden="true"></span>
-              <span class="today-docket-label">אתגר יומי</span>
+              <span class="today-docket-label">היום אוספים:</span>
               <strong id="today-challenge-hook">הסיעה של היום</strong>
               <small id="today-challenge-meta">הטבלה נפתחת</small>
-              <b aria-hidden="true">←</b>
+              <em class="today-docket-go">למירוץ</em>
             </button>
-            <button type="button" class="today-docket-row" data-today-nav="events">
+            <button type="button" class="today-docket-row live" data-today-nav="events">
               <span class="today-docket-visual event-visual" aria-hidden="true"><img src="/design-assets/pack-wrapper-transparent.png" alt="" loading="lazy" /></span>
-              <span class="today-docket-label">אירוע פעיל</span>
+              <span class="today-docket-label">עכשיו:<i class="live-pulse" aria-hidden="true"></i></span>
               <strong id="today-event-hook">בודקים מה פתוח</strong>
               <small id="today-event-meta">לזמן מוגבל</small>
-              <b aria-hidden="true">←</b>
+              <em class="today-docket-go">פותחים</em>
             </button>
             <button type="button" class="today-docket-row" data-today-nav="growth">
               <span class="today-docket-visual" aria-hidden="true"><img src="/design-assets/hero-art-knesset.png" alt="" loading="lazy" /></span>
-              <span class="today-docket-label">מוביל באוסף</span>
+              <span class="today-docket-label">טבלת מובילים:</span>
               <strong id="today-leader-hook">המרוץ עוד פתוח</strong>
               <small id="today-leader-meta">טבלת האספנים</small>
-              <b aria-hidden="true">←</b>
+              <em class="today-docket-go">לטבלה</em>
             </button>
           </div>
         </section>
@@ -115,7 +126,7 @@
             <p class="eyebrow" id="pack-step">החבילה סגורה</p>
             <h1 id="pack-heading">קורעים ופותחים.</h1>
           </div>
-          <span id="pack-counter" class="pack-counter">0 / 6</span>
+          <span id="pack-counter" class="pack-counter">0 / 1</span>
         </div>
         <div id="rip-stage" class="rip-stage" aria-live="polite"></div>
         <div class="action-dock">
@@ -134,15 +145,17 @@
       </section>
 
       <section id="binder-view" class="view">
-        <div id="earned-badge-rail" class="earned-badge-rail" aria-label="התגים שלי"></div>
+        <div id="earned-badge-rail" class="earned-badge-rail" aria-label="התגים וההתקדמות">
+          <div class="binder-total">
+            <strong id="binder-percent">0%</strong>
+            <span id="binder-count">0 מתוך 14 בסדרה הפעילה</span>
+          </div>
+          <div id="earned-badge-list" class="earned-badge-list"></div>
+        </div>
         <div class="binder-head">
           <div>
             <p class="eyebrow">האוסף שלי</p>
             <h1>האלבום.</h1>
-          </div>
-          <div class="binder-total">
-            <strong id="binder-percent">0%</strong>
-            <span id="binder-count">0 / 28</span>
           </div>
         </div>
         <div id="binder-filters" class="filter-strip" role="tablist" aria-label="סינון האוסף לפי סדרה"></div>
@@ -161,6 +174,7 @@
       <section id="events-view" class="view">
         <p class="eyebrow">לזמן מוגבל</p>
         <h1>אירועים.</h1>
+        <p class="lede event-explainer">עכשיו · האוסף · בהמשך. קלף אירוע אחד ביום, מחוץ לאיסוף האוטומטי.</p>
         <div id="event-tabs" class="contained-tabs" role="tablist" aria-label="עמודי האירועים">
           <button type="button" role="tab" data-event-page="active" class="active">עכשיו</button>
           <button type="button" role="tab" data-event-page="collection">האוסף</button>
@@ -294,6 +308,7 @@
               <p id="studio-content-summary">Loading the 51-person editorial roster…</p>
             </div>
             <div class="reveal-lab-actions">
+              <button id="copy-pack-prompts" class="secondary-action" type="button">Copy KLAFI pack image + video</button>
               <button id="copy-member-prompts" class="secondary-action" type="button">Copy politician · 3 images</button>
               <button id="export-party-content" class="secondary-action" type="button">Export party JSON</button>
               <button id="export-all-quotes" class="secondary-action" type="button">Export all quotes Excel</button>
@@ -342,6 +357,27 @@
               </select>
             </label>
           </div>
+          <div class="level-increments" role="group" aria-label="Level increments per release set">
+            <label>סף עקומה
+              <input id="level-exponent" type="number" min="0.5" max="3" step="0.1" value="1.2" />
+            </label>
+          </div>
+          <div id="level-increments" class="level-increments"></div>
+          <section class="studio-meta-desk">
+            <article>
+              <p class="work-kicker">Achievements · app/data/achievements.json</p>
+              <h2>הישגים.</h2>
+              <div id="studio-achievements" class="studio-meta-list"></div>
+              <button id="add-achievement" class="secondary-action" type="button">Add achievement</button>
+              <button id="save-achievements" class="secondary-action" type="button">Save achievements</button>
+            </article>
+            <article>
+              <p class="work-kicker">Events · app/data/events.json</p>
+              <h2>אירועים.</h2>
+              <div id="studio-events" class="studio-meta-list"></div>
+              <button id="save-events" class="secondary-action" type="button">Save events</button>
+            </article>
+          </section>
           <p id="studio-stage-label" class="naama-stage-label" aria-live="polite">Complete · quote → party + slot → member → portrait</p>
           <div id="studio-card-grid" class="naama-variants studio-card-grid" data-stage="4"></div>
           <div id="studio-member-extras" class="studio-member-extras"></div>
@@ -394,13 +430,6 @@
       <button id="open-advocacy" class="advocacy-info" type="button" aria-label="גילוי נאות: איך נבחר התוכן?" title="איך נבחר התוכן?">ⓘ</button>
     </div>
 
-  </div>
-
-  <div id="home-pack-rip-backdrop" class="home-pack-rip-backdrop" aria-hidden="true" hidden></div>
-  <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="metadata" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
-    <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
-  </video>
-
   <dialog id="card-dialog" class="card-dialog">
     <button id="close-dialog" class="dialog-close" type="button" aria-label="סגירת הקלף">×</button>
     <div id="dialog-card"></div>
@@ -418,9 +447,23 @@
     <button id="close-level" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">עליתם רמה</p>
     <h2 id="level-dialog-title">רמה חדשה</h2>
+    <img class="level-reward-pack" src="/design-assets/pack-wrapper-transparent.png" alt="חבילת בונוס" />
+    <ul id="level-unlocks" class="level-unlocks"></ul>
     <p id="level-dialog-reward"></p>
     <button id="claim-level" class="primary-action" type="button">קבלת הפרס</button>
-    <p class="work-note">הפרסים יוצגו בלבד בגרסת ההדגמה.</p>
+  </dialog>
+
+  <dialog id="quiz-dialog" class="policy-dialog quiz-dialog">
+    <button id="close-quiz" class="dialog-close" type="button" aria-label="סגירה">×</button>
+    <p class="eyebrow">חידון על קלף מהאוסף</p>
+    <h2 id="quiz-title">שתי שאלות מהקלף. חמש דקות.</h2>
+    <p class="quiz-rule">השאלות נלקחות מנתוני הקלף שכבר אספתם — רשימה, מקום, או נושא. זה לא סקר. חבילה נוספת אחת לכל יום אזרחי בישראל (שעון ירושלים), לא אירוע מיוחד.</p>
+    <p id="quiz-clock" class="quiz-clock" aria-live="polite">05:00</p>
+    <div id="quiz-card" class="quiz-card"></div>
+    <div id="quiz-questions" class="quiz-questions"></div>
+    <p id="quiz-fail" class="quiz-fail" hidden></p>
+    <button id="quiz-submit" class="primary-action" type="button">בדיקת התשובות</button>
+    <p id="quiz-status" class="work-note"></p>
   </dialog>
 
   <dialog id="profile-dialog" class="policy-dialog">
@@ -430,8 +473,10 @@
     <form id="profile-form">
       <label class="profile-name-label" for="profile-name-input">השם שיופיע בטבלאות</label>
       <input id="profile-name-input" name="displayName" minlength="2" maxlength="24" autocomplete="nickname" required />
+      <p class="profile-name-label">הפנים שלכם</p>
+      <div id="avatar-picker" class="avatar-picker"></div>
       <p id="profile-error" class="profile-error" role="alert"></p>
-      <button class="primary-action" type="submit">שמירת השם</button>
+      <button class="primary-action" type="submit">שמירת הפרופיל</button>
     </form>
   </dialog>
 
@@ -446,6 +491,12 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="/app.js?v=hebrew-quality-5"></script>
+  </div>
+
+  <div id="home-pack-rip-backdrop" class="home-pack-rip-backdrop" aria-hidden="true" hidden></div>
+  <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="metadata" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
+    <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
+  </video>
+  <script type="module" src="/app.js?v=hebrew-quality-10"></script>
 </body>
 </html>

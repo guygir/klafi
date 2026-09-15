@@ -27,10 +27,25 @@ const cases = [
   ["achievements-mobile", 390, 844, "/?view=achievements"],
   ["events-mobile", 390, 844, "/?view=events"],
   ["community-mobile", 390, 844, "/?view=growth"],
+  ["community-short", 390, 700, "/?view=growth"],
+  ["community-tablet", 768, 1024, "/?view=growth"],
+  ["pack-mobile", 390, 844, "/", "open-pack"],
+  ["pack-short", 390, 700, "/", "open-pack"],
   ["classic-card-mobile", 390, 844, "/?card=LIK-M01-Q02&theme=classic-v1&cardFrame=classic-v1&density=compact-v1&quoteReveal=fade-v1"],
 ];
 
 const sleep = (duration) => new Promise((resolve) => setTimeout(resolve, duration));
+
+async function loadSessionToken() {
+  try {
+    const state = JSON.parse(await readFile(path.join(appRoot, ".runtime", "state.json"), "utf8"));
+    return Object.keys(state.sessions || {})[0] || "";
+  } catch {
+    return "";
+  }
+}
+
+const sessionToken = await loadSessionToken();
 
 async function waitForFile(filePath, timeout = 10_000) {
   const started = Date.now();
@@ -74,7 +89,7 @@ async function connectCdp(webSocketUrl) {
   };
 }
 
-async function capture([name, width, height, route], index) {
+async function capture([name, width, height, route, action], index) {
   const screenshot = path.join(outputDir, `${name}.png`);
   const profile = path.join(os.tmpdir(), `kalpi-visual-${process.pid}-${index}`);
   await rm(screenshot, { force: true });
@@ -97,6 +112,7 @@ async function capture([name, width, height, route], index) {
     const target = await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" }).then((response) => response.json());
     const cdp = await connectCdp(target.webSocketDebuggerUrl);
     await cdp.send("Page.enable");
+    await cdp.send("Runtime.enable");
     await cdp.send("Emulation.setDeviceMetricsOverride", {
       width,
       height,
@@ -105,8 +121,19 @@ async function capture([name, width, height, route], index) {
       screenWidth: width,
       screenHeight: height,
     });
+    if (sessionToken) {
+      await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
+        source: `localStorage.setItem("kalpi-alpha-session", ${JSON.stringify(sessionToken)});`,
+      });
+    }
     await cdp.send("Page.navigate", { url: `${baseUrl}${route}` });
     await sleep(3500);
+    if (action === "open-pack") {
+      await cdp.send("Runtime.evaluate", {
+        expression: "document.querySelector('#open-pack')?.click()",
+      });
+      await sleep(2200);
+    }
     const result = await cdp.send("Page.captureScreenshot", {
       format: "png",
       fromSurface: true,

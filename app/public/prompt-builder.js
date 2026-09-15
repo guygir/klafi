@@ -1,4 +1,4 @@
-export const PROMPT_TEMPLATE_VERSION = "kalpi-weave-card-v1";
+export const PROMPT_TEMPLATE_VERSION = "klafi-weave-card-v2";
 
 const MEMBER_POSES = [
   "Near-frontal direct gaze, shoulders mostly square to camera; quiet, iconic introduction.",
@@ -25,7 +25,7 @@ export function buildWeavePrompt({ party, member, card }) {
     : "No added symbolic prop.";
   const quoteStatus = card.quote.status || "researching";
 
-  return `KALPI WEAVE CARD · ${card.id}
+  return `KLAFI WEAVE CARD · ${card.id}
 
 SUBJECT
 ${member.nameEn} · ${member.nameHe}
@@ -44,7 +44,7 @@ ${scene}
 ${flavor}
 Any generated prop, lighting cue, or scene treatment is editorial symbolic framing, not documentary evidence.
 
-SHARED KALPI STYLE
+SHARED KLAFI STYLE
 Use hero-art-naama-lazimi.png only as the fixed style anchor: recognizable but deliberately non-photoreal editorial portrait, expressive ink-and-gouache brushwork on aged parchment, dark ink linework, tactile archival paper, restrained aged-brass detail, subtle teal reflected light, serious civic mood, and ample crop room. Preserve the politician's facial geometry, age, hair, and recognizable identity from the identity reference. Party identity is rendered later in HTML; do not wash the image in party color.
 
 OUTPUT
@@ -89,10 +89,10 @@ export function buildMemberWeavePrompt({ party, member }) {
     .map((card, index) => memberImageBrief(party, member, card, index))
     .join("\n\n");
 
-  return `KALPI WEAVE · THREE-IMAGE POLITICIAN SET · ${member.id}
+  return `KLAFI WEAVE · THREE-IMAGE POLITICIAN SET · ${member.id}
 
 TASK
-Generate exactly THREE separate vertical 3:4 portrait images in one run, one image for each numbered specification below. Do not combine them into a triptych, grid, contact sheet, or one wide canvas. Keep the politician's identity and the Kalpi finish consistent across all three outputs while making the pose, orientation, scene, quote interpretation, and filename distinct.
+Generate exactly THREE separate vertical 3:4 portrait images in one run, one image for each numbered specification below. Do not combine them into a triptych, grid, contact sheet, or one wide canvas. Keep the politician's identity and the KLAFI finish consistent across all three outputs while making the pose, orientation, scene, quote interpretation, and filename distinct.
 
 SUBJECT
 ${member.nameEn} · ${member.nameHe}
@@ -116,4 +116,39 @@ Return three separate 3:4 image files together. Portrait art only: no card chrom
 
 GLOBAL CONSTRAINTS
 No readable text, logos, flags, campaign marks, party symbols, card border, UI, stars, photorealism, caricature, changed age, face distortion, invented medals or insignia, extra fingers, lip movement, documentary claim, ethnic coding, defamatory visual allegation, invented recipient, or unsupported literal reconstruction. Any prop, lighting cue, or setting treatment is editorial symbolic framing, not documentary evidence.`;
+}
+
+export function buildPackImagePrompt() {
+  return `KLAFI WEAVE · NEW PACK STILL · ONE CARD
+
+TASK
+Generate a front-facing premium paper wrapper for the KLAFI civic card game. This is a one-card pack, not a six-card booster.
+
+BRAND
+The Latin wordmark must read exactly KLAFI in clear uppercase Latin letters. Never render KALPI. Never invent KALPI as a watermark, stamp, faded underprint, or spine mark.
+
+STYLE LOCK
+Preserve parchment, deep umber, wax-seal teal, antique-gold print, ballot-box illustration, folds, and worn letterpress finish from pack-wrapper.png. Slim physical volume. Centered on a transparent background with generous safe area.
+
+OUTPUT RULES
+No hands. No cards outside the wrapper. No extra logos. No photoreal plastic. No modern neon. No additional text. No warped or misspelled lettering. Record model/version, seed, and review status.`;
+}
+
+export function buildPackRipPrompt() {
+  return `KLAFI WEAVE · NEW PACK RIP VIDEO · ONE CARD
+
+TASK
+Image-to-video from the approved pack-wrapper-klafi.png first frame.
+
+MOTION
+Locked camera. The top gold serrated seam pulls apart from the center, paper fibers stretch and tear, and the wrapper opens with believable physical resistance. A restrained teal light appears from inside. The two paper lips peel back and exactly one card back rises from the wrapper.
+
+BRAND
+The Latin wordmark must remain exactly KLAFI throughout and must never become KALPI.
+
+CONSTRAINTS
+No hands. No camera move. No new text. No warped letters or logo. No melting package. No explosion. End on a stable open-wrapper frame suitable for cutting to the one live HTML card reveal.
+
+TARGET
+2.0–2.8 seconds, 24 or 30 fps, silent, 9:16 with generous safe area if needed.`;
 }

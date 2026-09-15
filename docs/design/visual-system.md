@@ -89,12 +89,12 @@ Corners: 12px. Inset: 16px. Art well radius: 8px.
 
 ### Selected pack-v2 member front
 
-The framed collectible treatment is selected. The physical ratio is `63 / 88`, with a taller art well. Percentages are fixed across every member card and measured upward from the bottom:
+The framed collectible treatment is selected. The physical ratio is `63 / 96`, with a taller art well. Percentages are fixed across every member card and measured upward from the bottom:
 
-- `2.2–14%`: centered quote in a fixed-height Hebrew zone.
-- `14.4–18.6%`: Hebrew party name and `מקום <slot>`.
-- `18.9–25.1%`: Hebrew member name.
-- `25.5–100%`: inset editorial portrait.
+- `1.8–12%`: centered quote in a fixed-height Hebrew zone.
+- `12.2–16.2%`: Hebrew party name and `מקום <slot>`.
+- `16.4–21.8%`: Hebrew member name.
+- `22–100%`: inset editorial portrait.
 
 Catalog metadata appears with the portrait stage: top-left is the Hebrew ballot letters plus one set-wide sequence number; top-right is the compact rarity mark. Stars use wax-seal green, not yellow. `01` is the ballot-symbol card, `02–03` are the two platform cards, and each list slot then reserves three stable numbers in Common / Uncommon / Rare order. Netanyahu therefore occupies `מחל-04–06`; slot 2 occupies `מחל-07–09`, even if one of those cards is not published yet. Use the rounded antique outer frame, gold/umber rarity finish and inset portrait well.
 

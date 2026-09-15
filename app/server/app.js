@@ -17,11 +17,15 @@ const RANK_TITLES = [
   "חבר סניף",
   "רכז שטח",
   "מנהל מטה",
+  "יועץ פרלמנטרי",
   "חבר כנסת",
+  "יו״ר ועדה",
+  "סגן שר",
+  "שר",
   "שר בכיר",
   "ראש הממשלה",
 ];
-const LEVEL_RATIOS = [0, 0.03, 0.08, 0.15, 0.25, 0.38, 0.52, 0.68, 0.84, 1];
+const LEVEL_RATIOS = [0, 0.03, 0.07, 0.12, 0.18, 0.25, 0.33, 0.42, 0.52, 0.63, 0.74, 0.84, 0.92, 1];
 const DEFAULT_REVEAL_TIMING = Object.freeze({
   quote: 200,
   party: 1100,
@@ -139,6 +143,21 @@ function validVisualConfig(value) {
   );
 }
 
+function validProgressionPatch(value) {
+  if (value === undefined) return true;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  if (value.releaseLevelIncrements !== undefined) {
+    const increments = value.releaseLevelIncrements;
+    if (!increments || typeof increments !== "object" || Array.isArray(increments)) return false;
+    if (!Object.values(increments).every((item) => Number.isInteger(item) && item >= 0 && item <= 20)) return false;
+  }
+  if (value.thresholdExponent !== undefined) {
+    const exponent = Number(value.thresholdExponent);
+    if (!Number.isFinite(exponent) || exponent < 0.5 || exponent > 3) return false;
+  }
+  return true;
+}
+
 function normalizeDisplayName(value) {
   if (typeof value !== "string") return null;
   const normalized = value.normalize("NFKC").trim().replace(/\s+/g, " ");
@@ -226,32 +245,96 @@ async function writeJsonAtomic(filePath, value) {
   await rename(temporary, filePath);
 }
 
-function achievementState(session, cards) {
+function achievementMeasures(session, cards) {
   const ownedIds = new Set(Object.keys(session.inventory));
   const unique = ownedIds.size;
   const collectible = cards.filter((card) => card.idleEligible || card.eventOnly || ownedIds.has(card.id));
   const commons = cards.filter(({ releaseSetId }) => releaseSetId === "party-leaders");
+  const ownedLeaderParties = new Set(commons.filter(({ id }) => ownedIds.has(id)).map(({ set }) => set)).size;
+  const eventClaims = Object.values(session.eventClaims || {}).reduce((sum, claims) => sum + Object.keys(claims || {}).length, 0);
+  const stars = collectionStarCount(session, cards);
+  const idleEligible = cards.filter((card) => card.idleEligible && !card.eventOnly);
+  const ownedIdle = idleEligible.filter(({ id }) => ownedIds.has(id)).length;
   const partySets = [...new Set(collectible.filter(({ set }) => set !== "SYS").map(({ set }) => set))]
     .map((set) => {
       const ids = collectible.filter((card) => card.set === set).map(({ id }) => id);
       return { set, owned: ids.filter((id) => ownedIds.has(id)).length, total: ids.length };
     });
   const bestSet = partySets.sort((a, b) => (b.owned / b.total) - (a.owned / a.total))[0];
-  return [
-    { id: "first-rip", name: "First reveal", description: "Reveal one collected card.", earned: (session.idlePullCount || session.packCount) >= 1, progress: Math.min(session.idlePullCount || session.packCount, 1), target: 1 },
-    { id: "register-five", name: "Five in the register", description: "Own five different cards.", earned: unique >= 5, progress: Math.min(unique, 5), target: 5 },
-    { id: "source-check", name: "Receipt checked", description: "Open a card source.", earned: (session.eventCounts?.source_opened ?? 0) >= 1, progress: Math.min(session.eventCounts?.source_opened ?? 0, 1), target: 1 },
-    { id: "share-pull", name: "Passed hand to hand", description: "Share one pull.", earned: (session.eventCounts?.share_created ?? 0) >= 1, progress: Math.min(session.eventCounts?.share_created ?? 0, 1), target: 1 },
-    { id: "commons-complete", name: "All party leaders", description: "Collect every party leader.", earned: commons.length > 0 && commons.every(({ id }) => ownedIds.has(id)), progress: commons.filter(({ id }) => ownedIds.has(id)).length, target: commons.length || 1 },
-    { id: "set-chase", name: "List chaser", description: "Complete one party set.", earned: Boolean(bestSet && bestSet.owned === bestSet.total), progress: bestSet?.owned ?? 0, target: bestSet?.total ?? 1 },
-    { id: "trade-match", name: "Across the aisle", description: "Complete one trade.", earned: session.tradeCount >= 1, progress: Math.min(session.tradeCount, 1), target: 1 },
-  ];
+  return {
+    unique,
+    idlePulls: session.idlePullCount || session.packCount || 0,
+    sources: session.eventCounts?.source_opened ?? 0,
+    shares: session.eventCounts?.share_created ?? 0,
+    leaders: commons.filter(({ id }) => ownedIds.has(id)).length,
+    leadersTotal: commons.length || 1,
+    bestSetOwned: bestSet?.owned ?? 0,
+    bestSetTotal: bestSet?.total ?? 1,
+    trades: session.tradeCount || 0,
+    favorites: session.favorites?.length ?? 0,
+    events: eventClaims,
+    leaderParties: ownedLeaderParties,
+    stars,
+    duplicate: Math.max(0, ...Object.values(session.inventory || {}), 0),
+    rank: session.highestRank || 1,
+    binderHalf: ownedIdle,
+    binderHalfTarget: Math.max(1, Math.ceil(idleEligible.length / 2)),
+  };
+}
+
+function achievementProgress(definition, measures) {
+  const dynamicTargets = {
+    leaders: measures.leadersTotal,
+    bestSet: measures.bestSetTotal,
+    binderHalf: measures.binderHalfTarget,
+  };
+  const target = dynamicTargets[definition.rule] || Math.max(1, Number(definition.target) || 1);
+  const raw = {
+    idlePulls: measures.idlePulls,
+    unique: measures.unique,
+    sources: measures.sources,
+    shares: measures.shares,
+    leaders: measures.leaders,
+    bestSet: measures.bestSetOwned,
+    trades: measures.trades,
+    favorites: measures.favorites,
+    events: measures.events,
+    leaderParties: measures.leaderParties,
+    stars: measures.stars,
+    duplicate: measures.duplicate,
+    rank: measures.rank,
+    binderHalf: measures.binderHalf,
+  }[definition.rule] ?? 0;
+  const progress = Math.min(raw, target);
+  return {
+    id: definition.id,
+    name: definition.nameHe || definition.name,
+    description: definition.descriptionHe || definition.description,
+    earned: raw >= target,
+    progress,
+    target,
+  };
+}
+
+function achievementState(session, cards, catalog = []) {
+  const measures = achievementMeasures(session, cards);
+  const definitions = catalog.length ? catalog : [{ id: "first-rip", nameHe: "First reveal", descriptionHe: "Reveal one collected card.", rule: "idlePulls", target: 1 }];
+  return definitions.map((definition) => achievementProgress(definition, measures));
+}
+
+function publicAvatars(session, catalog = [], level = 1) {
+  const currentLevel = Math.max(1, level || session.highestRank || 1);
+  return catalog.map((avatar) => ({
+    ...avatar,
+    unlocked: currentLevel >= (avatar.unlockLevel || 1),
+    selected: session.avatarId === avatar.id,
+  }));
 }
 
 function activeIdleCards(cards, current = Date.now()) {
   return cards.filter((card) =>
     !card.eventOnly
-    && card.idleEligible !== false
+    && card.idleEligible === true
     && (!card.availableFrom || Date.parse(card.availableFrom) <= current));
 }
 
@@ -266,33 +349,57 @@ function collectionStarCount(session, cards) {
   }, 0);
 }
 
-function progressionConfig(config = {}) {
-  const ratios = Array.isArray(config.thresholdRatios) && config.thresholdRatios.length === 10
-    ? config.thresholdRatios
-    : LEVEL_RATIOS;
-  const ranks = Array.isArray(config.rankNames) && config.rankNames.length === 10
+function progressionConfig(config = {}, activeReleaseIds = null) {
+  const ranks = Array.isArray(config.rankNames) && config.rankNames.length >= 2
     ? config.rankNames
     : RANK_TITLES;
-  return { ratios, ranks, reward: config.reward || "קלף בונוס מיידי" };
+  const increments = config.releaseLevelIncrements && typeof config.releaseLevelIncrements === "object"
+    ? config.releaseLevelIncrements
+    : {};
+  const releaseIds = activeReleaseIds === null ? Object.keys(increments) : activeReleaseIds;
+  const configuredLevels = releaseIds.reduce((sum, id) => sum + Math.max(0, Math.round(Number(increments[id]) || 0)), 0);
+  const firstSetLevels = Math.max(0, Math.round(Number(increments["party-leaders"]) || 0));
+  const legacyLevels = Array.isArray(config.thresholdRatios) ? config.thresholdRatios.length : LEVEL_RATIOS.length;
+  const totalLevels = Math.max(2, Math.min(ranks.length, configuredLevels || firstSetLevels || legacyLevels));
+  const exponent = Math.max(0.5, Math.min(3, Number(config.thresholdExponent) || 1.2));
+  const ratios = Array.isArray(config.thresholdRatios) && config.thresholdRatios.length === totalLevels
+    ? config.thresholdRatios
+    : Array.from({ length: totalLevels }, (_, index) =>
+      index === totalLevels - 1 ? 1 : Number((index / (totalLevels - 1)) ** exponent));
+  return {
+    ratios,
+    ranks,
+    totalLevels,
+    campaignLevels: ranks.length,
+    releaseLevelIncrements: increments,
+    thresholdExponent: exponent,
+    reward: config.reward || "קלף בונוס מיידי",
+  };
 }
 
 function progressionState(session, cards, config = {}, current = Date.now()) {
   const eligible = activeIdleCards(cards, current);
   const eligibleIds = new Set(eligible.map(({ id }) => id));
   const unique = Object.keys(session.inventory).filter((id) => eligibleIds.has(id)).length;
-  const { ratios, ranks, reward } = progressionConfig(config);
+  const activeReleaseIds = [...new Set(eligible.map(({ releaseSetId }) => releaseSetId).filter(Boolean))];
+  const { ratios, ranks, totalLevels, campaignLevels, reward } = progressionConfig(config, activeReleaseIds);
   const thresholds = ratios.map((ratio, index) => index === 0 ? 0 : Math.ceil(eligible.length * ratio));
   const computedLevel = eligible.length
     ? thresholds.reduce((result, threshold, index) => unique >= threshold ? index + 1 : result, 1)
     : 1;
-  const level = Math.max(computedLevel, Math.min(10, session.highestRank || 1));
-  const start = thresholds[level - 1] ?? 0;
-  const target = level < 10 ? thresholds[level] : thresholds[9];
+  const earned = Math.max(1, session.highestRank || 1);
+  const level = Math.max(computedLevel, Math.min(campaignLevels, earned));
+  const openLevels = Math.max(totalLevels, level);
+  const capped = Math.min(level, totalLevels);
+  const start = thresholds[capped - 1] ?? 0;
+  const target = level < totalLevels ? thresholds[level] : thresholds[totalLevels - 1];
   return {
     level,
-    totalLevels: 10,
+    totalLevels: openLevels,
+    campaignLevels,
     rank: ranks[level - 1],
-    nextRank: level < 10 ? ranks[level] : null,
+    nextRank: level < openLevels ? ranks[level] : null,
+    nextReleaseRank: level === openLevels && openLevels < campaignLevels ? ranks[level] : null,
     unique,
     start,
     target,
@@ -345,8 +452,71 @@ function publicState(session, now, cards, config = {}) {
     idlePullCount: session.idlePullCount ?? 0,
     factionId: session.factionId,
     tradeCount: session.tradeCount,
-    achievements: achievementState(session, cards),
+    achievements: achievementState(session, cards, config.achievements),
+    avatars: publicAvatars(session, config.avatars, progressionState(session, cards, config, now).level),
+    avatarId: session.avatarId || "kid-boy",
     progression: progressionState(session, cards, config, now),
+    quizAvailable: Boolean(Object.keys(session.inventory || {}).length) && session.quizWonDay !== jerusalemDay(now),
+    quizWonToday: session.quizWonDay === jerusalemDay(now),
+  };
+}
+
+function jerusalemDay(ms) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(ms));
+}
+
+function unitRandom(rng) {
+  if (typeof rng === "function" && rng.length >= 1) return rng(1e9) / 1e9;
+  const value = typeof rng === "function" ? rng() : Math.random();
+  return Number.isFinite(value) ? value : Math.random();
+}
+
+function shuffleChoices(items, rng) {
+  const next = [...items];
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(unitRandom(rng) * (index + 1));
+    [next[index], next[swap]] = [next[swap], next[index]];
+  }
+  return next;
+}
+
+function quizChoices(correct, pool, rng) {
+  const distractors = shuffleChoices(pool.filter((item) => item && item !== correct), rng).slice(0, 3);
+  return shuffleChoices([correct, ...distractors], rng);
+}
+
+function buildOwnedCardQuiz(session, catalog, rng, nowMs) {
+  const owned = catalog.filter((card) => session.inventory?.[card.id]);
+  if (!owned.length) return null;
+  const lastOwnedId = [...(session.instances || [])].reverse().find((instance) => session.inventory[instance.cardId])?.cardId;
+  const card = catalog.find((item) => item.id === lastOwnedId) || owned.at(-1);
+  const slotMatch = /^מקום\s+(\d+)$/.exec(String(card.subtitleHe || "").trim());
+  const role = slotMatch ? `מקום ${slotMatch[1]}` : (card.subtitleHe || card.typeHe || card.type);
+  const rolePrompt = slotMatch ? "איזה מקום ברשימה?" : "במה הקלף הזה עוסק?";
+  const party = card.setNameHe || card.set;
+  const rolePool = [...new Set(catalog.map((item) => {
+    const subtitle = String(item.subtitleHe || "").trim();
+    if (slotMatch) return /^מקום\s+\d+$/.test(subtitle) ? subtitle : "";
+    return subtitle && !/^מקום\s+\d+$/.test(subtitle) ? subtitle : (item.typeHe || item.type);
+  }).filter(Boolean))];
+  const partyPool = [...new Set(catalog.map((item) => item.setNameHe || item.set).filter(Boolean))];
+  const quizId = randomUUID();
+  return {
+    quizId,
+    cardId: card.id,
+    startedAt: new Date(nowMs).toISOString(),
+    expiresAt: new Date(nowMs + (5 * 60 * 1000)).toISOString(),
+    answers: { role, list: party },
+    public: {
+      quizId,
+      expiresAt: new Date(nowMs + (5 * 60 * 1000)).toISOString(),
+      cardId: card.id,
+      source: "owned-card",
+      questions: [
+        { id: "role", prompt: rolePrompt, options: quizChoices(role, rolePool, rng) },
+        { id: "list", prompt: "באיזו רשימה?", options: quizChoices(party, partyPool, rng) },
+      ],
+    },
   };
 }
 
@@ -419,6 +589,8 @@ export async function createKalpiApp({
   specialsPath,
   presentationContentPath,
   eventsPath,
+  achievementsPath = eventsPath ? path.join(path.dirname(eventsPath), "achievements.json") : null,
+  avatarsPath = eventsPath ? path.join(path.dirname(eventsPath), "avatars.json") : null,
   assetsDir,
   docsDir,
   databaseUrl,
@@ -439,6 +611,8 @@ export async function createKalpiApp({
     ? JSON.parse(await readFile(presentationContentPath, "utf8"))
     : { schemaVersion: 1, deckId: "poc-response", updatedAt: null, fields: {} };
   const events = eventsPath ? JSON.parse(await readFile(eventsPath, "utf8")) : { events: [] };
+  let achievementCatalog = achievementsPath ? JSON.parse(await readFile(achievementsPath, "utf8")) : { achievements: [] };
+  const avatarCatalog = avatarsPath ? JSON.parse(await readFile(avatarsPath, "utf8")) : { avatars: [] };
   const specialSets = new Map(specials.sets.map((set) => [set.id, set]));
   const specialLettersBySet = {
     "legendary-aces": "אס",
@@ -550,7 +724,12 @@ export async function createKalpiApp({
     : new JsonStore(path.join(dataDir, "state.json"));
   await store.init();
   const rateLimit = createRateLimiter();
-  const stateFor = (session) => publicState(session, now(), allCards, studioContent?.gameConfig?.progression);
+  const runtimeProgression = () => ({
+    ...studioContent?.gameConfig?.progression,
+    achievements: achievementCatalog.achievements || [],
+    avatars: avatarCatalog.avatars || [],
+  });
+  const stateFor = (session) => publicState(session, now(), allCards, runtimeProgression());
   function grantCard(session, pull, { acquiredBy, pulledAt }) {
     const isNew = !session.inventory[pull.cardId];
     session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
@@ -639,6 +818,8 @@ export async function createKalpiApp({
           visual: normalizeVisualConfig(studioContent?.gameConfig?.visual),
           progression: progressionConfig(studioContent?.gameConfig?.progression),
           releaseSets: studioContent?.gameConfig?.releaseSets || [],
+          achievements: achievementCatalog.achievements || [],
+          avatars: avatarCatalog.avatars || [],
         });
         return;
       }
@@ -691,7 +872,14 @@ export async function createKalpiApp({
             return;
           }
           await store.setDisplayName(token, displayName);
-          json(response, 200, { displayName });
+          const requestedAvatar = String(input.avatarId || session.avatarId || "kid-boy");
+          const level = progressionState(store.getSession(token), allCards, runtimeProgression(), now()).level;
+          const avatar = (avatarCatalog.avatars || []).find((item) => item.id === requestedAvatar);
+          if (avatar && level >= (avatar.unlockLevel || 1)) {
+            await store.setAvatar(token, avatar.id);
+          }
+          const current = store.getSession(token);
+          json(response, 200, { displayName: current.displayName, avatarId: current.avatarId });
           return;
         }
 
@@ -812,6 +1000,85 @@ export async function createKalpiApp({
             current.unseenPulls = [...unseen].filter((id) => !accepted.has(id));
           });
           json(response, 200, stateFor(store.getSession(token)));
+          return;
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/quiz") {
+          const currentMs = now();
+          const day = jerusalemDay(currentMs);
+          const result = await store.withSession(token, (current) => {
+            if (current.quizWonDay === day) {
+              return { available: false, wonToday: true };
+            }
+            if (current.currentQuiz && Date.parse(current.currentQuiz.expiresAt) > currentMs) {
+              return { available: true, wonToday: false, ...current.currentQuiz.public };
+            }
+            const quiz = buildOwnedCardQuiz(current, cards, rng, currentMs);
+            if (!quiz) return { available: false, wonToday: false };
+            current.currentQuiz = quiz;
+            return { available: true, wonToday: false, ...quiz.public };
+          });
+          json(response, 200, result);
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/quiz/answer") {
+          const input = await readJson(request);
+          const currentMs = now();
+          const day = jerusalemDay(currentMs);
+          const pool = activeIdleCards(cards, currentMs);
+          const result = await store.withSession(token, (current) => {
+            const quiz = current.currentQuiz;
+            if (!quiz || quiz.quizId !== input.quizId) {
+              return { status: 409, body: { error: "QUIZ_NOT_OPEN" } };
+            }
+            if (current.quizWonDay === day) {
+              current.currentQuiz = null;
+              return { status: 409, body: { error: "QUIZ_ALREADY_WON" } };
+            }
+            if (Date.parse(quiz.expiresAt) <= currentMs) {
+              current.currentQuiz = null;
+              return { status: 409, body: { error: "QUIZ_EXPIRED" } };
+            }
+            const correct = quiz.answers.role === input.answers?.role && quiz.answers.list === input.answers?.list;
+            current.currentQuiz = null;
+            if (!correct) {
+              return { status: 200, body: { correct: false, wonToday: false, cardId: quiz.cardId } };
+            }
+            const pull = generateIdlePull({
+              cards: pool,
+              inventory: current.inventory,
+              duplicateStreak: current.idleDuplicateStreak,
+              rng,
+            });
+            const pulledAt = new Date(currentMs).toISOString();
+            const instance = grantCard(current, pull, { acquiredBy: "quiz", pulledAt });
+            current.quizWonDay = day;
+            current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
+            current.packs.push({
+              packId: `quiz-${instance.instanceId}`,
+              mode: "quiz",
+              pulledAt,
+              nextDailyAt: null,
+              cards: [instance],
+            });
+            current.packs = current.packs.slice(-100);
+            syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
+            return {
+              status: 201,
+              body: {
+                correct: true,
+                wonToday: true,
+                cardId: quiz.cardId,
+                cards: [instance],
+                state: null,
+              },
+            };
+          });
+          if (result.status === 201) {
+            result.body.state = stateFor(store.getSession(token));
+          }
+          json(response, result.status, result.body);
           return;
         }
 
@@ -1176,7 +1443,7 @@ export async function createKalpiApp({
             return;
           }
           const input = await readJson(request);
-          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual)) {
+          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual) || !validProgressionPatch(input.progression)) {
             json(response, 400, { error: "INVALID_GAME_CONFIG" });
             return;
           }
@@ -1184,10 +1451,71 @@ export async function createKalpiApp({
             ...studioContent.gameConfig,
             revealTiming: normalizeRevealTiming(input.revealTiming),
             visual: normalizeVisualConfig(input.visual ?? studioContent.gameConfig?.visual),
+            progression: {
+              ...studioContent.gameConfig.progression,
+              releaseLevelIncrements: {
+                ...(studioContent.gameConfig.progression?.releaseLevelIncrements || {}),
+                ...(input.progression?.releaseLevelIncrements || {}),
+              },
+              thresholdExponent: input.progression?.thresholdExponent
+                ?? studioContent.gameConfig.progression?.thresholdExponent,
+            },
           };
           studioContent.generatedAt = new Date(now()).toISOString();
           await writeJsonAtomic(studioContentPath, studioContent);
           json(response, 200, studioContent.gameConfig);
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/studio/achievements") {
+          if (!debugRequest || !achievementsPath) {
+            json(response, 404, { error: "NOT_FOUND" });
+            return;
+          }
+          const input = await readJson(request);
+          const next = Array.isArray(input.achievements) ? input.achievements : null;
+          if (!next || !next.every((item) => item?.id && item.rule)) {
+            json(response, 400, { error: "INVALID_ACHIEVEMENTS" });
+            return;
+          }
+          achievementCatalog = {
+            schemaVersion: 1,
+            achievements: next.map((item) => ({
+              id: String(item.id),
+              nameHe: String(item.nameHe || item.name || item.id).slice(0, 48),
+              descriptionHe: String(item.descriptionHe || item.description || "").slice(0, 160),
+              rule: String(item.rule),
+              target: Math.max(0, Math.round(Number(item.target) || 0)),
+            })),
+          };
+          await writeJsonAtomic(achievementsPath, achievementCatalog);
+          json(response, 200, achievementCatalog);
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/studio/events") {
+          if (!debugRequest || !eventsPath) {
+            json(response, 404, { error: "NOT_FOUND" });
+            return;
+          }
+          const input = await readJson(request);
+          const next = Array.isArray(input.events) ? input.events : null;
+          if (!next || !next.every((item) => item?.id && item.nameHe && item.opensAt && item.closesAt)) {
+            json(response, 400, { error: "INVALID_EVENTS" });
+            return;
+          }
+          events.events = next.map((item) => ({
+            id: String(item.id),
+            nameHe: String(item.nameHe).slice(0, 64),
+            descriptionHe: String(item.descriptionHe || "").slice(0, 240),
+            status: ["active", "blocked", "scheduled"].includes(item.status) ? item.status : "blocked",
+            opensAt: String(item.opensAt),
+            closesAt: String(item.closesAt),
+            timezone: item.timezone || "Asia/Jerusalem",
+            cardIds: Array.isArray(item.cardIds) ? item.cardIds.map(String) : [],
+          }));
+          await writeJsonAtomic(eventsPath, events);
+          json(response, 200, events);
           return;
         }
 

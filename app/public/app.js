@@ -1,4 +1,4 @@
-import { buildMemberWeavePrompt, buildWeavePrompt } from "./prompt-builder.js";
+import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -38,6 +38,7 @@ const model = {
   dialogBack: false,
   holdGeneration: 0,
   renderedLevel: null,
+  selectedAvatarId: null,
 };
 let showcaseTimers = [];
 let packTimers = [];
@@ -47,6 +48,16 @@ const elements = {
   main: document.querySelector("#main"),
   headerStatus: document.querySelector("#header-status"),
   playerName: document.querySelector("#player-name"),
+  playerNameLabel: document.querySelector("#player-name-label"),
+  playerAvatar: document.querySelector("#player-avatar"),
+  levelAvatar: document.querySelector("#level-avatar"),
+  levelAvatarButton: document.querySelector("#level-avatar-button"),
+  avatarPicker: document.querySelector("#avatar-picker"),
+  studioAchievements: document.querySelector("#studio-achievements"),
+  studioEvents: document.querySelector("#studio-events"),
+  addAchievement: document.querySelector("#add-achievement"),
+  saveAchievements: document.querySelector("#save-achievements"),
+  saveEvents: document.querySelector("#save-events"),
   profileDialog: document.querySelector("#profile-dialog"),
   profileForm: document.querySelector("#profile-form"),
   profileNameInput: document.querySelector("#profile-name-input"),
@@ -80,6 +91,17 @@ const elements = {
   openPack: document.querySelector("#open-pack"),
   openPackFancy: document.querySelector("#open-pack-fancy"),
   openBibiPack: document.querySelector("#open-bibi-pack"),
+  openQuiz: document.querySelector("#open-quiz"),
+  openPendingLevel: document.querySelector("#open-pending-level"),
+  quizDialog: document.querySelector("#quiz-dialog"),
+  closeQuiz: document.querySelector("#close-quiz"),
+  quizTitle: document.querySelector("#quiz-title"),
+  quizClock: document.querySelector("#quiz-clock"),
+  quizCard: document.querySelector("#quiz-card"),
+  quizQuestions: document.querySelector("#quiz-questions"),
+  quizFail: document.querySelector("#quiz-fail"),
+  quizSubmit: document.querySelector("#quiz-submit"),
+  quizStatus: document.querySelector("#quiz-status"),
   cooldownCopy: document.querySelector("#cooldown-copy"),
   packStep: document.querySelector("#pack-step"),
   packHeading: document.querySelector("#pack-heading"),
@@ -102,6 +124,7 @@ const elements = {
   achievementPager: document.querySelector("#achievement-pager"),
   communityTabs: document.querySelector("#community-tabs"),
   earnedBadgeRail: document.querySelector("#earned-badge-rail"),
+  earnedBadgeList: document.querySelector("#earned-badge-list"),
   levelNumber: document.querySelector("#level-number"),
   levelTeaser: document.querySelector("#level-teaser"),
   levelRank: document.querySelector("#level-rank"),
@@ -110,6 +133,7 @@ const elements = {
   levelNext: document.querySelector("#level-next"),
   levelDialog: document.querySelector("#level-dialog"),
   levelDialogTitle: document.querySelector("#level-dialog-title"),
+  levelUnlocks: document.querySelector("#level-unlocks"),
   levelDialogReward: document.querySelector("#level-dialog-reward"),
   closeLevel: document.querySelector("#close-level"),
   claimLevel: document.querySelector("#claim-level"),
@@ -169,6 +193,9 @@ const elements = {
   visualCardFrame: document.querySelector("#visual-card-frame"),
   visualDensity: document.querySelector("#visual-density"),
   visualQuoteReveal: document.querySelector("#visual-quote-reveal"),
+  levelIncrements: document.querySelector("#level-increments"),
+  levelExponent: document.querySelector("#level-exponent"),
+  copyPackPrompts: document.querySelector("#copy-pack-prompts"),
   editorialSample: document.querySelector("#editorial-sample"),
   reviewFilter: document.querySelector("#review-filter"),
   cardReviewList: document.querySelector("#card-review-list"),
@@ -230,7 +257,10 @@ function applyVisualConfig() {
     density: params.get("density") || configured.density || "airy-v2",
     quoteReveal: params.get("quoteReveal") || configured.quoteReveal || "ink-v2",
   };
-  for (const [key, value] of Object.entries(values)) app.dataset[key] = value;
+  for (const [key, value] of Object.entries(values)) {
+    app.dataset[key] = value;
+    document.documentElement.dataset[key] = value;
+  }
   for (const [key, input] of Object.entries(visualConfigInputs())) {
     if (input) input.value = configured[key] || values[key];
   }
@@ -305,6 +335,8 @@ async function bootstrap() {
     model.catalog = cards;
     model.byId = new Map(cards.map((card) => [card.id, card]));
     populateRevealTimingInputs();
+    populateLevelIncrements();
+    populateStudioMeta();
     renderProfile();
     renderAdvocacy();
     renderHome();
@@ -369,7 +401,7 @@ function handleInboundLink() {
 function showSharedCard(cardId, isTradeIntent = false) {
   const card = model.byId.get(cardId);
   elements.sharedTitle.textContent = cardTitle(card);
-  elements.sharedCard.innerHTML = cardMarkup(card, {}, { progressiveStage: "portrait", surface: "shared" });
+  elements.sharedCard.innerHTML = displayCardMarkup(card);
   elements.sharedNotice.textContent = isTradeIntent
     ? "זו תצוגה של הצעת החלפה. הבעלות לא השתנתה והקלף לא נוסף לאוסף שלכם."
     : "זו תצוגת שיתוף בלבד. הקלף לא נוסף לאוסף שלכם.";
@@ -499,14 +531,48 @@ function formatEventCountdown(milliseconds) {
   return days >= 2 ? `${days} ימים` : formatCountdown(milliseconds);
 }
 
+function avatarUrl(avatar) {
+  return avatar?.art ? `/design-assets/${avatar.art}` : "";
+}
+
+function selectedAvatar() {
+  const avatars = model.serverState?.avatars || model.gameConfig?.avatars || [];
+  return avatars.find(({ selected }) => selected) || avatars.find(({ id }) => id === model.serverState?.avatarId) || avatars[0];
+}
+
 function renderProfile() {
   if (!model.serverState) return;
-  elements.playerName.textContent = model.serverState.displayName;
+  if (elements.playerNameLabel) elements.playerNameLabel.textContent = model.serverState.displayName;
+  else elements.playerName.textContent = model.serverState.displayName;
+  const avatar = selectedAvatar();
+  if (elements.playerAvatar && avatar) {
+    elements.playerAvatar.hidden = false;
+    elements.playerAvatar.src = avatarUrl(avatar);
+    elements.playerAvatar.alt = avatar.nameHe || "";
+  }
+  if (elements.levelAvatar && avatar) {
+    elements.levelAvatar.src = avatarUrl(avatar);
+    elements.levelAvatar.alt = avatar.nameHe || "";
+  }
+}
+
+function renderAvatarPicker() {
+  if (!elements.avatarPicker) return;
+  const avatars = model.serverState?.avatars || [];
+  const selected = model.selectedAvatarId || model.serverState.avatarId || "kid-boy";
+  elements.avatarPicker.innerHTML = avatars.map((avatar) => `
+    <button type="button" class="avatar-choice${avatar.unlocked ? "" : " locked"}${avatar.id === selected ? " selected" : ""}" data-avatar-id="${avatar.id}" ${avatar.unlocked ? "" : "disabled"} aria-pressed="${avatar.id === selected}">
+      <img src="${avatarUrl(avatar)}" alt="" />
+      <span>${escapeHtml(avatar.nameHe)}</span>
+      ${avatar.unlocked ? "" : `<small>רמה ${avatar.unlockLevel}</small>`}
+    </button>`).join("");
 }
 
 function openProfileDialog() {
   elements.profileNameInput.value = model.serverState?.displayName || "";
+  model.selectedAvatarId = model.serverState?.avatarId || "kid-boy";
   elements.profileError.textContent = "";
+  renderAvatarPicker();
   elements.profileDialog.showModal();
   elements.profileNameInput.focus();
   elements.profileNameInput.select();
@@ -519,9 +585,14 @@ async function saveProfile(event) {
     const profile = await request("/api/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ displayName: elements.profileNameInput.value }),
+      body: JSON.stringify({
+        displayName: elements.profileNameInput.value,
+        avatarId: model.selectedAvatarId || model.serverState.avatarId,
+      }),
     });
     model.serverState.displayName = profile.displayName;
+    model.serverState.avatarId = profile.avatarId || model.serverState.avatarId;
+    model.serverState = await request("/api/state");
     const [leaderboards, tradeData] = await Promise.all([
       request("/api/leaderboards"),
       request("/api/trades"),
@@ -540,29 +611,148 @@ async function saveProfile(event) {
   }
 }
 
+let quizTimer = null;
+const quizAnswers = {};
+
+function stopQuizTimer() {
+  if (quizTimer) {
+    clearInterval(quizTimer);
+    quizTimer = null;
+  }
+}
+
+function formatQuizClock(remainingMs) {
+  const total = Math.max(0, Math.ceil(remainingMs / 1000));
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+async function openQuizDialog(retried = false) {
+  if (!elements.quizDialog) return;
+  elements.quizStatus.textContent = "";
+  if (elements.quizFail) {
+    elements.quizFail.hidden = true;
+    elements.quizFail.textContent = "";
+  }
+  elements.quizSubmit.disabled = false;
+  try {
+    const quiz = await request("/api/quiz");
+    if (!quiz.available) {
+      showToast(quiz.wonToday ? "החידון היומי כבר הושלם." : "צריך קלף באוסף כדי להיבחן.");
+      return;
+    }
+    model.currentQuiz = quiz;
+    Object.keys(quizAnswers).forEach((key) => delete quizAnswers[key]);
+    const card = model.byId.get(quiz.cardId);
+    elements.quizTitle.textContent = card ? cardTitle(card) : "שתי שאלות. חמש דקות.";
+    elements.quizCard.innerHTML = card ? displayCardMarkup(card) : "";
+    elements.quizQuestions.innerHTML = quiz.questions.map((question) => `
+      <fieldset data-quiz-question="${escapeHtml(question.id)}">
+        <legend>${escapeHtml(question.prompt)}</legend>
+        ${question.options.map((option) => `<button type="button" data-quiz-option="${escapeHtml(option)}">${escapeHtml(option)}</button>`).join("")}
+      </fieldset>`).join("");
+    const tick = () => {
+      const remaining = Date.parse(quiz.expiresAt) - Date.now();
+      elements.quizClock.textContent = formatQuizClock(remaining);
+      if (remaining <= 0) {
+        stopQuizTimer();
+        elements.quizSubmit.disabled = true;
+        elements.quizStatus.textContent = "הזמן נגמר. אפשר לנסות שוב מאוחר יותר.";
+      }
+    };
+    stopQuizTimer();
+    tick();
+    quizTimer = setInterval(tick, 1000);
+    elements.quizDialog.showModal();
+  } catch (error) {
+    if (error.status === 401 && !retried) {
+      try {
+        await ensureSession();
+        return openQuizDialog(true);
+      } catch {
+        showToast("צריך להיכנס מחדש כדי לפתוח את החידון.");
+        return;
+      }
+    }
+    showToast(error.body?.error === "SERVER_ERROR"
+      ? "החידון נתקע בשרת. נסו שוב."
+      : "לא הצלחנו לפתוח את החידון.");
+  }
+}
+
+async function submitQuiz() {
+  if (!model.currentQuiz) return;
+  const unanswered = model.currentQuiz.questions.filter(({ id }) => !quizAnswers[id]);
+  if (unanswered.length) {
+    elements.quizStatus.textContent = "בחרו תשובה לכל שאלה.";
+    return;
+  }
+  elements.quizSubmit.disabled = true;
+  try {
+    const result = await request("/api/quiz/answer", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ quizId: model.currentQuiz.quizId, answers: quizAnswers }),
+    });
+    stopQuizTimer();
+    if (result.correct) {
+      model.serverState = result.state;
+      model.idleQueue = result.cards || [];
+      model.currentPack = {
+        packId: result.cards?.[0] ? `quiz-${result.cards[0].instanceId}` : "quiz",
+        mode: "quiz",
+        cards: result.cards || [],
+      };
+      model.currentCardIndex = 0;
+      elements.quizDialog.close();
+      showView("pack");
+      startWalkout();
+      showToast("שתי תשובות נכונות · חבילה נוספת.");
+    } else {
+      if (elements.quizFail) {
+        elements.quizFail.hidden = false;
+        elements.quizFail.textContent = "לא הפעם. פתחו את גב הקלף ונסו שוב מאוחר יותר.";
+      } else {
+        elements.quizStatus.textContent = "לא הפעם. פתחו את גב הקלף ונסו שוב מאוחר יותר.";
+      }
+      if (elements.openQuiz) elements.openQuiz.hidden = !model.serverState?.quizAvailable;
+    }
+  } catch (error) {
+    elements.quizSubmit.disabled = false;
+    elements.quizStatus.textContent = error.status === 409 ? "החידון כבר לא פתוח." : "לא הצלחנו לבדוק.";
+  }
+}
+
 function renderHome() {
   const { owned, total, percent } = completion();
   const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
   const available = unseen > 0;
-  elements.collectionCount.textContent = `${owned} מתוך ${total} קלפים · ${percent}%`;
+  elements.collectionCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה · ${percent}%`;
   elements.collectionProgress.style.width = `${percent}%`;
   elements.openPack.disabled = !available;
-  elements.openPack.textContent = available ? `לראות מה נאסף (${unseen})` : "ממשיכים לאסוף";
-  if (elements.idleStorage) elements.idleStorage.textContent = `נאספו ${unseen}/${model.serverState?.idleCapacity ?? 8}`;
+  elements.openPack.textContent = available ? "פתיחת קלף" : "ממשיכים לאסוף";
+  if (elements.idleStorage) {
+    elements.idleStorage.hidden = true;
+    elements.idleStorage.textContent = `${unseen}/${model.serverState?.idleCapacity ?? 8}`;
+  }
   const activeReleaseIds = [...new Set(model.catalog.filter(({ idleEligible }) => idleEligible).map(({ releaseSetId }) => releaseSetId))];
   const releaseNames = activeReleaseIds
     .map((id) => model.gameConfig?.releaseSets?.find((release) => release.id === id)?.nameHe)
     .filter(Boolean);
   if (elements.activeRelease) elements.activeRelease.textContent = releaseNames.join(" + ");
-  elements.homeTitle.textContent = available ? `נאספו עבורך ${unseen} קלפים.` : "הקלף הבא בדרך.";
+  elements.homeTitle.textContent = available
+    ? unseen === 1 ? "נאסף עבורך קלף אחד." : `נאספו עבורך ${unseen} קלפים.`
+    : "הקלף הבא בדרך.";
   elements.homeCopy.textContent = available
-    ? "חושפים אותם אחד־אחד."
+    ? "פותחים קלף אחד בכל פעם."
     : "קלף אחד נאסף אוטומטית בכל שלוש שעות.";
   renderSiteCardPeeks();
   renderProgression();
   renderActivity();
   renderTodayDocket();
   updateCountdown();
+  if (elements.openQuiz) {
+    elements.openQuiz.hidden = !model.serverState?.quizAvailable;
+  }
 }
 
 function renderSiteCardPeeks() {
@@ -582,7 +772,7 @@ function renderSiteCardPeeks() {
   if (elements.siteCardPeeks.dataset.cards === signature) return;
   elements.siteCardPeeks.dataset.cards = signature;
   elements.siteCardPeeks.innerHTML = cards.map((card) => `
-    <div class="site-card-peek">${cardMarkup(card, { finish: card.rarity }, { progressiveStage: "portrait", surface: "peek" })}</div>
+    <div class="site-card-peek">${displayCardMarkup(card, "peek")}</div>
   `).join("");
   queueCardTextFit(elements.siteCardPeeks);
 }
@@ -611,29 +801,22 @@ function renderTodayDocket() {
     elements.todayChallengeVisual.style.setProperty("--pip", challengeCard.pip);
     elements.todayChallengeVisual.innerHTML = artMarkup(challengeCard, true);
   }
-  elements.todayChallengeHook.textContent = `היום אוספים: ${challengeParty}!`;
-  elements.todayChallengeMeta.textContent = challengeLeader
-    ? challengeLeader.current
-      ? `אתם מובילים עם ${challengeLeader.cards} קלפים — תשמרו על המקום`
-      : `אספו ${Math.max(1, challengeLeader.cards - (challengeCurrent?.cards || 0) + 1)} כדי לעבור את ${challengeLeader.label}`
-    : "הקלף הראשון שם אתכם במקום הראשון";
+  elements.todayChallengeHook.textContent = challengeParty;
+  elements.todayChallengeMeta.textContent = "";
 
   const activeEvent = model.events.find((event) => event.active);
-  elements.todayEventHook.textContent = activeEvent ? `עכשיו: ${activeEvent.nameHe}` : "האירוע הבא בדרך";
-  elements.todayEventMeta.textContent = activeEvent
-    ? activeEvent.claimedToday
-      ? `הקלף נאסף · נשארו ${formatEventCountdown(Math.max(0, Date.parse(activeEvent.closesAt) - Date.now()))}`
-      : `קלף מיוחד מחכה · נשארו ${formatEventCountdown(Math.max(0, Date.parse(activeEvent.closesAt) - Date.now()))}`
-    : "כאן יופיע קלף שאפשר להשיג לזמן מוגבל";
+  elements.todayEventHook.textContent = activeEvent ? `${activeEvent.nameHe} פתוח` : "האירוע הבא בדרך";
+  elements.todayEventMeta.textContent = "";
+  document.querySelector(".today-docket-row.live")?.classList.toggle("hot", Boolean(activeEvent));
 
   const leader = model.leaderboards?.collectors?.[0];
   const currentCollector = model.leaderboards?.collectors?.find(({ current }) => current);
-  elements.todayLeaderHook.textContent = leader ? `${leader.label} בראש הטבלה` : "המקום הראשון פנוי";
-  elements.todayLeaderMeta.textContent = leader
-    ? leader.current
-      ? `אתם במקום הראשון עם ★${leader.stars} מ־${leader.ownedUnique} קלפים!`
-      : `אתם מקום ${currentCollector?.rank || "—"}, ו־${leader.label} מוביל עם ★${leader.stars} מ־${leader.ownedUnique} קלפים!`
-    : "התחילו לאסוף ותעלו לראש הטבלה";
+  elements.todayLeaderHook.textContent = currentCollector?.rank
+    ? `אתם מקום ${currentCollector.rank}`
+    : leader?.current
+      ? "אתם מקום 1"
+      : "המקום הראשון פנוי";
+  elements.todayLeaderMeta.textContent = "";
 }
 
 function renderActivity() {
@@ -644,43 +827,101 @@ function renderActivity() {
   elements.activityCopy.textContent = `${pulls} איסופים · ${shares} שיתופים`;
 }
 
+const SEEN_LEVEL_KEY = "klafi-seen-level-dialog";
+
+function seenLevel() {
+  const value = Number(localStorage.getItem(SEEN_LEVEL_KEY));
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function markLevelSeen(level) {
+  localStorage.setItem(SEEN_LEVEL_KEY, String(level));
+  model.renderedLevel = level;
+}
+
+function levelUnlockItems(fromLevel, toLevel) {
+  const ranks = model.gameConfig?.progression?.rankNames || model.gameConfig?.progression?.ranks || [];
+  const avatars = model.serverState?.avatars || [];
+  const items = [];
+  for (let level = fromLevel + 1; level <= toLevel; level += 1) {
+    const rank = ranks[level - 1];
+    if (rank) items.push(`דרגה חדשה · ${rank}`);
+    items.push("חבילת בונוס");
+    avatars
+      .filter((avatar) => Number(avatar.unlockLevel) === level)
+      .forEach((avatar) => items.push(`אווטאר חדש · ${avatar.nameHe}`));
+  }
+  return [...new Set(items)];
+}
+
+function fillLevelDialog(progression, fromLevel) {
+  const toLevel = Math.max(progression.level, ...(progression.pendingRewards || []), fromLevel + 1);
+  elements.levelDialogTitle.textContent = `הגעתם לרמה ${progression.level}`;
+  const items = levelUnlockItems(fromLevel, toLevel);
+  if (elements.levelUnlocks) {
+    elements.levelUnlocks.hidden = !items.length;
+    elements.levelUnlocks.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  }
+  elements.levelDialogReward.textContent = items.length ? "אפשר לקבל את חבילת הבונוס עכשיו." : (progression.reward || "");
+}
+
+function renderPendingLevelCue() {
+  const pending = model.serverState?.progression?.pendingRewards || [];
+  if (elements.openPendingLevel) elements.openPendingLevel.hidden = pending.length === 0;
+}
+
+function openPendingLevelDialog() {
+  const progression = model.serverState?.progression;
+  const pending = progression?.pendingRewards || [];
+  if (!progression || !pending.length) return;
+  fillLevelDialog(progression, Math.min(...pending) - 1);
+  elements.levelDialog.showModal();
+}
+
 function renderProgression({ announce = false } = {}) {
   const progression = model.serverState?.progression;
   if (!progression) return;
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
-  elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels}`);
+  elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
   elements.levelRank.textContent = progression.rank;
+  if (elements.levelAvatarButton) {
+    elements.levelAvatarButton.setAttribute("aria-label", `${progression.rank} · הפרופיל והאווטאר`);
+  }
   if (elements.levelTeaser) elements.levelTeaser.textContent = progression.teaser;
   elements.levelProgress.style.width = `${progression.percent}%`;
   elements.levelProgressCount.textContent = `${progression.unique - progression.start}/${progression.target - progression.start}`;
   if (progression.remaining) {
-    elements.levelNext.textContent = progression.nextRank
-      ? `עוד ${progression.remaining} שונים לקלף בונוס ולדרגת ${progression.nextRank}`
-      : `עוד ${progression.remaining} שונים לקלף בונוס`;
+    elements.levelNext.textContent = `גלה עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
   } else {
-    elements.levelNext.textContent = progression.nextRank
-      ? `קלף הבונוס מוכן · הדרגה הבאה: ${progression.nextRank}`
+    elements.levelNext.textContent = progression.nextReleaseRank
+      ? `הרמה מוכנה · ${progression.nextReleaseRank} תיפתח בסדרה הבאה`
       : "הגעתם לדרגת ראש הממשלה";
   }
-  if (announce && (progression.pendingRewards?.length || (model.renderedLevel !== null && progression.level > model.renderedLevel))) {
-    elements.levelDialogTitle.textContent = `הגעתם לרמה ${progression.level}`;
-    elements.levelDialogReward.textContent = `הפרס מחכה: ${progression.reward}`;
+  const seen = seenLevel();
+  if (!seen) {
+    markLevelSeen(progression.level);
+  } else if (announce && progression.level > seen) {
+    fillLevelDialog(progression, seen);
     elements.levelDialog.showModal();
+    markLevelSeen(progression.level);
+  } else {
+    model.renderedLevel = Math.max(seen, progression.level);
   }
-  model.renderedLevel = progression.level;
+  renderPendingLevelCue();
 }
 
 function updateCountdown() {
   renderTodayDocket();
   const remaining = timeUntil(model.serverState?.nextIdleAt);
+  const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
   if (!remaining) {
-    elements.cooldownCopy.textContent = "קלף חדש מוכן לאיסוף";
+    elements.cooldownCopy.textContent = unseen ? "פותחים אחד-אחד" : "קלף חדש מוכן לאיסוף";
     elements.headerStatus.textContent = "אוספים עכשיו";
     if (elements.debugClock) elements.debugClock.textContent = "Idle pull · ready";
     return;
   }
   const clock = formatCountdown(remaining);
-  elements.cooldownCopy.textContent = `הקלף הבא בעוד ${clock}`;
+  elements.cooldownCopy.textContent = `הבא בעוד ${clock}`;
   elements.headerStatus.textContent = `הקלף הבא · ${clock}`;
   if (elements.debugClock) elements.debugClock.textContent = `Next idle pull · ${clock}`;
 }
@@ -722,39 +963,9 @@ function playHomePackRip() {
   });
 }
 
-async function openDailyPack(opening = "regular") {
+async function openIdleReturn(opening = "regular") {
   elements.openPack.disabled = true;
-  elements.openPackFancy.disabled = true;
-  if (opening === "fancy") elements.openPackFancy.textContent = "בוחרים קלפים…";
-  else elements.openPack.textContent = "בוחרים קלפים…";
-  try {
-    model.currentPack = await request("/api/packs/daily", { method: "POST" });
-    model.serverState = await request("/api/state");
-    model.leaderboards = await request("/api/leaderboards");
-    model.currentCardIndex = 0;
-    model.previewMode = false;
-    if (opening === "fancy") {
-      await playHomePackRip();
-      showView("pack");
-      startWalkout();
-    } else {
-      model.packPhase = "sealed";
-      renderPack();
-      showView("pack");
-    }
-  } catch (error) {
-    if (error.body?.error === "PACK_NOT_READY") {
-      model.serverState.nextDailyAt = error.body.nextDailyAt;
-      model.serverState.packAvailable = false;
-      renderHome();
-      return;
-    }
-    showError("החבילה לא נפתחה.", describeError(error));
-  }
-}
-
-async function openIdleReturn() {
-  elements.openPack.disabled = true;
+  if (elements.openPackFancy) elements.openPackFancy.disabled = true;
   elements.openPack.textContent = "אוספים…";
   try {
     const settled = await request("/api/idle/settle", { method: "POST" });
@@ -769,10 +980,11 @@ async function openIdleReturn() {
       packId: `idle-return-${Date.now()}`,
       mode: "idle-return",
       pulledAt: new Date().toISOString(),
-      cards: model.idleQueue,
+      cards: model.idleQueue.slice(0, 1),
     };
     model.currentCardIndex = 0;
     model.previewMode = false;
+    if (opening === "fancy") await playHomePackRip();
     showView("pack");
     startWalkout();
   } catch (error) {
@@ -808,6 +1020,7 @@ async function openBibiDebugPack() {
     model.leaderboards = await request("/api/leaderboards");
     model.currentCardIndex = 0;
     model.previewMode = false;
+    model.currentPack.cards = model.currentPack.cards.slice(0, 1);
     await playHomePackRip();
     showView("pack");
     startWalkout();
@@ -821,12 +1034,12 @@ async function openBibiDebugPack() {
 
 function renderPack() {
   const phase = model.packPhase;
-  const count = model.currentPack?.cards.length ?? 6;
+  const count = model.currentPack?.cards.length ?? 1;
   const isDemo = model.currentPack?.mode?.includes("demo");
   elements.packCounter.textContent = `${Math.min(model.currentCardIndex + (phase === "complete-card" ? 1 : 0), count)} / ${count}`;
 
-  if (phase === "sealed") {
-    elements.packStep.textContent = model.currentPack?.mode === "event" ? "חבילת אירוע · קלף אחד" : isDemo ? "חבילת הדגמה" : "שישה קלפים נבחרו";
+    if (phase === "sealed") {
+    elements.packStep.textContent = isDemo ? "חבילת הדגמה" : "קלף אחד";
     elements.packHeading.textContent = "פותחים.";
     elements.ripStage.innerHTML = sealedPackMarkup();
     setPackAction("קריעת החבילה", false, "הקלפים כבר נשמרו.");
@@ -877,29 +1090,35 @@ async function handlePackAction() {
       renderStudio();
       showView("studio");
       showToast("Guided demo complete. Daily state was not changed.");
-    } else if (model.currentPack.mode === "idle-return" || model.currentPack.mode === "level-reward") {
+    } else if (model.currentPack.mode === "idle-return" || model.currentPack.mode === "level-reward" || model.currentPack.mode === "quiz") {
       const instanceIds = model.currentPack.cards.map(({ instanceId }) => instanceId).filter(Boolean);
       model.serverState = await request("/api/idle/seen", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ instanceIds }),
       });
-      model.idleQueue = [];
+      const opened = new Set(instanceIds);
+      model.idleQueue = model.idleQueue.filter(({ instanceId }) => !opened.has(instanceId));
       model.leaderboards = await request("/api/leaderboards");
       renderHome();
       renderBinder();
       renderAchievements();
       renderGrowth();
-      showView("binder");
       renderProgression({ announce: true });
-      showToast(instanceIds.length === 1 ? "הקלף נוסף לאוסף." : `${instanceIds.length} קלפים נוספו לאוסף.`);
+      if (model.idleQueue.length) {
+        showView("home");
+        showToast(`הקלף נוסף לאוסף · עוד ${model.idleQueue.length} מחכים.`);
+      } else {
+        showView("binder");
+        showToast("הקלף נוסף לאוסף.");
+      }
     } else {
       renderHome();
       renderBinder();
       showView("binder");
       recordEvent("binder_reached", { packId: model.currentPack.packId });
       renderProgression({ announce: true });
-      showToast("שישה קלפים נוספו לאוסף.");
+      showToast("הקלף נוסף לאוסף.");
     }
   }
 }
@@ -1043,6 +1262,10 @@ function displayedCardQuote(card) {
   return `״${text.replace(/^״|״$/g, "")}״`;
 }
 
+function displayCardMarkup(card, surface = "display") {
+  return cardMarkup(card, { finish: card.rarity }, { progressiveStage: "portrait", surface });
+}
+
 function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full" } = {}) {
   const finish = (instance.finish ?? card.rarity.split(/\s|\//)[0]).toLowerCase();
   const finishLabel = instance.finish ?? card.rarity;
@@ -1050,12 +1273,12 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
   const progressive = `progressive-card stage-${stage}`;
   return `
     <article class="kalpi-card ${finish} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" style="--pip:${card.pip}" aria-label="קלף ${escapeHtml(cardTitle(card))}">
-      ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
           ${artMarkup(card)}
           <div class="card-image-meta"><span>${escapeHtml(cardCode(card))}</span><strong aria-label="${rarityNameHe(finishLabel)}">${rarityMark(finishLabel)}</strong></div>
+          ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
         </div>
         <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(displayedCardQuote(card))}</blockquote>
         <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${card.pip}">${escapeHtml(cardSetName(card))}${card.type === "Quote" ? ` · ${escapeHtml(card.subtitleHe || card.subtitle)}` : ""}</p>
@@ -1066,14 +1289,15 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
 
 function binderCardMarkup(card) {
   return `
-    <div class="binder-shared-card">${cardMarkup(card, { finish: card.rarity }, { progressiveStage: "portrait", surface: "binder" })}</div>`;
+    <div class="binder-shared-card">${displayCardMarkup(card)}</div>`;
 }
 
 function renderBinder() {
   if (!model.catalog.length || !model.serverState) return;
   const { owned, total, percent } = completion();
   elements.binderPercent.textContent = `${percent}%`;
-  elements.binderCount.textContent = `${owned} / ${total}`;
+  elements.binderPercent.title = `${owned} קלפים שונים מתוך ${total} בסדרה הפעילה כרגע`;
+  elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
   elements.binderEmpty.hidden = owned > 0;
 
   const favorites = new Set(model.serverState.favorites || []);
@@ -1146,7 +1370,8 @@ function renderBinder() {
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
   const starCounter = `<span class="collection-star-count" role="button" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${model.serverState.starCount} כוכבי אוסף. ${starExplanation}"><b>★</b><strong>${model.serverState.starCount ?? 0}</strong></span>`;
   const visibleBadges = earned.slice(0, 3);
-  elements.earnedBadgeRail.innerHTML = starCounter + visibleBadges.map((badge) => {
+  const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
+  rail.innerHTML = starCounter + visibleBadges.map((badge) => {
     const copy = hebrewBadge(badge);
     return `
     <span class="badge-medallion" role="button" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
@@ -1165,6 +1390,21 @@ function badgeArtwork(id) {
     "commons-complete": '<path d="M15 22h18l-2 13H17zM13 22h22M19 16h10l3 6H16z"/><path d="M21 19h6"/>',
     "set-chase": '<path d="M24 13l3.2 6.3 7 .9-5.1 4.8 1.3 6.9-6.4-3.3-6.4 3.3 1.3-6.9-5.1-4.8 7-.9z"/>',
     "trade-match": '<rect x="13" y="17" width="11" height="15" rx="1"/><rect x="24" y="20" width="11" height="15" rx="1"/><path d="M17 14h11l-2-2M31 38H20l2 2"/>',
+    "collector-ten": '<path d="M17 17h14v18H17zM20 14h14v18M14 20h14v18"/>',
+    "favorite-first": '<path d="M24 35S13 29 13 21c0-6 8-8 11-2 3-6 11-4 11 2 0 8-11 14-11 14z"/>',
+    "event-first": '<path d="M16 18h16v17H16zM20 14v8M28 14v8M16 24h16"/><path d="M21 29h6"/>',
+    "source-three": '<circle cx="20" cy="23" r="6"/><path d="M24 28l7 7M29 17h5M31.5 14.5v5"/>',
+    "trade-three": '<path d="M14 20h17l-3-3M34 31H17l3 3"/><circle cx="17" cy="27" r="3"/><circle cx="31" cy="24" r="3"/>',
+    "three-parties": '<circle cx="24" cy="16" r="3"/><circle cx="16" cy="31" r="3"/><circle cx="32" cy="31" r="3"/><path d="M22 19l-4 9M26 19l4 9M19 31h10"/>',
+    "twenty-stars": '<path d="M24 13l3.2 6.5 7.2 1-5.2 5.1 1.2 7.2-6.4-3.4-6.4 3.4 1.2-7.2-5.2-5.1 7.2-1z"/>',
+    "idle-eight": '<path d="M16 18h16v16H16zM20 14h16v16M24 22h8M24 26h8"/>',
+    "first-double": '<rect x="14" y="18" width="12" height="16" rx="1"/><rect x="22" y="14" width="12" height="16" rx="1"/>',
+    "five-leaders": '<circle cx="16" cy="20" r="2.4"/><circle cx="24" cy="16" r="2.4"/><circle cx="32" cy="20" r="2.4"/><circle cx="19" cy="30" r="2.4"/><circle cx="29" cy="30" r="2.4"/>',
+    "event-three": '<path d="M16 17h16v16H16zM20 14v6M28 14v6M16 23h16"/><path d="M20 28h8"/>',
+    "share-three": '<circle cx="16" cy="24" r="2.2"/><circle cx="32" cy="16" r="2.2"/><circle cx="32" cy="32" r="2.2"/><path d="M18 23l12-6M18 25l12 6"/>',
+    "rank-three": '<path d="M15 32h18l-3-16H18zM18 16h12l-2-4H20z"/>',
+    "fifty-stars": '<path d="M18 16l2 4 4 .6-3 2.9.7 4.1-3.7-2-3.7 2 .7-4.1-3-2.9 4-.6zM30 22l1.6 3.2 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/>',
+    "binder-half": '<path d="M14 16h20v22H14zM24 16v22M17 21h5M17 26h5M26 21h5M26 26h5"/>',
   }[id] || '<circle cx="24" cy="24" r="5"/>';
   return `<svg class="badge-artwork" viewBox="0 0 48 56" aria-hidden="true">
     <path class="badge-ribbon" d="M15 39v14l9-5 9 5V39"/>
@@ -1172,6 +1412,114 @@ function badgeArtwork(id) {
     <circle class="badge-field" cx="24" cy="24" r="14"/>
     <g class="badge-icon">${icon}</g>
   </svg>`;
+}
+
+const ACHIEVEMENT_RULES = [
+  ["idlePulls", "איסוף אוטומטי"],
+  ["unique", "קלפים שונים"],
+  ["sources", "מקורות"],
+  ["shares", "שיתופים"],
+  ["leaders", "מנהיגים"],
+  ["bestSet", "סדרה מלאה"],
+  ["trades", "החלפות"],
+  ["favorites", "פייבוריטים"],
+  ["events", "אירועים"],
+  ["leaderParties", "סיעות מנהיגים"],
+  ["stars", "כוכבים"],
+  ["duplicate", "עותק כפול"],
+  ["rank", "רמה"],
+  ["binderHalf", "חצי אלבום"],
+];
+
+function achievementEditorMarkup(badge = {}) {
+  const id = badge.id || `badge-${Date.now().toString(36)}`;
+  const rule = badge.rule || "unique";
+  return `
+      <fieldset data-achievement-id="${escapeHtml(id)}">
+        <legend>${escapeHtml(id)}</legend>
+        <label>מזהה <input data-ach-field="id" value="${escapeHtml(id)}" /></label>
+        <label>שם <input data-ach-field="nameHe" value="${escapeHtml(badge.nameHe || badge.name || "")}" /></label>
+        <label>תיאור <input data-ach-field="descriptionHe" value="${escapeHtml(badge.descriptionHe || badge.description || "")}" /></label>
+        <label>כלל
+          <select data-ach-field="rule">
+            ${ACHIEVEMENT_RULES.map(([value, label]) => `<option value="${value}"${rule === value ? " selected" : ""}>${label}</option>`).join("")}
+          </select>
+        </label>
+        <label>יעד <input data-ach-field="target" type="number" min="0" max="200" value="${badge.target ?? 1}" /></label>
+      </fieldset>`;
+}
+
+function populateStudioMeta() {
+  if (elements.studioAchievements) {
+    const badges = model.gameConfig.achievements || model.serverState?.achievements || [];
+    elements.studioAchievements.innerHTML = badges.map((badge) => `
+      ${achievementEditorMarkup(badge)}`).join("");
+  }
+  if (elements.studioEvents) {
+    elements.studioEvents.innerHTML = (model.events || []).map((event) => `
+      <fieldset data-event-id="${escapeHtml(event.id)}">
+        <legend>${escapeHtml(event.id)}</legend>
+        <label>שם <input data-event-field="nameHe" value="${escapeHtml(event.nameHe || "")}" /></label>
+        <label>תיאור <input data-event-field="descriptionHe" value="${escapeHtml(event.descriptionHe || "")}" /></label>
+        <label>סטטוס
+          <select data-event-field="status">
+            ${["active", "scheduled", "blocked"].map((status) => `<option value="${status}"${event.status === status || (status === "active" && event.active) ? " selected" : ""}>${status}</option>`).join("")}
+          </select>
+        </label>
+        <label>פתיחה <input data-event-field="opensAt" value="${escapeHtml(event.opensAt || "")}" /></label>
+        <label>סגירה <input data-event-field="closesAt" value="${escapeHtml(event.closesAt || "")}" /></label>
+        <input type="hidden" data-event-field="cardIds" value="${escapeHtml((event.cardIds || event.cards?.map(({ id }) => id) || []).join(","))}" />
+      </fieldset>`).join("");
+  }
+}
+
+async function saveStudioAchievements() {
+  const achievements = [...elements.studioAchievements.querySelectorAll("[data-achievement-id]")].map((row) => ({
+    id: (row.querySelector('[data-ach-field="id"]')?.value || row.dataset.achievementId).trim(),
+    nameHe: row.querySelector('[data-ach-field="nameHe"]').value.trim(),
+    descriptionHe: row.querySelector('[data-ach-field="descriptionHe"]').value.trim(),
+    rule: row.querySelector('[data-ach-field="rule"]').value,
+    target: Number(row.querySelector('[data-ach-field="target"]').value) || 0,
+  }));
+  try {
+    const saved = await request("/api/studio/achievements", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ achievements }),
+    });
+    model.gameConfig.achievements = saved.achievements;
+    model.serverState = await request("/api/state");
+    renderAchievements();
+    showToast("Achievements published.");
+  } catch (error) {
+    showToast(error.status === 404 ? "Achievement editing is debug-only." : "Could not save achievements.");
+  }
+}
+
+async function saveStudioEvents() {
+  const events = [...elements.studioEvents.querySelectorAll("[data-event-id]")].map((row) => ({
+    id: row.dataset.eventId,
+    nameHe: row.querySelector('[data-event-field="nameHe"]').value.trim(),
+    descriptionHe: row.querySelector('[data-event-field="descriptionHe"]').value.trim(),
+    status: row.querySelector('[data-event-field="status"]').value,
+    opensAt: row.querySelector('[data-event-field="opensAt"]').value.trim(),
+    closesAt: row.querySelector('[data-event-field="closesAt"]').value.trim(),
+    cardIds: row.querySelector('[data-event-field="cardIds"]').value.split(",").map((id) => id.trim()).filter(Boolean),
+  }));
+  try {
+    await request("/api/studio/events", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ events }),
+    });
+    model.events = (await request("/api/events")).events;
+    populateStudioMeta();
+    renderEvents();
+    renderTodayDocket();
+    showToast("Events published.");
+  } catch (error) {
+    showToast(error.status === 404 ? "Event editing is debug-only." : "Could not save events.");
+  }
 }
 
 function hebrewBadge(badge) {
@@ -1183,6 +1531,21 @@ function hebrewBadge(badge) {
     "commons-complete": ["כל המנהיגים", "אספו את מנהיגי כל המפלגות."],
     "set-chase": ["סדרה מלאה", "השלימו סדרת מפלגה."],
     "trade-match": ["החלפה ראשונה", "השלימו החלפה עם שחקן אחר."],
+    "collector-ten": ["עשרה שונים", "אספו עשרה קלפים שונים."],
+    "favorite-first": ["שומר בלב", "סמנו קלף אחד כפייבוריט."],
+    "event-first": ["מהדורה מוגבלת", "אספו קלף מאירוע."],
+    "source-three": ["קורא מקורות", "פתחו שלושה מקורות של קלפים."],
+    "trade-three": ["שולחן החלפות", "השלימו שלוש החלפות."],
+    "three-parties": ["רוחב המפה", "אספו מנהיגים משלוש מפלגות."],
+    "twenty-stars": ["עשרים כוכבים", "צברו עשרים כוכבי אוסף."],
+    "idle-eight": ["מחסן מלא", "אספו שמונה קלפים מהאיסוף האוטומטי."],
+    "first-double": ["עותק כפול", "השיגו עותק שני של אותו קלף."],
+    "five-leaders": ["חמש סיעות", "אספו מנהיגים מחמש מפלגות."],
+    "event-three": ["שלושה אירועים", "אספו שלושה קלפי אירוע."],
+    "share-three": ["שלושה שיתופים", "שתפו שלושה קלפים."],
+    "rank-three": ["מצביע מעורב", "הגיעו לרמה 3."],
+    "fifty-stars": ["חמישים כוכבים", "צברו חמישים כוכבי אוסף."],
+    "binder-half": ["חצי האלבום", "השלימו מחצית מהסדרה הפעילה."],
   }[badge.id];
   return { name: copy?.[0] || badge.name, description: copy?.[1] || badge.description };
 }
@@ -1286,12 +1649,16 @@ function renderGrowth() {
   elements.tradeWantedCard.innerHTML = wantedCards
     .map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("");
   if (wantedCards.some(({ id }) => id === wantedValue)) elements.tradeWantedCard.value = wantedValue;
+  for (const select of [elements.tradeOfferedSet, elements.tradeWantedSet, elements.tradeOfferedCard, elements.tradeWantedCard]) {
+    const chosen = select.selectedOptions[0];
+    select.title = chosen?.text || "";
+  }
   elements.tradeCreate.disabled = !ownedCards.length;
   const renderTradeChoice = (container, cardId) => {
     const selected = model.byId.get(cardId);
     container.innerHTML = selected
       ? `<button type="button" data-trade-choice-card="${selected.id}" aria-label="פתיחת ${escapeHtml(cardTitle(selected))}">
-          ${cardMarkup(selected, { finish: selected.rarity }, { progressiveStage: "portrait", surface: "trade" })}
+          ${displayCardMarkup(selected, "trade")}
         </button>`
       : '<span class="work-note">אין קלף זמין</span>';
   };
@@ -1409,9 +1776,19 @@ function renderEvents() {
       </article>`).join("");
   }
   const upcoming = model.events.filter((event) => !event.active && Date.parse(event.opensAt) > Date.now());
-  elements.eventUpcoming.innerHTML = upcoming.length
-    ? `<strong>בקרוב</strong>${upcoming.map((event) => `<p>${escapeHtml(event.nameHe)} · ${new Date(event.opensAt).toLocaleDateString("he-IL")}</p>`).join("")}`
+  const past = model.events.filter((event) => !event.active && Date.parse(event.opensAt) <= Date.now());
+  const scheduled = upcoming.filter(({ status }) => status !== "blocked");
+  const awaitingApproval = upcoming.filter(({ status }) => status === "blocked");
+  const ledgerSection = (title, items, line) => items.length
+    ? `<section class="event-ledger-block"><p class="work-kicker">${title}</p>${items.map((event) => `<p>${escapeHtml(line(event))}</p>`).join("")}</section>`
     : "";
+  elements.eventUpcoming.innerHTML = `
+    <div class="event-ledger">
+      ${ledgerSection("מתוזמן", scheduled, (event) => `${event.nameHe} · ${new Date(event.opensAt).toLocaleDateString("he-IL")}`)}
+      ${ledgerSection("בהכנה", awaitingApproval, (event) => `${event.nameHe} · ממתין לאישור תוכן ואמנות`)}
+      ${ledgerSection("נסגרו", past, (event) => event.nameHe)}
+      ${!scheduled.length && !awaitingApproval.length && !past.length ? "<p>אין אירועים נוספים בלוח.</p>" : ""}
+    </div>`;
   elements.activeEvent.hidden = model.eventPage !== "active";
   elements.eventPull.hidden = model.eventPage !== "active" || !active;
   elements.eventCards.hidden = model.eventPage !== "collection";
@@ -1434,9 +1811,9 @@ async function pullEventCard() {
     model.events = (await request("/api/events")).events;
     model.currentCardIndex = 0;
     model.previewMode = false;
-    model.packPhase = "sealed";
-    renderPack();
+    model.currentPack.cards = (model.currentPack.cards || []).slice(0, 1);
     showView("pack");
+    startWalkout();
   } catch {
     model.events = (await request("/api/events")).events;
     renderEvents();
@@ -1471,6 +1848,30 @@ function populateRevealTimingInputs() {
   }
 }
 
+function populateLevelIncrements() {
+  if (!elements.levelIncrements) return;
+  const increments = model.gameConfig.progression?.releaseLevelIncrements || {};
+  const sets = model.gameConfig.releaseSets || [];
+  if (elements.levelExponent) elements.levelExponent.value = String(model.gameConfig.progression?.thresholdExponent ?? 1.2);
+  elements.levelIncrements.innerHTML = `${sets.map((set) => `
+    <label>${escapeHtml(set.nameHe)}
+      <input type="number" min="0" max="20" data-level-increment="${escapeHtml(set.id)}" value="${increments[set.id] ?? 0}" />
+    </label>`).join("")}
+    <p class="work-note">Max level = sum of increments for sets that are currently idle-eligible. First set ${increments["party-leaders"] ?? 5}; each later set adds its own increment.</p>`;
+}
+
+function readStudioProgression() {
+  const increments = { ...(model.gameConfig.progression?.releaseLevelIncrements || {}) };
+  elements.levelIncrements?.querySelectorAll("[data-level-increment]").forEach((input) => {
+    increments[input.dataset.levelIncrement] = Math.min(20, Math.max(0, Math.round(Number(input.value) || 0)));
+  });
+  const exponent = Number(elements.levelExponent?.value);
+  return {
+    releaseLevelIncrements: increments,
+    thresholdExponent: Number.isFinite(exponent) ? exponent : model.gameConfig.progression?.thresholdExponent,
+  };
+}
+
 function readStudioVisualConfig() {
   return Object.fromEntries(Object.entries(visualConfigInputs()).map(([key, input]) => [key, input.value]));
 }
@@ -1481,9 +1882,14 @@ async function saveVisualConfig() {
     model.gameConfig = await request("/api/studio/config", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ revealTiming: readStudioRevealDelays(), visual }),
+      body: JSON.stringify({
+        revealTiming: readStudioRevealDelays(),
+        visual,
+        progression: readStudioProgression(),
+      }),
     });
     applyVisualConfig();
+    populateLevelIncrements();
     renderHome();
     renderBinder();
     renderAchievements();
@@ -1501,9 +1907,14 @@ async function saveRevealDelays() {
     model.gameConfig = await request("/api/studio/config", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ revealTiming }),
+      body: JSON.stringify({
+        revealTiming,
+        visual: readStudioVisualConfig(),
+        progression: readStudioProgression(),
+      }),
     });
     populateRevealTimingInputs();
+    populateLevelIncrements();
     showToast("Reveal timing published to the game.");
   } catch (error) {
     showToast(error.status === 404 ? "Studio configuration is disabled outside debug mode." : "Could not publish reveal timing.");
@@ -1603,7 +2014,7 @@ function studioCardMarkup(party, member, card) {
         <p class="concept-number">${escapeHtml(card.rarity)} · ${escapeHtml(card.id)}</p>
         <span class="status-chip">${escapeHtml(card.review?.contentStatus || card.publicationState)}</span>
       </div>
-      <div class="studio-shared-card">${cardMarkup(sharedCard, { finish: card.rarity }, { progressiveStage: "portrait", surface: "studio" })}</div>
+      <div class="studio-shared-card">${displayCardMarkup(sharedCard)}</div>
       <div class="studio-editor-fields">
         ${studioField("Display quote", "quote.displayText", card.quote.displayText, { type: "textarea" })}
         <details>
@@ -1738,7 +2149,7 @@ function specialStudioCardMarkup(card) {
         <p class="concept-number">${escapeHtml(runtimeCard.displayCode)} · ${escapeHtml(card.id)}</p>
         <span class="status-chip">${escapeHtml(card.contentStatus)}</span>
       </div>
-      <div class="studio-shared-card">${cardMarkup(runtimeCard, { finish: runtimeCard.rarity }, { progressiveStage: "portrait", surface: "studio" })}</div>
+      <div class="studio-shared-card">${displayCardMarkup(runtimeCard)}</div>
       <div class="studio-editor-fields">
         ${specialStudioField("Display text", "displayText", card.displayText, { type: "textarea" })}
         <details>
@@ -1791,7 +2202,7 @@ function updateSpecialStudioPreview(container) {
     if (field.dataset.specialField === "artKey") previewCard.artKey = field.value || null;
   });
   const preview = container.querySelector(".studio-shared-card");
-  preview.innerHTML = cardMarkup(previewCard, { finish: previewCard.rarity }, { progressiveStage: "portrait", surface: "studio" });
+  preview.innerHTML = displayCardMarkup(previewCard);
   queueCardTextFit(preview);
 }
 
@@ -1876,6 +2287,31 @@ async function copyMemberPrompts() {
   const prompt = buildMemberWeavePrompt({ party, member });
   const copied = await copyText(prompt);
   showToast(copied ? `Copied one three-image prompt for ${member.nameHe}.` : "Could not copy prompt.");
+}
+
+async function copyPackPrompts() {
+  const prompt = `${buildPackImagePrompt()}\n\n---\n\n${buildPackRipPrompt()}`;
+  const copied = await copyText(prompt);
+  showToast(copied ? "Copied KLAFI pack image + rip video prompts." : "Could not copy pack prompts.");
+}
+
+async function saveLevelIncrements() {
+  try {
+    model.gameConfig = await request("/api/studio/config", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        revealTiming: readStudioRevealDelays(),
+        visual: readStudioVisualConfig(),
+        progression: readStudioProgression(),
+      }),
+    });
+    populateLevelIncrements();
+    renderProgression();
+    showToast("Level increments published to the game.");
+  } catch (error) {
+    showToast(error.status === 404 ? "Studio configuration is disabled outside debug mode." : "Could not publish level increments.");
+  }
 }
 
 function exportPartyContent() {
@@ -2135,21 +2571,15 @@ function openCardDialog(cardId) {
   queueCardTextFit(elements.dialog);
 }
 
-function simulatedOwnerCount(cardId) {
-  let hash = 2166136261;
-  for (const character of cardId) {
-    hash ^= character.charCodeAt(0);
-    hash = Math.imul(hash, 16777619);
-  }
-  return 120 + (Math.abs(hash) % 4880);
-}
-
 function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
-  const latest = [...(model.serverState.instances ?? [])].reverse().find((item) => item.cardId === card.id);
   const ownedCount = model.serverState.inventory[card.id] ?? 0;
-  elements.dialogCard.innerHTML = cardMarkup(card, latest ?? {}, { surface: "dialog" });
-  elements.dialogOwnership.innerHTML = `<strong>${simulatedOwnerCount(card.id).toLocaleString("he-IL")}*</strong> שחקנים נוספים מחזיקים בקלף הזה <small>* נתון מדומה להדגמה</small>`;
+  elements.dialogCard.innerHTML = displayCardMarkup(card);
+  elements.dialogOwnership.textContent = ownedCount < 1
+    ? "הקלף הזה עדיין לא באוסף."
+    : ownedCount === 1
+      ? "ברשותכם עותק אחד."
+      : `ברשותכם ${ownedCount} עותקים.`;
   elements.dialogSource.href = card.walkout.sourceUrl;
   elements.dialogSource.dataset.sourceCard = card.id;
   elements.dialogShare.hidden = ownedCount < 1;
@@ -2430,17 +2860,52 @@ async function offerDuplicate() {
 }
 
 elements.openPack.addEventListener("click", openIdleReturn);
-elements.openPackFancy.addEventListener("click", () => openDailyPack("fancy"));
+elements.openPackFancy.addEventListener("click", () => openIdleReturn("fancy"));
 elements.sharedOpenGame.addEventListener("click", leaveSharedCard);
 elements.openBibiPack.addEventListener("click", openBibiDebugPack);
 elements.packAction.addEventListener("click", handlePackAction);
 elements.eventPull.addEventListener("click", pullEventCard);
 elements.retry.addEventListener("click", bootstrap);
+elements.openQuiz?.addEventListener("click", openQuizDialog);
+elements.closeQuiz?.addEventListener("click", () => {
+  stopQuizTimer();
+  elements.quizDialog.close();
+});
+elements.quizSubmit?.addEventListener("click", submitQuiz);
+elements.quizQuestions?.addEventListener("click", (event) => {
+  const option = event.target.closest("[data-quiz-option]");
+  const question = option?.closest("[data-quiz-question]");
+  if (!option || !question) return;
+  quizAnswers[question.dataset.quizQuestion] = option.dataset.quizOption;
+  question.querySelectorAll("[data-quiz-option]").forEach((button) => {
+    button.classList.toggle("selected", button === option);
+  });
+});
 elements.playerName.addEventListener("click", openProfileDialog);
+elements.levelAvatarButton?.addEventListener("click", openProfileDialog);
+elements.addAchievement?.addEventListener("click", () => {
+  if (!elements.studioAchievements) return;
+  elements.studioAchievements.insertAdjacentHTML("beforeend", achievementEditorMarkup({
+    id: `badge-${Date.now().toString(36)}`,
+    nameHe: "הישג חדש",
+    descriptionHe: "",
+    rule: "unique",
+    target: 1,
+  }));
+});
 elements.profileForm.addEventListener("submit", saveProfile);
+elements.avatarPicker?.addEventListener("click", (event) => {
+  const choice = event.target.closest("[data-avatar-id]");
+  if (!choice || choice.disabled) return;
+  model.selectedAvatarId = choice.dataset.avatarId;
+  renderAvatarPicker();
+});
+elements.saveAchievements?.addEventListener("click", saveStudioAchievements);
+elements.saveEvents?.addEventListener("click", saveStudioEvents);
 elements.closeProfile.addEventListener("click", () => elements.profileDialog.close());
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
 elements.closeLevel.addEventListener("click", () => elements.levelDialog.close());
+elements.openPendingLevel?.addEventListener("click", openPendingLevelDialog);
 elements.claimLevel.addEventListener("click", async () => {
   elements.claimLevel.disabled = true;
   try {
@@ -2517,10 +2982,13 @@ elements.headerDebugReset.addEventListener("click", resetDailyPack);
 elements.playStudioReveal.addEventListener("click", playStudioReveal);
 elements.showStudioComplete.addEventListener("click", showStudioComplete);
 elements.copyMemberPrompts.addEventListener("click", copyMemberPrompts);
+elements.copyPackPrompts?.addEventListener("click", copyPackPrompts);
 elements.exportPartyContent.addEventListener("click", exportPartyContent);
 elements.exportAllQuotes.addEventListener("click", exportAllQuotes);
 Object.values(revealDelayInputs()).forEach((input) => input.addEventListener("change", saveRevealDelays));
 Object.values(visualConfigInputs()).forEach((input) => input.addEventListener("change", saveVisualConfig));
+elements.levelIncrements?.addEventListener("change", saveLevelIncrements);
+elements.levelExponent?.addEventListener("change", saveLevelIncrements);
 elements.studioPartyTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-studio-party]");
   if (!button) return;

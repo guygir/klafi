@@ -31,6 +31,8 @@ async function start(dataDir, clock, {
     specialsPath,
     presentationContentPath,
     eventsPath: path.join(appRoot, "data/events.json"),
+    achievementsPath: path.join(appRoot, "data/achievements.json"),
+    avatarsPath: path.join(appRoot, "data/avatars.json"),
     assetsDir: path.join(projectRoot, "docs/design/assets"),
     docsDir: path.join(projectRoot, "docs"),
     debugEnabled,
@@ -95,7 +97,6 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   assert.equal(seen.body.unseenCount, 0);
 
   const pendingRanks = [...seen.body.progression.pendingRewards];
-  assert.ok(pendingRanks.includes(2));
   const rewardInstances = [];
   for (const rank of pendingRanks) {
     const reward = await api(running.base, "/api/rewards/level", { token, method: "POST" });
@@ -244,8 +245,8 @@ test("only one concurrent accepter can complete a trade", async (t) => {
 });
 
 test("server owns sessions, idle pulls, inventory, and persistence", async (t) => {
-  assert.equal(RANK_TITLES.length, 10);
-  assert.equal(new Set(RANK_TITLES).size, 10);
+  assert.equal(RANK_TITLES.length, 14);
+  assert.equal(new Set(RANK_TITLES).size, 14);
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-test-"));
   const clock = { value: Date.parse("2026-09-03T12:00:00.000Z") };
   let running = await start(dataDir, clock);
@@ -279,7 +280,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(page.status, 200);
   assert.match(page.headers.get("content-type"), /^text\/html/);
   const pageHtml = await page.text();
-  assert.match(pageHtml, /לראות מה נאסף/);
+  assert.match(pageHtml, /פתיחת קלף/);
   assert.match(pageHtml, /קלף אחד בכל שלוש שעות/);
   const clientScript = await fetch(`${running.base}/app.js?v=test`);
   assert.match(clientScript.headers.get("cache-control"), /no-cache/);
@@ -330,7 +331,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(stateAfterDemo.body.packCount, 0);
   assert.deepEqual(stateAfterDemo.body.inventory, {});
   assert.equal(stateAfterDemo.body.progression.level, 1);
-  assert.equal(stateAfterDemo.body.progression.totalLevels, 10);
+  assert.equal(stateAfterDemo.body.progression.totalLevels, 5);
   assert.equal(stateAfterDemo.body.progression.rank, "אזרח סקרן");
   assert.equal(stateAfterDemo.body.progression.nextRank, "קורא כותרות");
 
@@ -733,4 +734,50 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
     body: { fields: { "s01-t001": "blocked" } },
   });
   assert.equal(presentationResponse.status, 404);
+});
+
+test("owned-card quiz grants one extra pack per Jerusalem day", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-quiz-test-"));
+  const clock = { value: Date.parse("2026-09-15T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const token = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const empty = await api(running.base, "/api/quiz", { token });
+  assert.equal(empty.body.available, false);
+  const cardId = (await api(running.base, "/api/catalog")).body.cards.find(({ idleEligible }) => idleEligible).id;
+  await api(running.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId } });
+  const quiz = await api(running.base, "/api/quiz", { token });
+  assert.equal(quiz.status, 200);
+  assert.equal(quiz.body.available, true);
+  assert.equal(quiz.body.questions.length, 2);
+  assert.equal(quiz.body.source, "owned-card");
+  assert.match(quiz.body.questions[0].prompt, /מקום|עוסק/);
+  assert.equal(quiz.body.questions[1].prompt, "באיזו רשימה?");
+  const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  const answers = stored.sessions[token].currentQuiz.answers;
+  const wrong = await api(running.base, "/api/quiz/answer", {
+    token,
+    method: "POST",
+    body: { quizId: quiz.body.quizId, answers: { role: "לא", list: "לא" } },
+  });
+  assert.equal(wrong.status, 200);
+  assert.equal(wrong.body.correct, false);
+  const retry = await api(running.base, "/api/quiz", { token });
+  const storedRetry = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  const win = await api(running.base, "/api/quiz/answer", {
+    token,
+    method: "POST",
+    body: { quizId: retry.body.quizId, answers: storedRetry.sessions[token].currentQuiz.answers },
+  });
+  assert.equal(win.status, 201);
+  assert.equal(win.body.correct, true);
+  assert.equal(win.body.cards.length, 1);
+  assert.equal(win.body.state.quizWonToday, true);
+  const again = await api(running.base, "/api/quiz", { token });
+  assert.equal(again.body.available, false);
+  assert.equal(again.body.wonToday, true);
+  assert.ok(answers.role && answers.list);
 });

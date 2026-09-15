@@ -33,6 +33,9 @@ export function normalizeState(value = {}) {
     session.highestRank ??= 1;
     session.claimedRankRewards ??= [];
     session.pendingRankRewards ??= [];
+    session.avatarId ??= "kid-boy";
+    session.quizWonDay ??= null;
+    session.currentQuiz ??= null;
   }
   return state;
 }
@@ -76,6 +79,7 @@ export class JsonStore {
       const token = randomUUID();
       this.state.sessions[token] = {
         displayName: `שחקן ${token.slice(0, 4)}`,
+        avatarId: "kid-boy",
         createdAt: now,
         nextDailyAt: null,
         dryPacks: 0,
@@ -159,6 +163,16 @@ export class JsonStore {
       session.displayName = displayName;
       await this.persist();
       return displayName;
+    });
+  }
+
+  async setAvatar(token, avatarId) {
+    return this.exclusive(async () => {
+      const session = this.getSession(token);
+      if (!session) return null;
+      session.avatarId = avatarId;
+      await this.persist();
+      return avatarId;
     });
   }
 

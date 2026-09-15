@@ -26,6 +26,8 @@ const handler = await createKalpiApp({
   specialsPath: path.join(appRoot, "data/specials-content.json"),
   presentationContentPath: path.join(appRoot, "data/presentation-content.json"),
   eventsPath: path.join(appRoot, "data/events.json"),
+  achievementsPath: path.join(appRoot, "data/achievements.json"),
+  avatarsPath: path.join(appRoot, "data/avatars.json"),
   assetsDir: path.join(projectRoot, "docs/design/assets"),
   docsDir: path.join(projectRoot, "docs"),
   databaseUrl: process.env.DATABASE_URL || null,

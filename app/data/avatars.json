@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "avatars": [
+    { "id": "kid-boy", "nameHe": "ילד", "unlockLevel": 1, "art": "avatars/avatar-kid-boy.png" },
+    { "id": "kid-girl", "nameHe": "ילדה", "unlockLevel": 1, "art": "avatars/avatar-kid-girl.png" },
+    { "id": "grown-man", "nameHe": "אזרח", "unlockLevel": 3, "art": "avatars/avatar-grown-man.png" },
+    { "id": "grown-woman", "nameHe": "אזרחית", "unlockLevel": 3, "art": "avatars/avatar-grown-woman.png" },
+    { "id": "activist-man", "nameHe": "פעיל", "unlockLevel": 5, "art": "avatars/avatar-activist-man.png" },
+    { "id": "activist-woman", "nameHe": "פעילה", "unlockLevel": 5, "art": "avatars/avatar-activist-woman.png" },
+    { "id": "elected", "nameHe": "נבחר", "unlockLevel": 10, "art": "avatars/avatar-elected.png" },
+    { "id": "prime-minister", "nameHe": "ראש ממשלה", "unlockLevel": 14, "art": "avatars/avatar-prime-minister.png" }
+  ]
+}

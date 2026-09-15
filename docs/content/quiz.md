@@ -28,7 +28,9 @@ which list?
 5:00  ·  both right → extra pack
 ```
 
-Drawn from a card the player **owns** (prefer last pack). Options come from that card’s back. One successful extra-pack quiz per day.
+Drawn from a card the player **owns** (prefer last pack). Options come from that card’s catalog fields (list name, list slot, or subject) — not from a survey and not from a special event.
+
+**One extra-pack win per Israel civil day.** The server keys this on `jerusalemDay()`: the `YYYY-MM-DD` calendar date in `Asia/Jerusalem`. That is “today in Israel,” not a Jerusalem holiday and not an Events-tab event. After a win, `quizWonDay` stores that date; the button stays hidden until the date rolls over at midnight Israel time. Noted in `app/server/app.js` (`jerusalemDay`, `quizWonDay`) and in this file.
 
 Below: item bank for the deck and for later implementation. Same rule: no “who is good.”
 

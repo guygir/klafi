@@ -1,4 +1,4 @@
-# Kalpi PoC — Figma Weave production brief
+# KLAFI PoC — Figma Weave production brief
 
 Use Weave for reusable still and motion pipelines. Export finished assets into `docs/design/assets/`; the app does not depend on a live Weave graph.
 
@@ -18,7 +18,7 @@ Yes—examples are required if the full set is expected to look authored rather 
 
 1. **Portrait style anchor:** `hero-art-naama-lazimi.png` controls ink-and-gouache texture, parchment, facial simplification, lighting restraint, and crop density.
 2. **Packaging anchor:** `pack-wrapper.png` controls ballot-paper material, civic teal, brass accents, folds, and print wear for pack/rip assets. It must not control facial style or card composition.
-3. **Card chrome anchor:** a current rendered Kalpi card or `hero-cards.html` controls the 63:88 frame, insets, pip, typography zones, rarity edge, and footer. Weave produces art only; live HTML renders text and chrome.
+3. **Card chrome anchor:** a current rendered KLAFI card or `hero-cards.html` controls the 63:88 frame, insets, pip, typography zones, rarity edge, and footer. Weave produces art only; live HTML renders text and chrome.
 
 Keep these anchors fixed for the whole production run. Generate the first four politicians, place all twelve variants in one contact sheet, and reject the batch if paper tone, line weight, facial realism, crop density, or lighting reads as a different collection. Once approved, lock the model/version, style-reference strength, negative prompt, grade, and export settings. Identity images change per politician; the three style anchors do not.
 
@@ -68,7 +68,19 @@ Keep identity references and style description fixed. Vary pose and setting. If 
 
 ## Reusable portrait prompt
 
-> Vertical 3:4 illustrated collectible-card portrait of {{politician_name}}, an Israeli politician, for the Kalpi civic election game. Recognizable and identity-consistent with the supplied references, but deliberately non-photoreal. {{pose_variant}} in {{setting_variant}}. Expressive ink-and-gouache brushwork on aged parchment, dark ink linework, restrained {{party_pip_color}} accent only, subtle aged-brass details and teal reflected light, serious contemporary civic mood, tactile archival finish, ample crop room around head and shoulders. No logos, no flags, no readable text, no photorealism, no card border, no caricature, no invented medals or insignia, no changed age, no face distortion, no extra fingers.
+> Vertical 3:4 illustrated collectible-card portrait of {{politician_name}}, an Israeli politician, for the KLAFI civic election game. Recognizable and identity-consistent with the supplied references, but deliberately non-photoreal. {{pose_variant}} in {{setting_variant}}. Expressive ink-and-gouache brushwork on aged parchment, dark ink linework, restrained {{party_pip_color}} accent only, subtle aged-brass details and teal reflected light, serious contemporary civic mood, tactile archival finish, ample crop room around head and shoulders. No logos, no flags, no readable text, no photorealism, no card border, no caricature, no invented medals or insignia, no changed age, no face distortion, no extra fingers.
+
+## IMAGE AND VIDEO CREATION — NEW PACK (KLAFI, never KALPI)
+
+Every new pack still and rip video is branded **KLAFI**. Do not generate, reprint, or leave residual **KALPI** lettering.
+
+## New single-card KLAFI pack image
+
+Source artwork path: `docs/design/assets/pack-wrapper.png`
+
+> Front-facing premium paper wrapper for the KLAFI civic card game, preserving the supplied wrapper's exact parchment, deep umber, wax-seal teal, antique-gold print, ballot-box illustration, folds, and worn letterpress finish. Redesign the Latin wordmark so it reads exactly **KLAFI** in clear uppercase Latin letters. Never render KALPI. One-card pack, slim physical volume, centered on a transparent background with generous safe area. No hands, no cards outside the wrapper, no extra logos, no photoreal plastic, no modern neon, no additional text, no warped or misspelled lettering.
+
+Export the approved transparent still as `docs/design/assets/pack-wrapper-klafi.png`; keep `pack-wrapper.png` only as the visual reference until the replacement is approved.
 
 Generate at least four candidates for each variant; approve one. Do not automatically publish the first output.
 
@@ -92,7 +104,7 @@ Graph:
 
 Motion prompt:
 
-> Locked camera. Preserve the exact Kalpi wrapper, seal, lettering, ballot-box drawing, paper texture, and proportions. The top gold serrated seam pulls apart from the center, paper fibers stretch and tear, and the wrapper opens with believable physical resistance. A restrained teal light appears from inside. The two paper lips peel back and six card backs begin to rise together. No hands. No camera move. No new text. No warped letters or logo. No melting package. No explosion. End on a stable open-wrapper frame suitable for cutting to the live HTML card fan.
+> Locked camera. Use the approved `pack-wrapper-klafi.png` as the exact first frame. Preserve the KLAFI lettering, seal, ballot-box drawing, paper texture, colors, and proportions; the Latin wordmark must remain exactly **KLAFI** throughout and must never become KALPI. The top gold serrated seam pulls apart from the center, paper fibers stretch and tear, and the wrapper opens with believable physical resistance. A restrained teal light appears from inside. The two paper lips peel back and exactly one card back rises from the wrapper. No hands. No camera move. No new text. No warped letters or logo. No melting package. No explosion. End on a stable open-wrapper frame suitable for cutting to the one live HTML card reveal.
 
 Configuration target:
 
@@ -129,7 +141,7 @@ Use the reference to tune a 500–700ms CSS FLIP transition. Do not ship a gener
 
 - Portrait stills: `portrait-<party>-<rank>-<slug>-01.png` through `03.png`
 - Rare motion: `portrait-<party>-<rank>-<slug>-rare.webm`
-- Pack motion: `pack-rip-v01.webm`
+- Pack motion: `pack-rip-klafi-v02.webm`
 - Review masters: same stem with `.mp4`
 - Poster/fallback: same stem with `-poster.png`
 

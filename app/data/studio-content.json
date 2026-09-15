@@ -16,18 +16,19 @@
       "quoteReveal": "ink-v2"
     },
     "progression": {
-      "thresholdRatios": [
-        0,
-        0.03,
-        0.08,
-        0.15,
-        0.25,
-        0.38,
-        0.52,
-        0.68,
-        0.84,
-        1
-      ],
+      "thresholdExponent": 1.2,
+      "releaseLevelIncrements": {
+        "party-leaders": 5,
+        "party-slot-2": 2,
+        "decisions": 1,
+        "records": 1,
+        "party-position-security": 1,
+        "party-position-economy": 1,
+        "party-position-religion-state": 1,
+        "party-position-democracy": 1,
+        "party-position-society-services": 1,
+        "special-events": 0
+      },
       "rankNames": [
         "אזרח סקרן",
         "קורא כותרות",
@@ -36,7 +37,11 @@
         "חבר סניף",
         "רכז שטח",
         "מנהל מטה",
+        "יועץ פרלמנטרי",
         "חבר כנסת",
+        "יו״ר ועדה",
+        "סגן שר",
+        "שר",
         "שר בכיר",
         "ראש הממשלה"
       ],
