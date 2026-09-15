@@ -67,5 +67,6 @@ export async function createRuntimeHandler({ loadDotEnv = false } = {}) {
     databaseSsl: process.env.DATABASE_SSL === "1",
     debugEnabled,
     quizEnabled: process.env.QUIZ_ENABLED === "1",
+    studioSecret: process.env.STUDIO_SECRET || null,
   });
 }

@@ -2309,6 +2309,18 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 
 #studio-view { direction: ltr; text-align: left; }
 #studio-view h1, #studio-view h2, #studio-view h3 { font-family: Fraunces, Georgia, serif; }
+.studio-release-sets {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+}
+.studio-release-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) 7rem minmax(11rem, auto);
+  gap: 8px;
+  align-items: center;
+}
+.studio-release-row b { font-size: 13px; }
 
 @media (max-width: 760px) {
   .app-shell { padding-inline: 16px; }

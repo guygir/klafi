@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#1f4f4a" />
   <meta name="description" content="קְלָפִי — אוספים את הבחירות." />
   <title>קְלָפִי · KLAFI</title>
+  <script src="/boot-warmup.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -29,7 +30,7 @@
         <span id="header-status">טוענים…</span>
         <span class="localhost-debug-chip" hidden data-debug-only>localhost</span>
         <button id="header-debug-reset" class="header-debug-reset" type="button" hidden>איפוס</button>
-        <button class="header-debug-reset" type="button" data-nav="studio" data-debug-only>Studio</button>
+        <button class="header-debug-reset" type="button" data-nav="studio" data-studio-only hidden>Studio</button>
         <a class="header-debug-reset presentation-link" href="/project-docs/presentation/poc-response/index.html" target="_blank" rel="noopener" data-debug-only>Presentation</a>
         <a class="header-debug-reset presentation-studio-link" href="/project-docs/presentation/poc-response/index.html?studio=1" target="_blank" rel="noopener" data-debug-only>Presentation Studio</a>
       </div>
@@ -272,7 +273,7 @@
         </div>
       </section>
 
-      <section id="studio-view" class="view" data-debug-only>
+      <section id="studio-view" class="view" data-studio-only hidden>
         <div class="workspace-head">
           <div>
             <p class="eyebrow">PoC Studio · editorial + debug</p>
@@ -288,6 +289,8 @@
             <p id="studio-viewpoint"></p>
             <code>app/data/advocacy.json</code>
             <div id="studio-release-status" class="release-status"></div>
+            <div id="studio-release-sets" class="studio-release-sets"></div>
+            <button id="save-release-sets" class="secondary-action" type="button">Publish set calendar</button>
           </article>
           <article class="work-card debug-console">
             <p class="work-kicker">Local debug</p>
@@ -476,6 +479,7 @@
       <input id="profile-name-input" name="displayName" minlength="2" maxlength="24" autocomplete="nickname" required />
       <p class="profile-name-label">הפנים שלכם</p>
       <div id="avatar-picker" class="avatar-picker"></div>
+      <p class="profile-name-label">האוסף שמור במכשיר הזה. חשבון הוא אופציונלי — לא חובה כדי לשחק.</p>
       <p id="profile-error" class="profile-error" role="alert"></p>
       <button class="primary-action" type="submit">שמירת הפרופיל</button>
     </form>
@@ -498,6 +502,6 @@
   <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="metadata" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
     <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
   </video>
-  <script type="module" src="/app.js?v=hebrew-quality-11"></script>
+  <script type="module" src="/app.js?v=hebrew-quality-12"></script>
 </body>
 </html>

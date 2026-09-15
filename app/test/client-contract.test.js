@@ -82,6 +82,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /"04 \/ 04 · portrait"/);
   assert.doesNotMatch(javascript, /REVEAL_TIMING_KEY/);
   assert.match(javascript, /\/api\/bootstrap/);
+  assert.match(html, /boot-warmup\.js/);
+  assert.match(javascript, /studioKey/);
+  assert.match(javascript, /x-kalpi-studio/);
+  assert.match(html, /data-studio-only/);
+  assert.match(html, /id="studio-release-sets"/);
+  assert.match(javascript, /function populateReleaseSets/);
+  assert.match(html, /חשבון הוא אופציונלי/);
   assert.match(javascript, /\/api\/studio\/config/);
   assert.match(javascript, /updateStudioCardPreview/);
   assert.match(javascript, /\["quote\.displayText", "art\.artKey"\]/);

@@ -1,5 +1,5 @@
 import { readFile, rename, stat, writeFile } from "node:fs/promises";
-import { randomInt, randomUUID } from "node:crypto";
+import { randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
 import { JsonStore } from "./store.js";
 import { PostgresStore } from "./postgres-store.js";
@@ -82,6 +82,7 @@ function json(response, status, value) {
 }
 
 const STATELESS_API_PATHS = new Set([
+  "/api/health",
   "/api/catalog",
   "/api/specials",
   "/api/editorial",
@@ -89,6 +90,13 @@ const STATELESS_API_PATHS = new Set([
   "/api/game-config",
   "/api/presentation/content",
 ]);
+
+function secretsMatch(provided, expected) {
+  if (!provided || !expected) return false;
+  const left = Buffer.from(String(provided));
+  const right = Buffer.from(String(expected));
+  return left.length === right.length && timingSafeEqual(left, right);
+}
 
 export function publicPartyRegister(studioContent, cards = []) {
   if (studioContent?.parties?.length) {
@@ -125,6 +133,36 @@ function bearer(request) {
   return match?.[1] ?? null;
 }
 
+function studioSecretFrom(request) {
+  return request.headers["x-kalpi-studio"] || null;
+}
+
+function validReleaseSets(value) {
+  if (value === undefined) return true;
+  if (!Array.isArray(value)) return false;
+  return value.every((item) =>
+    item
+    && typeof item === "object"
+    && typeof item.id === "string"
+    && item.id.length > 0
+    && item.id.length <= 80
+    && (item.runtimeState === undefined || item.runtimeState === "active" || item.runtimeState === "held")
+    && (item.runtimeAvailableFrom === undefined || item.runtimeAvailableFrom === null || typeof item.runtimeAvailableFrom === "string"));
+}
+
+function mergeReleaseSets(current = [], patch) {
+  if (!Array.isArray(patch)) return current;
+  const next = current.map((set) => ({ ...set }));
+  const byId = new Map(next.map((set) => [set.id, set]));
+  for (const item of patch) {
+    const existing = byId.get(item.id);
+    if (!existing) continue;
+    if (item.runtimeState === "active" || item.runtimeState === "held") existing.runtimeState = item.runtimeState;
+    if (item.runtimeAvailableFrom !== undefined) existing.runtimeAvailableFrom = item.runtimeAvailableFrom || null;
+  }
+  return next;
+}
+
 function isLoopbackRequest(request) {
   const address = request.socket?.remoteAddress || "";
   return address === "127.0.0.1" || address === "::1" || address === "::ffff:127.0.0.1";
@@ -159,6 +197,7 @@ function normalizeRevealTiming(value = {}) {
 }
 
 function validRevealTiming(value) {
+  if (value === undefined) return true;
   return value
     && typeof value === "object"
     && !Array.isArray(value)
@@ -638,6 +677,7 @@ export async function createKalpiApp({
   databaseSsl = false,
   debugEnabled = false,
   quizEnabled = false,
+  studioSecret = process.env.STUDIO_SECRET || null,
   now = () => Date.now(),
   rng = randomInt,
 } = {}) {
@@ -765,6 +805,35 @@ export async function createKalpiApp({
     ? new PostgresStore(databaseUrl, { ssl: databaseSsl })
     : new JsonStore(path.join(dataDir, "state.json"));
   await store.init();
+  const studioOverlay = await store.getStudioConfig();
+  if (studioContent && studioOverlay?.gameConfig) {
+    studioContent.gameConfig = {
+      ...studioContent.gameConfig,
+      ...studioOverlay.gameConfig,
+      revealTiming: normalizeRevealTiming(studioOverlay.gameConfig.revealTiming || studioContent.gameConfig.revealTiming),
+      visual: normalizeVisualConfig(studioOverlay.gameConfig.visual || studioContent.gameConfig.visual),
+      progression: {
+        ...studioContent.gameConfig.progression,
+        ...studioOverlay.gameConfig.progression,
+      },
+      releaseSets: studioOverlay.gameConfig.releaseSets || studioContent.gameConfig.releaseSets,
+    };
+  }
+  function applyReleaseSets() {
+    const sets = studioContent?.gameConfig?.releaseSets || [];
+    const byId = new Map(sets.map((set) => [set.id, set]));
+    for (const card of allCards) {
+      if (card.eventOnly) continue;
+      const release = byId.get(card.releaseSetId);
+      if (!release) continue;
+      const isIdleSet = card.releaseSetId === "party-leaders" || card.releaseSetId === "party-slot-2";
+      const activeForIdle = isIdleSet && release.runtimeState === "active";
+      card.releaseState = release.runtimeState;
+      card.availableFrom = activeForIdle ? (release.runtimeAvailableFrom || release.plannedPublishAt || null) : null;
+      card.idleEligible = activeForIdle;
+    }
+  }
+  applyReleaseSets();
   const rateLimit = createRateLimiter();
   const runtimeProgression = () => ({
     ...studioContent?.gameConfig?.progression,
@@ -899,12 +968,51 @@ export async function createKalpiApp({
     return instance;
   }
 
+  async function persistStudioConfig() {
+    if (!studioContent) return;
+    await store.saveStudioConfig({
+      gameConfig: {
+        revealTiming: studioContent.gameConfig.revealTiming,
+        visual: studioContent.gameConfig.visual,
+        progression: studioContent.gameConfig.progression,
+        releaseSets: studioContent.gameConfig.releaseSets,
+      },
+    });
+    if (studioContentPath && !databaseUrl) {
+      await writeJsonAtomic(studioContentPath, studioContent);
+    }
+  }
+
+  async function buildBootstrap(token, studioRequest) {
+    const settled = await settleIdle(token);
+    const idleReturn = settled.error
+      ? { mode: "idle-return", newlySettledCount: 0, cards: [], state: stateFor(store.getSession(token)) }
+      : settled;
+    await store.expireTrades(new Date(now()).toISOString());
+    return {
+      token,
+      catalog: { cards: allCards },
+      editorial: publicEditorial(debugEnabled && studioRequest),
+      activity: await store.activitySummary(),
+      studioContent: studioRequest && studioContent
+        ? { ...studioContent, debugEnabled: debugEnabled && studioRequest, studioEnabled: true }
+        : null,
+      gameConfig: publicGameConfig(),
+      leaderboards: await store.leaderboardSummary(cards, now(), token),
+      specials,
+      idleReturn,
+      trades: await store.listTrades(token),
+      events: publicEvents(store.getSession(token)),
+    };
+  }
+
   return async function handler(request, response) {
     const requestId = randomUUID();
     response.setHeader("x-request-id", requestId);
     try {
       const url = new URL(request.url, "http://localhost");
       const debugRequest = debugEnabled && isLoopbackRequest(request);
+      const studioRequest = debugRequest || secretsMatch(studioSecretFrom(request), studioSecret);
       if (!debugRequest) {
         response.setHeader(
           "content-security-policy",
@@ -951,11 +1059,28 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/studio/content") {
-        if (!debugRequest || !studioContent) {
+        if (!studioRequest || !studioContent) {
           json(response, 404, { error: "NOT_FOUND" });
           return;
         }
-        json(response, 200, { ...studioContent, debugEnabled: true });
+        json(response, 200, { ...studioContent, debugEnabled, studioEnabled: true });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/bootstrap") {
+        const clientAddress = request.socket?.remoteAddress || "unknown";
+        let token = bearer(request);
+        await store.hydrateSession(token);
+        if (!store.getSession(token)) {
+          const limit = rateLimit(`session:${clientAddress}`, 20, 10 * 60 * 1000, now());
+          if (!limit.allowed) {
+            response.setHeader("retry-after", String(limit.retryAfter));
+            json(response, 429, { error: "RATE_LIMITED" });
+            return;
+          }
+          token = await store.createSession(new Date(now()).toISOString());
+        }
+        json(response, 200, await buildBootstrap(token, studioRequest));
         return;
       }
 
@@ -974,17 +1099,18 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/activity") {
-        json(response, 200, store.activitySummary());
+        json(response, 200, await store.activitySummary());
         return;
       }
 
       if (request.method === "GET" && url.pathname === "/api/leaderboards") {
-        json(response, 200, store.leaderboardSummary(cards, now(), bearer(request)));
+        json(response, 200, await store.leaderboardSummary(cards, now(), bearer(request)));
         return;
       }
 
       if (url.pathname.startsWith("/api/")) {
         const token = bearer(request);
+        await store.hydrateSession(token);
         const session = store.getSession(token);
         if (!session) {
           json(response, 401, { error: "INVALID_SESSION" });
@@ -997,27 +1123,6 @@ export async function createKalpiApp({
             json(response, 429, { error: "RATE_LIMITED" });
             return;
           }
-        }
-
-        if (request.method === "GET" && url.pathname === "/api/bootstrap") {
-          const settled = await settleIdle(token);
-          const idleReturn = settled.error
-            ? { mode: "idle-return", newlySettledCount: 0, cards: [], state: stateFor(store.getSession(token)) }
-            : settled;
-          await store.expireTrades(new Date(now()).toISOString());
-          json(response, 200, {
-            catalog: { cards: allCards },
-            editorial: publicEditorial(debugRequest),
-            activity: store.activitySummary(),
-            studioContent: debugRequest && studioContent ? { ...studioContent, debugEnabled: true } : null,
-            gameConfig: publicGameConfig(),
-            leaderboards: store.leaderboardSummary(cards, now(), token),
-            specials,
-            idleReturn,
-            trades: store.listTrades(token),
-            events: publicEvents(store.getSession(token)),
-          });
-          return;
         }
 
         if (request.method === "GET" && url.pathname === "/api/state") {
@@ -1221,7 +1326,7 @@ export async function createKalpiApp({
 
         if (request.method === "GET" && url.pathname === "/api/trades") {
           await store.expireTrades(new Date(now()).toISOString());
-          json(response, 200, { trades: store.listTrades(token), simulated: false });
+          json(response, 200, { trades: await store.listTrades(token), simulated: false });
           return;
         }
 
@@ -1269,7 +1374,7 @@ export async function createKalpiApp({
             json(response, 409, { error: "TRADE_NOT_CANCELLABLE" });
             return;
           }
-          json(response, 200, { trade: store.listTrades(token).find(({ tradeId }) => tradeCancel[1]) });
+          json(response, 200, { trade: (await store.listTrades(token)).find(({ tradeId }) => tradeCancel[1]) });
           return;
         }
 
@@ -1279,7 +1384,7 @@ export async function createKalpiApp({
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
-          const currentTrade = store.listTrades(token).find(({ tradeId }) => tradeId === tradeMatch[1]);
+          const currentTrade = (await store.listTrades(token)).find(({ tradeId }) => tradeId === tradeMatch[1]);
           const wanted = currentTrade ? cardsById.get(currentTrade.wantedCardId) : null;
           const trade = wanted ? await store.simulateTradeMatch({
             tradeId: tradeMatch[1],
@@ -1301,7 +1406,7 @@ export async function createKalpiApp({
 
         const tradeAccept = url.pathname.match(/^\/api\/trades\/([^/]+)\/accept$/);
         if (request.method === "POST" && tradeAccept) {
-          const currentTrade = store.listTrades(token).find(({ tradeId }) => tradeId === tradeAccept[1]);
+          const currentTrade = (await store.listTrades(token)).find(({ tradeId }) => tradeId === tradeAccept[1]);
           const offered = currentTrade ? cardsById.get(currentTrade.offeredCardId) : null;
           const wanted = currentTrade ? cardsById.get(currentTrade.wantedCardId) : null;
           const trade = offered && wanted ? await store.acceptTrade({
@@ -1316,7 +1421,7 @@ export async function createKalpiApp({
             return;
           }
           json(response, 200, {
-            trade: store.listTrades(token).find(({ tradeId }) => tradeAccept[1]),
+            trade: (await store.listTrades(token)).find(({ tradeId }) => tradeAccept[1]),
             state: stateFor(store.getSession(token)),
           });
           return;
@@ -1335,7 +1440,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/debug/unlock-card") {
-          if (!debugRequest) {
+          if (!studioRequest) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
@@ -1403,7 +1508,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/content") {
-          if (!debugRequest || !studioContent || !studioContentPath) {
+          if (!studioRequest || !studioContent) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
@@ -1443,8 +1548,11 @@ export async function createKalpiApp({
           };
           studioContent.generatedAt = new Date(now()).toISOString();
           const runtimeCard = publishStudioCard(member, card);
-          await writeJsonAtomic(studioContentPath, studioContent);
-          await writeJsonAtomic(cardsPath, cards);
+          if (studioContentPath && !databaseUrl) {
+            await writeJsonAtomic(studioContentPath, studioContent);
+            await writeJsonAtomic(cardsPath, cards);
+          }
+          await persistStudioConfig();
           json(response, 200, {
             memberId: member.id,
             identityReference: member.identityReference,
@@ -1457,7 +1565,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/specials") {
-          if (!debugRequest || !specialsPath) {
+          if (!studioRequest || !specialsPath) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
@@ -1526,18 +1634,18 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/config") {
-          if (!debugRequest || !studioContent || !studioContentPath) {
+          if (!studioRequest || !studioContent) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
           const input = await readJson(request);
-          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual) || !validProgressionPatch(input.progression)) {
+          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual) || !validProgressionPatch(input.progression) || !validReleaseSets(input.releaseSets)) {
             json(response, 400, { error: "INVALID_GAME_CONFIG" });
             return;
           }
           studioContent.gameConfig = {
             ...studioContent.gameConfig,
-            revealTiming: normalizeRevealTiming(input.revealTiming),
+            revealTiming: normalizeRevealTiming(input.revealTiming ?? studioContent.gameConfig?.revealTiming),
             visual: normalizeVisualConfig(input.visual ?? studioContent.gameConfig?.visual),
             progression: {
               ...studioContent.gameConfig.progression,
@@ -1548,15 +1656,17 @@ export async function createKalpiApp({
               thresholdExponent: input.progression?.thresholdExponent
                 ?? studioContent.gameConfig.progression?.thresholdExponent,
             },
+            releaseSets: mergeReleaseSets(studioContent.gameConfig.releaseSets, input.releaseSets),
           };
           studioContent.generatedAt = new Date(now()).toISOString();
-          await writeJsonAtomic(studioContentPath, studioContent);
-          json(response, 200, studioContent.gameConfig);
+          applyReleaseSets();
+          await persistStudioConfig();
+          json(response, 200, publicGameConfig());
           return;
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/achievements") {
-          if (!debugRequest || !achievementsPath) {
+          if (!studioRequest || !achievementsPath) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
@@ -1582,7 +1692,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/events") {
-          if (!debugRequest || !eventsPath) {
+          if (!studioRequest || !eventsPath) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }

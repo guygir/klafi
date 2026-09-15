@@ -16,6 +16,7 @@ async function start(dataDir, clock, {
   debugEnabled = true,
   quizEnabled = false,
   databaseUrl = null,
+  studioSecret = null,
   studioContentPath = path.join(appRoot, "data/studio-content.json"),
   cardsPath = path.join(appRoot, "data/cards.json"),
   specialsPath = path.join(appRoot, "data/specials-content.json"),
@@ -41,6 +42,7 @@ async function start(dataDir, clock, {
     debugEnabled,
     quizEnabled,
     databaseUrl,
+    studioSecret,
     now: () => clock.value,
     rng: () => 0,
   });
@@ -54,11 +56,12 @@ async function start(dataDir, clock, {
   };
 }
 
-async function api(base, route, { token, method = "GET", body } = {}) {
+async function api(base, route, { token, method = "GET", body, studio } = {}) {
   const response = await fetch(`${base}${route}`, {
     method,
     headers: {
       ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(studio ? { "x-kalpi-studio": studio } : {}),
       ...(body ? { "content-type": "application/json" } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -782,6 +785,68 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   assert.equal(presentationResponse.status, 404);
 });
 
+test("bootstrap creates a guest session in one request", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-boot-session-"));
+  const running = await start(dataDir, { value: Date.parse("2026-09-15T12:00:00.000Z") }, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const boot = await api(running.base, "/api/bootstrap");
+  assert.equal(boot.status, 200);
+  assert.match(boot.body.token, /^[0-9a-f-]{36}$/i);
+  assert.ok(boot.body.idleReturn.state.displayName);
+  assert.equal(boot.body.studioContent, null);
+  const again = await api(running.base, "/api/bootstrap", { token: boot.body.token });
+  assert.equal(again.body.token, boot.body.token);
+  assert.equal(again.body.idleReturn.state.displayName, boot.body.idleReturn.state.displayName);
+});
+
+test("production Studio opens with STUDIO_SECRET for unlock and set calendar", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-studio-secret-"));
+  const studioContentPath = path.join(dataDir, "studio-content.json");
+  await copyFile(path.join(appRoot, "data/studio-content.json"), studioContentPath);
+  const running = await start(dataDir, { value: Date.parse("2026-09-15T12:00:00.000Z") }, {
+    debugEnabled: false,
+    studioSecret: "ops-test-secret",
+    studioContentPath,
+  });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const boot = await api(running.base, "/api/bootstrap", { studio: "ops-test-secret" });
+  assert.equal(boot.status, 200);
+  assert.equal(boot.body.studioContent.studioEnabled, true);
+  const token = boot.body.token;
+  const denied = await api(running.base, "/api/studio/config", {
+    token,
+    method: "POST",
+    body: { revealTiming: { quote: 1, party: 2, name: 3, portrait: 4 } },
+  });
+  assert.equal(denied.status, 404);
+  const saved = await api(running.base, "/api/studio/config", {
+    token,
+    studio: "ops-test-secret",
+    method: "POST",
+    body: {
+      revealTiming: { quote: 80, party: 0, name: 600, portrait: 400 },
+      releaseSets: [{ id: "party-slot-2", runtimeState: "active", runtimeAvailableFrom: "2026-09-15T00:00:00.000Z" }],
+    },
+  });
+  assert.equal(saved.status, 200);
+  assert.equal(saved.body.releaseSets.find(({ id }) => id === "party-slot-2").runtimeState, "active");
+  const cardId = boot.body.catalog.cards.find(({ idleEligible }) => idleEligible).id;
+  const unlocked = await api(running.base, "/api/debug/unlock-card", {
+    token,
+    studio: "ops-test-secret",
+    method: "POST",
+    body: { cardId },
+  });
+  assert.equal(unlocked.status, 200);
+  assert.equal(unlocked.body.inventory[cardId], 1);
+});
+
 test("quiz routes stay closed unless explicitly enabled", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-quiz-off-"));
   const clock = { value: Date.parse("2026-09-15T12:00:00.000Z") };
@@ -851,7 +916,20 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const pool = new pg.Pool({ connectionString: databaseUrl });
   try {
     await pool.query("SELECT 1");
-    await pool.query("DROP TABLE IF EXISTS kalpi_runtime_state, kalpi_schema_migrations");
+    await pool.query(`
+      DROP TABLE IF EXISTS
+        kalpi_studio_config,
+        kalpi_events,
+        kalpi_trades,
+        kalpi_packs,
+        kalpi_instances,
+        kalpi_inventory,
+        kalpi_factions,
+        kalpi_sessions,
+        kalpi_runtime_state,
+        kalpi_schema_migrations
+      CASCADE
+    `);
   } finally {
     await pool.end();
   }
@@ -863,6 +941,8 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const health = await api(first.base, "/api/health");
   assert.equal(health.status, 200);
   assert.equal(health.body.backend, "postgres");
+  const cardId = (await api(first.base, "/api/catalog")).body.cards.find(({ idleEligible }) => idleEligible).id;
+  await api(first.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId } });
   await first.close();
   const second = await start(dataDir, clock, { databaseUrl });
   t.after(async () => {
@@ -872,5 +952,6 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const state = await api(second.base, "/api/state", { token });
   assert.equal(state.status, 200);
   assert.ok(state.body.displayName);
+  assert.equal(state.body.inventory[cardId], 1);
   assert.equal(state.body.quizAvailable, false);
 });

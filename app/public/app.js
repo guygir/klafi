@@ -1,6 +1,7 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
+const STUDIO_KEY = "kalpi-studio-secret";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -168,6 +169,8 @@ const elements = {
   studioSponsor: document.querySelector("#studio-sponsor"),
   studioViewpoint: document.querySelector("#studio-viewpoint"),
   studioReleaseStatus: document.querySelector("#studio-release-status"),
+  studioReleaseSets: document.querySelector("#studio-release-sets"),
+  saveReleaseSets: document.querySelector("#save-release-sets"),
   debugClock: document.querySelector("#debug-clock"),
   headerDebugReset: document.querySelector("#header-debug-reset"),
   runGuidedDemo: document.querySelector("#run-guided-demo"),
@@ -268,11 +271,25 @@ function applyVisualConfig() {
   queueCardTextFit(app);
 }
 
+function studioSecret() {
+  return localStorage.getItem(STUDIO_KEY);
+}
+
+function captureStudioSecret() {
+  const url = new URL(location.href);
+  const key = url.searchParams.get("studioKey");
+  if (!key) return;
+  localStorage.setItem(STUDIO_KEY, key);
+  url.searchParams.delete("studioKey");
+  history.replaceState({}, "", url);
+}
+
 async function request(path, options = {}) {
   const response = await fetch(path, {
     ...options,
     headers: {
       ...(model.token ? { authorization: `Bearer ${model.token}` } : {}),
+      ...(studioSecret() ? { "x-kalpi-studio": studioSecret() } : {}),
       ...options.headers,
     },
   });
@@ -304,9 +321,13 @@ async function ensureSession() {
 
 async function bootstrap() {
   showView("loading");
+  captureStudioSecret();
   try {
-    await ensureSession();
     const boot = await request("/api/bootstrap");
+    if (boot.token) {
+      model.token = boot.token;
+      localStorage.setItem(SESSION_KEY, boot.token);
+    }
     const { cards } = boot.catalog;
     model.editorial = boot.editorial;
     model.activity = boot.activity;
@@ -314,6 +335,9 @@ async function bootstrap() {
     model.gameConfig = boot.gameConfig;
     document.querySelectorAll("[data-debug-only]").forEach((element) => {
       element.hidden = !boot.studioContent?.debugEnabled;
+    });
+    document.querySelectorAll("[data-studio-only]").forEach((element) => {
+      element.hidden = !boot.studioContent?.studioEnabled;
     });
     applyVisualConfig();
     model.leaderboards = boot.leaderboards;
@@ -1411,7 +1435,7 @@ function renderBinder() {
     if (!count) {
       return `<div class="binder-slot" aria-label="${escapeHtml(cardCode(card))} חסר">
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
-        ${model.editorial?.debugEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">unlock</button>` : ""}
+        ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">unlock</button>` : ""}
       </div>`;
     }
     const favorite = favorites.has(card.id);
@@ -1924,6 +1948,41 @@ function populateLevelIncrements() {
       <input type="number" min="0" max="20" data-level-increment="${escapeHtml(set.id)}" value="${increments[set.id] ?? 0}" />
     </label>`).join("")}
     <p class="work-note">Max level = sum of increments for sets that are currently idle-eligible. First set ${increments["party-leaders"] ?? 5}; each later set adds its own increment.</p>`;
+  populateReleaseSets();
+}
+
+function populateReleaseSets() {
+  if (!elements.studioReleaseSets) return;
+  const sets = model.gameConfig.releaseSets || [];
+  elements.studioReleaseSets.innerHTML = sets.map((set) => `
+    <label class="studio-release-row">
+      <b>${escapeHtml(set.nameHe)}</b>
+      <select data-release-state="${escapeHtml(set.id)}">
+        <option value="held"${set.runtimeState === "held" ? " selected" : ""}>held</option>
+        <option value="active"${set.runtimeState === "active" ? " selected" : ""}>active</option>
+      </select>
+      <input data-release-from="${escapeHtml(set.id)}" type="datetime-local" value="${escapeHtml(toDatetimeLocal(set.runtimeAvailableFrom || set.plannedPublishAt))}" />
+    </label>`).join("");
+}
+
+function toDatetimeLocal(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function readStudioReleaseSets() {
+  return (model.gameConfig.releaseSets || []).map((set) => {
+    const state = elements.studioReleaseSets?.querySelector(`[data-release-state="${CSS.escape(set.id)}"]`)?.value;
+    const from = elements.studioReleaseSets?.querySelector(`[data-release-from="${CSS.escape(set.id)}"]`)?.value;
+    return {
+      id: set.id,
+      runtimeState: state === "active" ? "active" : "held",
+      runtimeAvailableFrom: from ? new Date(from).toISOString() : null,
+    };
+  });
 }
 
 function readStudioProgression() {
@@ -1952,6 +2011,7 @@ async function saveVisualConfig() {
         revealTiming: readStudioRevealDelays(),
         visual,
         progression: readStudioProgression(),
+        releaseSets: readStudioReleaseSets(),
       }),
     });
     applyVisualConfig();
@@ -1977,6 +2037,7 @@ async function saveRevealDelays() {
         revealTiming,
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
+        releaseSets: readStudioReleaseSets(),
       }),
     });
     populateRevealTimingInputs();
@@ -2117,7 +2178,7 @@ function studioCardMarkup(party, member, card) {
         ${studioField("Review status", "review.contentStatus", card.review?.contentStatus, { type: "select", options: ["blank", "researched", "review-needed", "reviewed", "approved", "rejected"] })}
       </div>
       <div class="studio-card-actions">
-        <button type="button" data-save-studio-card="${card.id}"${model.studioContent.debugEnabled ? "" : " disabled"}>Save card</button>
+        <button type="button" data-save-studio-card="${card.id}"${model.studioContent.studioEnabled ? "" : " disabled"}>Save card</button>
         <button type="button" data-copy-studio-card="${card.id}"${populated ? "" : " disabled"}>Copy Weave prompt</button>
         ${card.quote.sourceUrl ? `<a href="${escapeHtml(card.quote.sourceUrl)}" target="_blank" rel="noopener">Inspect source ↗</a>` : ""}
       </div>
@@ -2232,7 +2293,7 @@ function specialStudioCardMarkup(card) {
         ${specialStudioField("Review status", "contentStatus", card.contentStatus, { type: "select", options: ["draft", "review-needed", "approved", "rejected"] })}
       </div>
       <div class="studio-card-actions">
-        <button type="button" data-save-studio-special="${card.id}"${model.studioContent?.debugEnabled ? "" : " disabled"}>Save live card</button>
+        <button type="button" data-save-studio-special="${card.id}"${model.studioContent?.studioEnabled ? "" : " disabled"}>Save live card</button>
         <a href="${escapeHtml(card.sourceUrl)}" target="_blank" rel="noopener">Inspect source ↗</a>
       </div>
       <p class="concept-note">Fact cards retain their source, measurement unit and caveat in the live runtime record.</p>
@@ -2370,6 +2431,7 @@ async function saveLevelIncrements() {
         revealTiming: readStudioRevealDelays(),
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
+        releaseSets: readStudioReleaseSets(),
       }),
     });
     populateLevelIncrements();
@@ -2443,6 +2505,27 @@ function exportAllQuotes() {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   showToast(`Exported ${rows.length} quote rows for Excel.`);
+}
+
+async function saveReleaseSets() {
+  try {
+    model.gameConfig = await request("/api/studio/config", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        revealTiming: readStudioRevealDelays(),
+        visual: readStudioVisualConfig(),
+        progression: readStudioProgression(),
+        releaseSets: readStudioReleaseSets(),
+      }),
+    });
+    populateReleaseSets();
+    renderHome();
+    renderBinder();
+    showToast("Release calendar published.");
+  } catch (error) {
+    showToast(error.status === 404 ? "Studio configuration is disabled without the ops key." : "Could not publish the set calendar.");
+  }
 }
 
 function renderStudio() {
@@ -3057,6 +3140,7 @@ Object.values(revealDelayInputs()).forEach((input) => input.addEventListener("ch
 Object.values(visualConfigInputs()).forEach((input) => input.addEventListener("change", saveVisualConfig));
 elements.levelIncrements?.addEventListener("change", saveLevelIncrements);
 elements.levelExponent?.addEventListener("change", saveLevelIncrements);
+elements.saveReleaseSets?.addEventListener("click", saveReleaseSets);
 elements.studioPartyTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-studio-party]");
   if (!button) return;

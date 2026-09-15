@@ -12,5 +12,8 @@
       "includeFiles": "{app/data/**,app/server/**}",
       "maxDuration": 10
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/health", "schedule": "0 8 * * *" }
+  ]
 }

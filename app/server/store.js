@@ -74,6 +74,18 @@ export class JsonStore {
     return { ok: true, backend: "json" };
   }
 
+  async hydrateSession(token) {
+    return this.getSession(token);
+  }
+
+  async getStudioConfig() {
+    return null;
+  }
+
+  async saveStudioConfig() {
+    return null;
+  }
+
   async createSession(now) {
     return this.exclusive(async () => {
       const token = randomUUID();
@@ -131,7 +143,7 @@ export class JsonStore {
     });
   }
 
-  activitySummary() {
+  async activitySummary() {
     const counts = {};
     const sessions = new Set();
     for (const event of this.state.analytics.events) {
@@ -299,7 +311,7 @@ export class JsonStore {
     });
   }
 
-  listTrades(token) {
+  async listTrades(token) {
     const current = this.getSession(token);
     return this.state.trades
       .filter((trade) => trade.status === "open" || trade.ownerToken === token || trade.acceptedBy === token)
@@ -318,7 +330,7 @@ export class JsonStore {
       });
   }
 
-  leaderboardSummary(cards = [], now = Date.now(), currentToken = null) {
+  async leaderboardSummary(cards = [], now = Date.now(), currentToken = null) {
     const cardsById = new Map(cards.map((card) => [card.id, card]));
     const allCollectors = Object.entries(this.state.sessions)
       .map(([token, session]) => ({

@@ -9,6 +9,7 @@
   - `DATABASE_SSL=1`
   - `DATABASE_POOL_SIZE=5`
   - `NODE_ENV=production`, `KALPI_DEBUG=0`, `QUIZ_ENABLED=0`
+  - Optional `STUDIO_SECRET` to open Studio unlock + set calendar in production (send as `x-kalpi-studio`, or open `/?studioKey=...` once). Leave unset to keep Studio closed.
 
 The [Dockerfile](../../Dockerfile) remains the local/container path. Koyeb is a documented spare if we want an always-on Nano later.
 
@@ -19,7 +20,7 @@ The [Dockerfile](../../Dockerfile) remains the local/container path. Koyeb is a 
 - HTTPS at the edge (Vercel).
 - Error-log collection keyed by the `x-request-id` response header.
 
-The current PostgreSQL adapter replaces the local file and provides a cross-process row lock for atomic game operations. It intentionally keeps the PoC state shape in one JSONB row for migration safety. Treat that as an initial launch adapter, not an unlimited-scale schema: load-test it, cap the first cohort, then normalize sessions, inventory, instances, trades and analytics before broad acquisition.
+The PostgreSQL adapter now keeps player writes on their own tables (`kalpi_sessions`, inventory, instances, packs, trades, events, factions). A leftover `kalpi_runtime_state` JSONB row is imported once, then ignored. Studio release/unlock config persists in `kalpi_studio_config`. Guest play still uses the browser token; account bind is optional and not required.
 
 ## Required environment
 
@@ -54,7 +55,8 @@ Local defaults live in [`.env.example`](../../.env.example) (`kalpi` / `change-m
    - `NODE_ENV=production`
    - `KALPI_DEBUG=0`
    - `QUIZ_ENABLED=0`
-3. Deploy from `main`. First function boot runs the Postgres migration.
+  - `STUDIO_SECRET` only if you want production Studio (unlock cards, flip release sets)
+3. Deploy from `main`. First function boot runs the Postgres migrations, including the normalized writer tables.
 4. Confirm `https://<project>.vercel.app/api/health` returns `{"status":"ok","backend":"postgres"}`.
 5. Confirm a new session can settle one idle card and reload it.
 6. Confirm Studio and `/api/quiz` stay closed. Confirm `KALPI_DEBUG` routes stay 404.
