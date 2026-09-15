@@ -3,8 +3,11 @@
   "framework": null,
   "installCommand": "npm ci --prefix app",
   "buildCommand": "node scripts/prepare-vercel-static.mjs",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api?__kalpi_path=/api/:path*" }
+  ],
   "functions": {
-    "api/[...path].js": {
+    "api/index.js": {
       "includeFiles": "{app/data/**,app/server/**}",
       "maxDuration": 10,
       "memory": 1024
