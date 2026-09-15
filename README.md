@@ -90,7 +90,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 
 **Mandatory / production first**
 1. [x] GitHub repo https://github.com/guygir/klafi + local PostgreSQL store (`DATABASE_URL`, docker-compose, persist-across-restart test).
-2. Public URL https://klafi.vercel.app (Vercel Hobby). Needs Supabase `DATABASE_URL` (session pooler `:5432`) in Vercel env before `/api` works.
+2. [x] Public URL https://klafi.vercel.app (Vercel Hobby + Supabase session pooler). `/api/health` is `backend=postgres`. Quiz and debug stay off.
 3. Production advocacy identity configured for live.
 4. CEC / rights / likeness / source approval (release blockers).
 5. Account recovery, moderation, public rate limits.
