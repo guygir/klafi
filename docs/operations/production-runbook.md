@@ -25,7 +25,7 @@ The current PostgreSQL adapter replaces the local file and provides a cross-proc
 
 - `NODE_ENV=production`
 - `DATABASE_URL`
-- `DATABASE_SSL=1` when the provider supplies a trusted TLS certificate
+- `DATABASE_SSL=1` to require TLS. Supabase pooler uses a chain Node rejects with verify-full, so the adapter encrypts without CA pin.
 - `DATABASE_POOL_SIZE=5` on Vercel (keep local at 10)
 - `KALPI_DEBUG=0`
 

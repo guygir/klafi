@@ -13,7 +13,7 @@ export class PostgresStore extends JsonStore {
     super("postgres://kalpi-runtime-state");
     this.pool = new Pool({
       connectionString,
-      ssl: ssl ? { rejectUnauthorized: true } : undefined,
+      ssl: ssl ? { rejectUnauthorized: false } : undefined,
       max: Number(process.env.DATABASE_POOL_SIZE || 10),
     });
     this.activeClient = null;
