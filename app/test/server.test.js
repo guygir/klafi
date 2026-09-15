@@ -913,9 +913,18 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const databaseUrl = process.env.KALPI_TEST_DATABASE_URL
     || "postgresql://kalpi:change-me@127.0.0.1:5432/kalpi_test";
   const { default: pg } = await import("pg");
-  const pool = new pg.Pool({ connectionString: databaseUrl });
+  const pool = new pg.Pool({ connectionString: databaseUrl, connectionTimeoutMillis: 2000 });
   try {
     await pool.query("SELECT 1");
+  } catch (error) {
+    await pool.end().catch(() => {});
+    if (["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN"].includes(error.code)) {
+      t.skip("Postgres is not available");
+      return;
+    }
+    throw error;
+  }
+  try {
     await pool.query(`
       DROP TABLE IF EXISTS
         kalpi_studio_config,
