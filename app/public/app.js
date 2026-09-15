@@ -162,6 +162,7 @@ const elements = {
   collectorBoard: document.querySelector("#collector-board"),
   dailyChallengeTitle: document.querySelector("#daily-challenge-title"),
   dailyChallengeLeaderArt: document.querySelector("#daily-challenge-leader-art"),
+  dailyChallengeRecap: document.querySelector("#daily-challenge-recap"),
   dailyChallengeBoard: document.querySelector("#daily-challenge-board"),
   specialsGrid: document.querySelector("#specials-grid"),
   studioSponsor: document.querySelector("#studio-sponsor"),
@@ -803,6 +804,54 @@ function partyDisplayName(partyId, fallback = "הסיעה היומית") {
   return fromCatalog || partyId;
 }
 
+function challengeRecap() {
+  const leaders = model.leaderboards?.dailyChallenge?.leaders || [];
+  const current = leaders.find(({ current }) => current);
+  const ranked = [...leaders].sort((a, b) => b.cards - a.cards);
+  const place = current ? ranked.findIndex((entry) => entry.current) + 1 : null;
+  const counts = leaders.map(({ cards }) => Number(cards) || 0);
+  const peak = Math.max(0, ...counts);
+  const lastBin = Math.min(4, Math.max(peak, 1));
+  const binFor = (value) => (lastBin === 4 && peak > 4 && value >= 4 ? 4 : value);
+  const bins = Array.from({ length: lastBin + 1 }, (_, cards) => ({
+    label: cards === 4 && peak > 4 ? "4+" : String(cards),
+    count: counts.filter((value) => binFor(value) === cards).length,
+    you: Boolean(current && binFor(current.cards) === cards),
+  }));
+  const field = Math.max(1, ...bins.map(({ count }) => count));
+  const meta = current
+    ? `${current.cards} קלפים · מקום ${place}`
+    : "עוד לא משכתם מהסיעה";
+  return { current, place, bins, field, meta, players: leaders.length };
+}
+
+function renderChallengeRecap() {
+  if (!elements.dailyChallengeRecap) return;
+  const recap = challengeRecap();
+  elements.dailyChallengeRecap.hidden = false;
+  elements.dailyChallengeRecap.style.setProperty("--bins", String(recap.bins.length));
+  const score = recap.current ? recap.current.cards : 0;
+  const place = recap.place
+    ? `מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`
+    : "עוד לא בטבלה";
+  elements.dailyChallengeRecap.innerHTML = `
+    <div class="challenge-recap-score">
+      <small>היום אספתם מהסיעה</small>
+      <strong>${score}<span>קלפים</span></strong>
+      <b class="challenge-recap-place">${escapeHtml(place)}</b>
+    </div>
+    <div class="challenge-hist">
+      <small>איך כולם משכו היום</small>
+      <div class="challenge-hist-plot" aria-hidden="true">
+        ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
+          <b style="height:${Math.max(8, Math.round((bin.count / recap.field) * 100))}%; animation-delay:${index * 45}ms"></b>
+        </div>`).join("")}
+      </div>
+      <div class="challenge-hist-axis">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
+    </div>
+  `;
+}
+
 function renderTodayDocket() {
   if (!elements.todayChallengeHook) return;
   const challenge = model.leaderboards?.dailyChallenge;
@@ -826,7 +875,8 @@ function renderTodayDocket() {
     elements.todayChallengeVisual.innerHTML = artMarkup(challengeCard, true);
   }
   elements.todayChallengeHook.textContent = challengeParty;
-  elements.todayChallengeMeta.textContent = "";
+  const recap = challengeRecap();
+  elements.todayChallengeMeta.textContent = recap.meta;
 
   const activeEvent = model.events.find((event) => event.active);
   elements.todayEventHook.textContent = activeEvent ? `${activeEvent.nameHe} פתוח` : "האירוע הבא בדרך";
@@ -1137,8 +1187,10 @@ async function handlePackAction() {
         showToast("הקלף נוסף לאוסף.");
       }
     } else {
+      model.leaderboards = await request("/api/leaderboards");
       renderHome();
       renderBinder();
+      renderGrowth();
       showView("binder");
       recordEvent("binder_reached", { packId: model.currentPack.packId });
       renderProgression({ announce: true });
@@ -1736,6 +1788,7 @@ function renderGrowth() {
   elements.dailyChallengeLeaderArt.innerHTML = challengeLeaderCard ? artMarkup(challengeLeaderCard, true) : "";
   elements.dailyChallengeLeaderArt.style.setProperty("--pip", challengeLeaderCard?.pip || "#1f4f4a");
   elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
+  renderChallengeRecap();
   elements.dailyChallengeBoard.innerHTML = challenge?.leaders?.length
     ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="${entry.current ? "current-player" : ""}"><span>${index + 1}. ${escapeHtml(entry.label)}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
     : '<p class="work-note">עוד אין משיכות מהסיעה היומית.</p>';
@@ -2971,7 +3024,9 @@ for (const preview of [elements.tradeOfferedPreview, elements.tradeWantedPreview
 document.querySelector(".today-docket").addEventListener("click", (event) => {
   const hook = event.target.closest("[data-today-nav]");
   if (!hook) return;
+  if (hook.dataset.communityPage) model.communityPage = hook.dataset.communityPage;
   elements.navButtons.find((button) => button.dataset.nav === hook.dataset.todayNav)?.click();
+  if (hook.dataset.communityPage) renderGrowth();
 });
 elements.tradeOfferedSet.addEventListener("change", renderGrowth);
 elements.tradeWantedSet.addEventListener("change", renderGrowth);

@@ -3005,7 +3005,159 @@ body {
   font-weight: 600;
 }
 
+.challenge-recap {
+  display: grid;
+  gap: 14px;
+  margin: 12px 0 16px;
+}
+
+.challenge-recap-score {
+  display: grid;
+  gap: 6px;
+}
+
+.challenge-recap-score small {
+  color: var(--civic);
+  font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.challenge-recap-score strong {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--ink);
+  font-family: "Noto Serif Hebrew", "Fraunces", serif;
+  font-size: clamp(44px, 12vw, 64px);
+  font-weight: 600;
+  line-height: 0.9;
+}
+
+.challenge-recap-score strong span {
+  color: rgba(26, 31, 28, 0.62);
+  font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.challenge-recap-place {
+  justify-self: start;
+  padding: 4px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.challenge-hist {
+  display: grid;
+  gap: 8px;
+}
+
+.challenge-hist > small {
+  color: rgba(26, 31, 28, 0.62);
+  font-size: 11px;
+}
+
+.challenge-hist-plot {
+  display: grid;
+  grid-template-columns: repeat(var(--bins, 5), minmax(0, 1fr));
+  align-items: end;
+  gap: 6px;
+  min-height: 92px;
+  padding-top: 22px;
+}
+
+.challenge-hist-col {
+  position: relative;
+  display: grid;
+  align-items: end;
+  min-height: 92px;
+}
+
+.challenge-hist-col b {
+  display: block;
+  width: 100%;
+  min-height: 4px;
+  border-radius: 3px 3px 0 0;
+  background: #9aa39b;
+  transform: scaleY(0.08);
+  transform-origin: bottom;
+  animation: challenge-bar-rise 720ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.challenge-hist-col.you b {
+  background: var(--civic);
+}
+
+.challenge-hist-col.you::before {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  color: var(--ink);
+  font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  content: "אתם";
+  transform: translateX(-50%);
+  animation: challenge-you-mark 420ms 280ms both;
+}
+
+.challenge-hist-col.you::after {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 1px;
+  height: 10px;
+  background: var(--ink);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.challenge-hist-axis {
+  display: grid;
+  grid-template-columns: repeat(var(--bins, 5), minmax(0, 1fr));
+  gap: 6px;
+  color: rgba(26, 31, 28, 0.5);
+  font-size: 10px;
+  text-align: center;
+}
+
+@keyframes challenge-bar-rise {
+  from { transform: scaleY(0.08); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes challenge-you-mark {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .challenge-hist-col b,
+  .challenge-hist-col.you::before {
+    animation: none;
+  }
+  .challenge-hist-col b { transform: none; }
+}
+
 @media (max-width: 520px) {
+  .daily-challenge-desk {
+    padding: 16px !important;
+  }
+  .daily-challenge-leader-art {
+    position: static;
+    width: 72px;
+    margin: 0 0 12px;
+  }
+  .challenge-recap-score strong {
+    font-size: 52px;
+  }
   .app-shell.home-active .level-strip {
     grid-template-columns: minmax(128px, 148px) minmax(0, 1fr) 34px;
   }

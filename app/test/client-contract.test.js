@@ -121,6 +121,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function partyRegister/);
   assert.match(javascript, /model\.gameConfig\?\.parties/);
   assert.match(javascript, /targetPartyNameHe/);
+  assert.match(javascript, /function challengeRecap/);
+  assert.match(javascript, /function renderChallengeRecap/);
+  assert.match(html, /id="daily-challenge-recap"/);
   assert.match(html, /id="today-challenge-hook"/);
   assert.match(html, /id="today-event-hook"/);
   assert.match(html, /id="today-leader-hook"/);
