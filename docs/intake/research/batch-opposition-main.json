@@ -1,0 +1,909 @@
+{
+  "members": [
+    {
+      "partyId": "YB",
+      "slot": 1,
+      "nameHe": "אביגדור ליברמן",
+      "nameEn": "Avigdor Lieberman",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://main.knesset.gov.il/mk/Apps/mk/mk-personal-details/214",
+        "license": "unknown",
+        "status": "identity-verified-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "חיפה חייבת להפוך להיות פרויקט לאומי. צריך לפתח פרויקטים חדשים של תעסוקה ועתיד לצעירים.",
+          "displayText": "חיפה חייבת להפוך לפרויקט לאומי — תעסוקה ועתיד לצעירים.",
+          "translation": "Haifa must become a national project. We need new projects for employment and a future for young people.",
+          "quoteStatus": "verified",
+          "speaker": "אביגדור ליברמן",
+          "date": "2025-09-03",
+          "sourceUrl": "https://news.walla.co.il/item/3777962",
+          "sourceTitle": "ליברמן מזהיר: \"ישראל עוברת לבנוניציה\"",
+          "publisher": "וואלה חדשות",
+          "sourceType": "recorded-conference-report",
+          "sourceQuality": "direct-quote-reliable-secondary",
+          "context": "Remarks at the Haifa metropolitan economic-future conference; the following sentence proposed making Haifa airport international.",
+          "sourceLocation": "Final paragraph of report",
+          "discoverySources": [
+            "https://news.walla.co.il/item/3777962"
+          ],
+          "editorialRole": "constructive-regional-development",
+          "selectionRationale": "A concrete, locally grounded promise focused on jobs and young residents.",
+          "scene": "Haifa skyline, port cranes and young commuters at sunrise",
+          "flavor": "Northern renewal",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "עד המערכה הבאה מול איראן יש לנו מקסימום שלוש שנים - זה אומר שממשלת ישראל חייבת לשנות את כל סדרי העדיפויות.",
+          "displayText": "ממשלת ישראל חייבת לשנות את כל סדרי העדיפויות.",
+          "translation": "We have at most three years until the next campaign against Iran—this means Israel's government must change all of its priorities.",
+          "quoteStatus": "verified",
+          "speaker": "אביגדור ליברמן",
+          "date": "2025-06-30",
+          "sourceUrl": "https://news.walla.co.il/break/3761552",
+          "sourceTitle": "ליברמן: \"עד המערכה הבאה מול איראן יש מקסימום 3 שנים\"",
+          "publisher": "וואלה חדשות",
+          "sourceType": "Knesset-plenary-report",
+          "sourceQuality": "direct-quote-reliable-secondary",
+          "context": "Knesset plenary remarks introducing a proposal to rewrite the budget and set a protected defense-spending target.",
+          "sourceLocation": "Opening quotation",
+          "discoverySources": [
+            "https://news.walla.co.il/break/3761552"
+          ],
+          "editorialRole": "strategic-preparedness",
+          "selectionRationale": "Shows forward planning and a willingness to reprioritize government around a stated security assessment.",
+          "scene": "Planning table with a three-year horizon and restrained defense motifs",
+          "flavor": "The preparedness clock",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "אנחנו עם פוטנציאל אדיר. אם תהיה פה הנהגה נכונה, תוך חמש־שש שנים אנחנו יכולים לעבור את שווייץ מבחינת רמת חיים וחוסן כלכלי.",
+          "displayText": "אנחנו עם פוטנציאל אדיר.",
+          "translation": "We are a people with enormous potential. With the right leadership, within five or six years we can surpass Switzerland in living standards and economic resilience.",
+          "quoteStatus": "verified",
+          "speaker": "אביגדור ליברמן",
+          "date": "2025-11-13",
+          "sourceUrl": "https://www.grantthornton.co.il/media-centre-page/2025/failed_manager_the_company_will_collapse/",
+          "sourceTitle": "ליברמן: אנחנו יכולים לעבור את רמת החיים של שווייץ",
+          "publisher": "Grant Thornton Israel",
+          "sourceType": "conference-summary",
+          "sourceQuality": "direct-quote-event-host",
+          "context": "Macroeconomic remarks at a Grant Thornton Israel conference; the next sentence warned that continued current management would instead produce decline.",
+          "sourceLocation": "Macroeconomic outlook section",
+          "discoverySources": [
+            "https://www.grantthornton.co.il/media-centre-page/2025/failed_manager_the_company_will_collapse/",
+            "https://finance.walla.co.il/item/3794150"
+          ],
+          "editorialRole": "optimistic-economic-vision",
+          "selectionRationale": "The strongest affirmative expression of national economic possibility, retained with its leadership condition.",
+          "scene": "An upward civic-economic horizon with homes, research and industry",
+          "flavor": "Potential made practical",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Three attributable, context-preserving selections spanning regional development, strategic planning and economic optimism. The Switzerland comparison is an aspiration, not a verified forecast."
+    },
+    {
+      "partyId": "YB",
+      "slot": 2,
+      "nameHe": "רפי בן שטרית",
+      "nameEn": "Rafi Ben Shitrit",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://www.ynet.co.il/news/article/yokra14725012",
+        "license": "unknown",
+        "status": "identity-verified-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "7 באוקטובר זו נקודת משבר אישית ולאומית.",
+          "displayText": "7 באוקטובר זו נקודת משבר אישית ולאומית.",
+          "translation": "October 7 is a personal and national point of crisis.",
+          "quoteStatus": "verified",
+          "speaker": "רפי בן שטרית",
+          "date": "2026-03-30",
+          "sourceUrl": "https://www.ynet.co.il/news/article/yokra14725012",
+          "sourceTitle": "מהליכוד לישראל ביתנו: רפי בן שטרית ששכל את בנו ב-7/10 ירוץ לכנסת",
+          "publisher": "ynet",
+          "sourceType": "reported-statement",
+          "sourceQuality": "direct-quote-reliable-secondary",
+          "context": "Opening of a statement about the death of his son Elroy at Nahal Oz and his work to establish a state commission of inquiry.",
+          "sourceLocation": "First quoted statement",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/article/yokra14725012"
+          ],
+          "editorialRole": "public-service-motivation",
+          "selectionRationale": "Plainly states the personal and civic origin of his public campaign without exploiting the surrounding bereavement.",
+          "scene": "Quiet civic memorial transitioning into a public forum",
+          "flavor": "Grief into duty",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "המניע שלי לבוא הוא קודם כל כדי לוודא שתקום ועדת חקירה ממלכתית.",
+          "displayText": "לוודא שתקום ועדת חקירה ממלכתית.",
+          "translation": "My primary motive for entering is to ensure that a state commission of inquiry is established.",
+          "quoteStatus": "verified",
+          "speaker": "רפי בן שטרית",
+          "date": "2026-03-30",
+          "sourceUrl": "https://www.ynet.co.il/news/article/yokra14725012",
+          "sourceTitle": "מהליכוד לישראל ביתנו: רפי בן שטרית ששכל את בנו ב-7/10 ירוץ לכנסת",
+          "publisher": "ynet",
+          "sourceType": "reported-statement",
+          "sourceQuality": "direct-quote-reliable-secondary",
+          "context": "His stated reason for entering national politics after co-founding the October Council.",
+          "sourceLocation": "Penultimate quoted paragraph",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/article/yokra14725012"
+          ],
+          "editorialRole": "accountability",
+          "selectionRationale": "A specific and testable public-purpose commitment.",
+          "scene": "Open inquiry files beneath a formal state seal motif",
+          "flavor": "Answers owed",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "מי שלא רצה אותי ביציע יקבל אותי במליאה.",
+          "displayText": "מי שלא רצה אותי ביציע יקבל אותי במליאה.",
+          "translation": "Those who did not want me in the gallery will get me in the plenary.",
+          "quoteStatus": "verified",
+          "speaker": "רפי בן שטרית",
+          "date": "2026-04-30",
+          "sourceUrl": "https://www.ynet.co.il/news/120andone/article/r1t0pg3eml",
+          "sourceTitle": "רפי בן שטרית רץ לכנסת: \"המחנה הלאומי זה אני\"",
+          "publisher": "ynet",
+          "sourceType": "recorded-podcast-interview",
+          "sourceQuality": "primary-recording-with-transcript",
+          "context": "Said after describing the March 2025 attempt by bereaved families to attend a Knesset debate on a commission of inquiry and the decision to move the campaign into electoral politics.",
+          "sourceLocation": "Discussion of the October Council's Knesset protest",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/120andone/article/r1t0pg3eml",
+            "https://omny.fm/shows/120veahat/5moran"
+          ],
+          "editorialRole": "democratic-persistence",
+          "selectionRationale": "Memorable but accurately contextualized expression of moving from protest to parliamentary participation.",
+          "scene": "A public gallery sightline opening toward the Knesset plenary",
+          "flavor": "From gallery to floor",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "The first two quotes come from the same announcement because they cleanly establish motivation and policy objective. The podcast date follows the publisher's April 2026 episode sequence; recheck page metadata before publication if day-level precision is critical."
+    },
+    {
+      "partyId": "YB",
+      "slot": 3,
+      "nameHe": "טליה לנקרי",
+      "nameEn": "Talia Lankri",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://www.forumdvorah.org.il/expert/talyal",
+        "license": "unknown",
+        "status": "identity-verified-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "לאחר 7 באוקטובר הבנתי שאין לי את הפריווילגיה לשבת מהצד וחייבים להשיב את הביטחון ולהשפיע על תהליכי קבלת ההחלטות.",
+          "displayText": "אין לי את הפריווילגיה לשבת מהצד.",
+          "translation": "After October 7, I understood that I do not have the privilege of sitting on the sidelines; security must be restored and decision-making processes influenced.",
+          "quoteStatus": "verified",
+          "speaker": "טליה לנקרי",
+          "date": "2026-07-08",
+          "sourceUrl": "https://www.mako.co.il/news-israel-elections/2026/Article-a80c93951124f91027.htm",
+          "sourceTitle": "אל\"מ במיל' טליה לנקרי, בכירה לשעבר במל\"ל מצטרפת לישראל ביתנו",
+          "publisher": "N12",
+          "sourceType": "candidate-statement",
+          "sourceQuality": "verbatim-statement-reliable-secondary",
+          "context": "Statement announcing her entry into Yisrael Beiteinu after a military and National Security Council career.",
+          "sourceLocation": "First sentence of candidate statement",
+          "discoverySources": [
+            "https://www.mako.co.il/news-israel-elections/2026/Article-a80c93951124f91027.htm"
+          ],
+          "editorialRole": "call-to-service",
+          "selectionRationale": "A direct explanation of why she moved from professional expertise into electoral politics.",
+          "scene": "A briefing-room chair pulled toward a civic decision table",
+          "flavor": "Step in",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "אני מביאה עמי ניסיון ביטחוני וניהולי של עשרות שנים שאותו אני רוצה לתרגם לעשייה.",
+          "displayText": "לתרגם ניסיון של עשרות שנים לעשייה.",
+          "translation": "I bring decades of security and management experience that I want to translate into action.",
+          "quoteStatus": "verified",
+          "speaker": "טליה לנקרי",
+          "date": "2026-07-08",
+          "sourceUrl": "https://www.mako.co.il/news-israel-elections/2026/Article-a80c93951124f91027.htm",
+          "sourceTitle": "אל\"מ במיל' טליה לנקרי, בכירה לשעבר במל\"ל מצטרפת לישראל ביתנו",
+          "publisher": "N12",
+          "sourceType": "candidate-statement",
+          "sourceQuality": "verbatim-statement-reliable-secondary",
+          "context": "Middle sentence of the same candidacy announcement, following a summary of her operational and policy roles.",
+          "sourceLocation": "Second sentence of candidate statement",
+          "discoverySources": [
+            "https://www.mako.co.il/news-israel-elections/2026/Article-a80c93951124f91027.htm"
+          ],
+          "editorialRole": "experience-to-execution",
+          "selectionRationale": "Constructive, biography-linked claim centered on implementation.",
+          "scene": "Layered planning maps resolving into a completed checklist",
+          "flavor": "Experience in motion",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "המדינה זקוקה היום להנהגה מנוסה, נחושה ואמיצה, שלא חוששת לקבל החלטות קשות כשצריך.",
+          "displayText": "הנהגה מנוסה, נחושה ואמיצה.",
+          "translation": "The country today needs experienced, determined and courageous leadership that is not afraid to make difficult decisions when necessary.",
+          "quoteStatus": "verified",
+          "speaker": "טליה לנקרי",
+          "date": "2026-07-08",
+          "sourceUrl": "https://www.mako.co.il/news-israel-elections/2026/Article-a80c93951124f91027.htm",
+          "sourceTitle": "אל\"מ במיל' טליה לנקרי, בכירה לשעבר במל\"ל מצטרפת לישראל ביתנו",
+          "publisher": "N12",
+          "sourceType": "candidate-statement",
+          "sourceQuality": "verbatim-statement-reliable-secondary",
+          "context": "Closing sentence of her announcement, explaining her choice of political leadership.",
+          "sourceLocation": "Final sentence of candidate statement",
+          "discoverySources": [
+            "https://www.mako.co.il/news-israel-elections/2026/Article-a80c93951124f91027.htm"
+          ],
+          "editorialRole": "leadership-standard",
+          "selectionRationale": "The clearest positive statement of the leadership qualities she seeks to represent.",
+          "scene": "A calm decision room during a storm, with a clear lit route",
+          "flavor": "Courage under pressure",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "All three are distinct sentences from her July 2026 candidacy statement. This avoids repackaging her more divisive coalition comments as favorable material."
+    },
+    {
+      "partyId": "DEM",
+      "slot": 1,
+      "nameHe": "יאיר גולן",
+      "nameEn": "Yair Golan",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://democrats.org.il/",
+        "license": "unknown",
+        "status": "identity-verified-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "ללא משילות, ללא בטחון. מכל המגזרים והקהילות, אף אזרח אינו בטוח.",
+          "displayText": "מכל המגזרים והקהילות — ביטחון לכל אזרח.",
+          "translation": "Without governance, there is no security. Across all sectors and communities, no citizen is safe.",
+          "quoteStatus": "verified",
+          "speaker": "יאיר גולן",
+          "date": "2025-06-02",
+          "sourceUrl": "https://news.walla.co.il/break/3754328",
+          "sourceTitle": "יאיר גולן: \"ללא משילות, ללא ביטחון. אף אזרח אינו בטוח\"",
+          "publisher": "וואלה חדשות",
+          "sourceType": "social-media-statement-report",
+          "sourceQuality": "verbatim-post-reliable-secondary",
+          "context": "Response to a cluster of murders, criticizing the national-security minister and emphasizing insecurity across communities.",
+          "sourceLocation": "Quoted X post",
+          "discoverySources": [
+            "https://news.walla.co.il/break/3754328"
+          ],
+          "editorialRole": "equal-public-safety",
+          "selectionRationale": "Frames personal safety as a universal obligation across sectors and communities.",
+          "scene": "Different neighborhoods connected by one protective civic canopy",
+          "flavor": "Safety without sectors",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "אני לא מתכתב עם שמאל או ימין עמוק - אני מתכתב עם ביטחון מדינת ישראל וביטחונה לטווח הארוך.",
+          "displayText": "אני מתכתב עם ביטחון מדינת ישראל לטווח הארוך.",
+          "translation": "I am not taking my cues from the deep left or deep right—I am taking my cues from the security of the State of Israel and its long-term security.",
+          "quoteStatus": "verified",
+          "speaker": "יאיר גולן",
+          "date": "2024-11-08",
+          "sourceUrl": "https://news.walla.co.il/item/3701292",
+          "sourceTitle": "יאיר גולן: \"לנתניהו אין אסטרטגיה\"",
+          "publisher": "וואלה חדשות",
+          "sourceType": "recorded-interview",
+          "sourceQuality": "primary-interview-with-transcript",
+          "context": "Answering criticism from the left over his support for military control of strategic ridgelines in southern Lebanon.",
+          "sourceLocation": "Mid-interview, after Lebanon strategy discussion",
+          "discoverySources": [
+            "https://news.walla.co.il/item/3701292"
+          ],
+          "editorialRole": "pragmatic-security",
+          "selectionRationale": "Defines his security position as outcome-driven rather than camp-driven; context prevents it from being read as pacifist.",
+          "scene": "A compass aligned to a long horizon rather than partisan signposts",
+          "flavor": "Beyond the camps",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "רק הסדרים מדיניים מביאים ביטחון בראייה ארוכת טווח.",
+          "displayText": "רק הסדרים מדיניים מביאים ביטחון בראייה ארוכת טווח.",
+          "translation": "Only diplomatic arrangements bring security in the long term.",
+          "quoteStatus": "verified",
+          "speaker": "יאיר גולן",
+          "date": "2024-11-08",
+          "sourceUrl": "https://news.walla.co.il/item/3701292",
+          "sourceTitle": "יאיר גולן: \"לנתניהו אין אסטרטגיה\"",
+          "publisher": "וואלה חדשות",
+          "sourceType": "recorded-interview",
+          "sourceQuality": "primary-interview-with-transcript",
+          "context": "Said while advocating an end to the fighting in Gaza, hostage return and construction of a post-Hamas governing alternative; elsewhere in the interview he also supported force when needed.",
+          "sourceLocation": "Opening paragraph",
+          "discoverySources": [
+            "https://news.walla.co.il/item/3701292"
+          ],
+          "editorialRole": "diplomacy-as-security",
+          "selectionRationale": "A concise statement of his signature synthesis of military capability and political settlement.",
+          "scene": "A defended horizon becoming a signed regional bridge",
+          "flavor": "The long security",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Selections preserve Golan's force-and-diplomacy combination. The November 2024 interview date should be checked against publisher metadata during final production because the fetched article omitted its dateline."
+    },
+    {
+      "partyId": "DEM",
+      "slot": 2,
+      "nameHe": "נעמה לזימי",
+      "nameEn": "Naama Lazimi",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://main.knesset.gov.il/mk/Apps/mk/mk-personal-details/1094",
+        "license": "unknown",
+        "status": "identity-verified-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "המבחן הגדול שלנו הוא בבניית עתיד של תקווה ושל ביטחון אישי וחברתי.",
+          "displayText": "לבנות עתיד של תקווה וביטחון אישי וחברתי.",
+          "translation": "Our great test is building a future of hope and personal and social security.",
+          "quoteStatus": "verified",
+          "speaker": "נעמה לזימי",
+          "date": "2025-04-10",
+          "sourceUrl": "https://www.maariv.co.il/journalists/opinions/article-1187228",
+          "sourceTitle": "\"יש דור צעיר שלא יודע מה זאת מדינה שלוקחת אחריות\"",
+          "publisher": "מעריב",
+          "sourceType": "signed-op-ed",
+          "sourceQuality": "primary-authored-text",
+          "context": "Her affirmative framing of the democratic protest movement's purpose after describing distrust among younger Israelis.",
+          "sourceLocation": "Second paragraph",
+          "discoverySources": [
+            "https://www.maariv.co.il/journalists/opinions/article-1187228"
+          ],
+          "editorialRole": "hope-and-social-security",
+          "selectionRationale": "A broad positive objective stated in her own authored text.",
+          "scene": "Young families and workers building a shared illuminated neighborhood",
+          "flavor": "A future worth trusting",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "כדי שאנשים יאמינו בשוויון, עלינו להרחיב אותו לשוויון במשאבים ובהזדמנויות.",
+          "displayText": "להרחיב את השוויון למשאבים ולהזדמנויות.",
+          "translation": "For people to believe in equality, we must extend it to equality in resources and opportunities.",
+          "quoteStatus": "verified",
+          "speaker": "נעמה לזימי",
+          "date": "2025-04-10",
+          "sourceUrl": "https://www.maariv.co.il/journalists/opinions/article-1187228",
+          "sourceTitle": "\"יש דור צעיר שלא יודע מה זאת מדינה שלוקחת אחריות\"",
+          "publisher": "מעריב",
+          "sourceType": "signed-op-ed",
+          "sourceQuality": "primary-authored-text",
+          "context": "Part of an argument that democratic resilience depends on education, checks and balances, reduced gaps and access to social services.",
+          "sourceLocation": "Fourth paragraph",
+          "discoverySources": [
+            "https://www.maariv.co.il/journalists/opinions/article-1187228"
+          ],
+          "editorialRole": "material-equality",
+          "selectionRationale": "Connects an abstract value to resource access and opportunity.",
+          "scene": "Balanced paths opening toward schools, clinics and workplaces",
+          "flavor": "Equality made tangible",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "הכוח של מחנה התקווה הוא בלראות את כולם, גם את מי שלא הצביעו עבורו, וגם את מי שלא ניצבים כאן איתנו. לראות את אזרחי ישראל באשר הם.",
+          "displayText": "הכוח הוא בלראות את כולם.",
+          "translation": "The strength of the camp of hope lies in seeing everyone, including those who did not vote for it and those who are not standing here with us—in seeing Israel's citizens wherever they are.",
+          "quoteStatus": "verified",
+          "speaker": "נעמה לזימי",
+          "date": "2025-04-10",
+          "sourceUrl": "https://www.maariv.co.il/journalists/opinions/article-1187228",
+          "sourceTitle": "\"יש דור צעיר שלא יודע מה זאת מדינה שלוקחת אחריות\"",
+          "publisher": "מעריב",
+          "sourceType": "signed-op-ed",
+          "sourceQuality": "primary-authored-text",
+          "context": "Conclusion of her policy argument, immediately before calling this the basis of an all-Israeli partnership.",
+          "sourceLocation": "Closing paragraph",
+          "discoverySources": [
+            "https://www.maariv.co.il/journalists/opinions/article-1187228"
+          ],
+          "editorialRole": "inclusive-solidarity",
+          "selectionRationale": "Her strongest constructive language about governing for non-supporters as well as supporters.",
+          "scene": "A wide civic circle with space deliberately left open",
+          "flavor": "See everyone",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "All three are exact passages from a signed 2025 op-ed, enabling high-confidence wording and context. They are distinct in theme: security, economic equality and political inclusion."
+    },
+    {
+      "partyId": "DEM",
+      "slot": 3,
+      "nameHe": "גלעד קריב",
+      "nameEn": "Gilad Kariv",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://giladkariv.com/about/",
+        "license": "unknown",
+        "status": "identity-verified-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "הדבר היחיד שצריך להעסיק אותנו הוא איך שכחנו את המצווה החשובה ביותר - פדיון שבויים.",
+          "displayText": "המצווה החשובה ביותר — פדיון שבויים.",
+          "translation": "The one thing that should occupy us is how we forgot the most important commandment—the redemption of captives.",
+          "quoteStatus": "verified",
+          "speaker": "גלעד קריב",
+          "date": "2025-06-11",
+          "sourceUrl": "https://www.ynet.co.il/news/120andone/article/r100jzjhmgx",
+          "sourceTitle": "גלעד קריב: \"נתניהו הוא בובה מתנפחת של מנהיגות\"",
+          "publisher": "ynet",
+          "sourceType": "recorded-podcast-interview",
+          "sourceQuality": "primary-recording-with-transcript",
+          "context": "Opening the interview on day 613 after October 7; a Jewish-textual argument for prioritizing hostage return.",
+          "sourceLocation": "Opening answer",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/120andone/article/r100jzjhmgx"
+          ],
+          "editorialRole": "hostage-return-moral-frame",
+          "selectionRationale": "Combines his rabbinic identity with a clear humanitarian priority.",
+          "scene": "An open gate beneath a subtle page of Hebrew text",
+          "flavor": "The first commandment now",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "הנכס הביטחוני האסטרטגי של מדינת ישראל, לצד עוצמתו של צה\"ל, אלה הסכמים מדיניים.",
+          "displayText": "לצד עוצמת צה\"ל — הסכמים מדיניים.",
+          "translation": "Alongside the strength of the IDF, Israel's strategic security asset is diplomatic agreements.",
+          "quoteStatus": "verified",
+          "speaker": "גלעד קריב",
+          "date": "2025-06-11",
+          "sourceUrl": "https://www.ynet.co.il/news/120andone/article/r100jzjhmgx",
+          "sourceTitle": "גלעד קריב: \"נתניהו הוא בובה מתנפחת של מנהיגות\"",
+          "publisher": "ynet",
+          "sourceType": "recorded-podcast-interview",
+          "sourceQuality": "primary-recording-with-transcript",
+          "context": "Answering a challenge about future attacks and citing Israel's peace with Jordan as a strategic security asset.",
+          "sourceLocation": "Regional-security discussion",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/120andone/article/r100jzjhmgx"
+          ],
+          "editorialRole": "regional-security",
+          "selectionRationale": "A compact constructive formulation that explicitly places diplomacy alongside military strength.",
+          "scene": "A strong defensive line joined to signed regional pathways",
+          "flavor": "Two pillars of security",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "מול זה יש יהדות מתונה, דרך אגב לא רק רפורמית.",
+          "displayText": "יש יהדות מתונה — ולא רק רפורמית.",
+          "translation": "Opposite that, there is a moderate Judaism—and, incidentally, not only a Reform one.",
+          "quoteStatus": "verified",
+          "speaker": "גלעד קריב",
+          "date": "2025-06-11",
+          "sourceUrl": "https://www.ynet.co.il/news/120andone/article/r100jzjhmgx",
+          "sourceTitle": "גלעד קריב: \"נתניהו הוא בובה מתנפחת של מנהיגות\"",
+          "publisher": "ynet",
+          "sourceType": "recorded-podcast-interview",
+          "sourceQuality": "primary-recording-with-transcript",
+          "context": "Contrasting a moderate Jewish alternative with what he described as a growing fundamentalist, misogynistic and anti-LGBT current; he explicitly broadened that alternative beyond his own denomination.",
+          "sourceLocation": "Discussion of religious pluralism",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/120andone/article/r100jzjhmgx"
+          ],
+          "editorialRole": "religious-pluralism",
+          "selectionRationale": "A concise inclusive religious message that does not claim moderation for one movement alone.",
+          "scene": "Several distinct streams of light entering one open study hall",
+          "flavor": "Many doors to tradition",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Three exact passages from a recorded June 2025 interview, selected to cover captives, regional security and religious pluralism rather than its personal attacks."
+    },
+    {
+      "partyId": "DEM",
+      "slot": 4,
+      "nameHe": "אפרת רייטן",
+      "nameEn": "Efrat Rayten",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://main.knesset.gov.il/mk/Apps/mk/mk-personal-details/1098",
+        "license": "unknown",
+        "status": "identity-verified-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "הצעת החוק באה לתקן את העוול ולהגביר את ההרתעה כלפי המעסיקים.",
+          "displayText": "לתקן את העוול ולהגביר את ההרתעה.",
+          "translation": "The bill is intended to correct the injustice and increase deterrence toward employers.",
+          "quoteStatus": "verified",
+          "speaker": "אפרת רייטן",
+          "date": "2024-03-27",
+          "sourceUrl": "https://www.ynet.co.il/news/article/sjb136b1c",
+          "sourceTitle": "\"חוק הקופאיות\" אושר בטרומית: \"מתקנים את העוול\"",
+          "publisher": "ynet",
+          "sourceType": "Knesset-vote-report",
+          "sourceQuality": "direct-quote-reliable-secondary",
+          "context": "After unanimous preliminary approval of her bill strengthening remedies against unlawful wage deductions.",
+          "sourceLocation": "Sponsor quotation",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/article/sjb136b1c",
+            "https://main.knesset.gov.il/activity/legislation/laws/pages/lawbill.aspx?lawitemid=2213308&t=lawsuggestionssearch"
+          ],
+          "editorialRole": "worker-protection",
+          "selectionRationale": "States the remedial purpose of a concrete legislative initiative.",
+          "scene": "A pay slip protected beneath balanced scales",
+          "flavor": "Wages kept whole",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "בהצעה קבענו סנקציות חמורות יותר, חיזקנו את האכיפה, והעברנו את חובת ההוכחה למעסיקים - כך שהם יצטרכו להוכיח שהניכויים נעשו כחוק ולא להטיל את הנטל על העובדים.",
+          "displayText": "לא להטיל את נטל ההוכחה על העובדים.",
+          "translation": "In the proposal we set tougher sanctions, strengthened enforcement and shifted the burden of proof to employers, so they will have to prove deductions were lawful rather than placing the burden on workers.",
+          "quoteStatus": "verified",
+          "speaker": "אפרת רייטן",
+          "date": "2025-02-18",
+          "sourceUrl": "https://www.ynet.co.il/economy/article/r1puvezc1x",
+          "sourceTitle": "בעקבות תחקיר ynet: \"חוק הקופאיות\" אושר בקריאה ראשונה",
+          "publisher": "ynet",
+          "sourceType": "Knesset-plenary-report",
+          "sourceQuality": "direct-quote-reliable-secondary",
+          "context": "Explaining the enforcement design after the bill passed first reading.",
+          "sourceLocation": "Plenary quotation on enforcement",
+          "discoverySources": [
+            "https://www.ynet.co.il/economy/article/r1puvezc1x",
+            "https://main.knesset.gov.il/activity/legislation/laws/pages/lawbill.aspx?lawitemid=2213308&t=lawsuggestionssearch"
+          ],
+          "editorialRole": "enforcement-design",
+          "selectionRationale": "Shows policy mechanics rather than a generic promise.",
+          "scene": "A burden lifted from a worker and placed on documented records",
+          "flavor": "Proof where power sits",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "זהו מאבק בעד שוויון וצדק. חברה חזקה צריכה ללמוד להכיל את כל הציבורים ולהגן על החלש ומפני ניצול כח ושררה.",
+          "displayText": "חברה חזקה מגינה על החלש מפני ניצול כוח ושררה.",
+          "translation": "This is a struggle for equality and justice. A strong society must learn to include all communities and protect the vulnerable from exploitation of power and authority.",
+          "quoteStatus": "verified",
+          "speaker": "אפרת רייטן",
+          "date": "2025-02-18",
+          "sourceUrl": "https://www.ynet.co.il/economy/article/r1puvezc1x",
+          "sourceTitle": "בעקבות תחקיר ynet: \"חוק הקופאיות\" אושר בקריאה ראשונה",
+          "publisher": "ynet",
+          "sourceType": "Knesset-plenary-report",
+          "sourceQuality": "direct-quote-reliable-secondary",
+          "context": "Conclusion of her argument for the wage-protection bill amid wartime cost-of-living pressure; followed by a call for unanimous support.",
+          "sourceLocation": "Closing lines of sponsor quotation",
+          "discoverySources": [
+            "https://www.ynet.co.il/economy/article/r1puvezc1x",
+            "https://www.ynet.co.il/news/article/s15ankwlll"
+          ],
+          "editorialRole": "social-solidarity",
+          "selectionRationale": "Elevates a specific worker-protection bill into a clear standard for social strength.",
+          "scene": "A diverse crowd sheltering the smallest figure beneath a shared arch",
+          "flavor": "Strength protects",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "The Knesset bill page independently confirms sponsor, legislative stages and dates. Quotes are exact media transcriptions of her remarks; wording retains the source's grammatical irregularity in the Rare quote."
+    },
+    {
+      "partyId": "DEM",
+      "slot": 5,
+      "nameHe": "יאיא פינק",
+      "nameEn": "Yaya Fink",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://yayafink.co.il/about-me/",
+        "license": "unknown",
+        "status": "self-published-identity-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "התקווה שלי למקום הזה היא לא נאיביות. היא בחירה מודעת.",
+          "displayText": "תקווה היא בחירה מודעת.",
+          "translation": "My hope for this place is not naïveté. It is a conscious choice.",
+          "quoteStatus": "verified",
+          "speaker": "יאיא פינק",
+          "date": "2026-06-16",
+          "sourceUrl": "https://yayafink.co.il/%D7%A2%D7%93%D7%9B%D7%95%D7%9F1/",
+          "sourceTitle": "הודעה שמרגש אותי לשלוח",
+          "publisher": "האתר הרשמי של יאיא פינק",
+          "sourceType": "official-candidacy-statement",
+          "sourceQuality": "primary-self-published",
+          "context": "After describing grief, anger and Rachel Goldberg-Polin's insistence that hope is an obligation.",
+          "sourceLocation": "Middle of statement",
+          "discoverySources": [
+            "https://yayafink.co.il/%D7%A2%D7%93%D7%9B%D7%95%D7%9F1/"
+          ],
+          "editorialRole": "chosen-hope",
+          "selectionRationale": "A compact, non-naïve articulation of his central political theme.",
+          "scene": "A hand deliberately lighting a lamp in a dark corridor",
+          "flavor": "Hope by choice",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "תקווה היא פעולה אקטיבית – והיא אלמנטרית כשאתה הופך לאבא לבנים על אדמת הארץ הזו.",
+          "displayText": "תקווה היא פעולה אקטיבית.",
+          "translation": "Hope is an active deed—and it becomes fundamental when you become a father to sons on this land.",
+          "quoteStatus": "verified",
+          "speaker": "יאיא פינק",
+          "date": "2026-06-16",
+          "sourceUrl": "https://yayafink.co.il/%D7%A2%D7%93%D7%9B%D7%95%D7%9F1/",
+          "sourceTitle": "הודעה שמרגש אותי לשלוח",
+          "publisher": "האתר הרשמי של יאיא פינק",
+          "sourceType": "official-candidacy-statement",
+          "sourceQuality": "primary-self-published",
+          "context": "Immediately follows his statement that hope is a conscious choice and precedes his aspirations for his sons' future.",
+          "sourceLocation": "Middle of statement",
+          "discoverySources": [
+            "https://yayafink.co.il/%D7%A2%D7%93%D7%9B%D7%95%D7%9F1/"
+          ],
+          "editorialRole": "hope-as-action",
+          "selectionRationale": "Turns optimism into an obligation to act and ties it to intergenerational responsibility.",
+          "scene": "A parent and children laying the first stones of a bright path",
+          "flavor": "Hope does work",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "עכשיו זה הזמן שלנו לבנות כאן ישראל שוויונית ובטוחה לכולם – דתיים, חילונים ומסורתיים, יהודים וערבים, נשים וגברים.",
+          "displayText": "לבנות ישראל שוויונית ובטוחה לכולם.",
+          "translation": "Now is our time to build an Israel that is equal and safe for everyone—religious, secular and traditional people; Jews and Arabs; women and men.",
+          "quoteStatus": "verified",
+          "speaker": "יאיא פינק",
+          "date": "2026-06-16",
+          "sourceUrl": "https://yayafink.co.il/%D7%A2%D7%93%D7%9B%D7%95%D7%9F1/",
+          "sourceTitle": "הודעה שמרגש אותי לשלוח",
+          "publisher": "האתר הרשמי של יאיא פינק",
+          "sourceType": "official-candidacy-statement",
+          "sourceQuality": "primary-self-published",
+          "context": "His inclusive statement of purpose after invoking the values of the Declaration of Independence; the sentence continues by calling this his life's mission.",
+          "sourceLocation": "Final third of statement",
+          "discoverySources": [
+            "https://yayafink.co.il/%D7%A2%D7%93%D7%9B%D7%95%D7%9F1/"
+          ],
+          "editorialRole": "inclusive-national-future",
+          "selectionRationale": "The most specific and inclusive positive vision in his candidacy announcement.",
+          "scene": "Religious, secular, Jewish, Arab, female and male silhouettes building one civic home",
+          "flavor": "Room for everyone",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "All three quotes are exact from a dated, first-party candidacy statement. They overlap around hope but perform distinct roles: choice, action and inclusive destination."
+    },
+    {
+      "partyId": "BW",
+      "slot": 1,
+      "nameHe": "בני גנץ",
+      "nameEn": "Benny Gantz",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://main.knesset.gov.il/mk/Apps/mk/mk-personal-details/1004",
+        "license": "unknown",
+        "status": "identity-verified-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "ממשלה טובה זה לא רק האנשים, אלא איך היא בנויה, איך היא רוצה לעבוד, מה סדרי העדיפויות שלה.",
+          "displayText": "ממשלה טובה היא גם איך היא בנויה ועובדת.",
+          "translation": "A good government is not only about the people, but how it is built, how it intends to work and what its priorities are.",
+          "quoteStatus": "verified",
+          "speaker": "בני גנץ",
+          "date": "2026-07-13",
+          "sourceUrl": "https://www.maariv.co.il/news/politics/article-1343912",
+          "sourceTitle": "בני גנץ: \"חייבת לקום ממשלת אחדות ציונית - אין לנו שום פתרון אחר\"",
+          "publisher": "מעריב / 103fm",
+          "sourceType": "radio-interview-transcript",
+          "sourceQuality": "primary-interview-with-transcript",
+          "context": "Explaining that replacing the government requires an operating structure and priorities, not merely different officeholders.",
+          "sourceLocation": "Final third of interview",
+          "discoverySources": [
+            "https://www.maariv.co.il/news/politics/article-1343912"
+          ],
+          "editorialRole": "governing-competence",
+          "selectionRationale": "A constructive standard for evaluating government beyond personalities.",
+          "scene": "A transparent civic blueprint with roles, workflow and priorities",
+          "flavor": "Build government to work",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "אנחנו חייבים להקים ממשלת אחדות ציונית רחבה שתשרת את כל הציבור עם אג'נדה, ציונית, דמוקרטית, ביטחונית, מסורתית.",
+          "displayText": "ממשלת אחדות רחבה שתשרת את כל הציבור.",
+          "translation": "We must establish a broad Zionist unity government that serves the entire public with a Zionist, democratic, security-minded and traditional agenda.",
+          "quoteStatus": "verified",
+          "speaker": "בני גנץ",
+          "date": "2026-07-13",
+          "sourceUrl": "https://www.maariv.co.il/news/politics/article-1343912",
+          "sourceTitle": "בני גנץ: \"חייבת לקום ממשלת אחדות ציונית - אין לנו שום פתרון אחר\"",
+          "publisher": "מעריב / 103fm",
+          "sourceType": "radio-interview-transcript",
+          "sourceQuality": "primary-interview-with-transcript",
+          "context": "His proposed governing model; surrounding remarks exclude reliance on Arab or ultra-Orthodox parties, which should remain available in the source receipt.",
+          "sourceLocation": "Middle of interview",
+          "discoverySources": [
+            "https://www.maariv.co.il/news/politics/article-1343912"
+          ],
+          "editorialRole": "unity-government",
+          "selectionRationale": "The affirmative core of his 2026 campaign proposition, with exclusions disclosed in context.",
+          "scene": "A broad coalition table with one central public-service charter",
+          "flavor": "A wider center",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "אם היינו כל כך חזקים כשהתאחדנו במקום הכי נמוך – תארו לעצמכם מה יקרה אם נצליח להתאחד עכשיו.",
+          "displayText": "תארו לעצמכם מה יקרה אם נצליח להתאחד עכשיו.",
+          "translation": "If we were so strong when we united at our lowest point, imagine what will happen if we manage to unite now.",
+          "quoteStatus": "verified",
+          "speaker": "בני גנץ",
+          "date": "2026-03-12",
+          "sourceUrl": "https://www.c14.co.il/article/1466794",
+          "sourceTitle": "בני גנץ מזהיר: \"אם לא נתאחד - יהיה שוב 7 באוקטובר\"",
+          "publisher": "ערוץ 14",
+          "sourceType": "conference-speech-report",
+          "sourceQuality": "direct-quote-reliable-secondary",
+          "context": "At a leadership conference in memory of Maj. Eitan Balachsan; followed by examples involving a fully mobilized army, economy and education system.",
+          "sourceLocation": "Middle of speech report",
+          "discoverySources": [
+            "https://www.c14.co.il/article/1466794"
+          ],
+          "editorialRole": "collective-capacity",
+          "selectionRationale": "An aspirational unity message grounded in the public mobilization after October 7.",
+          "scene": "Separate streams converging into a bright national current",
+          "flavor": "Strength in joining",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "The Rare quote is separated from the article headline's threat framing and preserved with the positive examples that followed. The two unity-government quotes retain context noting the coalition exclusions."
+    },
+    {
+      "partyId": "BW",
+      "slot": 2,
+      "nameHe": "פנינה תמנו-שטה",
+      "nameEn": "Pnina Tamano-Shata",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://main.knesset.gov.il/mk/Apps/mk/mk-personal-details/893",
+        "license": "unknown",
+        "status": "identity-verified-not-cleared-for-reuse"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "אני רוצה לומר לכל אחת שהיא מנהיגה בחלקת האלוהים שלה ואנחנו לא רק מדברות מגדר ושוויון אלא דואגות שזה יקרה.",
+          "displayText": "כל אחת מנהיגה בחלקת האלוהים שלה.",
+          "translation": "I want to tell every woman that she is a leader in her own corner of the world, and we are not merely talking about gender and equality—we make sure it happens.",
+          "quoteStatus": "verified",
+          "speaker": "פנינה תמנו-שטה",
+          "date": "2025-07-14",
+          "sourceUrl": "https://www.themarker.com/labels/conferences/diversity/2025-07-14/ty-article-labels/00000198-082a-d8b3-a1de-ef6f05cf0000",
+          "sourceTitle": "\"תעתוע לחשוב שאישה ישראלית יכולה לעשות כל מה שהיא רוצה\"",
+          "publisher": "TheMarker Labels",
+          "sourceType": "conference-speech-report",
+          "sourceQuality": "direct-quote-sponsored-event-report",
+          "context": "Closing remarks at a business-sector equality and diversity conference, praising civil society and business while pressing government to model leadership.",
+          "sourceLocation": "Final paragraph",
+          "discoverySources": [
+            "https://www.themarker.com/labels/conferences/diversity/2025-07-14/ty-article-labels/00000198-082a-d8b3-a1de-ef6f05cf0000"
+          ],
+          "editorialRole": "women-as-leaders",
+          "selectionRationale": "An empowering direct address that moves from equality language to implementation.",
+          "scene": "Many women each illuminating a distinct sphere of civic life",
+          "flavor": "Leadership everywhere",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "שוויון מגדרי לא נוצר יש מאין. הוא החלטה ותוצאה של מדיניות, שנסללה בדם, יזע ודמעות של נשים שידעו לפלס דרך במחירים כבדים.",
+          "displayText": "שוויון מגדרי הוא החלטה ותוצאה של מדיניות.",
+          "translation": "Gender equality does not emerge from nothing. It is a decision and the result of policy, paved with the blood, sweat and tears of women who forged a path at great cost.",
+          "quoteStatus": "verified",
+          "speaker": "פנינה תמנו-שטה",
+          "date": "2025-07-14",
+          "sourceUrl": "https://www.themarker.com/labels/conferences/diversity/2025-07-14/ty-article-labels/00000198-082a-d8b3-a1de-ef6f05cf0000",
+          "sourceTitle": "\"תעתוע לחשוב שאישה ישראלית יכולה לעשות כל מה שהיא רוצה\"",
+          "publisher": "TheMarker Labels",
+          "sourceType": "conference-speech-report",
+          "sourceQuality": "direct-quote-sponsored-event-report",
+          "context": "Opening statement arguing that representation and equality require deliberate government policy.",
+          "sourceLocation": "Opening paragraph",
+          "discoverySources": [
+            "https://www.themarker.com/labels/conferences/diversity/2025-07-14/ty-article-labels/00000198-082a-d8b3-a1de-ef6f05cf0000"
+          ],
+          "editorialRole": "equality-by-policy",
+          "selectionRationale": "Her clearest formulation that equality is an institutional choice, not an automatic outcome.",
+          "scene": "A policy blueprint becoming a staircase built by generations of women",
+          "flavor": "Equality is built",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "הנשים לא מבקשות צדקה אלא צדק, לא רחמים אלא הכרה. הן לא מבקשות הרבה, רק שנהיה ראויים.",
+          "displayText": "לא צדקה אלא צדק; לא רחמים אלא הכרה.",
+          "translation": "The women are not asking for charity but justice, not pity but recognition. They are not asking for much—only that we be worthy.",
+          "quoteStatus": "verified",
+          "speaker": "פנינה תמנו-שטה",
+          "date": "2025-02-27",
+          "sourceUrl": "https://www.ice.co.il/opinions/news/article/1053114",
+          "sourceTitle": "לא צדקה אלא צדק: הגיע הזמן לתת לנשים השכולות את שמגיע להן",
+          "publisher": "ice",
+          "sourceType": "signed-op-ed",
+          "sourceQuality": "primary-authored-text",
+          "context": "Argument for twelve months of state support and recovery time for bereaved women rather than the three months recognized by the finance and defense ministries.",
+          "sourceLocation": "Concluding policy appeal",
+          "discoverySources": [
+            "https://www.ice.co.il/opinions/news/article/1053114"
+          ],
+          "editorialRole": "recognition-for-bereaved-women",
+          "selectionRationale": "A memorable rights-based appeal tied to a specific support-period demand.",
+          "scene": "A dignified support circle, with an official recognition document replacing an alms bowl",
+          "flavor": "Recognition, not pity",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Three exact, constructive quotes centered on leadership, policy-driven equality and recognition for bereaved women. TheMarker item is sponsored conference coverage, so its quality is labeled accordingly rather than treated as independent reporting."
+    }
+  ]
+}

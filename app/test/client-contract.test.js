@@ -1,0 +1,184 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const publicDir = path.resolve(here, "../public");
+
+test("client selectors match the HTML and preserve Alpha UX constraints", async () => {
+  const [html, javascript, baseCss, themeCss] = await Promise.all([
+    readFile(path.join(publicDir, "index.html"), "utf8"),
+    readFile(path.join(publicDir, "app.js"), "utf8"),
+    readFile(path.join(publicDir, "styles.css"), "utf8"),
+    readFile(path.join(publicDir, "theme-pack-v2.css"), "utf8"),
+  ]);
+  const css = `${baseCss}\n${themeCss}`;
+
+  const selectorIds = [...javascript.matchAll(/querySelector\("#([^"]+)"\)/g)].map((match) => match[1]);
+  for (const id of selectorIds) {
+    assert.match(html, new RegExp(`id=["']${id}["']`), `Missing #${id} in index.html`);
+  }
+
+  assert.doesNotMatch(html, /skip remaining backs/i);
+  assert.doesNotMatch(html, /\benergy\b/i);
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /--pip/);
+  assert.match(html, /aria-live/);
+  assert.match(javascript, /"blank", "quote", "party", "identity", "portrait"/);
+  assert.match(javascript, /const delays = \[configured\.quote, configured\.party, configured\.name, configured\.portrait\]/);
+  assert.doesNotMatch(javascript, /Flip for full context/);
+  assert.match(javascript, /card-quote-zone/);
+  assert.match(javascript, /data-fit-card-text="quote"/);
+  assert.match(javascript, /data-fit-card-text="party"/);
+  assert.match(javascript, /data-fit-card-text="name"/);
+  assert.match(javascript, /function fitCardText/);
+  assert.match(javascript, /function applyCardStage/);
+  assert.match(javascript, /progressiveStage: "blank"/);
+  assert.doesNotMatch(javascript, /reveal: stage === "portrait"/);
+  assert.match(javascript, /binder-shared-card/);
+  assert.match(javascript, /studio-shared-card/);
+  assert.equal((javascript.match(/class="card-face front"/g) || []).length, 1, "all surfaces must share one card renderer");
+  assert.doesNotMatch(javascript, /miniCardMarkup/);
+  assert.doesNotMatch(javascript, /class="mini-card"/);
+  assert.doesNotMatch(javascript, /class="concept-stage"/);
+  assert.match(css, /\.card-image-meta strong/);
+  assert.match(css, /\.card-name-zone[^}]*background: var\(--civic\)/);
+  assert.match(css, /\.binder-card-tools[^}]*left: 50%/);
+  assert.match(css, /\.binder-card-tools \.dupe-count[^}]*position: static/);
+  assert.match(javascript, /data-favorite-card/);
+  assert.match(javascript, /setLabels\.FAVORITES = "פייבוריטים"/);
+  assert.match(javascript, /setTimeout\(startWalkout/);
+  assert.match(html, /pack-wrapper-transparent\.png/);
+  assert.match(html, /id="open-pack"[^>]*>לראות מה נאסף/);
+  assert.match(html, /id="idle-storage"/);
+  assert.match(javascript, /\/api\/idle\/settle/);
+  assert.match(javascript, /\/api\/idle\/seen/);
+  assert.match(javascript, /function openIdleReturn/);
+  assert.match(javascript, /model\.packPhase = "sealed";\s+renderPack\(\);\s+showView\("pack"\)/);
+  assert.match(html, /data-nav="growth"/);
+  assert.match(html, /data-nav="achievements"/);
+  assert.match(html, /data-nav="events"/);
+  assert.match(html, /data-nav="studio"/);
+  assert.match(html, /Reset daily pack now/);
+  assert.match(html, /id="header-debug-reset"/);
+  assert.match(html, />Presentation<\/a>/);
+  assert.match(html, /poc-response\/index\.html" target="_blank"/);
+  assert.match(html, /Presentation Studio/);
+  assert.match(html, /poc-response\/index\.html\?studio=1/);
+  assert.match(html, /Run six-card guided demo/);
+  assert.match(html, /id="play-studio-reveal"/);
+  assert.match(html, /Expanded content studio/);
+  assert.match(html, /id="delay-quote"/);
+  assert.match(html, /id="studio-party-tabs"/);
+  assert.match(html, /id="studio-card-grid"/);
+  assert.match(html, /Copy politician · 3 images/);
+  assert.match(javascript, /buildMemberWeavePrompt/);
+  assert.match(javascript, /buildWeavePrompt/);
+  assert.match(javascript, /data-save-studio-card/);
+  assert.match(javascript, /\/api\/studio\/content/);
+  assert.match(javascript, /"01 \/ 04 · quote"/);
+  assert.match(javascript, /"04 \/ 04 · portrait"/);
+  assert.doesNotMatch(javascript, /REVEAL_TIMING_KEY/);
+  assert.match(javascript, /\/api\/game-config/);
+  assert.match(javascript, /\/api\/studio\/config/);
+  assert.match(javascript, /updateStudioCardPreview/);
+  assert.match(javascript, /\["quote\.displayText", "art\.artKey"\]/);
+  assert.match(javascript, /\/api\/debug\/reset-pack/);
+  assert.match(javascript, /\/api\/packs\/demo/);
+  assert.match(javascript, /Daily state was not changed/);
+  assert.match(html, /איך נבחר התוכן/);
+  assert.match(javascript, /referral_opened/);
+  assert.match(javascript, /gift_preview_created/);
+  assert.match(html, /id="dialog-whatsapp"/);
+  assert.match(javascript, /https:\/\/wa\.me\/\?text=/);
+  assert.match(html, /id="earned-badge-rail"/);
+  assert.match(html, /id="open-bibi-pack"/);
+  assert.match(javascript, /\/api\/packs\/bibi-demo/);
+  assert.match(javascript, /badgeArtwork/);
+  assert.doesNotMatch(javascript, /function badgeSymbol/);
+  assert.match(html, /האם תגיעו לדרגת ראש הממשלה/);
+  assert.match(html, /רמה 1\/10/);
+  assert.match(html, /id="level-next"/);
+  assert.match(html, /id="dialog-ownership"/);
+  assert.match(javascript, /נתון מדומה להדגמה/);
+  assert.match(html, /החלפות/);
+  assert.match(html, /מלחמת הסיעות/);
+  assert.match(html, /כל סדרות המיוחדים/);
+  assert.match(html, /id="level-progress"/);
+  assert.match(javascript, /\/api\/events\/.*\/pull/);
+  assert.match(html, /id="trade-offered-set"/);
+  assert.match(html, /id="trade-wanted-set"/);
+  assert.match(html, /id="today-challenge-hook"/);
+  assert.match(html, /id="today-event-hook"/);
+  assert.match(html, /id="today-leader-hook"/);
+  assert.match(html, /id="site-card-peeks"/);
+  assert.match(html, /id="today-challenge-visual"/);
+  assert.match(html, /hero-art-knesset\.png/);
+  assert.match(javascript, /function renderSiteCardPeeks/);
+  assert.ok(
+    html.indexOf('id="site-card-peeks"') < html.indexOf('class="masthead"'),
+    "background card layer must sit behind every application surface",
+  );
+  assert.doesNotMatch(javascript, /לא נבחר ציטוט/);
+  assert.match(javascript, /if \(!text\) return ""/);
+  assert.match(html, /id="player-name"/);
+  assert.match(html, /id="profile-dialog"/);
+  assert.match(javascript, /\/api\/profile/);
+  assert.match(html, /id="shared-view"/);
+  assert.match(javascript, /function showSharedCard/);
+  assert.match(javascript, /תצוגת שיתוף בלבד/);
+  assert.match(javascript, /הקלף לא נוסף לאוסף שלכם/);
+  assert.match(javascript, /progression\.nextRank/);
+  assert.match(javascript, /לקלף בונוס ולדרגת/);
+  assert.match(html, /data-today-nav="growth"/);
+  assert.match(html, /data-today-nav="events"/);
+  assert.match(javascript, /data-trade-card/);
+  assert.match(javascript, /openCardDialog\(card\.dataset\.tradeCard\)/);
+  assert.match(css, /\.app-shell\.home-active \.level-strip/);
+  assert.match(css, /grid-template-areas: "identity progress pack"/);
+  assert.match(css, /grid-template-columns: minmax\(132px, auto\) minmax\(0, 1fr\) 48px/);
+  assert.match(css, /\.level-strip[^}]*direction: rtl/);
+  assert.match(css, /\.policy-dialog ol \{ padding-inline-start:/);
+  assert.match(css, /\.bottom-nav button[^}]*border-inline-start:/);
+  assert.match(css, /html,\s*body\s*\{[^}]*height: 100%[^}]*overflow: hidden/s);
+  assert.match(css, /\.top-nav-row\s*\{[^}]*position: fixed/s);
+  assert.doesNotMatch(javascript, /window\.scrollTo/);
+  assert.match(html, /id="binder-pager"/);
+  assert.match(html, /id="community-tabs"/);
+  assert.doesNotMatch(javascript, /textAlign = "left"/);
+  assert.match(css, /4\.2cqw/);
+  assert.doesNotMatch(css, /4\.2vw/);
+  assert.match(javascript, /cardTitle/);
+  assert.match(javascript, /cardCode/);
+  assert.match(html, /hebrew-quality-5/);
+  assert.match(html, /theme-pack-v2\.css/);
+  assert.match(html, /data-theme="pack-v2"/);
+  assert.match(html, /id="visual-theme"/);
+  assert.match(html, /id="visual-card-frame"/);
+  assert.match(html, /id="visual-density"/);
+  assert.match(html, /id="visual-quote-reveal"/);
+  assert.match(html, /id="dialog-instagram"/);
+  assert.match(html, /data-debug-only/);
+  assert.match(javascript, /function applyVisualConfig/);
+  assert.match(javascript, /function shareToInstagram/);
+  assert.match(javascript, /\/api\/trades\/\$\{encodeURIComponent\(tradeId\)\}\/cancel/);
+  assert.match(javascript, /new ResizeObserver/);
+  assert.match(javascript, /data-card-surface/);
+  assert.match(css, /aspect-ratio: 63 \/ 88/);
+  assert.match(css, /data-quote-reveal="ink-v2"/);
+  assert.match(css, /pack-quote-ink/);
+  assert.doesNotMatch(javascript, /floor: 4\.5/);
+  assert.doesNotMatch(html, /id="dialog-flip"/);
+
+  const studioStart = html.indexOf('<section id="studio-view"');
+  const errorStart = html.indexOf('<section id="error-view"');
+  const playerHtml = `${html.slice(0, studioStart)}${html.slice(errorStart)}`;
+  const playerText = playerHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+  assert.doesNotMatch(playerText, /שלב/);
+  assert.doesNotMatch(playerText, /\b(?:Today|Binder|Growth|Achievements|Events|Creator|Copy|Close|Something|Try|cards|Source)\b/);
+  for (const staleCopy of ["Why it matters", "Open today’s pack", "Share this pull", "Trade preview"]) {
+    assert.doesNotMatch(javascript, new RegExp(staleCopy, "i"));
+  }
+});

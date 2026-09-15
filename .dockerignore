@@ -1,0 +1,7 @@
+.git
+.DS_Store
+**/.runtime
+**/node_modules
+app/data/cards-alpha-*.json
+app/data/demo-pack-alpha-*.json
+docs/review

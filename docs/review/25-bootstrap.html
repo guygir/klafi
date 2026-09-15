@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bootstrap playbook · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">25 / 37 · Bootstrap playbook</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="24-poc-feedback.html">← PoC feedback response</a><button class="btn mark" type="button" data-slug="25-bootstrap">Mark reviewed</button><a class="btn primary" id="next-page" href="26-editorial-pipeline.html">Next: Editorial pipeline →</a></div>
+  </header>
+  <article><h1>Kalpi — PoC bootstrap playbook</h1>
+<p>Virality after scale is not the problem. Reaching the first credible pocket of activity is.</p>
+<h2>The bootstrap wedge</h2>
+<p>Do not launch to “young Israelis.” Start with a coordinated seed:</p>
+<ul>
+<li><strong>10 creators</strong> whose audience overlaps 18–24.</li>
+<li><strong>3 formats:</strong> one short vertical walkout, one WhatsApp still, one “guess the quote before the name” prompt.</li>
+<li><strong>One launch window:</strong> creators open during the same 60–90 minutes so the format feels active without altering numbers.</li>
+<li><strong>One common product:</strong> creator links identify acquisition source, not political profile. Everyone sees the same editorial sequence.</li>
+</ul>
+<p>Creator URL:</p>
+<p><code>http://host/?ref=creator-name</code></p>
+<p>Exact-card URL:</p>
+<p><code>http://host/?card=DEM-Q-01&amp;ref=creator-name</code></p>
+<p>Duplicate gift/trade preview:</p>
+<p><code>http://host/?gift=DEM-Q-01&amp;ref=creator-name</code></p>
+<p>The gift URL demonstrates social intent. It does not transfer ownership in the PoC.</p>
+<h2>The artifact must carry the loop</h2>
+<p>Every share artifact needs:</p>
+<ol>
+<li>The quote/fact large enough to read in-feed.</li>
+<li>Identity and card finish.</li>
+<li>A source cue.</li>
+<li>The advocacy disclosure.</li>
+<li>A reason to tap: “See the line before the name.”</li>
+<li>A deep link to the exact walkout.</li>
+</ol>
+<p>The artifact is unsuccessful if it only says “I pulled a rare.” The quote is the conversation; rarity earns attention.</p>
+<h2>Instrument the actual funnel</h2>
+<p>Server-recorded events:</p>
+<p><code>pack_opened → back_completed → source_opened → binder_reached → share_created → referral_opened</code></p>
+<p>Secondary:</p>
+<p><code>gift_preview_created</code></p>
+<p>PoC learning thresholds:</p>
+<ul>
+<li>10 / 10 seeded creators complete one pack.</li>
+<li>≥70% of opened packs reach all six backs.</li>
+<li>≥30% of seeded players create a share artifact.</li>
+<li>≥20% of referral visitors start a guest session.</li>
+<li>≥15% of completed backs open the inspectable source during the seeded test.</li>
+</ul>
+<p>These are thresholds for diagnosing the PoC, not public traction claims.</p>
+<h2>Failure tree</h2>
+<h3>Creators do not post</h3>
+<ul>
+<li>The artifact requires too much explanation → make the quote/name reveal self-contained.</li>
+<li>The disclosure overwhelms the visual → shorten, do not hide.</li>
+<li>The asset is not native to their channel → export 9:16 video frame + 4:5 still + WhatsApp still.</li>
+</ul>
+<h3>People view but do not tap</h3>
+<ul>
+<li>Quote has no curiosity gap → choose a clearer sourced line.</li>
+<li>Identity is already fully revealed in the caption → let the walkout finish the reveal.</li>
+<li>CTA is generic → deep-link to “guess who said it,” not the homepage.</li>
+</ul>
+<h3>People tap but do not open a pack</h3>
+<ul>
+<li>Onboarding delays the pack → advocacy disclosure stays visible but concise; pack remains first action.</li>
+<li>The shared card cannot be previewed → exact-card walkout opens before asking for a session action.</li>
+<li>Mobile load is slow → compress art; CSS motion first; no autoplay video dependency.</li>
+</ul>
+<h3>Packs open but backs do not complete</h3>
+<ul>
+<li>Walkout feels slow instead of suspenseful → shorten minimum holds, preserve tap control.</li>
+<li>Back is too dense → keep 40–60 words and one “why it matters.”</li>
+<li>Source looks like legal text → use a short source label plus one inspect link.</li>
+</ul>
+<h3>Shares do not create referrals</h3>
+<ul>
+<li>Share is only collection vanity → put the quote and source cue back at the center.</li>
+<li>No social mechanic after duplicates → expose gift/trade preview.</li>
+<li>Activity looks empty → coordinate seed timing; never invent totals.</li>
+</ul>
+<h2>Privacy and credibility</h2>
+<ul>
+<li>Sharing is optional.</li>
+<li>A share card need not display a user’s faction.</li>
+<li>Referral codes identify the creator/link, not inferred ideology.</li>
+<li>Public activity is aggregate event count only.</li>
+<li>Demo fixtures must say “demo.” Production-looking fake totals are forbidden.</li>
+</ul>
+<h2>After the PoC</h2>
+<p>If the funnel works, build real gifting/trading only after abuse, consent, and ownership rules are specified. If the funnel does not work, do not hide the failure behind a faction board; fix the walkout or artifact first.</p></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="24-poc-feedback.html">← PoC feedback response</a><a class="btn primary" id="next-page" href="26-editorial-pipeline.html">Next: Editorial pipeline →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+{
+  "members": [
+    {
+      "partyId": "AMH",
+      "slot": 1,
+      "nameHe": "עופר וינטר",
+      "nameEn": "Ofer Winter",
+      "treatment": "critical",
+      "identityReference": {
+        "url": "https://commons.wikimedia.org/wiki/File:Ofer_Winter_(49676496197)_(cropped).jpg",
+        "license": "CC BY 2.0",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Rare",
+          "originalText": "לעולם לא תהיה פה מדינה פלסטינית. הפתרון בעזה הוא אחד: הגירה.",
+          "displayText": "הפתרון בעזה הוא אחד: הגירה",
+          "translation": "There will never be a Palestinian state here. There is one solution in Gaza: emigration.",
+          "quoteStatus": "verified-direct-quote",
+          "speaker": "עופר וינטר",
+          "date": "2026-08-25",
+          "sourceUrl": "https://www.ynet.co.il/news/elections2026/article/s13ku7jdzg",
+          "sourceTitle": "וינטר חשף את הרשימה לבחירות: \"רוצים ממשלת ימין רחבה. הפתרון בעזה - הגירה\"",
+          "publisher": "ynet",
+          "sourceType": "event-report-with-direct-quotation",
+          "sourceQuality": "high",
+          "context": "Winter said this in his Jerusalem launch speech for Amcha Yisrael. The statement presents emigration as his prescribed outcome for Gaza; the source does not specify whether he meant voluntary, incentivized, or coerced emigration.",
+          "sourceLocation": "Section headed \"הפתרון בעזה - הגירה\", final paragraph of Winter's quoted launch remarks",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/elections2026/article/s13ku7jdzg",
+            "https://www.i24news.tv/he/news/news/politics/artc-cf662c49",
+            "https://www.israelhayom.co.il/news/politics/article/21277122"
+          ],
+          "editorialRole": "headline-policy-position",
+          "selectionRationale": "A concise, consequential statement of policy on Palestinian statehood and Gaza that is central to Winter's campaign launch and likely to drive scrutiny.",
+          "scene": "At the party launch podium in Jerusalem, delivering the new list's security platform to supporters.",
+          "flavor": "ONE SOLUTION",
+          "flavorDisclosure": "Critical advocacy framing: the card foregrounds the most controversial plain-language policy line from Winter's launch speech.",
+          "contentStatus": "ready"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "החיילים שלנו, החיילים שלנו, לעולם, אבל לעולם לפני אזרחי האויב! זה המוסר האמיתי. זה ולא אחר.",
+          "displayText": "החיילים שלנו — לעולם לפני אזרחי האויב",
+          "translation": "Our soldiers—always, absolutely always—before the enemy's civilians. That is true morality, and no other.",
+          "quoteStatus": "verified-direct-quote",
+          "speaker": "עופר וינטר",
+          "date": "2026-08-25",
+          "sourceUrl": "https://www.israelhayom.co.il/news/politics/article/21277122",
+          "sourceTitle": "יוסף חדאד וללי דרעי בפנים: עופר וינטר חשף את רשימתו לכנסת",
+          "publisher": "ישראל היום",
+          "sourceType": "event-report-with-direct-quotation",
+          "sourceQuality": "high",
+          "context": "In the same launch speech, after saying an enemy that starts a war should pay a heavy territorial price, Winter ranked Israeli soldiers ahead of enemy civilians and called that ordering \"true morality.\" The quote states his moral priority; it does not by itself define an operational rule or negate applicable law.",
+          "sourceLocation": "Quoted launch-speech passage beginning \"לעולם לא תהיה פה מדינה פלסטינית\"",
+          "discoverySources": [
+            "https://www.israelhayom.co.il/news/politics/article/21277122",
+            "https://www.inn.co.il/news/704820",
+            "https://www.i24news.tv/he/news/news/politics/artc-cf662c49"
+          ],
+          "editorialRole": "values-under-pressure",
+          "selectionRationale": "The categorical comparison between soldiers and enemy civilians is morally and legally consequential, highly quotable, and distinct from the Gaza-emigration policy line.",
+          "scene": "Campaign launch speech, escalating from territorial consequences to a declared hierarchy of wartime protection.",
+          "flavor": "TRUE MORALITY?",
+          "flavorDisclosure": "Critical advocacy framing: the question mark signals editorial scrutiny; it does not alter Winter's quoted words.",
+          "contentStatus": "ready"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "אם אני ראש הממשלה, הראש שלו מותז. מי אתה בכלל? חוצפן! מי אתה? אתה מבולבל! אתה רמטכ\"ל מבולבל, אתה כפוף לראש הממשלה ולדרג המדיני, מי אתה בכלל?",
+          "displayText": "אם אני ראש הממשלה, הראש שלו מותז",
+          "translation": "If I were prime minister, his head would be lopped off. Who are you, anyway? Insolent! You are a confused chief of staff; you answer to the prime minister and the political echelon.",
+          "quoteStatus": "verified-direct-quote-with-disputed-underlying-account",
+          "speaker": "עופר וינטר",
+          "date": "2024-12-12",
+          "sourceUrl": "https://www.c14.co.il/article/1071013",
+          "sourceTitle": "וינטר חשף: רה\"מ רצה למנות אותו למזכ\"צ, הלוי ביקש ממנו לפרוש",
+          "publisher": "עכשיו 14",
+          "sourceType": "broadcast-clip-report",
+          "sourceQuality": "medium-high",
+          "context": "In a Kan 11 interview clip, Winter reacted to his account of a prewar meeting in which then-IDF chief Herzi Halevi allegedly opposed appointing him as the prime minister's military secretary. The IDF spokesperson denied that the remarks Winter attributed to Halevi were said and stated that the meeting was documented. The card quotes Winter's reaction, not proof of his underlying allegation.",
+          "sourceLocation": "Second paragraph, direct quotation from the Kan public-broadcast interview clip",
+          "discoverySources": [
+            "https://www.c14.co.il/article/1071013",
+            "https://www.news1.co.il/Archive/001-D-494484-00.html",
+            "https://www.hidabroot.org/article/1203819"
+          ],
+          "editorialRole": "temperament-and-civil-military-relations",
+          "selectionRationale": "An unusually aggressive and meme-ready formulation from a former senior officer, consequential to evaluating temperament and views of civilian control.",
+          "scene": "Television interview, reacting angrily to his own account of a confrontation with the serving chief of staff.",
+          "flavor": "HEADS WILL ROLL",
+          "flavorDisclosure": "Critical advocacy framing: the flavor paraphrases the violent idiom; the context preserves the IDF's denial of Winter's underlying account.",
+          "contentStatus": "ready"
+        }
+      ]
+    },
+    {
+      "partyId": "AMH",
+      "slot": 2,
+      "nameHe": "יוסף חדאד",
+      "nameEn": "Yoseph Haddad",
+      "treatment": "critical",
+      "identityReference": {
+        "url": "https://commons.wikimedia.org/wiki/File:Yoseph_Haddad.jpg",
+        "license": "CC BY-SA 4.0",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Rare",
+          "originalText": "כערבי, אם הייתי צופה רק באל-ג'זירה, כנראה שהייתי מחבל נגד המדינה. חד משמעית, זה הערוץ הזה.",
+          "displayText": "אם הייתי צופה רק באל-ג'זירה, כנראה שהייתי מחבל",
+          "translation": "As an Arab, if I watched only Al Jazeera, I would probably be a terrorist against the state. Unequivocally—that is what this channel is.",
+          "quoteStatus": "verified-direct-quote",
+          "speaker": "יוסף חדאד",
+          "date": "2024-05-08",
+          "sourceUrl": "https://www.ynet.co.il/news/article/skccdiufr",
+          "sourceTitle": "יוסף חדאד: \"אם הייתי צופה רק באל-ג'זירה - כנראה שהייתי מחבל נגד המדינה\"",
+          "publisher": "ynet",
+          "sourceType": "publisher-hosted-conference-report",
+          "sourceQuality": "high",
+          "context": "Haddad made the remark at the ynet and Yedioth Ahronoth \"People of the State\" conference shortly before lighting an Independence Day torch. It is his sweeping assessment of Al Jazeera's influence, not evidence that watching a channel causes terrorism.",
+          "sourceLocation": "Single-paragraph report; complete direct quotation",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/article/skccdiufr",
+            "https://www.emess.co.il/radio/979081"
+          ],
+          "editorialRole": "media-rhetoric",
+          "selectionRationale": "A provocative, compact, widely understandable line that fuses media criticism, identity, and terrorism in a highly meme-worthy formulation.",
+          "scene": "Onstage at a national conference, speaking as an Arab-Israeli advocacy figure and incoming Independence Day torchlighter.",
+          "flavor": "ONE CHANNEL LATER",
+          "flavorDisclosure": "Critical advocacy framing: the card spotlights Haddad's causal-sounding hyperbole while context labels it as his assessment.",
+          "contentStatus": "ready"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "אני אקים מחדש את המשרד, ולא כמשרד זניח - אלא כמשרד ממשלתי גדול ומוביל עם תקציב עתק שמוקדש כולו להסברה ישראלית יעילה ומנצחת.",
+          "displayText": "משרד הסברה גדול ומוביל — עם תקציב עתק",
+          "translation": "I will reestablish the ministry—not as a marginal office, but as a large, leading government ministry with a huge budget devoted entirely to effective, winning Israeli public diplomacy.",
+          "quoteStatus": "verified-direct-quote",
+          "speaker": "יוסף חדאד",
+          "date": "2026-08-25",
+          "sourceUrl": "https://www.ynet.co.il/news/elections2026/article/s13ku7jdzg",
+          "sourceTitle": "וינטר חשף את הרשימה לבחירות: \"רוצים ממשלת ימין רחבה. הפתרון בעזה - הגירה\"",
+          "publisher": "ynet",
+          "sourceType": "event-report-with-direct-quotation",
+          "sourceQuality": "high",
+          "context": "At Amcha Yisrael's launch, Haddad said he entered politics to become information minister and proposed rebuilding the ministry at a much larger scale. He argued that public diplomacy is part of national security and helps counter international pressure, incitement, and antisemitism. No budget figure or funding source was given in the cited speech.",
+          "sourceLocation": "Section headed \"הערבי הראשון בקבינט\", second paragraph",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/elections2026/article/s13ku7jdzg",
+            "https://www.c14.co.il/article/1677397",
+            "https://www.babli.co.il/political-political/tkqzxv"
+          ],
+          "editorialRole": "spending-and-government-growth",
+          "selectionRationale": "A concrete promise to create a large ministry with a \"huge budget,\" consequential for spending, bureaucracy, and the state's communications strategy.",
+          "scene": "Party launch speech, setting out the office and resources Haddad wants in a future government.",
+          "flavor": "MEGA-MINISTRY",
+          "flavorDisclosure": "Critical advocacy framing: the flavor stresses proposed scale; the source supplies no numeric budget for comparison.",
+          "contentStatus": "ready"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "הגיע הזמן שיהיה ערבי ישראלי גאה שיושב שם, שמבין את האויב ואיך הוא חושב, שחי את המנטליות המזרח תיכונית. ויחד עם עופר וינטר כשר הביטחון הבא של מדינת ישראל נוכל לאתגר מבפנים את המערכת הביטחונית ולוודא שצה\"ל יגיע להכרעות בכל החזיתות.",
+          "displayText": "ערבי ישראלי גאה שמבין את האויב ואיך הוא חושב",
+          "translation": "It is time for a proud Arab Israeli to sit there—someone who understands the enemy and how it thinks, who lives the Middle Eastern mentality. Together with Ofer Winter as the next defense minister, we can challenge the security establishment from within and ensure the IDF achieves decisive outcomes on every front.",
+          "quoteStatus": "verified-direct-quote",
+          "speaker": "יוסף חדאד",
+          "date": "2026-08-25",
+          "sourceUrl": "https://www.ynet.co.il/news/elections2026/article/s13ku7jdzg",
+          "sourceTitle": "וינטר חשף את הרשימה לבחירות: \"רוצים ממשלת ימין רחבה. הפתרון בעזה - הגירה\"",
+          "publisher": "ynet",
+          "sourceType": "event-report-with-direct-quotation",
+          "sourceQuality": "high",
+          "context": "Haddad used this reasoning to support his ambition to become the first Arab Israeli member of the security cabinet. The statement links his ethnic and regional identity to claimed insight into an enemy mindset and pairs that claim with a promised Winter defense-minister appointment.",
+          "sourceLocation": "Section headed \"הערבי הראשון בקבינט\", final paragraph",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/elections2026/article/s13ku7jdzg",
+            "https://www.c14.co.il/article/1677397",
+            "https://news.walla.co.il/break/3863185"
+          ],
+          "editorialRole": "identity-and-security-credential",
+          "selectionRationale": "A consequential identity-based argument for cabinet power that also reveals the ticket's intended defense leadership and doctrine of military decision.",
+          "scene": "Campaign debut, presenting his Arab-Israeli identity as a qualification for the security cabinet.",
+          "flavor": "ENEMY MINDSET",
+          "flavorDisclosure": "Critical advocacy framing: the card invites scrutiny of an identity-based credential without disputing Haddad's identity or military service.",
+          "contentStatus": "ready"
+        }
+      ]
+    },
+    {
+      "partyId": "AMH",
+      "slot": 3,
+      "nameHe": "נטעלי שם טוב",
+      "nameEn": "Netali Shem Tov",
+      "treatment": "critical",
+      "identityReference": {
+        "url": "https://commons.wikimedia.org/wiki/File:Netali_shem_tov_(cropped).jpg",
+        "license": "CC BY-SA 4.0",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Rare",
+          "originalText": "הוא יודע שיש לנו עקרונות, והוא יודע שאנחנו לא עובדים אצלו, אנחנו עובדים אצל עם ישראל. מה שהיה הוא לא מה שיהיה.",
+          "displayText": "אנחנו לא עובדים אצל נתניהו",
+          "translation": "He knows we have principles, and he knows we do not work for him; we work for the people of Israel. What was will not be.",
+          "quoteStatus": "verified-direct-quote",
+          "speaker": "נטעלי שם טוב",
+          "date": "2026-08-31",
+          "sourceUrl": "https://news.walla.co.il/item/3864435",
+          "sourceTitle": "נטעלי שם טוב: \"מי שתוקף אותנו יודע שאנו לא עובדים אצלו\"",
+          "publisher": "וואלה חדשות",
+          "sourceType": "radio-interview-report-with-direct-quotation",
+          "sourceQuality": "high",
+          "context": "In a 103fm interview, Shem Tov responded to Benjamin Netanyahu's criticism of Amcha Yisrael. She simultaneously said Netanyahu remained the leader of the right-wing bloc and the party's preferred prime-ministerial option, while insisting a future right-wing government must include new people and differ from the current government.",
+          "sourceLocation": "Second quoted paragraph; original audio is the 103fm/Omny episode \"לא עובדת בשביל אף אחד\"",
+          "discoverySources": [
+            "https://news.walla.co.il/item/3864435",
+            "https://omny.fm/shows/7-9-103fm/31-2026-2",
+            "https://www.maariv.co.il/news/politics/article-1361386"
+          ],
+          "editorialRole": "coalition-independence-test",
+          "selectionRationale": "A crisp claim of independence from Netanyahu that sits in visible tension with her continued preference for him as prime minister.",
+          "scene": "Live political radio interview, answering an attack from the dominant leader of her own bloc.",
+          "flavor": "NOT HIS EMPLOYEE",
+          "flavorDisclosure": "Critical advocacy framing: the shortened display names Netanyahu from the documented interview context; the full original wording says \"him.\"",
+          "contentStatus": "ready"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "אני לא חושבת שמה שאנחנו מדברים עליו כאן היום, זה מאבק של מזרחים ואשכנזים. זה לא. זה מאבק של דמוקרטים מול גזענים. מול אנשים חשוכים.",
+          "displayText": "זה מאבק של דמוקרטים מול גזענים",
+          "translation": "I do not think what we are discussing here today is a struggle between Mizrahim and Ashkenazim. It is not. It is a struggle of democrats against racists—against benighted people.",
+          "quoteStatus": "verified-direct-quote",
+          "speaker": "נטעלי שם טוב",
+          "date": "2026-08-07",
+          "sourceUrl": "https://www.ice.co.il/media/news/article/1124533",
+          "sourceTitle": "נטעלי שם טוב: \"קראו לי ביביסטית. כל מה שלא מסכים איתם הוא כזה\"",
+          "publisher": "ice",
+          "sourceType": "podcast-clip-report-with-embedded-video",
+          "sourceQuality": "medium-high",
+          "context": "Before joining Amcha Yisrael, Shem Tov said this on Avi Shushan's podcast while discussing discrimination and her treatment at Channel 13. She explicitly rejected reducing the dispute to a Mizrahi-versus-Ashkenazi divide and framed it instead as democracy and equal opportunity versus racism. The labels are her characterization of the conflict, not adjudicated findings.",
+          "sourceLocation": "First full direct quotation after the article introduction",
+          "discoverySources": [
+            "https://www.ice.co.il/media/news/article/1124533",
+            "https://www.ice.co.il/media/news/article/1124215",
+            "https://www.ice.co.il/media/news/article/1124418"
+          ],
+          "editorialRole": "polarizing-social-frame",
+          "selectionRationale": "A stark binary that is controversial and memorable, while revealing how Shem Tov frames ideological exclusion and ethnic discrimination.",
+          "scene": "Long-form podcast conversation about her workplace dispute and perceived discrimination in Israeli media.",
+          "flavor": "DEMOCRATS VS. RACISTS",
+          "flavorDisclosure": "Critical advocacy framing: the flavor reproduces Shem Tov's own binary and does not endorse either label as fact.",
+          "contentStatus": "ready"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "ברור שזה מגלם את האספסוף וצ'חצ'חים וצ'אחלות ומנשקי קמעות. אבל בשורה התחתונה, זה כל מי שלא מסכים איתם הוא ביביסט.",
+          "displayText": "ביביסט = אספסוף, צ'חצ'חים, צ'אחלות ומנשקי קמעות",
+          "translation": "Obviously it embodies 'the mob,' chakhchakhim, chahlot, and amulet-kissers. But ultimately, anyone who disagrees with them is a Bibist.",
+          "quoteStatus": "verified-direct-quote",
+          "speaker": "נטעלי שם טוב",
+          "date": "2026-08-07",
+          "sourceUrl": "https://www.ice.co.il/media/news/article/1124533",
+          "sourceTitle": "נטעלי שם טוב: \"קראו לי ביביסטית. כל מה שלא מסכים איתם הוא כזה\"",
+          "publisher": "ice",
+          "sourceType": "podcast-clip-report-with-embedded-video",
+          "sourceQuality": "medium-high",
+          "context": "Asked what she believed the label \"Bibist\" implied when colleagues used it about her, Shem Tov listed older class- and ethnicity-coded insults and argued that the term was applied to anyone who disagreed with them. She was describing what she believed others encoded in the label; she was not herself asserting that Netanyahu supporters are those stereotypes.",
+          "sourceLocation": "Final direct quotation before the article's hot-stories section",
+          "discoverySources": [
+            "https://www.ice.co.il/media/news/article/1124533",
+            "https://www.ice.co.il/media/news/article/1124418"
+          ],
+          "editorialRole": "meme-ready-language-and-media-grievance",
+          "selectionRationale": "The compressed chain of loaded Israeli political and ethnic terms is highly meme-worthy and exposes the grievance vocabulary Shem Tov carried from media into politics.",
+          "scene": "Podcast exchange, defining the social meaning she attributes to a label repeatedly directed at her.",
+          "flavor": "THE BIBIST EQUATION",
+          "flavorDisclosure": "Critical advocacy framing: the equals sign compresses Shem Tov's account of an implied stereotype; context makes clear she rejects, rather than adopts, that stereotype.",
+          "contentStatus": "ready"
+        }
+      ]
+    }
+  ]
+}

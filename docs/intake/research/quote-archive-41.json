@@ -1,0 +1,661 @@
+{
+  "source": "https://thebigbookofquotes.com/quotes.js",
+  "retrievedAt": "2026-09-09T13:36:51.631Z",
+  "recordCount": 41,
+  "notice": "Discovery archive only. Follow originalSourceUrl and verify context before selecting a card.",
+  "records": [
+    {
+      "slug": "gozlan-1",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/gozlan-1/",
+      "originalSourceUrl": "https://www.tiktok.com/@n12news/video/7637880102633737479",
+      "quoteText": "ברוכים הבאים לליכודיאדה,\nהאירוע הגדול והמשמעותי ביותר\nשל תנועת הליכוד.\nאני רוצה לבשר על נפילת חייל.\n*** *** מהרצליה.\nאנחנו משתתפים כולנו בצער המשפחה.\nוכאן במדינת ישראל\nאנחנו חיים בין השמחה לעצב,\nאז אני רוצה להזמין לבמה\nאת הסטנדאפיסט מיקי גבע.",
+      "person": "עופרה גוזלן",
+      "role": "חברת מרכז הליכוד ומנחת האירוע",
+      "statedDate": "30.4.26",
+      "publicationDetails": [
+        "בטקס פתיחת הליכודיאדה ה-7 באילת",
+        "פורסם בחדשות 12"
+      ],
+      "archiveSummary": "מבשרת על נפילת חייל — ומיד מזמינה סטנדאפיסט לבמה",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "deri-2",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/deri-2/",
+      "originalSourceUrl": "https://www.i24news.tv/he/news/news/politics/artc-93ca33f1",
+      "quoteText": "חלילה וחס,\nשלא יעלה על הדעת\nשל אף אחד מכאן,\nבשעה כזו שעם ישראל נמצא\nבמצב של מלחמה,\nשלאף אחד לא יהיה חלילה וחס\nאיזשהו \"הווה אמינא\" של איזה רפיון.\n\"אולי באמת צריך לעשות משהו אחר?\nאולי צריך לתרום?\"\nחלילה וחס!",
+      "person": "אריה דרעי",
+      "role": "יו\"ר ש\"ס",
+      "statedDate": "4.8.25",
+      "publicationDetails": [
+        "בישיבה לקהל לומדי תורה",
+        "פורסם ב-i24NEWS"
+      ],
+      "archiveSummary": "חלילה שאברך יחשוב לתרום למאמץ המלחמה",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "sara-netanyahu-36",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/sara-netanyahu-36/",
+      "originalSourceUrl": "https://www.mako.co.il/news-military/2024_q1/Article-8e8cd70cec16e81027.htm",
+      "quoteText": "ראית כמה חטופים\nהחזרנו?\nאפילו תודה\nהם לא אמרו לנו.",
+      "person": "שרה נתניהו",
+      "role": "אשת ראש הממשלה",
+      "statedDate": "21.3.24",
+      "publicationDetails": [
+        "בפגישה סגורה",
+        "ע\"פ פרסום ב-N12"
+      ],
+      "archiveSummary": "אפילו תודה הם לא אמרו לנו",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "pindrus-3",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/pindrus-3/",
+      "originalSourceUrl": "https://www.mako.co.il/news-politics/2023_q2/Article-b2368775d29d881026.htm",
+      "quoteText": "בתפיסה שלי,\nהדבר הכי מסוכן למדינת ישראל -\nהכי מסוכן -\nיותר מדאע\"ש,\nיותר מחיזבאללה,\nיותר מחמאס,\nזה הפריצות בעריות.\nכי זה מה שכתוב בתורה.\nולכן אני צריך לא רק למנוע\nאת מצעד הגאווה,\nאלא למנוע בכלל\nאת התנועה הזאת.",
+      "person": "יצחק פינדרוס",
+      "role": "יו\"ר סיעת יהדות התורה",
+      "statedDate": "21.6.23",
+      "publicationDetails": [
+        "בראיון לתכנית \"אנשים\"",
+        "קשת 12"
+      ],
+      "archiveSummary": "הפריצות בעריות מסוכנת יותר מחמאס ומחיזבאללה",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "netanyahu-4",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/netanyahu-4/",
+      "originalSourceUrl": "https://www.youtube.com/watch?v=I78Se3DUQp8",
+      "quoteText": "את פשוט\nלא מעניינת,\nאת משעממת\nאותנו.",
+      "person": "בנימין נתניהו",
+      "role": "ראש הממשלה",
+      "statedDate": "16.10.18",
+      "publicationDetails": [
+        "בתגובה לפעילה החברתית תושבת קריית שמונה,",
+        "אורנה פרץ, שהתפרצה לדבריו במהלך נאומו"
+      ],
+      "archiveSummary": "את משעממת אותנו",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "smotrich-5",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/smotrich-5/",
+      "originalSourceUrl": "https://www.mako.co.il/news-military/politics-q4_2015/Article-9ee54d011678151004.htm",
+      "quoteText": "יש לי חמישה ילדים\nואני לא חושב ששניים מהם\nעניים.",
+      "person": "בצלאל סמוטריץ'",
+      "role": "סגן יו\"ר הכנסת",
+      "statedDate": "9.12.15",
+      "publicationDetails": [
+        "בתגובה לפרסום דוח העוני של הביטוח הלאומי",
+        "שקבע כי אחד מכל שלושה ילדים בישראל",
+        "חי מתחת לקו העוני"
+      ],
+      "archiveSummary": "לא חושב ששניים מחמשת ילדיי עניים",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "smotrich-6",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/smotrich-6/",
+      "originalSourceUrl": "https://103fm.maariv.co.il/programs/media.aspx?ZrqvnVq=KFLHKF&c41t4nzVQ=GJL",
+      "quoteText": "הקמת הממשלה עם עבאס\nחמורה פי 1,000\nמטבח שבעה באוקטובר.\nהטבח הוא מחדל נורא ואיום,\nצריך לתחקר אותו -\nאבל הוא מחדל טקטי.",
+      "person": "בצלאל סמוטריץ'",
+      "role": "שר האוצר",
+      "statedDate": "5.5.26",
+      "publicationDetails": [
+        "בראיון לעמיחי אתאלי וגדעון אוקו",
+        "רדיו 103FM"
+      ],
+      "archiveSummary": "ממשלה עם עבאס חמורה פי אלף מ-7 באוקטובר",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "regev-7",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/regev-7/",
+      "originalSourceUrl": "https://www.instagram.com/reels/DXrEslDiF9S/",
+      "quoteText": "אלה (בנט ולפיד) אנשים שבעבר\nעשו את אחד הנזקים הגדולים\nלמדינת ישראל,\nאסון גדול,\nעשרה קילומטר מרובע\nשל שטח מדינת ישראל ריבוני -\nהם העבירו אותו לחיזבאללה.",
+      "person": "מירי רגב",
+      "role": "שרת התחבורה",
+      "statedDate": "28.4.26",
+      "publicationDetails": [
+        "בראיון לרדיו 103FM"
+      ],
+      "archiveSummary": "בנט ולפיד העבירו שטח ריבוני לחיזבאללה",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "goldknopf-8",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/goldknopf-8/",
+      "originalSourceUrl": "https://x.com/pgosh_MTP/status/1581313905988579328",
+      "quoteText": "לא ראיתי שהמתמטיקה והאנגלית\nכל כך קידמו את הכלכלה במדינה.",
+      "person": "יצחק גולדקנופף",
+      "role": "יו\"ר יהדות התורה",
+      "statedDate": "15.10.22",
+      "publicationDetails": [
+        "בראיון לעמית סגל ובן כספית",
+        "ב\"פגוש את העיתונות\"",
+        "קשת 12"
+      ],
+      "archiveSummary": "מתמטיקה ואנגלית לא קידמו את הכלכלה",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "regev-9",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/regev-9/",
+      "originalSourceUrl": "https://www.ynet.co.il/news/article/skucxvkv9",
+      "quoteText": "החלטנו שאנחנו\nאופוזיציה לוחמת\nושאנחנו רוצים להפיל\nאת הממשלה הזאת -\nאז אין כאבי בטן,\nואין כאבי בטן למקרי אונס,\nואין כאבי בטן עם נשים מוכות,\nואין כאבי בטן עם חיילים.",
+      "person": "מירי רגב",
+      "role": "ח\"כ מטעם הליכוד",
+      "statedDate": "24.5.22",
+      "publicationDetails": [
+        "בישיבת סיעת הליכוד"
+      ],
+      "archiveSummary": "אין כאבי בטן — לא לאונס, לא לנשים מוכות, לא לחיילים",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "zohar-10",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/zohar-10/",
+      "originalSourceUrl": "https://www.israelhayom.co.il/news/politics/article/18283961",
+      "quoteText": "משפט נתניהו\nזה אולי הדבר הרע ביותר\nשקרה לישראל\nבשנים האחרונות.",
+      "person": "מיקי זוהר",
+      "role": "שר התרבות והספורט",
+      "statedDate": "26.6.25",
+      "publicationDetails": [
+        "בראיון לאילנה דיין",
+        "גל\"צ"
+      ],
+      "archiveSummary": "משפט נתניהו — הדבר הרע ביותר שקרה לישראל",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "smotrich-11",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/smotrich-11/",
+      "originalSourceUrl": "https://www.facebook.com/watch/?v=452667652699336",
+      "quoteText": "חמאס\nהוא\nנכס.",
+      "person": "בצלאל סמוטריץ'",
+      "role": "ח\"כ מטעם הבית היהודי",
+      "statedDate": "אוקטובר 2015",
+      "publicationDetails": [
+        "בתכנית אולפן פתוח בערוץ הכנסת"
+      ],
+      "archiveSummary": "חמאס הוא נכס",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "strock-12",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/strock-12/",
+      "originalSourceUrl": "https://www.mako.co.il/news-israel/2025_q1/Article-4cd8f80ec18c491026.htm",
+      "quoteText": "אם לא אכפת לך,\nאת שוחררת מהשבי\nכי אני הרמתי את היד שלי\nבעד השחרור שלך.",
+      "person": "אורית סטרוק",
+      "role": "שרת ההתיישבות",
+      "statedDate": "2.2.25",
+      "publicationDetails": [
+        "לחטופה ששוחררה",
+        "בשיחה שקיימה עם משפחות חטופים וחטופים שחזרו",
+        "ההקלטה פורסמה בחדשות 12"
+      ],
+      "archiveSummary": "שוחררת מהשבי כי אני הצבעתי בעד",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "netanyahu-37",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/netanyahu-37/",
+      "originalSourceUrl": "https://www.facebook.com/watch/?v=129293438736778",
+      "quoteText": "אנחנו חמלים\nעל בעלי חיים?\nנשים הן\nבעלי חיים.\nילדים הם\nבעלי חיים.",
+      "person": "בנימין נתניהו",
+      "role": "ראש הממשלה",
+      "statedDate": "23.11.20",
+      "publicationDetails": [
+        "בכנס בכנסת למיגור אלימות נגד נשים"
+      ],
+      "archiveSummary": "נשים הן בעלי חיים, ילדים הם בעלי חיים",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "amsalem-13",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/amsalem-13/",
+      "originalSourceUrl": "https://x.com/KnessetT/status/1980303002545398040",
+      "quoteText": "תפסיקי לקרקר,\nאת הבן אדם הכי שפל בכנסת,\nלכי תצחצחי את הנעליים של לפיד.",
+      "person": "דודי אמסלם",
+      "role": "שר בממשלה",
+      "statedDate": "20.10.25",
+      "publicationDetails": [
+        "לח\"כ מרב בן ארי מטעם \"יש עתיד\"",
+        "במהלך נאומו במליאת הכנסת"
+      ],
+      "archiveSummary": "לכי תצחצחי את הנעליים של לפיד",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "goldknopf-14",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/goldknopf-14/",
+      "originalSourceUrl": "https://www.mako.co.il/news-politics/2024_q1/Article-11aa21da2d38d81027.htm",
+      "quoteText": "מה שייך\nחברי ממשלה\nלמלחמה?\nמה היא (הממשלה)\nשייכת למלחמה?",
+      "person": "יצחק גולדקנופף",
+      "role": "שר השיכון והבינוי",
+      "statedDate": "7.2.24",
+      "publicationDetails": [
+        "בראיון לישי כהן",
+        "מאתר \"כיכר השבת\""
+      ],
+      "archiveSummary": "מה שייכת הממשלה למלחמה?",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "ben-gvir-15",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/ben-gvir-15/",
+      "originalSourceUrl": "https://www.ynet.co.il/news/article/rj0uucxdyg",
+      "quoteText": "בשנה האחרונה,\nבאמצעות כוחנו הפוליטי,\nהצלחנו למנוע מעסקת החטופים הזו\nלצאת לפועל,\nפעם אחר פעם.",
+      "person": "איתמר בן גביר",
+      "role": "השר לביטחון לאומי",
+      "statedDate": "14.1.25",
+      "publicationDetails": [
+        "בסרטון שפרסם ברשתות החברתיות"
+      ],
+      "archiveSummary": "מנענו את עסקת החטופים פעם אחר פעם",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "zohar-16",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/zohar-16/",
+      "originalSourceUrl": "https://103fm.maariv.co.il/programs/media.aspx?ZrqvnVq=KFLLKK&c41t4nzVQ=GJL",
+      "quoteText": "טבח 7 באוקטובר\nאמנם קרה במשמרת שלנו,\nאבל נרקם במשמרת הקודמת\nשל בנט ולפיד.\nסינוואר תכנן את הדבר הזה\nברגע שהוא ראה\nאת חולשת הממשלה (הקודמת),\nובסופו של דבר לצערי\nזה יצא, בפועל,\nבמשמרת שלנו.",
+      "person": "מיקי זוהר",
+      "role": "שר התרבות והספורט",
+      "statedDate": "10.5.26",
+      "publicationDetails": [
+        "בראיון עבור 103FM"
+      ],
+      "archiveSummary": "הטבח נרקם במשמרת הקודמת של בנט ולפיד",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "smotrich-17",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/smotrich-17/",
+      "originalSourceUrl": "https://www.ynet.co.il/news/article/s100t6eeer",
+      "quoteText": "אתם בכוח\nלא רוצים\nלישון טוב\nבלילה?",
+      "person": "בצלאל סמוטריץ'",
+      "role": "שר האוצר",
+      "statedDate": "10.4.24",
+      "publicationDetails": [
+        "לשרים שצפו בסרטון הזוועות מהשבעה באוקטובר,",
+        "לאחר שסירב לצפות בסרטון בעצמו"
+      ],
+      "archiveSummary": "אתם בכוח לא רוצים לישון טוב בלילה?",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "netanyahu-18",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/netanyahu-18/",
+      "originalSourceUrl": "https://www.facebook.com/watch/?v=1593874609015506",
+      "quoteText": "מראיין: במה אתה השתנית\nמאז השביעי באוקטובר?\n\nבנימין נתניהו: קודם כל,\nהורדתי קצת במשקל.",
+      "person": "בנימין נתניהו",
+      "role": "ראש הממשלה",
+      "statedDate": "30.6.26",
+      "publicationDetails": [
+        "בראיון בערוץ 14"
+      ],
+      "archiveSummary": "מה השתנה מאז 7 באוקטובר? הורדתי במשקל",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "regev-19",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/regev-19/",
+      "originalSourceUrl": "https://www.mako.co.il/news-politics/2024_q2/Article-1ff19495b64ef81027.htm",
+      "quoteText": "הממשלה הזו\nעשתה בשנה הזאת\nדברים מדהימים.\nדברים מדהימים!\nכל כך הרבה אנשים\nנמצאים במלונות,\nהכל ממומן על ידי הממשלה!",
+      "person": "מירי רגב",
+      "role": "שרת התחבורה",
+      "statedDate": "4.6.24",
+      "publicationDetails": [
+        "בהתייחסות לפינוי של אלפי פליטי",
+        "מלחמת חרבות ברזל מהדרום ומהצפון",
+        "בראיון לרדיו קול חי"
+      ],
+      "archiveSummary": "דברים מדהימים — כולם במלונות על חשבון הממשלה",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "netanyahu-38",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/netanyahu-38/",
+      "originalSourceUrl": "https://www.facebook.com/watch/?v=610080532749837",
+      "quoteText": "החיים הם כמו\nנהר גועש ושוצף,\nוהחיים פשוט\nסוחפים אותך\nבמורד הנהר\nואתה מגיע למחוזות…",
+      "person": "בנימין נתניהו",
+      "role": "ראש הממשלה",
+      "statedDate": "18.3.19",
+      "publicationDetails": [
+        "בפגישה עם הורי הנספים",
+        "באסון נחל צפית"
+      ],
+      "archiveSummary": "החיים סוחפים אותך במורד הנהר",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "deri-20",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/deri-20/",
+      "originalSourceUrl": "https://www.c14.co.il/article/1250034",
+      "quoteText": "טבח שבעה באוקטובר\nהציל את עם ישראל.",
+      "person": "אריה דרעי",
+      "role": "יו\"ר ש\"ס",
+      "statedDate": "22.6.25",
+      "publicationDetails": [
+        "בראיון לינון מגל",
+        "ערוץ 14"
+      ],
+      "archiveSummary": "טבח 7 באוקטובר הציל את עם ישראל",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "strock-21",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/strock-21/",
+      "originalSourceUrl": "https://www.ynet.co.il/news/article/r1d0tjikt",
+      "quoteText": "אני מכירה שרים\nשלא גומרים\nאת החודש.",
+      "person": "אורית סטרוק",
+      "role": "השרה למשימות לאומיות",
+      "statedDate": "21.1.24",
+      "publicationDetails": [
+        "בהתכתבות פנימית שתכניה פורסמו",
+        "בכאן רשת ב'",
+        "כאשר משכורת שרים בממשלה",
+        "עמדה על כ-53 אלף ש\"ח בחודש"
+      ],
+      "archiveSummary": "יש שרים שלא גומרים את החודש",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "goldknopf-22",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/goldknopf-22/",
+      "originalSourceUrl": "https://www.israelhayom.co.il/news/politics/article/18490012",
+      "quoteText": "החרדים לא ישנו את אורח חייהם\nבגלל שיש צבא ומלחמה.\nיש צבא, ויש גם מי שילך לצבא.\nאם אתה אומר שחסר לך\n50 אלף חיילים,\nקח את אלה שמשתמטים.\nאני לא מדבר על חרדים.",
+      "person": "יצחק גולדקנופף",
+      "role": "יו\"ר יהדות התורה",
+      "statedDate": "24.7.25",
+      "publicationDetails": [
+        "בראיון ל\"מקור ראשון\""
+      ],
+      "archiveSummary": "קחו את המשתמטים — ולא, אני לא מדבר על חרדים",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "kalner-41",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/kalner-41/",
+      "originalSourceUrl": "https://www.zman.co.il/live/518767/",
+      "quoteText": "עד כמה\nשהטבח הנורא הזה\nקרה,\nלפחות הוא קרה\nבממשלה ציונית.",
+      "person": "אריאל קלנר",
+      "role": "ח\"כ מטעם הליכוד",
+      "statedDate": "9.9.24",
+      "publicationDetails": [
+        "בראיון לערוץ הכנסת"
+      ],
+      "archiveSummary": "לפחות הטבח קרה בממשלה ציונית",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "regev-23",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/regev-23/",
+      "originalSourceUrl": "https://www.inn.co.il/news/495827",
+      "quoteText": "למדנו מההיסטוריה\nשבכל מקום שיש רכבת -\nיש חיים.",
+      "person": "מירי רגב",
+      "role": "שרת התחבורה",
+      "statedDate": "14.6.21",
+      "publicationDetails": [
+        "במהלך נאומה בטקס חילופי שרים",
+        "במשרד התחבורה"
+      ],
+      "archiveSummary": "בכל מקום שיש רכבת — יש חיים",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "distel-24",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/distel-24/",
+      "originalSourceUrl": "https://www.mako.co.il/news-politics/2024_q4/Article-6f6b72121c4d391026.htm",
+      "quoteText": "זה המשולש שנגדו אנחנו נלחמים:\nצמרת צה''ל, צמרת המשפט והתקשורת.\nאחד מגן על השני.\nשיחלמו שניתן להם לעשות\nועדת חקירה ממלכתית\nעל אסון הטבח.",
+      "person": "גלית דיסטל-אטבריאן",
+      "role": "שרת ההסברה לשעבר",
+      "statedDate": "17.12.24",
+      "publicationDetails": [
+        "בנאום במליאת הכנסת"
+      ],
+      "archiveSummary": "נלחמים במשולש: צה\"ל, המשפט והתקשורת",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "regev-39",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/regev-39/",
+      "originalSourceUrl": "https://www.youtube.com/watch?v=ydO84K-nBk4",
+      "quoteText": "עשיתי מהפכות\nשאני חושבת\nששני שרים אחריי\nלא יצליחו לתקן\nאת מה שעשיתי.",
+      "person": "מירי רגב",
+      "role": "שרת התרבות",
+      "statedDate": "11.1.19",
+      "publicationDetails": [
+        "בראיון לאילה חסון"
+      ],
+      "archiveSummary": "שני שרים אחריי לא יצליחו לתקן את מה שעשיתי",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "gotliv-25",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/gotliv-25/",
+      "originalSourceUrl": "https://www.kan.org.il/content/kan-news/politic/905184/",
+      "quoteText": "כל חטוף\nהוא שטוף מוח\nשל חמאס.",
+      "person": "טלי גוטליב",
+      "role": "חברת כנסת מטעם הליכוד",
+      "statedDate": "19.5.25",
+      "publicationDetails": [
+        "בראיון לערוץ הכנסת"
+      ],
+      "archiveSummary": "כל חטוף הוא שטוף מוח של חמאס",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "regev-26",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/regev-26/",
+      "originalSourceUrl": "https://www.calcalist.co.il/local/articles/0,7340,L-3694416,00.html",
+      "quoteText": "מה שווה התאגיד\nאם אנחנו לא\nשולטים בו?",
+      "person": "מירי רגב",
+      "role": "שרת התרבות",
+      "statedDate": "31.7.16",
+      "publicationDetails": [
+        "בדיון בוועדת השרים לחקיקה"
+      ],
+      "archiveSummary": "מה שווה התאגיד אם איננו שולטים בו?",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "netanyahu-27",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/netanyahu-27/",
+      "originalSourceUrl": "https://www.zman.co.il/live/577601/",
+      "quoteText": "קטאר היא\nמדינה מורכבת\nולא מדינה פשוטה,\nאבל היא לא\nמדינת אויב.",
+      "person": "בנימין נתניהו",
+      "role": "ראש הממשלה",
+      "statedDate": "2.4.25",
+      "publicationDetails": [
+        "בסרטון שפרסם ברשתות החברתיות",
+        "במטרה להגן על יונתן אוריך שחשוד במסירת ידיעה סודית",
+        "בכוונה לפגוע בבטחון המדינה"
+      ],
+      "archiveSummary": "קטאר היא לא מדינת אויב",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "regev-28",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/regev-28/",
+      "originalSourceUrl": "https://www.tiktok.com/@hanoch_daum/video/7164675142369660161",
+      "quoteText": "מירי רגב: רבין אמר את זה\nעל ההתנחלויות -\nלא קרה לו כלום.\nחנוך דאום: לא קרה לו כלום?\nשילם מחיר, אחרי הכל.\nמירי רגב: לא…\nלא הרגו אותו בתקשורת!\nחנוך דאום: הרגו אותו\nבמציאות.",
+      "person": "מירי רגב",
+      "role": "ח\"כ מטעם הליכוד",
+      "statedDate": "פברואר 2014",
+      "publicationDetails": [
+        "בראיון לחנוך דאום"
+      ],
+      "archiveSummary": "את רבין לא הרגו בתקשורת",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "regev-29",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/regev-29/",
+      "originalSourceUrl": "https://x.com/kann_news/status/1934571892880429336",
+      "quoteText": "קודם כל,\nאין מה להילחץ.\nאתם נמצאים בחו\"ל,\nתיהנו.",
+      "person": "מירי רגב",
+      "role": "שרת התחבורה",
+      "statedDate": "16.6.25",
+      "publicationDetails": [
+        "לישראלים שנתקעו בחו\"ל",
+        "ללא טיסות חזרה לארץ",
+        "בזמן המלחמה עם איראן",
+        "פורסם בכאן 11"
+      ],
+      "archiveSummary": "תקועים בחו\"ל במלחמה? תיהנו",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "eshel-30",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/eshel-30/",
+      "originalSourceUrl": "https://www.globes.co.il/news/article.aspx?did=1001320113",
+      "quoteText": "השנאה הזאת\nהיא מה שמאחד\nאת המחנה שלנו.",
+      "person": "נתן אשל",
+      "role": "יועצו של בנימין נתניהו",
+      "statedDate": "29.2.20",
+      "publicationDetails": [
+        "בהקלטות שנחשפו בחדשות 12",
+        "בהן הוא מדבר עם גורם נוסף",
+        "על אסטרטגיית הליכוד לבחירות"
+      ],
+      "archiveSummary": "השנאה היא מה שמאחד את המחנה שלנו",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "strock-31",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/strock-31/",
+      "originalSourceUrl": "https://www.ynet.co.il/news/article/hyqqkiwdr",
+      "quoteText": "אצלי זה כמו\nתקופה של נס.",
+      "person": "אורית סטרוק",
+      "role": "שרת ההתיישבות והמשימות הלאומיות",
+      "statedDate": "7.7.24",
+      "publicationDetails": [
+        "בשיחה עם מתנחלים בהר חברון",
+        "על הגברת הבנייה ביהודה ושומרון",
+        "תשעה חודשים אחרי מחדל שבעה באוקטובר",
+        "וכשבעזה עדיין מוחזקים 120 חטופים"
+      ],
+      "archiveSummary": "אצלי זו תקופה של נס",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "karhi-32",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/karhi-32/",
+      "originalSourceUrl": "https://www.mako.co.il/news-politics/2024_q4/Article-b74f467b58f5391026.htm",
+      "quoteText": "אנחנו נבחרי ציבור\nואנחנו יכולים גם לשנות את המשטר\nאם נרצה.",
+      "person": "שלמה קרעי",
+      "role": "שר התקשורת",
+      "statedDate": "24.11.24",
+      "publicationDetails": [
+        "בוועדת השרים לענייני חקיקה",
+        "ההקלטה פורסמה בחדשות 12"
+      ],
+      "archiveSummary": "נוכל גם לשנות את המשטר, אם נרצה",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "rothman-33",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/rothman-33/",
+      "originalSourceUrl": "https://www.ynet.co.il/news/article/b16aozg6i",
+      "quoteText": "לכנסת מגיע מעמד\nשהיא יכולה לחוקק מה שהיא רוצה,\nולא צריכה להיות עליה ביקורת.",
+      "person": "שמחה רוטמן",
+      "role": "יו\"ר וועדת החוקה בכנסת",
+      "statedDate": "7.2.23",
+      "publicationDetails": [
+        "בדיון בכנסת",
+        "פורסם ב-Ynet"
+      ],
+      "archiveSummary": "הכנסת יכולה לחוקק הכל — בלי ביקורת",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "agmon-34",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/agmon-34/",
+      "originalSourceUrl": "https://www.mako.co.il/news-politics/2026_q1/Article-27fa11cf3412d91026.htm",
+      "quoteText": "לא טוב שפתחו את מרוקו\nלתיירות ישראלית,\nעכשיו אנחנו יודעים\nמאיפה המרוקאים שלנו הגיעו.\nמאפריקה.\nבבון זה קוף.",
+      "person": "זיו אגמון",
+      "role": "ראש הסגל והדובר של בנימין נתניהו",
+      "statedDate": "24.3.26",
+      "publicationDetails": [
+        "פורסם בחדשות 12"
+      ],
+      "archiveSummary": "מרוקאים הגיעו מאפריקה — בבון זה קוף",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "smotrich-42",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/smotrich-42/",
+      "originalSourceUrl": "https://www.davar1.co.il/690715/",
+      "quoteText": "חשבתי להתפטר\nאחרי השבעה באוקטובר,\nאבל כשניסיתי לחשוב\nבמה הייתי לא בסדר —\nלא מצאתי.",
+      "person": "בצלאל סמוטריץ'",
+      "role": "שר האוצר",
+      "statedDate": "28.7.26",
+      "publicationDetails": [
+        "בראיון לפודקאסט 'גיקונומי'",
+        "בהנחיית ראם שרמן"
+      ],
+      "archiveSummary": "חשבתי להתפטר — אבל לא מצאתי במה הייתי לא בסדר",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    },
+    {
+      "slug": "netanyahu-40",
+      "archiveUrl": "https://thebigbookofquotes.com/quote/netanyahu-40/",
+      "originalSourceUrl": "https://www.ynet.co.il/news/article/syaeaawxle",
+      "quoteText": "אני ישן\nבמצפון נקי.",
+      "person": "בנימין נתניהו",
+      "role": "ראש הממשלה",
+      "statedDate": "6.5.25",
+      "publicationDetails": [
+        "באותו יום עדיין היו בעזה",
+        "59 חטופים וחטופות, חיים וחללים"
+      ],
+      "archiveSummary": "אני ישן במצפון נקי",
+      "retrievedAt": "2026-09-09T13:36:51.631Z",
+      "evidenceStatus": "discovery-only"
+    }
+  ]
+}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalpi — Story pitch (v2)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a1f1c;
+      --paper: #f4efe4;
+      --civic: #1f4f4a;
+      --deep: #e7dfd0;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #111; color: var(--ink); font-family: "IBM Plex Sans", sans-serif; }
+    .slide {
+      display: none;
+      height: 100%;
+      padding: 72px 88px;
+      background: var(--paper);
+      flex-direction: column;
+      justify-content: center;
+    }
+    .slide.on { display: flex; }
+    .kicker { letter-spacing: 0.16em; text-transform: uppercase; color: var(--civic); font-size: 13px; margin: 0 0 18px; font-weight: 600; }
+    h1 { font-family: Fraunces, Georgia, serif; font-size: clamp(42px, 6.2vw, 78px); line-height: 1.04; margin: 0 0 18px; }
+    h2 { font-family: Fraunces, Georgia, serif; font-size: clamp(34px, 4.6vw, 56px); line-height: 1.08; margin: 0 0 18px; }
+    p { font-size: 24px; line-height: 1.4; margin: 0 0 14px; max-width: 18em; }
+    .wide { max-width: 22em; }
+    .num { font-family: Fraunces, Georgia, serif; font-size: clamp(72px, 12vw, 128px); color: var(--civic); margin: 0; line-height: 0.95; }
+    .pair { display: flex; gap: 56px; flex-wrap: wrap; }
+    .pair p { max-width: 10em; }
+    .sub { font-size: 18px; opacity: 0.75; max-width: 28em; }
+    .footer {
+      position: fixed; bottom: 16px; left: 24px; right: 24px;
+      display: flex; justify-content: space-between;
+      color: var(--paper); font-size: 13px; mix-blend-mode: difference;
+    }
+    a { color: var(--civic); }
+    .cards { display: flex; gap: 16px; margin: 12px 0; }
+    .cards img { width: 150px; height: 210px; object-fit: cover; border-radius: 8px; border: 2px solid var(--ink); }
+    @media (max-width: 800px) {
+      .slide { padding: 32px 20px; }
+      p { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide on">
+    <p class="kicker">Version B · the story</p>
+    <h1>Who does not reach the kalpi.</h1>
+    <p class="wide">And a pack of cards that might change that before 27 October.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">The last official number</p>
+    <div class="pair">
+      <div>
+        <p class="num">46.7%</p>
+        <p>of 18–24s voted after 2021.</p>
+      </div>
+      <div>
+        <p class="num">74.9%</p>
+        <p>of 65–74s did.</p>
+      </div>
+    </div>
+    <p class="sub">Knesset Research and Information Center, 2022.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">That is the issue</p>
+    <h2>Not a vibe. A 28-point age gap.</h2>
+    <p class="wide">National turnout in 2022 was 70.6%. Young adults are a different electorate. The youth rate has been rising, and they vote more than young Europeans. The gap with older Israelis is still the fact.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">This year</p>
+    <p class="num">~600k</p>
+    <h2>first-timers. About six seats.</h2>
+    <p>595–640 thousand people aged 18–22. 8.7% of the roll. Election day 27 October 2026.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">The headline you will hear</p>
+    <h2>“This year they say they will vote.”</h2>
+    <p class="wide">IDI, May 2026: 80–95% of first-timers intend to. Hold that number. It is not a forecast.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Because surveys always look like that</p>
+    <h2>2013: 88% intended.<br />92% later said they voted.<br />67.8% actually did.</h2>
+    <p class="wide">Same institute. Ages 18–22 were already the most likely to stay home. Vote questions run hot. Official counts do not.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Working assumption</p>
+    <h2>Youth turnout will still be low.</h2>
+    <p class="wide">Even if 2026 is a few points above 46.7%, it is still low versus older adults. Then the second job: the slip has to be informed.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">The audience</p>
+    <h2>18–24. First-timers. Feed politics.</h2>
+    <p class="wide">Social is their #1 political source. Most do not seek it. They distrust parties. They do not live in manifesto PDFs.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">What characterizes them</p>
+    <h2>47 seconds.<br />Dopamine.<br />Viral or invisible.</h2>
+    <p class="wide">Gloria Mark: average screen focus is 47 seconds, median 40. Age of wars and TikTok. If it is not a daily loop, it is a lecture they will not finish.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">What already works</p>
+    <h2>They already collect cards.</h2>
+    <p class="wide">Pokémon TCG Pocket is collection-first, global, daily rips. State Makers sold out a 98-card Israeli history set. We point that format at this election.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Therefore</p>
+    <h1>Kalpi.</h1>
+    <p class="wide">A free digital collect-only TCG of the lists. Daily pack. The rip is bait. The back is the lesson. Show up on 27 October.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">The rip</p>
+    <div class="cards">
+      <img src="../../design/assets/hero-art-kalpi.png" alt="Kalpi" />
+      <img src="../../design/assets/hero-art-threshold.png" alt="Threshold" />
+      <img src="../../design/assets/hero-art-memchetlammed.png" alt="Ballot letters" />
+    </div>
+    <p><a href="../../design/hero-cards.html">Flip the hero cards</a> · <a href="../../design/wireframes.html">Phone wireframes</a></p>
+    <p class="sub">Collect only. Equal sets. No lore. No battles.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">On the art</p>
+    <h2>Yes, it is AI.<br />The election is in eight weeks.</h2>
+    <p class="wide">This community often prefers hand-made art. We are not claiming AI is more original. Lists file 9 September. Virality needs weeks. Hand-painting every member of every list is how you miss October. The cause is the deadline.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">27 October 2026</p>
+    <h1>Assume the gap.<br />Then give them a pack they will open.</h1>
+    <p class="sub">Official youth turnout has been 46.7%. Surveys will always say 90. Free. Equal. Informed slip. Then show up.</p>
+  </section>
+
+  <div class="footer">
+    <span>Kalpi · story v2</span>
+    <span id="pos">1 / 14 · ← →</span>
+  </div>
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    let i = 0;
+    const go = (n) => {
+      i = (n + slides.length) % slides.length;
+      slides.forEach((s, idx) => s.classList.toggle("on", idx === i));
+      document.getElementById("pos").textContent = `${i + 1} / ${slides.length} · ← →`;
+    };
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(i + 1); }
+      if (e.key === "ArrowLeft") go(i - 1);
+    });
+    document.body.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return;
+      go(i + 1);
+    });
+  </script>
+</body>
+</html>

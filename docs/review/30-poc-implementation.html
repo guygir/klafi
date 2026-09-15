@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PoC implementation review · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">30 / 31 · PoC implementation review</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="29-poc-test-kit.html">← PoC first test kit</a><button class="btn mark" type="button" data-slug="30-poc-implementation">Mark reviewed</button><a class="btn last" id="next-page" href="31-poc-pitch-notes.html">Next: PoC presentation — holding notes →</a></div>
+  </header>
+  <article><h1>Kalpi PoC — implementation review</h1>
+<p>This is the single review map for the post-feedback product direction and its playable implementation.</p>
+<h2>Run and review</h2>
+<pre><code class="language-bash">cd app
+npm start
+</code></pre>
+<p>Open <code>http://127.0.0.1:4173</code>.</p>
+<p>The bottom navigation now exposes four surfaces:</p>
+<ul>
+<li><strong>Today</strong> — the real pack art, server-authoritative daily pull, and the staged walkout.</li>
+<li><strong>Binder</strong> — all 28 collection wells, set filters, duplicate counts, full card backs, sources, sharing, and duplicate offers.</li>
+<li><strong>Growth</strong> — the trading/gift-preview surface, creator-link builder, real local funnel events, and a link to the full bootstrap playbook.</li>
+<li><strong>Studio</strong> — sponsor/agenda status, debug pack reset and countdown, the critical-contrast editorial sample, all-card status/source review, and walkout replay.</li>
+</ul>
+<p>The complete browser review hub is at <code>http://127.0.0.1:4173/project-docs/review/index.html</code> while the app server is running, or <code>docs/review/index.html</code> directly.</p>
+<h2>PoC scope correction</h2>
+<p>Prestige / Legacy and Imitations / Satire are final-product backlog sets. They are explicitly outside this PoC. The PoC proves the core 28-card daily product, one reproducible six-card journey, the walkout, contextual backs, binder, sharing/trading preview, and return intent.</p>
+<h2>Reproducible guided demo</h2>
+<p>Use <strong>Studio → Run six-card guided demo</strong>. The server loads <code>app/data/demo-pack.json</code>, validates the real 3C/2U/1R composition, and returns six deterministic instances. Demo mode does not write inventory, pity, cooldown, packs, or funnel events.</p>
+<p>The narrative and publication blockers are documented in <code>docs/content/poc-demo-sequence.md</code>.</p>
+<h2>Corrected walkout</h2>
+<p>The reveal now uses one persistent card silhouette:</p>
+<p><code>sealed art pack → empty card → quotation/fact below card → party name + ballot letters → portrait → person name → contextual back</code></p>
+<p>The card does not disappear between beats. Source label, date, and source link arrive with the quotation. Every beat has a short readability hold and then waits for the player.</p>
+<p>Implementation:</p>
+<ul>
+<li>Markup and choreography: <code>app/public/app.js</code></li>
+<li>Persistent-card and motion styling: <code>app/public/styles.css</code></li>
+<li>Existing art used by both home and tear stages: <code>docs/design/assets/pack-wrapper.png</code></li>
+<li>Core demo art and rights status: <code>docs/design/poc-asset-manifest.md</code></li>
+</ul>
+<h2>Sponsor and agenda configuration</h2>
+<p>Round 1 strategy configuration:</p>
+<ul>
+<li>Sponsor: <strong>Guy Girmonsky</strong></li>
+<li>Supported faction: <strong>Current opposition</strong></li>
+<li>Agenda: <strong>Kalpi supports change.</strong></li>
+<li>Primary audience: quiet/fearful supporters and undecided voters</li>
+<li>Secondary audience: voters currently supporting the opposing side</li>
+<li>Primary PoC action: return tomorrow</li>
+<li>Secondary distribution action: share a card</li>
+</ul>
+<p>These values live in <code>app/data/advocacy.json</code>. Studio displays them and keeps the independent card-review release gate visible.</p>
+<h2>Card and source review</h2>
+<p>Use <strong>Studio → Card review desk</strong> to inspect all 28 cards, filter the 10 drafts, open sources, and replay any walkout.</p>
+<p>Source-of-truth files:</p>
+<ul>
+<li>Authored card copy: <code>docs/content/poc-cards.md</code></li>
+<li>Generated runtime cards: <code>app/data/cards.json</code></li>
+<li>Source registry: <code>app/data/sources.json</code></li>
+<li>Generated content audit: <code>app/data/content-audit.json</code></li>
+<li>Content process and human gates: <code>docs/content/editorial-pipeline.md</code></li>
+</ul>
+<p>The current roster has 10 cards in <code>draft</code>; those need direct-source review before release.</p>
+<h2>Smotrich critical-contrast sample</h2>
+<p>The supplied 2015 quote is in <code>app/data/editorial-samples.json</code> and visible in Studio. It is marked <code>draft-secondary-source</code> because The Big Book of Quotes is a secondary archive. The original linked publication or recording must be inspected before moving it into the public pack.</p>
+<h2>Trading and bootstrap</h2>
+<p>Trading is intentionally a preview, not a fake transfer:</p>
+<ul>
+<li>Growth always shows the offer flow, even before a duplicate exists, and labels that state as a fixture.</li>
+<li>When a card count reaches two, Growth uses the real duplicate and records the offer event.</li>
+<li>Binder exposes <strong>Offer duplicate</strong> on any card owned twice.</li>
+<li>Gift links reopen the exact card walkout; ownership transfer is the next implementation boundary.</li>
+</ul>
+<p>The operating plan, thresholds, and failure tree live in <code>docs/growth/bootstrap-playbook.md</code>.</p>
+<h2>Debug pack reset</h2>
+<p>Studio shows the live <code>HH:MM:SS</code> countdown and <strong>Reset daily pack now</strong>. The button calls a server-authoritative debug endpoint and clears only the current guest session's cooldown.</p>
+<p>Debug is enabled by default locally. Run <code>KALPI_DEBUG=0 npm start</code> to hide and disable the endpoint.</p>
+<h2>Architecture and verification</h2>
+<ul>
+<li>Runtime: zero-dependency Node.js 20+.</li>
+<li>State: server-owned sessions, inventory, RNG, pity, cooldown, instances, and events.</li>
+<li>Persistence: queued atomic JSON writes under <code>app/.runtime/</code>.</li>
+<li>Client: vanilla HTML/CSS/JS; it renders server results.</li>
+<li>Verification: <code>cd app &amp;&amp; npm test</code>.</li>
+<li>First-test protocol: <code>docs/growth/poc-test-kit.md</code>.</li>
+</ul>
+<p>The automated suite covers content provenance, pack composition and pity, sessions/persistence/isolation, activity validation, debug reset, client/HTML selector contracts, the corrected walkout sequence, visible Growth/Studio routes, and use of the existing pack art.</p></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="29-poc-test-kit.html">← PoC first test kit</a><a class="btn last" id="next-page" href="31-poc-pitch-notes.html">Next: PoC presentation — holding notes →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

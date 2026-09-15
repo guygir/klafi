@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PoC v2 — 49-card structure · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">30 / 37 · PoC v2 — 49-card structure</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="29-poc-test-kit.html">← PoC first test kit</a><button class="btn mark" type="button" data-slug="30-poc-v2-structure">Mark reviewed</button><a class="btn primary" id="next-page" href="31-weave-production.html">Next: Figma Weave production brief →</a></div>
+  </header>
+  <article><h1>Kalpi PoC v2 — 49-card structure</h1>
+<p>This replaces the 28-card content structure after the first Alpha. Prestige, Satire, and שופרות / Mouthpieces remain post-PoC expansion backlog.</p>
+<h2>Timed Legendary / Aces promotion set</h2>
+<p>Legendary cards are a PoC extension, not part of the base 49-card pool and not a fourth result silently added to daily odds.</p>
+<ul>
+<li>A Legendary is attached to a dated political or campaign event and is available only during a published server-controlled window.</li>
+<li>The server records the event id, active window, card id, and grant. Once earned, the card remains in the binder after the window closes.</li>
+<li>The front shows the event date and <code>Legendary</code>; the back retains the exact/adapted classification, source, full context, and release rationale.</li>
+<li>Debug and guided-demo grants do not modify ordinary inventory or daily cooldown.</li>
+<li>First candidate: Benjamin Netanyahu — “אם היו מעירים אותי בבוקר ה־7 באוקטובר, זה היה נראה אחרת.*” The display line is adapted; the source record preserves his longer direct answer and the asterisk must remain visible.</li>
+</ul>
+<h2>Total</h2>
+<ul>
+<li>3 parties × 15 cards = 45 party cards.</li>
+<li>4 shared system cards.</li>
+<li><strong>49 cards total.</strong></li>
+</ul>
+<p>PoC parties:</p>
+<ul>
+<li>Likud (<code>LIK</code>)</li>
+<li>The Democrats (<code>DEM</code>)</li>
+<li>Ra’am (<code>RAM</code>)</li>
+</ul>
+<h2>Per-party structure</h2>
+<p>Each party has:</p>
+<ol>
+<li><strong>One symbol card</strong><br />
+   - Official or historically associated ballot letters.<br />
+   - Common.<br />
+   - Filing/status date and official source required.</li>
+<li><strong>Two manifesto excerpt cards</strong><br />
+   - Exact excerpts from the party’s own published document or official page.<br />
+   - <code>P-01</code> is Common.<br />
+   - <code>P-02</code> is Uncommon.<br />
+   - Label as a document excerpt, not a politician quote.</li>
+<li><strong>Top four chosen members × three quote cards</strong><br />
+   - 12 member cards per party.<br />
+   - Each card carries a different real quotation.<br />
+   - Each quotation needs exact wording, speaker, date/date-status, primary or closest source, and surrounding context.<br />
+   - <code>Q01</code> is Common.<br />
+   - <code>Q02</code> is Uncommon.<br />
+   - <code>Q03</code> is Rare.</li>
+</ol>
+<p>Total per party:</p>
+<ul>
+<li>6 Common: symbol, first manifesto excerpt, four <code>Q01</code> cards.</li>
+<li>5 Uncommon: second manifesto excerpt, four <code>Q02</code> cards.</li>
+<li>4 Rare: four <code>Q03</code> cards.</li>
+</ul>
+<h2>Shared system cards</h2>
+<p>Retain:</p>
+<ul>
+<li>The Knesset</li>
+<li>The Kalpi</li>
+<li>The Threshold</li>
+<li>Central Elections Committee</li>
+</ul>
+<p>Current rarity allocation remains 2 Common, 1 Uncommon, 1 Rare.</p>
+<h2>Full rarity pool</h2>
+<ul>
+<li>20 Common.</li>
+<li>16 Uncommon.</li>
+<li>13 Rare.</li>
+<li>No Holo in the PoC.</li>
+</ul>
+<p>Daily packs remain:</p>
+<p><code>3 Common · 2 Uncommon · 1 Rare</code></p>
+<h2>Member-card identity</h2>
+<p>Recommended ID:</p>
+<p><code>&lt;PARTY&gt;-M&lt;rank&gt;-Q&lt;quote&gt;</code></p>
+<p>Examples:</p>
+<ul>
+<li><code>LIK-M01-Q01</code></li>
+<li><code>LIK-M01-Q02</code></li>
+<li><code>LIK-M01-Q03</code></li>
+</ul>
+<p>All three cards use the same person and stable visual identity. They vary by:</p>
+<ul>
+<li>Real quotation.</li>
+<li>Pose or camera angle.</li>
+<li>Civic/issue setting.</li>
+<li>Common, Uncommon, or Rare finish.</li>
+</ul>
+<p>The three cards are separate collectible knowledge units, not cosmetic variants of the same quotation.</p>
+<h2>Data and publication gates</h2>
+<p>A member triplet is blocked unless:</p>
+<ul>
+<li>All three quotations are genuinely different.</li>
+<li>Every text is classified as <code>exact</code>, <code>shortened</code>, or <code>attributed-paraphrase</code>.</li>
+<li><code>shortened</code> and <code>attributed-paraphrase</code> cards carry a visible <code>*</code> beside the quotation plus the on-card footnote “* shortened/adapted from sourced remarks”; the back states the precise classification and links the source.</li>
+<li>An asterisk never upgrades uncertain wording into a verbatim quotation.</li>
+<li>Speaker and date/date-status are known.</li>
+<li>Each source URL is inspectable.</li>
+<li>Context prevents a clipped or reversed meaning.</li>
+<li>At least one identity reference is recorded per person. Public photographs remain internal model references; only the generated editorial illustration ships in the PoC.</li>
+</ul>
+<p>A manifesto card is blocked unless the exact source document, version/date, section/page where available, and original-language excerpt are recorded.</p></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="29-poc-test-kit.html">← PoC first test kit</a><a class="btn primary" id="next-page" href="31-weave-production.html">Next: Figma Weave production brief →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

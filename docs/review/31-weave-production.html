@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Figma Weave production brief · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">31 / 37 · Figma Weave production brief</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="30-poc-v2-structure.html">← PoC v2 — 49-card structure</a><button class="btn mark" type="button" data-slug="31-weave-production">Mark reviewed</button><a class="btn primary" id="next-page" href="32-weave-member-prompts.html">Next: Weave member prompt library →</a></div>
+  </header>
+  <article><h1>Kalpi PoC — Figma Weave production brief</h1>
+<p>Use Weave for reusable still and motion pipelines. Export finished assets into <code>docs/design/assets/</code>; the app does not depend on a live Weave graph.</p>
+<p>Copy-ready prompts for all 12 PoC politicians: <a href="weave-member-prompts.html">weave-member-prompts.html</a></p>
+<h2>What created the Naama Lazimi image</h2>
+<p>Cursor generated <code>hero-art-naama-lazimi.png</code> at 3:4 with this exact prompt:</p>
+<blockquote>
+<p>Vertical 3:4 illustrated collectible-card portrait of Israeli politician Naama Lazimi for a civic election game. Recognizable but deliberately non-photoreal editorial portrait, confident direct gaze, waist-up at a parliamentary lectern, expressive ink-and-gouache brushwork on aged parchment, dark ink linework, restrained red party pip accent only, subtle brass and teal reflected light, serious contemporary civic mood, ample crop room, no logos, no flags, no readable text, no photorealism, no card border, no caricature.</p>
+</blockquote>
+<p>Cursor did not expose its model or seed, so those cannot be copied exactly. In Weave, record the selected model/version and seed beside every approved output.</p>
+<h2>Style-anchor bundle</h2>
+<p>Yes—examples are required if the full set is expected to look authored rather than like 36 unrelated generations. Use each reference only for the layer it controls:</p>
+<ol>
+<li><strong>Portrait style anchor:</strong> <code>hero-art-naama-lazimi.png</code> controls ink-and-gouache texture, parchment, facial simplification, lighting restraint, and crop density.</li>
+<li><strong>Packaging anchor:</strong> <code>pack-wrapper.png</code> controls ballot-paper material, civic teal, brass accents, folds, and print wear for pack/rip assets. It must not control facial style or card composition.</li>
+<li><strong>Card chrome anchor:</strong> a current rendered Kalpi card or <code>hero-cards.html</code> controls the 63:88 frame, insets, pip, typography zones, rarity edge, and footer. Weave produces art only; live HTML renders text and chrome.</li>
+</ol>
+<p>Keep these anchors fixed for the whole production run. Generate the first four politicians, place all twelve variants in one contact sheet, and reject the batch if paper tone, line weight, facial realism, crop density, or lighting reads as a different collection. Once approved, lock the model/version, style-reference strength, negative prompt, grade, and export settings. Identity images change per politician; the three style anchors do not.</p>
+<h2>Inputs needed for every politician</h2>
+<p>Create one folder per person:</p>
+<p><code>&lt;party&gt;/&lt;member-rank&gt;-&lt;slug&gt;/</code></p>
+<p>Provide:</p>
+<ul>
+<li>Exact English and Hebrew name.</li>
+<li>Party and list rank.</li>
+<li>One clear identity reference is the PoC minimum. A second or third angle is optional and recommended only when identity drifts across variants.</li>
+<li>Source URL, copyright owner where known, and permission/status for using every reference as model input. Reference permission does not imply permission to ship the photograph.</li>
+<li>Three exact, different quotations.</li>
+<li>Speaker, date/date-status, primary or closest source URL, surrounding context, and editorial role for each quotation.</li>
+<li>Any physical detail the illustration must not get wrong.</li>
+<li>Any forbidden treatment.</li>
+</ul>
+<p>References may guide identity without being shipped. Do not use a press photograph as the final card image unless its rights are cleared.</p>
+<h2>Reusable portrait graph</h2>
+<p>Recommended node shape:</p>
+<ol>
+<li>Image inputs: identity references.</li>
+<li>Image input: approved Naama image as one style reference.</li>
+<li>Image Describer: extract texture, palette, lighting, and composition from the style reference.</li>
+<li>Text inputs: politician identity, party pip color, pose variant, setting variant, constraints.</li>
+<li>Prompt concatenation.</li>
+<li>Image model comparison: test two suitable models before locking one.</li>
+<li>Seed node: record a stable base seed per politician.</li>
+<li>Identity/style reference conditioning available in the chosen model.</li>
+<li>Upscale.</li>
+<li>Color grade to the shared paper/ink/brass/teal palette.</li>
+<li>3:4 crop.</li>
+<li>Export PNG.</li>
+</ol>
+<p>Use a List Selector or text iterator for the three variants:</p>
+<ul>
+<li><code>01</code>: direct gaze, waist-up, formal lectern or neutral civic setting.</li>
+<li><code>02</code>: three-quarter view while speaking, one restrained hand gesture.</li>
+<li><code>03</code>: seated or standing with a document, committee, field, or issue-specific setting.</li>
+</ul>
+<p>Keep identity references and style description fixed. Vary pose and setting. If a fixed seed prevents meaningful pose variation, use three recorded seeds while keeping the same references, model, style text, palette, crop, and grading.</p>
+<h2>Reusable portrait prompt</h2>
+<blockquote>
+<p>Vertical 3:4 illustrated collectible-card portrait of {{politician_name}}, an Israeli politician, for the Kalpi civic election game. Recognizable and identity-consistent with the supplied references, but deliberately non-photoreal. {{pose_variant}} in {{setting_variant}}. Expressive ink-and-gouache brushwork on aged parchment, dark ink linework, restrained {{party_pip_color}} accent only, subtle aged-brass details and teal reflected light, serious contemporary civic mood, tactile archival finish, ample crop room around head and shoulders. No logos, no flags, no readable text, no photorealism, no card border, no caricature, no invented medals or insignia, no changed age, no face distortion, no extra fingers.</p>
+</blockquote>
+<p>Generate at least four candidates for each variant; approve one. Do not automatically publish the first output.</p>
+<h2>Pack-rip image-to-video graph</h2>
+<p>Input:</p>
+<ul>
+<li><code>pack-wrapper.png</code></li>
+<li>Optional clean mask isolating the pack from its dark background.</li>
+</ul>
+<p>Graph:</p>
+<ol>
+<li>Image input.</li>
+<li>Mask/background separation.</li>
+<li>Image-to-video model comparison using Kling, Runway, Luma, or another currently available model.</li>
+<li>Motion prompt.</li>
+<li>Optional paper-fiber/debris layer.</li>
+<li>Color grade matching the source frame.</li>
+<li>Trim to the clean action.</li>
+<li>Export silent WebM for the app and MP4 for review.</li>
+</ol>
+<p>Motion prompt:</p>
+<blockquote>
+<p>Locked camera. Preserve the exact Kalpi wrapper, seal, lettering, ballot-box drawing, paper texture, and proportions. The top gold serrated seam pulls apart from the center, paper fibers stretch and tear, and the wrapper opens with believable physical resistance. A restrained teal light appears from inside. The two paper lips peel back and six card backs begin to rise together. No hands. No camera move. No new text. No warped letters or logo. No melting package. No explosion. End on a stable open-wrapper frame suitable for cutting to the live HTML card fan.</p>
+</blockquote>
+<p>Configuration target:</p>
+<ul>
+<li>2.0–2.8 seconds.</li>
+<li>24 or 30 fps.</li>
+<li>Locked camera and low motion strength first.</li>
+<li>Preserve first-frame composition.</li>
+<li>9:16 with generous safe area if exact source ratio is unavailable.</li>
+<li>Silent.</li>
+<li>WebM under roughly 2 MB after final compression; MP4 review master may be larger.</li>
+<li>Export a poster PNG and reduced-motion fallback.</li>
+</ul>
+<p>The video ends before card identities appear. The server-selected cards and live fan remain HTML.</p>
+<h2>Rare-card ambient motion</h2>
+<p>Use only for the final identity beat of Rare/Holo cards. Do not pre-render quotation, source, party, or name.</p>
+<p>Motion prompt:</p>
+<blockquote>
+<p>Locked portrait crop. Preserve identity and facial structure exactly. Minimal natural breathing, one subtle blink at most, slight fabric movement, and a narrow teal-to-gold light sweep across the illustrated paper texture. No speech, no lip movement, no head turn, no face morphing, no camera orbit, no background replacement, no new objects.</p>
+</blockquote>
+<p>Target 1.2–1.8 seconds, silent WebM. CSS supplies entrance, labels, quote timing, flip, and reduced-motion behavior.</p>
+<h2>Binder landing</h2>
+<p>The actual card-to-slot movement stays in HTML/CSS because the destination depends on server inventory and screen layout. Weave may produce a motion reference:</p>
+<blockquote>
+<p>One finished paper collectible card moves forward, scales down with physical depth, and settles precisely into an empty binder well. A restrained dust displacement and brief gold edge glint mark contact. Locked top-down camera, no bounce loop, no text changes, no extra cards.</p>
+</blockquote>
+<p>Use the reference to tune a 500–700ms CSS FLIP transition. Do not ship a generic landing video over the live binder.</p>
+<h2>Naming</h2>
+<ul>
+<li>Portrait stills: <code>portrait-&lt;party&gt;-&lt;rank&gt;-&lt;slug&gt;-01.png</code> through <code>03.png</code></li>
+<li>Rare motion: <code>portrait-&lt;party&gt;-&lt;rank&gt;-&lt;slug&gt;-rare.webm</code></li>
+<li>Pack motion: <code>pack-rip-v01.webm</code></li>
+<li>Review masters: same stem with <code>.mp4</code></li>
+<li>Poster/fallback: same stem with <code>-poster.png</code></li>
+</ul>
+<h2>Delivery checklist</h2>
+<ul>
+<li>Model and version recorded.</li>
+<li>Seed recorded.</li>
+<li>Prompt stored with output.</li>
+<li>Identity references and URLs stored.</li>
+<li>Rights/review status stored.</li>
+<li>Three variants visibly differ in pose or setting but retain identity and style.</li>
+<li>No generated text or party logo baked into portrait art.</li>
+<li>3:4 crop tested inside the actual card.</li>
+<li>WebM, MP4 master, and reduced-motion fallback supplied for motion assets.</li>
+</ul></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="30-poc-v2-structure.html">← PoC v2 — 49-card structure</a><a class="btn primary" id="next-page" href="32-weave-member-prompts.html">Next: Weave member prompt library →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

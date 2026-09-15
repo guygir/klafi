@@ -1,0 +1,552 @@
+{
+  "asOfDate": "2026-09-09",
+  "scopeNote": "Metadata for the 14 lists selected by the project from the 38 lists submitted for the 26th Knesset election. Submission and requested ballot letters are not final CEC approval; final approval was scheduled for 2026-09-27.",
+  "parties": [
+    {
+      "id": "YSR",
+      "displayNameHe": "ישר!",
+      "displayNameEn": "Yashar!",
+      "submittedListNameHe": "ישר! עם איזנקוט",
+      "requestedLetters": ["דרך"],
+      "letterStatus": "requested",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#355C7D",
+      "treatment": "favorable",
+      "membershipConstituentCaveat": "A newly formed party and submitted list led by Gadi Eisenkot; former National Unity figures joined as individuals, not as a separately identified constituent party.",
+      "symbolSourceUrl": "https://www.ynetnews.com/article/syywdl3oge",
+      "platformCards": [
+        {
+          "originalText": "בישר! אנחנו מאמינים בישראל יהודית, דמוקרטית, עוצמתית, מתקדמת ובטוחה - ברוח מגילת העצמאות",
+          "translation": "At Yashar!, we believe in a Jewish, democratic, strong, advanced and secure Israel—in the spirit of the Declaration of Independence.",
+          "documentName": "מטרות המפלגה",
+          "dateOrVersion": "accessed 2026-09-09",
+          "sourceUrl": "https://yasharwitheisenkot.com/principles/",
+          "sourceType": "official",
+          "section/page": "Goals of the party",
+          "context": "Opening statement on Yashar's official plans page; it is a current party-program statement, not described here as a manifesto.",
+          "contentStatus": "verified-current-official"
+        },
+        {
+          "originalText": "המועצה תגדיר תוכנית חומש חינוכית ותקציבית, תיקבע ליבה לאומית מחייבת לכל תלמיד במערכת החינוך הציבורית: זהות יהודית-ישראלית, עברית, אנגלית, מתמטיקה, מדעים, אוריינות בינה מלאכותית, חשיבה ביקורתית, אזרחות ודמוקרטיה.",
+          "translation": "The council will define a five-year educational and budget plan, and a binding national core will be set for every student in public education: Jewish-Israeli identity, Hebrew, English, mathematics, science, AI literacy, critical thinking, civics and democracy.",
+          "documentName": "ישר! לחינוך ממלכתי ומצטיין",
+          "dateOrVersion": "2026 policy page; accessed 2026-09-09",
+          "sourceUrl": "https://yasharwitheisenkot.com/principles/education/",
+          "sourceType": "official",
+          "section/page": "National Education Council proposal",
+          "context": "A concrete curriculum proposal within Yashar's current education plan.",
+          "contentStatus": "verified-current-official"
+        }
+      ]
+    },
+    {
+      "id": "LIK",
+      "displayNameHe": "הליכוד",
+      "displayNameEn": "Likud",
+      "submittedListNameHe": "הליכוד בהנהגת בנימין נתניהו לראשות הממשלה",
+      "requestedLetters": ["מחל"],
+      "letterStatus": "protected",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#1D5FA7",
+      "treatment": "critical",
+      "membershipConstituentCaveat": "The submitted list is Likud's party list; the excerpts are from its standing constitution because no official 2026 election manifesto was located.",
+      "symbolSourceUrl": "https://www.ynetnews.com/article/sylgqc9dmx",
+      "platformCards": [
+        {
+          "originalText": "שמירת זכותו של העם היהודי על ארץ ישראל, כזכות נצחית שאינה ניתנת לערעור, התמדה ביישובם ובפיתוחם של כל חלקי ארץ-ישראל והחלת ריבונות המדינה עליהם.",
+          "translation": "Safeguarding the Jewish people's right to the Land of Israel as an eternal right that cannot be challenged; persisting in the settlement and development of every part of the Land of Israel; and applying state sovereignty over them.",
+          "documentName": "חוקת הליכוד",
+          "dateOrVersion": "updated July 2015",
+          "sourceUrl": "https://www.likud.org.il/על-הליכוד/חוקת-הליכוד",
+          "sourceType": "official",
+          "section/page": "Chapter B, objectives, §1(b)",
+          "context": "Standing constitutional objective. No official 2026 manifesto was located; borders, implementation and Palestinian governance are not specified in this clause.",
+          "contentStatus": "verified-official-historical-fallback"
+        },
+        {
+          "originalText": "ביצורה הכלכלי של המדינה ויצירת תנאים נאותים לצמיחה כלכלית ולכינון משק חופשי- תחרותי הנושא את עצמו והמבוסס על יוזמה חפשית, והימנעות הממשלה, ככל הניתן ממעורבות במשק.",
+          "translation": "Strengthening the state economically and creating suitable conditions for economic growth and a self-sustaining, free and competitive economy based on private initiative, while government refrains, insofar as possible, from intervention.",
+          "documentName": "חוקת הליכוד",
+          "dateOrVersion": "updated July 2015",
+          "sourceUrl": "https://www.likud.org.il/על-הליכוד/חוקת-הליכוד",
+          "sourceType": "official",
+          "section/page": "Chapter B, objectives, §1(g)",
+          "context": "Standing constitutional objective. It states a free-market direction but gives no 2026 cost-of-living targets or implementation schedule.",
+          "contentStatus": "verified-official-historical-fallback"
+        }
+      ]
+    },
+    {
+      "id": "BYD",
+      "displayNameHe": "ביחד",
+      "displayNameEn": "Beyachad / Together",
+      "submittedListNameHe": "ביחד בראשות נפתלי בנט",
+      "requestedLetters": ["ב", "רק"],
+      "letterStatus": "disputed",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#5B78A6",
+      "treatment": "favorable",
+      "membershipConstituentCaveat": "A joint submitted list headed by Naftali Bennett with Yair Lapid second, drawing candidates from Bennett 2026 and Yesh Atid. The letter ב was also requested by Otzma Yehudit.",
+      "symbolSourceUrl": "https://www.ynetnews.com/article/syywdl3oge",
+      "platformCards": [
+        {
+          "originalText": "ב\"הסכם החדש\", תוך שלוש שנים נוריד את מחירי המזון ב-30%. זה אפשרי!",
+          "translation": "Under the “New Contract,” within three years we will reduce food prices by 30%. It is possible!",
+          "documentName": "הסכם חדש ליוקר המחיה",
+          "dateOrVersion": "2026 campaign plan; accessed 2026-09-09",
+          "sourceUrl": "https://bennett2026.org.il/",
+          "sourceType": "official",
+          "section/page": "Cost-of-living plan",
+          "context": "A measurable campaign target on the official Bennett/Beyachad site; the same page attributes high prices to concentration and weak competition.",
+          "contentStatus": "verified-current-official"
+        },
+        {
+          "originalText": "נחסל את הבירוקרטיה המיותרת ונעודד יזמות נפחית רגולציה, נסיר חסמי יבוא ונקים רשות מזון מרכזית – כתובת אחת ברורה, פשוטה ומהירה ליבואנים וליצרנים.",
+          "translation": "We will eliminate unnecessary bureaucracy and encourage enterprise: reduce regulation, remove import barriers and establish a central food authority—a single clear, simple and fast address for importers and producers.",
+          "documentName": "תוכנית בנט להורדת יוקר המחייה",
+          "dateOrVersion": "2026 campaign plan; accessed 2026-09-09",
+          "sourceUrl": "https://be-yahad.org.il/plans/yokermichya/",
+          "sourceType": "official",
+          "section/page": "Reducing bureaucracy and encouraging enterprise",
+          "context": "Implementation proposal from the list's current official cost-of-living plan.",
+          "contentStatus": "verified-current-official"
+        }
+      ]
+    },
+    {
+      "id": "YB",
+      "displayNameHe": "ישראל ביתנו",
+      "displayNameEn": "Yisrael Beiteinu",
+      "submittedListNameHe": "ישראל ביתנו בראשות אביגדור ליברמן",
+      "requestedLetters": ["ל"],
+      "letterStatus": "protected",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#4A8BC2",
+      "treatment": "favorable",
+      "membershipConstituentCaveat": "The submitted list is Yisrael Beiteinu's party list; candidates who recently joined from other factions are individuals, not listed constituent parties.",
+      "symbolSourceUrl": "https://www.ynetnews.com/article/syywdl3oge",
+      "platformCards": [
+        {
+          "originalText": "עיקרון השוויון בנטל יחול על כל אזרח ישראלי בן 18 - יהודי, מוסלמי, נוצרי, דרוזי או צ'רקסי.",
+          "translation": "The principle of equal sharing of the burden will apply to every 18-year-old Israeli citizen—Jewish, Muslim, Christian, Druze or Circassian.",
+          "documentName": "קווי היסוד של ישראל ביתנו לממשלה הבאה",
+          "dateOrVersion": "published 2025-09-11; updated 2026-07-31",
+          "sourceUrl": "https://beytenu.org.il/party-platform-israel-beytenu-next-government/",
+          "sourceType": "official",
+          "section/page": "Equal service",
+          "context": "Current official governing principles; the following text specifies military and civilian tracks.",
+          "contentStatus": "verified-current-official"
+        },
+        {
+          "originalText": "ישראל ביתנו תפעל להחלת האפשרות לנישואין וגירושין אזרחיים בישראל ולביטול הכפייה והמונופול של הרבנות בתחום זה.",
+          "translation": "Yisrael Beiteinu will act to introduce the option of civil marriage and divorce in Israel and to end coercion and the Rabbinate's monopoly in this field.",
+          "documentName": "הקווים האדומים של ישראל ביתנו בתחום דת ומדינה",
+          "dateOrVersion": "published 2025-12-10; updated 2026-01-07",
+          "sourceUrl": "https://beytenu.org.il/7645-2/",
+          "sourceType": "official",
+          "section/page": "Civil marriage and divorce",
+          "context": "Official party red line on religion and state, carried into its next-government platform.",
+          "contentStatus": "verified-current-official"
+        }
+      ]
+    },
+    {
+      "id": "DEM",
+      "displayNameHe": "הדמוקרטים",
+      "displayNameEn": "The Democrats",
+      "submittedListNameHe": "הדמוקרטים בראשות יאיר גולן",
+      "requestedLetters": ["אמת"],
+      "letterStatus": "protected",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#D64A4A",
+      "treatment": "favorable",
+      "membershipConstituentCaveat": "The party was formed by the 2024 Labor–Meretz merger; its submitted slate applies internal reservations linked to that merger, but it is filed as The Democrats.",
+      "symbolSourceUrl": "https://www.ynet.co.il/news/elections2026/article/hkvatl5ome",
+      "platformCards": [
+        {
+          "originalText": "נקים ועדת חקירה ממלכתית לאירועי 7 באוקטובר וניישם את מסקנותיה במלואן.",
+          "translation": "We will establish a state commission of inquiry into the events of October 7 and implement its conclusions in full.",
+          "documentName": "מדיני-ביטחוני",
+          "dateOrVersion": "August 2026 policy plan",
+          "sourceUrl": "https://democrats.org.il/wp-content/uploads/2026/08/plan-8-26-he.pdf",
+          "sourceType": "official",
+          "section/page": "Security-policy module, step 5, p. 2",
+          "context": "One module in the party's August 2026 collection of work plans; the collection is not represented as a single manifesto.",
+          "contentStatus": "verified-current-official"
+        },
+        {
+          "originalText": "נגביל את כהונת ראש הממשלה לשמונה שנים, נקבע מנגנונים ברורים לנבצרות, ונעגן בחוק איסור כהונה תחת כתב אישום לשרים ולראש הממשלה.",
+          "translation": "We will limit the prime minister's tenure to eight years, establish clear incapacity procedures, and prohibit ministers and the prime minister from serving while under indictment.",
+          "documentName": "דמוקרטיה ושלטון החוק",
+          "dateOrVersion": "August 2026 policy plan",
+          "sourceUrl": "https://democrats.org.il/wp-content/uploads/2026/08/plan-8-26-he.pdf",
+          "sourceType": "official",
+          "section/page": "Democracy and Law module, step 5, p. 4",
+          "context": "Institutional proposal in the party's current official policy-plan collection.",
+          "contentStatus": "verified-current-official"
+        }
+      ]
+    },
+    {
+      "id": "RZ",
+      "displayNameHe": "הציונות הדתית וזהות",
+      "displayNameEn": "Religious Zionism–Zehut",
+      "submittedListNameHe": "הציונות הדתית וזהות בראשות בצלאל סמוטריץ' ומשה פייגלין",
+      "requestedLetters": ["ט"],
+      "letterStatus": "protected",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#6A5A93",
+      "treatment": "critical",
+      "membershipConstituentCaveat": "A technical bloc of two separately organized parties. One card represents Religious Zionism's standing program and one Zehut's explicitly updated 2026 platform; neither alone is a joint-list manifesto.",
+      "symbolSourceUrl": "https://www.jdn.co.il/news/2726035/",
+      "platformCards": [
+        {
+          "originalText": "חיזוק הדמוקרטיה הישראלית ועריכת התיקונים הנדרשים במערכת המשפט יפתחו את הפתח למימוש מדיניות הימין בכל התחומים",
+          "translation": "Strengthening Israeli democracy and making the required changes in the judicial system will open the way to implementing right-wing policy in every field.",
+          "documentName": "תכנית חוק וצדק",
+          "dateOrVersion": "standing Religious Zionism program; originally published 2022",
+          "sourceUrl": "https://digitaler.cld.bz/zionutdatit",
+          "sourceType": "official",
+          "section/page": "Introduction",
+          "context": "Religious Zionism's standing judicial program, not a newly dated joint Religious Zionism–Zehut manifesto.",
+          "contentStatus": "verified-official-constituent-fallback"
+        },
+        {
+          "originalText": "לא עוד שטחים מופקרים או \"אזורי שליטה\" לישות עוינת, אלא ריבונות ישראלית מלאה. כשנחזיר את המדינה לעם, נחיל ריבונות על יהודה שומרון וחבל עזה, נבטיח גבולות בטוחים לאורך כל הארץ, ונחסל את מודל \"הרשות\" שהפך לאיום על קיומנו.",
+          "translation": "No more abandoned territories or “areas of control” for a hostile entity, but full Israeli sovereignty. When we return the state to the people, we will apply sovereignty to Judea, Samaria and the Gaza Strip, ensure secure borders throughout the land, and eliminate the “Authority” model that has become a threat to our existence.",
+          "documentName": "מחזירים את המדינה לעם: ישראל — הוראות הפעלה",
+          "dateOrVersion": "2026 Zehut platform",
+          "sourceUrl": "https://zehut.org.il/platform/full",
+          "sourceType": "official",
+          "section/page": "Sovereignty",
+          "context": "Zehut constituent-party text explicitly updated for 2026; it is not evidence that every Religious Zionism candidate adopted every clause.",
+          "contentStatus": "verified-current-official-constituent"
+        }
+      ]
+    },
+    {
+      "id": "OTZ",
+      "displayNameHe": "עוצמה יהודית",
+      "displayNameEn": "Otzma Yehudit",
+      "submittedListNameHe": "עוצמה יהודית בראשות איתמר בן גביר",
+      "requestedLetters": ["ב"],
+      "letterStatus": "disputed",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#D08A2E",
+      "treatment": "critical",
+      "membershipConstituentCaveat": "Otzma filed separately after previously running under Religious Zionism's ט; its request for ב conflicts with Beyachad's first choice. No consolidated official 2026 manifesto was located.",
+      "symbolSourceUrl": "https://www.ynetnews.com/article/syywdl3oge",
+      "platformCards": [
+        {
+          "originalText": "הקמפיין מבטא, לדברי המפלגה, אמונה בצדקת הדרך, נחישות מול איומים ולחצים והמשך קידום מדיניות של משילות, ביטחון וזהות יהודית.",
+          "translation": "According to the party, the campaign expresses belief in the justice of its path, resolve in the face of threats and pressure, and continued advancement of a policy of governance, security and Jewish identity.",
+          "documentName": "עוצמה יהודית חושפת את קמפיין הבחירות: מי שמאמין לא מפחד",
+          "dateOrVersion": "2026-08-03",
+          "sourceUrl": "https://www.c14.co.il/article/1644728",
+          "sourceType": "attributed-party-statement",
+          "section/page": "Campaign launch",
+          "context": "Contemporaneous report explicitly attributing the policy description to the party; not a manifesto.",
+          "contentStatus": "verified-current-attributed-statement"
+        },
+        {
+          "originalText": "במסגרת הקמפיין מוצגים, לטענת המפלגה, הקמת 1,000 כיתות כוננות, הענקת כ-400 אלף רישיונות נשק, העברת חוק עונש מוות למחבלים וסיום הקייטנות למחבלים בכלא.",
+          "translation": "As part of the campaign, the party claims the establishment of 1,000 emergency squads, the granting of about 400,000 firearms licenses, passage of a death-penalty law for terrorists, and an end to what it calls “summer camps” for terrorists in prison.",
+          "documentName": "עוצמה יהודית חושפת את קמפיין הבחירות: מי שמאמין לא מפחד",
+          "dateOrVersion": "2026-08-03",
+          "sourceUrl": "https://www.c14.co.il/article/1644728",
+          "sourceType": "attributed-party-statement",
+          "section/page": "Campaign claims",
+          "context": "The source reports these as the party's own claims about its record; it is record-oriented campaign material, not a manifesto.",
+          "contentStatus": "verified-current-attributed-statement"
+        }
+      ]
+    },
+    {
+      "id": "SHS",
+      "displayNameHe": "ש״ס",
+      "displayNameEn": "Shas",
+      "submittedListNameHe": "התאחדות הספרדים שומרי תורה תנועתו של מרן הרב עובדיה יוסף זצ״ל",
+      "requestedLetters": ["שס"],
+      "letterStatus": "protected",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#1F5E78",
+      "treatment": "critical",
+      "membershipConstituentCaveat": "The candidate order is determined under the authority of Shas's Council of Torah Sages. No official 2026 manifesto was located; these are historical party principles.",
+      "symbolSourceUrl": "https://www.ynet.co.il/news/elections2026/article/hkvatl5ome",
+      "platformCards": [
+        {
+          "originalText": "במסגרת סדרי העדיפויות הלאומיים יש להציב את תחום החינוך בראש. החינוך הוא המנוף העיקרי לקידום האדם והחברה הישראלית, ולקיום מדינת ישראל.",
+          "translation": "Within the national order of priorities, education must be placed first. Education is the principal lever for advancing the individual and Israeli society, and for sustaining the State of Israel.",
+          "documentName": "מסמך עקרונות תנועת ש״ס — לצדק חברתי",
+          "dateOrVersion": "17th Knesset-era principles document, circa 2006",
+          "sourceUrl": "https://www.idi.org.il/media/6856/shas-17.pdf",
+          "sourceType": "official",
+          "section/page": "Education",
+          "context": "Historical principles document archived by IDI; no verified 2026 Shas manifesto was found.",
+          "contentStatus": "verified-official-historical-fallback"
+        },
+        {
+          "originalText": "חינוך חינם מגיל הגן ועד לסיום הלימודים התיכוניים והישיבתיים וסבסוד הלימודים באקדמיה לסטודנטים משכבות חלשות (שכר לימוד פרוגרסיבי).",
+          "translation": "Free education from kindergarten through completion of secondary and yeshiva studies, and subsidized higher education for students from disadvantaged groups (progressive tuition).",
+          "documentName": "מסמך עקרונות תנועת ש״ס — לצדק חברתי",
+          "dateOrVersion": "17th Knesset-era principles document, circa 2006",
+          "sourceUrl": "https://www.idi.org.il/media/6856/shas-17.pdf",
+          "sourceType": "official",
+          "section/page": "Education proposals",
+          "context": "A historical social-policy commitment, not a current costed 2026 promise.",
+          "contentStatus": "verified-official-historical-fallback"
+        }
+      ]
+    },
+    {
+      "id": "UTJ",
+      "displayNameHe": "יהדות התורה",
+      "displayNameEn": "United Torah Judaism",
+      "submittedListNameHe": "יהדות התורה והשבת אגודת ישראל — דגל התורה",
+      "requestedLetters": ["ג"],
+      "letterStatus": "protected",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#324B73",
+      "treatment": "critical",
+      "membershipConstituentCaveat": "A joint list of Agudat Israel and Degel HaTorah despite their 2026 parliamentary faction split. No new joint 2026 platform was found; the cards use exact clauses from their last signed coalition agreement.",
+      "symbolSourceUrl": "https://www.ynet.co.il/news/elections2026/article/hkvatl5ome",
+      "platformCards": [
+        {
+          "originalText": "ישמרו עצמאותו, מעמדו הייחודי ותקצובו היחסי של החינוך החרדי על כל סוגיו (לרבות רשתות החינוך, מוסדות הפטור והמוכש״ר) במערכת החינוך הכללית.",
+          "translation": "The autonomy, unique status and relative funding of Haredi education in all its forms (including the education networks, exempt institutions and recognized non-official institutions) will be preserved within the general education system.",
+          "documentName": "הסכם קואליציוני בין הליכוד ליהדות התורה",
+          "dateOrVersion": "2022-12-21",
+          "sourceUrl": "https://www.jdn.co.il/blog/1877608/",
+          "sourceType": "official",
+          "section/page": "Clause 55",
+          "context": "Exact signed coalition-policy clause relayed with the agreement text; used because no joint 2026 manifesto was located.",
+          "contentStatus": "verified-official-historical-fallback"
+        },
+        {
+          "originalText": "הממשלה תפעל לפתרון משבר הדיור בכלל האמצעים העומדים לרשותה ותשים נושא זה בראש סדרי העדיפויות התקציביים.",
+          "translation": "The government will act to solve the housing crisis using all means at its disposal and will place this issue at the top of its budget priorities.",
+          "documentName": "הסכם קואליציוני בין הליכוד ליהדות התורה",
+          "dateOrVersion": "2022-12-21",
+          "sourceUrl": "https://www.jdn.co.il/blog/1877608/",
+          "sourceType": "official",
+          "section/page": "Clause 93",
+          "context": "Exact coalition-agreement commitment; the following clause language adapts planning and marketing targets to population-specific needs.",
+          "contentStatus": "verified-official-historical-fallback"
+        }
+      ]
+    },
+    {
+      "id": "JNT",
+      "displayNameHe": "הרשימה המשותפת",
+      "displayNameEn": "Joint List",
+      "submittedListNameHe": "הרשימה המשותפת (חד״ש, תע״ל, בל״ד)",
+      "requestedLetters": ["ום"],
+      "letterStatus": "protected",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#B44646",
+      "treatment": "favorable",
+      "membershipConstituentCaveat": "A revived 2026 joint list of Hadash, Ta'al and Balad; Ra'am is not a constituent. No common 2026 manifesto was located, so these cards use the latest located Joint List manifesto, from 2019.",
+      "symbolSourceUrl": "https://www.ynet.co.il/news/elections2026/article/hkvatl5ome",
+      "platformCards": [
+        {
+          "originalText": "הרשימה המשותפת שואפת לשים קץ לכיבוש כל השטחים הפלסטיניים, הסוריים והלבנוניים שנכבשו בשנת 1967, לפרק את כל ההתנחלויות ואת גדר ההפרדה הגזענית, לשחרר את כל האסירים הפוליטיים, להקים מדינה פלסטינית עצמאית שבירתה ירושלים המזרחית, להשיג פתרון צודק לבעיית הפליטים אשר יבטיח את זכות השיבה בהתאם להחלטה 194, ולשלום צודק המסתמך על הסכמה בינלאומית.",
+          "translation": "The Joint List seeks to end the occupation of all Palestinian, Syrian and Lebanese territories occupied in 1967, dismantle all settlements and the racist separation wall, release all political prisoners, establish an independent Palestinian state with East Jerusalem as its capital, achieve a just solution to the refugee problem guaranteeing the right of return under Resolution 194, and attain a just peace based on international consensus.",
+          "documentName": "מצע הרשימה המשותפת לכנסת ה-22",
+          "dateOrVersion": "2019",
+          "sourceUrl": "http://hadash.org.il/זכויות-שוויון-ושלום-בין-העמים-פורסם-המצע/",
+          "sourceType": "official",
+          "section/page": "Peace between the peoples and peoples' rights",
+          "context": "Exact excerpt from the latest located common Joint List manifesto; it is not labeled as a 2026 manifesto.",
+          "contentStatus": "verified-official-historical-fallback"
+        },
+        {
+          "originalText": "הרשימה המשותפת תפעל למען צדק חברתי, להגנה על זכויות העובדים והשכבות המדוכאות, לשמירה על הסביבה ולהבטחת הזכויות החברתיות והכלכליות של האזרחים.",
+          "translation": "The Joint List will work for social justice, protection of workers' rights and oppressed groups, environmental protection, and the guarantee of citizens' social and economic rights.",
+          "documentName": "מצע הרשימה המשותפת לכנסת ה-22",
+          "dateOrVersion": "2019",
+          "sourceUrl": "http://hadash.org.il/זכויות-שוויון-ושלום-בין-העמים-פורסם-המצע/",
+          "sourceType": "official",
+          "section/page": "Social, community and environmental justice",
+          "context": "Exact historical common-list platform excerpt; the 2026 constituent arrangement may negotiate new priorities.",
+          "contentStatus": "verified-official-historical-fallback"
+        }
+      ]
+    },
+    {
+      "id": "RAM",
+      "displayNameHe": "רע״ם",
+      "displayNameEn": "Ra'am",
+      "submittedListNameHe": "הרשימה הערבית המאוחדת",
+      "requestedLetters": ["עם"],
+      "letterStatus": "protected",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#2E8B57",
+      "treatment": "favorable",
+      "membershipConstituentCaveat": "Ra'am filed separately from the revived Joint List. Yoav Segalovitz joined its slate with agreed voting independence on specified issues; that does not make Yesh Atid a constituent.",
+      "symbolSourceUrl": "https://www.ynet.co.il/news/elections2026/article/hkqbeu3dgx",
+      "platformCards": [
+        {
+          "originalText": "موقف القائمة من مسألة الحكم واضح، ويتمثل في استبدال هذه الحكومة الفاشية العنصرية بحكومة تغيير نكون شركاء فيها",
+          "translation": "The list's position on government is clear: replacing this racist, fascist government with a government of change in which we are partners.",
+          "documentName": "Mansour Abbas address to Ra'am's 28th general conference",
+          "dateOrVersion": "2026-08-22",
+          "sourceUrl": "https://panet.com/index.php/story/4294302",
+          "sourceType": "attributed-party-statement",
+          "section/page": "Conference speech",
+          "context": "Exact attributable speech reported by PANET; no current official manifesto repository was located, so this must be labeled a dated party policy statement.",
+          "contentStatus": "verified-current-attributed-statement"
+        },
+        {
+          "originalText": "وعلى رأسها قضايا العنف والإجرام، والمسكن، والفقر والبطالة والتشغيل، والاعتراف بقرانا في النقب وغيرها",
+          "translation": "Foremost among them are violence and crime, housing, poverty, unemployment and employment, and recognition of our villages in the Negev, among other issues.",
+          "documentName": "Ra'am official list statement relayed by Kul al-Arab",
+          "dateOrVersion": "2021-02-11",
+          "sourceUrl": "https://www.kul-alarab.com/Article/983129",
+          "sourceType": "attributed-party-statement",
+          "section/page": "Policy priorities",
+          "context": "Exact party statement, dated and retained only as a fallback because no current official manifesto was located.",
+          "contentStatus": "verified-attributed-historical-fallback"
+        }
+      ]
+    },
+    {
+      "id": "AMH",
+      "displayNameHe": "עמך ישראל",
+      "displayNameEn": "Amcha Yisrael",
+      "submittedListNameHe": "עמך ישראל בראשות עופר וינטר",
+      "requestedLetters": ["ך"],
+      "letterStatus": "requested",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#8A6D3B",
+      "treatment": "critical",
+      "membershipConstituentCaveat": "A new independent list led by Ofer Winter. Yoseph Haddad's pre-existing registration did not remain a separately named constituent in the submitted Amcha list. No full official written manifesto was located.",
+      "symbolSourceUrl": "https://www.ynetnews.com/article/syywdl3oge",
+      "platformCards": [
+        {
+          "originalText": "We are a clear and unequivocal part of the right-wing camp. We will do everything to establish the broadest possible right-wing government with as many Zionist partners as possible.",
+          "translation": "The accessible source publishes Winter's exact quotation in English; no separate translation is required.",
+          "documentName": "Ofer Winter launch address for Amcha Israel",
+          "dateOrVersion": "2026-08-25",
+          "sourceUrl": "https://www.ynetnews.com/article/r1xkosjpzl",
+          "sourceType": "attributed-party-statement",
+          "section/page": "Party launch",
+          "context": "Exact translated-back-to-source-language policy statement as quoted in contemporaneous reporting; no manifesto was claimed or located.",
+          "contentStatus": "verified-current-attributed-statement"
+        },
+        {
+          "originalText": "Every young person of service age will report to the state. No sector is above the law. Those who serve will receive benefits. Those who contribute more will receive much more.",
+          "translation": "The accessible source publishes Winter's exact quotation in English; no separate translation is required.",
+          "documentName": "Amcha Yisrael national-service condition statement",
+          "dateOrVersion": "2026-09-02",
+          "sourceUrl": "https://worldisraelnews.com/ofer-winter-makes-mandatory-service-condition-for-joining-netanyahu-government/",
+          "sourceType": "attributed-party-statement",
+          "section/page": "National-service policy",
+          "context": "Dated statement attributed directly to Winter. The accessible source publishes the quotation in English; no Hebrew original was inferred or fabricated.",
+          "contentStatus": "verified-current-attributed-statement"
+        }
+      ]
+    },
+    {
+      "id": "RSE",
+      "displayNameHe": "המילואימניקים והכלכלית",
+      "displayNameEn": "The Reservists and the Economic Party",
+      "submittedListNameHe": "המילואימניקים והכלכלית בראשות יועז הנדל וירון זליכה",
+      "requestedLetters": ["די", "צ", "י"],
+      "letterStatus": "requested",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#3F766A",
+      "treatment": "favorable",
+      "membershipConstituentCaveat": "A newly submitted joint list of Yoaz Hendel's Reservists party and Yaron Zelekha's Economic Party. No signed joint manifesto was located; each card is explicitly a dated joint statement or a constituent-party platform excerpt.",
+      "symbolSourceUrl": "https://www.ynet.co.il/news/elections2026/article/hkqbeu3dgx",
+      "platformCards": [
+        {
+          "originalText": "מי שיכול לשרת צריך לשרת. מי שלא - שלא יקבל כלום ולא יקבל החלטות.",
+          "translation": "Anyone who can serve must serve. Whoever does not should receive nothing and should not make decisions.",
+          "documentName": "Hendel–Zelekha joint-run announcement",
+          "dateOrVersion": "2026-09-06",
+          "sourceUrl": "https://news.walla.co.il/item/3866017",
+          "sourceType": "attributed-party-statement",
+          "section/page": "Universal-service statement",
+          "context": "Exact Hendel quotation at the joint-list announcement; this is not represented as a joint manifesto.",
+          "contentStatus": "verified-current-attributed-statement"
+        },
+        {
+          "originalText": "הורדת המע״מ - המע״מ בישראל לא צריך להיות 18 אחוזים אלא 12 אחוזים לכל היותר.",
+          "translation": "Reducing VAT—VAT in Israel should not be 18 percent but no more than 12 percent.",
+          "documentName": "מצע המפלגה הכלכלית",
+          "dateOrVersion": "standing constituent-party platform; accessed 2026-09-09",
+          "sourceUrl": "https://www.hakalkalit.org/מצע-המפלגה-הכלכלית",
+          "sourceType": "official",
+          "section/page": "Cost of living",
+          "context": "Economic Party constituent-platform proposal; no evidence was found of a separately signed joint Hendel–Zelekha manifesto adopting every constituent clause.",
+          "contentStatus": "verified-official-constituent-fallback"
+        }
+      ]
+    },
+    {
+      "id": "BW",
+      "displayNameHe": "כחול לבן",
+      "displayNameEn": "Blue and White",
+      "submittedListNameHe": "כחול לבן בראשות בני גנץ",
+      "requestedLetters": ["כן"],
+      "letterStatus": "protected",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-09-09",
+      "pipSuggestion": "#2D77B8",
+      "treatment": "favorable",
+      "membershipConstituentCaveat": "The 2026 submission is the reduced Blue and White list, not the former multi-party National Unity alliance. No newly dated full 2026 manifesto was located; cards use named 2025 policy plans.",
+      "symbolSourceUrl": "https://www.okn.co.il/politics/61423/",
+      "platformCards": [
+        {
+          "originalText": "הממשלה צריכה לשרת את העם. השירות הציבורי הוא אחד מהמפתחות לשגשוג כלכלי, לחיזוק תחושת הלכידות, ולדבר הבסיסי ביותר שממשלה צריכה להעניק לאזרחיה - חיים טובים יותר.",
+          "translation": "The government must serve the people. The public service is one of the keys to economic prosperity, strengthening social cohesion, and the most basic thing a government should give its citizens—a better life.",
+          "documentName": "צו 8 לתיקון השירות הציבורי בישראל",
+          "dateOrVersion": "2025 policy plan; accessed 2026-09-09",
+          "sourceUrl": "https://www.8publicservice.com/",
+          "sourceType": "official",
+          "section/page": "Benny Gantz introduction",
+          "context": "Official named public-service reform plan from 2025, not a 2026 manifesto.",
+          "contentStatus": "verified-official-recent-fallback"
+        },
+        {
+          "originalText": "עיקרי תוכנית \"מציאות אחרת\": עד 100 ימי מילואים בשלוש שנה; שליחת צווים לפחות שלושה חודשים לפני קריאה לשירות ובתום שירות ארוך - איסור קריאה למשך חצי שנה; העברת עקרונות מתווה שירות ישראלי ובמסגרתו גיוס חרדים.",
+          "translation": "Main points of the “Different Reality” plan: up to 100 reserve-duty days in three years; orders sent at least three months before call-up and, after long service, no call-up for six months; adoption of the principles of an Israeli service framework including Haredi enlistment.",
+          "documentName": "מציאות אחרת — תוכנית המילואימניקים של כחול לבן",
+          "dateOrVersion": "2025-12-08",
+          "sourceUrl": "https://www.israelhayom.co.il/news/politics/article/19412713",
+          "sourceType": "attributed-party-statement",
+          "section/page": "Main plan points",
+          "context": "Exact dated summary of the party plan in contemporaneous reporting; it is not labeled a 2026 manifesto.",
+          "contentStatus": "verified-recent-attributed-statement"
+        }
+      ]
+    }
+  ]
+}

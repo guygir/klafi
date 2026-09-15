@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalpi · Weave member prompt library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a1f1c;
+      --paper: #f4efe4;
+      --paper-deep: #e7dfd0;
+      --rule: #2c3330;
+      --civic: #1f4f4a;
+      --foil: #c4a35a;
+      --review: #8a4a3a;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "IBM Plex Sans", "IBM Plex Sans Hebrew", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, transparent 49.9%, rgba(44, 51, 48, 0.05) 50%, transparent 50.1%),
+        var(--paper);
+    }
+    button, input, textarea { font: inherit; }
+    button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 3px solid var(--foil);
+      outline-offset: 3px;
+    }
+    .shell { width: min(1240px, calc(100% - 40px)); margin: 0 auto; padding: 36px 0 80px; }
+    .masthead {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.55fr);
+      gap: 56px;
+      padding-bottom: 28px;
+      border-bottom: 2px solid var(--rule);
+    }
+    .eyebrow, .member-code {
+      margin: 0 0 10px;
+      color: var(--civic);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { font-family: Fraunces, Georgia, serif; }
+    h1 { max-width: 11ch; margin: 0 0 16px; font-size: clamp(44px, 7vw, 82px); line-height: 0.91; letter-spacing: -0.045em; }
+    .intro { max-width: 54em; margin: 0; font-size: 15px; line-height: 1.55; }
+    .method {
+      align-self: end;
+      padding: 20px;
+      border: 1px solid var(--rule);
+      background: rgba(255, 253, 247, 0.5);
+    }
+    .method h2 { margin: 0 0 10px; font-size: 23px; }
+    .method p { margin: 7px 0; font-size: 12px; line-height: 1.45; }
+    .method strong { color: var(--civic); }
+    .disclosure {
+      margin: 18px 0 0;
+      padding: 13px 15px;
+      border-left: 5px solid var(--foil);
+      background: var(--paper-deep);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .toolbar {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 30px 0 18px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(44, 51, 48, 0.35);
+      background: rgba(244, 239, 228, 0.94);
+      backdrop-filter: blur(12px);
+    }
+    .filters { display: flex; gap: 7px; }
+    .filters button {
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid var(--rule);
+      background: transparent;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .filters button.active { background: var(--civic); color: var(--paper); }
+    .search-wrap { display: flex; align-items: center; gap: 10px; min-width: min(390px, 45vw); }
+    .search-wrap input { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--rule); background: var(--paper); }
+    #visible-count { flex: 0 0 auto; color: rgba(26, 31, 28, 0.65); font-size: 10px; }
+    .party-key {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin-bottom: 24px;
+      border: 1px solid var(--rule);
+      background: var(--rule);
+    }
+    .party-key article { padding: 14px 16px; background: var(--paper); }
+    .party-key h3 { margin: 0 0 5px; font-size: 18px; }
+    .party-key p { margin: 0; font-size: 10px; line-height: 1.45; }
+    .member {
+      margin-bottom: 22px;
+      border: 1px solid var(--rule);
+      background: rgba(255, 253, 247, 0.45);
+      box-shadow: 0 12px 30px rgba(26, 31, 28, 0.08);
+    }
+    .member-head {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 20px 18px 34px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .member-head::before { content: ""; position: absolute; top: 18px; bottom: 18px; left: 15px; width: 8px; background: var(--pip); }
+    .member-head h2 { margin: 0 0 4px; font-size: clamp(25px, 3vw, 36px); letter-spacing: -0.025em; }
+    .member-head h2 span { display: inline-block; margin-left: 8px; color: var(--civic); font-family: "IBM Plex Sans Hebrew", sans-serif; font-size: 0.62em; }
+    .member-head p:last-child { margin: 0; color: rgba(26, 31, 28, 0.66); font-size: 11px; }
+    .copy {
+      min-height: 42px;
+      padding: 9px 13px;
+      border: 1px solid var(--civic);
+      background: transparent;
+      color: var(--civic);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .primary-copy { flex: 0 0 auto; background: var(--civic); color: var(--paper); }
+    .quotes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .quote { position: relative; min-width: 0; padding: 18px; border-right: 1px solid rgba(44, 51, 48, 0.25); }
+    .quote:last-child { border-right: 0; }
+    .quote-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: rgba(26, 31, 28, 0.58); font-size: 8px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .rarity, .confidence { display: inline-block; padding: 3px 5px; border: 1px solid currentColor; font-weight: 600; }
+    .rarity.uncommon { color: #7d672d; }
+    .rarity.rare { border-width: 2px; color: #7d672d; }
+    .confidence.review { color: var(--review); }
+    .confidence.verified { color: var(--civic); }
+    .confidence.adapted { color: var(--review); }
+    .quote-asterisk { position: absolute; top: 7px; right: 10px; color: var(--review); font: 700 21px/1 Georgia, serif; }
+    blockquote { min-height: 8.6em; margin: 16px 0 12px; font: 600 18px/1.35 "IBM Plex Sans Hebrew", sans-serif; }
+    .quote p { margin: 7px 0; font-size: 10px; line-height: 1.45; }
+    .quote .context { color: rgba(26, 31, 28, 0.68); }
+    .quote a { color: var(--civic); font-size: 10px; font-weight: 600; text-underline-offset: 3px; }
+    .source-warning { margin: 0; padding: 11px 18px; border-top: 1px solid rgba(138, 74, 58, 0.3); background: rgba(138, 74, 58, 0.07); color: var(--review); font-size: 10px; line-height: 1.45; }
+    .source-warning a { color: inherit; font-weight: 600; text-underline-offset: 3px; }
+    details { border-top: 1px solid var(--rule); }
+    summary { padding: 12px 18px; color: var(--civic); font-size: 11px; font-weight: 600; cursor: pointer; }
+    textarea { display: block; width: calc(100% - 36px); min-height: 420px; margin: 0 18px 18px; padding: 14px; border: 1px solid var(--rule); background: #ece5d8; color: var(--ink); font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; }
+    .footer-note { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 11px; line-height: 1.5; }
+    @media (max-width: 820px) {
+      .shell { width: min(100% - 24px, 680px); padding-top: 22px; }
+      .masthead { grid-template-columns: 1fr; gap: 20px; }
+      .toolbar { align-items: stretch; flex-direction: column; }
+      .filters { overflow-x: auto; }
+      .search-wrap { min-width: 0; }
+      .party-key, .quotes { grid-template-columns: 1fr; }
+      .party-key article, .quote { border-right: 0; border-bottom: 1px solid rgba(44, 51, 48, 0.25); }
+      .member-head { align-items: flex-start; flex-direction: column; }
+      .primary-copy { width: 100%; }
+      blockquote { min-height: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">Kalpi production desk · 12 identities · 36 sourced quote contexts</p>
+        <h1>Weave member prompts.</h1>
+        <p class="intro">Each button copies one complete three-portrait prompt: stable identity, party-specific editorial treatment, Common/Uncommon/Rare quote context, scene direction, constraints, graph, and filenames.</p>
+      </div>
+      <aside class="method">
+        <h2>The visual argument is disclosed.</h2>
+        <p><strong>Likud:</strong> critical institutional tension, without distortion or invented wrongdoing.</p>
+        <p><strong>Democrats:</strong> favorable constructive treatment, without beauty retouching or invented support.</p>
+        <p><strong>Ra’am:</strong> analytical treatment, without hero or villain coding.</p>
+      </aside>
+    </header>
+    <p class="disclosure"><strong>Editorial illustration:</strong> image tone expresses Kalpi’s stated agenda. It is not evidence. Quotations remain independently reviewable, and the live card—not the generated image—renders quote, source, date, party and rarity.</p>
+
+    <section class="toolbar" aria-label="Prompt filters">
+      <div class="filters">
+        <button class="active" type="button" data-filter="ALL">All</button>
+        <button type="button" data-filter="LIK">Likud</button>
+        <button type="button" data-filter="DEM">Democrats</button>
+        <button type="button" data-filter="RAM">Ra’am</button>
+      </div>
+      <label class="search-wrap">
+        <input id="search" type="search" placeholder="Search member or party" />
+        <span id="visible-count">12 / 12 members</span>
+      </label>
+    </section>
+
+    <section class="party-key" aria-label="Editorial treatments">
+      <article><h3>Critical</h3><p>Harder light, constrained framing, guarded posture. Never distort the face or invent an allegation.</p></article>
+      <article><h3>Favorable</h3><p>Open posture, constructive setting, warmer light. Never change age or fabricate admiration.</p></article>
+      <article><h3>Analytical</h3><p>Eye-level, issue-specific, restrained. Avoid both heroic and threatening visual shorthand.</p></article>
+    </section>
+
+    <div id="prompt-library"></div>
+
+    <p class="footer-note">Reported 2026 slate positions are not presented as final CEC certification. Rows marked “human review required” rely on a reproduced statement, archived social post, or source that still needs direct-context inspection before publication.</p>
+  </main>
+  <script type="module" src="weave-member-prompts.js"></script>
+</body>
+</html>

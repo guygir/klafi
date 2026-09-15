@@ -1,0 +1,47 @@
+{
+  "id": "kalpi-change-advocacy",
+  "version": 2,
+  "status": "configured",
+  "sponsor": "Guy Girmonsky",
+  "supportedFaction": "Current opposition",
+  "viewpoint": "Kalpi supports change.",
+  "supportedAgenda": [
+    "Support political change through the current opposition",
+    "Give quiet or fearful supporters and undecided voters a reason to return tomorrow",
+    "Make sourced cards useful enough to share",
+    "Keep every quotation exact, dated, sourced, and contextualized",
+    "Use one published editorial sequence for every player"
+  ],
+  "disclosureShort": "Advocacy edition · Guy Girmonsky · supports the current opposition",
+  "disclosureFull": "Kalpi is an advocacy collectible sponsored by Guy Girmonsky. It supports political change through Israel’s current opposition. Its editors choose which sourced facts and quotations appear and how they are sequenced. Quotations remain exact, dated, sourced, and contextualized; every player receives the same published editorial program.",
+  "editorialPolicy": {
+    "rulesStayFixed": true,
+    "oneProgramForEveryone": true,
+    "realActivityOnly": true,
+    "quoteRequirements": [
+      "Exact wording",
+      "Named speaker",
+      "Date or clearly labeled date status",
+      "Inspectable source",
+      "Surrounding context",
+      "Published selection rationale"
+    ],
+    "releasePhases": [
+      {
+        "id": "orientation",
+        "label": "Orientation",
+        "purpose": "Teach the system, people, and source-reading habit before making a case."
+      },
+      {
+        "id": "issue-contrast",
+        "label": "Issue contrast",
+        "purpose": "Place supporting cases and critical contrasts beside inspectable receipts."
+      },
+      {
+        "id": "decision-readiness",
+        "label": "Decision readiness",
+        "purpose": "Connect list slots, ballot marks, logistics, and the disclosed closing case."
+      }
+    ]
+  }
+}

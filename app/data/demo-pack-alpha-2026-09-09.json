@@ -1,0 +1,13 @@
+{
+  "id": "core-poc-demo-v1",
+  "label": "Guided PoC demo",
+  "description": "A reproducible 3C/2U/1R journey through ballot mechanics, claim/action contrast, list placement, and the disclosed closing case.",
+  "cards": [
+    { "cardId": "SYS-C-02", "finish": "Uncommon" },
+    { "cardId": "SYS-C-01", "finish": "Common" },
+    { "cardId": "LIK-P-02", "finish": "Common" },
+    { "cardId": "DEM-P-01", "finish": "Common" },
+    { "cardId": "DEM-M-02", "finish": "Uncommon" },
+    { "cardId": "DEM-Q-01", "finish": "Rare" }
+  ]
+}

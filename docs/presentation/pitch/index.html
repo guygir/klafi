@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalpi — Pitch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a1f1c;
+      --paper: #f4efe4;
+      --civic: #1f4f4a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #111; color: var(--ink); font-family: "IBM Plex Sans", sans-serif; }
+    .slide {
+      display: none;
+      height: 100%;
+      padding: 72px 88px;
+      background: var(--paper);
+      flex-direction: column;
+      justify-content: center;
+    }
+    .slide.on { display: flex; }
+    .kicker { letter-spacing: 0.16em; text-transform: uppercase; color: var(--civic); font-size: 13px; margin: 0 0 18px; font-weight: 600; }
+    h1 { font-family: Fraunces, Georgia, serif; font-size: clamp(42px, 6.2vw, 78px); line-height: 1.04; margin: 0 0 18px; }
+    h2 { font-family: Fraunces, Georgia, serif; font-size: clamp(34px, 4.6vw, 56px); line-height: 1.08; margin: 0 0 18px; }
+    p { font-size: 24px; line-height: 1.4; margin: 0 0 14px; max-width: 18em; }
+    .wide { max-width: 22em; }
+    .num { font-family: Fraunces, Georgia, serif; font-size: clamp(72px, 12vw, 128px); color: var(--civic); margin: 0; line-height: 0.95; }
+    .pair { display: flex; gap: 56px; flex-wrap: wrap; }
+    .pair p { max-width: 10em; }
+    .sub { font-size: 18px; opacity: 0.75; max-width: 28em; }
+    .footer {
+      position: fixed; bottom: 16px; left: 24px; right: 24px;
+      display: flex; justify-content: space-between;
+      color: var(--paper); font-size: 13px; mix-blend-mode: difference;
+    }
+    a { color: var(--civic); }
+    ol.five { margin: 0; padding: 0 0 0 1.2em; max-width: 28em; }
+    ol.five li { font-size: 22px; line-height: 1.35; margin: 0 0 10px; }
+    .cards { display: flex; gap: 16px; margin: 12px 0; align-items: flex-end; }
+    .cards img { width: 150px; height: 210px; object-fit: cover; border-radius: 8px; border: 2px solid var(--ink); }
+    .qr { width: 160px; height: 160px; background: #fff; padding: 8px; border: 2px solid var(--ink); border-radius: 8px; }
+    .lore { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; }
+    .lore .copy { flex: 1; min-width: 16em; }
+    @media (max-width: 800px) {
+      .slide { padding: 32px 20px; }
+      p { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide on">
+    <p class="kicker">Israeli Elections 2026</p>
+    <h1>Who does not reach the kalpi.</h1>
+    <p class="wide">And why a pack of cards is the way to get them there — knowing who they are voting for.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">1 · Voting % · the background</p>
+    <div class="pair">
+      <div>
+        <p class="num">46.7%</p>
+        <p>of 18–24s voted after 2021.</p>
+      </div>
+      <div>
+        <p class="num">74.9%</p>
+        <p>of 65–74s did.</p>
+      </div>
+    </div>
+    <p class="sub">Knesset Research and Information Center. National turnout in 2022: 70.6%.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Why that number matters</p>
+    <h2>A 28-point age gap.<br />Not a vibe.</h2>
+    <p class="wide">Young Israelis vote more than young Europeans, and the youth rate has been rising. They still vote far less than older Israelis. That is the issue we are in the room for.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Why it matters this year</p>
+    <p class="num">~600k</p>
+    <h2>first-timers. About six seats.</h2>
+    <p>595–640 thousand people aged 18–22. 8.7% of the roll. Election day 27 October 2026.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">“But they say they will vote”</p>
+    <h2>80–95% intend to.<br />That is not a forecast.</h2>
+    <p class="wide">IDI, May 2026. Intention surveys always run hot. In 2013 the same institute saw ~88% intend, ~92% later say they voted — official turnout was 67.8%. Ages 18–22 were already the most likely to stay home.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Working assumption</p>
+    <h2>Youth turnout will still be low.</h2>
+    <p class="wide">Even if 2026 is a few points above 46.7%, it is still low versus older adults. And even the ones who show up often do not know the list. Two jobs: get them there, make the slip informed.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">2 · They do not know who to vote for</p>
+    <h2>“Bennett is a bro.”</h2>
+    <p class="wide">That was me. A vibe is not a platform. My little brother does not know who to vote for. Hadar Muchtar — same room. This is not a survey. This is the product.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">The young-voter problem</p>
+    <h2>Default to parents.<br />Or don’t care.<br />Or the feed decides.</h2>
+    <p class="wide">War. Load. Enough already. TikTok is full of viral fake news. Some are afraid to show an opinion — at least on one side. A lot of new voters. Not a PDF audience.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Why not “ask your parents”</p>
+    <h2>Rebellion.<br />And they are invested.</h2>
+    <p class="wide">A parent lecture is the wrong teacher for this age. Parents are emotional and already decided. That is not a syllabus. That is a fight.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">The solution</p>
+    <h2>אוריינות פוליטית.<br />A smart vote.</h2>
+    <p class="wide">How do you teach them to vote properly — without a parent, a party ad, or a TikTok? Knowledge they chose to flip. Fake news is another reason this is the job: if they know the list, a fake has less room.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Why they are still the target</p>
+    <h2>Lowest turnout. Largest new bloc. Weakest list-knowledge.</h2>
+    <p class="wide">If anyone can move six seats without knowing who sits in slots 1–20, it is this group. Older voters already show up. This group does not — and when they do, the feed is their civics class.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">What characterizes them</p>
+    <h2>47 seconds.<br />Dopamine.<br />Viral or invisible.</h2>
+    <p class="wide">Gloria Mark: average screen focus is 47 seconds, median 40. Age of wars and TikTok. Variable rewards. If it is not a daily loop, it is a lecture they will not finish.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">3 · Local proof — cards already teach Israel</p>
+    <h2>State Makers / יוצרים מדינה</h2>
+    <p class="wide">Piece of History. 98-card Israeli history set. Packs of 8. Holos. First edition <strong>sold out</strong>. People paid to collect — and learned the country’s story. The format works here. We point it at <em>this</em> election, digital and free.</p>
+    <p class="sub"><a href="https://www.pieceofhistory.com/statemakers" target="_blank" rel="noopener">pieceofhistory.com/statemakers</a></p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Why the digital maneuver works — Pokémon TCG Pocket</p>
+    <h2>Five things we take. Not the shop.</h2>
+    <ol class="five">
+      <li>A daily timed pack makes them come back.</li>
+      <li>The rip is a ritual — and it is addictive.</li>
+      <li>Collecting sets is the progression (a hole in the binder).</li>
+      <li>Rarity is a spectacle you screenshot. That is the virality.</li>
+      <li>Built for a quick session. Not a 30-minute match.</li>
+    </ol>
+    <p class="sub">~150M downloads. Extra pack is a quiz, not a shop. Battles optional — we skip them.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">STRATEGY · The iron is hot</p>
+    <h2>Not only Pokémon.<br />The format is spreading.</h2>
+    <p class="wide">Tracked TCG sales doubled in 2025. One Piece, Riftbound, Cyberpunk. Sports never left. US politics already has cards. State Makers is the best <em>local</em> proof. Hit it now.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Trait → game</p>
+    <h2>Short attention → 90-second rip.<br />Dopamine → daily pack, holos.<br />Feed politics → the back of the card.<br />Afraid to speak → anonymous pledge.<br />Viral → share the pull, race the set.</h2>
+    <p class="sub">The rip is bait. The back is the lesson. Extra packs come from a 5-minute swipe. A survey can unlock a party pack. Show-up is the outcome.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">They already pay for a ladder</p>
+    <h2>outbid.lol — fame for whoever pays more.</h2>
+    <p class="wide">Companies spent five figures to sit on top of a public board. ~1M visits. Proof people will waste a lot of money to go viral. This time the spectacle is for a civic cause. <strong>Nobody pays.</strong></p>
+    <p class="sub"><a href="https://outbid.lol" target="_blank" rel="noopener">outbid.lol</a> · <a href="https://outbid.lol/about" target="_blank" rel="noopener">about</a></p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Therefore</p>
+    <h1>Kalpi.</h1>
+    <p class="wide">A free digital collect-only TCG of the lists. No battles. No lore. No paywall. Equal sets. The game never picks a side — you may, anonymously. One free pack a day.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">PRODUCT · Bait vs goal</p>
+    <h2>The pack is bait.<br />The goal is a smart vote.</h2>
+    <p class="wide">Teach Israeli politics well enough that they show up knowing the list. The card back is one lesson — not the only one. Quiz, commons, a party pack: same job. Progression is bound to learning.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Play it</p>
+    <div class="cards">
+      <img src="../../design/assets/hero-art-kalpi.png" alt="Kalpi" />
+      <img src="../../design/assets/hero-art-threshold.png" alt="Threshold" />
+      <img src="../../design/assets/hero-art-memchetlammed.png" alt="Ballot letters" />
+    </div>
+    <p><a href="../../design/hero-cards.html">Flip the hero cards</a> · <a href="../../design/wireframes.html">Phone wireframes</a></p>
+    <p class="sub">Alpha: pack, flip, binder. 28 sourced cards. Three lists across the map, same skeleton. Server pulls the pack — the player does not invent it.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">Progression is learning</p>
+    <h2>Image. Name. Two swipes. Five minutes.</h2>
+    <p class="wide">What do they do? Which list? Both right → extra pack. Optional survey → a pack of that party’s politicians. Daily rip is habit. Literacy is how you get ahead. Streaks and set chase keep them in.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">המטרה מקדשת את האמצעים</p>
+    <div class="lore">
+      <div class="copy">
+        <h2>Empty of lore. Full of cause.</h2>
+        <p class="wide">Jams usually reward heart in the fiction. This is viral on purpose — pack rips, AI art, a party energy board with no story bible. The civic goal is the message. 27 October will not wait for a novel.</p>
+        <p class="sub"><a href="https://guygir.itch.io" target="_blank" rel="noopener">Prior jams → guygir.itch.io</a></p>
+      </div>
+      <a href="https://guygir.itch.io" target="_blank" rel="noopener">
+        <img class="qr" src="../../design/assets/qr-guygir-itchio.png" alt="QR to guygir.itch.io" />
+      </a>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">27 October 2026</p>
+    <h1>Assume the gap.<br />Give them a pack they will open.</h1>
+    <p class="wide">If this should leave the room, it needs to be live in September — free, Hebrew, seeded where 18–24 already are.</p>
+  </section>
+
+  <div class="footer">
+    <span>Kalpi · pitch</span>
+    <span id="pos">1 / 23 · ← →</span>
+  </div>
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    let i = 0;
+    const go = (n) => {
+      i = (n + slides.length) % slides.length;
+      slides.forEach((s, idx) => s.classList.toggle("on", idx === i));
+      document.getElementById("pos").textContent = `${i + 1} / ${slides.length} · ← →`;
+    };
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(i + 1); }
+      if (e.key === "ArrowLeft") go(i - 1);
+    });
+    document.body.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return;
+      go(i + 1);
+    });
+  </script>
+</body>
+</html>

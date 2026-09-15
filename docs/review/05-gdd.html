@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GDD lite · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">5 / 37 · GDD lite</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="04-strategy.html">← Strategy one-pager</a><button class="btn mark" type="button" data-slug="05-gdd">Mark reviewed</button><a class="btn primary" id="next-page" href="06-digital-collectibles.html">Next: Digital collectibles →</a></div>
+  </header>
+  <article><h1>Kalpi — Product / GDD lite</h1>
+<p>Collect-only digital TCG. No battles. Free forever.</p>
+<blockquote>
+<p><strong>Decision update, 6 Sept 2026:</strong> the feedback-focused PoC is a <strong>disclosed advocacy edition</strong>, not a neutral referee. The earlier objective-content principle below is retained as the original baseline, but is superseded for editorial selection. Game rules, source provenance, and recorded activity remain fixed and common to every player. See <a href="24-poc-feedback.html">poc-feedback-response.md</a>.</p>
+</blockquote>
+<p>Why this format works (Pocket + collectible musts): <a href="06-digital-collectibles.html">digital-collectibles.md</a>.</p>
+<hr />
+<h2>Product job</h2>
+<p>Help 18–24s <strong>recognize party members, symbols, and manifesto points</strong> well enough to cast a <strong>smart vote</strong> (אוריינות פוליטית), by making the learning loop feel like a daily collectible habit. Show-up on 27 Oct is the other half.</p>
+<p><strong>Subgoal — be objective.</strong> Kalpi never picks a side. Players may. Content, art weight, rarity, and rules do not.</p>
+<p>Full alignment (audience, jam goals, security, progression): <a href="03-alignment.html">alignment.md</a>.</p>
+<hr />
+<h2>Principles</h2>
+<ol>
+<li><strong>Free forever.</strong> No IAP. Reach is the business model; civic turnout is the outcome.</li>
+<li><strong>Short session.</strong> Daily rip under ~90 seconds. Longer only if the player chooses to read backs or browse the binder.</li>
+<li><strong>The back is the product.</strong> Pack open without a readable back fails the civic job.</li>
+<li><strong>Equal structure per party.</strong> Same slot types, same rarity math, same visual weight. No “cool party / boring party.”</li>
+<li><strong>Objective voice.</strong> Facts, dates, roles, published platform lines. No jokes that punch a camp. No “we” that means a bloc.</li>
+<li><strong>No lore.</strong> The world is the election. Atmosphere comes from real institutions. Empty of story on purpose — the cause is the heart.</li>
+<li><strong>Progression is learning.</strong> Extra packs come from timed quizzes on cards you own, not from empty grind.</li>
+</ol>
+<hr />
+<h2>Core loop</h2>
+<ol>
+<li>Come back (habit).</li>
+<li>Rip a free pack (dopamine).</li>
+<li>Hit a new / holo card (variable reward).</li>
+<li>Flip the back (learning, 10–20 seconds).</li>
+<li>Slot it into a party set (progress).</li>
+<li>Share or chase the missing card (social).</li>
+</ol>
+<pre><code>login → pack available? → rip → reveal → flip backs → binder → share
+                ↓ no
+         countdown to next daily pack
+</code></pre>
+<hr />
+<h2>Alpha slice (must ship later, designed now)</h2>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Account</td>
+<td>Guest or one-tap. No social graph required.</td>
+</tr>
+<tr>
+<td>Daily pack</td>
+<td><strong>One free pack per 24 hours.</strong> Not 8 hours in Alpha.</td>
+</tr>
+<tr>
+<td>Open</td>
+<td>Tear → spread → rare pause → tap to flip. 6 cards.</td>
+</tr>
+<tr>
+<td>Card</td>
+<td>Front (identity) and back (short factual text + source).</td>
+</tr>
+<tr>
+<td>Binder</td>
+<td>Filter by party set. Missing slots shown. Completion %.</td>
+</tr>
+<tr>
+<td>Share</td>
+<td>Static “just pulled X” image. Optional, never mandatory.</td>
+</tr>
+<tr>
+<td>Race UI</td>
+<td>Fake social proof only: “12 people have 80% of Set A.” No money.</td>
+</tr>
+</tbody>
+</table>
+<p>8-hour drops are a <strong>live-ops lever</strong> on the roadmap, not the Alpha default. Daily is enough habit; 8h is more hostile.</p>
+<hr />
+<h2>Roadmap (designed now, built later)</h2>
+<ul>
+<li><strong>In-game faction board</strong> (pick a list; packs tally it; no reward).</li>
+<li><strong>Real-life party work</strong> (verified) → big pack bundle.</li>
+<li><strong>Timed swipe quiz popups</strong> → extra pack (bind progression to learning).</li>
+<li><strong>Opinion survey → PARTY pack</strong> (matched-list politicians only).</li>
+<li>Verified civic actions (volunteer at a kalpi / party HQ) → pack bundle.</li>
+<li>Optional <strong>election pulse</strong> (filings, dates — not horse-race polls). See below.</li>
+<li>Completion race + optional sponsored civic prize (see legal).</li>
+<li>Streaks, commons milestones, share stamps (see progression).</li>
+<li>Influencer seeding. Trading / gifting. Daily numbered holos.</li>
+</ul>
+<hr />
+<h2>Card types (same skeleton for every party)</h2>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Front job</th>
+<th>Back job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Member</td>
+<td>Name, list slot, role</td>
+<td>2–3 factual lines that help you vote</td>
+</tr>
+<tr>
+<td>Symbol</td>
+<td>Official letter / mark</td>
+<td>What the mark is and how it appears on the ballot</td>
+</tr>
+<tr>
+<td>Platform</td>
+<td>One plank title</td>
+<td>One sourced position, not editorialized</td>
+</tr>
+<tr>
+<td>Quote</td>
+<td>Attributed public line</td>
+<td>Context + date + source. Labeled as a quote.</td>
+</tr>
+<tr>
+<td>Commons</td>
+<td>Institution or rule</td>
+<td>How the system actually works</td>
+</tr>
+</tbody>
+</table>
+<p>Shared commons sit outside party sets so the collection is not only “my camp.”</p>
+<hr />
+<h2>Rarity</h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Weight in a 6-card pack (target)</th>
+<th>Visual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Common</td>
+<td>3</td>
+<td>Flat frame, no foil</td>
+</tr>
+<tr>
+<td>Uncommon</td>
+<td>2</td>
+<td>Thin foil edge</td>
+</tr>
+<tr>
+<td>Rare</td>
+<td>0–1</td>
+<td>Full foil frame, pause on reveal</td>
+</tr>
+<tr>
+<td>Holo</td>
+<td>0–1 (low)</td>
+<td>Animated foil + date stamp</td>
+</tr>
+</tbody>
+</table>
+<p>Pity: if a player opens <strong>3 packs</strong> without a <strong>new-to-them</strong> card, the next pack guarantees one new card. Civic games should not withhold knowledge like a casino.</p>
+<p>Duplicates exist (trading bait later). Alpha may mark “already owned” and still show the back — rereading is learning.</p>
+<h3>Numbered holos — list slot, not population</h3>
+<p>Life TCG prints holos to an animal’s wild population. We take the <em>idea</em> (print run means something real) and invert it for neutrality.</p>
+<p><strong>Member cards:</strong> numbered run = official <strong>list slot</strong>, same rule on every list.</p>
+<table>
+<thead>
+<tr>
+<th>List slot</th>
+<th>Numbered copies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 (head of list)</td>
+<td><strong>1/1</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>1/2 · 2/2</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1/3 · 2/3 · 3/3</td>
+</tr>
+<tr>
+<td><em>n</em></td>
+<td>1/<em>n</em> … <em>n</em>/<em>n</em></td>
+</tr>
+</tbody>
+</table>
+<p>Likud 1 and Democrats 1 and Ra'am 1 are all <strong>1/1</strong>. We are teaching list order, not poll share. Do <strong>not</strong> tie runs to seats, polls, or “importance.”</p>
+<p>Server assigns the number. Client cannot claim 1/1.</p>
+<p>Symbol / platform / quote / commons are <strong>not</strong> slot-numbered.</p>
+<h3>Daily holo treatment (separate)</h3>
+<p>A holo can also carry the date (<code>01.09.2026</code>). Time-based spectacle, not a second print-run system. Slot-number is the chase. Date is the screenshot caption.</p>
+<hr />
+<h2>Pack rules</h2>
+<ul>
+<li><strong>6 cards</strong> per pack (faster than State Makers’ 8).</li>
+<li>Target mix: 3C / 2U / 1R-or-Holo. <strong>Print the mix.</strong> Hidden odds are a loot-box tell.</li>
+<li>At least one card from a party set the player has not completed, when possible.</li>
+<li>At least one commons card in every other pack, so system literacy is not optional.</li>
+<li>After the reveal, <strong>animate the card into its binder well</strong> (Pocket: show where it slots).</li>
+<li><strong>Learning beat is mandatory.</strong> The back is party / member / system info. Default: a short hold, then tap to flip. Target ~1.5s — <strong>not 3s in Alpha</strong> (3s may bounce them). Never skip the back as the default. The idea is: collectible ritual, knowledge on top.</li>
+<li>No paid rerolls. No hourglasses. <strong>Extra pack = quiz</strong> (learning). Pledge does <strong>not</strong> grant an extra pack.</li>
+</ul>
+<hr />
+<h2>Party sets</h2>
+<p><strong>Full vision:</strong> one set per list submitted to the Central Elections Committee (deadline <strong>9 September 2026</strong>).</p>
+<p><strong>Equal structure per list:</strong></p>
+<ul>
+<li>4 Member</li>
+<li>1 Symbol</li>
+<li>2 Platform</li>
+<li>1 Quote</li>
+</ul>
+<p><strong>Shared commons (all players):</strong> 4 cards — Knesset, Kalpi, Threshold, CEC.</p>
+<p><strong>PoC:</strong> 3 parties × 8 + 4 commons = <strong>28 unique cards</strong>, plus “more parties coming” placeholders. Three parties are chosen for <strong>map spread</strong>, not popularity. See <a href="08-poc-cards.html">poc-cards.md</a>.</p>
+<hr />
+<h2>Reward taxonomy</h2>
+<table>
+<thead>
+<tr>
+<th>Trigger</th>
+<th>Reward</th>
+<th>Why</th>
+<th>In Alpha?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daily login</td>
+<td>1 pack</td>
+<td>Habit</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Timed swipe quiz (owned card)</td>
+<td>1 extra pack</td>
+<td>Bind progression to learning</td>
+<td>Designed, not built</td>
+</tr>
+<tr>
+<td>Pack opened while in a <strong>faction</strong></td>
+<td>+1 on that list’s public tally (not a currency, not a pack)</td>
+<td>The faction game <em>is</em> the progression. No extra reward</td>
+<td>Designed, not built</td>
+</tr>
+<tr>
+<td>Opinion survey complete</td>
+<td>1 <strong>PARTY pack</strong> (matched list only)</td>
+<td>Choice + a reason to open that set</td>
+<td>Designed, not built</td>
+</tr>
+<tr>
+<td>Login / literacy streak (3 / 7 days)</td>
+<td>Cosmetic stamp or guaranteed uncommon</td>
+<td>Keep the week alive</td>
+<td>Designed, not built</td>
+</tr>
+<tr>
+<td>Commons set complete</td>
+<td>Binder badge</td>
+<td>System literacy, not only “my party”</td>
+<td>Designed, not built</td>
+</tr>
+<tr>
+<td>Verified <strong>real-life</strong> party / kalpi work</td>
+<td><strong>Big pack bundle</strong></td>
+<td>Best way to become knowledgeable. This is the large reward</td>
+<td>Designed, not built</td>
+</tr>
+<tr>
+<td>Share a pull (optional)</td>
+<td>Binder stamp / cosmetic</td>
+<td>Virality without pay</td>
+<td>Share image only</td>
+</tr>
+<tr>
+<td>First to complete a set</td>
+<td>Public race placement</td>
+<td>Spectacle</td>
+<td>Fake race UI only</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Two different “pledges” (do not mix them)</h2>
+<p><strong>Energy was a bad name.</strong> There is no currency. You do not earn, spend, or buy anything called energy.</p>
+<h3>1. In-game faction — no reward</h3>
+<p>Optional. Pick one real list <strong>inside the game</strong>. Anonymous to other players (tile, not your name). Afraid to show an opinion? This is the bypass.</p>
+<ul>
+<li>Each pack you open adds <strong>+1</strong> to that list’s public tally.</li>
+<li>That number is just <strong>packs pledged in-game</strong>. A scoreboard. Not a poll, not a wallet.</li>
+<li><strong>No extra pack. No prize.</strong> The faction race <em>is</em> the progression — people come back so their list’s number moves.</li>
+<li>Switch anytime (or after 24h). Unfactioned players still play; their packs do not tally a list.</li>
+<li>Same tile size for every list. Order = CEC letter / alpha, not polls.</li>
+</ul>
+<p>Kalpi is the ref. Content stays even.</p>
+<h3>2. Real-life party work — big reward</h3>
+<p>Verified volunteer at a <strong>party HQ, campaign, or kalpi</strong> (someone signs off).</p>
+<p>This is the best way to become knowledgeable about politics — you are in the room, not only flipping a card. So it <strong>should</strong> pay a large result: a <strong>pack bundle</strong>, not +1 on a board.</p>
+<p>Do not auto-join the in-game faction when they volunteer. They can still pick (or not) in the game.</p>
+<hr />
+<h2>Opinion survey → PARTY pack</h2>
+<p>Optional. Not required to play. Not an endorsement.</p>
+<ol>
+<li>Short issue survey (what matters to you — not “who is a bro”).</li>
+<li><strong>Server</strong> scores against a published table (same questions for every player).</li>
+<li>Reward: one pack whose members are <strong>only politicians from the matched list</strong>.</li>
+<li>Copy: “Based on what you marked, here is a pack from [list]. Open it. Then collect the others.”</li>
+</ol>
+<p>Rules:</p>
+<ul>
+<li>Kalpi does not say “you should vote this.” It says “here is that set, so you can actually read it.”</li>
+<li>Other lists stay visible and completable. Never hide the rest of the binder.</li>
+<li>Completing the survey does <strong>not</strong> auto-join an in-game faction.</li>
+<li>Survey answers and the match live on the server. The client does not pick the party pack contents.</li>
+</ul>
+<hr />
+<h2>Timed quiz popups (progression = learning)</h2>
+<p>Not a homework screen. A <strong>super-short timed offer</strong>, same family as a flash sale — except the currency is attention.</p>
+<p><strong>Offer:</strong> “5 minutes. Two swipes. Extra pack.” Dismiss is always allowed. Never block the daily rip.</p>
+<p><strong>Card (from a card the player already owns, preferably from the last pack):</strong></p>
+<ol>
+<li>Face / illustration + name (always shown).</li>
+<li>Swipe left/right: <strong>what they do now / what they are known for</strong> — 3–4 options, one correct, taken from the card back.</li>
+<li>Swipe: <strong>which list</strong> — 3–4 list names, one correct.</li>
+</ol>
+<p>Both correct inside <strong>5:00</strong> → extra pack. Wrong or timeout → no pack, show the back, they can try a new popup later (one successful extra-pack quiz per day).</p>
+<p>Rules:</p>
+<ul>
+<li>Intuitive: swipe changes the option, one tap locks.</li>
+<li>No “who is good.” No opinion items.</li>
+<li>Commons cards can quiz the threshold / 120 / closed list the same way (image of the institution, swipe the fact).</li>
+<li>This is how extra packs are earned. Login is the habit pack. <strong>Learning is the bonus pack.</strong></li>
+</ul>
+<hr />
+<h2>Election pulse (maybe)</h2>
+<p>Worth considering, not locked. Goal: keep players in the real race without turning Kalpi into a poll aggregator.</p>
+<p><strong>Safe if we do it:</strong> CEC calendar, list-filing facts, “letters assigned,” dated official events. A Commons-style pulse chip: <em>9 Sept — lists filed.</em></p>
+<p><strong>Unsafe:</strong> live poll widgets, “X is leading,” seat projections. That picks a horse and rewards large lists. If a partner later wants polls, they sit behind a labeled third-party strip, never in our voice, never affecting rarity or energy.</p>
+<p>Default for jam: <strong>skip polls.</strong> Mention pulse as a later live-ops option.</p>
+<hr />
+<h2>Leaderboard / prize</h2>
+<p>Public boards, all free:</p>
+<ol>
+<li><strong>Faction tally</strong> — in-game packs counted per list. Not a currency.</li>
+<li><strong>Set race</strong> — who completed a set (or commons) first.</li>
+<li><strong>Country board</strong> — collection % / literacy streak, whole game.</li>
+<li><strong>Groups / leagues</strong> later — friends, campus, unit. Same rules, smaller room.</li>
+</ol>
+<p><strong>Trading / gifting</strong> is how the game becomes friendly and social: gift a dupe, complete a friend’s set, talk about the back. Knowledge should move. No paid trade gate.</p>
+<p><strong>Commons-complete badge</strong> is shareable — viral for system literacy, not only “my party.”</p>
+<p><a href="https://outbid.lol">outbid.lol</a> proved a public ranked list can explode — and that people/companies will <strong>pay</strong> (top spot ~$13–17k; six figures of bids; ~1M visits) to sit on that ladder for fame. Proof the spectacle is worth money. We steal the spectator sport, not the paywall. Civic cause; <strong>nobody pays.</strong> <a href="https://outbid.lol/about">About</a>.</p>
+<ul>
+<li><strong>10,000 NIS first-set prize</strong> remains a pitch concept, legal review required.</li>
+<li>Alpha: fake counts only.</li>
+</ul>
+<hr />
+<h2>Session budget</h2>
+<table>
+<thead>
+<tr>
+<th>Beat</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Open app → pack</td>
+<td>5s</td>
+</tr>
+<tr>
+<td>Rip + reveal 6</td>
+<td>20–30s</td>
+</tr>
+<tr>
+<td>Flip 1–2 backs</td>
+<td>20–40s</td>
+</tr>
+<tr>
+<td>Binder glance</td>
+<td>10–15s</td>
+</tr>
+<tr>
+<td><strong>Default session</strong></td>
+<td><strong>under 90s</strong></td>
+</tr>
+<tr>
+<td>Deep binder browse</td>
+<td>player-chosen, uncapped</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Why they keep playing (progression beyond faction + cash)</h2>
+<p>Camp energy and a $$ race are two hooks. Not enough on their own.</p>
+<ol>
+<li><strong>Daily clock</strong> — pack is waiting.</li>
+<li><strong>Pity</strong> — knowledge is not withheld like a casino.</li>
+<li><strong>Binder %</strong> — dashed wells, set chase.</li>
+<li><strong>Daily numbered holo</strong> — time-based chase, not pay-to-win.</li>
+<li><strong>Quiz extra pack</strong> — literacy is how you get ahead.</li>
+<li><strong>In-game faction tally</strong> — no reward; the board is the game.</li>
+<li><strong>Set race</strong> — spectator sport (outbid invert; nobody pays).</li>
+<li><strong>Streaks</strong> — login and quiz chains (3 / 7).</li>
+<li><strong>Commons complete</strong> — you finished how the system works.</li>
+<li><strong>Party pack</strong> — a matched set you have a reason to open.</li>
+<li><strong>Share stamps</strong> — cosmetic, optional.</li>
+</ol>
+<p>Prize money stays a <strong>pitch concept</strong>. Alpha does not ship a lottery.</p>
+<hr />
+<h2>Security (baseline)</h2>
+<p>The client <strong>displays</strong>. It does not own luck.</p>
+<ul>
+<li>Pack RNG and contents are created <strong>on the server</strong>. Client receives card ids. A player cannot inject pulls.</li>
+<li>Inventory, faction tallies, streaks, quiz grades, and party-pack matches are <strong>server state</strong>.</li>
+<li>Never persist a client-authored collection as truth.</li>
+</ul>
+<p>See <a href="14-implementation.html">implementation/part-2.md</a>. Alpha is HTML-first for approachability.</p>
+<hr />
+<h2>What this is not</h2>
+<ul>
+<li>Not a battler (Marvel Snap / Pocket battles).</li>
+<li>Not a physical print run (State Makers is the local analog, not the product).</li>
+<li>Not a poll, forecast, or endorsement. Faction tally is <strong>in-game packs</strong>, not an election.</li>
+<li>Not a pay-to-rank board (<a href="https://outbid.lol">outbid.lol</a> is the analog we invert).</li>
+<li>Not a client-trusted inventory.</li>
+<li>Not a story game with lore. Empty of fiction on purpose.</li>
+</ul></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="04-strategy.html">← Strategy one-pager</a><a class="btn primary" id="next-page" href="06-digital-collectibles.html">Next: Digital collectibles →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "kalpi-alpha",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:data": "node scripts/build-runtime-catalog.mjs --activate",
+    "build:alpha": "node scripts/build-cards.mjs",
+    "build:studio": "node scripts/build-studio-content.mjs",
+    "build:catalog": "node scripts/build-runtime-catalog.mjs",
+    "activate:catalog": "node scripts/build-runtime-catalog.mjs --activate",
+    "audit:studio": "node scripts/audit-studio-content.mjs",
+    "audit:launch": "npm run build:data && node scripts/audit-studio-content.mjs --strict",
+    "import:quotes": "node scripts/import-quote-archive.mjs",
+    "sync:art": "node scripts/sync-generated-art.mjs",
+    "verify:visual": "node scripts/verify-player-visuals.mjs",
+    "start": "node server/index.js",
+    "dev": "KALPI_DEBUG=1 node --watch server/index.js",
+    "poc": "KALPI_DEBUG=1 node server/index.js",
+    "test": "npm run build:data && node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}

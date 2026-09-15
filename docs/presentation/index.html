@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalpi — Pitch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a1f1c;
+      --paper: #f4efe4;
+      --civic: #1f4f4a;
+      --foil: #c4a35a;
+      --deep: #e7dfd0;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #111; color: var(--ink); font-family: "IBM Plex Sans", sans-serif; }
+    .deck { height: 100%; }
+    .slide {
+      display: none;
+      height: 100%;
+      padding: 64px 80px;
+      background: var(--paper);
+      flex-direction: column;
+      justify-content: center;
+    }
+    .slide.on { display: flex; }
+    .kicker { letter-spacing: 0.14em; text-transform: uppercase; color: var(--civic); font-size: 14px; margin: 0 0 16px; font-weight: 600; }
+    h1 { font-family: Fraunces, Georgia, serif; font-size: clamp(40px, 6vw, 72px); line-height: 1.05; margin: 0 0 20px; font-weight: 600; }
+    h2 { font-family: Fraunces, Georgia, serif; font-size: clamp(32px, 4.4vw, 52px); line-height: 1.1; margin: 0 0 20px; }
+    p, li { font-size: 22px; line-height: 1.4; }
+    .big { font-family: Fraunces, Georgia, serif; font-size: clamp(56px, 8vw, 96px); margin: 0; }
+    .sub { font-size: 20px; opacity: 0.8; }
+    .row { display: flex; gap: 40px; flex-wrap: wrap; align-items: center; }
+    .stat { flex: 1; min-width: 220px; }
+    .stat span { display: block; font-family: Fraunces, Georgia, serif; font-size: 64px; color: var(--civic); }
+    ul { padding-left: 1.2em; }
+    .footer {
+      position: fixed; bottom: 16px; left: 24px; right: 24px;
+      display: flex; justify-content: space-between;
+      color: var(--paper); font-size: 13px; mix-blend-mode: difference;
+    }
+    a { color: var(--civic); }
+    .cards { display: flex; gap: 16px; }
+    .cards img { width: 160px; height: 224px; object-fit: cover; border-radius: 8px; border: 2px solid var(--ink); }
+    .box { background: var(--deep); padding: 20px 24px; border-radius: 12px; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    @media (max-width: 800px) {
+      .slide { padding: 32px 20px; }
+      .cols { grid-template-columns: 1fr; }
+      p, li { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+
+    <section class="slide on">
+      <p class="kicker">Israeli Elections 2026 · Game jam</p>
+      <h1>Kalpi</h1>
+      <p>A free digital collectible TCG of the lists.<br />The dopamine is the bait. Informed turnout is the product.</p>
+      <p class="sub">Collect only. No battles. No lore. No paywall. English pitch · Hebrew product later.</p>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">The age gap</p>
+      <div class="row">
+        <div class="stat"><span>46.7%</span><p>turnout ages 18–24 after 2021</p></div>
+        <div class="stat"><span>74.9%</span><p>turnout ages 65–74</p></div>
+      </div>
+      <p>~595k–640k first-timers in 2026. About 8.7% of the roll. On the order of <strong>six Knesset seats</strong>.</p>
+      <p class="sub">Knesset RIC, 2022 · IDI / Points on first-timers · national 2022 turnout 70.6%</p>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">Surveys are not turnout</p>
+      <h2>They always say they will vote.</h2>
+      <ul>
+        <li>IDI 2026: 80–95% of first-timers <em>intend</em> to. That is not a forecast.</li>
+        <li>2013: ~88% intended, ~92% later said they voted, official turnout was <strong>67.8%</strong>.</li>
+        <li>18–22 were already the age most likely to stay home. Official 18–24 turnout after 2021: <strong>46.7%</strong>.</li>
+        <li>Assume 2026 is still low vs older adults — even if a few points higher. Then make the slip <strong>informed</strong>.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">Why this generation</p>
+      <h2>47 seconds. Pack rips. Feed politics.</h2>
+      <p>Gloria Mark: screen focus 2.5 min (2004) → 75s (~2012) → <strong>47s</strong> now (median 40).</p>
+      <p>They already collect cards. They already live on variable rewards. We meet them there.</p>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">The trick</p>
+      <h2>Rip for dopamine.<br />Flip for literacy.</h2>
+      <div class="cols">
+        <div class="box">
+          <p><strong>Bait</strong><br />Daily pack · holo · numbered date · share · race the set</p>
+        </div>
+        <div class="box">
+          <p><strong>Product</strong><br />Card back · members · letters · planks · show up 27 Oct</p>
+        </div>
+      </div>
+      <p>If they never flip the back, we shipped a casino.</p>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">Why digital · why free</p>
+      <h2>Reach, speed, no pay-to-win.</h2>
+      <ul>
+        <li>Physical cannot hit 600k first-timers before 27 Oct.</li>
+        <li>Digital numbered holos: one per identity per day. No print cap.</li>
+        <li>Free forever. Monetization would fight the civic goal.</li>
+        <li>Alpha: one pack / 24h. Eight-hour drops later, if we want more habit.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">The game · live rip</p>
+      <h2>Collect-only TCG. 28 PoC cards.</h2>
+      <div class="row">
+        <div class="cards">
+          <img src="../design/assets/hero-art-kalpi.png" alt="Kalpi card art" />
+          <img src="../design/assets/hero-art-threshold.png" alt="Threshold card art" />
+          <img src="../design/assets/hero-art-memchetlammed.png" alt="Ballot letter art" />
+        </div>
+        <div>
+          <p>6-card daily pack. Flip the back. Binder by equal party set.</p>
+          <p><a href="../design/hero-cards.html">Open hero cards</a> · <a href="../design/wireframes.html">Open wireframes</a></p>
+          <p class="sub">Likud · Democrats · Ra'am — map spread, not the three largest. Same 8-card skeleton.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">Why cards</p>
+      <h2>The format is already winning.</h2>
+      <ul>
+        <li><strong>Pokémon TCG Pocket</strong> — collection-first, global, daily rips.</li>
+        <li><strong>State Makers / יוצרים מדינה</strong> — 98-card Israeli history set, packs of 8, holos, first edition sold out.</li>
+        <li>Kalpi points that loop at <em>this</em> election, digitally, free.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">Growth</p>
+      <h2>Reward anything that teaches or turns out.</h2>
+      <ul>
+        <li>Quiz on cards you own → extra pack.</li>
+        <li>Verified volunteer at a real kalpi → packs.</li>
+        <li>Influencers who already hold 18–24.</li>
+        <li>Public set-race (outbid.lol spectacle, <strong>nobody pays</strong>).</li>
+        <li>10k NIS first-set prize = concept, legal review — or merch / a voter night.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">Neutrality · ethics</p>
+      <h2>Equal sets. Sourced backs. No spending.</h2>
+      <ul>
+        <li>Same slots, same tone, same frame. Color only in an 8px pip.</li>
+        <li>Facts and dated quotes. Never our joke at a camp.</li>
+        <li>Likeness and marks need a real-product legal pass.</li>
+        <li>Dopamine on purpose: short sessions, pity for new knowledge, no IAP.</li>
+        <li>Do not say “youth won’t vote.” Say <strong>informed turnout</strong>.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">Next</p>
+      <h1>Learn the list.<br />Then show up.</h1>
+      <p>Alpha: pack + flip + binder. Full lists after <strong>9 September</strong>. Election day <strong>27 October 2026</strong>.</p>
+      <p class="sub">~600k first-timers. 46.7% historic turnout in their age group. They already live in pack-rip dopamine. That is the bait.</p>
+    </section>
+  </div>
+  <div class="footer">
+    <span>Kalpi · civic TCG</span>
+    <span id="pos">1 / 11 · ← →</span>
+  </div>
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    let i = 0;
+    const go = (n) => {
+      i = (n + slides.length) % slides.length;
+      slides.forEach((s, idx) => s.classList.toggle("on", idx === i));
+      document.getElementById("pos").textContent = `${i + 1} / ${slides.length} · ← →`;
+    };
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(i + 1); }
+      if (e.key === "ArrowLeft") go(i - 1);
+    });
+    document.body.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return;
+      go(i + 1);
+    });
+  </script>
+</body>
+</html>

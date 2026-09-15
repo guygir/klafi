@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quiz items · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">9 / 37 · Quiz items</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="08-poc-cards.html">← PoC card backs</a><button class="btn mark" type="button" data-slug="09-quiz">Mark reviewed</button><a class="btn primary" id="next-page" href="10-sources.html">Next: Sources →</a></div>
+  </header>
+  <article><h1>Kalpi — Quiz (learning-bound packs)</h1>
+<h2>What “quiz on pulled cards” means</h2>
+<p>You only get quizzed on a card <strong>already in your binder</strong> — usually from the last pack you ripped.</p>
+<ol>
+<li>You open a pack. You see a face. You (should) flip the back and read who they are / which list.</li>
+<li>Later (or right after), a 5-minute popup shows <strong>that same face + name</strong>.</li>
+<li>Swipe: what do they do? Swipe: which list? Both right → <strong>one extra pack</strong>.</li>
+<li>Wrong or timeout → no pack. Show the back again. You can try a different owned card later. One extra-pack win per day.</li>
+</ol>
+<p>Why only pulled cards: you cannot farm knowledge you never saw. The rip creates the chance to learn; the quiz checks that you did. That is “progression bound to learning.”</p>
+<p>Not an opinion poll. Not “who is good.” Options are copied from the card back.</p>
+<hr />
+<h2>Popup UX (designed)</h2>
+<p>Timed offer, not a menu. Dismissible. Never blocks the daily rip.</p>
+<pre><code>[ illustration + name ]
+what do they do / what are they known for?
+  ←  swipe options  →     (1 correct)
+which list?
+  ←  swipe lists  →       (1 correct)
+5:00  ·  both right → extra pack
+</code></pre>
+<p>Drawn from a card the player <strong>owns</strong> (prefer last pack). Options come from that card’s back. One successful extra-pack quiz per day.</p>
+<p>Below: item bank for the deck and for later implementation. Same rule: no “who is good.”</p>
+<hr />
+<h2>10 sample items (from PoC backs)</h2>
+<hr />
+<h3>1 — Commons</h3>
+<p><strong>How many seats does the Knesset have?</strong><br />
+- A. 61<br />
+- B. 100<br />
+- C. 120<br />
+- D. 150</p>
+<p><strong>Answer:</strong> C. 120. A government still needs 61. (SYS-C-01)</p>
+<hr />
+<h3>2 — Commons</h3>
+<p><strong>What do you vote for at the kalpi?</strong><br />
+- A. A local district MK<br />
+- B. A closed party list<br />
+- C. A prime minister by name<br />
+- D. A yes/no referendum</p>
+<p><strong>Answer:</strong> B. Closed list. If the list wins 18 seats, the first 18 names enter. (SYS-C-02)</p>
+<hr />
+<h3>3 — Commons</h3>
+<p><strong>What is the electoral threshold?</strong><br />
+- A. 1% of registered voters<br />
+- B. 2% of all citizens<br />
+- C. 3.25% of valid votes<br />
+- D. 5% of ballots cast</p>
+<p><strong>Answer:</strong> C. 3.25% of valid votes, since 2015. Under-threshold votes elect nobody. (SYS-C-03)</p>
+<hr />
+<h3>4 — Commons</h3>
+<p><strong>When must lists be filed with the CEC for 2026?</strong><br />
+- A. 17 July 2026<br />
+- B. 9 September 2026<br />
+- C. 20 October 2026<br />
+- D. 27 October 2026</p>
+<p><strong>Answer:</strong> B. 9 September. Election day is 27 October; abroad voting starts 20 October. (SYS-C-04)</p>
+<hr />
+<h3>5 — Likud</h3>
+<p><strong>Who is reported in slot 1 on the Likud list?</strong><br />
+- A. Israel Katz<br />
+- B. Amir Ohana<br />
+- C. Eli Cohen<br />
+- D. Benjamin Netanyahu</p>
+<p><strong>Answer:</strong> D. Chair and current prime minister. (LIK-M-01)</p>
+<hr />
+<h3>6 — Democrats</h3>
+<p><strong>The Democrats are a merger of which two parties?</strong><br />
+- A. Likud and New Hope<br />
+- B. Labor and Meretz<br />
+- C. Yesh Atid and Bennett 2026<br />
+- D. Hadash and Balad</p>
+<p><strong>Answer:</strong> B. Merged in 2024; Yair Golan chairs the list. (DEM-M-01)</p>
+<hr />
+<h3>7 — Democrats</h3>
+<p><strong>Which published Democrats plank appears on DEM-P-01?</strong><br />
+- A. A state commission of inquiry into 7 October 2023<br />
+- B. Cancelling the electoral threshold<br />
+- C. A presidential system<br />
+- D. Ending proportional representation</p>
+<p><strong>Answer:</strong> A. (DEM-P-01)</p>
+<hr />
+<h3>8 — Ra'am</h3>
+<p><strong>In 2021, what did Ra'am do that no Arab party had done as a formal partner?</strong><br />
+- A. Boycott the Knesset<br />
+- B. Merge with Likud<br />
+- C. Sit in a governing coalition<br />
+- D. Run only abroad</p>
+<p><strong>Answer:</strong> C. Bennett–Lapid government. (RAM-M-01)</p>
+<hr />
+<h3>9 — Ra'am</h3>
+<p><strong>Who did Abbas announce as joining the 2026 Ra'am slate on 31 August?</strong><br />
+- A. Ahmad Tibi<br />
+- B. Yoav Segalovitz<br />
+- C. Gideon Sa'ar<br />
+- D. Yair Lapid</p>
+<p><strong>Answer:</strong> B. Former Yesh Atid MK; expected slot 2, first Jewish candidate on this list. (RAM-M-02)</p>
+<hr />
+<h3>10 — System literacy</h3>
+<p><strong>If a list you like is polling at 2.8%, what happens to those votes if the result holds?</strong><br />
+- A. They are split among similar lists<br />
+- B. They still get two seats<br />
+- C. They stay valid on the tally but elect nobody<br />
+- D. They are recounted as blank</p>
+<p><strong>Answer:</strong> C. Threshold is 3.25% of valid votes. (SYS-C-03)</p>
+<hr />
+<h2>Writing rule for more items</h2>
+<ul>
+<li>Stem from a back the player owns.</li>
+<li>For popups: two swipe stems only — <strong>role/achievement</strong> and <strong>list</strong>. Four-choice items above are for a longer quiz mode if we ever want one.</li>
+<li>No “all of the above.” No opinion.</li>
+<li>If a slot is still TBD, do not quiz the TBD. Quiz the rule (CEC date, threshold, closed list).</li>
+</ul>
+<h3>Popup examples (same backs)</h3>
+<p><strong>LIK-M-01</strong><br />
+Shown: illustrated Netanyahu.<br />
+Swipe A: Prime Minister and Likud chair / Knesset Speaker / Ra'am chair / CEC head.<br />
+Swipe B: Likud / Democrats / Ra'am / Commons.</p>
+<p><strong>DEM-M-02</strong><br />
+Shown: illustrated Lazimi.<br />
+Swipe A: Slot 2 on The Democrats after the 2026 primary / Likud slot 2 / Ra'am reserved women’s slot / CEC chair.<br />
+Swipe B: Democrats / Likud / Ra'am / Yisrael Beiteinu.</p>
+<p><strong>SYS-C-03</strong><br />
+Shown: threshold art.<br />
+Swipe A: 3.25% of valid votes / 61 seats / 120 MKs / 9 September.<br />
+Swipe B: treat as Commons (no party). Second swipe can be “what happens under the line?” → elects nobody.</p></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="08-poc-cards.html">← PoC card backs</a><a class="btn primary" id="next-page" href="10-sources.html">Next: Sources →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

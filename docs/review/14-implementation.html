@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Part 2 — how we build · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">14 / 37 · Part 2 — how we build</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="13-wireframes.html">← Phone wireframes</a><button class="btn mark" type="button" data-slug="14-implementation">Mark reviewed</button><a class="btn primary" id="next-page" href="15-citations.html">Next: Citation card →</a></div>
+  </header>
+  <article><h1>Kalpi — Part 2: implementation</h1>
+<p>Product stays in <a href="03-alignment.html">alignment.md</a> and <a href="05-gdd.html">gdd-lite.md</a>. This note is stack, security, and craft. <strong>Do not start a framework debate in the pitch.</strong></p>
+<hr />
+<h2>Shipped Alpha</h2>
+<p>The first Alpha ships in <a href="../../app/"><code>../../app/</code></a>: <strong>HTML + CSS + a little JS</strong>, served by a zero-dependency Node server that owns pulls and inventory.</p>
+<p>Why HTML:</p>
+<ul>
+<li>Judges and partners can open a file or a URL. No store, no install, no “wait for the build.”</li>
+<li>Matches the jam artifacts we already have (<code>hero-cards.html</code>, <code>wireframes.html</code>).</li>
+<li>Agents and humans can read and patch the same files.</li>
+</ul>
+<p>Later (Hebrew live, accounts, energy board) we can grow the server. The client stays thin.</p>
+<hr />
+<h2>Security baseline (non-negotiable)</h2>
+<p><strong>Where the pull happens, the server pulls.</strong> The saved result must not have gone through the player.</p>
+<pre><code>player taps “Open” → POST /packs/daily (auth or guest token)
+server: check clock / pity / rate limit
+server: RNG + pack mix + persist inventory
+server: return the six card ids
+client: play the rip animation on those ids
+</code></pre>
+<p>Never:</p>
+<ul>
+<li>Client sends <code>{cards: [...]}</code> as the pull.</li>
+<li>Client writes binder state that the server blindly accepts.</li>
+<li>“Offline pack” that later syncs as gospel.</li>
+<li>Quiz “I got both right” without the server scoring.</li>
+</ul>
+<p>Also:</p>
+<ul>
+<li>Extra pack from quiz: server picks the owned card, scores the two swipes, grants or not.</li>
+<li>Party-pack survey: answers go to the server; match + pack seed happen there.</li>
+<li>Camp energy: increment only on a <strong>confirmed</strong> server pack (or quiz).</li>
+<li>Daily numbered holo: server assigns <code>#1 of 1 today</code> per identity. Client cannot claim the stamp.</li>
+</ul>
+<p>This is baseline civic trust, not a pentest. We are not building a bank. We are making sure the collection is not a cheat sheet.</p>
+<hr />
+<h2>Frontend &amp; visual skills (for agents)</h2>
+<p>When we write UI, <strong>read these before coding:</strong></p>
+<ol>
+<li><a href="11-visual-system.html">visual-system.md</a> — palette, frame, rarity, pack beats. <strong>This brief wins.</strong></li>
+<li>Project skill <code>.cursor/skills/frontend-design</code> — Anthropic <strong>frontend-design</strong>: distinctive craft, not generic AI UI. Paper / ink / foil is already our look; do not reinvent a cream-and-terracotta template on top.</li>
+<li>Do <strong>not</strong> use Awwwards “premium landing page” skills (magnetic cursors, full-bleed heroes) as the game UI. Those are for a promo site if we make one later.</li>
+</ol>
+<p>Wireframes to implement first: <a href="../design/wireframes.html">wireframes.html</a> (home, rip, back, binder). Quiz / energy / pledge screens exist as later frames.</p>
+<hr />
+<h2>Weavy (Figma Weave) — assets, motion, promo</h2>
+<p>Weavy was acquired by Figma (Oct 2025) and ships as <strong>Figma Weave</strong>.</p>
+<ul>
+<li>Product: <a href="https://www.figma.com/solutions/figma-ai-tool-weave/">Figma Weave</a></li>
+<li>Canvas: <a href="https://www.figma.com/solutions/figma-ai-tool-weave/">weave.figma.com</a> (account at Weave; Figma login works)</li>
+<li>Node docs still at <a href="https://help.weavy.ai">help.weavy.ai</a></li>
+</ul>
+<p>Use it to <strong>generate, then rip into the game:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Still cards / pack wrapper / UI chrome</td>
+<td>Drop into <code>docs/design/assets/</code> then the client</td>
+</tr>
+<tr>
+<td>Rip / tear / foil animation</td>
+<td>Short loops, WebM/MP4, CSS-clipped</td>
+</tr>
+<tr>
+<td>Binder slot motion</td>
+<td>Reference, then implement in CSS</td>
+</tr>
+<tr>
+<td>Promo / trailer</td>
+<td>Social seed. Vertical for TikTok/Reels</td>
+</tr>
+</tbody>
+</table>
+<p>Generate more than we ship. Cut. Do not paste a raw video node into the Alpha.</p>
+<p>Same AI-art argument as the deck: deadline + full-set volume. Civic objects and letters, not scraped press faces.</p>
+<hr />
+<h2>Alpha build order (completed)</h2>
+<ol>
+<li>[x] Static HTML shell that follows the wireframes.</li>
+<li>[x] Card renderer (front/back) from the 28 PoC cards.</li>
+<li>[x] <strong>Server pack endpoint</strong> + atomic JSON persistence. Rip animation on returned ids.</li>
+<li>[x] Binder from server inventory.</li>
+<li>[x] Share image (static).</li>
+<li>[ ] Next: quiz, faction tally, verified volunteer bundle, survey pack, Hebrew pass.</li>
+</ol>
+<p>If leftover time fights a framework, we already lost. Stay HTML.</p>
+<hr />
+<h2>What we will not do in Alpha</h2>
+<ul>
+<li>Trust the client for RNG or inventory.</li>
+<li>IAP, hourglasses, live polls.</li>
+<li>A React/Unity rewrite “for later.”</li>
+<li>Outing a pledged list on a public profile.</li>
+</ul></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="13-wireframes.html">← Phone wireframes</a><a class="btn primary" id="next-page" href="15-citations.html">Next: Citation card →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

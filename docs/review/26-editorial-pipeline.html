@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Editorial pipeline · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">26 / 37 · Editorial pipeline</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="25-bootstrap.html">← Bootstrap playbook</a><button class="btn mark" type="button" data-slug="26-editorial-pipeline">Mark reviewed</button><a class="btn primary" id="next-page" href="27-poc-demo-sequence.html">Next: PoC guided demo sequence →</a></div>
+  </header>
+  <article><h1>Kalpi — editorial content pipeline</h1>
+<p>Agents can accelerate structure. A human editor owns political judgment.</p>
+<h2>Unit of publication</h2>
+<p>Every card has:</p>
+<ul>
+<li>Identity, set, type, rarity, subtitle</li>
+<li>40–60 word body</li>
+<li>“Why it matters”</li>
+<li>Short printed source</li>
+<li>Walkout kind (<code>quote</code> or <code>fact</code>)</li>
+<li>Exact walkout text</li>
+<li>Speaker and date/date-status</li>
+<li>Source registry id + inspectable URL</li>
+<li>Context</li>
+<li>Selection rationale</li>
+<li>Release phase</li>
+<li>Editorial role</li>
+<li>Content status</li>
+</ul>
+<p>Release phases:</p>
+<ul>
+<li><code>orientation</code></li>
+<li><code>issue-contrast</code></li>
+<li><code>decision-readiness</code></li>
+</ul>
+<p>Editorial roles:</p>
+<ul>
+<li><code>orientation</code></li>
+<li><code>supporting-case</code></li>
+<li><code>critical-contrast</code></li>
+</ul>
+<p>Statuses:</p>
+<ul>
+<li><code>draft</code> — structured, not publishable</li>
+<li><code>fact-checked</code> — wording and provenance checked</li>
+<li><code>approved</code> — human editor approved context, selection, tone, and rights</li>
+</ul>
+<h2>Agent work</h2>
+<ul>
+<li>Convert source notes into the schema.</li>
+<li>Flag missing speaker/date/source/context.</li>
+<li>Count words and compare sibling cards.</li>
+<li>Detect repeated or contradictory dates.</li>
+<li>Render cards and walkouts for review.</li>
+<li>Validate URLs syntactically.</li>
+<li>Generate an audit report of draft/blocked items.</li>
+<li>Suggest—not approve—possible issue pairs and chronology.</li>
+</ul>
+<h2>Human work</h2>
+<ul>
+<li>Open the primary or closest available source.</li>
+<li>Verify the quote character-for-character.</li>
+<li>Read enough surrounding material to prevent a clipped meaning.</li>
+<li>Decide whether the selection supports the disclosed editorial case.</li>
+<li>Write the selection rationale.</li>
+<li>Review the strongest opposing formulation before publishing a response.</li>
+<li>Approve rights and visual treatment.</li>
+<li>Mark the item <code>approved</code>.</li>
+</ul>
+<h2>Publication gates</h2>
+<p>A public card does not ship if:</p>
+<ul>
+<li>Speaker, date/date-status, source URL, or context is empty.</li>
+<li>A paraphrase is styled as a quotation.</li>
+<li>An indirect index is the only quote source and the card is labeled approved.</li>
+<li>Editorial interpretation appears inside quotation marks.</li>
+<li>The selection rationale is hidden.</li>
+<li>An issue pair compares unlike questions.</li>
+<li>A correction was made without a revision note.</li>
+<li>The sponsor or supported agenda is still “configuration-required.”</li>
+</ul>
+<h2>Broad → sharp programming</h2>
+<p>Each argumentative set should be reviewable as a chain:</p>
+<ol>
+<li><strong>Baseline fact</strong> — what happened or how the institution works.</li>
+<li><strong>Receipt</strong> — quote, vote, policy, decision, or official result.</li>
+<li><strong>Contrast</strong> — a parallel receipt or consistency test.</li>
+<li><strong>Synthesis</strong> — a clearly labeled editorial conclusion.</li>
+</ol>
+<p>Rarity can encode depth:</p>
+<ul>
+<li>Common = vocabulary / system</li>
+<li>Uncommon = issue fact / responsibility</li>
+<li>Rare = comparison / synthesis</li>
+</ul>
+<p>Rarity never means “more true.”</p>
+<h2>Current PoC status</h2>
+<p><code>app/scripts/build-cards.mjs</code> generates 28 cards from <code>poc-cards.md</code> and joins them to <code>app/data/sources.json</code>. Three direct quote walkouts are configured. Indirect reporting indexes remain visibly <code>draft</code> or <code>fact-checked</code>; they should be replaced by direct article/source URLs before a public advocacy release.</p>
+<p><code>app/data/editorial-sequences.json</code> demonstrates:</p>
+<ul>
+<li>Quote → context → consistency test</li>
+<li>Same-issue paired receipts (schema demonstration; publication blocked)</li>
+<li>Commons → uncommon → rare argument</li>
+</ul></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="25-bootstrap.html">← Bootstrap playbook</a><a class="btn primary" id="next-page" href="27-poc-demo-sequence.html">Next: PoC guided demo sequence →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

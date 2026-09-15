@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalpi — Pitch D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --ink: #1a1f1c; --paper: #f4efe4; --civic: #1f4f4a; --deep: #e7dfd0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #111; color: var(--ink); font-family: "IBM Plex Sans", sans-serif; }
+    .slide {
+      display: none; height: 100%; padding: 36px 52px 48px;
+      background: var(--paper); flex-direction: column; justify-content: center;
+    }
+    .slide.on { display: flex; }
+    .kicker { letter-spacing: 0.12em; text-transform: uppercase; color: var(--civic); font-size: 11px; margin: 0 0 8px; font-weight: 600; }
+    h1 { font-family: Fraunces, Georgia, serif; font-size: clamp(30px, 4.6vw, 56px); line-height: 1.06; margin: 0 0 10px; }
+    h2 { font-family: Fraunces, Georgia, serif; font-size: clamp(22px, 3vw, 34px); line-height: 1.12; margin: 0 0 10px; }
+    p { font-size: 17px; line-height: 1.35; margin: 0 0 8px; max-width: 46em; }
+    .wide { max-width: 48em; }
+    .num { font-family: Fraunces, Georgia, serif; font-size: clamp(40px, 6.4vw, 72px); color: var(--civic); margin: 0; line-height: 0.95; }
+    .pair, .grid { display: flex; gap: 22px; flex-wrap: wrap; }
+    .grid > div { min-width: 9em; flex: 1; }
+    .sub, .tiny { font-size: 13px; opacity: 0.78; max-width: 52em; margin: 6px 0 0; }
+    ul.meat, ol.meat { margin: 0; padding: 0 0 0 1.1em; max-width: 52em; }
+    ul.meat li, ol.meat li { font-size: 16px; line-height: 1.32; margin: 0 0 5px; }
+    table.facts { border-collapse: collapse; font-size: 14px; max-width: 58em; width: 100%; }
+    table.facts th, table.facts td { border: 1px solid var(--ink); padding: 5px 8px; text-align: left; vertical-align: top; }
+    table.facts th { background: var(--deep); font-size: 12px; letter-spacing: 0.04em; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .cols3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .cols h3, .cols3 h3 { font-family: Fraunces, Georgia, serif; font-size: 18px; margin: 0 0 6px; color: var(--civic); }
+    .footer {
+      position: fixed; bottom: 12px; left: 22px; right: 22px;
+      display: flex; justify-content: space-between;
+      color: var(--paper); font-size: 12px; mix-blend-mode: difference;
+    }
+    a { color: var(--civic); }
+    .cards { display: flex; gap: 12px; margin: 8px 0; align-items: flex-end; }
+    .cards img { width: 118px; height: 164px; object-fit: cover; border-radius: 8px; border: 2px solid var(--ink); }
+    .qr { width: 128px; height: 128px; background: #fff; padding: 8px; border: 2px solid var(--ink); border-radius: 8px; }
+    .lore { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+    pre.loop { font-size: 16px; line-height: 1.4; margin: 0 0 10px; font-family: "IBM Plex Sans", sans-serif; }
+    @media (max-width: 900px) {
+      .slide { padding: 22px 14px; }
+      .cols, .cols3 { grid-template-columns: 1fr; }
+      p, ul.meat li { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide on">
+    <p class="kicker">Pitch D · intertwined · strategy earns a product line · cut later</p>
+    <h1>Kalpi / קלפי</h1>
+    <p class="wide">Free digital <strong>collect-only</strong> TCG of the 2026 lists. Pack = bait. <strong>אוריינות פוליטית</strong> — a smart vote + show-up — is the goal. The game never picks a side. You may.</p>
+    <ul class="meat">
+      <li>Election <strong>27 Oct 2026</strong>. Lists <strong>9 Sept</strong>. Threshold <strong>3.25%</strong>. 120 seats. Government 61. Hit the iron while it’s hot.</li>
+      <li>No battles. No lore. No IAP. Equal 8-card skeleton per list. Server pulls the pack. Client displays it.</li>
+      <li><strong>C</strong> = civic story (~10 min). This deck = product a room can cut from. Notes are longer than the slides.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">STRATEGY · What we can prove · why this cohort</p>
+    <div class="pair">
+      <div><p class="num">46.7%</p><p>ages 18–24 voted after 2021.</p></div>
+      <div><p class="num">74.9%</p><p>ages 65–74 did.</p></div>
+      <div><p class="num">~600k</p><p>first-timers. ~six seats.</p></div>
+    </div>
+    <ul class="meat">
+      <li>Knesset RIC after 2021. National 2022: <strong>70.6%</strong>. A <strong>28-point</strong> age gap — persistent, not a collapse. Lavi &amp; Adler: young Israelis vote <em>more</em> than young Europeans; the youth rate has been rising; they still vote far below older Israelis.</li>
+      <li><strong>595–640k</strong> first-timers (18–22). ~<strong>8.7%</strong> of the roll. Points / JPost + IDI citing CBS. If they turn out, on the order of <strong>six Knesset seats</strong>.</li>
+      <li>They are still the target because they are the <strong>lowest turnout</strong>, the <strong>largest new bloc</strong>, and the weakest list-knowledge. Older voters already show up. This group can move six seats without knowing slots 1–20.</li>
+      <li>Calendar we build to: lists <strong>9 Sept</strong> · election <strong>27 Oct</strong> · virality needs weeks. A launch the week of the vote is too late.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">STRATEGY · Surveys are not turnout · two jobs</p>
+    <h2>80–95% intend to vote. That is not a forecast.</h2>
+    <ul class="meat">
+      <li>IDI May 2026, first-timers, n=576, ages 18–22: 80–95% <em>intend</em>. Same institute, <strong>2013</strong>: ~88% intended (72.8% + 15%), ~92% later said they voted, official turnout <strong>67.8%</strong>.</li>
+      <li>In 2013, ages <strong>18–22</strong> were already most likely to stay home (<strong>17.7%</strong> intend-not / ~<strong>15%</strong> after), vs 7–9% in older groups. Intention + “I voted” overreport is known (social desirability; Waismel-Manor &amp; Sarid 2011).</li>
+      <li><strong>Working assumption:</strong> 2026 youth turnout stays <strong>low vs older adults</strong>, even if a few points above 46.7%. Do not say “they will not vote, period.” Do not say “IDI proves 91% will.”</li>
+      <li><strong>Two jobs:</strong> get them there, and make the slip <strong>informed</strong>. Feed is #1 political source (IDI 2026); most do not seek. We do <strong>not</strong> invent “X% cannot name three parties.” Say: they do not know the <em>list</em>.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">STRATEGY + PRODUCT · They do not know who · so the product…</p>
+    <h2>“Bennett is a bro.” Lived. Not a fake knowledge %.</h2>
+    <p class="wide"><strong>Me</strong> — a vibe is not a platform. <strong>Little brother</strong> — does not know who to vote for. <strong>Hadar Muchtar</strong> — same room. Age of wars and TikTok. Not a PDF audience.</p>
+    <table class="facts">
+      <tr><th>What is going on</th><th>So Kalpi…</th></tr>
+      <tr><td>Many are <strong>new</strong> voters</td><td>Teach lists + the booth. Do not assume they already know.</td></tr>
+      <tr><td>May default to <strong>parents</strong></td><td>Facts they can use without a family fight. Not “rebel against home.”</td></tr>
+      <tr><td>May <strong>not care</strong> — war, load, enough already</td><td>90-second rip. Dopamine first. Lecture never.</td></tr>
+      <tr><td><strong>TikTok / viral fake news</strong> is their civics class</td><td>Sourced backs + commons. Knowledge, not clip-by-clip debunking.</td></tr>
+      <tr><td>Some are <strong>afraid to show an opinion</strong> (at least on one side)</td><td>In-game faction is <strong>anonymous</strong> (tile, not a name).</td></tr>
+    </table>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">STRATEGY · Why not parents · why literacy · jam goals</p>
+    <div class="cols">
+      <div>
+        <h3>Parents fail (do not skip #2)</h3>
+        <ul class="meat">
+          <li><strong>Rebellion.</strong> A parent lecture is the wrong teacher for this age.</li>
+          <li>Parents are <strong>invested and emotional</strong>. They already decided. That is a fight, not a syllabus.</li>
+        </ul>
+        <h3>אוריינות פוליטית</h3>
+        <ul class="meat">
+          <li>A smart vote — without a parent, a party ad, or a TikTok. Knowledge they <em>chose</em> to flip.</li>
+          <li>Fake news is another reason this is the job: if they know the list, a fake has less room.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Jam goals we owe</h3>
+        <ul class="meat">
+          <li>Voter knowledge → backs, quiz, commons</li>
+          <li>Social involvement → share the rare, tally, trade</li>
+          <li>Encourage voting → habit to 27 Oct</li>
+          <li>Taking a choice → faction, survey pack, then a real slip</li>
+          <li>Literacy = north star. Fight AI fakes via knowledge, not a fact-check feed</li>
+          <li>Young audience = 18–24 / first-timers</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">STRATEGY + PRODUCT · Trait → this format, why now</p>
+    <h2>If the product is a lecture, we already lost this age.</h2>
+    <table class="facts">
+      <tr><th>Fact</th><th>So we…</th></tr>
+      <tr><td>~47s screen focus, median 40 (Gloria Mark, APA 2023)</td><td>Daily rip, default <strong>under 90s</strong>. Not a PDF.</td></tr>
+      <tr><td>Variable-ratio rewards power feeds <em>and</em> packs</td><td>The rip is the habit engine — on purpose.</td></tr>
+      <tr><td>Feed politics, low seeking</td><td>Lesson lives on the <strong>card back</strong> + commons + quiz.</td></tr>
+      <tr><td>Afraid to speak</td><td>Anonymous faction tile. Race without outing.</td></tr>
+      <tr><td>Viral or invisible</td><td>Share the 1/1. Screenshot is the ad.</td></tr>
+      <tr><td>Pokémon TCG Pocket (~150M / ~$1.3B y1)</td><td>Digital collect works: daily pack, ritual, binder, screenshot. <strong>Not battles.</strong></td></tr>
+      <tr><td>State Makers / יוצרים מדינה sold out (98 cards)</td><td>Cards already teach Israel, physically, to a paying audience.</td></tr>
+      <tr><td>Tracked TCG sales +107% in 2025 (Collectr)</td><td>Format is spreading. Hit it <strong>now</strong> — lists 9 Sept.</td></tr>
+      <tr><td>Digital + free</td><td>Reach, speed, no pay-to-win, no civic/money fight.</td></tr>
+    </table>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">STRATEGY + PRODUCT · Local proof</p>
+    <h2>State Makers / יוצרים מדינה — do not compress to “cards work.”</h2>
+    <div class="cols">
+      <div>
+        <ul class="meat">
+          <li>Piece of History. <strong>98-card</strong> Israeli history set. Packs of <strong>8</strong>. Holos. First edition <strong>sold out</strong>.</li>
+          <li>People <strong>paid</strong> to collect — and learned the country’s story. The format teaches <em>here</em>.</li>
+          <li><a href="https://www.pieceofhistory.com/statemakers">pieceofhistory.com/statemakers</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>We point it at this election</h3>
+        <ul class="meat">
+          <li>Digital. Free. Equal lists. No till.</li>
+          <li>Our pack is <strong>6</strong> cards — faster than their 8.</li>
+          <li>Subject = <em>this</em> cycle’s lists, not history-as-hobby.</li>
+          <li>They are cardboard. Next slides: why digital, and the global wave.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">STRATEGY + PRODUCT · Pocket’s five · what we refuse</p>
+    <ol class="meat">
+      <li><strong>Daily timed pack</strong> — a clock, not a pile. Login, not a match reward (Naavik). Ours: one free / 24h. (8h drops = parked live-ops, more hostile; not Alpha.)</li>
+      <li><strong>The rip is a ritual</strong> — tear, sound, rare pause. Creatures obsessed over the tear because they expected <em>daily</em>. A fade-to-grid is not a collectible.</li>
+      <li><strong>Collecting sets is the progression</strong> — card lands in a hole. Not a duel. Missing well = missing fact.</li>
+      <li><strong>Rarity is a screenshot</strong> — that is the virality. Social is show, not chat.</li>
+      <li><strong>Quick session</strong> — bus ride. We target under 90s. Earlier digital Pokémon (Live / PTCGO) skipped collecting and stalled.</li>
+    </ol>
+    <p class="wide">~150M downloads · ~$1.3B y1 · built for people who never played the table game. <strong>We take the door. We do not take</strong> the shop, hourglasses, Wonder-Pick paid rewind, or battles. Their extra pack is a pass. Ours is a 5-minute swipe. Why not a quiz app? Quiz apps do not become a daily habit for this age. Pocket just showed what does.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">STRATEGY · The iron is hot · window is September</p>
+    <h2>The format left Pokémon. It did not stop. Subject is not the limiter.</h2>
+    <ul class="meat">
+      <li><strong>Pokémon</strong> still ~65% of tracked hobby. Pocket proved the <em>digital</em> daily pack (launched 30 Oct 2024).</li>
+      <li><strong>One Piece</strong> — nothing in 2022, hobby <strong>#2</strong> (~17%) now. A new IP can become a collect giant in a few years.</li>
+      <li><strong>Riftbound</strong> (League of Legends, 31 Oct 2025) — fastest 30-day move Cardlogs tracked.</li>
+      <li><strong>Cyberpunk TCG</strong> — Kickstarter games record, ~<strong>$27M</strong>, 48k+ backers.</li>
+      <li><strong>Sports cards</strong> never left (still the bulk of US physical). <strong>Life TCG</strong> — animals; 1st-ed holo print run = estimated wild population. We steal the <em>idea</em> (print run means something real) and invert it to <strong>list slot</strong>.</li>
+      <li><strong>US politics cards</strong> already exist (Decision 2024 sold-out election set; Politic Packs). Subject is legal in cardboard. <strong>State Makers</strong> is the best <em>Israeli</em> analog — not yet worldwide. That is the window. Collectr: tracked sales <strong>+107% in 2025</strong>. Direction, not a random “market is $X billion.”</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">PRODUCT · Therefore Kalpi · bait vs goal</p>
+    <h2>Free digital collect-only TCG of the lists. Pack is bait. Smart vote is the goal.</h2>
+    <ul class="meat">
+      <li>Teach Israeli politics well enough that they reach the kalpi <em>knowing the list</em>. Show-up is the other half. The card back is <strong>one</strong> lesson — not the whole product.</li>
+      <li>Same job, other doors: quiz on a pulled card · commons (120, 3.25%, closed list, CEC date) · survey → party pack · trading a dupe so someone else reads a back · verified real-life party work.</li>
+      <li>A beautiful rip with no learning beat is a failed civic game. Extra pack = <strong>quiz</strong>. Not spend. Not in-game faction.</li>
+      <li><strong>Constraints / non-goals:</strong> no battles, no lore, no IAP, no client-trusted pulls, no live polls in our voice, no “Kalpi recommends this list,” no outing a camp, no cash-prize Alpha. Equal 8-card skeleton per list + 4 commons. PoC: Likud · Democrats · Ra'am (map spread, not the three largest) = <strong>28</strong> sourced cards.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">PRODUCT · Collectible musts · knowledge on top · inverts</p>
+    <table class="facts">
+      <tr><th>Collectible must</th><th>Knowledge on top</th></tr>
+      <tr><td>Rip is a ritual (tear → pause)</td><td>Hold, then flip the <strong>back</strong> (who / list / system). Cannot skip as default. ~1.5s Alpha; 3s is the idea, too hostile to launch. Skip the <em>animation</em> if they want — never skip literacy as the default.</td></tr>
+      <tr><td>Timer, not a pile (1 pack / 24h)</td><td>Habit. No hourglass shop.</td></tr>
+      <tr><td>Pity after 3 dry packs</td><td>New <em>knowledge</em>, not a casino withhold. Duplicates still show the back (reread = learn).</td></tr>
+      <tr><td>Printed odds 3C / 2U / 1R-or-H</td><td>Civic trust. Hidden odds are a loot-box tell.</td></tr>
+      <tr><td>Card lands in a binder hole</td><td>Missing slot = missing fact. Animate into the well (Pocket).</td></tr>
+      <tr><td>Rarity you screenshot</td><td>Share the 1/1, then they see who it is. Date can caption a holo; slot-number is the chase.</td></tr>
+      <tr><td>Extra pack</td><td>Quiz on a card you <strong>already pulled</strong>. Their lever was money / a pass. Ours is attention.</td></tr>
+      <tr><td>New set so you are never “done”</td><td>New lists after 9 Sept. Optional CEC pulse later — filings/dates only, never horse-race polls.</td></tr>
+    </table>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">PRODUCT · Core loop · pack rules · session · Alpha</p>
+    <pre class="loop">login → pack ready? → rip (6) → rare pause → hold → flip the back → binder well
+     → share / quiz / faction tally          ↓ if no pack: countdown to next daily</pre>
+    <div class="cols">
+      <div>
+        <ul class="meat">
+          <li><strong>Session:</strong> open 5s · rip 20–30s · flip 1–2 backs 20–40s · binder 10–15s. <strong>Default under 90s.</strong> Deep browse is optional, uncapped.</li>
+          <li>6 cards. Mix <strong>printed</strong>. Pity: new-to-them after 3 dry packs. Prefer a card from an incomplete set. Commons in every other pack (system literacy is not optional).</li>
+          <li><strong>Server</strong> creates the pack. Client displays six ids. A user cannot inject “I pulled Netanyahu 1/1.”</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="meat">
+          <li><strong>Alpha ships:</strong> guest/one-tap · daily pack · rip · flip · binder % · share image. Server pulls from day one.</li>
+          <li><strong>Designed, not Alpha:</strong> quiz, faction tally, volunteer bundle, survey pack, streaks, slot-numbered holos, trading, real boards.</li>
+          <li>No paid rerolls. Pledge does not grant a pack. Energy <strong>does not exist</strong> (no currency).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">PRODUCT · Quiz on pulled cards · extra pack = learning</p>
+    <h2>You only get asked what you already ripped. Prefer the last pack.</h2>
+    <ol class="meat">
+      <li>Pack lands a face. You had a chance to flip the back.</li>
+      <li>Popup: <strong>that same face + name</strong>. Swipe: what do they do / known for (options from the back). Swipe: which list. 3–4 options each. <strong>5:00</strong>.</li>
+      <li>Both right → <strong>one extra pack</strong>. Wrong or timeout → no pack, show the back again. One successful extra-pack quiz per day. New popup later if they fail.</li>
+    </ol>
+    <ul class="meat">
+      <li>Cannot farm a card you never pulled. Rip = chance to learn. Quiz = check. Always dismissible. Never blocks the daily pack. No “who is good.” No opinion items.</li>
+      <li>Commons quiz the same way: 120 / 3.25% / closed list / CEC date. Login = habit pack. <strong>Learning = bonus pack.</strong></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">PRODUCT · Three choice mechanics · do not mix them · energy is dead</p>
+    <div class="cols3">
+      <div>
+        <h3>1. In-game faction — no reward</h3>
+        <p>Optional. Pick one real list. Anonymous tile, not a name. Each pack +1 on that list’s public tally = packs opened while factioned. Scoreboard, not a poll, not a wallet. <strong>No extra pack. No prize.</strong> The race <em>is</em> the game. Switch ok. Unfactioned still play (packs do not tally). Same tile size; order = CEC letter / alpha, not polls.</p>
+      </div>
+      <div>
+        <h3>2. Real-life party work — big reward</h3>
+        <p>Verified volunteer at a <strong>party HQ, campaign, or kalpi</strong>. Best way to become knowledgeable — you are in the room. Pays a <strong>pack bundle</strong>. Does <strong>not</strong> auto-join the in-game faction. They can still pick (or not) in the game.</p>
+      </div>
+      <div>
+        <h3>3. Survey → PARTY pack — tool</h3>
+        <p>Optional issue survey (not “who is a bro”). Server scores a <strong>published table</strong>, same questions for everyone. Reward: one pack of <strong>matched-list politicians only</strong>. Copy: “here is that set — then collect the others.” Not an endorsement. Never hides the rest of the binder. Never auto-factions.</p>
+      </div>
+    </div>
+    <p class="tiny">There is no currency called energy. You do not earn, spend, or buy it. If a room mixes 1 and 2, stop and separate them.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">PRODUCT · List-slot numbered holos · Life TCG invert</p>
+    <h2>Print run means something real. We print to official list slot — same rule on every list.</h2>
+    <table class="facts">
+      <tr><th>List slot</th><th>Numbered copies</th><th>Why</th></tr>
+      <tr><td>1 (head of list)</td><td><strong>1/1</strong></td><td>Likud 1, Democrats 1, Ra'am 1 are all 1/1.</td></tr>
+      <tr><td>2</td><td>1/2 · 2/2</td><td>Teach order, not poll share.</td></tr>
+      <tr><td>3</td><td>1/3 · 2/3 · 3/3</td><td></td></tr>
+      <tr><td>n</td><td>1/n … n/n</td><td>Never seats. Never polls. Never “importance.”</td></tr>
+    </table>
+    <ul class="meat">
+      <li>Life TCG: 1st-ed holo print run = estimated wild population. We steal the idea and invert it for neutrality.</li>
+      <li>Server assigns the number. Client cannot claim 1/1. Symbol / platform / quote / commons are <strong>not</strong> slot-numbered.</li>
+      <li>Separate: a holo can carry the <strong>date</strong> (`01.09.2026`) as a screenshot caption. Slot-number is the chase. Date is the stamp.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">CONTENT · What is on a card · voice · what we will not write</p>
+    <div class="cols">
+      <div>
+        <ul class="meat">
+          <li><strong>Per list (equal):</strong> 4 members · 1 symbol · 2 platform · 1 quote. Same slots, same rarity math, same art weight. No “cool party.”</li>
+          <li><strong>Commons (everyone):</strong> Knesset <strong>120</strong> · Kalpi = <strong>closed list</strong> · Threshold <strong>3.25%</strong> (since 2015) · CEC <strong>9 Sept</strong>.</li>
+          <li><strong>Back:</strong> who / role / one vote-useful fact. Quote labeled as a quote + date + source. Source on the card. We do not write slogans as facts.</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="meat">
+          <li>Hebrew on shipped cards. English PoC / this pitch. Voice: a tired 19-year-old on the bus. No campaign “we.” No jokes that punch a camp.</li>
+          <li><strong>Pulse later (maybe):</strong> CEC calendar, letters assigned, dated official events. <strong>Never</strong> live polls, “X is leading,” or seat projections in our voice.</li>
+          <li>Civic objects and letters — not scraped press faces. Artist pass if a partner funds it. We do not wait.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">DESIGN · Play it · tokens</p>
+    <div class="cards">
+      <img src="../../design/assets/hero-art-kalpi.png" alt="Kalpi" />
+      <img src="../../design/assets/hero-art-threshold.png" alt="Threshold" />
+      <img src="../../design/assets/hero-art-memchetlammed.png" alt="Ballot letters" />
+    </div>
+    <p><a href="../../design/hero-cards.html">Flip hero cards</a> · <a href="../../design/wireframes.html">Phone wireframes</a> · visual system already locked.</p>
+    <ul class="meat">
+      <li>Paper, ink, foil. Party color is an <strong>8px pip</strong> only — never a wash. Shared chrome so no list looks like the hero.</li>
+      <li>Date stamp on the holo. מחל = letters in the booth. Alpha: pack, flip, binder. Server pulls.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">PRODUCT · Why they stay · metrics · Alpha vs later</p>
+    <table class="facts">
+      <tr><th>Hook</th><th>Job</th><th>When</th></tr>
+      <tr><td>Daily clock / 24h</td><td>Habit</td><td>Alpha</td></tr>
+      <tr><td>Pity (3 dry → new card)</td><td>Knowledge floor</td><td>Alpha</td></tr>
+      <tr><td>Binder % / dashed wells</td><td>Set chase</td><td>Alpha</td></tr>
+      <tr><td>Share the rare</td><td>Ad</td><td>Share image Alpha</td></tr>
+      <tr><td>Quiz extra pack</td><td>Literacy is how you get ahead</td><td>Designed</td></tr>
+      <tr><td>Faction tally (no reward)</td><td>Race without outing</td><td>Designed</td></tr>
+      <tr><td>Real-life party work</td><td>Pack bundle</td><td>Designed</td></tr>
+      <tr><td>Survey → party pack</td><td>A reason to open that set</td><td>Designed</td></tr>
+      <tr><td>Trading / gifting</td><td>Friendly; knowledge moves; no paid gate</td><td>Designed</td></tr>
+      <tr><td>Slot 1/1 + daily date stamp</td><td>Chase that is not pay-to-win</td><td>Designed</td></tr>
+      <tr><td>Streaks 3 / 7 · commons-complete badge</td><td>Week alive; system literacy is viral</td><td>Designed</td></tr>
+      <tr><td>Country board · later leagues · set race</td><td>Spectator sport (outbid invert)</td><td>Mock UI / later</td></tr>
+      <tr><td>10k NIS first-set prize</td><td>Pitch concept; legal later</td><td>Not Alpha</td></tr>
+    </table>
+    <p class="tiny">North-star metrics (deck, not Alpha): D1/D7 return · % of pulls flipped to the back · quiz accuracy on owned cards · extra packs from learning vs login · set % · self-reported “I know who I’m voting for.” Vanity (pulls, holos shared) only as leading indicators of the learning loop.</p>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">GROWTH · How it leaves the room · outbid invert</p>
+    <ul class="meat">
+      <li><strong>Share the rare is the ad.</strong> Screenshot the 1/1. Seed TikTok / Instagram / WhatsApp — where 18–24 already are. Influencers: their audience is ours. Hebrew pass as soon as the rip works.</li>
+      <li><strong>Weavy / Figma Weave</strong> — stills, rip loops, foil, promo videos. Generate, then cut. Same deadline argument as AI art: lists × members × marks will not wait for a novel.</li>
+      <li><a href="https://outbid.lol">outbid.lol</a> (19 Aug 2026): pay-to-rank public ladder. Founder-reported ~1M+ visits, six-figure bids, top spot ~<strong>$13–17k</strong>, $100k buy offer declined. Treat dollars as founder-reported if a judge is picky. Existence is enough: people and companies <strong>pay for a ladder</strong>. We invert — civic spectator sport, <strong>nobody pays</strong>.</li>
+      <li>Lists file 9 September. Virality needs weeks. If this should leave the room it needs to be live in September — free, Hebrew, seeded.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">IMPLEMENTATION · HTML first · server owns luck</p>
+    <ul class="meat">
+      <li><strong>HTML first</strong> — judges open a URL. No store, no framework tax. Visual tokens already locked. Agent skills: <code>frontend-design</code> + <code>kalpi-frontend</code>.</li>
+      <li><strong>Server pulls.</strong> <code>POST /packs/daily</code> → check clock / pity → RNG → persist inventory → return six ids. Client animates those ids. Never <code>POST { cards: [...] }</code> as a pull. Collection is server state.</li>
+      <li>Same server-side: quiz grade (against <em>owned</em> ids) · faction tally · volunteer bundle · party-pack match · streaks. Rate-limit: one daily pack, one quiz-pack per day. Guest ok; bind later.</li>
+      <li>Weavy for motion. Civic objects, not scraped press faces. If a partner funds an artist pass, we take it. We do not wait on 27 October.</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">DESIGN · המטרה מקדשת את האמצעים</p>
+    <div class="lore">
+      <div>
+        <h2>Empty of lore. Full of cause.</h2>
+        <p class="wide">Jams reward heart in the fiction. We shipped dopamine on purpose — rips, AI art, a faction board, no story bible. The civic goal is the message. Lists file 9 September. Virality needs weeks. Hand-painting every member of every list is how you miss October.</p>
+        <p class="wide">We use the same psychology as gacha (timed packs, variable reward) <em>and</em> put floors under it: no spend, short sessions, pity for new knowledge, extra packs only when they learn.</p>
+        <p class="sub">QR: prior jams. The emptiness is a choice, not a skill gap. <a href="https://guygir.itch.io">guygir.itch.io</a></p>
+      </div>
+      <a href="https://guygir.itch.io"><img class="qr" src="../../design/assets/qr-guygir-itchio.png" alt="QR to guygir.itch.io" /></a>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="kicker">27 October 2026 · one line</p>
+    <h1>Assume the gap.<br />Give them a pack they will open.</h1>
+    <p class="wide">Live in September — free, Hebrew, seeded where 18–24 already are. Civic-only room: present <strong>C</strong>. This room was the product, the loop, and how it grows.</p>
+    <p class="tiny">Forbidden on any slide: “IDI proves 91% will vote.” “Kids are stupid.” An unsited knowledge %. “Kalpi helps the Democrats.” (Personal aside — notes only.)</p>
+  </section>
+
+  <div class="footer">
+    <span>Kalpi · pitch D</span>
+    <span id="pos">1 / 22 · ← →</span>
+  </div>
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    let i = 0;
+    const go = (n) => {
+      i = (n + slides.length) % slides.length;
+      slides.forEach((s, idx) => s.classList.toggle("on", idx === i));
+      document.getElementById("pos").textContent = `${i + 1} / ${slides.length} · ← →`;
+    };
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(i + 1); }
+      if (e.key === "ArrowLeft") go(i - 1);
+    });
+    document.body.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return;
+      go(i + 1);
+    });
+  </script>
+</body>
+</html>

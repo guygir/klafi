@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>קְלָפִי · KLAFI — תשובה למצגת הראשונה</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --ink:#1a1f1c; --paper:#f4efe4; --paper-deep:#e7dfd0; --rule:#2c3330; --civic:#1f4f4a; --foil:#c4a35a; }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; background: var(--paper); color: var(--ink); }
+    body { overflow: hidden; font-family: "IBM Plex Sans Hebrew", sans-serif; }
+    button, a { font: inherit; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100dvh;
+      padding: clamp(26px, 4vw, 58px);
+      overflow: auto;
+      isolation: isolate;
+    }
+    .slide.active { display: grid; animation: enter 220ms ease-out both; }
+    @keyframes enter { from { opacity: 0; transform: translateY(8px); } }
+    .slide::before {
+      content: attr(data-mark);
+      position: absolute;
+      z-index: -1;
+      bottom: 0;
+      left: clamp(20px, 5vw, 78px);
+      color: rgba(31,79,74,.055);
+      font: 600 clamp(180px,32vw,450px)/.8 "IBM Plex Sans Hebrew",sans-serif;
+      letter-spacing: -.1em;
+      contain: paint;
+      pointer-events: none;
+    }
+    .head, .foot { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .part { color: var(--civic); font-size: 12px; font-weight: 600; letter-spacing: .05em; }
+    .count { direction: ltr; font: 600 12px/1 Fraunces,serif; }
+    .body { width: min(1120px,100%); margin: auto; }
+    .foot { padding-top: 16px; border-top: 1px solid rgba(44,51,48,.25); color: rgba(26,31,28,.55); font-size: 10px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 980px; margin-bottom: 22px; font-size: clamp(52px,8vw,108px); line-height: .95; letter-spacing: -.055em; }
+    h2 { max-width: 880px; margin-bottom: 28px; font-size: clamp(39px,5.5vw,72px); line-height: 1; letter-spacing: -.045em; }
+    h3 { margin-bottom: 8px; font-size: clamp(20px,2.2vw,28px); }
+    p { max-width: 720px; font-size: clamp(17px,1.8vw,23px); line-height: 1.42; }
+    .eyebrow { margin-bottom: 16px; color: var(--civic); font-size: 13px; font-weight: 600; }
+    .lede { color: var(--civic); }
+    .split { display: grid; grid-template-columns: minmax(0,1fr) minmax(260px,.72fr); gap: clamp(34px,7vw,86px); align-items: center; }
+    .feature-list { display: grid; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
+    .feature-list li { padding-top: 12px; border-top: 1px solid rgba(44,51,48,.28); font-size: clamp(16px,1.65vw,21px); line-height: 1.35; }
+    .feature-list b { color: var(--civic); }
+    .phone { justify-self: center; width: min(290px,32vw); padding: 7px; overflow: hidden; border: 2px solid var(--rule); border-radius: 24px; background: var(--ink); box-shadow: 0 18px 38px rgba(26,31,28,.18); }
+    .phone img { display: block; width: 100%; height: min(66dvh,558px); object-fit: cover; object-position: top; border-radius: 17px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 32px; direction: rtl; }
+    .chips span { padding: 8px 12px; border: 1px solid var(--rule); background: rgba(244,239,228,.8); font-size: 14px; }
+    .chips b { align-self: center; color: var(--foil); font-size: 21px; }
+    blockquote { max-width: 970px; margin: 0; font-size: clamp(48px,8vw,103px); font-weight: 600; line-height: 1; letter-spacing: -.05em; }
+    blockquote small { display: block; margin-top: 25px; color: var(--civic); font-size: clamp(18px,2vw,26px); font-weight: 500; line-height: 1.4; letter-spacing: 0; }
+    .goal-slide h2 { max-width: 1040px; margin-bottom: 20px; font-size: clamp(35px,4.6vw,60px); }
+    .goal-slide blockquote { font-size: clamp(42px,5.5vw,72px); }
+    .goal-slide blockquote small { margin-top: 14px; font-size: clamp(16px,1.7vw,21px); }
+    .goal-slide .chips { margin-top: 20px; }
+    .goal-slide .lede { margin-top: 15px; font-size: clamp(15px,1.5vw,19px); }
+    .risk-grid, .metric-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: clamp(18px,3vw,38px); }
+    .risk, .metric { padding-top: 17px; border-top: 7px solid var(--rule); }
+    .risk span, .metric span { color: var(--civic); font-size: 12px; font-weight: 600; }
+    .risk strong { display: block; margin: 14px 0; font-size: clamp(26px,3.4vw,45px); line-height: 1.05; }
+    .risk p, .metric p { font-size: clamp(14px,1.4vw,18px); }
+    .number { display: block; color: var(--civic); font: 600 clamp(58px,8vw,100px)/.9 Fraunces,serif; direction: ltr; text-align: right; }
+    .pipeline { display: grid; grid-template-columns: repeat(3,1fr); margin-top: 30px; border-block: 2px solid var(--rule); }
+    .pipeline div { padding: 22px; border-inline-end: 1px solid var(--rule); }
+    .pipeline div:last-child { border: 0; }
+    .pipeline b { display: block; color: var(--civic); font-size: clamp(20px,2.4vw,32px); }
+    .pipeline span { display: block; margin-top: 7px; font-size: 13px; }
+    kalpi-reveal-loop { display: block; justify-self: center; width: min(330px,34vw); }
+    .deck-reveal-shell { position: relative; width: 100%; aspect-ratio: 3/4; overflow: hidden; border-radius: 14px; background: transparent; box-shadow: 0 18px 32px rgba(26,31,28,.2); }
+    .deck-reveal-card { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 360ms ease; }
+    .deck-reveal-card.active { opacity: 1; }
+    .deck-reveal-mask { position: absolute; z-index: 2; top: 7px; right: 7px; left: 7px; height: calc(100% - 14px); border-radius: 8px 8px 0 0; background: var(--paper); transition: height 420ms ease, opacity 360ms ease; pointer-events: none; }
+    .deck-reveal-shell[data-stage="quote"] .deck-reveal-mask { height: calc(85% - 7px); }
+    .deck-reveal-shell[data-stage="party"] .deck-reveal-mask { height: calc(79% - 7px); }
+    .deck-reveal-shell[data-stage="identity"] .deck-reveal-mask { height: calc(71% - 7px); }
+    .deck-reveal-shell[data-stage="portrait"] .deck-reveal-mask { height: 0; opacity: 0; }
+    .deck-reveal-caption { margin: 10px 0 0; color: var(--civic); font-size: 11px; font-weight: 600; text-align: center; direction: ltr; }
+    .live { display: inline-flex; align-items: center; min-height: 48px; margin-top: 25px; padding: 10px 17px; border-radius: 8px; background: var(--civic); color: var(--paper); font-weight: 600; text-decoration: none; }
+    .controls { position: fixed; z-index: 30; left: 20px; bottom: 16px; display: flex; gap: 6px; direction: ltr; }
+    .controls button { width: 44px; height: 44px; border: 1px solid var(--rule); border-radius: 50%; background: var(--paper); color: var(--ink); cursor: pointer; }
+    .progress { position: fixed; z-index: 30; right: 0; bottom: 0; width: 0; height: 5px; background: var(--civic); transition: width 160ms ease; }
+    .presentation-studio-tools { position: fixed; z-index: 50; top: 12px; left: 12px; display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 9px; background: var(--paper); direction: ltr; font-size: 11px; }
+    .presentation-studio-tools[hidden] { display: none; }
+    .presentation-studio-tools button { padding: 6px 10px; border: 1px solid var(--civic); border-radius: 7px; background: var(--civic); color: var(--paper); cursor: pointer; }
+    .presentation-studio-tools span { color: var(--civic); }
+    body.presentation-studio [data-presentation-field] { border-radius: 3px; outline: 1px dashed rgba(31,79,74,.35); outline-offset: 2px; cursor: text; }
+    body.presentation-studio [data-presentation-field]:hover,
+    body.presentation-studio [data-presentation-field]:focus { background: rgba(196,163,90,.18); outline: 2px solid var(--civic); }
+    @media (max-height:760px) and (min-width:761px) {
+      .slide { padding: 25px 44px; }
+      h2 { margin-bottom: 22px; font-size: clamp(36px,5vw,61px); }
+      .feature-list { gap: 8px; margin-top: 16px; }
+      .feature-list li { padding-top: 8px; }
+      .phone img { height: 510px; }
+      .pipeline { margin-top: 18px; }
+      .pipeline div { padding: 14px 18px; }
+      .risk strong { margin: 10px 0; }
+    }
+    @media (max-width:760px) {
+      .slide { padding: 23px 20px 72px; }
+      .split { grid-template-columns: 1fr; gap: 22px; align-content: center; }
+      .split .copy h2 { margin-bottom: 14px; }
+      .feature-list { gap: 7px; margin-top: 13px; }
+      .feature-list li { padding-top: 7px; font-size: 15px; }
+      .phone { width: min(205px,56vw); }
+      .phone img { height: min(36dvh,305px); }
+      .risk-grid, .metric-grid { grid-template-columns: 1fr; gap: 16px; }
+      .risk, .metric { padding-top: 9px; border-top-width: 4px; }
+      .risk strong { margin: 7px 0; font-size: 25px; }
+      .risk p, .metric p { margin-bottom: 0; }
+      .pipeline { grid-template-columns: 1fr; margin-top: 16px; }
+      .pipeline div { padding: 10px 0; border-inline-end: 0; border-bottom: 1px solid var(--rule); }
+      kalpi-reveal-loop { width: min(205px,54vw); }
+      .goal-slide h2 { margin-bottom: 12px; font-size: 30px; }
+      .goal-slide blockquote { font-size: 36px; }
+      .goal-slide blockquote small { margin-top: 8px; font-size: 14px; }
+      .goal-slide .chips { margin-top: 10px; }
+      .goal-slide .chips span { padding: 5px 8px; font-size: 11px; }
+      .goal-slide .lede { margin-top: 9px; font-size: 13px; }
+      .foot span:first-child { display: none; }
+      .controls { left: 10px; bottom: 10px; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; }
+      .deck-reveal-card { opacity:0; }
+      .deck-reveal-card:first-child { opacity:1; }
+      .deck-reveal-mask { display:none; }
+    }
+    @media print { body{overflow:visible}.slide{position:relative;display:grid!important;min-height:100vh;break-after:page}.controls,.progress{display:none} }
+  </style>
+</head>
+<body>
+  <aside id="presentation-studio-tools" class="presentation-studio-tools" hidden>
+    <strong>Presentation Studio</strong>
+    <span id="presentation-save-status">ready</span>
+    <button id="save-presentation-text" type="button">Save text</button>
+  </aside>
+  <main>
+    <section class="slide active" data-mark="קלפי">
+      <header class="head"><span class="part">קְלָפִי · KLAFI · אחרי המצגת הראשונה</span><span class="count">01 / 16</span></header>
+      <div class="body"><p class="eyebrow">הצגנו רעיון. קיבלנו שאלות קשות.</p><h1>זה מה שבנינו בתגובה.</h1><p class="lede">הוכחת היתכנות שאפשר לפתוח, לקרוא ולבדוק.</p></div>
+      <footer class="foot"><span>תשובה למשוב</span><span>לא חוזרים על כל הפיץ׳</span></footer>
+    </section>
+
+    <section class="slide" data-mark="ב">
+      <header class="head"><span class="part">חלק 1 · תזכורת</span><span class="count">02 / 16</span></header>
+      <div class="body"><blockquote>״בנט אח.״<small>זו תחושה — לא היכרות עם מצע. אחי הקטן לא ידע למי להצביע. גם הדר מוכתר ביטאה את אותו חוסר ידע. מכאן נולד המוצר.</small></blockquote><p class="lede">המטרה: אוריינות פוליטית ובחירה חכמה יותר.</p></div>
+      <footer class="foot"><span>סיפור אישי, לא נתון מומצא</span><span>ידע שבוחרים להפוך</span></footer>
+    </section>
+
+    <section class="slide" data-mark="↻">
+      <header class="head"><span class="part">חלק 1 · למה משחק קלפים</span><span class="count">03 / 16</span></header>
+      <div class="body"><p class="eyebrow">לא חסר מידע — חסר קשב</p><h2>הפוליטיקה דורשת שעה. הפיד מקבל שנייה.</h2><div class="risk-grid"><article class="risk"><span>ההרגל</span><strong>טיקטוק ולולאת הדופמין</strong><p>גוללים מהר, מחפשים גירוי חדש — ולא עוצרים לקרוא מצע.</p></article><article class="risk"><span>הקהל</span><strong>צעירים בלי נקודת התחלה</strong><p>רבים מגיעים לבחירות בלי היכרות בסיסית עם האנשים, המפלגות והעמדות.</p></article><article class="risk"><span>המנגנון</span><strong>פתיחה, נדירות וסיכוי</strong><p>תחושת ההימור והאוסף יוצרת סיבה לחזור — ואז נותנת מידע במנות קטנות.</p></article></div><p class="lede">לא נלחמים בהרגל. משתמשים בו כדי להגיש בכל פתיחה ציטוט אחד קצר שאפשר לקרוא, לזכור ולבדוק.</p></div>
+      <footer class="foot"><span>המשחק הוא מנגנון ההפצה; הציטוטים הם התוכן</span><span>דקה ביום במקום שיעור בפוליטיקה</span></footer>
+    </section>
+
+    <section class="slide" data-mark="היום">
+      <header class="head"><span class="part">חלק 2 · היום</span><span class="count">04 / 16</span></header>
+      <div class="body split"><div class="copy"><p class="eyebrow">מסך הבית</p><h2>המשחק מתקדם גם כשלא נמצאים בו.</h2><ul class="feature-list"><li><b>איסוף אוטומטי:</b> קלף אחד בכל שלוש שעות, עד שמונה בהמתנה</li><li><b>עשר דרגות:</b> מקצב מהיר בהתחלה ועד ראש הממשלה</li><li><b>היום בקְלָפִי:</b> אתגר יומי, אירוע פעיל ומוביל באוסף</li><li><b>זהות שחקן:</b> שם אישי שממשיך לטבלאות</li></ul></div><figure class="phone"><img src="../../design/assets/presentation-today.png" alt="מסך היום במשחק קְלָפִי" /></figure></div>
+      <footer class="foot"><span>מה להראות: חבילה → רמה → היום בקְלָפִי</span><span>פעולה ראשית אחת</span></footer>
+    </section>
+
+    <section class="slide" data-mark="6">
+      <header class="head"><span class="part">חלק 2 · פתיחת חבילה</span><span class="count">05 / 16</span></header>
+      <div class="body split"><div class="copy"><p class="eyebrow">הריטואל</p><h2>הציטוט מגיע לפני הזהות.</h2><div class="chips"><span>ציטוט</span><b>←</b><span>סיעה</span><b>←</b><span>שם</span><b>←</b><span>דיוקן</span></div><ul class="feature-list"><li><b>אותו קלף, אותו קוד:</b> הכרטיס מתמלא — לא מוחלף באמצע</li><li><b>השרת קובע:</b> התוצאה נשמרת לפני האנימציה</li><li><b>ה־Studio שולט:</b> תוכן ומהירות החשיפה משפיעים על המשחק</li></ul></div><kalpi-reveal-loop></kalpi-reveal-loop></div>
+      <footer class="foot"><span>מה להראות: חבילת ביבי לצורכי הדגמה</span><span>המתח קונה זמן קריאה</span></footer>
+    </section>
+
+    <section class="slide" data-mark="▦">
+      <header class="head"><span class="part">חלק 2 · האלבום</span><span class="count">06 / 16</span></header>
+      <div class="body split"><div class="copy"><p class="eyebrow">האוסף</p><h2>רואים מה יש — ומה עדיין חסר.</h2><ul class="feature-list"><li><b>סדרות בעברית:</b> סמל, מצע ופוליטיקאים באותו רצף</li><li><b>מספור יציב:</b> `מחל-01` לסמל; ביבי `מחל-04–06`</li><li><b>קלף מלא בלחיצה:</b> אותו עיצוב כמו בפתיחה וב־Studio</li><li><b>שכפולים ותגים:</b> מספר העותקים למעלה; תגים מוחשיים בראש האלבום</li><li><b>מטא־דאטה חברתי:</b> כמה שחקנים נוספים מחזיקים בקלף*</li></ul></div><figure class="phone"><img src="../../design/assets/presentation-binder.png" alt="מסך האלבום במשחק קלפי" /></figure></div>
+      <footer class="foot"><span>* נתון מדומה מסומן</span><span>מה להראות: סינון → קלף → מקור</span></footer>
+    </section>
+
+    <section class="slide" data-mark="◇">
+      <header class="head"><span class="part">חלק 2 · הישגים</span><span class="count">07 / 16</span></header>
+      <div class="body split"><div class="copy"><p class="eyebrow">לשונית עצמאית</p><h2>התקדמות שאפשר לענוד.</h2><ul class="feature-list"><li><b>תגים מוחשיים:</b> שפה של סיכות ואמייל, לא רק מספרים</li><li><b>תנאי פתיחה:</b> קלפים שונים, שכפולים, סדרות וביקורים</li><li><b>שני מקומות:</b> פירוט מלא כאן; התגים שהושגו בראש האלבום</li><li><b>הסבר בריחוף ובמגע:</b> כל תג אומר בדיוק למה התקבל</li></ul></div><figure class="phone"><img src="../../design/assets/presentation-achievements.png" alt="מסך ההישגים במשחק קלפי" /></figure></div>
+      <footer class="foot"><span>מה להראות: תג שהושג מול היעד הבא</span><span>אוסף שהוא גם זהות</span></footer>
+    </section>
+
+    <section class="slide" data-mark="★">
+      <header class="head"><span class="part">חלק 2 · אירועים</span><span class="count">08 / 16</span></header>
+      <div class="body split"><div class="copy"><p class="eyebrow">לזמן מוגבל</p><h2>משהו חדש קורה עכשיו.</h2><ul class="feature-list"><li><b>אירוע פעיל:</b> חלון זמן ברור וסדרה זמינה עכשיו</li><li><b>קלפי מיוחדים:</b> אסים וסדרות קידום שאינם בחבילה היומית</li><li><b>משיכה נשמרת:</b> קלף האירוע נכנס לאלבום דרך השרת</li><li><b>הבא בתור:</b> הצצה לאירועים הקרובים בלי להעמיס</li></ul></div><figure class="phone"><img src="../../design/assets/presentation-events.png" alt="מסך האירועים במשחק קלפי" /></figure></div>
+      <footer class="foot"><span>מה להראות: האירוע הפעיל → הקלף שניתן למשוך</span><span>סיבה לחזור מעבר לחבילה</span></footer>
+    </section>
+
+    <section class="slide" data-mark="⇄">
+      <header class="head"><span class="part">חלק 2 · קהילה</span><span class="count">09 / 16</span></header>
+      <div class="body split"><div class="copy"><p class="eyebrow">משחקים יחד</p><h2>האוסף הופך לפעילות חברתית.</h2><ul class="feature-list"><li><b>החלפה נקייה:</b> בוחרים קודם סדרה, אחר כך קלף</li><li><b>תצוגה מלאה:</b> אפשר להגדיל את הקלף לפני שמציעים</li><li><b>מלחמת סיעות:</b> בחירה אנונימית ופעילות שנמדדת בפועל</li><li><b>טבלאות:</b> אספנים ואתגר יומי לפי סיעה מתחלפת</li><li><b>שם אישי:</b> אותו שם מופיע בכל הטבלאות</li></ul></div><figure class="phone"><img src="../../design/assets/presentation-community.png" alt="מסך הקהילה במשחק קלפי" /></figure></div>
+      <footer class="foot"><span>מה להראות: סדרה → קלף → הצעה → טבלה</span><span>לא ממציאים פעילות</span></footer>
+    </section>
+
+    <section class="slide goal-slide" data-mark="״">
+      <header class="head"><span class="part">חלק 3 · המטרה</span><span class="count">10 / 16</span></header>
+      <div class="body"><p class="eyebrow">אוריינטציה פוליטית דרך ההרגל שכבר קיים</p><h2>חוטפים את לולאת הדופמין — ומאכילים אותה בציטוטים.</h2><blockquote>הציטוטים הם המוצר.<small>החבילה, הנדירות והאוסף גורמים לפתוח. השורה המדויקת גורמת לקרוא, לזכור ולבדוק.</small></blockquote><div class="chips"><span>סקרנות</span><b>←</b><span>ציטוט</span><b>←</b><span>זהות</span><b>←</b><span>מקור</span><b>←</b><span>אוריינטציה</span></div><p class="lede">מתחילים בקלפי התמצאות עובדתיים; הטיעון הערכי מתחדד בהמשך. העמדה גלויה כבר מהכניסה — לא מסתירים אותה עד שהשחקן בפנים.</p></div>
+      <footer class="foot"><span>המנגנון ממכר; התוכן נשאר מדויק וניתן לבדיקה</span><span>הפיד נותן דופמין — אנחנו מחליפים את המזון</span></footer>
+    </section>
+
+    <section class="slide" data-mark="?!">
+      <header class="head"><span class="part">חלק 3 · מה שמענו</span><span class="count">11 / 16</span></header>
+      <div class="body"><h2>שלושה סיכונים שיכלו לשבור את הרעיון.</h2><div class="risk-grid"><article class="risk"><span>תוכן</span><strong>יותר מדי חומר יצירתי</strong><p>דיוק, הקשר, זכויות ושיקול דעת אינם עבודה של סוכן בלבד.</p></article><article class="risk"><span>הפצה</span><strong>ויראליות מתחילה מאפס</strong><p>לולאת שיתוף לא עוזרת לפני שיש קבוצה ראשונה אמינה.</p></article><article class="risk"><span>משיכה</span><strong>צריך לרצות לפתוח</strong><p>עיצוב נכון, חשיפה חדה וחוויית מובייל הם המוצר.</p></article></div></div>
+      <footer class="foot"><span>משוב הקהל לאחר המצגת הראשונה</span><span>בנינו סביב נקודות הכשל</span></footer>
+    </section>
+
+    <section class="slide" data-mark="✓">
+      <header class="head"><span class="part">תשובה 1 · תוכן</span><span class="count">12 / 16</span></header>
+      <div class="body"><div class="split"><div><span class="number">195</span><p>קלפים שחיקים, 14 מפלגות ו־51 פוליטיקאים בהוכחת ההיתכנות המורחבת.</p></div><div><h2>אוטומציה מכינה. אדם מפרסם.</h2><ul class="feature-list"><li><b>הסוכן:</b> מבנה, שדות חסרים, כפילויות, תצוגה ובדיקות</li><li><b>העורך:</b> ציטוט, הקשר, בחירה, שיקול פוליטי וזכויות</li></ul></div></div><div class="pipeline"><div><b>טיוטה</b><span>בנוי, עדיין לא לפרסום</span></div><div><b>נבדק עובדתית</b><span>ניסוח ומקור אומתו</span></div><div><b>מאושר</b><span>שער פרסום אנושי</span></div></div></div>
+      <footer class="foot"><span>העמדה גלויה; כללי המשחק זהים לכולם</span><span>המספר אינו תחליף לאיכות</span></footer>
+    </section>
+
+    <section class="slide" data-mark="10">
+      <header class="head"><span class="part">תשובה 2 · התנעה</span><span class="count">13 / 16</span></header>
+      <div class="body"><h2>ניסוי מדיד — לא ״נהיה ויראליים״.</h2><div class="metric-grid"><article class="metric"><span class="number">10</span><p>יוצרים ראשונים עם קהל רלוונטי לגילי 18–24</p></article><article class="metric"><span class="number">3</span><p>פורמטים: חשיפה קצרה, תמונת WhatsApp וניחוש הציטוט</p></article><article class="metric"><span class="number">1</span><p>חלון פתיחה מתואם של 60–90 דקות</p></article></div><div class="chips"><span>חבילה</span><b>←</b><span>קריאה</span><b>←</b><span>מקור</span><b>←</b><span>שיתוף</span><b>←</b><span>הפניה</span><b>←</b><span>שחקן חדש</span></div><p class="lede">יעדי למידה מתוכננים. לא טענה לתוצאות קיימות.</p></div>
+      <footer class="foot"><span>מתקנים את ההמרה הראשונה שנשברת</span><span>לעולם לא מזייפים מומנטום</span></footer>
+    </section>
+
+    <section class="slide" data-mark="₪">
+      <header class="head"><span class="part">תשובה 2ב · פרסים</span><span class="count">14 / 16</span></header>
+      <div class="body"><p class="eyebrow">ערך אמיתי בלי מחיר כניסה</p><h2>עוד סיבה להיכנס לדקה ביום.</h2><div class="risk-grid"><article class="risk"><span>אפשרות א׳</span><strong>הראשון שמשלים סדרה</strong><p>תחרות ברורה שמתגמלת התמדה ומהירות. דורשת מניעת בוטים וכללי שוויון.</p></article><article class="risk"><span>אפשרות ב׳</span><strong>הגרלה משוקללת</strong><p>הסיכוי של שחקן = מספר הקלפים השונים שלו חלקי סך הקלפים השונים של כולם.</p></article><article class="risk"><span>שער לפני השקה</span><strong>חוקיות ואמון</strong><p>תקנון, גיל, מס, פרטיות, מניעת ניצול ותקציב פרס. כניסה חינם אינה מבטלת בדיקה משפטית.</p></article></div><p class="lede">ניסוי רכישה עתידי — לא מכניקה קיימת ולא הבטחת פרס.</p></div>
+      <footer class="foot"><span>הערך לשחקן אמיתי; העלות שלו היא דקת תשומת לב</span><span>בכפוף לייעוץ משפטי ולמניעת שימוש לרעה</span></footer>
+    </section>
+
+    <section class="slide" data-mark="״">
+      <header class="head"><span class="part">תשובה 3 · המשיכה</span><span class="count">15 / 16</span></header>
+      <div class="body split"><div class="copy"><p class="eyebrow">השורה לפני השם</p><h2>קלף אחד. חשיפה אחת. בכל המשחק.</h2><ul class="feature-list"><li>הציטוט מופיע לפני הזהות — ואז נשאר על הקלף</li><li>אותו קוד מציג את הקלף בחבילה, באלבום וב־Studio</li><li>נייר, דיו וזהב; צבע המפלגה נשאר נקודה קטנה</li><li>נדירות משנה את הטקס — לעולם לא את האמת</li></ul></div><kalpi-reveal-loop></kalpi-reveal-loop></div>
+      <footer class="foot"><span>מחל-04–06 · צילומים ישירים מהרכיב האמיתי</span><span>המתח משרת את הקריאה</span></footer>
+    </section>
+
+    <section class="slide" data-mark="→">
+      <header class="head"><span class="part">ההוכחה הבאה</span><span class="count">16 / 16</span></header>
+      <div class="body"><h2>האם עשרה יוצרים יכולים לגרום לאנשים לפתוח, לקרוא, לבדוק ולשתף?</h2><div class="risk-grid"><article class="risk"><span>צריך</span><strong>מקורות ראשוניים</strong><p>קישורים ישירים לשרשראות הציטוטים המרכזיות.</p></article><article class="risk"><span>צריך</span><strong>חמישה מבחני מובייל</strong><p>שחקנים צעירים, על הטלפונים שלהם, מולנו.</p></article><article class="risk"><span>צריך</span><strong>רשימת יוצרים וזכויות</strong><p>קבוצת התנעה ובדיקה אנושית של דמויות ואמנות.</p></article></div><a class="live" href="http://127.0.0.1:4173" target="_blank" rel="noopener">פותחים את החבילה</a></div>
+      <footer class="foot"><span>הניסוי הבא, לא עוד שקף אסטרטגיה</span><span>קְלָפִי · KLAFI · אוספים את הבחירות</span></footer>
+    </section>
+  </main>
+  <nav class="controls" aria-label="ניווט במצגת"><button id="prev" type="button" aria-label="השקף הקודם">←</button><button id="next" type="button" aria-label="השקף הבא">→</button></nav>
+  <div id="progress" class="progress" aria-hidden="true"></div>
+  <script>
+    customElements.define("kalpi-reveal-loop",class extends HTMLElement{
+      connectedCallback(){
+        this.generation=0;
+        this.innerHTML=`<div class="deck-reveal-shell" aria-label="חשיפת קלפי מחל 04 עד 06 במחזור">
+          <img class="deck-reveal-card" src="../../design/assets/card-likud-04.png" alt="קלף מחל-04 נחשף בשלבים" />
+          <img class="deck-reveal-card" src="../../design/assets/card-likud-05.png" alt="קלף מחל-05 נחשף בשלבים" />
+          <img class="deck-reveal-card" src="../../design/assets/card-likud-06.png" alt="קלף מחל-06 נחשף בשלבים" />
+          <span class="deck-reveal-mask" aria-hidden="true"></span>
+        </div><p class="deck-reveal-caption">מחל-04 ← מחל-05 ← מחל-06 · תזמון Studio · השהיה 3 שניות</p>`;
+      }
+      stop(){
+        this.generation+=1;
+        this.querySelectorAll(".deck-reveal-card").forEach(card=>card.classList.remove("active"));
+        this.querySelector(".deck-reveal-shell").dataset.stage="blank";
+      }
+      async timing(){
+        try{
+          const response=await fetch("/api/game-config");
+          if(response.ok)return(await response.json()).revealTiming;
+        }catch{}
+        return{quote:200,party:2000,name:1500,portrait:1000};
+      }
+      wait(milliseconds){return new Promise(resolve=>setTimeout(resolve,milliseconds))}
+      setStage(card,stage){
+        card.classList.add("active");
+        this.querySelector(".deck-reveal-shell").dataset.stage=stage;
+      }
+      async restart(){
+        this.stop();
+        const run=++this.generation,cards=[...this.querySelectorAll(".deck-reveal-card")];
+        if(matchMedia("(prefers-reduced-motion: reduce)").matches){
+          this.setStage(cards[0],"portrait");
+          return;
+        }
+        while(run===this.generation){
+          for(const card of cards){
+            if(run!==this.generation)return;
+            cards.forEach(item=>item.classList.remove("active"));
+            card.classList.add("active");
+            this.querySelector(".deck-reveal-shell").dataset.stage="blank";
+            const timing=await this.timing();
+            for(const [stage,delay] of [["quote",timing.quote],["party",timing.party],["identity",timing.name],["portrait",timing.portrait]]){
+              await this.wait(delay);
+              if(run!==this.generation)return;
+              this.setStage(card,stage);
+            }
+            await this.wait(420);
+            if(run!==this.generation)return;
+            await this.wait(3000);
+          }
+        }
+      }
+    });
+    const slides=[...document.querySelectorAll(".slide")],progress=document.querySelector("#progress");
+    const presentationStudio=new URLSearchParams(location.search).get("studio")==="1";
+    const presentationFields=[];
+    function preparePresentationFields(){
+      slides.forEach((slide,slideIndex)=>{
+        let textIndex=0;
+        [slide.querySelector(".head .part"),slide.querySelector(".body"),slide.querySelector(".foot")].filter(Boolean).forEach(root=>{
+          const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+          const nodes=[];
+          while(walker.nextNode()){
+            if(walker.currentNode.nodeValue.trim())nodes.push(walker.currentNode);
+          }
+          nodes.forEach(node=>{
+            const span=document.createElement("span");
+            span.dataset.presentationField=`s${String(slideIndex+1).padStart(2,"0")}-t${String(++textIndex).padStart(3,"0")}`;
+            span.textContent=node.nodeValue;
+            node.replaceWith(span);
+            presentationFields.push(span);
+          });
+        });
+      });
+    }
+    async function ensurePresentationSession(){
+      let token=localStorage.getItem("kalpi-alpha-session");
+      if(token)return token;
+      const response=await fetch("/api/session",{method:"POST"});
+      if(!response.ok)throw new Error("session");
+      token=(await response.json()).token;
+      localStorage.setItem("kalpi-alpha-session",token);
+      return token;
+    }
+    async function loadPresentationText(){
+      try{
+        const response=await fetch("/api/presentation/content");
+        if(!response.ok)return;
+        const {fields={}}=await response.json();
+        presentationFields.forEach(field=>{
+          if(Object.hasOwn(fields,field.dataset.presentationField))field.textContent=fields[field.dataset.presentationField];
+        });
+      }catch{}
+    }
+    async function savePresentationText(){
+      const button=document.querySelector("#save-presentation-text");
+      const status=document.querySelector("#presentation-save-status");
+      button.disabled=true;
+      status.textContent="saving…";
+      try{
+        const token=await ensurePresentationSession();
+        const fields=Object.fromEntries(presentationFields.map(field=>[field.dataset.presentationField,field.textContent]));
+        const response=await fetch("/api/presentation/content",{
+          method:"POST",
+          headers:{"authorization":`Bearer ${token}`,"content-type":"application/json"},
+          body:JSON.stringify({fields}),
+        });
+        if(!response.ok)throw new Error("save");
+        status.textContent="saved";
+      }catch{
+        status.textContent="save failed";
+      }finally{
+        button.disabled=false;
+      }
+    }
+    preparePresentationFields();
+    loadPresentationText();
+    if(presentationStudio){
+      document.body.classList.add("presentation-studio");
+      document.querySelector("#presentation-studio-tools").hidden=false;
+      presentationFields.forEach(field=>field.setAttribute("contenteditable","plaintext-only"));
+      document.querySelector("#save-presentation-text").addEventListener("click",savePresentationText);
+      document.addEventListener("input",event=>{
+        if(event.target.closest("[data-presentation-field]"))document.querySelector("#presentation-save-status").textContent="unsaved";
+      });
+    }
+    let current=Math.max(0,Math.min(slides.length-1,Number(location.hash.slice(1))-1||0));
+    function show(index){
+      current=(index+slides.length)%slides.length;
+      document.querySelectorAll("kalpi-reveal-loop").forEach(loop=>loop.stop());
+      slides.forEach((slide,i)=>slide.classList.toggle("active",i===current));
+      slides[current].querySelectorAll("kalpi-reveal-loop").forEach(loop=>loop.restart());
+      progress.style.width=`${((current+1)/slides.length)*100}%`;
+      history.replaceState(null,"",`#${current+1}`);
+    }
+    document.querySelector("#prev").addEventListener("click",()=>show(current-1));
+    document.querySelector("#next").addEventListener("click",()=>show(current+1));
+    document.addEventListener("keydown",event=>{if(event.target.closest("[contenteditable]")){if(event.key==="Enter")event.preventDefault();return}if(["ArrowLeft","PageDown"," "].includes(event.key))show(current+1);if(["ArrowRight","PageUp"].includes(event.key))show(current-1);if(event.key==="Home")show(0);if(event.key==="End")show(slides.length-1)});
+    show(current);
+  </script>
+</body>
+</html>

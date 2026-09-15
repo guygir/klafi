@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "events": [
+    {
+      "id": "aces-launch-2026",
+      "nameHe": "אירוע האסים",
+      "descriptionHe": "קלף אס אחד בחינם בכל יום, כל עוד האירוע פתוח.",
+      "status": "active",
+      "opensAt": "2026-09-09T00:00:00+03:00",
+      "closesAt": "2026-09-30T23:59:59+03:00",
+      "timezone": "Asia/Jerusalem",
+      "cardIds": [
+        "LEG-NETANYAHU-OCT7-2026",
+        "LEG-RABIN-LAST-SPEECH-1995"
+      ]
+    },
+    {
+      "id": "records-week-2026",
+      "nameHe": "שבוע השיאים",
+      "descriptionHe": "קלף רקורד אחד ביום. האירוע ייפתח רק לאחר אישור תוכן, אמנות וזכויות.",
+      "status": "blocked",
+      "opensAt": "2026-10-05T09:00:00+03:00",
+      "closesAt": "2026-10-11T23:59:59+03:00",
+      "timezone": "Asia/Jerusalem",
+      "cardIds": [
+        "REC-BEN-GVIR-LEGAL-01",
+        "REC-YAIR-GOLAN-SERVICE-01",
+        "REC-FEIGLIN-ZEHUT-01",
+        "REC-NETANYAHU-OFFICES-01",
+        "REC-NETANYAHU-TRIAL-01"
+      ]
+    },
+    {
+      "id": "ministers-week-2026",
+      "nameHe": "שבוע השרים",
+      "descriptionHe": "קלף שר אחד ביום. האירוע ייפתח רק לאחר אישור תוכן, אמנות וזכויות.",
+      "status": "blocked",
+      "opensAt": "2026-10-12T09:00:00+03:00",
+      "closesAt": "2026-10-18T23:59:59+03:00",
+      "timezone": "Asia/Jerusalem",
+      "cardIds": [
+        "MIN-KISCH-TIMSS-01",
+        "MIN-BEN-GVIR-HOMICIDES-01",
+        "MIN-REGEV-TRAVEL-01"
+      ]
+    }
+  ]
+}

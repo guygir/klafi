@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Expanded PoC Content Studio · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">35 / 37 · Expanded PoC Content Studio</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="33-poc-implementation.html">← PoC implementation review</a><button class="btn mark" type="button" data-slug="34-expanded-studio">Mark reviewed</button><a class="btn primary" id="next-page" href="35-expanded-content-audit.html">Next: Expanded content audit →</a></div>
+  </header>
+  <article><h1>Expanded PoC Content Studio — implementation review</h1>
+<h2>Run it</h2>
+<pre><code class="language-bash">cd app
+npm start
+</code></pre>
+<p>Open <code>http://127.0.0.1:4173</code> and choose <strong>Studio</strong>.</p>
+<h2>What is live</h2>
+<ul>
+<li><strong>14 submitted lists and 51 selected politicians</strong> in one canonical source.</li>
+<li><strong>149 populated quote cards</strong> plus four visible blank slots created by the sparse-card rule.</li>
+<li><strong>14 symbols, 28 platform/policy cards, and four shared commons</strong>.</li>
+<li><strong>195 playable cards</strong> after blank quote slots are omitted.</li>
+<li>Daily and demo packs preserve <strong>3 Common / 2 Uncommon / 1 Rare</strong>.</li>
+<li>Binder filters, totals, sources, backs, sharing, art keys, and walkouts derive from the active catalog.</li>
+<li>Quote backs are intentionally compact: quotation, classification/disclosure, and source receipt rather than an additional essay.</li>
+<li>Binder achievements are derived from server inventory and recorded events.</li>
+<li>Growth now includes explicit WhatsApp sharing, a real local faction tally, a real local collection board, and persistent give/want trade offers with clearly labeled simulated acceptance.</li>
+<li>Prestige, Mouthpieces, Satire, and Legendary/Aces have sourced <code>P</code>-marked showcase examples in <code>app/data/specials-content.json</code>; they remain outside daily odds.</li>
+</ul>
+<p>The old 28-card Alpha and its demo are preserved as dated fallback snapshots in <code>app/data/</code>.</p>
+<h2>Studio review flow</h2>
+<ol>
+<li>Choose a party from the horizontal party register. Each tab shows populated slots versus possible slots.</li>
+<li>Choose a politician. The status line shows requested letters, list slot, editorial treatment, and evidence grades.</li>
+<li>Review Common, Uncommon, and Rare together. Blank slots remain visible and cannot produce prompts or enter packs.</li>
+<li>Review the separate meme-research desk: final cards remain quotations, while sourced non-quote visual moments and alternate candidates stay visible beneath them.</li>
+<li>Edit the displayed/original quotation, translation, classification, date, source, source quality, context, scene, added flavor, art key, and review state.</li>
+<li>Record Weave model/version, seed, identity/style reference strengths, and output-review status after generation.</li>
+<li>Use <strong>Save card</strong>. In debug mode this patches one card and atomically replaces <code>app/data/studio-content.json</code>; with <code>KALPI_DEBUG=0</code> the mutation endpoint is unavailable.</li>
+<li>Copy one prompt, concatenate a politician's populated prompts, or export one party's canonical JSON.</li>
+</ol>
+<p>Unsaved cards receive a visible gold state and trigger the browser's leave-page warning.</p>
+<h2>Reveal and card contract</h2>
+<p>The selected framed treatment remains:</p>
+<p><code>empty frame → quotation → Hebrew party + requested letters + slot → Hebrew name → portrait + catalog ID + rarity</code></p>
+<p>All four delays remain configurable and locally persistent. Rarity is <code>★ / ★★ / ★★★</code>; timed Legendary/Aces cards remain outside this base catalog.</p>
+<h2>Canonical and generated files</h2>
+<ul>
+<li><code>app/data/studio-content.json</code> — editable canonical party, roster, quote, evidence, scene, flavor, art, and review data.</li>
+<li><code>docs/intake/research/quote-archive-41.json</code> — archive discovery leads with upstream source links.</li>
+<li><code>docs/intake/research/batch-*.json</code> — reviewable research batches.</li>
+<li><code>docs/intake/research/party-metadata.json</code> — requested letters, caveats, symbols, and two policy cards per list.</li>
+<li><code>app/data/cards.json</code> — active generated catalog.</li>
+<li><code>app/data/cards-expanded.json</code> — generated expanded catalog artifact.</li>
+<li><code>app/data/cards-alpha-28-2026-09-09.json</code> — fallback Alpha catalog.</li>
+<li><code>app/data/demo-pack-alpha-2026-09-09.json</code> — fallback Alpha demo.</li>
+<li><code>docs/review/expanded-content-audit.md</code> — generated missing-source, evidence, blank-slot, CEC, and art audit.</li>
+</ul>
+<h2>Build and verification commands</h2>
+<pre><code class="language-bash">cd app
+npm run import:quotes
+npm run build:studio
+npm run audit:studio
+npm run build:catalog
+npm run activate:catalog
+npm test
+</code></pre>
+<p><code>build:studio</code> normalizes source descriptors into the public <code>exact</code>, <code>shortened</code>, or <code>attributed-paraphrase</code> card classifications while retaining the original evidence descriptions. It also normalizes source evidence to A/B/C and source type to primary/closest-primary/secondary.</p>
+<p><code>build:data</code> now activates the expanded catalog. <code>build:alpha</code> remains available only for rebuilding the retired Markdown-authored Alpha artifact.</p>
+<h2>Editorial and evidence disclosure</h2>
+<p>The prototype openly applies one rule to everyone:</p>
+<ul>
+<li>governing/right-bloc figures: critical, controversial, consequential, or meme-worthy selections;</li>
+<li>current-opposition figures: favorable, constructive selections.</li>
+</ul>
+<p>Selection is partisan; wording and provenance may not be falsified. Adapted display text is marked through its classification, while original text and context remain on the record. Generated props, lighting, and scene treatments are editorial symbolism—not documentary evidence—and this disclosure appears in canonical data, Studio, runtime backs, and every copied Weave prompt.</p>
+<h2>Release blockers</h2>
+<ul>
+<li>CEC confirmation of final list names and ballot letters.</li>
+<li>Human review of direct context for sensitive or secondary-source quotations.</li>
+<li>Human likeness review of generated portraits.</li>
+<li>Exact license recording for the specific identity image selected for each final generation.</li>
+<li>Replacement of missing art keys and completion of Weave export metadata.</li>
+<li>Live measurement of tomorrow-return and card-sharing behavior.</li>
+</ul></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="33-poc-implementation.html">← PoC implementation review</a><a class="btn primary" id="next-page" href="35-expanded-content-audit.html">Next: Expanded content audit →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

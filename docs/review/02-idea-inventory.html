@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Idea inventory · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">2 / 37 · Idea inventory</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="01-how-to-review.html">← How to review</a><button class="btn mark" type="button" data-slug="02-idea-inventory">Mark reviewed</button><a class="btn primary" id="next-page" href="03-alignment.html">Next: Product alignment →</a></div>
+  </header>
+  <article><h1>Kalpi — Idea inventory</h1>
+<p><strong>This is the place.</strong> Everything we talked about in this project stays here, even if it does not fit on Pitch C.</p>
+<p>Pitch C is a story for the room. This file is the product memory. If an idea is not on a slide, it is not lost.</p>
+<p>Statuses:</p>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pitch</strong></td>
+<td>Say it on stage (C)</td>
+</tr>
+<tr>
+<td><strong>Locked</strong></td>
+<td>In the product. Build toward it</td>
+</tr>
+<tr>
+<td><strong>Alpha</strong></td>
+<td>Must ship in the first playable</td>
+</tr>
+<tr>
+<td><strong>Shipped Alpha</strong></td>
+<td>Implemented in <code>app/</code> and verified</td>
+</tr>
+<tr>
+<td><strong>Designed</strong></td>
+<td>Specified now, build after the rip works</td>
+</tr>
+<tr>
+<td><strong>Parked</strong></td>
+<td>Possible later. Not rejected</td>
+</tr>
+<tr>
+<td><strong>Invert</strong></td>
+<td>We looked at it and did the opposite</td>
+</tr>
+<tr>
+<td><strong>Notes only</strong></td>
+<td>Speaker notes / aside. Not a slide, not a design input</td>
+</tr>
+<tr>
+<td><strong>Rejected</strong></td>
+<td>We decided no</td>
+</tr>
+<tr>
+<td><strong>Superseded</strong></td>
+<td>Was locked earlier; a later product decision replaced it</td>
+</tr>
+</tbody>
+</table>
+<p>Where the long version lives is in the last column.</p>
+<hr />
+<h2>North star and job</h2>
+<table>
+<thead>
+<tr>
+<th>Idea</th>
+<th>Status</th>
+<th>Lives in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Free digital collect-only TCG of lists / members / symbols / platforms</td>
+<td>Locked, Pitch, Shipped Alpha</td>
+<td>GDD, alignment, C, <code>app/</code></td>
+</tr>
+<tr>
+<td>Bait = pack dopamine. <strong>Goal</strong> = teach Israeli politics → smart vote + show-up. In the current PoC, quote cards use the quotation plus source receipt instead of an additional long back essay</td>
+<td>Locked, Pitch C+D, current PoC simplified</td>
+<td>one-pager, alignment, C, D, <code>app/public/app.js</code></td>
+</tr>
+<tr>
+<td><strong>אוריינות פוליטית</strong> — a smart vote</td>
+<td>Locked, Pitch</td>
+<td>alignment §1, C slide 10</td>
+</tr>
+<tr>
+<td>Subgoal: stay objective. Game never picks a side</td>
+<td>Superseded after pre-PoC feedback</td>
+<td>Original GDD, C</td>
+</tr>
+<tr>
+<td>Disclosed advocacy edition: sponsor/viewpoint visible; quote selection may make a case</td>
+<td>Locked for feedback-focused PoC; profile configuration required</td>
+<td><code>app/data/advocacy.json</code>, poc-feedback-response</td>
+</tr>
+<tr>
+<td>One common program: orientation → issue contrast → decision readiness</td>
+<td>Locked, Shipped Alpha infrastructure</td>
+<td>poc-feedback-response, card walkout metadata</td>
+</tr>
+<tr>
+<td>Real activity only; exact quote + speaker/date/source/context/rationale</td>
+<td>Locked, Shipped Alpha</td>
+<td>advocacy profile, source registry, server events</td>
+</tr>
+<tr>
+<td>Reward any pro-voting / pro-knowledge activity</td>
+<td>Locked</td>
+<td>GDD reward taxonomy</td>
+</tr>
+<tr>
+<td>המטרה מקדשת את האמצעים — empty of lore on purpose</td>
+<td>Locked, Pitch</td>
+<td>alignment §3, C empty-of-lore</td>
+</tr>
+<tr>
+<td>Jam goals: knowledge, socials, voting, taking choices, literacy, fight AI fake news via knowledge, young audience</td>
+<td>Locked</td>
+<td>alignment table</td>
+</tr>
+<tr>
+<td>* Helps Democrats more (uninformed default is anti-Democrat)</td>
+<td>Notes only</td>
+<td>C speaker notes. Not a slide. Not a design input</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Audience and pitch story</h2>
+<table>
+<thead>
+<tr>
+<th>Idea</th>
+<th>Status</th>
+<th>Lives in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>18–24 / first-timers (~595–640k, ~six seats)</td>
+<td>Locked, Pitch</td>
+<td>one-pager, citations, C</td>
+</tr>
+<tr>
+<td>46.7% vs 74.9%; national 70.6%</td>
+<td>Locked, Pitch</td>
+<td>citations, C</td>
+</tr>
+<tr>
+<td>Intention surveys run hot (2013 88% → 67.8%)</td>
+<td>Locked, Pitch</td>
+<td>one-pager, C</td>
+</tr>
+<tr>
+<td>Do <strong>not</strong> claim “2026 youth will not vote” or invent a knowledge %</td>
+<td>Locked</td>
+<td>citations forbidden lines</td>
+</tr>
+<tr>
+<td>New voters may default to parents</td>
+<td>Locked, Pitch</td>
+<td>alignment §2, C</td>
+</tr>
+<tr>
+<td>May not care (war, load)</td>
+<td>Locked, Pitch</td>
+<td>alignment §2, C</td>
+</tr>
+<tr>
+<td>TikTok / viral fake news as civics class</td>
+<td>Locked, Pitch</td>
+<td>alignment, C</td>
+</tr>
+<tr>
+<td>Afraid to show an opinion → anonymous camp</td>
+<td>Locked, Pitch</td>
+<td>GDD camps, C trait→game</td>
+</tr>
+<tr>
+<td>Parents fail: rebellion + emotionally invested</td>
+<td>Locked, Pitch</td>
+<td>alignment, C</td>
+</tr>
+<tr>
+<td>Lived examples: “Bennett is a bro”; brother; Hadar Muchtar</td>
+<td>Locked, Pitch</td>
+<td>C slide 7, notes</td>
+</tr>
+<tr>
+<td>47s attention (Gloria Mark)</td>
+<td>Locked, Pitch</td>
+<td>citations, C</td>
+</tr>
+<tr>
+<td>Age of wars and TikTok</td>
+<td>Locked, Pitch</td>
+<td>one-pager, C</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Why cards / why digital (the proofs)</h2>
+<table>
+<thead>
+<tr>
+<th>Idea</th>
+<th>Status</th>
+<th>Lives in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>State Makers / יוצרים מדינה</strong> — 98-card Israeli history TCG, packs of 8, holos, first edition sold out. <a href="https://www.pieceofhistory.com/statemakers">Piece of History</a></td>
+<td>Locked, Pitch</td>
+<td>C own slide, sources, citations</td>
+</tr>
+<tr>
+<td><strong>Pocket — five takes:</strong> (1) daily timed pack (2) rip ritual (3) set collecting (4) rarity you screenshot (5) quick session</td>
+<td>Locked, Pitch</td>
+<td>digital-collectibles, C</td>
+</tr>
+<tr>
+<td>Pocket scale ~150M / ~$1.3B; earlier digital Pokémon stalled without collecting</td>
+<td>Locked</td>
+<td>digital-collectibles, notes</td>
+</tr>
+<tr>
+<td>We take Pocket’s <strong>door</strong>, not the shop / battles / hourglasses</td>
+<td>Locked</td>
+<td>digital-collectibles invert table</td>
+</tr>
+<tr>
+<td>Digital collectible musts + <strong>knowledge on top</strong> (hold → flip back; extra pack = quiz on pulled card)</td>
+<td>Locked, Pitch D (essence on C)</td>
+<td>digital-collectibles §4, D</td>
+</tr>
+<tr>
+<td>TCG rising trend (Pokémon, One Piece, Riftbound, Cyberpunk, sports, Life TCG, US politics cards). Hit the iron</td>
+<td>Locked, Pitch C+D</td>
+<td>one-pager insight, sources, C, D</td>
+</tr>
+<tr>
+<td><a href="https://outbid.lol">outbid.lol</a> — people/companies pay to sit on a viral ladder; we invert: nobody pays</td>
+<td>Locked, Pitch</td>
+<td>C, sources, GDD leaderboard</td>
+</tr>
+<tr>
+<td>Why not a quiz app? Quiz apps are not a daily habit for this age</td>
+<td>Locked</td>
+<td>digital-collectibles, notes</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Loop, packs, cards</h2>
+<table>
+<thead>
+<tr>
+<th>Idea</th>
+<th>Status</th>
+<th>Lives in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One free pack / 24h</td>
+<td>Locked, Shipped Alpha</td>
+<td>GDD, <code>app/server/</code></td>
+</tr>
+<tr>
+<td>Maybe every <strong>8 hours</strong> as a live-ops lever</td>
+<td>Parked</td>
+<td>GDD: not Alpha default (“more hostile”)</td>
+</tr>
+<tr>
+<td>6 cards / pack (faster than State Makers’ 8); print the mix 3C/2U/1R-or-H</td>
+<td>Locked, Shipped Alpha</td>
+<td>GDD, <code>app/server/pack-engine.js</code></td>
+</tr>
+<tr>
+<td>Tear → spread → <strong>hook → receipt → faction/type → silhouette → identity → full back</strong></td>
+<td>Locked, Shipped Alpha</td>
+<td>visual-system, feedback response, <code>app/public/</code></td>
+</tr>
+<tr>
+<td>Equal 8-card skeleton per list + 4 commons</td>
+<td>Superseded for the next PoC content pass; implemented only in the current Alpha</td>
+<td>card-bible, poc-cards (28), <code>app/data/cards.json</code></td>
+</tr>
+<tr>
+<td><strong>PoC v2 party structure:</strong> 1 symbol + 2 exact manifesto excerpts + top 4 chosen members × 3 distinct sourced quote cards = <strong>15 cards per party</strong></td>
+<td>Locked, not implemented</td>
+<td>45 party cards + 4 retained shared commons = 49; <code>poc-set-structure-v2.md</code></td>
+</tr>
+<tr>
+<td>Every top-four member gets cards <code>01 / 02 / 03</code>: three different real quotations, three related but visibly different portraits/poses, one stable identity style</td>
+<td>Locked, not implemented</td>
+<td>Quote/source manifest + Weave portrait pipeline required</td>
+</tr>
+<tr>
+<td><strong>Legendary / Aces promotion set</strong> — exceptional, highly recognizable quotations released through dated event windows rather than ordinary daily packs. First PoC candidate: Netanyahu, “אם היו מעירים אותי בבוקר ה־7 באוקטובר, זה היה נראה אחרת.*” with the asterisk linking to the exact recorded wording and context</td>
+<td>PoC extension backlog; outside the base 49-card random pool</td>
+<td>Event id, active window, server-issued entitlement, source status, and permanent binder record required</td>
+</tr>
+<tr>
+<td>PoC: Likud / Democrats / Ra'am (map spread, not the three largest)</td>
+<td>Locked, Shipped Alpha</td>
+<td>poc-cards, <code>app/data/cards.json</code></td>
+</tr>
+<tr>
+<td>Daily holo <strong>date</strong> as screenshot caption</td>
+<td>Final product; explicitly removed from PoC v2</td>
+<td>GDD rarity</td>
+</tr>
+<tr>
+<td>Signed / special variants</td>
+<td>Parked</td>
+<td>first brief</td>
+</tr>
+<tr>
+<td><strong>Prestige / Legacy set</strong> — recognizable current and former political figures across parties and eras; archive/status labels distinguish current from former</td>
+<td>PoC showcase shipped; pack-ineligible</td>
+<td>Oren Hazan, Menachem Begin, and Ehud Olmert examples in <code>app/data/specials-content.json</code></td>
+</tr>
+<tr>
+<td><strong>Imitations / satire set</strong> — political characters and impersonations associated with <em>Eretz Nehederet</em>; satire cards are labeled as portrayals, never quoted as the real politician, and identify episode/date/performer where relevant</td>
+<td>PoC showcase shipped; concept-only and rights-gated</td>
+<td>Amsalem and Netanyahu portrayal examples; no show art shipped</td>
+</tr>
+<tr>
+<td><strong>שופרות / Mouthpieces set</strong> — disclosed editorial/satirical set about public figures who repeatedly amplify and defend a leader’s line. Cards demonstrate the pattern with dated sourced statements; “blind follower” remains the game’s editorial characterization, not an undisclosed factual claim about motive</td>
+<td>PoC showcase shipped; pack-ineligible</td>
+<td>Yinon Magal and Yaakov Bardugo examples with repeated-statement evidence</td>
+</tr>
+<tr>
+<td>Life TCG population print-run</td>
+<td>Invert</td>
+<td>We do <strong>not</strong> tie to polls. We tie numbered copies to <strong>list slot</strong> (1 → 1/1), same on every list</td>
+</tr>
+<tr>
+<td>List-slot numbered holos (Likud 1 = 1/1; slot 3 = 1–3/3)</td>
+<td>Locked, Pitch D</td>
+<td>GDD rarity</td>
+</tr>
+<tr>
+<td>FIFA-style readable walkout: short minimum beats + player-controlled advance</td>
+<td>Shipped Alpha</td>
+<td>feedback response, <code>app/public/app.js</code></td>
+</tr>
+<tr>
+<td>Pity: new-to-them card after 3 dry packs</td>
+<td>Locked, Shipped Alpha</td>
+<td>GDD, <code>app/server/pack-engine.js</code></td>
+</tr>
+<tr>
+<td>Hebrew on cards in shipped product; English PoC / pitch</td>
+<td>Locked</td>
+<td>card-bible</td>
+</tr>
+<tr>
+<td>No lore, no PvP, no IAP</td>
+<td>Locked</td>
+<td>GDD non-goals</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Progression and social (beyond faction + cash)</h2>
+<table>
+<thead>
+<tr>
+<th>Idea</th>
+<th>Status</th>
+<th>Lives in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daily login pack</td>
+<td>Locked, Shipped Alpha</td>
+<td>GDD, <code>app/</code></td>
+</tr>
+<tr>
+<td>Timed swipe quiz (image + name, role, list, 5:00) → extra pack</td>
+<td>Designed</td>
+<td>GDD, quiz.md (10 items)</td>
+</tr>
+<tr>
+<td>Bind progression to <strong>learning</strong></td>
+<td>Locked</td>
+<td>GDD, C</td>
+</tr>
+<tr>
+<td>In-game <strong>faction</strong>: pick a list; packs tally it. <strong>No reward</strong> (not a currency)</td>
+<td>Shipped PoC local slice</td>
+<td>Server stores anonymous choice; each real pack adds +1</td>
+</tr>
+<tr>
+<td><strong>Real-life</strong> party / kalpi work → <strong>big pack bundle</strong></td>
+<td>Designed</td>
+<td>GDD</td>
+</tr>
+<tr>
+<td>Extra pack = quiz on a card you <strong>already pulled</strong></td>
+<td>Designed, Pitch</td>
+<td>GDD, quiz.md, C, D</td>
+</tr>
+<tr>
+<td>Pledge is <strong>anonymous</strong></td>
+<td>Designed</td>
+<td>GDD, alignment</td>
+</tr>
+<tr>
+<td>Set race / who completes first</td>
+<td>Designed (mock UI in Alpha)</td>
+<td>GDD, wireframes</td>
+</tr>
+<tr>
+<td><strong>10,000 NIS</strong> first-set prize</td>
+<td>Parked / pitch concept</td>
+<td>GDD legal; Alpha does <strong>not</strong> ship a lottery</td>
+</tr>
+<tr>
+<td>Influencer seeding (their audience = ours)</td>
+<td>Designed (GROWTH on D)</td>
+<td>D, GDD roadmap</td>
+</tr>
+<tr>
+<td>Trading / gifting (friendly virality; knowledge moves)</td>
+<td>Simulated async trade shipped; real counterparty later</td>
+<td>Persistent give/want offer plus explicitly simulated acceptance and inventory swap</td>
+</tr>
+<tr>
+<td>Country leaderboard + later groups / leagues</td>
+<td>Local collection leaderboard shipped; groups/leagues later</td>
+<td>Real anonymous local session inventory only</td>
+</tr>
+<tr>
+<td>Commons-complete badge (shareable / viral)</td>
+<td>Shipped PoC achievement</td>
+<td>Server-derived badge shelf in Binder</td>
+</tr>
+<tr>
+<td>Verified civic volunteer (kalpi / party HQ) → pack bundle</td>
+<td>Designed</td>
+<td>GDD rewards</td>
+</tr>
+<tr>
+<td>Opinion survey → <strong>PARTY pack</strong> (matched-list politicians only)</td>
+<td>Designed</td>
+<td>GDD, alignment</td>
+</tr>
+<tr>
+<td>Login / literacy streaks (3 / 7)</td>
+<td>Designed</td>
+<td>GDD progression</td>
+</tr>
+<tr>
+<td>Share-the-pull + exact-card/referral link + duplicate gift/trade preview</td>
+<td>Shipped; explicit WhatsApp action added</td>
+<td>GDD, bootstrap playbook, <code>app/public/app.js</code></td>
+</tr>
+<tr>
+<td>News / live <strong>polls</strong> in the game</td>
+<td>Invert on polls</td>
+<td>Pulse = CEC facts only, maybe later. No live polls in our voice</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Presentation versions (all kept)</h2>
+<table>
+<thead>
+<tr>
+<th>Deck</th>
+<th>Job</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>C — ~10 min civic story</strong></td>
+<td>% → examples → literacy → State Makers → Pocket → iron hot → bait vs goal → QR</td>
+<td><a href="../presentation/pitch/">presentation/pitch/</a></td>
+</tr>
+<tr>
+<td><strong>D — 22 dense slides + long notes</strong></td>
+<td>Product deck, <strong>intertwined on purpose</strong>: each civic claim earns a product line. Prove → lived table → literacy → trait→format → State Makers / Pocket / iron → bait → musts → loop → quiz → three choice mechanics → slots → content → stay/growth/build. Cut later.</td>
+<td><a href="../presentation/pitch-d/">presentation/pitch-d/</a></td>
+</tr>
+<tr>
+<td>A</td>
+<td>Product-brief argument</td>
+<td><a href="../presentation/index.html">presentation/index.html</a></td>
+</tr>
+<tr>
+<td>B</td>
+<td>Story only, no ask</td>
+<td><a href="../presentation/story/">presentation/story/</a></td>
+</tr>
+<tr>
+<td>Citations</td>
+<td>Numbers you may say</td>
+<td><a href="15-citations.html">citations.md</a></td>
+</tr>
+<tr>
+<td>AI-art deadline argument</td>
+<td>Jam community anti-AI art</td>
+<td>visual-system + B/C notes</td>
+</tr>
+</tbody>
+</table>
+<p>Ask is one last slide. Contest + possible partners deduced; do not split the room.</p>
+<hr />
+<h2>Implementation (when we build)</h2>
+<table>
+<thead>
+<tr>
+<th>Idea</th>
+<th>Status</th>
+<th>Lives in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTML first (approachability)</td>
+<td>Locked, Shipped Alpha</td>
+<td>part-2.md, <code>app/public/</code></td>
+</tr>
+<tr>
+<td>Server-authoritative pulls; client displays</td>
+<td>Locked, Shipped Alpha</td>
+<td>part-2.md, GDD security, <code>app/server/</code></td>
+</tr>
+<tr>
+<td>Guest / one-tap account</td>
+<td>Shipped Alpha (guest token)</td>
+<td>GDD, <code>app/server/store.js</code></td>
+</tr>
+<tr>
+<td>Weavy / Figma Weave for stills, rip, UI, promo video</td>
+<td>Locked craft</td>
+<td>part-2, visual-system</td>
+</tr>
+<tr>
+<td>Agent skills: <code>frontend-design</code> + <code>kalpi-frontend</code></td>
+<td>Locked craft</td>
+<td><code>.cursor/skills/</code></td>
+</tr>
+<tr>
+<td>Visual tokens (paper/ink/foil, 8px pip)</td>
+<td>Locked, Shipped Alpha</td>
+<td>visual-system, hero-cards, wireframes, <code>app/public/styles.css</code></td>
+</tr>
+<tr>
+<td>QR to prior jams <a href="https://guygir.itch.io">guygir.itch.io</a></td>
+<td>Pitch</td>
+<td>C empty-of-lore</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Still open (not lost — just unfinished)</h2>
+<ul>
+<li>[ ] Survey <strong>items</strong> + published scoring table (neutrality pass)</li>
+<li>[ ] Public jam-page URL (goals already transcribed)</li>
+<li>[ ] You review Pitch C + this inventory; mark anything that still feels missing</li>
+<li>[ ] Legal if 10k NIS ever becomes real</li>
+<li>[ ] Artist pass if a partner funds it</li>
+</ul>
+<hr />
+<h2>How to use this file</h2>
+<ol>
+<li>Pitch C stays short. Do not dump this list on stage.</li>
+<li>When we add an idea in chat, <strong>add a row here in the same turn.</strong></li>
+<li>If you cannot find something, search this file first, then the “Lives in” path.</li>
+</ol></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="01-how-to-review.html">← How to review</a><a class="btn primary" id="next-page" href="03-alignment.html">Next: Product alignment →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

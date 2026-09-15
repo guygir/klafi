@@ -1,0 +1,30 @@
+[
+  {
+    "id": "quote-context-consistency",
+    "label": "Quote → context → consistency test",
+    "status": "prototype-ready",
+    "releasePhase": "issue-contrast",
+    "cards": ["LIK-Q-01", "LIK-P-02", "SYS-C-01"],
+    "editorialConclusion": "A campaign phrase is a claim. Coalition arithmetic is the test.",
+    "pattern": "A quote walks out first, its campaign context follows, and a system card supplies the consistency test."
+  },
+  {
+    "id": "paired-receipts",
+    "label": "Same issue · paired receipts",
+    "status": "schema-demo",
+    "releasePhase": "issue-contrast",
+    "cards": ["DEM-P-01", "LIK-P-01"],
+    "editorialConclusion": "The current PoC cards demonstrate parallel presentation; a public edition requires two receipts on the same named issue.",
+    "pattern": "Parallel source depth, dates, layout, and visible editorial interpretation.",
+    "publicationBlockedBy": "Supported agenda and same-issue source pair are not configured."
+  },
+  {
+    "id": "common-uncommon-rare",
+    "label": "Commons → uncommon → rare argument",
+    "status": "prototype-ready",
+    "releasePhase": "decision-readiness",
+    "cards": ["SYS-C-02", "DEM-M-02", "DEM-Q-01"],
+    "editorialConclusion": "System literacy establishes what a vote does; list position shows who it seats; the quote reveals the chair’s own closing case.",
+    "pattern": "Rarity increases argumentative depth, never factual reliability."
+  }
+]

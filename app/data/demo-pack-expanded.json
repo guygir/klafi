@@ -1,0 +1,31 @@
+{
+  "id": "expanded-review",
+  "label": "Expanded catalog guided demo",
+  "description": "Deterministic 3C / 2U / 1R preview generated from the active expanded catalog.",
+  "cards": [
+    {
+      "cardId": "SYS-C-01",
+      "finish": "Common"
+    },
+    {
+      "cardId": "SYS-C-04",
+      "finish": "Common"
+    },
+    {
+      "cardId": "YSR-S-01",
+      "finish": "Common"
+    },
+    {
+      "cardId": "SYS-C-02",
+      "finish": "Uncommon"
+    },
+    {
+      "cardId": "YSR-P-02",
+      "finish": "Uncommon"
+    },
+    {
+      "cardId": "SYS-C-03",
+      "finish": "Rare"
+    }
+  ]
+}

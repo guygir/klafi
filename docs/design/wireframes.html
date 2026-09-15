@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalpi — Mobile wireframes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="kalpi.css" />
+  <style>
+    main { padding: 40px 24px 80px; }
+    .phones { display: flex; flex-wrap: wrap; gap: 28px; }
+    .phone h2 { font-size: 28px; margin: 8px 0 6px; }
+    .phone p { margin: 0 0 12px; font-size: 14px; line-height: 1.4; }
+    .label { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--civic); margin: 0 0 16px; }
+    .pack-art {
+      flex: 1;
+      border-radius: 16px;
+      background: var(--paper-deep) center/cover no-repeat;
+      margin: 8px 0 16px;
+      min-height: 360px;
+    }
+    .tiny { font-size: 12px; opacity: 0.7; margin-top: 8px; }
+    .race { background: var(--paper-deep); border-radius: 12px; padding: 12px; font-size: 13px; margin-bottom: 12px; }
+    nav { margin-bottom: 24px; }
+    nav a { color: var(--civic); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Mobile wireframes</h1>
+    <p>390 × 844. One primary action per screen. Daily rip under 90 seconds.</p>
+    <nav><a href="hero-cards.html">Hero cards</a> · <a href="../presentation/pitch/index.html">Pitch</a></nav>
+    <div class="phones">
+
+      <section>
+        <p class="label">01 Home</p>
+        <div class="phone">
+          <div class="phone-bar"><span>Kalpi</span><span>1 pack ready</span></div>
+          <div class="phone-body">
+            <p class="tiny">Tuesday 1 Sept · 12 / 28 cards</p>
+            <h2>Today’s pack is waiting.</h2>
+            <p>Six cards. Flip the backs. That is the whole session if you want it to be.</p>
+            <div class="pack-art" style="background-image:url('assets/pack-wrapper.png')"></div>
+            <button class="btn">Open today’s pack</button>
+            <p class="tiny" style="text-align:center">Next free pack in 23:59 · no purchase</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="label">02 Rip</p>
+        <div class="phone">
+          <div class="phone-bar"><span>Pack</span><span>6 cards</span></div>
+          <div class="phone-body">
+            <p class="tiny">Tear → spread → rare pause</p>
+            <h2>Hold for the holo.</h2>
+            <div class="pack-art" style="background-image:url('assets/hero-art-threshold.png')"></div>
+            <button class="btn">Tap to flip the back</button>
+            <p class="tiny">The back is the product. Every revealed front gets its learning beat by default.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="label">03 Card back</p>
+        <div class="phone">
+          <div class="phone-bar"><span>SYS-C-03</span><span>Holo</span></div>
+          <div class="phone-body">
+            <p class="tiny">Commons · 01.09.2026 · #1 of 1 today</p>
+            <h2>The Threshold</h2>
+            <p>Since 2015 a list needs 3.25% of valid votes to take any seats. Votes under the line elect nobody.</p>
+            <p><strong>Why it matters.</strong> A protest slip that misses 3.25% does not become a protest MK.</p>
+            <p class="tiny">IDI, 2026 · 2022 results</p>
+            <div style="flex:1"></div>
+            <button class="btn">Next card</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="label">04 Binder</p>
+        <div class="phone">
+          <div class="phone-bar"><span>Binder</span><span>43%</span></div>
+          <div class="phone-body">
+            <h2>Your sets</h2>
+            <p class="tiny" style="margin-bottom:8px">12 / 28 · equal structure, every list</p>
+            <div class="progress" style="margin-bottom:16px"><span style="width:43%"></span></div>
+            <div class="grid-3">
+              <div class="thumb owned" style="background-image:url('assets/hero-art-kalpi.png')"></div>
+              <div class="thumb owned" style="background-image:url('assets/hero-art-threshold.png')"></div>
+              <div class="thumb owned" style="background-image:url('assets/hero-art-memchetlammed.png')"></div>
+              <div class="thumb"></div>
+              <div class="thumb"></div>
+              <div class="thumb"></div>
+              <div class="thumb"></div>
+              <div class="thumb"></div>
+              <div class="thumb"></div>
+            </div>
+            <p class="tiny">Dashed wells are missing knowledge, not missing loot.</p>
+            <div style="flex:1"></div>
+            <button class="btn ghost">Filter: Commons</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="label">05 Race (mock)</p>
+        <div class="phone">
+          <div class="phone-bar"><span>Race</span><span>Free</span></div>
+          <div class="phone-body">
+            <h2>Who completed a set.</h2>
+            <p>Public spectacle. Nobody pays. Alpha shows this row with fake counts only.</p>
+            <div class="race">1 · Noa K. · Commons 4/4</div>
+            <div class="race">2 · You · 12/28</div>
+            <div class="race">12 people at 80% of Likud</div>
+            <p class="tiny">A cash prize is a pitch concept, not this screen. Legal review required.</p>
+            <div style="flex:1"></div>
+            <button class="btn">Back to today’s pack</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="label">06 Empty / later</p>
+        <div class="phone">
+          <div class="phone-bar"><span>Kalpi</span><span>0:00</span></div>
+          <div class="phone-body">
+            <h2>Come back tomorrow.</h2>
+            <p>One pack a day. A 5-minute swipe on a face you own is how you earn the extra pack.</p>
+            <div class="progress" style="margin:16px 0"><span style="width:8%"></span></div>
+            <p class="tiny">Next pack 08:00 · 27 Oct is the real timer.</p>
+            <div style="flex:1"></div>
+            <button class="btn ghost">Open binder</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="label">07 Pledge a list</p>
+        <div class="phone">
+          <div class="phone-bar"><span>Camp</span><span>Optional</span></div>
+          <div class="phone-body">
+            <h2>Pick a list. Or don’t.</h2>
+            <p>Each pack you open adds +1 to that list’s public tally. No reward. Kalpi does not pick a side. You may.</p>
+            <div class="race">Likud · מחל</div>
+            <div class="race">The Democrats</div>
+            <div class="race">Ra'am · עם</div>
+            <p class="tiny">Same tile size. Alphabetical / letter — not poll rank. Skip anytime.</p>
+            <div style="flex:1"></div>
+            <button class="btn ghost">Play without a camp</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="label">08 Faction tally</p>
+        <div class="phone">
+          <div class="phone-bar"><span>Tally</span><span>Player activity</span></div>
+          <div class="phone-body">
+            <h2>Not a poll.</h2>
+            <p>This board is packs people opened for a list. It is not who is winning the election.</p>
+            <div class="race">1 · Democrats · 4,201</div>
+            <div class="race">2 · Likud · 3,880</div>
+            <div class="race">3 · Ra'am · 1,104</div>
+            <p class="tiny">You are pledged to Democrats. Today’s pack → +1.</p>
+            <div style="flex:1"></div>
+            <button class="btn">Open today’s pack</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="label">09 Quiz popup</p>
+        <div class="phone">
+          <div class="phone-bar"><span>5:00</span><span>Extra pack</span></div>
+          <div class="phone-body">
+            <p class="tiny">From a card you already own</p>
+            <h2>Naama Lazimi</h2>
+            <div class="pack-art" style="min-height:180px;background:#e7dfd0"></div>
+            <p><strong>What is she known for here?</strong><br />← Slot 2, Democrats 2026 primary →</p>
+            <p><strong>Which list?</strong><br />← The Democrats →</p>
+            <p class="tiny">Swipe to change. One tap locks. Both right in 5:00 → pack. Dismiss anytime.</p>
+            <div style="flex:1"></div>
+            <button class="btn">Lock answers</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</body>
+</html>

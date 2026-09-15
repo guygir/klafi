@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Visual system · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">11 / 37 · Visual system</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="10-sources.html">← Sources</a><button class="btn mark" type="button" data-slug="11-visual-system">Mark reviewed</button><a class="btn primary" id="next-page" href="12-hero-cards.html">Next: Hero cards →</a></div>
+  </header>
+  <article><h1>Kalpi — Visual system</h1>
+<p>Collectible and civic. Not a campaign poster, not a meme page, not a government PDF. Reference: State Makers finish + TCG Pocket pack feel, with <strong>shared chrome</strong> so no party looks like the hero.</p>
+<p>Hero finishes (open in a browser): <a href="hero-cards.html">hero-cards.html</a><br />
+Mobile wireframes: <a href="wireframes.html">wireframes.html</a><br />
+PoC asset and rights status: <a href="28-poc-assets.html">poc-asset-manifest.md</a><br />
+Weave still/motion production template: <a href="31-weave-production.html">weave-production-brief.md</a></p>
+<hr />
+<h2>Direction</h2>
+<ul>
+<li>Paper, ink, foil. A card you would want to keep.</li>
+<li>Party color is an <strong>8px badge</strong> only. Never a full-bleed wash.</li>
+<li>Illustrated / letterform art. No scraped press photos. No photoreal likeness in the jam.</li>
+<li>RTL-ready frames even when the PoC text is English.</li>
+</ul>
+<hr />
+<h2>Palette</h2>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Hex</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ink</code></td>
+<td><code>#1A1F1C</code></td>
+<td>Type, rules</td>
+</tr>
+<tr>
+<td><code>paper</code></td>
+<td><code>#F4EFE4</code></td>
+<td>Page, card field</td>
+</tr>
+<tr>
+<td><code>paper-deep</code></td>
+<td><code>#E7DFD0</code></td>
+<td>Binder slots, wells</td>
+</tr>
+<tr>
+<td><code>rule</code></td>
+<td><code>#2C3330</code></td>
+<td>Frames</td>
+</tr>
+<tr>
+<td><code>civic</code></td>
+<td><code>#1F4F4A</code></td>
+<td>Shared brand teal — buttons, pack, progress</td>
+</tr>
+<tr>
+<td><code>civic-bright</code></td>
+<td><code>#2A7A72</code></td>
+<td>Hover, pack glow</td>
+</tr>
+<tr>
+<td><code>foil</code></td>
+<td><code>#C4A35A</code></td>
+<td>Rare edge</td>
+</tr>
+<tr>
+<td><code>holo</code></td>
+<td><code>#7E8B9A</code> → <code>#C4A35A</code> → <code>#5E7A74</code></td>
+<td>Holo wash (CSS gradient)</td>
+</tr>
+<tr>
+<td><code>danger-mute</code></td>
+<td><code>#8A4A3A</code></td>
+<td>Countdown only, never party-coded</td>
+</tr>
+</tbody>
+</table>
+<p>Party pips (badge only):</p>
+<table>
+<thead>
+<tr>
+<th>Set</th>
+<th>Pip</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Likud</td>
+<td><code>#1B3A6B</code></td>
+</tr>
+<tr>
+<td>Democrats</td>
+<td><code>#C43B3B</code></td>
+</tr>
+<tr>
+<td>Ra'am</td>
+<td><code>#2E7D4F</code></td>
+</tr>
+<tr>
+<td>Commons / SYS</td>
+<td><code>#1F4F4A</code></td>
+</tr>
+</tbody>
+</table>
+<p>If a new list is added, it gets a pip. It does not get a new frame.</p>
+<hr />
+<h2>Type</h2>
+<p>Web-safe lock for jam artifacts:</p>
+<ul>
+<li><strong>Display:</strong> <code>Fraunces</code> — card titles, pack wordmark</li>
+<li><strong>UI / body:</strong> <code>IBM Plex Sans</code> — backs, binder, deck</li>
+<li><strong>Letters:</strong> <code>IBM Plex Sans Hebrew</code> — ballot marks</li>
+</ul>
+<p>Sizes on a 63 × 88 mm card (390 × 544 CSS px):</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Size</th>
+<th>Weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Type chip</td>
+<td>10px</td>
+<td>600</td>
+</tr>
+<tr>
+<td>Title</td>
+<td>22px</td>
+<td>600</td>
+</tr>
+<tr>
+<td>Subtitle</td>
+<td>12px</td>
+<td>400</td>
+</tr>
+<tr>
+<td>Back body</td>
+<td>13px / 1.4</td>
+<td>400</td>
+</tr>
+<tr>
+<td>Source</td>
+<td>10px</td>
+<td>400</td>
+</tr>
+</tbody>
+</table>
+<p>Minimum body size 13px. No 9px legal grey.</p>
+<hr />
+<h2>Card frame</h2>
+<pre><code>┌─────────────────────────┐  8px outer rule (ink)
+│ ▌ pip                   │  8px party pip, top-left
+│  [MEMBER]          R    │  type chip + rarity
+│                         │
+│         ART  3:4        │  illustration well
+│                         │
+│  Title                  │
+│  Subtitle               │
+│  KALPI · LIK-M-01       │  footer catalog
+└─────────────────────────┘
+</code></pre>
+<p>Back: same outer rule, no art well. Title, 40–60 word body, “Why it matters,” source, catalog code.</p>
+<p>Corners: 12px. Inset: 16px. Art well radius: 8px.</p>
+<h3>Selected PoC v2 member front</h3>
+<p>The framed collectible treatment is selected. Percentages are fixed across every member card and measured upward from the bottom:</p>
+<ul>
+<li><code>0–15%</code>: quote in a fixed-height Hebrew zone.</li>
+<li><code>15–20%</code>: Hebrew party name and <code>מקום &lt;slot&gt;</code>.</li>
+<li><code>20–28%</code>: Hebrew member name.</li>
+<li><code>28–100%</code>: inset editorial portrait.</li>
+</ul>
+<p>Catalog metadata appears with the portrait stage: top-left is the Hebrew ballot letters/set identifier plus two-digit quote number; top-right is the compact rarity mark. Netanyahu’s third Likud quotation is <code>מחל-03</code>; a Democrats card uses the submitted letters <code>אמת-01</code> pending final CEC approval. Use the binder’s rounded 13px outer frame and an 8px rounded portrait well.</p>
+<p>Each portrait prompt may carry one editable <strong>Added flavor</strong> note tied to the quote. It is disclosed editorial symbolism, never evidence: examples include an unlit cigar, generic distant moving silhouettes, or a closed suitcase. Avoid logos, ethnic coding, literal allegations, invented recipients, visible money, or documentary reconstruction.</p>
+<hr />
+<h2>Rarity language</h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Frame</th>
+<th>Reveal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Common <code>★</code></td>
+<td>Flat ink rule, no foil</td>
+<td>Instant</td>
+</tr>
+<tr>
+<td>Uncommon <code>★★</code></td>
+<td>1px <code>foil</code> inner line</td>
+<td>Instant</td>
+</tr>
+<tr>
+<td>Rare <code>★★★</code></td>
+<td>3px <code>foil</code> frame + pause</td>
+<td>400ms hold</td>
+</tr>
+<tr>
+<td>Holo</td>
+<td>Final-product treatment, not generated in the PoC</td>
+<td>Reserved</td>
+</tr>
+</tbody>
+</table>
+<p>The PoC uses Common, Uncommon, and Rare only. Holo remains a future <strong>treatment</strong>, not a card type.</p>
+<p><strong>Legendary / Aces is a timed promotion set, not a daily-pack rarity.</strong> Its compact rarity mark is <code>P</code>. Its PoC treatment may add an event-date seal and longer portrait hold, but it keeps the shared frame, source receipt, and asterisk disclosure. Promotion cards never enter the base 49-card odds.</p>
+<hr />
+<h2>Pack-open beats</h2>
+<ol>
+<li><strong>Tear</strong> — pack art splits (400ms)</li>
+<li><strong>Spread</strong> — six cards fan (500ms)</li>
+<li><strong>Empty card</strong> — one persistent card frame arrives without identity</li>
+<li><strong>Hook + receipt below</strong> — exact quote or labeled fact, review status, source label, date-status, and inspect link</li>
+<li><strong>Party + ballot letters</strong> — the first identity clue fills the same card</li>
+<li><strong>Portrait</strong> — illustrated art walks into the same frame; rare/holo ceremony escalates here</li>
+<li><strong>Identity</strong> — name and finished treatment complete the card</li>
+<li><strong>Full context</strong> — flip to body, “why it matters,” source, and editorial role</li>
+</ol>
+<p>Each information beat has a short minimum hold, then waits for the player. Reduced motion removes movement but preserves this order. If we skip the receipt or full context, we shipped a casino with campaign copy.</p>
+<p>The signature visual is <strong>the line before the name</strong>: quote typography appears to emerge through the ballot slit. Other motion stays subordinate.</p>
+<p>An advocacy disclosure strip remains visible above the app. Party color remains an 8px pip even when editorial selection supports a disclosed agenda.</p>
+<hr />
+<h2>Mobile layout (390 × 844)</h2>
+<ul>
+<li>Safe areas: 16px side, 24px top, 32px bottom for the primary button</li>
+<li>One primary action per screen (<code>Open today’s pack</code> / <code>Flip</code> / <code>To binder</code>)</li>
+<li>Binder: 3-column card thumbs, missing slots as dashed wells</li>
+<li>Progress: civic teal bar, label <code>12 / 28 · 43%</code></li>
+<li>Race row (roadmap UI): <code>12 people at 80% of Likud</code> — no prize amount in Alpha</li>
+</ul>
+<hr />
+<h2>Weavy / Figma Weave (when we make more art)</h2>
+<p>Still cards, pack wrappers, <strong>rip / foil loops</strong>, UI chrome, and <strong>promo videos</strong> can be generated in Weavy (now Figma Weave), then ripped into the client.</p>
+<ul>
+<li><a href="https://www.figma.com/solutions/figma-ai-tool-weave/">Figma Weave</a> · canvas at weave.figma.com</li>
+<li>Node docs: <a href="https://help.weavy.ai">help.weavy.ai</a></li>
+</ul>
+<p>Generate, then cut. Civic objects and letters — not scraped press faces. Agent UI craft: <code>.cursor/skills/frontend-design</code> + <code>.cursor/skills/kalpi-frontend</code>. Tokens below still win.</p>
+<hr />
+<h2>Alpha art strategy</h2>
+<ul>
+<li>Lock the frame first.</li>
+<li>Finish <strong>3 hero cards</strong> for demo and deck (SYS-C-02 Kalpi, SYS-C-03 Threshold holo, LIK-S-01 מחל).</li>
+<li>Remaining 25 cards use the same frame + letter/silhouette placeholders.</li>
+<li>Final product needs a rights pass on likeness and marks.</li>
+</ul>
+<h3>Why the art is AI (say this in the jam)</h3>
+<p>This community often prefers hand-made art. We are not arguing that AI is “better.” We are arguing the <strong>deadline</strong>.</p>
+<ul>
+<li>Election day is <strong>27 October 2026</strong>. Lists file <strong>9 September</strong>. Virality needs weeks, not a launch the week of the vote.</li>
+<li>A full set is every list × members × symbols × platforms. Hand-painting that before October is how you miss the election.</li>
+<li>The civic goal is turnout and an informed slip. Every day without a daily pack is a day the 18–24 habit does not start.</li>
+<li>So AI-generated illustration — civic objects, letters, silhouettes, not scraped press faces — is the way we ship on time. If a later partner funds an artist pass, we take it. We do not wait.</li>
+</ul>
+<p>Same stance as the product: <strong>המטרה מקדשת את האמצעים.</strong> The jam usually wants lore and hand-made heart. We want 18–24 at the kalpi. The empty means are on purpose.</p>
+<hr />
+<h2>Accessibility</h2>
+<ul>
+<li>Contrast: ink on paper, not grey on cream.</li>
+<li>Flip control is a button, not a hover-only gesture.</li>
+<li>Reduced-motion: skip shimmer, keep the flip.</li>
+<li>RTL: pip and rarity swap sides; body still starts from the start edge.</li>
+</ul></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="10-sources.html">← Sources</a><a class="btn primary" id="next-page" href="12-hero-cards.html">Next: Hero cards →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

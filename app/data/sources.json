@@ -1,0 +1,51 @@
+[
+  {
+    "id": "basic-law-knesset",
+    "label": "Basic Law: The Knesset, article 4",
+    "url": "https://main.knesset.gov.il/en/about/lexicon/pages/electoralsystem.aspx",
+    "kind": "official",
+    "status": "approved"
+  },
+  {
+    "id": "idi-seats",
+    "label": "IDI · How Votes Become Knesset Seats",
+    "url": "https://en.idi.org.il/articles/63750",
+    "kind": "research",
+    "status": "approved"
+  },
+  {
+    "id": "cec-calendar",
+    "label": "Central Elections Committee calendar",
+    "url": "https://www.gov.il/en/departments/units/central-elections-committee/govil-landing-page",
+    "kind": "official",
+    "status": "fact-checked"
+  },
+  {
+    "id": "party-lists-2026",
+    "label": "2026 party-list compilation with linked reporting",
+    "url": "https://en.wikipedia.org/wiki/Party_lists_for_the_2026_Israeli_legislative_election",
+    "kind": "index",
+    "status": "fact-checked"
+  },
+  {
+    "id": "party-platforms-2026",
+    "label": "Israel 2026 party-platform tracker",
+    "url": "https://israel2026.co.il/en/parties.html",
+    "kind": "tracker",
+    "status": "fact-checked"
+  },
+  {
+    "id": "democrats-primary-2026",
+    "label": "Democrats 2026 primary reporting",
+    "url": "https://en.wikipedia.org/wiki/Party_lists_for_the_2026_Israeli_legislative_election",
+    "kind": "reporting-index",
+    "status": "draft"
+  },
+  {
+    "id": "raam-list-2026",
+    "label": "Ra'am 2026 list reporting",
+    "url": "https://en.wikipedia.org/wiki/Party_lists_for_the_2026_Israeli_legislative_election",
+    "kind": "reporting-index",
+    "status": "draft"
+  }
+]

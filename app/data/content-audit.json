@@ -1,0 +1,155 @@
+{
+  "generatedAt": "2026-09-09T13:43:01.409Z",
+  "totalCards": 28,
+  "byContentStatus": {
+    "approved": 3,
+    "fact-checked": 15,
+    "draft": 10
+  },
+  "byReleasePhase": {
+    "orientation": 19,
+    "issue-contrast": 6,
+    "decision-readiness": 3
+  },
+  "byEditorialRole": {
+    "orientation": 28
+  },
+  "directQuoteWalkouts": [
+    "LIK-Q-01",
+    "DEM-Q-01",
+    "RAM-Q-01"
+  ],
+  "blockedCards": [
+    {
+      "id": "SYS-C-04",
+      "status": "fact-checked",
+      "sourceId": "cec-calendar"
+    },
+    {
+      "id": "LIK-M-01",
+      "status": "fact-checked",
+      "sourceId": "party-lists-2026"
+    },
+    {
+      "id": "LIK-M-02",
+      "status": "fact-checked",
+      "sourceId": "party-lists-2026"
+    },
+    {
+      "id": "LIK-M-03",
+      "status": "fact-checked",
+      "sourceId": "party-lists-2026"
+    },
+    {
+      "id": "LIK-M-04",
+      "status": "fact-checked",
+      "sourceId": "party-lists-2026"
+    },
+    {
+      "id": "LIK-S-01",
+      "status": "fact-checked",
+      "sourceId": "party-lists-2026"
+    },
+    {
+      "id": "LIK-P-01",
+      "status": "fact-checked",
+      "sourceId": "party-platforms-2026"
+    },
+    {
+      "id": "LIK-P-02",
+      "status": "fact-checked",
+      "sourceId": "party-platforms-2026"
+    },
+    {
+      "id": "LIK-Q-01",
+      "status": "fact-checked",
+      "sourceId": "party-platforms-2026"
+    },
+    {
+      "id": "DEM-M-01",
+      "status": "draft",
+      "sourceId": "democrats-primary-2026"
+    },
+    {
+      "id": "DEM-M-02",
+      "status": "draft",
+      "sourceId": "democrats-primary-2026"
+    },
+    {
+      "id": "DEM-M-03",
+      "status": "draft",
+      "sourceId": "democrats-primary-2026"
+    },
+    {
+      "id": "DEM-M-04",
+      "status": "draft",
+      "sourceId": "democrats-primary-2026"
+    },
+    {
+      "id": "DEM-S-01",
+      "status": "fact-checked",
+      "sourceId": "party-lists-2026"
+    },
+    {
+      "id": "DEM-P-01",
+      "status": "fact-checked",
+      "sourceId": "party-platforms-2026"
+    },
+    {
+      "id": "DEM-P-02",
+      "status": "fact-checked",
+      "sourceId": "party-platforms-2026"
+    },
+    {
+      "id": "DEM-Q-01",
+      "status": "draft",
+      "sourceId": "democrats-primary-2026"
+    },
+    {
+      "id": "RAM-M-01",
+      "status": "draft",
+      "sourceId": "raam-list-2026"
+    },
+    {
+      "id": "RAM-M-02",
+      "status": "draft",
+      "sourceId": "raam-list-2026"
+    },
+    {
+      "id": "RAM-M-03",
+      "status": "draft",
+      "sourceId": "raam-list-2026"
+    },
+    {
+      "id": "RAM-M-04",
+      "status": "draft",
+      "sourceId": "raam-list-2026"
+    },
+    {
+      "id": "RAM-S-01",
+      "status": "fact-checked",
+      "sourceId": "party-lists-2026"
+    },
+    {
+      "id": "RAM-P-01",
+      "status": "fact-checked",
+      "sourceId": "party-platforms-2026"
+    },
+    {
+      "id": "RAM-P-02",
+      "status": "fact-checked",
+      "sourceId": "party-platforms-2026"
+    },
+    {
+      "id": "RAM-Q-01",
+      "status": "draft",
+      "sourceId": "raam-list-2026"
+    }
+  ],
+  "blockedSequences": [
+    {
+      "id": "paired-receipts",
+      "reason": "Supported agenda and same-issue source pair are not configured."
+    }
+  ]
+}

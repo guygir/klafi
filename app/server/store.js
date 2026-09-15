@@ -1,0 +1,356 @@
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
+
+export const EMPTY_STATE = {
+  version: 5,
+  sessions: {},
+  analytics: { events: [] },
+  trades: [],
+  factions: {},
+};
+
+export function normalizeState(value = {}) {
+  const state = { ...structuredClone(EMPTY_STATE), ...value };
+  state.version = 5;
+  state.sessions ??= {};
+  state.analytics ??= { events: [] };
+  state.analytics.events ??= [];
+  state.trades ??= [];
+  state.factions ??= {};
+  for (const [token, session] of Object.entries(state.sessions)) {
+    session.eventCounts ??= {};
+    session.factionId ??= null;
+    session.tradeCount ??= 0;
+    session.eventClaims ??= {};
+    session.favorites ??= [];
+    session.displayName ??= `שחקן ${token.slice(0, 4)}`;
+    session.idleAnchorAt ??= null;
+    session.nextIdleAt ??= null;
+    session.unseenPulls ??= [];
+    session.idleDuplicateStreak ??= 0;
+    session.idlePullCount ??= 0;
+    session.highestRank ??= 1;
+    session.claimedRankRewards ??= [];
+    session.pendingRankRewards ??= [];
+  }
+  return state;
+}
+
+function cardStars(card) {
+  if (card?.rarity === "Promotion") return 5;
+  if (card?.rarity?.startsWith("Rare")) return 3;
+  if (card?.rarity?.startsWith("Uncommon")) return 2;
+  return 1;
+}
+
+export class JsonStore {
+  constructor(filePath) {
+    this.filePath = filePath;
+    this.state = structuredClone(EMPTY_STATE);
+    this.queue = Promise.resolve();
+  }
+
+  async init() {
+    await mkdir(path.dirname(this.filePath), { recursive: true });
+    try {
+      this.state = normalizeState(JSON.parse(await readFile(this.filePath, "utf8")));
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+      await this.persist();
+    }
+  }
+
+  async persist() {
+    const temporary = `${this.filePath}.${process.pid}.${randomUUID()}.tmp`;
+    await writeFile(temporary, `${JSON.stringify(this.state, null, 2)}\n`);
+    await rename(temporary, this.filePath);
+  }
+
+  async health() {
+    return { ok: true, backend: "json" };
+  }
+
+  async createSession(now) {
+    return this.exclusive(async () => {
+      const token = randomUUID();
+      this.state.sessions[token] = {
+        displayName: `שחקן ${token.slice(0, 4)}`,
+        createdAt: now,
+        nextDailyAt: null,
+        dryPacks: 0,
+        packCount: 0,
+        inventory: {},
+        instances: [],
+        packs: [],
+        eventCounts: {},
+        factionId: null,
+        tradeCount: 0,
+        eventClaims: {},
+        favorites: [],
+        idleAnchorAt: now,
+        nextIdleAt: null,
+        unseenPulls: [],
+        idleDuplicateStreak: 0,
+        idlePullCount: 0,
+        highestRank: 1,
+        claimedRankRewards: [],
+        pendingRankRewards: [],
+      };
+      await this.persist();
+      return token;
+    });
+  }
+
+  getSession(token) {
+    return token ? this.state.sessions[token] ?? null : null;
+  }
+
+  async withSession(token, mutator) {
+    return this.exclusive(async () => {
+      const session = this.getSession(token);
+      if (!session) return null;
+      const result = await mutator(session);
+      await this.persist();
+      return result;
+    });
+  }
+
+  async recordEvent(event) {
+    return this.exclusive(async () => {
+      this.state.analytics.events.push(event);
+      this.state.analytics.events = this.state.analytics.events.slice(-5000);
+      const session = this.getSession(event.sessionToken);
+      if (session) session.eventCounts[event.type] = (session.eventCounts[event.type] ?? 0) + 1;
+      await this.persist();
+      return event;
+    });
+  }
+
+  activitySummary() {
+    const counts = {};
+    const sessions = new Set();
+    for (const event of this.state.analytics.events) {
+      counts[event.type] = (counts[event.type] ?? 0) + 1;
+      if (event.sessionToken) sessions.add(event.sessionToken);
+    }
+    return {
+      counts,
+      participatingSessions: sessions.size,
+      fixture: false,
+      label: "Recorded PoC activity",
+    };
+  }
+
+  async setFaction(token, factionId) {
+    return this.exclusive(async () => {
+      const session = this.getSession(token);
+      if (!session) return null;
+      session.factionId = factionId;
+      await this.persist();
+      return factionId;
+    });
+  }
+
+  async setDisplayName(token, displayName) {
+    return this.exclusive(async () => {
+      const session = this.getSession(token);
+      if (!session) return null;
+      session.displayName = displayName;
+      await this.persist();
+      return displayName;
+    });
+  }
+
+  async incrementFaction(factionId, amount = 1) {
+    if (!factionId) return;
+    return this.exclusive(async () => {
+      this.state.factions[factionId] = (this.state.factions[factionId] ?? 0) + amount;
+      await this.persist();
+    });
+  }
+
+  async createTrade({ sessionToken, offeredCardId, wantedCardId, createdAt, expiresAt }) {
+    return this.exclusive(async () => {
+      const session = this.getSession(sessionToken);
+      if (!session || !session.inventory[offeredCardId] || offeredCardId === wantedCardId) return null;
+      const reservedCopies = this.state.trades.filter((trade) =>
+        trade.ownerToken === sessionToken
+        && trade.offeredCardId === offeredCardId
+        && trade.status === "open"
+        && Date.parse(trade.expiresAt || 0) > Date.parse(createdAt)).length;
+      if ((session.inventory[offeredCardId] ?? 0) <= reservedCopies) return null;
+      const trade = {
+        tradeId: randomUUID(),
+        ownerToken: sessionToken,
+        offeredCardId,
+        wantedCardId,
+        status: "open",
+        createdAt,
+        expiresAt,
+        acceptedAt: null,
+        acceptedBy: null,
+      };
+      this.state.trades.unshift(trade);
+      this.state.trades = this.state.trades.slice(0, 100);
+      await this.persist();
+      return trade;
+    });
+  }
+
+  async simulateTradeMatch({ tradeId, sessionToken, acceptedAt, finish }) {
+    return this.exclusive(async () => {
+      const trade = this.state.trades.find((candidate) => candidate.tradeId === tradeId);
+      const session = this.getSession(sessionToken);
+      if (!trade || trade.ownerToken !== sessionToken || trade.status !== "open" || !session?.inventory[trade.offeredCardId]) {
+        return null;
+      }
+      session.inventory[trade.offeredCardId] -= 1;
+      if (!session.inventory[trade.offeredCardId]) delete session.inventory[trade.offeredCardId];
+      session.inventory[trade.wantedCardId] = (session.inventory[trade.wantedCardId] ?? 0) + 1;
+      session.instances.push({
+        instanceId: randomUUID(),
+        cardId: trade.wantedCardId,
+        finish,
+        pulledAt: acceptedAt,
+        isNew: session.inventory[trade.wantedCardId] === 1,
+        acquiredBy: "simulated-trade",
+      });
+      session.tradeCount += 1;
+      trade.status = "matched-demo";
+      trade.acceptedAt = acceptedAt;
+      trade.acceptedBy = "simulated-matching-user";
+      await this.persist();
+      return trade;
+    });
+  }
+
+  async acceptTrade({ tradeId, sessionToken, acceptedAt, offeredFinish, wantedFinish }) {
+    return this.exclusive(async () => {
+      const trade = this.state.trades.find((candidate) => candidate.tradeId === tradeId);
+      const owner = trade ? this.getSession(trade.ownerToken) : null;
+      const accepter = this.getSession(sessionToken);
+      if (!trade || trade.status !== "open" || Date.parse(trade.expiresAt || 0) <= Date.parse(acceptedAt) || trade.ownerToken === sessionToken
+        || !owner?.inventory[trade.offeredCardId] || !accepter?.inventory[trade.wantedCardId]) {
+        return null;
+      }
+      const transfer = (from, to, cardId, finish, acquiredBy) => {
+        from.inventory[cardId] -= 1;
+        if (!from.inventory[cardId]) delete from.inventory[cardId];
+        const isNew = !to.inventory[cardId];
+        to.inventory[cardId] = (to.inventory[cardId] ?? 0) + 1;
+        to.instances.push({
+          instanceId: randomUUID(),
+          cardId,
+          finish,
+          pulledAt: acceptedAt,
+          isNew,
+          acquiredBy,
+        });
+      };
+      transfer(owner, accepter, trade.offeredCardId, offeredFinish, "trade-accepted");
+      transfer(accepter, owner, trade.wantedCardId, wantedFinish, "trade-accepted");
+      owner.tradeCount += 1;
+      accepter.tradeCount += 1;
+      trade.status = "accepted";
+      trade.acceptedAt = acceptedAt;
+      trade.acceptedBy = sessionToken;
+      await this.persist();
+      return trade;
+    });
+  }
+
+  async expireTrades(currentAt) {
+    return this.exclusive(async () => {
+      let changed = false;
+      for (const trade of this.state.trades) {
+        if (trade.status === "open" && Date.parse(trade.expiresAt || 0) <= Date.parse(currentAt)) {
+          trade.status = "expired";
+          changed = true;
+        }
+      }
+      if (changed) await this.persist();
+      return changed;
+    });
+  }
+
+  async cancelTrade({ tradeId, sessionToken, cancelledAt }) {
+    return this.exclusive(async () => {
+      const trade = this.state.trades.find((candidate) => candidate.tradeId === tradeId);
+      if (!trade || trade.ownerToken !== sessionToken || trade.status !== "open") return null;
+      trade.status = "cancelled";
+      trade.cancelledAt = cancelledAt;
+      await this.persist();
+      return trade;
+    });
+  }
+
+  listTrades(token) {
+    const current = this.getSession(token);
+    return this.state.trades
+      .filter((trade) => trade.status === "open" || trade.ownerToken === token || trade.acceptedBy === token)
+      .map(({ ownerToken, acceptedBy, ...trade }) => {
+        const owner = this.getSession(ownerToken);
+        return {
+          ...trade,
+          ownerLabel: owner?.displayName || "שחקן קְלָפִי",
+          ownedByCurrent: ownerToken === token,
+          acceptedByCurrent: acceptedBy === token,
+          canAccept: trade.status === "open"
+            && ownerToken !== token
+            && Boolean(owner?.inventory[trade.offeredCardId])
+            && Boolean(current?.inventory[trade.wantedCardId]),
+        };
+      });
+  }
+
+  leaderboardSummary(cards = [], now = Date.now(), currentToken = null) {
+    const cardsById = new Map(cards.map((card) => [card.id, card]));
+    const allCollectors = Object.entries(this.state.sessions)
+      .map(([token, session]) => ({
+        label: session.displayName,
+        ownedUnique: Object.keys(session.inventory).length,
+        stars: Object.keys(session.inventory).reduce((sum, cardId) => sum + cardStars(cardsById.get(cardId)), 0),
+        packs: session.idlePullCount ?? session.packCount,
+        current: token === currentToken,
+      }))
+      .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
+      .map((entry, index) => ({ ...entry, rank: index + 1 }));
+    const collectors = allCollectors.slice(0, 8);
+    const currentCollector = allCollectors.find(({ current }) => current);
+    if (currentCollector && !collectors.some(({ current }) => current)) collectors.splice(7, 1, currentCollector);
+    const factions = Object.entries(this.state.factions)
+      .map(([partyId, packs]) => ({ partyId, packs }))
+      .sort((a, b) => b.packs - a.packs);
+    const partyIds = [...new Set(cards.filter(({ set }) => set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set))].sort();
+    const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
+    const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+    const targetPartyId = partyIds.length ? partyIds[dayNumber % partyIds.length] : null;
+    const allDailyParty = Object.entries(this.state.sessions)
+      .map(([token, session]) => ({
+        label: session.displayName,
+        current: token === currentToken,
+        cards: session.packs
+          .filter((pack) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(pack.pulledAt)) === day)
+          .flatMap((pack) => pack.cards)
+          .filter((instance) => cardsById.get(instance.cardId)?.set === targetPartyId).length,
+      }))
+      .sort((a, b) => b.cards - a.cards);
+    const dailyParty = allDailyParty.slice(0, 8);
+    const currentDaily = allDailyParty.find(({ current }) => current);
+    if (currentDaily && !dailyParty.some(({ current }) => current)) dailyParty.splice(7, 1, currentDaily);
+    return {
+      collectors,
+      factions,
+      dailyChallenge: { day, targetPartyId, leaders: dailyParty },
+      fixture: false,
+      label: "Real activity in this local PoC",
+    };
+  }
+
+  exclusive(operation) {
+    const next = this.queue.then(operation, operation);
+    this.queue = next.catch(() => {});
+    return next;
+  }
+}

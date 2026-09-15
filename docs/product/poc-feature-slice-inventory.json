@@ -1,0 +1,1523 @@
+{
+  "generatedAt": "2026-09-09T17:10:00+03:00",
+  "scoringScale": {
+    "difficulty": "1 = small PoC slice with existing server/client patterns; 5 = new systems, legal/rights gates, or cross-player state at scale",
+    "effortHours": "Rough engineering + minimal design for a PoC-quality slice, not full production polish",
+    "recommendation": "now = prove/extend current PoC wedge; next = after tomorrow-return/share funnel is credible; later = post-election or expansion; no = rejected/inverted/superseded mechanic"
+  },
+  "features": [
+    {
+      "id": "daily-pack-24h",
+      "name": "Daily free pack (24h cooldown)",
+      "category": "core-loop",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/app.js"
+      ],
+      "userValue": "Creates the daily habit clock that turns civic learning into a collectible ritual.",
+      "pocSlice": "Real: POST /api/packs/daily enforces one pack per guest session per 24h with visible countdown on Today.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["server-authoritative-rng", "guest-session"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Boundary: no account binding across devices yet; cooldown is per guest token only."
+    },
+    {
+      "id": "six-card-pack-composition",
+      "name": "Six-card pack with printed 3C/2U/1R mix",
+      "category": "core-loop",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/pack-engine.js"
+      ],
+      "userValue": "Fast session (~90s) with transparent odds and a rare pause moment.",
+      "pocSlice": "Real: pack-engine validates tier counts on every daily and demo pack.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["server-authoritative-rng"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. PoC v2 removed Holo from base pool; expanded catalog uses ★/★★/★★★ only."
+    },
+    {
+      "id": "pack-rip-ritual",
+      "name": "Pack tear → spread reveal ritual",
+      "category": "core-loop",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/digital-collectibles.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/visual-system.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/app.js"
+      ],
+      "userValue": "Variable-reward anticipation that makes the open feel physical and shareable.",
+      "pocSlice": "Real: tear/spread phases in Today pack flow using pack-wrapper art.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Remaining boundary: Weavy-generated rip/foil loops are briefed but not required in runtime."
+    },
+    {
+      "id": "fifa-walkout-reveal",
+      "name": "FIFA-style staged walkout (quote before identity)",
+      "category": "core-loop",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/visual-system.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/app.js"
+      ],
+      "userValue": "Buys reading time so players encounter the sourced hook before the politician’s name.",
+      "pocSlice": "Real: blank → quote → party/slot → portrait → identity → back; tap-advanced with ~900ms minimum holds.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["card-front-back-flip"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Expanded Studio adds configurable delay replay; deep-link and gift URLs reopen the same walkout."
+    },
+    {
+      "id": "card-front-back-flip",
+      "name": "Card front + contextual back (40–60 word lesson)",
+      "category": "content",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/card-bible.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md"
+      ],
+      "userValue": "The card back is the civic payload: role, fact, why-it-matters, inspectable source.",
+      "pocSlice": "Real: every catalog card renders body, whyItMatters, source label/URL in pack dialog and binder.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "medium",
+      "recommendation": "now",
+      "notes": "Shipped. Boundary: many cards remain draft/blocked pending direct-source review per editorial pipeline."
+    },
+    {
+      "id": "pity-new-card-guarantee",
+      "name": "Pity: guarantee new-to-player card after 3 dry packs",
+      "category": "core-loop",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/pack-engine.js"
+      ],
+      "userValue": "Prevents casino-style knowledge withholding; keeps collection progress trustworthy.",
+      "pocSlice": "Real: server pity counter persisted per session; covered by npm test suite.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["server-authoritative-rng"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Demo/guided packs intentionally bypass pity and inventory."
+    },
+    {
+      "id": "binder-collection-wells",
+      "name": "Binder with set filters, completion %, dashed missing wells",
+      "category": "core-loop",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/wireframes.html",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/app.js"
+      ],
+      "userValue": "Visible chase: players see what they still need to learn across parties and commons.",
+      "pocSlice": "Real: Binder tab filters ALL + each set; shows owned count, duplicate count, full backs.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["server-authoritative-rng"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped for expanded 191-card catalog. Boundary: no animated slot-in from pack yet."
+    },
+    {
+      "id": "server-authoritative-rng",
+      "name": "Server-authoritative pulls and inventory",
+      "category": "platform",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/implementation/part-2.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/store.js"
+      ],
+      "userValue": "Players cannot spoof rare pulls; aggregate activity stays credible.",
+      "pocSlice": "Real: client never POSTs card ids as truth; inventory/pity/cooldown live in app/.runtime state.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped baseline. Boundary: single-node JSON persistence, not multi-tenant production DB."
+    },
+    {
+      "id": "guest-session",
+      "name": "Guest / one-tap session (no social graph)",
+      "category": "platform",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/app.js"
+      ],
+      "userValue": "Zero-friction first open for referral traffic and fearful supporters.",
+      "pocSlice": "Real: POST /api/session issues bearer token; state isolated per token.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Boundary: bind-later one-tap account not built; clearing browser loses collection."
+    },
+    {
+      "id": "commons-in-every-other-pack",
+      "name": "System literacy: commons card in every other pack",
+      "category": "core-loop",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/pack-engine.js"
+      ],
+      "userValue": "Ensures booth mechanics and institutions are not optional side content.",
+      "pocSlice": "Real: pack-engine alternates SYS inclusion based on pack count.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["six-card-pack-composition"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Works with 4 shared commons in all catalog generations."
+    },
+    {
+      "id": "prefer-incomplete-set-packs",
+      "name": "Pack bias toward incomplete party sets",
+      "category": "core-loop",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/pack-engine.js"
+      ],
+      "userValue": "Reduces duplicate frustration and keeps the binder chase moving.",
+      "pocSlice": "Real: pack-engine prefers cards from sets with missing slots when possible.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["binder-collection-wells"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Still allows duplicates for future trading bait."
+    },
+    {
+      "id": "duplicate-marking-reread",
+      "name": "Duplicate pulls marked; back still readable",
+      "category": "core-loop",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/app.js"
+      ],
+      "userValue": "Duplicates remain learning opportunities and future social currency.",
+      "pocSlice": "Real: inventory counts >1 enable Offer duplicate in binder and Growth trade desk.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["binder-collection-wells"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Boundary: no automatic dupe exchange UI beyond preview links."
+    },
+    {
+      "id": "debug-pack-reset",
+      "name": "Debug daily pack reset (Studio/header)",
+      "category": "platform",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-implementation-review.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/app.js"
+      ],
+      "userValue": "Enables repeatable demos and facilitator testing without waiting 24h.",
+      "pocSlice": "Real: POST /api/debug/reset-pack when KALPI_DEBUG≠0; hidden when KALPI_DEBUG=0.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["daily-pack-24h"],
+      "integrityRisk": "medium",
+      "recommendation": "now",
+      "notes": "Shipped for local/review. Must stay disabled in any public production deploy."
+    },
+    {
+      "id": "guided-six-card-demo",
+      "name": "Deterministic six-card guided demo mode",
+      "category": "content",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/poc-demo-sequence.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-implementation-review.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/app.js"
+      ],
+      "userValue": "Reproducible pitch/review journey without RNG breaking the narrative.",
+      "pocSlice": "Real: Studio → Run six-card guided demo loads demo-pack.json; mode=demo skips inventory/events.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["fifa-walkout-reveal"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Alpha fallback demo preserved in demo-pack-alpha-2026-09-09.json. Does not emit funnel metrics."
+    },
+    {
+      "id": "disclosed-advocacy-edition",
+      "name": "Disclosed advocacy edition (sponsor/faction/agenda)",
+      "category": "content",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/data/advocacy.json",
+        "/Users/guygirmonsky/Cursor_Elections/docs/intake/incoming/round-1-strategy/answers.md"
+      ],
+      "userValue": "Honest editorial framing for quiet supporters and opposing-side testers.",
+      "pocSlice": "Real: advocacy strip + dialog; Studio shows sponsor, supported faction, agenda, release phases.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "medium",
+      "recommendation": "now",
+      "notes": "Shipped config (Guy Girmonsky / current opposition / Kalpi supports Change). Supersedes neutral-referee positioning."
+    },
+    {
+      "id": "editorial-release-phases",
+      "name": "Editorial program phases: orientation → issue contrast → decision readiness",
+      "category": "content",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/editorial-pipeline.md"
+      ],
+      "userValue": "Same rules for everyone while the argumentative depth can sharpen over time.",
+      "pocSlice": "Real: releasePhase metadata on cards; advocacy dialog lists phases; editorial-sequences.json demonstrates chains.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 4,
+      "dependencies": ["disclosed-advocacy-edition"],
+      "integrityRisk": "medium",
+      "recommendation": "now",
+      "notes": "Infrastructure shipped; not all 191 cards yet sequenced into full phase rollout."
+    },
+    {
+      "id": "card-source-provenance",
+      "name": "Exact quote/source/context/rationale registry",
+      "category": "integrity-trust",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/editorial-pipeline.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/data/sources.json",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md"
+      ],
+      "userValue": "Inspectable receipts beat feed clips; underpins trust for undecided and opposing players.",
+      "pocSlice": "Real: walkout shows source cue; backs link inspectable URLs; Studio card review desk + content-audit.json.",
+      "difficulty": 3,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "high",
+      "recommendation": "now",
+      "notes": "Shipped schema and review surfaces. Boundary: many cards still draft; human approval gate remains open."
+    },
+    {
+      "id": "quote-classification-asterisk",
+      "name": "Quote classification (exact / shortened / attributed-paraphrase) with asterisk disclosure",
+      "category": "integrity-trust",
+      "priorStatus": "designed-partial",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/poc-set-structure-v2.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/expanded-poc-content-studio-review.md"
+      ],
+      "userValue": "Prevents adapted display lines from being mistaken for verbatim quotes.",
+      "pocSlice": "Partial: build:studio normalizes classifications; runtime backs and Weave prompts carry disclosure; Legendary candidate requires visible asterisk.",
+      "difficulty": 2,
+      "effortHoursLow": 4,
+      "effortHoursHigh": 12,
+      "dependencies": ["card-source-provenance"],
+      "integrityRisk": "high",
+      "recommendation": "now",
+      "notes": "Remaining boundary: uniform on-card footnote rendering for all shortened/paraphrase cards in client walkout."
+    },
+    {
+      "id": "editorial-content-patterns",
+      "name": "14 editorial content patterns (quote/context, paired receipts, ladder, etc.)",
+      "category": "content",
+      "priorStatus": "designed-partial",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/data/editorial-sequences.json"
+      ],
+      "userValue": "Scales partisan advocacy without hiding that selection is editorial.",
+      "pocSlice": "Partial: 3 sequences prototype-ready in editorial-sequences.json; paired-receipts schema-demo blocked.",
+      "difficulty": 4,
+      "effortHoursLow": 40,
+      "effortHoursHigh": 120,
+      "dependencies": ["card-source-provenance", "editorial-release-phases"],
+      "integrityRisk": "high",
+      "recommendation": "next",
+      "notes": "PoC demonstrates quote→context→consistency, paired receipts schema, commons→uncommon→rare. Full 14-pattern programming is content ops, not client UI."
+    },
+    {
+      "id": "expanded-14-party-catalog",
+      "name": "Expanded PoC catalog (14 lists, 51 politicians, 191 playable cards)",
+      "category": "content",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/expanded-poc-content-studio-review.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/review/expanded-content-audit.md"
+      ],
+      "userValue": "Map-wide coverage beyond 3-party Alpha; supports real collection depth before election.",
+      "pocSlice": "Real: cards.json active catalog; daily/demo packs draw from 191 cards; blank sparse slots omitted from packs.",
+      "difficulty": 4,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["content-studio-editing", "card-source-provenance"],
+      "integrityRisk": "high",
+      "recommendation": "now",
+      "notes": "Shipped playable catalog. Blockers: CEC letter confirmation, missing art keys, secondary sources, likeness review."
+    },
+    {
+      "id": "content-studio-editing",
+      "name": "Content Studio (per-card edit, Weave metadata, save endpoint)",
+      "category": "content",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/expanded-poc-content-studio-review.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/app.js"
+      ],
+      "userValue": "Human-in-the-loop editorial velocity without breaking runtime schema.",
+      "pocSlice": "Real: Studio tab with party register, politician editor, save to studio-content.json when debug enabled.",
+      "difficulty": 3,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["card-source-provenance"],
+      "integrityRisk": "medium",
+      "recommendation": "now",
+      "notes": "Shipped for local editorial workflow. Boundary: mutation disabled when KALPI_DEBUG=0; rebuild pipeline required to activate catalog."
+    },
+    {
+      "id": "weave-portrait-pipeline",
+      "name": "Weave/Figma portrait generation pipeline",
+      "category": "content",
+      "priorStatus": "designed-partial",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/weave-production-brief.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/visual-system.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/implementation/part-2.md"
+      ],
+      "userValue": "Distinct poses per quote triplet while keeping disclosed editorial illustration (not press photos).",
+      "pocSlice": "Partial: Studio stores model/version/seed/prompt exports; selected framed reveal replays LIK M01 Q01–Q03; many art keys still missing.",
+      "difficulty": 4,
+      "effortHoursLow": 24,
+      "effortHoursHigh": 80,
+      "dependencies": ["content-studio-editing"],
+      "integrityRisk": "medium",
+      "recommendation": "next",
+      "notes": "Remaining boundary: license recording per identity image, export metadata, and full-catalog art completion."
+    },
+    {
+      "id": "poc-v2-49-card-structure",
+      "name": "PoC v2 49-card structure (symbol + 2 manifesto + 4×3 quote triplets + 4 commons)",
+      "category": "content",
+      "priorStatus": "locked-not-primary",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/poc-set-structure-v2.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "Denser quote learning per top-four member with equal party skeleton.",
+      "pocSlice": "Pseudo: structure spec + platform excerpt research; superseded in active build by expanded 14-party catalog but informs triplet ID pattern.",
+      "difficulty": 4,
+      "effortHoursLow": 80,
+      "effortHoursHigh": 200,
+      "dependencies": ["card-source-provenance", "weave-portrait-pipeline"],
+      "integrityRisk": "high",
+      "recommendation": "later",
+      "notes": "Was locked to replace 28-card Alpha; expanded studio became the active content pass. Mechanics preserved via member Q01/Q02/Q03 triplets in expanded catalog."
+    },
+    {
+      "id": "poc-28-card-alpha-set",
+      "name": "Original 28-card Alpha (3 parties × 8 + 4 commons)",
+      "category": "content",
+      "priorStatus": "superseded",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/poc-cards.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/data/cards-alpha-28-2026-09-09.json"
+      ],
+      "userValue": "Quality benchmark and reproducible six-card demo narrative.",
+      "pocSlice": "Real fallback snapshot retained; guided demo sequence documented in poc-demo-sequence.md.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "low",
+      "recommendation": "later",
+      "notes": "Superseded by expanded catalog but kept for regression and pitch demo blockers visibility."
+    },
+    {
+      "id": "share-pull-artifact",
+      "name": "Share-the-pull vertical social artifact",
+      "category": "social-growth",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/bootstrap-playbook.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/app.js"
+      ],
+      "userValue": "Quote-first shareable that carries hook, identity, source cue, advocacy disclosure, deep link.",
+      "pocSlice": "Real: Share this pull button generates artifact and records share_created event.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["fifa-walkout-reveal", "disclosed-advocacy-edition"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Remaining boundary: native 9:16 / 4:5 / WhatsApp export presets are playbook guidance, not automated export."
+    },
+    {
+      "id": "exact-card-deep-link",
+      "name": "Exact-card deep link (?card=ID)",
+      "category": "social-growth",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/bootstrap-playbook.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/app.js"
+      ],
+      "userValue": "Referral traffic lands on the shared walkout, not a generic homepage.",
+      "pocSlice": "Real: ?card=DEM-Q-01 opens shared walkout on load; records referral_opened when paired with ref.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["fifa-walkout-reveal"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Boundary: preview does not grant ownership of the card."
+    },
+    {
+      "id": "creator-referral-links",
+      "name": "Creator/referral links (?ref=creator-code)",
+      "category": "social-growth",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/bootstrap-playbook.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/poc-test-kit.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/app.js"
+      ],
+      "userValue": "Attributes seed cohort opens without inferring player ideology.",
+      "pocSlice": "Real: Growth creator-link builder + sessionStorage deduped referral_opened events.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["bootstrap-funnel-analytics"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped locally. Boundary: no creator dashboard; counts are aggregate event totals only."
+    },
+    {
+      "id": "duplicate-gift-trade-preview",
+      "name": "Duplicate gift/trade preview links (no ownership transfer)",
+      "category": "social-growth",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-implementation-review.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/bootstrap-playbook.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/app.js"
+      ],
+      "userValue": "Social intent after dupes: receiver sees full walkout; sender demonstrates generosity.",
+      "pocSlice": "Real: Growth trade desk always shows flow; with 2+ copies uses real card; ?gift=ID URL; gift_preview_created event.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["duplicate-marking-reread", "exact-card-deep-link"],
+      "integrityRisk": "medium",
+      "recommendation": "now",
+      "notes": "Shipped preview. Explicit next boundary: server-side ownership transfer, consent, abuse rules."
+    },
+    {
+      "id": "real-gifting-trading-ownership",
+      "name": "Real gifting/trading with inventory transfer",
+      "category": "social-growth",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/bootstrap-playbook.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "Knowledge moves socially; friends complete sets and discuss backs.",
+      "pocSlice": "Pseudo: preview links and UI copy describe intent; no POST transfer endpoint exists.",
+      "difficulty": 4,
+      "effortHoursLow": 24,
+      "effortHoursHigh": 60,
+      "dependencies": ["duplicate-gift-trade-preview", "guest-session", "bootstrap-funnel-analytics"],
+      "integrityRisk": "high",
+      "recommendation": "later",
+      "notes": "Docs: build only after funnel works and abuse/consent/ownership rules specified. Inverts Pocket IAP-gated trading."
+    },
+    {
+      "id": "bootstrap-funnel-analytics",
+      "name": "Bootstrap funnel event ledger",
+      "category": "social-growth",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/bootstrap-playbook.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/poc-test-kit.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/server/store.js"
+      ],
+      "userValue": "Diagnose first broken conversion in seed test instead of vanity reach.",
+      "pocSlice": "Real: server records pack_opened, back_completed, source_opened, binder_reached, share_created, referral_opened, gift_preview_created; Growth shows aggregate counts.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["server-authoritative-rng"],
+      "integrityRisk": "medium",
+      "recommendation": "now",
+      "notes": "Shipped for PoC learning thresholds (70% backs, 30% share, 20% referral session, etc.). Demo mode excluded by design."
+    },
+    {
+      "id": "influencer-creator-seeding",
+      "name": "Influencer/creator seeding program (10 creators, 3 formats, 60–90m window)",
+      "category": "social-growth",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/bootstrap-playbook.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/presentation/pitch-d/speaker-notes.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "Creates first credible pocket of activity without fabricating totals.",
+      "pocSlice": "Pseudo: playbook + referral links + share artifact; no in-app creator roster or scheduling.",
+      "difficulty": 3,
+      "effortHoursLow": 16,
+      "effortHoursHigh": 40,
+      "dependencies": ["share-pull-artifact", "creator-referral-links", "bootstrap-funnel-analytics"],
+      "integrityRisk": "medium",
+      "recommendation": "now",
+      "notes": "Operational growth mechanic, not code. Formats: vertical walkout, WhatsApp still, guess-the-quote prompt."
+    },
+    {
+      "id": "timed-swipe-quiz-extra-pack",
+      "name": "Timed swipe quiz on owned cards → extra pack",
+      "category": "progression",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/quiz.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/wireframes.html"
+      ],
+      "userValue": "Binds bonus progression to literacy, not spend or faction pledge.",
+      "pocSlice": "Pseudo: wireframe 09 Quiz popup + 10-item bank in quiz.md; no server grading endpoint.",
+      "difficulty": 3,
+      "effortHoursLow": 16,
+      "effortHoursHigh": 32,
+      "dependencies": ["binder-collection-wells", "server-authoritative-rng", "daily-pack-24h"],
+      "integrityRisk": "medium",
+      "recommendation": "next",
+      "notes": "Rules: 5:00 timer, two swipes (role + list), owned cards only, one successful extra pack/day, dismissible. poc-test-kit says do not add until core funnel validated."
+    },
+    {
+      "id": "in-game-faction-tally",
+      "name": "In-game faction board (pack opens add +1 to chosen list tally)",
+      "category": "progression",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/wireframes.html",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/alignment.md"
+      ],
+      "userValue": "Tribal spectator sport without outing the player; not a poll and not a currency.",
+      "pocSlice": "Pseudo: wireframe 08 Faction tally mock only; no pledge UI or server tally state.",
+      "difficulty": 3,
+      "effortHoursLow": 12,
+      "effortHoursHigh": 24,
+      "dependencies": ["server-authoritative-rng", "anonymous-faction-pledge"],
+      "integrityRisk": "medium",
+      "recommendation": "later",
+      "notes": "Docs warn: if bootstrap fails, fix artifact/walkout before adding faction board. No extra pack reward for pledging."
+    },
+    {
+      "id": "anonymous-faction-pledge",
+      "name": "Anonymous faction pledge (tile not name)",
+      "category": "progression",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/alignment.md"
+      ],
+      "userValue": "Lets fearful supporters participate without public identity exposure.",
+      "pocSlice": "Pseudo: specified in GDD; no UI to pick/switch list.",
+      "difficulty": 2,
+      "effortHoursLow": 6,
+      "effortHoursHigh": 12,
+      "dependencies": ["in-game-faction-tally"],
+      "integrityRisk": "low",
+      "recommendation": "later",
+      "notes": "Switch anytime or after 24h per GDD. Unfactioned players still play; packs do not tally."
+    },
+    {
+      "id": "real-life-volunteer-pack-bundle",
+      "name": "Verified real-life party/kalpi volunteer → big pack bundle",
+      "category": "progression",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/implementation/part-2.md"
+      ],
+      "userValue": "Rewards the highest-quality civic learning path—being in the room.",
+      "pocSlice": "Pseudo: reward taxonomy only; no verification flow or bundle grant.",
+      "difficulty": 5,
+      "effortHoursLow": 40,
+      "effortHoursHigh": 120,
+      "dependencies": ["server-authoritative-rng", "guest-session"],
+      "integrityRisk": "high",
+      "recommendation": "later",
+      "notes": "Distinct from in-game faction; does not auto-join faction. Requires trusted verifier and abuse controls."
+    },
+    {
+      "id": "opinion-survey-party-pack",
+      "name": "Opinion survey → matched PARTY pack (list-only politicians)",
+      "category": "progression",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/alignment.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "Gives undecided players a reason to open one set deeply without Kalpi endorsing a list.",
+      "pocSlice": "Pseudo: GDD flow documented; survey items + published scoring table still open per idea-inventory.",
+      "difficulty": 4,
+      "effortHoursLow": 24,
+      "effortHoursHigh": 56,
+      "dependencies": ["published-survey-scoring-table", "server-authoritative-rng"],
+      "integrityRisk": "high",
+      "recommendation": "later",
+      "notes": "Server-side match only; never hides other binder sets; does not auto-faction."
+    },
+    {
+      "id": "published-survey-scoring-table",
+      "name": "Published neutrality-pass survey items + scoring table",
+      "category": "integrity-trust",
+      "priorStatus": "open",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/presentation/pitch-d/speaker-notes.md"
+      ],
+      "userValue": "Makes party-pack matching inspectable and same-for-every-player.",
+      "pocSlice": "Pseudo: checklist item only; no public table file in repo.",
+      "difficulty": 3,
+      "effortHoursLow": 8,
+      "effortHoursHigh": 24,
+      "dependencies": [],
+      "integrityRisk": "high",
+      "recommendation": "next",
+      "notes": "Blocks opinion-survey-party-pack. Must avoid 'who is a bro' opinion items."
+    },
+    {
+      "id": "login-literacy-streaks",
+      "name": "Login / literacy streaks (3 / 7 days) → cosmetic stamp or guaranteed uncommon",
+      "category": "progression",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/alignment.md"
+      ],
+      "userValue": "Keeps the week alive between election milestones.",
+      "pocSlice": "Pseudo: listed in reward taxonomy; no streak counters in server state.",
+      "difficulty": 3,
+      "effortHoursLow": 12,
+      "effortHoursHigh": 24,
+      "dependencies": ["guest-session", "daily-pack-24h"],
+      "integrityRisk": "medium",
+      "recommendation": "later",
+      "notes": "Could combine login streak with quiz-completion streak per alignment table."
+    },
+    {
+      "id": "commons-complete-badge",
+      "name": "Commons-complete shareable binder badge",
+      "category": "progression",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/presentation/pitch-d/speaker-notes.md"
+      ],
+      "userValue": "Virality for system literacy, not only 'my party' completion.",
+      "pocSlice": "Pseudo: reward taxonomy + pitch; binder tracks commons ownership but no badge artifact.",
+      "difficulty": 2,
+      "effortHoursLow": 8,
+      "effortHoursHigh": 16,
+      "dependencies": ["binder-collection-wells", "share-pull-artifact"],
+      "integrityRisk": "low",
+      "recommendation": "next",
+      "notes": "Natural follow-on once share funnel works; pairs with SYS set completion detection."
+    },
+    {
+      "id": "share-stamps-cosmetic",
+      "name": "Share stamps / cosmetic binder flair for sharing",
+      "category": "progression",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/alignment.md"
+      ],
+      "userValue": "Optional social recognition without pay or mandatory sharing.",
+      "pocSlice": "Pseudo: share image ships; stamp collection not implemented.",
+      "difficulty": 2,
+      "effortHoursLow": 6,
+      "effortHoursHigh": 12,
+      "dependencies": ["share-pull-artifact"],
+      "integrityRisk": "low",
+      "recommendation": "later",
+      "notes": "Distinct from commons-complete badge; lighter cosmetic layer."
+    },
+    {
+      "id": "set-completion-race",
+      "name": "Set completion race (who finished first)",
+      "category": "live-ops",
+      "priorStatus": "designed-mock",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/wireframes.html",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/visual-system.md"
+      ],
+      "userValue": "Spectator sport inverted from outbid.lol—nobody pays to rank.",
+      "pocSlice": "Pseudo: wireframe 05 Race shows fake rows ('12 people at 80% of Likud'); no server race state.",
+      "difficulty": 3,
+      "effortHoursLow": 16,
+      "effortHoursHigh": 32,
+      "dependencies": ["binder-collection-wells", "server-authoritative-rng"],
+      "integrityRisk": "medium",
+      "recommendation": "later",
+      "notes": "Alpha explicitly uses fake social proof only. Real board needs authenticated completion timestamps."
+    },
+    {
+      "id": "country-collection-leaderboard",
+      "name": "Country board (collection % / literacy streak)",
+      "category": "live-ops",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "Global chase visibility for completion and literacy without paywall.",
+      "pocSlice": "Pseudo: GDD leaderboard section; not implemented.",
+      "difficulty": 4,
+      "effortHoursLow": 24,
+      "effortHoursHigh": 48,
+      "dependencies": ["binder-collection-wells", "login-literacy-streaks"],
+      "integrityRisk": "medium",
+      "recommendation": "later",
+      "notes": "Part of public boards trio with faction tally and set race."
+    },
+    {
+      "id": "groups-leagues-leaderboard",
+      "name": "Groups / leagues (campus, unit, friends rooms)",
+      "category": "live-ops",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "Same rules in a smaller room for organic cohort competition.",
+      "pocSlice": "Pseudo: roadmap mention only.",
+      "difficulty": 4,
+      "effortHoursLow": 32,
+      "effortHoursHigh": 64,
+      "dependencies": ["country-collection-leaderboard", "guest-session"],
+      "integrityRisk": "medium",
+      "recommendation": "later",
+      "notes": "Requires invite codes or group ids; privacy rules for minors/soldiers TBD."
+    },
+    {
+      "id": "ten-k-nis-first-set-prize",
+      "name": "10,000 NIS first-set completion prize",
+      "category": "live-ops",
+      "priorStatus": "parked-pitch",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "High spectacle motivator for set race (if legal).",
+      "pocSlice": "Pseudo: pitch concept only; wireframes explicitly omit prize amount.",
+      "difficulty": 5,
+      "effortHoursLow": 40,
+      "effortHoursHigh": 120,
+      "dependencies": ["set-completion-race", "legal-review"],
+      "integrityRisk": "high",
+      "recommendation": "no",
+      "notes": "Parked pending legal review. Alpha must not ship a lottery."
+    },
+    {
+      "id": "list-slot-numbered-holos",
+      "name": "List-slot numbered holos (slot 1 = 1/1; slot n = 1/n…n/n)",
+      "category": "collectibles",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/card-bible.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/presentation/pitch-d/speaker-notes.md"
+      ],
+      "userValue": "Teaches official list order; chase copy that's neutral across parties.",
+      "pocSlice": "Pseudo: GDD + card-bible specify server-assigned numbers; expanded PoC uses ★ tiers without slot numbering.",
+      "difficulty": 4,
+      "effortHoursLow": 20,
+      "effortHoursHigh": 40,
+      "dependencies": ["server-authoritative-rng", "holo-visual-treatment"],
+      "integrityRisk": "medium",
+      "recommendation": "later",
+      "notes": "Inverts Life TCG population print runs. Only member cards numbered; not symbols/platforms/quotes/commons."
+    },
+    {
+      "id": "daily-holo-date-stamp",
+      "name": "Daily holo date stamp on pulls (#1 of 1 today / DD.MM.YYYY caption)",
+      "category": "collectibles",
+      "priorStatus": "designed-removed-from-poc-v2",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/card-bible.md"
+      ],
+      "userValue": "Screenshot-friendly time-based spectacle separate from slot numbering.",
+      "pocSlice": "Pseudo: hero-cards/wireframes show date on holo; active catalog has no holo tier in base pool.",
+      "difficulty": 3,
+      "effortHoursLow": 12,
+      "effortHoursHigh": 24,
+      "dependencies": ["server-authoritative-rng", "holo-visual-treatment"],
+      "integrityRisk": "low",
+      "recommendation": "later",
+      "notes": "Explicitly removed from PoC v2 base pool; final product treatment per idea-inventory."
+    },
+    {
+      "id": "holo-visual-treatment",
+      "name": "Holo animated foil treatment on rarest reveals",
+      "category": "collectibles",
+      "priorStatus": "final-product-backlog",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/visual-system.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/weave-production-brief.md"
+      ],
+      "userValue": "Spectacle pause that drives shares without changing factual depth.",
+      "pocSlice": "Pseudo: CSS holo gradient token exists; PoC uses ★★★ rare pause only, not full holo layer.",
+      "difficulty": 3,
+      "effortHoursLow": 12,
+      "effortHoursHigh": 28,
+      "dependencies": ["weave-portrait-pipeline"],
+      "integrityRisk": "low",
+      "recommendation": "later",
+      "notes": "Weave brief: holo only on final identity beat of Rare/Holo cards."
+    },
+    {
+      "id": "legendary-aces-promotion-set",
+      "name": "Legendary / Aces timed promotion cards (event-window grants)",
+      "category": "live-ops",
+      "priorStatus": "poc-extension-backlog",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/poc-set-structure-v2.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/visual-system.md"
+      ],
+      "userValue": "News-moment collectibles with exact/adapted quote discipline and permanent binder record.",
+      "pocSlice": "Pseudo: first candidate Netanyahu Oct-7 asterisk quote documented; Studio Netanyahu Q01–Q03 triplet demos reveal; no event window/grant API.",
+      "difficulty": 5,
+      "effortHoursLow": 32,
+      "effortHoursHigh": 80,
+      "dependencies": ["card-source-provenance", "quote-classification-asterisk", "server-authoritative-rng"],
+      "integrityRisk": "high",
+      "recommendation": "later",
+      "notes": "Outside base 49/191-card random pool. Requires event id, active window, entitlement, debug/demo isolation."
+    },
+    {
+      "id": "eight-hour-pack-drops",
+      "name": "8-hour pack drops (live-ops cadence lever)",
+      "category": "live-ops",
+      "priorStatus": "parked",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/presentation/pitch-d/speaker-notes.md"
+      ],
+      "userValue": "More frequent return pings during peak campaign weeks.",
+      "pocSlice": "Pseudo: documented as 'more hostile' alternative to 24h; cooldown hard-coded to 24h.",
+      "difficulty": 2,
+      "effortHoursLow": 4,
+      "effortHoursHigh": 8,
+      "dependencies": ["daily-pack-24h"],
+      "integrityRisk": "medium",
+      "recommendation": "later",
+      "notes": "Parked—not Alpha default. Would need configurable ops flag and abuse rate limits."
+    },
+    {
+      "id": "cec-election-pulse",
+      "name": "CEC election pulse (filings, dates, letters—not polls)",
+      "category": "live-ops",
+      "priorStatus": "maybe-later",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/alignment.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/digital-collectibles.md"
+      ],
+      "userValue": "Anchors the game in real electoral calendar without horse-race widgets.",
+      "pocSlice": "Partial: SYS-C-04 and many symbol cards carry CEC dates/status; no live pulse chip UI.",
+      "difficulty": 2,
+      "effortHoursLow": 8,
+      "effortHoursHigh": 20,
+      "dependencies": ["card-source-provenance"],
+      "integrityRisk": "medium",
+      "recommendation": "next",
+      "notes": "Safe: '9 Sept lists filed' commons-style chip. Unsafe: live polls/seat projections in Kalpi voice."
+    },
+    {
+      "id": "post-filing-list-expansion",
+      "name": "New list expansion after 9 Sept CEC filing",
+      "category": "content",
+      "priorStatus": "locked-roadmap",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/card-bible.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/digital-collectibles.md"
+      ],
+      "userValue": "Collection never 'done'; mirrors Pocket expansion drops.",
+      "pocSlice": "Partial: expanded catalog already has 14 submitted lists with pending-CEC-review labels; placeholder 'more parties' in original Alpha binder copy.",
+      "difficulty": 4,
+      "effortHoursLow": 40,
+      "effortHoursHigh": 200,
+      "dependencies": ["content-studio-editing", "cec-election-pulse"],
+      "integrityRisk": "medium",
+      "recommendation": "next",
+      "notes": "Full vision: one set per CEC-submitted list with equal skeleton. Blocked on final letters/names confirmation."
+    },
+    {
+      "id": "prestige-legacy-set",
+      "name": "Prestige / Legacy expansion set (cross-era figures, archive labels)",
+      "category": "expansion-set",
+      "priorStatus": "final-product-backlog",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/intake/incoming/round-2-content/answers.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/poc-test-kit.md"
+      ],
+      "userValue": "Nostalgia/controversy depth beyond current slates (e.g., Oren Hazan showcase).",
+      "pocSlice": "Pseudo: round-2 answers draft Oren Hazan critical-contrast Prestige card; explicitly excluded from PoC test.",
+      "difficulty": 5,
+      "effortHoursLow": 80,
+      "effortHoursHigh": 200,
+      "dependencies": ["card-source-provenance", "weave-portrait-pipeline", "legal-review"],
+      "integrityRisk": "high",
+      "recommendation": "later",
+      "notes": "Must distinguish current vs former status. Not part of bootstrap/funnel proof."
+    },
+    {
+      "id": "imitations-satire-set",
+      "name": "Imitations / Satire set (Eretz Nehederet portrayals)",
+      "category": "expansion-set",
+      "priorStatus": "final-product-backlog",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/intake/incoming/round-2-content/answers.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/poc-asset-manifest.md"
+      ],
+      "userValue": "Cultural satire lane labeled as portrayals, not real quotes.",
+      "pocSlice": "Pseudo: round-2 Amsalem/Eretz Nehederet entry with rights TBD; asset manifest forbids show stills in PoC.",
+      "difficulty": 5,
+      "effortHoursLow": 80,
+      "effortHoursHigh": 200,
+      "dependencies": ["legal-review", "rights-review"],
+      "integrityRisk": "high",
+      "recommendation": "later",
+      "notes": "Rights-gated: episode/date/performer identification required. Explicitly not in PoC scope."
+    },
+    {
+      "id": "mouthpieces-set",
+      "name": "Mouthpieces / שופרות set (disclosed editorial amplification pattern)",
+      "category": "expansion-set",
+      "priorStatus": "final-product-backlog",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-implementation-review.md"
+      ],
+      "userValue": "Shows repeated message-defense pattern with dated sourced statements.",
+      "pocSlice": "Pseudo: rubric undefined; no cards in catalog.",
+      "difficulty": 5,
+      "effortHoursLow": 60,
+      "effortHoursHigh": 160,
+      "dependencies": ["card-source-provenance", "editorial-content-patterns"],
+      "integrityRisk": "high",
+      "recommendation": "later",
+      "notes": "Needs inclusion rubric, evidence threshold, cross-party scope before roster selection."
+    },
+    {
+      "id": "signed-special-variants",
+      "name": "Signed / special card variants",
+      "category": "collectibles",
+      "priorStatus": "parked",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "Premium collectibility without IAP if ever used for partners/promos.",
+      "pocSlice": "Pseudo: one-line parked mention in idea-inventory only.",
+      "difficulty": 4,
+      "effortHoursLow": 24,
+      "effortHoursHigh": 60,
+      "dependencies": ["legendary-aces-promotion-set"],
+      "integrityRisk": "medium",
+      "recommendation": "later",
+      "notes": "Parked from first brief; no design detail in repo."
+    },
+    {
+      "id": "correction-revision-trail",
+      "name": "Visible correction revision trail on cards",
+      "category": "integrity-trust",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/editorial-pipeline.md"
+      ],
+      "userValue": "Opposing-side testers can trust fixes after clipped-context reports.",
+      "pocSlice": "Pseudo: publication gate requires revision note on correction; no version history UI in client.",
+      "difficulty": 3,
+      "effortHoursLow": 12,
+      "effortHoursHigh": 28,
+      "dependencies": ["card-source-provenance", "content-studio-editing"],
+      "integrityRisk": "high",
+      "recommendation": "next",
+      "notes": "Stop condition: opposing-user reports reveal clipped context → correct, version, preserve trail."
+    },
+    {
+      "id": "user-reporting-corrections",
+      "name": "In-app user report / challenge flow for card context",
+      "category": "integrity-trust",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/presentation/poc-pitch-notes.md"
+      ],
+      "userValue": "Channels adversarial review into structured fixes instead of drop-off.",
+      "pocSlice": "Pseudo: measured via corrections/reports in audience-impact section; no report button in UI.",
+      "difficulty": 3,
+      "effortHoursLow": 12,
+      "effortHoursHigh": 32,
+      "dependencies": ["correction-revision-trail"],
+      "integrityRisk": "medium",
+      "recommendation": "next",
+      "notes": "Pair with source_opened analytics to prioritize high-trust fixes."
+    },
+    {
+      "id": "fake-activity-forbidden",
+      "name": "No fabricated momentum / demo-labeled fixtures only",
+      "category": "integrity-trust",
+      "priorStatus": "locked",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/bootstrap-playbook.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md"
+      ],
+      "userValue": "Quiet supporters trust aggregate activity counts.",
+      "pocSlice": "Real: Growth labels fixture state before duplicates; playbook forbids production-looking fake totals.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["bootstrap-funnel-analytics"],
+      "integrityRisk": "high",
+      "recommendation": "now",
+      "notes": "Policy feature. Trade desk explicitly shows offer flow even without dupes as labeled fixture."
+    },
+    {
+      "id": "transparent-printed-odds",
+      "name": "Transparent printed pack mix (no hidden loot-box odds)",
+      "category": "integrity-trust",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/digital-collectibles.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md"
+      ],
+      "userValue": "Civic trust: players see 3C/2U/1R target, not opaque gambling.",
+      "pocSlice": "Real: UI copy and server validation enforce composition on every pack open.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["six-card-pack-composition"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. Legendary/Aces explicitly excluded from ordinary daily odds when added."
+    },
+    {
+      "id": "hebrew-product-pass",
+      "name": "Hebrew UI/cards in shipped product",
+      "category": "platform",
+      "priorStatus": "locked-roadmap",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/card-bible.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/implementation/part-2.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/presentation/pitch-d/speaker-notes.md"
+      ],
+      "userValue": "Native language for target cohort and WhatsApp sharing.",
+      "pocSlice": "Partial: Hebrew titles on cards, Hebrew party/name in Studio reveal; English PoC backs and chrome.",
+      "difficulty": 3,
+      "effortHoursLow": 24,
+      "effortHoursHigh": 80,
+      "dependencies": ["card-source-provenance"],
+      "integrityRisk": "low",
+      "recommendation": "next",
+      "notes": "RTL-ready frames in visual-system. Full Hebrew pass blocked on content approval as much as i18n."
+    },
+    {
+      "id": "one-tap-account-binding",
+      "name": "One-tap account bind (persist collection across devices)",
+      "category": "platform",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/implementation/part-2.md"
+      ],
+      "userValue": "Referral returners keep binder; enables fair leaderboards and trading.",
+      "pocSlice": "Pseudo: guest token only; GDD mentions bind later.",
+      "difficulty": 4,
+      "effortHoursLow": 24,
+      "effortHoursHigh": 56,
+      "dependencies": ["guest-session", "server-authoritative-rng"],
+      "integrityRisk": "medium",
+      "recommendation": "later",
+      "notes": "Prerequisite for real leagues, set race integrity, and gifting."
+    },
+    {
+      "id": "reduced-motion-accessibility",
+      "name": "Reduced-motion path (preserve information order)",
+      "category": "platform",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/visual-system.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md"
+      ],
+      "userValue": "Walkout remains readable without motion sickness or skipped beats.",
+      "pocSlice": "Real: prefers-reduced-motion CSS; walkout order unchanged per feedback response.",
+      "difficulty": 2,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["fifa-walkout-reveal"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped baseline. Continue verifying on 390×844 devices."
+    },
+    {
+      "id": "weavy-promo-asset-pipeline",
+      "name": "Weavy/Figma Weave promo and motion asset pipeline",
+      "category": "platform",
+      "priorStatus": "locked-craft",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/implementation/part-2.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/weave-production-brief.md"
+      ],
+      "userValue": "Native TikTok/Reels seed assets and richer rip/foil without shipping raw prompts.",
+      "pocSlice": "Partial: production brief + member prompts; pack-wrapper.png in use; rip loops not embedded.",
+      "difficulty": 3,
+      "effortHoursLow": 16,
+      "effortHoursHigh": 40,
+      "dependencies": [],
+      "integrityRisk": "low",
+      "recommendation": "next",
+      "notes": "Supports influencer 3-format seeding. Cut/compress before client embed."
+    },
+    {
+      "id": "visual-system-tokens",
+      "name": "Paper/ink/foil visual system + 8px party pip",
+      "category": "platform",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/visual-system.md",
+        "/Users/guygirmonsky/Cursor_Elections/app/public/styles.css"
+      ],
+      "userValue": "Distinctive collectible civic look; no party gets full-bleed hero wash.",
+      "pocSlice": "Real: styles.css tokens, hero-cards.html reference, consistent frame in app.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Shipped. PoC v2 selected framed member front layout documented in visual-system."
+    },
+    {
+      "id": "neutral-referee-model",
+      "name": "Neutral referee / game never picks a side (original model)",
+      "category": "integrity-trust",
+      "priorStatus": "superseded",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/strategy/one-pager.md"
+      ],
+      "userValue": "Was intended for equal editorial weight across camps.",
+      "pocSlice": "Superseded by disclosed-advocacy-edition with fixed rules and common program.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "n/a",
+      "recommendation": "no",
+      "notes": "Superseded 6 Sept 2026 after pre-PoC feedback. Equal structure/rarity math largely retained."
+    },
+    {
+      "id": "live-polls-horse-race",
+      "name": "Live poll widgets / seat projections in Kalpi voice",
+      "category": "integrity-trust",
+      "priorStatus": "invert-rejected",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/digital-collectibles.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "Would chase horse-race engagement but violates neutrality and rewards large lists.",
+      "pocSlice": "Invert: pulse limited to CEC facts; polls only as labeled third-party strip if ever.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "high",
+      "recommendation": "no",
+      "notes": "Explicit invert. Default for jam: skip polls."
+    },
+    {
+      "id": "hourglasses-iap-shop",
+      "name": "Hourglasses / IAP shop / premium third pack",
+      "category": "integrity-trust",
+      "priorStatus": "invert-rejected",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/digital-collectibles.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md"
+      ],
+      "userValue": "Monetization levers from Pocket—explicitly refused.",
+      "pocSlice": "Invert: free forever; extra pack = quiz or verified volunteer only.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "n/a",
+      "recommendation": "no",
+      "notes": "Includes battles, battle passes, pay-to-complete— all non-goals."
+    },
+    {
+      "id": "poll-population-print-run",
+      "name": "Life TCG population-based holo print runs",
+      "category": "collectibles",
+      "priorStatus": "invert",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/digital-collectibles.md"
+      ],
+      "userValue": "Tying runs to polls/seats would pick winners implicitly.",
+      "pocSlice": "Invert: list-slot numbering instead of population or poll share.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "n/a",
+      "recommendation": "no",
+      "notes": "Distinct accepted mechanic: list-slot-numbered-holos."
+    },
+    {
+      "id": "client-trusted-inventory",
+      "name": "Client-authored inventory / offline pack sync",
+      "category": "integrity-trust",
+      "priorStatus": "reject",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/implementation/part-2.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md"
+      ],
+      "userValue": "Would enable cheating and destroy trust in activity boards.",
+      "pocSlice": "Rejected: server returns card ids; client cannot POST inventory as truth.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "high",
+      "recommendation": "no",
+      "notes": "Baseline security non-negotiable from day one."
+    },
+    {
+      "id": "pay-to-rank-outbid-board",
+      "name": "Pay-to-rank public ladder (outbid.lol model)",
+      "category": "social-growth",
+      "priorStatus": "invert",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/strategy/one-pager.md"
+      ],
+      "userValue": "Proves spectacle value; Kalpi inverts to free civic boards.",
+      "pocSlice": "Invert: set race/faction/country boards free; ten-k-nis prize parked not pay-to-rank.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "medium",
+      "recommendation": "no",
+      "notes": "Analog informs design; monetized rank explicitly rejected."
+    },
+    {
+      "id": "wonder-pick-paid-rewind",
+      "name": "Wonder Pick paid rewind (Pocket FOMO mechanic)",
+      "category": "social-growth",
+      "priorStatus": "invert",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/digital-collectibles.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/presentation/pitch-d/speaker-notes.md"
+      ],
+      "userValue": "Pocket monetization—Kalpi inverts to free friend pull viewing.",
+      "pocSlice": "Invert: see friend's pull via share/deep link for free; no paid reroll.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": ["share-pull-artifact"],
+      "integrityRisk": "low",
+      "recommendation": "no",
+      "notes": "Merged into share/deep-link growth loop."
+    },
+    {
+      "id": "pvp-battles-lore",
+      "name": "PvP battles / deck combat / lore seasons",
+      "category": "core-loop",
+      "priorStatus": "reject",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/strategy/one-pager.md"
+      ],
+      "userValue": "Not aligned with collect-only civic job.",
+      "pocSlice": "Rejected non-goals throughout GDD and one-pager.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "n/a",
+      "recommendation": "no",
+      "notes": "Includes invented factions/lore; real-list faction pledge is separate designed feature."
+    },
+    {
+      "id": "equal-8-card-skeleton",
+      "name": "Equal 8-card skeleton per list (4M+1S+2P+1Q)",
+      "category": "content",
+      "priorStatus": "superseded",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/card-bible.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md"
+      ],
+      "userValue": "Neutrality via equal structure across parties.",
+      "pocSlice": "Implemented in 28-card Alpha; superseded by v2/expanded triplet-heavy structures while keeping equal party weight principle.",
+      "difficulty": 3,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "low",
+      "recommendation": "later",
+      "notes": "Principle retained (equal visual/rarity weight); exact slot mix evolved."
+    },
+    {
+      "id": "card-type-taxonomy",
+      "name": "Card types: Member / Symbol / Platform / Quote / Commons",
+      "category": "content",
+      "priorStatus": "shipped-alpha",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/gdd-lite.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/card-bible.md"
+      ],
+      "userValue": "Teaches lists, institutions, platforms, and attributed speech distinctly.",
+      "pocSlice": "Real: type chip on every card; expanded catalog adds platform/policy cards per list metadata.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Platform cards in expanded build sourced from manifestos, constitution, or labeled policy statements."
+    },
+    {
+      "id": "rarity-as-depth-not-truth",
+      "name": "Rarity encodes argumentative depth, never factual reliability",
+      "category": "content",
+      "priorStatus": "locked",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/content/editorial-pipeline.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/design/visual-system.md"
+      ],
+      "userValue": "Prevents 'rare = more true' misread during advocacy programming.",
+      "pocSlice": "Real: editorial pipeline doc + walkout ceremony scales with ★★★; copy states rarity ≠ truth in pitch notes.",
+      "difficulty": 1,
+      "effortHoursLow": 0,
+      "effortHoursHigh": 0,
+      "dependencies": [],
+      "integrityRisk": "medium",
+      "recommendation": "now",
+      "notes": "Policy/mechanic hybrid. Legendary uses separate P mark as promotion tier."
+    },
+    {
+      "id": "tomorrow-return-primary-metric",
+      "name": "Primary PoC success metric: return tomorrow",
+      "category": "social-growth",
+      "priorStatus": "locked",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/intake/incoming/round-1-strategy/answers.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/poc-test-kit.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/poc-feedback-response.md"
+      ],
+      "userValue": "Validates habit loop before adding progression systems.",
+      "pocSlice": "Real: facilitator script and stop conditions documented; measured via playtest not automated D1 yet.",
+      "difficulty": 2,
+      "effortHoursLow": 4,
+      "effortHoursHigh": 12,
+      "dependencies": ["bootstrap-funnel-analytics", "daily-pack-24h"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Secondary metric: share a card. Automated D1/D7 in one-pager is deck metric, not shipped analytics."
+    },
+    {
+      "id": "coordinated-pack-opening-window",
+      "name": "Coordinated 60–90 minute seed pack opening window",
+      "category": "live-ops",
+      "priorStatus": "designed",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/growth/bootstrap-playbook.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/presentation/poc-pitch-notes.md"
+      ],
+      "userValue": "Makes activity feel alive without altering tallies or fabricating counts.",
+      "pocSlice": "Pseudo: operational playbook timing; no in-app event scheduler.",
+      "difficulty": 2,
+      "effortHoursLow": 2,
+      "effortHoursHigh": 8,
+      "dependencies": ["influencer-creator-seeding"],
+      "integrityRisk": "low",
+      "recommendation": "now",
+      "notes": "Live-ops promotion mechanic distinct from 8-hour drop cadence."
+    },
+    {
+      "id": "legal-review-prize-partners",
+      "name": "Legal review for cash prizes and partner-funded art",
+      "category": "platform",
+      "priorStatus": "open",
+      "sourceDocs": [
+        "/Users/guygirmonsky/Cursor_Elections/docs/product/idea-inventory.md",
+        "/Users/guygirmonsky/Cursor_Elections/docs/strategy/one-pager.md"
+      ],
+      "userValue": "Unblocks ten-k-nis prize and licensed likeness passes.",
+      "pocSlice": "Pseudo: open checklist in idea-inventory still-open section.",
+      "difficulty": 3,
+      "effortHoursLow": 8,
+      "effortHoursHigh": 40,
+      "dependencies": [],
+      "integrityRisk": "high",
+      "recommendation": "later",
+      "notes": "Not a player-facing mechanic but gates promotion/prize features."
+    }
+  ]
+}

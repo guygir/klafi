@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PoC feedback response · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">24 / 37 · PoC feedback response</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="23-pitch-d.html">← Pitch D — product deck</a><button class="btn mark" type="button" data-slug="24-poc-feedback">Mark reviewed</button><a class="btn primary" id="next-page" href="25-bootstrap.html">Next: Bootstrap playbook →</a></div>
+  </header>
+  <article><h1>PoC feedback response</h1>
+<p>This is the working answer to the feedback received after the short pre-PoC pitch. It governs the playable PoC first; the presentation is rebuilt later.</p>
+<h2>Product decision</h2>
+<p>Kalpi is now designed as a <strong>disclosed advocacy collectible sponsored by Guy Girmonsky</strong>. It supports political change through the <strong>current opposition</strong>. The game rules stay fixed. Every player sees the same editorial program. The program may begin with broad political orientation and become sharper over time:</p>
+<ol>
+<li><strong>Orientation</strong> — system, lists, people, ballot marks, representative quotations, how to inspect a source.</li>
+<li><strong>Issue contrast</strong> — agenda-aligned supporting cases and critical contrasts, grouped by issue and backed by inspectable receipts.</li>
+<li><strong>Decision readiness</strong> — list slots, ballot logistics, strongest positive evidence, strongest critical contrasts, and a clearly labeled closing case.</li>
+</ol>
+<p>The sponsor, supported faction, and supported agenda are configured in <code>app/data/advocacy.json</code>. Card-level source and rights gates remain independent release blockers.</p>
+<p>Non-negotiable factual rules:</p>
+<ul>
+<li>Exact quotation, named speaker, date/date-status, source, surrounding context, and selection rationale.</li>
+<li>Editorial conclusions are labeled as editorial analysis.</li>
+<li>Faction and activity totals are recorded events only. Never adjusted for appearance.</li>
+<li>Same odds, sources, rules, and release sequence for everyone.</li>
+<li>Corrections remain visible in a revision trail.</li>
+</ul>
+<hr />
+<h2>Feedback → PoC response</h2>
+<h3>1. FIFA-style slow walkout</h3>
+<p><strong>Comment:</strong> FIFA buys time before a player card walks out. Kalpi should buy time for reading.</p>
+<p><strong>Response:</strong> identity no longer appears first. The reveal is:</p>
+<p><code>existing art pack → empty card → quote/fact below the card + source cue → party name + ballot letters → portrait → person name → full context/back</code></p>
+<p>One persistent card frame fills in across the beats; it is not replaced by separate reveal panels. Each beat has a short minimum hold and then waits for the player. A rare has more ceremony, not less source depth. Reduced motion removes movement but preserves the information order.</p>
+<p><strong>Success:</strong> a player can repeat the quote/hook and identify its source cue before the name appears; the full back is reached for every revealed card.</p>
+<h3>2. Design and feel are crucial</h3>
+<p><strong>Comment:</strong> fun, intuitive, addictive, pleasant, easy on the eyes; animation must be crisp.</p>
+<p><strong>Response:</strong> one signature moment—the quotation emerges through the ballot slit. Everything else supports it: physical tear, typographic quote stage, faction stamp, silhouette, identity hit, foil, binder landing. Paper/ink/foil and the 8px party pip remain. Audio is off by default.</p>
+<p><strong>Success:</strong> no ambiguous primary action, 390×844 works without clipping, touch/keyboard/reduced-motion paths remain complete, and the main reveal remains smooth on a normal phone.</p>
+<h3>3. Bootstrap is the hard part</h3>
+<p><strong>Comment:</strong> virality is easy only after enough people exist. The product must create the first users.</p>
+<p><strong>PoC mechanics:</strong></p>
+<ul>
+<li>Every pull creates a vertical social artifact containing the hook, identity, source cue, advocacy disclosure, and exact-card deep link.</li>
+<li>Referral links reopen the shared card; creator codes show which seed cohort produced real opens.</li>
+<li>Duplicate → “offer as gift/trade” creates a shareable preview. Ownership does not transfer in this PoC.</li>
+<li>Aggregate events: pack opened, back completed, source opened, binder reached, share created, referral opened, gift preview created.</li>
+<li>Activity shown in the product is real PoC activity. Demo fixtures are labeled.</li>
+<li>The playable <strong>Growth</strong> surface exposes the duplicate offer, creator-link builder, funnel ledger, and full playbook instead of leaving these only in documentation.</li>
+</ul>
+<p><strong>Bootstrap playbook:</strong></p>
+<ol>
+<li>Recruit a small named creator cohort rather than “launch to everyone.”</li>
+<li>Give each creator one recognizable reveal format and referral link.</li>
+<li>Release the first coordinated pack opening in a short window, with WhatsApp-ready stills and TikTok/Reels vertical frames.</li>
+<li>Watch share creation → referral open → first pack → completed back. Fix the first broken conversion, not vanity reach.</li>
+<li>If sharing stalls, improve the artifact and walkout. If referral opens stall, improve creator framing. If first packs stall, shorten onboarding. Never fabricate momentum.</li>
+</ol>
+<p><strong>Initial PoC thresholds (learning targets, not forecasts):</strong></p>
+<ul>
+<li>10 seeded creators complete a pack.</li>
+<li>30% of seeded players create at least one share artifact.</li>
+<li>20% of referral visitors begin a guest session.</li>
+<li>70% of opened packs reach all six backs.</li>
+</ul>
+<h3>4. Content volume is large</h3>
+<p><strong>Comment:</strong> an agent alone may not produce creative, accurate, thorough political content at scale.</p>
+<p><strong>Response:</strong> split mechanical work from editorial responsibility.</p>
+<ul>
+<li>Agent: schema conversion, source registry, duplicate detection, word counts, missing-field checks, chronology checks, preview rendering.</li>
+<li>Human editor: quote selection, context, stance, fairness of the opposing steelman, rights, political accuracy, final approval.</li>
+<li>Status per item: <code>draft → fact-checked → approved</code>.</li>
+<li>The first 28 cards remain the quality benchmark. Expansion is blocked if a card lacks provenance or approval.</li>
+<li>The playable <strong>Studio</strong> surface exposes sponsor/faction configuration status, all 28 card/source statuses, the draft filter, source links, and walkout replay.</li>
+</ul>
+<h3>5. Agenda and quote programming</h3>
+<p>The supported agenda may choose favorable evidence for its side and critical evidence about another side. It must say that it is doing so. A real quote is still published with context and a source; an editorial selection is not presented as exhaustive balance.</p>
+<h4>Content patterns: broad first, sharper later</h4>
+<ol>
+<li><strong>Institution → implication → position</strong> — teach a rule, show its policy consequence, state the supported position.</li>
+<li><strong>Shared value → competing methods → editorial case</strong> — begin with common language, compare methods, argue for one.</li>
+<li><strong>Biography → responsibility → record</strong> — identity, office controlled, dated decisions.</li>
+<li><strong>Promise → action → consequence</strong> — initial promise, actual act/vote, sourced outcome.</li>
+<li><strong>Quote → context → consistency test</strong> — memorable line, full setting, comparison with another quote/action.</li>
+<li><strong>Same issue, paired receipts</strong> — strongest sourced supporting card and strongest critical card, parallel visual treatment.</li>
+<li><strong>Coalition consequence ladder</strong> — list mechanics, declared relationships, policies a seat can enable or block.</li>
+<li><strong>Commons → uncommon → rare argument</strong> — vocabulary, issue facts, synthesis/contrast. Rarity is depth, not truth.</li>
+<li><strong>Receipt chain</strong> — three independent source cards unlock a labeled editorial synthesis.</li>
+<li><strong>Timeline reveal</strong> — before office, decision, later result, then interpretation.</li>
+<li><strong>Steelman → response</strong> — strongest fair opposing case before the supported answer.</li>
+<li><strong>Claim → source challenge</strong> — predict speaker/event, then reveal context and editorial takeaway.</li>
+<li><strong>Official-event context drop</strong> — CEC fact first; implications only in later cards.</li>
+<li><strong>Closing ballot set</strong> — letters, first slots, logistics, positive receipts, critical contrasts, closing case.</li>
+</ol>
+<p>The PoC demonstrates three deeply: quote/context/consistency, paired receipts, and common/uncommon/rare.</p>
+<hr />
+<h2>Audience-impact analysis</h2>
+<p>These are research scenarios for one common experience, not hidden user profiles.</p>
+<p>Priority order for the PoC:</p>
+<ol>
+<li>Quiet or fearful supporters and undecided voters.</li>
+<li>Voters currently supporting the opposing side.</li>
+</ol>
+<p>The primary measurable action is <strong>return tomorrow</strong>. Creating a card share is the secondary distribution action.</p>
+<h3>Quiet or fearful supporter</h3>
+<p><strong>Experience:</strong> private binder; anonymous participation later; source-first share card that can be posted without publicly declaring a vote; real aggregate activity.</p>
+<p><strong>Expected effect:</strong> reduced sense of isolation, a lower-risk way to participate, and stronger return behavior when the public activity is credible.</p>
+<p><strong>Product benefit:</strong> activates a silent audience without exposing identities or inventing a lead.</p>
+<p><strong>Measure:</strong> next-day return, source-card shares, voluntary anonymous participation, and perceived-isolation survey.</p>
+<h3>Undecided voter</h3>
+<p><strong>Experience:</strong> system orientation before argument; issue-grouped supporting and critical receipts; original source and context always one action away.</p>
+<p><strong>Expected effect:</strong> replaces feed pressure with inspectable material, gives a reason to return, and makes uncertainty more specific (“I disagree on issue X”) rather than vague.</p>
+<p><strong>Product benefit:</strong> credibility, consideration time, source inspection, and sustained collection.</p>
+<p><strong>Measure:</strong> next-day return, backs completed, source opens, issue-set completion, card shares, and self-reported clarity.</p>
+<h3>Voter supporting the opposing side</h3>
+<p><strong>Experience:</strong> same rules and access; collect every faction; inspect and challenge critical cards; see corrections; strongest opposing argument is represented before the response.</p>
+<p><strong>Expected effect:</strong> enough trust to keep playing even when disagreeing; sharing through disagreement; useful adversarial review of weak context.</p>
+<p><strong>Product benefit:</strong> broader reach, stronger fact-checking, correction signals, and organic discussion.</p>
+<p><strong>Measure:</strong> retention after critical cards, source opens, corrections/reports, cross-faction completion, disagreement shares.</p>
+<h3>Stop conditions</h3>
+<ul>
+<li>Next-day return is weak: improve the unresolved collection/reward promise before adding another mechanic.</li>
+<li>Players return but do not share: improve the card artifact and social framing without weakening the sourced payload.</li>
+<li>Trust or source opens fall: add context; do not merely intensify rhetoric.</li>
+<li>Shares stall: improve the artifact/walkout; do not fabricate social proof.</li>
+<li>Opposing-user reports reveal clipped context: correct, version, and preserve the revision.</li>
+<li>Players mistake editorial analysis for a quote: redesign the label before publishing more cards.</li>
+</ul>
+<hr />
+<h2>Presentation later</h2>
+<p>The audience already heard the broad introduction. The later PoC presentation should be issue-response oriented:</p>
+<p><code>feedback heard → walkout demo → design proof → bootstrap mechanics + thresholds → audience impact → content operation → next test</code></p>
+<p>Detailed holding notes live in <code>docs/presentation/poc-pitch-notes.md</code>.</p></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="23-pitch-d.html">← Pitch D — product deck</a><a class="btn primary" id="next-page" href="25-bootstrap.html">Next: Bootstrap playbook →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>

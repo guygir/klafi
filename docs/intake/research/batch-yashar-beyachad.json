@@ -1,0 +1,909 @@
+{
+  "members": [
+    {
+      "partyId": "yashar",
+      "slot": 1,
+      "nameHe": "גדי איזנקוט",
+      "nameEn": "Gadi Eisenkot",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://he.wikipedia.org/wiki/%D7%92%D7%93%D7%99_%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98",
+        "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "הרעיון שעמד לנגד עיני היה ליצור חיבור ממלכתי, ציוני, ליברלי ומאחד ולקדם חינוך ממלכתי, כלכלה חופשית, חיזוק השירות הישראלי וערבות הדדית.",
+          "displayText": "ליצור חיבור ממלכתי, ציוני, ליברלי ומאחד",
+          "translation": "The idea before me was to create a statesmanlike, Zionist, liberal and unifying alliance, and advance public education, a free economy, stronger Israeli service and mutual responsibility.",
+          "quoteStatus": "shortened",
+          "speaker": "Gadi Eisenkot",
+          "date": "2025-07-01",
+          "sourceUrl": "https://www.davar1.co.il/613382/",
+          "sourceTitle": "איזנקוט במסיבת עיתונאים ראשונה מאז הפרישה מהכנסת: \"יכול למלא כל תפקיד במדינה\"",
+          "publisher": "Davar",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Opening statement at Eisenkot's first press conference after leaving the Knesset and National Unity.",
+          "sourceLocation": "Opening paragraphs and article deck; direct quotation from the press conference",
+          "discoverySources": [
+            "https://www.mako.co.il/news-politics/2025_q3/Article-5a36dfa3cb6c791027.htm"
+          ],
+          "editorialRole": "governing ethos",
+          "selectionRationale": "A compact, affirmative statement linking institutional competence, service and social solidarity.",
+          "scene": "A broad civic table joining education, service and economic renewal.",
+          "flavor": "A compass laid over a shared map.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "הסולידריות היא העתיד המשותף במדינת ישראל, וזה מה שצריך לבוא לידי ביטוי בממשלה הבאה.",
+          "displayText": "הסולידריות היא העתיד המשותף",
+          "translation": "Solidarity is the shared future of the State of Israel, and that is what must be reflected in the next government.",
+          "quoteStatus": "shortened",
+          "speaker": "Gadi Eisenkot",
+          "date": "2025",
+          "sourceUrl": "https://be7.co.il/18227",
+          "sourceTitle": "איזנקוט: \"כל מי שכיהן בשבעה באוקטובר צריך ללכת הביתה\"",
+          "publisher": "BeSheva Online",
+          "sourceType": "secondary",
+          "sourceQuality": "B",
+          "context": "Interview at a conference on unity, discussing a future coalition of Zionist, statesmanlike parties and the wartime 'alliance of those who serve.'",
+          "sourceLocation": "Interview answer beginning \"הלוואי, זו התקווה שלי\"",
+          "discoverySources": [
+            "https://be7.co.il/18227"
+          ],
+          "editorialRole": "unity",
+          "selectionRationale": "The strongest concise expression of Eisenkot's solidarity-centered political offer.",
+          "scene": "Reservists standing shoulder to shoulder become a civic bridge.",
+          "flavor": "Threads pulled into one strong cord.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "ממלכתיות היא בעיניי ערך קדוש שאמור לחבר בין כל חלקי החברה הישראלית. אנחנו יכולים להיות חלוקים ולהתווכח, אבל גם לחפש את מה שמחבר בינינו.",
+          "displayText": "אנחנו יכולים להתווכח — וגם לחפש את מה שמחבר",
+          "translation": "Statesmanship is, in my eyes, a sacred value meant to connect every part of Israeli society. We can disagree and argue, but also seek what connects us.",
+          "quoteStatus": "shortened",
+          "speaker": "Gadi Eisenkot",
+          "date": "2025",
+          "sourceUrl": "https://be7.co.il/18227",
+          "sourceTitle": "איזנקוט: \"כל מי שכיהן בשבעה באוקטובר צריך ללכת הביתה\"",
+          "publisher": "BeSheva Online",
+          "sourceType": "secondary",
+          "sourceQuality": "B",
+          "context": "Answer about strengthening state education and shared civic standards across Jewish, religious, Haredi and Arab schools.",
+          "sourceLocation": "Interview section on ממלכתיות בחינוך",
+          "discoverySources": [
+            "https://be7.co.il/18227"
+          ],
+          "editorialRole": "civic pluralism",
+          "selectionRationale": "Preserves disagreement while framing connection as an active democratic practice.",
+          "scene": "A classroom where argument and belonging share the same desk.",
+          "flavor": "A bridge sturdy enough for disagreement.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Three direct quotations qualified. The 2025 BeSheva article supplies direct interview wording but its visible search record did not expose a full ISO publication date, so only the verified year is recorded. Identity reference verifies the person, not reusable rights for every embedded photograph."
+    },
+    {
+      "partyId": "yashar",
+      "slot": 2,
+      "nameHe": "יורם כהן",
+      "nameEn": "Yoram Cohen",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://he.wikipedia.org/wiki/%D7%99%D7%95%D7%A8%D7%9D_%D7%9B%D7%94%D7%9F",
+        "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Uncommon",
+          "originalText": "ראוי שהממשלה והכנסת יבינו את גודל השעה והצורך הקריטי ויקדמו לאלתר חוק המחייב שותפות בנטל, מכל אזרחי ישראל, שיוצבו במסגרות צה״ליות ואזרחיות שיוגדרו על ידי המדינה.",
+          "displayText": "לקדם שותפות בנטל מכל אזרחי ישראל",
+          "translation": "The government and Knesset should grasp the urgency and critical need and immediately advance a law requiring every Israeli citizen to share the burden through military and civilian frameworks defined by the state.",
+          "quoteStatus": "shortened",
+          "speaker": "Yoram Cohen",
+          "date": "2024-03",
+          "sourceUrl": "https://www.makorrishon.co.il/news/748329/",
+          "sourceTitle": "יורם כהן בוועידת מקור ראשון: \"רעיון 'שתי מדינות לשני עמים' מסוכן ביטחונית ואסטרטגית\"",
+          "publisher": "Makor Rishon",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Prepared speech at the Makor Rishon–Tachlith conference in Sderot on Israel's security concept.",
+          "sourceLocation": "Paragraph under \"על שירות חרדים\"",
+          "discoverySources": [
+            "https://www.jdn.co.il/news/2163228/"
+          ],
+          "editorialRole": "shared service",
+          "selectionRationale": "Turns a security requirement into a universal civic compact with military and civilian paths.",
+          "scene": "Different uniforms serving beneath one civic roof.",
+          "flavor": "A duty shared becomes a country strengthened.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "יש למנות בכירים הראויים לעמוד בראש משרדי הממשלה. אנשים מקצועיים, בעלי רקע ניהולי מתאים והבנה בתחום עליו הם מופקדים ולהימנע מתרבות המקדמת מינוי בכירים על בסיס השתייכות פוליטית או נאמנות לשר הממונה בלבד.",
+          "displayText": "למנות אנשים מקצועיים, בעלי רקע ניהולי והבנה בתחום",
+          "translation": "Senior officials worthy of leading government ministries should be appointed: professionals with suitable management backgrounds and command of their fields, avoiding a culture of appointments based on political affiliation or loyalty to the minister alone.",
+          "quoteStatus": "shortened",
+          "speaker": "Yoram Cohen",
+          "date": "2024-03",
+          "sourceUrl": "https://www.makorrishon.co.il/news/748329/",
+          "sourceTitle": "יורם כהן בוועידת מקור ראשון: \"רעיון 'שתי מדינות לשני עמים' מסוכן ביטחונית ואסטרטגית\"",
+          "publisher": "Makor Rishon",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Same security-policy speech, in the section on reforming Israel's civil service.",
+          "sourceLocation": "Paragraph beginning \"כהן גם התייחס לשירות הציבורי\"",
+          "discoverySources": [
+            "https://www.datili.co.il/12388-2/"
+          ],
+          "editorialRole": "competence",
+          "selectionRationale": "A notably specific pro-professionalism statement from a former security-service chief.",
+          "scene": "A ministry desk staffed by expertise instead of patronage.",
+          "flavor": "The right tool in trained hands.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "יש לעשות מאמץ עילאי מצד כל הגורמים, להמשיך לעודד ולקדם את השיח המאחד שהתפתח בחודשים האחרונים, ולא לאפשר גלישה לקיטוב, לשיסוי ולשנאה.",
+          "displayText": "לעודד ולקדם את השיח המאחד",
+          "translation": "Every party must make a supreme effort to keep encouraging and advancing the unifying discourse that developed in recent months, and not allow a slide into polarization, incitement and hatred.",
+          "quoteStatus": "shortened",
+          "speaker": "Yoram Cohen",
+          "date": "2024-03",
+          "sourceUrl": "https://www.makorrishon.co.il/news/748329/",
+          "sourceTitle": "יורם כהן בוועידת מקור ראשון: \"רעיון 'שתי מדינות לשני עמים' מסוכן ביטחונית ואסטרטגית\"",
+          "publisher": "Makor Rishon",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Call for a broad, balanced government and responsible leadership after October 7.",
+          "sourceLocation": "Paragraph beginning \"על אחריות הממשלה\"",
+          "discoverySources": [
+            "https://www.jdn.co.il/news/2163228/"
+          ],
+          "editorialRole": "depolarization",
+          "selectionRationale": "Constructive rather than merely accusatory: it names the discourse to build and the slide to resist.",
+          "scene": "A public square turning away from the cliff edge.",
+          "flavor": "A steady hand on the national conversation.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "All three candidates come from one recorded conference speech reproduced at length by the hosting publisher; they are distinct policy propositions. Month is recorded because the fetched page did not expose a day in its readable body."
+    },
+    {
+      "partyId": "yashar",
+      "slot": 3,
+      "nameHe": "אורית פרקש-הכהן",
+      "nameEn": "Orit Farkash-Hacohen",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://he.wikipedia.org/wiki/%D7%90%D7%95%D7%A8%D7%99%D7%AA_%D7%A4%D7%A8%D7%A7%D7%A9-%D7%94%D7%9B%D7%94%D7%9F",
+        "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "על הממשלה ללחוץ על הגז ולהעלות את הבינה המלאכותית לראש סדר היום הלאומי, לתת לכך את העדיפויות והתקציבים הנדרשים, על מנת שמדינת ישראל תהיה מובילה עולמית בתחום.",
+          "displayText": "להעלות את הבינה המלאכותית לראש סדר היום הלאומי",
+          "translation": "The government must accelerate and put artificial intelligence at the top of the national agenda, giving it the priorities and budgets needed for Israel to become a world leader in the field.",
+          "quoteStatus": "shortened",
+          "speaker": "Orit Farkash-Hacohen",
+          "date": "2023-06-12",
+          "sourceUrl": "https://www.pc.co.il/featured/388111/",
+          "sourceTitle": "\"הממשלה צריכה להעלות את ה-AI לראש סדר העדיפויות הלאומי\"",
+          "publisher": "People and Computers",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Remarks while chairing a Knesset Science and Technology Committee discussion on AI's effects on society and government.",
+          "sourceLocation": "First quoted paragraph beneath the timestamp",
+          "discoverySources": [
+            "https://www.pc.co.il/featured/388111/"
+          ],
+          "editorialRole": "innovation policy",
+          "selectionRationale": "A crisp, future-facing policy priority with a clear national outcome.",
+          "scene": "A government control room switching on the next generation.",
+          "flavor": "A green light for responsible innovation.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "המסמך שם דגש על חדשנות אחראית. מדובר במסמך ראשון מסוגו בישראל, שמהווה מצפן ערכי ועסקי, לכל חברה, ארגון או גוף ממשלתי שעוסק בתחום.",
+          "displayText": "חדשנות אחראית — מצפן ערכי ועסקי",
+          "translation": "The document emphasized responsible innovation. It was the first of its kind in Israel, serving as an ethical and business compass for every company, organization or government body working in the field.",
+          "quoteStatus": "shortened",
+          "speaker": "Orit Farkash-Hacohen",
+          "date": "2025-02-10",
+          "sourceUrl": "https://www.pc.co.il/featured/424447/",
+          "sourceTitle": "\"הממשלה חייבת להחליף דיסקט לגבי ה-AI\"",
+          "publisher": "People and Computers",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "At a Van Leer Institute conference, describing the AI regulation and ethics policy issued under her ministry in 2022.",
+          "sourceLocation": "Paragraph discussing the October 2022 policy document",
+          "discoverySources": [
+            "https://www.pc.co.il/featured/424447/"
+          ],
+          "editorialRole": "responsible technology",
+          "selectionRationale": "Balances technological ambition with ethics and practical governance.",
+          "scene": "A compass beside a circuit board.",
+          "flavor": "Progress with guardrails.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "אנחנו רוצות להטמיע עוד שפה במערכת החינוך - שפת מחשב ואת מקצוע לימודי המחשב, כדי שלכל ילד במדינת ישראל תהיה הזדמנות שווה להחליט מה הוא רוצה ללמוד.",
+          "displayText": "שלכל ילד במדינת ישראל תהיה הזדמנות שווה",
+          "translation": "We want to introduce another language into the education system—the language of computers and computer studies—so every child in Israel has an equal opportunity to decide what to study.",
+          "quoteStatus": "shortened",
+          "speaker": "Orit Farkash-Hacohen",
+          "date": "2021",
+          "sourceUrl": "https://www.calcalist.co.il/conferences/article/skalpbnr00",
+          "sourceTitle": "\"ניקח את השגשוג של ההייטק ונהפוך אותו למנוף חברתי אמיתי\"",
+          "publisher": "Calcalist",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Conference remarks as innovation minister on turning high-tech growth into social mobility.",
+          "sourceLocation": "Quoted paragraph beginning \"בנוסף החזון שלי\"",
+          "discoverySources": [
+            "https://www.israeldefense.co.il/node/56123"
+          ],
+          "editorialRole": "equal opportunity",
+          "selectionRationale": "Connects technology policy to a tangible promise of opportunity for every child.",
+          "scene": "Children across the map opening the same digital textbook.",
+          "flavor": "A new language, shared opportunity.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Selected three direct, policy-rich quotations spanning national AI strategy, responsible regulation and educational mobility. The older education quote remains unusually aligned with her demonstrated portfolio and current competence framing."
+    },
+    {
+      "partyId": "yashar",
+      "slot": 4,
+      "nameHe": "עדי אלטשולר",
+      "nameEn": "Adi Altschuler",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://he.wikipedia.org/wiki/%D7%A2%D7%93%D7%99_%D7%90%D7%9C%D7%98%D7%A9%D7%95%D7%9C%D7%A8",
+        "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "לכבוד כל הילדים והילדות בישראל. כולכם ראויים לאהבה, לכולכם הזכות לחלום, לכולכם יש מקום בעולם. כולכם ילדים מיוחדים.",
+          "displayText": "כולכם ראויים לאהבה. לכולכם הזכות לחלום.",
+          "translation": "To all the children of Israel: you are all worthy of love, you all have the right to dream, you all have a place in the world. You are all special children.",
+          "quoteStatus": "shortened",
+          "speaker": "Adi Altschuler",
+          "date": "2020-04-28",
+          "sourceUrl": "https://news.walla.co.il/item/3354080",
+          "sourceTitle": "יום העצמאות ה-72: טקס המשואות נפתח ללא קהל ודגלנים",
+          "publisher": "Walla",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Her nationally broadcast torch-lighting dedication on Israel's 72nd Independence Day.",
+          "sourceLocation": "Paragraph transcribing Altschuler's torch dedication",
+          "discoverySources": [
+            "https://www.ynet.co.il/articles/0,7340,L-5722212,00.html",
+            "https://www.srugim.co.il/443112-%D7%A6%D7%A4%D7%95-%D7%A0%D7%90%D7%95%D7%9E%D7%94-%D7%94%D7%9E%D7%A8%D7%92%D7%A9-%D7%A9%D7%9C-%D7%A2%D7%93%D7%99-%D7%90%D7%9C%D7%98%D7%A9%D7%95%D7%9C%D7%A8-%D7%91%D7%98%D7%A7%D7%A1-%D7%94%D7%9E%D7%A9"
+          ],
+          "editorialRole": "inclusion",
+          "selectionRationale": "Her best-known direct statement of universal belonging and aspiration.",
+          "scene": "A torch illuminating a circle with room for every child.",
+          "flavor": "Every wing given room to open.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "נעשה שתהיה פה חברה מאוחדת ומערכת חינוך איכותית, בריאה, טובה לילדים, למשפחות ולצוותי החינוך כולם.",
+          "displayText": "חברה מאוחדת ומערכת חינוך איכותית, בריאה וטובה",
+          "translation": "We will work for a united society and a high-quality, healthy education system that is good for children, families and every member of the education staff.",
+          "quoteStatus": "shortened",
+          "speaker": "Adi Altschuler",
+          "date": "2026-09-06",
+          "sourceUrl": "https://www.ynet.co.il/news/elections2026/article/hyd1fhcume",
+          "sourceTitle": "היזמית החברתית עדי אלטשולר מצטרפת לאיזנקוט: \"המועמדת לשרת החינוך\"",
+          "publisher": "Ynet",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Her statement on joining Yashar as its candidate for education minister.",
+          "sourceLocation": "Closing portion of Altschuler's quoted joining statement",
+          "discoverySources": [
+            "https://news.walla.co.il/item/3865923",
+            "https://www.kipa.co.il/%D7%97%D7%93%D7%A9%D7%95%D7%AA/%D7%A4%D7%95%D7%9C%D7%99%D7%98%D7%99/1231070-0/"
+          ],
+          "editorialRole": "education vision",
+          "selectionRationale": "Current, affirmative and directly tied to the portfolio she seeks.",
+          "scene": "Schools, families and educators gathered under one open roof.",
+          "flavor": "Belonging built from the classroom outward.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "אני חרדית ואדוקה באמונה שלי, אני מאמינה באדם. כל עוד הנר דולק, אפשר לשנות.",
+          "displayText": "אני מאמינה באדם. כל עוד הנר דולק, אפשר לשנות.",
+          "translation": "I am devout in my faith: I believe in people. As long as the candle burns, change is possible.",
+          "quoteStatus": "exact",
+          "speaker": "Adi Altschuler",
+          "date": "2025-07-29",
+          "sourceUrl": "https://www.israelhayom.co.il/news/local/article/18516415",
+          "sourceTitle": "\"אל תבקשו רשות, מקסימום תבקשו סליחה\": עדי אלטשולר עם טיפים על יזמות חברתית",
+          "publisher": "Israel Hayom",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Closing answer in a filmed podcast interview about what gives her hope in social entrepreneurship.",
+          "sourceLocation": "Final quoted paragraph before the correction notice",
+          "discoverySources": [
+            "https://www.israelhayom.co.il/news/local/article/18516415"
+          ],
+          "editorialRole": "hope",
+          "selectionRationale": "A memorable, humane credo grounded in her record of social entrepreneurship.",
+          "scene": "A single candle kept alight through difficult work.",
+          "flavor": "Faith in people as practical fuel.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Three strong direct candidates were available: a nationally broadcast primary-event transcript, her current campaign statement, and a filmed long-form interview. The phrase \"חרדית ואדוקה\" is metaphorical in context; the translation preserves its intended intensity rather than assigning a religious identity."
+    },
+    {
+      "partyId": "yashar",
+      "slot": 6,
+      "nameHe": "חילי טרופר",
+      "nameEn": "Hili Tropper",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://he.wikipedia.org/wiki/%D7%97%D7%99%D7%9C%D7%99_%D7%98%D7%A8%D7%95%D7%A4%D7%A8",
+        "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "תקווה היתה יסוד עמוק בבית שבו גדלתי, ואני מתעקש מאז לבחור תמיד בתקווה על פני ייאוש.",
+          "displayText": "לבחור תמיד בתקווה על פני ייאוש",
+          "translation": "Hope was a deep foundation in the home where I grew up, and ever since I have insisted on always choosing hope over despair.",
+          "quoteStatus": "shortened",
+          "speaker": "Hili Tropper",
+          "date": "2025-01",
+          "sourceUrl": "https://ybook.co.il/products/3627034",
+          "sourceTitle": "טיפות במדבר - תקווה בארץ פצועה",
+          "publisher": "Yedioth Books",
+          "sourceType": "primary",
+          "sourceQuality": "A",
+          "context": "Author's own back-cover text for his 2025 book, published by the book's publisher.",
+          "sourceLocation": "Back-cover text, opening sentence",
+          "discoverySources": [
+            "https://www.steimatzky.co.il/011325410"
+          ],
+          "editorialRole": "hope",
+          "selectionRationale": "The clearest statement of Tropper's long-standing public ethic.",
+          "scene": "A lamp carried from a childhood home into public life.",
+          "flavor": "Hope practiced as a choice.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "ישראלים רבים, ובתוכם אני, מתעקשים לטפטף את הטיפה שלהם, שלנו. טיפה של מתינות וחיבורים. טיפה של תקווה.",
+          "displayText": "טיפה של מתינות וחיבורים. טיפה של תקווה.",
+          "translation": "Many Israelis, myself among them, insist on adding their drop—our drop. A drop of moderation and connection. A drop of hope.",
+          "quoteStatus": "shortened",
+          "speaker": "Hili Tropper",
+          "date": "2025-01",
+          "sourceUrl": "https://ybook.co.il/products/3627034",
+          "sourceTitle": "טיפות במדבר - תקווה בארץ פצועה",
+          "publisher": "Yedioth Books",
+          "sourceType": "primary",
+          "sourceQuality": "A",
+          "context": "Author's back-cover text, adapting an image credited immediately beforehand to writer Erri De Luca.",
+          "sourceLocation": "Back-cover text, second paragraph; only Tropper's own follow-on words selected",
+          "discoverySources": [
+            "https://www.makorrishon.co.il/culture/books/article/173287"
+          ],
+          "editorialRole": "moderation",
+          "selectionRationale": "Distinctively expresses cumulative civic repair without misattributing De Luca's preceding line.",
+          "scene": "Drops gathering in a dry landscape.",
+          "flavor": "Small acts becoming civic water.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "אני משוכנע שהשותפות שאנחנו מקימים היא מה שיכול להוציא את מדינת ישראל מהבוץ. הגיע הזמן לדור חדש של הנהגה שמקשיבה, מחברת ופועלת. פחות אגו ופוליטיקה ישנה, יותר מקצועיות, שותפות, דרך ארץ ועבודה למען הציבור.",
+          "displayText": "הנהגה שמקשיבה, מחברת ופועלת",
+          "translation": "I am convinced the partnership we are building can pull Israel out of the mud. It is time for a new generation of leadership that listens, connects and acts: less ego and old politics, more professionalism, partnership, decency and work for the public.",
+          "quoteStatus": "shortened",
+          "speaker": "Hili Tropper",
+          "date": "2026-07",
+          "sourceUrl": "https://www.mako.co.il/news-israel-elections/2026/Article-1a87607940c3f91027.htm",
+          "sourceTitle": "הנדל וטרופר סיכמו על ריצה משותפת בבחירות",
+          "publisher": "N12",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Press-conference launch statement for his then-joint run with Yoaz Hendel; the alliance later dissolved before Tropper joined Yashar.",
+          "sourceLocation": "Direct quotation following the joint-run announcement",
+          "discoverySources": [
+            "https://www.srugim.co.il/101005816-%D7%98%D7%A8%D7%95%D7%A4%D7%A8-%D7%95%D7%94%D7%A0%D7%93%D7%9C-%D7%9E%D7%A6%D7%99%D7%92%D7%99%D7%9D-%D7%90%D7%AA-%D7%94%D7%9E%D7%A4%D7%9C%D7%92%D7%94-%D7%9E%D7%A7%D7%99%D7%9E%D7%99%D7%9D-%D7%91%D7%99%D7%AA"
+          ],
+          "editorialRole": "leadership style",
+          "selectionRationale": "A concrete, positive definition of the political culture he wants to model.",
+          "scene": "Leaders listening around a workbench.",
+          "flavor": "Quiet competence over spectacle.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "The first two quotations are authored primary-source copy from his book publisher, not review paraphrases. The third is retained despite the superseded Hendel alliance because it states Tropper's own leadership standard; context explicitly records the later political change."
+    },
+    {
+      "partyId": "beyachad",
+      "slot": 1,
+      "nameHe": "נפתלי בנט",
+      "nameEn": "Naftali Bennett",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://he.wikipedia.org/wiki/%D7%A0%D7%A4%D7%AA%D7%9C%D7%99_%D7%91%D7%A0%D7%98",
+        "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "אני גאה בזה ששני מנהיגים עם דעות שונות יכולים להילחם יחד לטובת עם ישראל, בדיוק כמו שהבנים שלנו, החיילים שלנו, נלחמים כתף אל כתף. האחדות בינינו היא מסר לכל עם ישראל: תם עידן הפילוג. הגיע עידן התיקון.",
+          "displayText": "תם עידן הפילוג. הגיע עידן התיקון.",
+          "translation": "I am proud that two leaders with different views can fight together for the people of Israel, just as our children, our soldiers, fight shoulder to shoulder. Our unity sends a message to all Israel: the era of division is over; the era of repair has arrived.",
+          "quoteStatus": "shortened",
+          "speaker": "Naftali Bennett",
+          "date": "2026-04-26",
+          "sourceUrl": "https://www.ice.co.il/local-news/news/article/1110929",
+          "sourceTitle": "בנט ולפיד בהצהרה מיוחדת: \"תם עידן הפילוג, הגיע עידן התיקון\"",
+          "publisher": "ice",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Joint televised statement with Yair Lapid announcing the Beyachad electoral alliance.",
+          "sourceLocation": "Bennett's second quoted paragraph",
+          "discoverySources": [
+            "https://www.calcalist.co.il/local_news/article/syy09ps6we",
+            "https://www.mako.co.il/news-politics/2026_q2/Article-a7fb5ebe06acd91026.htm"
+          ],
+          "editorialRole": "unity",
+          "selectionRationale": "The alliance's signature constructive line, grounded in acknowledged differences rather than false unanimity.",
+          "scene": "Two paths joining while retaining their colors.",
+          "flavor": "Difference turned into common purpose.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "צריך לאפשר לכל בן אדם בישראל להקים משפחה, וליהנות מכל הזכויות שנתונות מכוח נישואים. נאפשר ליהנות מכל הזכויות בלי שיצטרכו לנסוע לקפריסין, ליוטה ולכל מקום אחר.",
+          "displayText": "לאפשר לכל בן אדם בישראל להקים משפחה",
+          "translation": "Every person in Israel should be able to build a family and enjoy all the rights conferred by marriage. We will make those rights available without requiring travel to Cyprus, Utah or anywhere else.",
+          "quoteStatus": "shortened",
+          "speaker": "Naftali Bennett",
+          "date": "2026-04-26",
+          "sourceUrl": "https://www.ice.co.il/local-news/news/article/1110929",
+          "sourceTitle": "בנט ולפיד בהצהרה מיוחדת: \"תם עידן הפילוג, הגיע עידן התיקון\"",
+          "publisher": "ice",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Policy commitment in the alliance launch statement concerning civil and same-sex family rights.",
+          "sourceLocation": "Section headed \"עוד ב-\", direct Bennett quotation",
+          "discoverySources": [
+            "https://www.ice.co.il/local-news/news/article/1110929"
+          ],
+          "editorialRole": "civil equality",
+          "selectionRationale": "A specific, constructive rights commitment that broadens the favorable portrait beyond campaign process.",
+          "scene": "A family doorway open without an overseas ticket.",
+          "flavor": "Belonging recognized at home.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "עם ישראל רוצה להתאחד מחדש ולבנות מחדש.",
+          "displayText": "להתאחד מחדש ולבנות מחדש",
+          "translation": "The people of Israel want to reunite and rebuild.",
+          "quoteStatus": "exact",
+          "speaker": "Naftali Bennett",
+          "date": "2026-05-12",
+          "sourceUrl": "https://www.mako.co.il/news-politics/2026_q2/Article-91cb2d04b2d1e91026.htm",
+          "sourceTitle": "בנט לתומכיו בכנס \"ביחד\": \"בבחירות הקרובות עם ישראל יחולל מהפך שלא היה כמותו מאז 1977\"",
+          "publisher": "N12",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Speech at Beyachad's first major conference after the alliance was completed.",
+          "sourceLocation": "Paragraph following the description of a 'Zionist alliance of those who serve'",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/article/sy08irgkfl"
+          ],
+          "editorialRole": "reconstruction",
+          "selectionRationale": "Short, hopeful and action-oriented, with both social and institutional resonance.",
+          "scene": "Scaffolding rising around a renewed shared home.",
+          "flavor": "Reunion as reconstruction.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Three direct campaign-era quotes were corroborated across reports of filmed public events. The family-rights statement is intentionally preserved with its policy context; it is not generalized beyond the rights Bennett explicitly promised."
+    },
+    {
+      "partyId": "beyachad",
+      "slot": 2,
+      "nameHe": "יאיר לפיד",
+      "nameEn": "Yair Lapid",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://he.wikipedia.org/wiki/%D7%99%D7%90%D7%99%D7%A8_%D7%9C%D7%A4%D7%99%D7%93",
+        "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "אנחנו עומדים פה היום יחד כדי להתחיל תיקון גדול בעם ישראל. אנחנו עומדים פה יחד בשביל הילדים שלנו. מדינת ישראל צריכה לשנות כיוון. זה מבחן למנהיגות שלנו, ואנחנו נעמוד בו.",
+          "displayText": "אנחנו עומדים פה יחד בשביל הילדים שלנו",
+          "translation": "We stand here together today to begin a great repair among the people of Israel. We stand here together for our children. Israel must change direction. This is a test of our leadership, and we will meet it.",
+          "quoteStatus": "shortened",
+          "speaker": "Yair Lapid",
+          "date": "2026-04-26",
+          "sourceUrl": "https://www.calcalist.co.il/local_news/article/syy09ps6we",
+          "sourceTitle": "בנט ולפיד מתאחדים: מפלגת \"ביחד\" יוצאת לדרך",
+          "publisher": "Calcalist",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Joint televised announcement forming Beyachad and placing Bennett first on the list.",
+          "sourceLocation": "Lapid quotation beginning \"אנחנו עומדים פה היום יחד\"",
+          "discoverySources": [
+            "https://www.mako.co.il/news-politics/2026_q2/Article-a7fb5ebe06acd91026.htm",
+            "https://news.walla.co.il/item/3833352"
+          ],
+          "editorialRole": "future generations",
+          "selectionRationale": "Frames coalition compromise as accountable leadership for children and national repair.",
+          "scene": "Leaders stepping forward with the next generation in view.",
+          "flavor": "Direction changed for those who follow.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "תגידי להורים שלך שיחכו. משהו השתנה. אנחנו ננצח בבחירות ונקים ממשלה של אור.",
+          "displayText": "משהו השתנה. נקים ממשלה של אור.",
+          "translation": "Tell your parents to wait. Something has changed. We will win the election and form a government of light.",
+          "quoteStatus": "shortened",
+          "speaker": "Yair Lapid",
+          "date": "2026-05-12",
+          "sourceUrl": "https://www.mako.co.il/news-politics/2026_q2/Article-91cb2d04b2d1e91026.htm",
+          "sourceTitle": "בנט לתומכיו בכנס \"ביחד\": \"בבחירות הקרובות עם ישראל יחולל מהפך שלא היה כמותו מאז 1977\"",
+          "publisher": "N12",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Addressing a child named Or whose physician parents were considering leaving Israel.",
+          "sourceLocation": "Final paragraph of the article",
+          "discoverySources": [
+            "https://www.kore.co.il/viewArticle/211800"
+          ],
+          "editorialRole": "retaining talent",
+          "selectionRationale": "A vivid promise of hope tied to the concrete problem of families considering emigration.",
+          "scene": "A lit window persuading a family to stay.",
+          "flavor": "Hope answering a packed suitcase.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "עוד תהיה לנו ממשלה שתקום בבוקר ותלך לעבוד. ככה זה היה בממשלת השינוי. נעבוד בשביל האזרחים, נעבוד בשביל המילואימניקים, נעבוד בשביל מעמד הביניים, נעבוד כדי להחזיר לישראל את מעמדה בעולם.",
+          "displayText": "ממשלה שתקום בבוקר ותלך לעבוד",
+          "translation": "We will yet have a government that gets up in the morning and goes to work. We will work for citizens, reservists and the middle class, and to restore Israel's standing in the world.",
+          "quoteStatus": "shortened",
+          "speaker": "Yair Lapid",
+          "date": "2024-05-27",
+          "sourceUrl": "https://yeshatid.org.il/melia-lapid0705",
+          "sourceTitle": "אדוני ראש הממשלה, למה אתה עדיין ראש הממשלה?",
+          "publisher": "Yesh Atid",
+          "sourceType": "primary",
+          "sourceQuality": "A",
+          "context": "Official party transcript of Lapid's Knesset plenary speech contrasting the government with his promised working administration.",
+          "sourceLocation": "Closing paragraph before the final demand that the prime minister resign",
+          "discoverySources": [
+            "https://yeshatid.org.il/melia-lapid0705"
+          ],
+          "editorialRole": "competence",
+          "selectionRationale": "An accessible governing promise centered on daily work and named constituencies.",
+          "scene": "The lights coming on early in government offices.",
+          "flavor": "Public service with sleeves rolled up.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "The alliance and launch quotes are corroborated by multiple reports of filmed speeches. The 2024 official transcript page's slug is inconsistent with its displayed 27.5 title; the date follows the displayed title and speech reporting, not the slug."
+    },
+    {
+      "partyId": "beyachad",
+      "slot": 4,
+      "nameHe": "מירב בן ארי",
+      "nameEn": "Merav Ben Ari",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://main.knesset.gov.il/mk/Pages/MKPersonalDetails.aspx?MKID=937",
+        "license": "Knesset source; reuse license not stated on reference page",
+        "status": "verified-reference-only"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "צריך לתת נשק, אבל צריך תהליך סדור.",
+          "displayText": "צריך לתת נשק, אבל צריך תהליך סדור",
+          "translation": "Weapons should be issued, but there must be an orderly process.",
+          "quoteStatus": "exact",
+          "speaker": "Merav Ben Ari",
+          "date": "2023-11-29",
+          "sourceUrl": "https://www.knesset.tv/parliament/1307/61889/",
+          "sourceTitle": "עימות במליאה: ח\"כ מירב בן ארי תוקפת: \"מה זה הבדיחה הזאת?\"",
+          "publisher": "Knesset Channel",
+          "sourceType": "primary",
+          "sourceQuality": "A",
+          "context": "Recorded Knesset plenary exchange about expedited firearm licensing after October 7.",
+          "sourceLocation": "Embedded Knesset Channel clip and transcript after the first X embed",
+          "discoverySources": [
+            "https://www.knesset.tv/parliament/1307/61889/"
+          ],
+          "editorialRole": "balanced public safety",
+          "selectionRationale": "A concise competence frame that supports self-defense while insisting on safeguards.",
+          "scene": "A permit desk with both urgency and a checklist.",
+          "flavor": "Speed governed by care.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "המטרה שלנו לתת נשק כדי שאנשים יוכלו להגן על עצמם, אבל מנגד במקומות שאנשים לא מתאימים לשאת נשק לא לתת להם ולא לפזר סתם כלי נשק.",
+          "displayText": "לתת נשק למי שראוי וכשיר להחזיק בו",
+          "translation": "Our goal is to provide weapons so people can defend themselves, but where people are not suited to carry them, not to issue them and not to scatter firearms indiscriminately.",
+          "quoteStatus": "shortened",
+          "speaker": "Merav Ben Ari",
+          "date": "2023",
+          "sourceUrl": "https://www.inn.co.il/news/590726",
+          "sourceTitle": "ח\"כ מירב בן ארי לערוץ 7: חצי שנה אנשים מחכים לקבלת רישיון נשק",
+          "publisher": "Arutz 7",
+          "sourceType": "closest-primary",
+          "sourceQuality": "B",
+          "context": "On-camera Knesset interview arguing both for faster processing of qualified applicants and against indiscriminate licensing.",
+          "sourceLocation": "Closing quotation in the interview transcript",
+          "discoverySources": [
+            "https://www.inn.co.il/news/590726"
+          ],
+          "editorialRole": "pragmatic regulation",
+          "selectionRationale": "Shows policy balance and implementation focus rather than a one-sided slogan.",
+          "scene": "A gate that opens quickly only after a careful check.",
+          "flavor": "Protection paired with judgment.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "רצח נשים הוא עניין חברתי שאפשר וניתן לטפל בו... אמשיך לפעול ללא הרף ולסייע לנשים נפגעות אלימות.",
+          "displayText": "רצח נשים הוא עניין חברתי שאפשר וניתן לטפל בו",
+          "translation": "The murder of women is a social problem that can be addressed. I will continue working without pause to help women affected by violence.",
+          "quoteStatus": "shortened",
+          "speaker": "Merav Ben Ari",
+          "date": "2024-12-17",
+          "sourceUrl": "https://www.ynet.co.il/news/article/yokra14191265",
+          "sourceTitle": "היום בכנסת: דיון על הקלות נשק והסכנה לחיי נשים",
+          "publisher": "Ynet",
+          "sourceType": "secondary",
+          "sourceQuality": "A",
+          "context": "Statement ahead of a Knesset National Security Committee discussion she initiated on firearm licensing and risks to women with violent partners.",
+          "sourceLocation": "First body paragraph quoting Ben Ari",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/article/yokra14191265"
+          ],
+          "editorialRole": "violence prevention",
+          "selectionRationale": "Constructive because it treats femicide as preventable and pairs diagnosis with commitment.",
+          "scene": "Warning data becoming protective policy.",
+          "flavor": "Refusal to accept preventable harm.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Three direct candidates qualified, two from recorded interviews or parliamentary video and one contemporaneous quoted statement. Her December 2025 reporting-law achievement is strong evidence of follow-through, but no sufficiently clean direct quote from her was available in the retrieved official release, so it was not converted into a quotation."
+    },
+    {
+      "partyId": "beyachad",
+      "slot": 8,
+      "nameHe": "איתן גינזבורג",
+      "nameEn": "Eitan Ginzburg",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://he.wikipedia.org/wiki/%D7%90%D7%99%D7%AA%D7%9F_%D7%92%D7%99%D7%A0%D7%96%D7%91%D7%95%D7%A8%D7%92",
+        "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Common",
+          "originalText": "מדינת ישראל זקוקה לממשלה שתעבוד מיומה הראשון כדי לתקן את הנזק שנעשה ולהוביל שינויים גדולים באמצעות תכניות עבודה מפורטות.",
+          "displayText": "ממשלה שתעבוד מיומה הראשון",
+          "translation": "Israel needs a government that will work from its first day to repair the damage and lead major changes through detailed work plans.",
+          "quoteStatus": "shortened",
+          "speaker": "Eitan Ginzburg",
+          "date": "2026-08-05",
+          "sourceUrl": "https://www.ynet.co.il/news/article/hjla8ox8zx",
+          "sourceTitle": "איתן גינזבורג שעזב את גנץ מצטרף ל\"ביחד\" של בנט: \"לא יהיו רגעי חסד\"",
+          "publisher": "Ynet",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "His written statement upon joining Bennett's Beyachad list.",
+          "sourceLocation": "Final quoted paragraph, after \"גינזבורג עצמו אמר\"",
+          "discoverySources": [
+            "https://news.walla.co.il/item/3858693",
+            "https://www.davar1.co.il/691820/"
+          ],
+          "editorialRole": "day-one competence",
+          "selectionRationale": "A direct governing standard based on preparation and execution.",
+          "scene": "A detailed work plan open on the first morning.",
+          "flavor": "Ready before the clock starts.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Uncommon",
+          "originalText": "ביחד נחזיר את המדינה למסלול.",
+          "displayText": "ביחד נחזיר את המדינה למסלול",
+          "translation": "Together we will put the country back on track.",
+          "quoteStatus": "exact",
+          "speaker": "Eitan Ginzburg",
+          "date": "2026-08-05",
+          "sourceUrl": "https://news.walla.co.il/item/3858693",
+          "sourceTitle": "אחרי שעזב את גנץ: איתן גינזבורג מצטרף לבנט",
+          "publisher": "Walla",
+          "sourceType": "closest-primary",
+          "sourceQuality": "A",
+          "context": "Closing line of his statement joining Beyachad after describing Bennett's relevant experience.",
+          "sourceLocation": "Second body paragraph, closing sentence of Ginzburg quotation",
+          "discoverySources": [
+            "https://www.ynet.co.il/news/article/hjla8ox8zx"
+          ],
+          "editorialRole": "renewal",
+          "selectionRationale": "Short and card-ready, while its source context ties 'together' to an experienced team and operational plans.",
+          "scene": "A train returning smoothly to its rails.",
+          "flavor": "Course correction through teamwork.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "מה שחשוב זה לשמור על ישראל יהודית ודמוקרטית. החלת ריבונות היא לא יעד שאנחנו צריכים לקדש אותו. אנו מאמינים שגושי ההתיישבות צריכים להישאר תמיד בשטח ישראל וצריכים להיות חלק ממדינת ישראל אבל חלק מהסכם כולל.",
+          "displayText": "מה שחשוב זה לשמור על ישראל יהודית ודמוקרטית",
+          "translation": "What matters is preserving Israel as Jewish and democratic. Applying sovereignty is not an end we should sanctify. We believe the settlement blocs should always remain part of Israel, but as part of a comprehensive agreement.",
+          "quoteStatus": "shortened",
+          "speaker": "Eitan Ginzburg",
+          "date": "2020-06",
+          "sourceUrl": "https://www.inn.co.il/news/440149",
+          "sourceTitle": "רה\"מ לא מתכוון לקדם הקמה של מדינה פלסטינית",
+          "publisher": "Arutz 7",
+          "sourceType": "closest-primary",
+          "sourceQuality": "B",
+          "context": "Studio discussion as Blue and White faction chair on sovereignty proposals and the full Trump plan.",
+          "sourceLocation": "Paragraph introducing Ginzburg's position in the studio",
+          "discoverySources": [
+            "https://www.ynet.co.il/articles/0,7340,L-5737124,00.html"
+          ],
+          "editorialRole": "democratic pragmatism",
+          "selectionRationale": "Shows a principle-led preference for comprehensive agreement over symbolic unilateralism.",
+          "scene": "A constitutional compass beside a regional map.",
+          "flavor": "Principles before gestures.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "The two 2026 joining-statement lines are distinct but related; each is supported by multiple contemporaneous outlets. The older sovereignty quotation was included because it is direct, policy-specific and preserves the full balancing context rather than extracting only a generic democracy phrase."
+    },
+    {
+      "partyId": "beyachad",
+      "slot": 10,
+      "nameHe": "יונתן שלו",
+      "nameEn": "Yonatan Shalev",
+      "treatment": "favorable",
+      "identityReference": {
+        "url": "https://he.wikipedia.org/wiki/%D7%99%D7%95%D7%A0%D7%AA%D7%9F_%D7%A9%D7%9C%D7%95",
+        "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
+        "status": "verified"
+      },
+      "quotes": [
+        {
+          "rarity": "Uncommon",
+          "originalText": "שמרתם על הילדים של כולנו, עכשיו לשמור על הילדים שלכם.",
+          "displayText": "שמרתם על הילדים של כולנו — עכשיו נשמור על הילדים שלכם",
+          "translation": "You protected all of our children; now it is time to protect yours.",
+          "quoteStatus": "exact",
+          "speaker": "Yonatan Shalev",
+          "date": "2026-08-28",
+          "sourceUrl": "https://www.ice.co.il/local-news/news/article/1127422",
+          "sourceTitle": "יונתן שלו בריאיון: \"החיילים בראש הפירמידה, משתמטים לא יקבלו שקל\"",
+          "publisher": "ice",
+          "sourceType": "closest-primary",
+          "sourceQuality": "B",
+          "context": "Long-form interview explaining proposed childcare and education benefits for active reservists.",
+          "sourceLocation": "Answer beginning \"משרתי סדיר יקבלו\", after the list of reservist benefits",
+          "discoverySources": [
+            "https://www.ice.co.il/local-news/news/article/1127422"
+          ],
+          "editorialRole": "reservist families",
+          "selectionRationale": "Humanizes a benefits proposal by connecting national service to reciprocal care for families.",
+          "scene": "A reservist returning to a family whose load is finally shared.",
+          "flavor": "Service answered with care.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "אני חי בעולם בין גשרים. והדבר הזה מאפשר לי, אתה יודע, לגשר על זה גם פה בפוליטיקה, גם בחיים האישיים שלי בצוות בצבא.",
+          "displayText": "אני חי בעולם בין גשרים",
+          "translation": "I live in a world between bridges, and that enables me to bridge divides here in politics, in my personal life and in my army team.",
+          "quoteStatus": "shortened",
+          "speaker": "Yonatan Shalev",
+          "date": "2026-08-28",
+          "sourceUrl": "https://www.ice.co.il/local-news/news/article/1127422",
+          "sourceTitle": "יונתן שלו בריאיון: \"החיילים בראש הפירמידה, משתמטים לא יקבלו שקל\"",
+          "publisher": "ice",
+          "sourceType": "closest-primary",
+          "sourceQuality": "B",
+          "context": "Answer about growing up between secular and religious branches of his family and his relationship to Jewish tradition.",
+          "sourceLocation": "Answer following the question about tradition and Judaism",
+          "discoverySources": [
+            "https://www.ice.co.il/local-news/news/article/1127422"
+          ],
+          "editorialRole": "bridge-building identity",
+          "selectionRationale": "A rare constructive self-description that explains his claimed capacity to connect social worlds.",
+          "scene": "Bridges linking family, army and politics.",
+          "flavor": "Belonging on more than one shore.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        },
+        {
+          "rarity": "Rare",
+          "originalText": "והדור שלנו ראה איך המדינה הזאת נראית שהיא הכי חלשה וראה איך היא נראית שהיא הכי חזקה, ובגלל שראינו איך המדינה נראית שהיא הכי חזקה שמביאה את ההישגים הכי טובים שלה, אנחנו יודעים שככה המדינה יכולה להיות וזה מה שאנחנו רוצים.",
+          "displayText": "אנחנו יודעים שככה המדינה יכולה להיות",
+          "translation": "Our generation saw this country at its weakest and at its strongest. Because we saw what it looks like at its strongest, achieving its best results, we know that is what the country can be—and that is what we want.",
+          "quoteStatus": "shortened",
+          "speaker": "Yonatan Shalev",
+          "date": "2026-08-28",
+          "sourceUrl": "https://www.ice.co.il/local-news/news/article/1127422",
+          "sourceTitle": "יונתן שלו בריאיון: \"החיילים בראש הפירמידה, משתמטים לא יקבלו שקל\"",
+          "publisher": "ice",
+          "sourceType": "closest-primary",
+          "sourceQuality": "B",
+          "context": "Answer to criticism of his age and background, explaining why his generation entered politics.",
+          "sourceLocation": "Answer beginning \"תראה, כמו שסיפרתי לך עכשיו\"",
+          "discoverySources": [
+            "https://www.ice.co.il/local-news/news/article/1127422"
+          ],
+          "editorialRole": "generational agency",
+          "selectionRationale": "Optimistic without denying crisis; it grounds ambition in lived contrast and collective experience.",
+          "scene": "A young generation looking from a low valley toward a proven summit.",
+          "flavor": "Memory of strength becoming a mandate.",
+          "flavorDisclosure": "editorial-symbolism-not-evidence",
+          "contentStatus": "researched"
+        }
+      ],
+      "researchNotes": "Three usable direct quotes were found in one unusually detailed, dated interview. Because independent primary transcripts were scarce for this new candidate, all are marked Uncommon/Rare and source quality B; no leaked-audio remarks or summaries were used."
+    }
+  ]
+}

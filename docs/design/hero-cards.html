@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalpi — Three hero cards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Sans+Hebrew:wght@600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="kalpi.css" />
+  <style>
+    main { max-width: 1280px; margin: 0 auto; padding: 40px 24px 80px; }
+    .lede { max-width: 720px; margin-bottom: 32px; }
+    .row { display: flex; flex-wrap: wrap; gap: 28px; margin-bottom: 56px; align-items: flex-start; }
+    .pair { display: flex; flex-wrap: wrap; gap: 20px; }
+    button.flip {
+      margin-top: 12px;
+      background: var(--civic);
+      color: var(--paper);
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font: 600 13px "IBM Plex Sans", sans-serif;
+      cursor: pointer;
+    }
+    .hidden { display: none; }
+    nav a { color: var(--civic); }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="display" style="margin:0 0 8px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--civic)">Kalpi · Visual lock</p>
+    <div class="lede">
+      <h1>Three hero finishes</h1>
+      <p>Shared chrome. Party color only in the pip. Illustrated art, no press photos. Tap flip to read the back — that beat is the product.</p>
+      <nav><a href="wireframes.html">Wireframes</a> · <a href="../presentation/index.html">Pitch deck</a></nav>
+    </div>
+
+    <section>
+      <h2>SYS-C-02 · The Kalpi · Uncommon</h2>
+      <div class="row">
+        <div>
+          <article class="card uncommon" id="kalpi-front">
+            <span class="pip sys"></span>
+            <div class="card-inner">
+              <div class="card-meta"><span>Commons</span><span class="rarity">U</span></div>
+              <div class="art" style="background-image:url('assets/hero-art-kalpi.png')"></div>
+              <h2>The Kalpi</h2>
+              <p class="sub">The ballot box · you vote for a list</p>
+              <footer><span>Kalpi</span><span>SYS-C-02</span></footer>
+            </div>
+          </article>
+          <article class="card uncommon back hidden" id="kalpi-back">
+            <span class="pip sys"></span>
+            <div class="card-inner">
+              <div class="card-meta"><span>Commons</span><span class="rarity">U</span></div>
+              <h2>The Kalpi</h2>
+              <p class="sub">הקלפי</p>
+              <p class="body">At the kalpi you take one paper slip for one submitted list and put it in the box. Legally you vote for a closed list, not a person. If that list wins 18 seats, the first 18 names on it enter the Knesset, unless someone resigns later. The slip is secret.</p>
+              <p class="why"><strong>Why it matters.</strong> Knowing who sits in slots 1–20 is how you know who your vote can actually seat.</p>
+              <p class="src">Knesset Elections Law, 1969 · IDI, How Votes Become Knesset Seats</p>
+              <footer><span>Kalpi</span><span>SYS-C-02</span></footer>
+            </div>
+          </article>
+          <button class="flip" data-front="kalpi-front" data-back="kalpi-back">Flip card</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>SYS-C-03 · The Threshold · Holo · 01.09.2026 · #1 of 1 today</h2>
+      <div class="row">
+        <div>
+          <article class="card holo" id="th-front">
+            <span class="pip sys"></span>
+            <div class="card-inner">
+              <div class="card-meta"><span>Commons</span><span class="rarity">Holo</span></div>
+              <div class="art" style="background-image:url('assets/hero-art-threshold.png')"></div>
+              <h2>The Threshold</h2>
+              <p class="sub">3.25% of valid votes</p>
+              <div class="stamp">01.09.2026 · #1 of 1 today</div>
+              <footer><span>Kalpi</span><span>SYS-C-03</span></footer>
+            </div>
+          </article>
+          <article class="card holo back hidden" id="th-back">
+            <span class="pip sys"></span>
+            <div class="card-inner">
+              <div class="card-meta"><span>Commons</span><span class="rarity">Holo</span></div>
+              <h2>The Threshold</h2>
+              <p class="sub">אחוז החסימה</p>
+              <p class="body">Since 2015 a list needs 3.25% of valid votes to take any seats. Votes for lists under the line stay valid on the tally, but they elect nobody. In 2022 the seat quota after the threshold was about 36,227 votes. Small lists near the line can move several seats between blocs.</p>
+              <p class="why"><strong>Why it matters.</strong> A protest slip that misses 3.25% does not become a protest MK.</p>
+              <p class="src">IDI explainer, 2026 · Knesset 25th-election results</p>
+              <footer><span>Kalpi</span><span>SYS-C-03</span></footer>
+            </div>
+          </article>
+          <button class="flip" data-front="th-front" data-back="th-back">Flip card</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>LIK-S-01 · Ballot mark מחל · Uncommon</h2>
+      <div class="row">
+        <div>
+          <article class="card uncommon" id="lik-front">
+            <span class="pip lik"></span>
+            <div class="card-inner">
+              <div class="card-meta"><span>Symbol</span><span class="rarity">U</span></div>
+              <div class="art" style="background-image:url('assets/hero-art-memchetlammed.png')"></div>
+              <h2>Ballot mark מחל</h2>
+              <p class="sub">Likud’s familiar ballot letters</p>
+              <footer><span>Kalpi</span><span>LIK-S-01</span></footer>
+            </div>
+          </article>
+          <article class="card uncommon back hidden" id="lik-back">
+            <span class="pip lik"></span>
+            <div class="card-inner">
+              <div class="card-meta"><span>Symbol</span><span class="rarity">U</span></div>
+              <h2>Ballot mark מחל</h2>
+              <p class="sub">Likud · as associated ahead of filing</p>
+              <p class="body">Israeli ballots identify lists by letters, not by a portrait. Likud has long used the letters מחל. The CEC assigns or confirms letters when lists are filed. Until 9 September 2026, treat any letter as the historically associated mark, not as the filed 2026 slip.</p>
+              <p class="why"><strong>Why it matters.</strong> In the booth you will look for letters, not for a name you saw on television.</p>
+              <p class="src">CEC ballot practice · Knesset election lexicon</p>
+              <footer><span>Kalpi</span><span>LIK-S-01</span></footer>
+            </div>
+          </article>
+          <button class="flip" data-front="lik-front" data-back="lik-back">Flip card</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    document.querySelectorAll("button.flip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const front = document.getElementById(btn.dataset.front);
+        const back = document.getElementById(btn.dataset.back);
+        const showingBack = !back.classList.contains("hidden");
+        front.classList.toggle("hidden", !showingBack);
+        back.classList.toggle("hidden", showingBack);
+        btn.textContent = showingBack ? "Flip card" : "Show front";
+      });
+    });
+  </script>
+</body>
+</html>

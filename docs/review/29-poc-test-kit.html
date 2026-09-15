@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PoC first test kit · Kalpi review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="review.css" />
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="who">Kalpi · review 1 by 1</div>
+      <div class="step">29 / 37 · PoC first test kit</div>
+    </div>
+    <div class="nav"><a class="btn" id="prev-page" href="28-poc-assets.html">← PoC asset manifest</a><button class="btn mark" type="button" data-slug="29-poc-test-kit">Mark reviewed</button><a class="btn primary" id="next-page" href="30-poc-v2-structure.html">Next: PoC v2 — 49-card structure →</a></div>
+  </header>
+  <article><h1>Kalpi PoC — first test kit</h1>
+<p>Goal: determine whether the core pack creates enough comprehension and unresolved collection interest to make a player return tomorrow. Sharing is the secondary signal.</p>
+<p>Prestige and Satire are not part of this test.</p>
+<h2>Cohort</h2>
+<p>Use five to ten people:</p>
+<ul>
+<li>2–3 quiet or fearful current-opposition supporters</li>
+<li>2–3 undecided voters</li>
+<li>1–2 voters currently supporting the opposing side</li>
+<li>Optional: 1 creator who regularly posts political or youth-culture content</li>
+</ul>
+<p>Do not record names in product analytics. Keep recruitment/contact details outside the runtime event store.</p>
+<h2>Tester links</h2>
+<p>Use one code per tester or cohort:</p>
+<p><code>http://127.0.0.1:4173/?ref=tester-code</code></p>
+<p>For a remote deployment, replace the origin and keep the <code>ref</code> value.</p>
+<h2>Facilitator script</h2>
+<ol>
+<li>“This is a disclosed advocacy collectible. Use it as you normally would; I will not explain the controls.”</li>
+<li>Observe whether the tester opens the pack without help.</li>
+<li>Do not explain the walkout order or source link.</li>
+<li>After the sixth back, ask the questions below.</li>
+<li>Show Growth and Studio only after the unguided session.</li>
+</ol>
+<h2>Questions</h2>
+<ol>
+<li>What line, fact, or person do you remember?</li>
+<li>What did the card want you to understand?</li>
+<li>Where would you check whether it was accurate?</li>
+<li>What side did the game support, and was that clear early enough?</li>
+<li>Would you return tomorrow? Why or why not?</li>
+<li>Would you share any card? Which one, to whom, and why?</li>
+<li>What felt slow, confusing, manipulative, generic, or unfinished?</li>
+</ol>
+<h2>Observations to record</h2>
+<ul>
+<li>Pack started without assistance.</li>
+<li>Empty card understood as anticipation rather than a loading failure.</li>
+<li>Quote/fact read before advancing.</li>
+<li>Party/ballot clue noticed.</li>
+<li>Portrait/name relationship understood.</li>
+<li>Full back reached for all six cards.</li>
+<li>Source opened.</li>
+<li>Advocacy sponsor/faction understood.</li>
+<li>Binder reached.</li>
+<li>Share attempted or declined with reason.</li>
+<li>Stated return intent.</li>
+</ul>
+<h2>Runtime events</h2>
+<ul>
+<li><code>pack_opened</code></li>
+<li><code>back_completed</code></li>
+<li><code>binder_reached</code></li>
+<li><code>source_opened</code></li>
+<li><code>share_created</code></li>
+<li><code>referral_opened</code></li>
+<li><code>gift_preview_created</code></li>
+</ul>
+<p>The guided demo does not emit pack, binder, or inventory events. Use it for rehearsals, not funnel measurement.</p>
+<h2>First diagnosis</h2>
+<ul>
+<li>Pack not started: opening proposition or trust problem.</li>
+<li>Walkout abandoned: pacing, hierarchy, or reading-load problem.</li>
+<li>Back skipped mentally: payload or source presentation problem.</li>
+<li>Binder reached but no return intent: collection/timer promise problem.</li>
+<li>Return intent but no share: artifact or social-risk problem.</li>
+<li>Opposing-side tester spots clipped context: factual/editorial quality problem; correct before intensifying.</li>
+</ul>
+<p>Fix the first broken step. Do not add Prestige, Satire, quiz, real trading, or another progression system to compensate.</p>
+<h2>Pass signal for the next iteration</h2>
+<ul>
+<li>At least 4 of 5 testers finish all six backs without instruction.</li>
+<li>At least 3 of 5 can repeat one card’s point and identify where its source lives.</li>
+<li>At least 3 of 5 say they would return tomorrow for a product reason.</li>
+<li>At least 1 organic share attempt or a specific, actionable explanation for why nobody shared.</li>
+</ul>
+<p>These are learning thresholds for a tiny PoC, not population forecasts.</p></article>
+  <footer class="foot"><div class="nav"><a class="btn" id="prev-page" href="28-poc-assets.html">← PoC asset manifest</a><a class="btn primary" id="next-page" href="30-poc-v2-structure.html">Next: PoC v2 — 49-card structure →</a></div></footer>
+  <script src="review.js"></script>
+</body>
+</html>
