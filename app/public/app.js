@@ -627,7 +627,7 @@ function formatQuizClock(remainingMs) {
 }
 
 async function openQuizDialog(retried = false) {
-  if (!elements.quizDialog) return;
+  return;
   elements.quizStatus.textContent = "";
   if (elements.quizFail) {
     elements.quizFail.hidden = true;
@@ -714,7 +714,7 @@ async function submitQuiz() {
       } else {
         elements.quizStatus.textContent = "לא הפעם. פתחו את גב הקלף ונסו שוב מאוחר יותר.";
       }
-      if (elements.openQuiz) elements.openQuiz.hidden = !model.serverState?.quizAvailable;
+      if (elements.openQuiz) elements.openQuiz.hidden = true;
     }
   } catch (error) {
     elements.quizSubmit.disabled = false;
@@ -750,9 +750,7 @@ function renderHome() {
   renderActivity();
   renderTodayDocket();
   updateCountdown();
-  if (elements.openQuiz) {
-    elements.openQuiz.hidden = !model.serverState?.quizAvailable;
-  }
+  if (elements.openQuiz) elements.openQuiz.hidden = true;
 }
 
 function renderSiteCardPeeks() {

@@ -8,14 +8,18 @@ This build is an **advocacy prototype**, not a neutral election authority. Its s
 
 ## Run the Alpha
 
-Requires Node.js 20+; there are no runtime dependencies.
+Requires Node.js 20+ and PostgreSQL. The committed `.env` is local (user `kalpi` / password `change-me`). There are no cloud API keys yet.
 
 ```bash
+# Homebrew Postgres is enough on this machine. On a fresh PC:
+#   brew services start postgresql@14
+#   or: cd app && npm run db:up
 cd app
-npm start
+npm install
+npm run poc
 ```
 
-Open **http://127.0.0.1:4173**. Run `npm test` for generated content audits plus pack/server/client tests. Runtime guest collections and aggregate PoC events live in `app/.runtime/` and are intentionally ignored.
+Open **http://127.0.0.1:4173**. `/api/health` should report `"backend":"postgres"`. Quiz extra-packs are off (`QUIZ_ENABLED=0`). Run `npm test` for generated content audits plus pack/server/client tests. JSON file fallback remains only when `DATABASE_URL` is unset.
 
 Use the bottom navigation: **Today** for the pack, **Binder** for the collection, **Growth** for trading/creator links/funnel activity, and **Studio** for sponsor configuration status, card review, walkout replay, and debug reset. Full implementation map: [docs/product/poc-implementation-review.md](docs/product/poc-implementation-review.md).
 
@@ -85,7 +89,7 @@ Keep this list current. Check a box only when it is actually done.
 Reorder in the Cursor implementation-plan canvas. After every step: verify on phone + desktop before starting the next.
 
 **Mandatory / production first**
-1. Private GitHub repo https://github.com/guygir/klafi (so the project moves between machines) + PostgreSQL as the live store (retire the JSON file store).
+1. [x] Private GitHub repo https://github.com/guygir/klafi + local PostgreSQL store (`DATABASE_URL`, docker-compose, persist-across-restart test). Hosted production instance is the next deploy step.
 2. One-container deploy, HTTPS, secrets, `DATABASE_URL`.
 3. Production advocacy identity configured for live.
 4. CEC / rights / likeness / source approval (release blockers).

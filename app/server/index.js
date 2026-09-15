@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
 import { networkInterfaces } from "node:os";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -7,6 +8,29 @@ import { createKalpiApp } from "./app.js";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
 const projectRoot = path.resolve(appRoot, "..");
+
+async function loadEnvFile(filePath) {
+  try {
+    const text = await readFile(filePath, "utf8");
+    for (const raw of text.split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith("#")) continue;
+      const index = line.indexOf("=");
+      if (index < 1) continue;
+      const key = line.slice(0, index).trim();
+      let value = line.slice(index + 1).trim();
+      if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+      if (!(key in process.env)) process.env[key] = value;
+    }
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+}
+
+await loadEnvFile(path.join(projectRoot, ".env"));
+
 const port = Number(process.env.PORT ?? 4173);
 const host = process.env.HOST ?? "0.0.0.0";
 if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL) {
@@ -33,6 +57,7 @@ const handler = await createKalpiApp({
   databaseUrl: process.env.DATABASE_URL || null,
   databaseSsl: process.env.DATABASE_SSL === "1",
   debugEnabled: process.env.KALPI_DEBUG === "1" && process.env.NODE_ENV !== "production",
+  quizEnabled: process.env.QUIZ_ENABLED === "1",
 });
 
 const server = createServer(handler);

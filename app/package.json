@@ -17,6 +17,7 @@
     "start": "node server/index.js",
     "dev": "KALPI_DEBUG=1 node --watch server/index.js",
     "poc": "KALPI_DEBUG=1 node server/index.js",
+    "db:up": "docker compose -f ../docker-compose.yml up -d --wait postgres",
     "test": "npm run build:data && node --test"
   },
   "engines": {

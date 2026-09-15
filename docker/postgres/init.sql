@@ -1,0 +1,2 @@
+CREATE DATABASE kalpi_test;
+GRANT ALL PRIVILEGES ON DATABASE kalpi_test TO kalpi;

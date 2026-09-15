@@ -456,8 +456,10 @@ function publicState(session, now, cards, config = {}) {
     avatars: publicAvatars(session, config.avatars, progressionState(session, cards, config, now).level),
     avatarId: session.avatarId || "kid-boy",
     progression: progressionState(session, cards, config, now),
-    quizAvailable: Boolean(Object.keys(session.inventory || {}).length) && session.quizWonDay !== jerusalemDay(now),
-    quizWonToday: session.quizWonDay === jerusalemDay(now),
+    quizAvailable: Boolean(config.quizEnabled)
+      && Boolean(Object.keys(session.inventory || {}).length)
+      && session.quizWonDay !== jerusalemDay(now),
+    quizWonToday: Boolean(config.quizEnabled) && session.quizWonDay === jerusalemDay(now),
   };
 }
 
@@ -596,6 +598,7 @@ export async function createKalpiApp({
   databaseUrl,
   databaseSsl = false,
   debugEnabled = false,
+  quizEnabled = false,
   now = () => Date.now(),
   rng = randomInt,
 } = {}) {
@@ -728,6 +731,7 @@ export async function createKalpiApp({
     ...studioContent?.gameConfig?.progression,
     achievements: achievementCatalog.achievements || [],
     avatars: avatarCatalog.avatars || [],
+    quizEnabled,
   });
   const stateFor = (session) => publicState(session, now(), allCards, runtimeProgression());
   function grantCard(session, pull, { acquiredBy, pulledAt }) {
@@ -764,7 +768,7 @@ export async function createKalpiApp({
 
       if (request.method === "GET" && url.pathname === "/api/health") {
         const health = await store.health();
-        json(response, 200, { status: health.ok ? "ok" : "degraded" });
+        json(response, 200, { status: health.ok ? "ok" : "degraded", backend: health.backend || "json" });
         return;
       }
 
@@ -1001,6 +1005,13 @@ export async function createKalpiApp({
           });
           json(response, 200, stateFor(store.getSession(token)));
           return;
+        }
+
+        if ((request.method === "GET" && url.pathname === "/api/quiz") || (request.method === "POST" && url.pathname === "/api/quiz/answer")) {
+          if (!quizEnabled) {
+            json(response, 404, { error: "QUIZ_DISABLED" });
+            return;
+          }
         }
 
         if (request.method === "GET" && url.pathname === "/api/quiz") {

@@ -96,6 +96,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="earned-badge-rail"/);
   assert.match(html, /id="open-bibi-pack"/);
   assert.match(html, /id="open-quiz"/);
+  assert.match(javascript, /elements\.openQuiz\.hidden = true/);
+  assert.match(html, /חידון כבוי/);
   assert.match(html, /id="quiz-dialog"/);
   assert.match(javascript, /\/api\/packs\/bibi-demo/);
   assert.match(javascript, /badgeArtwork/);

@@ -30,7 +30,7 @@ which list?
 
 Drawn from a card the player **owns** (prefer last pack). Options come from that card’s catalog fields (list name, list slot, or subject) — not from a survey and not from a special event.
 
-**One extra-pack win per Israel civil day.** The server keys this on `jerusalemDay()`: the `YYYY-MM-DD` calendar date in `Asia/Jerusalem`. That is “today in Israel,” not a Jerusalem holiday and not an Events-tab event. After a win, `quizWonDay` stores that date; the button stays hidden until the date rolls over at midnight Israel time. Noted in `app/server/app.js` (`jerusalemDay`, `quizWonDay`) and in this file.
+**Currently disabled.** `QUIZ_ENABLED` defaults to `0`. The player button stays hidden, and `/api/quiz` returns `404 QUIZ_DISABLED`. Israel-civil-day extra-pack gating (`jerusalemDay()` / `quizWonDay`) is unused until the flag is turned back on. It is not an Events-tab event and not a survey.
 
 Below: item bank for the deck and for later implementation. Same rule: no “who is good.”
 

@@ -13,6 +13,8 @@ const projectRoot = path.resolve(appRoot, "..");
 
 async function start(dataDir, clock, {
   debugEnabled = true,
+  quizEnabled = false,
+  databaseUrl = null,
   studioContentPath = path.join(appRoot, "data/studio-content.json"),
   cardsPath = path.join(appRoot, "data/cards.json"),
   specialsPath = path.join(appRoot, "data/specials-content.json"),
@@ -36,6 +38,8 @@ async function start(dataDir, clock, {
     assetsDir: path.join(projectRoot, "docs/design/assets"),
     docsDir: path.join(projectRoot, "docs"),
     debugEnabled,
+    quizEnabled,
+    databaseUrl,
     now: () => clock.value,
     rng: () => 0,
   });
@@ -736,10 +740,26 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   assert.equal(presentationResponse.status, 404);
 });
 
+test("quiz routes stay closed unless explicitly enabled", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-quiz-off-"));
+  const clock = { value: Date.parse("2026-09-15T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const token = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const quiz = await api(running.base, "/api/quiz", { token });
+  const state = await api(running.base, "/api/state", { token });
+  assert.equal(quiz.status, 404);
+  assert.equal(quiz.body.error, "QUIZ_DISABLED");
+  assert.equal(state.body.quizAvailable, false);
+});
+
 test("owned-card quiz grants one extra pack per Jerusalem day", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-quiz-test-"));
   const clock = { value: Date.parse("2026-09-15T12:00:00.000Z") };
-  const running = await start(dataDir, clock);
+  const running = await start(dataDir, clock, { quizEnabled: true });
   t.after(async () => {
     await running.close();
     await rm(dataDir, { recursive: true, force: true });
@@ -780,4 +800,35 @@ test("owned-card quiz grants one extra pack per Jerusalem day", async (t) => {
   assert.equal(again.body.available, false);
   assert.equal(again.body.wonToday, true);
   assert.ok(answers.role && answers.list);
+});
+
+test("postgres store keeps a session after a second process boots", async (t) => {
+  const databaseUrl = process.env.KALPI_TEST_DATABASE_URL
+    || "postgresql://kalpi:change-me@127.0.0.1:5432/kalpi_test";
+  const { default: pg } = await import("pg");
+  const pool = new pg.Pool({ connectionString: databaseUrl });
+  try {
+    await pool.query("SELECT 1");
+    await pool.query("DROP TABLE IF EXISTS kalpi_runtime_state, kalpi_schema_migrations");
+  } finally {
+    await pool.end();
+  }
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-pg-test-"));
+  const clock = { value: Date.parse("2026-09-15T12:00:00.000Z") };
+  const first = await start(dataDir, clock, { databaseUrl });
+  const created = await api(first.base, "/api/session", { method: "POST" });
+  const token = created.body.token;
+  const health = await api(first.base, "/api/health");
+  assert.equal(health.status, 200);
+  assert.equal(health.body.backend, "postgres");
+  await first.close();
+  const second = await start(dataDir, clock, { databaseUrl });
+  t.after(async () => {
+    await second.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const state = await api(second.base, "/api/state", { token });
+  assert.equal(state.status, 200);
+  assert.ok(state.body.displayName);
+  assert.equal(state.body.quizAvailable, false);
 });
