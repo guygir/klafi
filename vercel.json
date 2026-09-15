@@ -4,7 +4,7 @@
   "installCommand": "npm ci --prefix app",
   "buildCommand": "node scripts/prepare-vercel-static.mjs",
   "functions": {
-    "api/[[...path]].js": {
+    "api/[...path].js": {
       "includeFiles": "{app/data/**,app/server/**}",
       "maxDuration": 10,
       "memory": 1024

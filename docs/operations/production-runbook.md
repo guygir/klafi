@@ -2,7 +2,7 @@
 
 ## Current public host (free)
 
-- **Vercel Hobby** from GitHub `guygir/klafi`. Static files (HTML, JS, CSS, card art) are copied to `/public` at build time. `/api/*` hits [api/[[...path]].js](../../api/[[...path]].js), which reuses `createKalpiApp`.
+- **Vercel Hobby** from GitHub `guygir/klafi`. Static files (HTML, JS, CSS, card art) are copied to `/public` at build time. `/api/*` hits [api/[...path].js](../../api/[...path].js), which reuses `createKalpiApp`.
 - **Supabase free Postgres** created on supabase.com (not Vercel Marketplace — Marketplace `free` is disabled and would bill through Vercel). Set `DATABASE_URL` only in the Vercel project (never commit the live URI).
   - Prefer the **session pooler** on port **5432** (`*.pooler.supabase.com`). Vercel functions are IPv4; the direct `db.*:5432` host is often IPv6-only.
   - Do **not** use the transaction pooler on port **6543**. It can break `FOR UPDATE` and advisory locks.
