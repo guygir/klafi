@@ -31,7 +31,7 @@ The current PostgreSQL adapter replaces the local file and provides a cross-proc
 
 The process fails closed when `DATABASE_URL` is absent. Studio, Presentation Studio, project documents, unlock/reset routes and simulated trade acceptance are unavailable in production.
 
-The committed `.env` is the local/private-repo default (`kalpi` / `change-me` on `127.0.0.1`). It is not a cloud secret. Live Supabase credentials live only in Vercel env. Quiz stays off until `QUIZ_ENABLED=1`.
+Local defaults live in [`.env.example`](../../.env.example) (`kalpi` / `change-me` on `127.0.0.1`). Do not commit `.env`. Live Supabase credentials live only in Vercel env. Quiz stays off until `QUIZ_ENABLED=1`.
 
 ## Pre-deploy
 

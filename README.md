@@ -8,7 +8,7 @@ This build is an **advocacy prototype**, not a neutral election authority. Its s
 
 ## Run the Alpha
 
-Requires Node.js 20+ and PostgreSQL. The committed `.env` is local (user `kalpi` / password `change-me`). There are no cloud API keys yet.
+Requires Node.js 20+ and PostgreSQL. Copy [`.env.example`](.env.example) to `.env` for local use (`kalpi` / `change-me` on `127.0.0.1`). Live Supabase credentials stay in Vercel env only.
 
 ```bash
 # Homebrew Postgres is enough on this machine. On a fresh PC:
@@ -89,7 +89,7 @@ Keep this list current. Check a box only when it is actually done.
 Reorder in the Cursor implementation-plan canvas. After every step: verify on phone + desktop before starting the next.
 
 **Mandatory / production first**
-1. [x] Private GitHub repo https://github.com/guygir/klafi + local PostgreSQL store (`DATABASE_URL`, docker-compose, persist-across-restart test).
+1. [x] GitHub repo https://github.com/guygir/klafi + local PostgreSQL store (`DATABASE_URL`, docker-compose, persist-across-restart test).
 2. Public URL https://klafi.vercel.app (Vercel Hobby). Needs Supabase `DATABASE_URL` (session pooler `:5432`) in Vercel env before `/api` works.
 3. Production advocacy identity configured for live.
 4. CEC / rights / likeness / source approval (release blockers).
