@@ -88,7 +88,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="home-view"[^>]*class="view active"/);
   assert.match(javascript, /HOME_CACHE_KEY/);
   assert.match(html, /boot-warmup\.js/);
-  assert.match(warmup, /\/api\/catalog/);
+  assert.match(warmup, /\/api\/warm/);
+  assert.doesNotMatch(warmup, /\/api\/catalog/);
   assert.match(warmup, /\/api\/home/);
   assert.match(javascript, /studioKey/);
   assert.match(javascript, /x-kalpi-studio/);

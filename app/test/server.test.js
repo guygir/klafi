@@ -805,6 +805,8 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(typeof home.body.state.inventory, "object");
   const again = await api(running.base, "/api/home", { token: home.body.token });
   assert.equal(again.body.token, home.body.token);
+  const warm = await api(running.base, "/api/warm");
+  assert.deepEqual(warm, { status: 200, body: { status: "ready" } });
 });
 
 test("bootstrap creates a guest session in one request", async (t) => {

@@ -78,6 +78,25 @@ function removedRecordIds(previous, next, key) {
   return previous.map((item) => item[key]).filter((id) => !remaining.has(id));
 }
 
+function sessionRowState(session) {
+  return {
+    displayName: session.displayName,
+    avatarId: session.avatarId || "kid-boy",
+    nextDailyAt: session.nextDailyAt,
+    dryPacks: session.dryPacks || 0,
+    packCount: session.packCount || 0,
+    factionId: session.factionId,
+    tradeCount: session.tradeCount || 0,
+    idleAnchorAt: session.idleAnchorAt,
+    nextIdleAt: session.nextIdleAt,
+    idleDuplicateStreak: session.idleDuplicateStreak || 0,
+    idlePullCount: session.idlePullCount || 0,
+    highestRank: session.highestRank || 1,
+    quizWonDay: session.quizWonDay,
+    extras: extrasFromSession(session),
+  };
+}
+
 export function sessionDeltas(previous, session) {
   const beforeInventory = previous.inventory || {};
   const nextInventory = session.inventory || {};
@@ -91,6 +110,7 @@ export function sessionDeltas(previous, session) {
   const beforePacks = (previous.packs || []).slice(-100);
   const nextPacks = (session.packs || []).slice(-100);
   return {
+    sessionChanged: JSON.stringify(sessionRowState(previous)) !== JSON.stringify(sessionRowState(session)),
     inventoryUpserts,
     inventoryDeletes,
     instanceUpserts: changedRecords(beforeInstances, nextInstances, "instanceId"),
@@ -127,20 +147,22 @@ export class PostgresStore {
 
   async init() {
     const client = await this.pool.connect();
+    let studioConfig = null;
     try {
-      await client.query("SELECT pg_advisory_lock(hashtext('kalpi-schema-migrations'))");
       await client.query(`
+        SELECT pg_advisory_lock(hashtext('kalpi-schema-migrations'));
         CREATE TABLE IF NOT EXISTS kalpi_schema_migrations (
           version TEXT PRIMARY KEY,
           applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
       `);
+      const appliedResult = await client.query(
+        "SELECT version FROM kalpi_schema_migrations WHERE version = ANY($1::text[])",
+        [MIGRATIONS.map(([version]) => version)],
+      );
+      const appliedVersions = new Set(appliedResult.rows.map(({ version }) => version));
       for (const [version, fileName] of MIGRATIONS) {
-        const applied = await client.query(
-          "SELECT 1 FROM kalpi_schema_migrations WHERE version = $1",
-          [version],
-        );
-        if (applied.rowCount) continue;
+        if (appliedVersions.has(version)) continue;
         const sql = await readFile(new URL(`./migrations/${fileName}`, import.meta.url), "utf8");
         await client.query("BEGIN");
         try {
@@ -155,19 +177,31 @@ export class PostgresStore {
           throw error;
         }
       }
-      await this.importLegacyState(client);
+      studioConfig = await this.importLegacyState(client);
     } finally {
       await client.query("SELECT pg_advisory_unlock(hashtext('kalpi-schema-migrations'))").catch(() => {});
       client.release();
     }
+    return { studioConfig };
   }
 
   async importLegacyState(client) {
-    const existing = await client.query("SELECT COUNT(*)::int AS count FROM kalpi_sessions");
-    if (existing.rows[0].count > 0) return;
-    const legacy = await client.query("SELECT state FROM kalpi_runtime_state WHERE id = 1");
-    if (!legacy.rowCount) return;
-    const state = normalizeState(legacy.rows[0].state);
+    const bootstrap = await client.query(`
+      SELECT
+        (
+          SELECT state
+          FROM kalpi_runtime_state
+          WHERE id = 1 AND NOT EXISTS (SELECT 1 FROM kalpi_sessions)
+        ) AS legacy_state,
+        (
+          SELECT config
+          FROM kalpi_studio_config
+          WHERE id = 1
+        ) AS studio_config
+    `);
+    const { legacy_state: legacyState, studio_config: studioConfig } = bootstrap.rows[0];
+    if (!legacyState) return studioConfig || null;
+    const state = normalizeState(legacyState);
     for (const [token, session] of Object.entries(state.sessions || {})) {
       await this.insertSessionRow(client, token, session);
     }
@@ -213,6 +247,7 @@ export class PostgresStore {
         [factionId, packs],
       );
     }
+    return studioConfig || null;
   }
 
   async insertSessionRow(client, token, session) {
@@ -314,29 +349,45 @@ export class PostgresStore {
 
   async loadSession(token, { forUpdate = false } = {}) {
     if (!token) return null;
-    const lock = forUpdate ? " FOR UPDATE" : "";
+    const lock = forUpdate ? " FOR UPDATE OF session" : "";
     const sessionResult = await this.executor().query(
-      `SELECT * FROM kalpi_sessions WHERE token = $1${lock}`,
+      `SELECT
+         session.*,
+         COALESCE((
+           SELECT jsonb_object_agg(inventory.card_id, inventory.copies)
+           FROM kalpi_inventory AS inventory
+           WHERE inventory.session_token = session.token
+         ), '{}'::jsonb) AS inventory_state,
+         COALESCE((
+           SELECT jsonb_agg(jsonb_build_object(
+             'instanceId', instance.instance_id,
+             'cardId', instance.card_id,
+             'finish', instance.finish,
+             'pulledAt', instance.pulled_at,
+             'isNew', instance.is_new,
+             'acquiredBy', instance.acquired_by,
+             'seenAt', instance.seen_at
+           ) ORDER BY instance.pulled_at ASC)
+           FROM kalpi_instances AS instance
+           WHERE instance.session_token = session.token
+         ), '[]'::jsonb) AS instance_state,
+         COALESCE((
+           SELECT jsonb_agg(jsonb_build_object(
+             'packId', pack.pack_id,
+             'mode', pack.mode,
+             'pulledAt', pack.pulled_at,
+             'nextDailyAt', pack.next_daily_at,
+             'cards', pack.cards
+           ) ORDER BY pack.pulled_at ASC)
+           FROM kalpi_packs AS pack
+           WHERE pack.session_token = session.token
+         ), '[]'::jsonb) AS pack_state
+       FROM kalpi_sessions AS session
+       WHERE session.token = $1${lock}`,
       [token],
     );
     const row = sessionResult.rows[0];
     if (!row) return null;
-    const [inventory, instances, packs] = await Promise.all([
-      this.executor().query(
-        "SELECT card_id, copies FROM kalpi_inventory WHERE session_token = $1",
-        [token],
-      ),
-      this.executor().query(
-        `SELECT instance_id, card_id, finish, pulled_at, is_new, acquired_by, seen_at
-         FROM kalpi_instances WHERE session_token = $1 ORDER BY pulled_at ASC`,
-        [token],
-      ),
-      this.executor().query(
-        `SELECT pack_id, mode, pulled_at, next_daily_at, cards
-         FROM kalpi_packs WHERE session_token = $1 ORDER BY pulled_at ASC`,
-        [token],
-      ),
-    ]);
     const extras = row.extras || {};
     return {
       displayName: row.display_name,
@@ -345,21 +396,16 @@ export class PostgresStore {
       nextDailyAt: iso(row.next_daily_at),
       dryPacks: row.dry_packs,
       packCount: row.pack_count,
-      inventory: Object.fromEntries(inventory.rows.map((item) => [item.card_id, item.copies])),
-      instances: instances.rows.map((item) => ({
-        instanceId: item.instance_id,
-        cardId: item.card_id,
-        finish: item.finish,
-        pulledAt: iso(item.pulled_at),
-        isNew: item.is_new,
-        acquiredBy: item.acquired_by,
-        seenAt: iso(item.seen_at),
+      inventory: row.inventory_state || {},
+      instances: row.instance_state.map((item) => ({
+        ...item,
+        pulledAt: iso(item.pulledAt),
+        seenAt: iso(item.seenAt),
       })),
-      packs: packs.rows.map((item) => ({
-        packId: item.pack_id,
-        mode: item.mode,
-        pulledAt: iso(item.pulled_at),
-        nextDailyAt: iso(item.next_daily_at),
+      packs: row.pack_state.map((item) => ({
+        ...item,
+        pulledAt: iso(item.pulledAt),
+        nextDailyAt: iso(item.nextDailyAt),
         cards: item.cards || [],
       })),
       eventCounts: extras.eventCounts || {},
@@ -384,6 +430,18 @@ export class PostgresStore {
     if (!previous) throw new Error("SESSION_SNAPSHOT_REQUIRED");
     const client = this.executor();
     const deltas = sessionDeltas(previous, session);
+    const hasCollectionChanges = [
+      deltas.inventoryUpserts,
+      deltas.inventoryDeletes,
+      deltas.instanceUpserts,
+      deltas.instanceDeletes,
+      deltas.packUpserts,
+      deltas.packDeletes,
+    ].some(({ length }) => length);
+    if (!deltas.sessionChanged && !hasCollectionChanges) {
+      this.remember(token, session);
+      return;
+    }
     await client.query(
       `WITH session_update AS (
          UPDATE kalpi_sessions SET

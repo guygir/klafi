@@ -41,6 +41,7 @@ test("session deltas touch only changed player-card rows and append-only records
   };
 
   assert.deepEqual(sessionDeltas(previous, next), {
+    sessionChanged: false,
     inventoryUpserts: [
       { cardId: "card-one", copies: 2 },
       { cardId: "card-two", copies: 1 },
@@ -69,7 +70,25 @@ test("session deltas delete records trimmed beyond persistence caps", () => {
   );
 
   assert.deepEqual(deltas.instanceDeletes, ["0"]);
+  assert.equal(deltas.sessionChanged, false);
   assert.deepEqual(deltas.instanceUpserts, [nextInstance]);
   assert.deepEqual(deltas.packDeletes, ["0"]);
   assert.deepEqual(deltas.packUpserts, [nextPack]);
+});
+
+test("session deltas detect scalar and extras-only player changes", () => {
+  const previous = {
+    inventory: {},
+    instances: [],
+    packs: [],
+    highestRank: 1,
+    favorites: [],
+  };
+  const next = {
+    ...previous,
+    highestRank: 2,
+    favorites: ["card-one"],
+  };
+
+  assert.equal(sessionDeltas(previous, next).sessionChanged, true);
 });

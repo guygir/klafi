@@ -10,4 +10,4 @@ window.__kalpiWarmup = {
   catalog: fetch(`/catalog.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json),
   home: fetch("/api/home", { cache: "no-store", headers }).then(json),
 };
-fetch("/api/catalog", { cache: "no-store" }).catch(() => {});
+fetch("/api/warm", { cache: "no-store" }).catch(() => {});

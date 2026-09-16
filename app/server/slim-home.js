@@ -13,6 +13,7 @@ const SECURITY_HEADERS = Object.freeze({
 
 let pool;
 let shell;
+let shellLoad;
 let ready;
 
 function json(response, status, value) {
@@ -27,9 +28,15 @@ function bearer(request) {
 
 async function loadShell() {
   if (shell) return shell;
-  const text = await readFile(new URL("../public/shell.json", import.meta.url), "utf8");
-  shell = JSON.parse(text);
-  return shell;
+  shellLoad ??= readFile(new URL("../public/shell.json", import.meta.url), "utf8")
+    .then((text) => {
+      shell = JSON.parse(text);
+      return shell;
+    })
+    .finally(() => {
+      shellLoad = null;
+    });
+  return shellLoad;
 }
 
 function getPool() {
@@ -43,8 +50,7 @@ function getPool() {
 }
 
 async function ensureReady(db) {
-  if (ready) return;
-  await db.query(`
+  ready ??= db.query(`
     CREATE TABLE IF NOT EXISTS kalpi_sessions (
       token TEXT PRIMARY KEY,
       display_name TEXT NOT NULL,
@@ -63,27 +69,35 @@ async function ensureReady(db) {
       quiz_won_day TEXT,
       extras JSONB NOT NULL DEFAULT '{}'::jsonb,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  await db.query(`
+    );
     CREATE TABLE IF NOT EXISTS kalpi_inventory (
       session_token TEXT NOT NULL REFERENCES kalpi_sessions(token) ON DELETE CASCADE,
       card_id TEXT NOT NULL,
       copies INTEGER NOT NULL CHECK (copies > 0),
       PRIMARY KEY (session_token, card_id)
     )
-  `);
-  ready = true;
+  `).catch((error) => {
+    ready = null;
+    throw error;
+  });
+  await ready;
 }
 
 async function loadSession(db, token) {
-  const sessionResult = await db.query("SELECT * FROM kalpi_sessions WHERE token = $1", [token]);
-  const row = sessionResult.rows[0];
-  if (!row) return null;
-  const inventory = await db.query(
-    "SELECT card_id, copies FROM kalpi_inventory WHERE session_token = $1",
+  const sessionResult = await db.query(
+    `SELECT
+       session.*,
+       COALESCE((
+         SELECT jsonb_object_agg(inventory.card_id, inventory.copies)
+         FROM kalpi_inventory AS inventory
+         WHERE inventory.session_token = session.token
+       ), '{}'::jsonb) AS inventory_state
+     FROM kalpi_sessions AS session
+     WHERE session.token = $1`,
     [token],
   );
+  const row = sessionResult.rows[0];
+  if (!row) return null;
   const extras = row.extras || {};
   return {
     displayName: row.display_name,
@@ -91,7 +105,7 @@ async function loadSession(db, token) {
     createdAt: row.created_at,
     highestRank: row.highest_rank,
     nextIdleAt: row.next_idle_at ? new Date(row.next_idle_at).toISOString() : null,
-    inventory: Object.fromEntries(inventory.rows.map((item) => [item.card_id, item.copies])),
+    inventory: row.inventory_state || {},
     unseenPulls: extras.unseenPulls || [],
     pendingRankRewards: extras.pendingRankRewards || [],
     favorites: extras.favorites || [],
@@ -106,23 +120,34 @@ async function createSession(db, now) {
      VALUES ($1,$2,$3,$3,'{}'::jsonb)`,
     [token, `שחקן ${token.slice(0, 4)}`, createdAt],
   );
-  return token;
+  return {
+    token,
+    session: {
+      displayName: `שחקן ${token.slice(0, 4)}`,
+      avatarId: "kid-boy",
+      createdAt,
+      highestRank: 1,
+      nextIdleAt: null,
+      inventory: {},
+      unseenPulls: [],
+      pendingRankRewards: [],
+      favorites: [],
+    },
+  };
 }
 
 export async function handleSlimHome(request, response) {
   try {
-    const config = await loadShell();
     const db = getPool();
     if (!db) {
       json(response, 501, { error: "HOME_NEEDS_DATABASE" });
       return;
     }
-    await ensureReady(db);
+    const [config] = await Promise.all([loadShell(), ensureReady(db)]);
     let token = bearer(request);
     let session = token ? await loadSession(db, token) : null;
     if (!session) {
-      token = await createSession(db, Date.now());
-      session = await loadSession(db, token);
+      ({ token, session } = await createSession(db, Date.now()));
     }
     json(response, 200, { token, state: slimPublicState(session, config) });
   } catch (error) {
