@@ -533,38 +533,36 @@ export class PostgresStore {
   }
 
   async recordEvent(event) {
-    return this.exclusive(async () => {
-      const eventId = event.eventId || randomUUID();
-      const result = await this.executor().query(
-        `WITH inserted AS (
-           INSERT INTO kalpi_events (event_id, type, session_token, payload, recorded_at)
-           VALUES ($1,$2,$3,$4::jsonb,$5)
-           ON CONFLICT (event_id) DO NOTHING
-           RETURNING 1
-         )
-         UPDATE kalpi_sessions
-         SET extras = jsonb_set(
-           extras,
-           ARRAY['eventCounts', $2],
-           to_jsonb(COALESCE((extras #>> ARRAY['eventCounts', $2])::integer, 0) + 1),
-           true
-         )
-         WHERE token = $3 AND EXISTS (SELECT 1 FROM inserted)
-         RETURNING token`,
-        [
-          eventId,
-          event.type,
-          event.sessionToken || null,
-          JSON.stringify(event),
-          event.recordedAt,
-        ],
-      );
-      const cached = this.getSession(event.sessionToken);
-      if (result.rowCount && cached) {
-        cached.eventCounts[event.type] = (cached.eventCounts[event.type] ?? 0) + 1;
-      }
-      return event;
-    });
+    const eventId = event.eventId || randomUUID();
+    const result = await this.executor().query(
+      `WITH inserted AS (
+         INSERT INTO kalpi_events (event_id, type, session_token, payload, recorded_at)
+         VALUES ($1,$2,$3,$4::jsonb,$5)
+         ON CONFLICT (event_id) DO NOTHING
+         RETURNING 1
+       )
+       UPDATE kalpi_sessions
+       SET extras = jsonb_set(
+         extras,
+         ARRAY['eventCounts', $2],
+         to_jsonb(COALESCE((extras #>> ARRAY['eventCounts', $2])::integer, 0) + 1),
+         true
+       )
+       WHERE token = $3 AND EXISTS (SELECT 1 FROM inserted)
+       RETURNING token`,
+      [
+        eventId,
+        event.type,
+        event.sessionToken || null,
+        JSON.stringify(event),
+        event.recordedAt,
+      ],
+    );
+    const cached = this.getSession(event.sessionToken);
+    if (result.rowCount && cached) {
+      cached.eventCounts[event.type] = (cached.eventCounts[event.type] ?? 0) + 1;
+    }
+    return event;
   }
 
   async activitySummary() {
@@ -608,13 +606,11 @@ export class PostgresStore {
 
   async incrementFaction(factionId, amount = 1) {
     if (!factionId) return;
-    return this.exclusive(async () => {
-      await this.executor().query(
-        `INSERT INTO kalpi_factions (faction_id, packs) VALUES ($1,$2)
-         ON CONFLICT (faction_id) DO UPDATE SET packs = kalpi_factions.packs + EXCLUDED.packs`,
-        [factionId, amount],
-      );
-    });
+    await this.executor().query(
+      `INSERT INTO kalpi_factions (faction_id, packs) VALUES ($1,$2)
+       ON CONFLICT (faction_id) DO UPDATE SET packs = kalpi_factions.packs + EXCLUDED.packs`,
+      [factionId, amount],
+    );
   }
 
   async createTrade({ sessionToken, offeredCardId, wantedCardId, createdAt, expiresAt }) {
