@@ -4,6 +4,7 @@ import path from "node:path";
 import { JsonStore } from "./store.js";
 import { PostgresStore } from "./postgres-store.js";
 import { generateIdlePull, generatePack, rarityTier } from "./pack-engine.js";
+import { expandPublicCatalog, runtimeSpecialCard } from "./public-catalog.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -695,68 +696,7 @@ export async function createKalpiApp({
   const events = eventsPath ? JSON.parse(await readFile(eventsPath, "utf8")) : { events: [] };
   let achievementCatalog = achievementsPath ? JSON.parse(await readFile(achievementsPath, "utf8")) : { achievements: [] };
   const avatarCatalog = avatarsPath ? JSON.parse(await readFile(avatarsPath, "utf8")) : { avatars: [] };
-  const specialSets = new Map(specials.sets.map((set) => [set.id, set]));
-  const specialLettersBySet = {
-    "legendary-aces": "אס",
-    "prestige-legacy": "מורשת",
-    mouthpieces: "שופר",
-    "satire-imitations": "סאטירה",
-    records: "רקורד",
-    "current-ministers": "שר",
-  };
-  const specialTypeBySet = {
-    records: { type: "Record", typeHe: "רקורד" },
-    "current-ministers": { type: "Ministerial record", typeHe: "שר בתפקיד" },
-  };
-  function runtimeSpecialCard(card) {
-    const set = specialSets.get(card.setId);
-    const setIndex = (specials.cards || []).filter((candidate) => candidate.setId === card.setId).findIndex(({ id }) => id === card.id) + 1;
-    const specialLetters = specialLettersBySet[card.setId] || "מיוחד";
-    const specialType = specialTypeBySet[card.setId] || { type: "Special", typeHe: "מיוחד" };
-    return {
-      id: card.id,
-      set: `special-${card.setId}`,
-      setName: set?.nameHe || card.setId,
-      setNameHe: set?.nameHe || card.setId,
-      title: card.nameHe,
-      titleHe: card.nameHe,
-      subtitle: card.displayText,
-      subtitleHe: card.displayText,
-      type: specialType.type,
-      typeHe: specialType.typeHe,
-      rarity: "Promotion",
-      pip: "#c4a35a",
-      artKey: card.artKey,
-      body: card.context,
-      whyItMatters: card.flavor,
-      source: card.sourceTitle,
-      letters: specialLetters,
-      displayCode: `${specialLetters}-${String(setIndex).padStart(2, "0")}`,
-      walkout: {
-        kind: card.quoteStatus === "fact-record" ? "fact" : "quote",
-        text: card.displayText,
-        speaker: card.nameHe,
-        date: card.date,
-        quoteStatus: card.quoteStatus,
-        sourceUrl: card.sourceUrl,
-        sourceLabel: card.sourceTitle,
-        contentStatus: card.contentStatus,
-        editorialRole: card.setId,
-        releasePhase: "event",
-      },
-      eventOnly: true,
-      packEligible: false,
-      idleEligible: false,
-      releaseSetId: card.setId === "records" || card.setId === "current-ministers" ? "records" : "special-events",
-      releaseOrder: card.setId === "records" || card.setId === "current-ministers" ? 4 : 10,
-      releaseTier: "event",
-      availableFrom: null,
-      binderGroup: card.setId === "records" || card.setId === "current-ministers" ? "records" : "specials",
-      subjectSet: null,
-    };
-  }
-  const specialCards = (specials.cards || []).map(runtimeSpecialCard);
-  const allCards = [...cards, ...specialCards];
+  const allCards = expandPublicCatalog(cards, specials);
   const cardsById = new Map(allCards.map((card) => [card.id, card]));
   const partyIds = new Set(cards.filter(({ set }) => set !== "SYS").map(({ set }) => set));
   if (studioContent) {
@@ -1619,7 +1559,7 @@ export async function createKalpiApp({
             json(response, 409, { error: "SPECIAL_RUNTIME_CARD_MISSING" });
             return;
           }
-          Object.assign(existing, runtimeSpecialCard(card));
+          Object.assign(existing, runtimeSpecialCard(card, specials));
           specials.updatedAt = new Date(now()).toISOString();
           await writeJsonAtomic(specialsPath, specials);
           json(response, 200, { card, runtimeCard: existing, saved: true });

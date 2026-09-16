@@ -10,6 +10,10 @@ await new Promise((resolve, reject) => {
   const child = spawn(process.execPath, [path.join(root, "scripts/build-shell.mjs")], { stdio: "inherit" });
   child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`build-shell exited ${code}`))));
 });
+await new Promise((resolve, reject) => {
+  const child = spawn(process.execPath, [path.join(root, "scripts/build-catalog.mjs")], { stdio: "inherit" });
+  child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`build-catalog exited ${code}`))));
+});
 
 await rm(publicDir, { recursive: true, force: true });
 await mkdir(publicDir, { recursive: true });

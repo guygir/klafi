@@ -41,6 +41,7 @@ const model = {
   holdGeneration: 0,
   renderedLevel: null,
   selectedAvatarId: null,
+  extrasReady: false,
 };
 let showcaseTimers = [];
 let packTimers = [];
@@ -341,6 +342,8 @@ function applyHomePayload(home) {
         idleCapacity: home.state.idleCapacity,
         progression: home.state.progression,
         avatars: home.state.avatars,
+        inventory: home.state.inventory || {},
+        favorites: home.state.favorites || [],
       },
     }));
   }
@@ -391,6 +394,12 @@ async function loadShell() {
   applyVisualConfig();
 }
 
+function applyCatalog(cards) {
+  if (!cards?.length) return;
+  model.catalog = cards;
+  model.byId = new Map(cards.map((card) => [card.id, card]));
+}
+
 function applyFullBoot(boot) {
   if (boot.token) {
     model.token = boot.token;
@@ -414,8 +423,7 @@ function applyFullBoot(boot) {
   model.idleQueue = boot.idleReturn.cards || [];
   model.trades = boot.trades || [];
   model.events = boot.events || [];
-  model.catalog = cards;
-  model.byId = new Map(cards.map((card) => [card.id, card]));
+  applyCatalog(cards);
   populateRevealTimingInputs();
   populateLevelIncrements();
   populateStudioMeta();
@@ -423,11 +431,16 @@ function applyFullBoot(boot) {
 }
 
 let catalogHydrate = null;
+let extrasHydrate = null;
 let catalogFailed = false;
 const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
 
 function catalogReady() {
-  return Boolean(model.catalog.length && model.serverState);
+  return Boolean(model.catalog.length);
+}
+
+function ownershipReady() {
+  return Boolean(model.serverState?.inventory);
 }
 
 function requestedPlayerView() {
@@ -468,12 +481,36 @@ function setEmptyNote(element, copy, { pending = false, failed = false, hidden =
   element.classList.toggle("is-failed", failed && !hidden);
 }
 
-async function hydrateCatalog() {
+async function loadStaticCatalog() {
   if (model.catalog.length) return model;
   if (!catalogHydrate) {
-    catalogHydrate = request("/api/bootstrap").then((boot) => {
+    catalogHydrate = fetch("/catalog.json", { cache: "no-store" }).then((response) => {
+      if (!response.ok) throw new Error("CATALOG_MISSING");
+      return response.json();
+    }).then((payload) => {
       catalogFailed = false;
+      applyCatalog(payload.cards || payload);
+      renderBinder();
+      renderHome();
+      handleInboundLink();
+      return model;
+    }).catch((error) => {
+      catalogFailed = true;
+      renderBinder();
+      throw error;
+    }).finally(() => {
+      catalogHydrate = null;
+    });
+  }
+  return catalogHydrate;
+}
+
+async function hydrateExtras() {
+  if (model.extrasReady) return model;
+  if (!extrasHydrate) {
+    extrasHydrate = request("/api/bootstrap").then((boot) => {
       applyFullBoot(boot);
+      model.extrasReady = true;
       renderProfile();
       renderAdvocacy();
       renderHome();
@@ -484,18 +521,19 @@ async function hydrateCatalog() {
       renderStudio();
       handleInboundLink();
       return boot;
-    }).catch((error) => {
-      catalogFailed = true;
-      renderBinder();
-      renderAchievements();
-      renderEvents();
-      renderGrowth();
-      throw error;
     }).finally(() => {
-      catalogHydrate = null;
+      extrasHydrate = null;
     });
   }
-  return catalogHydrate;
+  return extrasHydrate;
+}
+
+async function hydrateCatalog() {
+  try {
+    return await loadStaticCatalog();
+  } catch {
+    return hydrateExtras();
+  }
 }
 
 async function bootstrap() {
@@ -504,18 +542,22 @@ async function bootstrap() {
   const inboundView = requestedPlayerView();
   if (inboundView && inboundView !== "home") paintPlayerView(inboundView);
   else showView("home");
-  const catalogPromise = hydrateCatalog().catch(() => null);
+  const catalogPromise = loadStaticCatalog().catch(() => null);
+  const extrasNeeded = inboundView && inboundView !== "home" && inboundView !== "binder";
+  const extrasPromise = extrasNeeded ? hydrateExtras().catch(() => null) : null;
   try {
     await loadShell();
     renderAdvocacy();
     renderProfile();
     renderHome();
+    await catalogPromise;
+    if (inboundView === "binder") renderBinder();
     const home = await request("/api/home");
     applyHomePayload(home);
     renderProfile();
     renderHome();
-    if (inboundView === "binder") renderBinder();
-    await catalogPromise;
+    renderBinder();
+    if (extrasNeeded) await extrasPromise;
   } catch (error) {
     try {
       await hydrateCatalog();
@@ -1212,19 +1254,16 @@ function playHomePackRip() {
 }
 
 async function openIdleReturn(opening = "regular") {
-  if (!model.catalog.length) {
-    try {
-      await hydrateCatalog();
-    } catch {
-      showToast("עוד טוענים את הקלפים.");
-      return;
-    }
-  }
+  if (!model.catalog.length) loadStaticCatalog().catch(() => {});
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
   elements.openPack.textContent = "אוספים…";
+  const settlePromise = request("/api/idle/settle", { method: "POST" });
+  const ripPromise = opening === "fancy" ? playHomePackRip() : Promise.resolve();
   try {
-    const settled = await request("/api/idle/settle", { method: "POST" });
+    const [settleResult] = await Promise.allSettled([settlePromise, ripPromise]);
+    if (settleResult.status === "rejected") throw settleResult.reason;
+    const settled = settleResult.value;
     model.serverState = settled.state;
     model.idleQueue = settled.cards || [];
     if (!model.idleQueue.length) {
@@ -1240,7 +1279,6 @@ async function openIdleReturn(opening = "regular") {
     };
     model.currentCardIndex = 0;
     model.previewMode = false;
-    if (opening === "fancy") await playHomePackRip();
     showView("pack");
     startWalkout();
   } catch (error) {
@@ -1577,16 +1615,22 @@ function renderBinder() {
     binderView?.setAttribute("aria-busy", catalogFailed ? "false" : "true");
     return;
   }
-  binderView?.setAttribute("aria-busy", "false");
+  const waitingOwnership = !ownershipReady();
+  binderView?.setAttribute("aria-busy", waitingOwnership ? "true" : "false");
+  const inventory = model.serverState?.inventory || {};
   const { owned, total, percent } = completion();
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = `${owned} קלפים שונים מתוך ${total} בסדרה הפעילה כרגע`;
   elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
-  setEmptyNote(elements.binderEmpty, "פתחו חבילה כדי להתחיל.", { hidden: owned > 0 });
+  setEmptyNote(
+    elements.binderEmpty,
+    waitingOwnership ? "טוענים את האוסף…" : "פתחו חבילה כדי להתחיל.",
+    { pending: waitingOwnership, hidden: !waitingOwnership && owned > 0 },
+  );
 
-  const favorites = new Set(model.serverState.favorites || []);
+  const favorites = new Set(model.serverState?.favorites || []);
   const playerCards = model.catalog.filter((card) =>
-    card.idleEligible || card.eventOnly || model.serverState.inventory[card.id]);
+    card.idleEligible || card.eventOnly || inventory[card.id]);
   const releaseIds = [...new Set(playerCards.map((card) => card.releaseSetId).filter(Boolean))];
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
@@ -1614,7 +1658,7 @@ function renderBinder() {
           : set === "SPECIALS"
             ? card.eventOnly
             : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
-        return inSet && model.serverState.inventory[card.id];
+        return inSet && inventory[card.id];
       }).length;
     return `<button type="button" role="tab" aria-selected="${model.binderFilter === set}" class="${model.binderFilter === set ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
   }).join("");
@@ -1626,7 +1670,7 @@ function renderBinder() {
         ? card.releaseSetId === model.binderFilter.slice(8)
         : card.set === model.binderFilter));
   elements.binderGrid.innerHTML = visible.map((card) => {
-    const count = model.serverState.inventory[card.id] ?? 0;
+    const count = inventory[card.id] ?? 0;
     if (!count) {
       return `<div class="binder-slot" aria-label="${escapeHtml(cardCode(card))} חסר">
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
@@ -1650,9 +1694,10 @@ function renderBinder() {
     ? '<span class="binder-scroll-hint">עוד קלפים מחכים למטה ↓</span>'
     : "";
 
-  const earned = (model.serverState.achievements || []).filter(({ earned }) => earned);
+  const earned = (model.serverState?.achievements || []).filter(({ earned }) => earned);
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
-  const starCounter = `<span class="collection-star-count" role="button" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${model.serverState.starCount} כוכבי אוסף. ${starExplanation}"><b>★</b><strong>${model.serverState.starCount ?? 0}</strong></span>`;
+  const starCount = model.serverState?.starCount ?? 0;
+  const starCounter = `<span class="collection-star-count" role="button" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b>★</b><strong>${starCount}</strong></span>`;
   const visibleBadges = earned.slice(0, 3);
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
   rail.innerHTML = starCounter + visibleBadges.map((badge) => {
@@ -1835,7 +1880,7 @@ function hebrewBadge(badge) {
 }
 
 function renderAchievements() {
-  if (!catalogReady()) {
+  if (!model.serverState?.achievements) {
     if (elements.achievementGrid) elements.achievementGrid.innerHTML = "";
     if (elements.achievementPager) elements.achievementPager.innerHTML = "";
     setEmptyNote(elements.achievementsEmpty, pendingCopy("טוענים את התגים…", "לא הצלחנו לטעון את התגים."), {
@@ -1877,7 +1922,7 @@ function creatorLink() {
 function renderGrowth() {
   const communityTabs = elements.communityTabs;
   const growthGrid = document.querySelector(".growth-grid");
-  if (!catalogReady()) {
+  if (!model.extrasReady) {
     setEmptyNote(elements.growthEmpty, pendingCopy("טוענים את הקהילה…", "לא הצלחנו לטעון את הקהילה."), {
       pending: !catalogFailed,
       failed: catalogFailed,
@@ -2066,7 +2111,7 @@ function renderGrowth() {
 
 function renderEvents() {
   if (!elements.activeEvent) return;
-  if (!catalogReady()) {
+  if (!model.extrasReady) {
     elements.activeEvent.innerHTML = `<p class="empty-note ${catalogFailed ? "is-failed" : "is-loading"}">${pendingCopy("טוענים את האירועים…", "לא הצלחנו לטעון את האירועים.")}</p>`;
     elements.eventPull.hidden = true;
     if (elements.eventCards) elements.eventCards.innerHTML = "";
@@ -3421,7 +3466,8 @@ elements.cardReviewList.addEventListener("click", (event) => {
 
 elements.navButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.dataset.nav !== "home") hydrateCatalog().catch(() => {});
+    if (button.dataset.nav === "binder") loadStaticCatalog().catch(() => {});
+    else if (button.dataset.nav !== "home") hydrateExtras().catch(() => {});
     if (button.dataset.nav === "home") {
       renderHome();
       showView("home");

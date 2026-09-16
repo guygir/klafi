@@ -798,6 +798,7 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.ok(home.body.state.displayName);
   assert.equal(home.body.state.progression.rank, "אזרח סקרן");
   assert.equal(home.body.catalog, undefined);
+  assert.equal(typeof home.body.state.inventory, "object");
   const again = await api(running.base, "/api/home", { token: home.body.token });
   assert.equal(again.body.token, home.body.token);
 });

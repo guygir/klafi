@@ -94,6 +94,7 @@ async function loadSession(db, token) {
     inventory: Object.fromEntries(inventory.rows.map((item) => [item.card_id, item.copies])),
     unseenPulls: extras.unseenPulls || [],
     pendingRankRewards: extras.pendingRankRewards || [],
+    favorites: extras.favorites || [],
   };
 }
 

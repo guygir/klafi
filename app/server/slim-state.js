@@ -50,6 +50,8 @@ export function slimPublicState(session, shell, now = Date.now()) {
       teaser: shell.gameConfig?.progression?.teaser || "האם תגיעו לדרגת ראש הממשלה?",
       pendingRewards: [...(session.pendingRankRewards || [])],
     },
+    inventory: session.inventory || {},
+    favorites: session.favorites || [],
     now,
   };
 }
