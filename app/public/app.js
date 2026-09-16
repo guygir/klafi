@@ -2,6 +2,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
+const HOME_CACHE_KEY = "kalpi-home-cache";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -319,50 +320,151 @@ async function ensureSession() {
   model.serverState = await request("/api/state");
 }
 
-async function bootstrap() {
-  showView("loading");
-  captureStudioSecret();
+function applyHomePayload(home) {
+  if (home.token) {
+    model.token = home.token;
+    localStorage.setItem(SESSION_KEY, home.token);
+  }
+  if (home.state) {
+    model.serverState = { ...model.serverState, ...home.state };
+    localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
+      token: model.token,
+      state: {
+        displayName: home.state.displayName,
+        avatarId: home.state.avatarId,
+        ownedUnique: home.state.ownedUnique,
+        totalCards: home.state.totalCards,
+        unseenCount: home.state.unseenCount,
+        nextIdleAt: home.state.nextIdleAt,
+        idleCapacity: home.state.idleCapacity,
+        progression: home.state.progression,
+        avatars: home.state.avatars,
+      },
+    }));
+  }
+}
+
+function applyCachedHome() {
   try {
-    const boot = await request("/api/bootstrap");
-    if (boot.token) {
-      model.token = boot.token;
-      localStorage.setItem(SESSION_KEY, boot.token);
+    const cached = JSON.parse(localStorage.getItem(HOME_CACHE_KEY) || "null");
+    if (!cached?.state) return;
+    if (cached.token && !model.token) {
+      model.token = cached.token;
+      localStorage.setItem(SESSION_KEY, cached.token);
     }
-    const { cards } = boot.catalog;
-    model.editorial = boot.editorial;
-    model.activity = boot.activity;
-    model.studioContent = boot.studioContent;
-    model.gameConfig = boot.gameConfig;
-    document.querySelectorAll("[data-debug-only]").forEach((element) => {
-      element.hidden = !boot.studioContent?.debugEnabled;
+    model.serverState = { ...model.serverState, ...cached.state };
+  } catch {
+    localStorage.removeItem(HOME_CACHE_KEY);
+  }
+}
+
+async function loadShell() {
+  const shell = await fetch("/shell.json", { cache: "no-store" }).then((response) => {
+    if (!response.ok) throw new Error("SHELL_MISSING");
+    return response.json();
+  });
+  model.gameConfig = { ...model.gameConfig, ...shell.gameConfig };
+  model.editorial = shell.editorial || model.editorial;
+  if (!model.serverState && shell.totals) {
+    model.serverState = {
+      ownedUnique: 0,
+      totalCards: shell.totals.idleEligible,
+      unseenCount: 0,
+      idleCapacity: 8,
+      progression: {
+        level: 1,
+        totalLevels: Math.max(2, shell.gameConfig?.progression?.rankNames?.length || 5),
+        rank: shell.gameConfig?.progression?.rankNames?.[0] || "אזרח סקרן",
+        unique: 0,
+        start: 0,
+        target: 1,
+        remaining: 1,
+        percent: 0,
+        teaser: shell.gameConfig?.progression?.teaser,
+      },
+    };
+  } else if (shell.totals && model.serverState && !model.serverState.totalCards) {
+    model.serverState.totalCards = shell.totals.idleEligible;
+  }
+  applyVisualConfig();
+}
+
+function applyFullBoot(boot) {
+  if (boot.token) {
+    model.token = boot.token;
+    localStorage.setItem(SESSION_KEY, boot.token);
+  }
+  const { cards } = boot.catalog;
+  model.editorial = boot.editorial;
+  model.activity = boot.activity;
+  model.studioContent = boot.studioContent;
+  model.gameConfig = boot.gameConfig;
+  document.querySelectorAll("[data-debug-only]").forEach((element) => {
+    element.hidden = !boot.studioContent?.debugEnabled;
+  });
+  document.querySelectorAll("[data-studio-only]").forEach((element) => {
+    element.hidden = !boot.studioContent?.studioEnabled;
+  });
+  applyVisualConfig();
+  model.leaderboards = boot.leaderboards;
+  model.specials = boot.specials;
+  model.serverState = boot.idleReturn.state;
+  model.idleQueue = boot.idleReturn.cards || [];
+  model.trades = boot.trades || [];
+  model.events = boot.events || [];
+  model.catalog = cards;
+  model.byId = new Map(cards.map((card) => [card.id, card]));
+  populateRevealTimingInputs();
+  populateLevelIncrements();
+  populateStudioMeta();
+  applyHomePayload({ token: boot.token, state: boot.idleReturn.state });
+}
+
+let catalogHydrate = null;
+
+async function hydrateCatalog() {
+  if (model.catalog.length) return model;
+  if (!catalogHydrate) {
+    catalogHydrate = request("/api/bootstrap").then((boot) => {
+      applyFullBoot(boot);
+      renderProfile();
+      renderAdvocacy();
+      renderHome();
+      renderBinder();
+      renderAchievements();
+      renderEvents();
+      renderGrowth();
+      renderStudio();
+      handleInboundLink();
+      return boot;
+    }).finally(() => {
+      catalogHydrate = null;
     });
-    document.querySelectorAll("[data-studio-only]").forEach((element) => {
-      element.hidden = !boot.studioContent?.studioEnabled;
-    });
-    applyVisualConfig();
-    model.leaderboards = boot.leaderboards;
-    model.specials = boot.specials;
-    model.serverState = boot.idleReturn.state;
-    model.idleQueue = boot.idleReturn.cards || [];
-    model.trades = boot.trades || [];
-    model.events = boot.events || [];
-    model.catalog = cards;
-    model.byId = new Map(cards.map((card) => [card.id, card]));
-    populateRevealTimingInputs();
-    populateLevelIncrements();
-    populateStudioMeta();
-    renderProfile();
+  }
+  return catalogHydrate;
+}
+
+async function bootstrap() {
+  captureStudioSecret();
+  applyCachedHome();
+  showView("home");
+  try {
+    await loadShell();
     renderAdvocacy();
+    renderProfile();
     renderHome();
-    renderBinder();
-    renderAchievements();
-    renderEvents();
-    renderGrowth();
-    renderStudio();
-    showView("home");
-    handleInboundLink();
+    const home = await request("/api/home");
+    applyHomePayload(home);
+    renderProfile();
+    renderHome();
+    hydrateCatalog().catch(() => {});
   } catch (error) {
-    showError("לא הצלחנו לפתוח את המשחק.", describeError(error));
+    try {
+      await hydrateCatalog();
+      showView("home");
+    } catch {
+      showError("לא הצלחנו לפתוח את המשחק.", describeError(error));
+    }
   }
 }
 
@@ -1051,6 +1153,14 @@ function playHomePackRip() {
 }
 
 async function openIdleReturn(opening = "regular") {
+  if (!model.catalog.length) {
+    try {
+      await hydrateCatalog();
+    } catch {
+      showToast("עוד טוענים את הקלפים.");
+      return;
+    }
+  }
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
   elements.openPack.textContent = "אוספים…";
@@ -3195,6 +3305,7 @@ elements.cardReviewList.addEventListener("click", (event) => {
 
 elements.navButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    if (button.dataset.nav !== "home") hydrateCatalog().catch(() => {});
     if (button.dataset.nav === "home") {
       renderHome();
       showView("home");

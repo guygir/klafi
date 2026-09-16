@@ -82,6 +82,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /"04 \/ 04 · portrait"/);
   assert.doesNotMatch(javascript, /REVEAL_TIMING_KEY/);
   assert.match(javascript, /\/api\/bootstrap/);
+  assert.match(javascript, /\/api\/home/);
+  assert.match(javascript, /\/shell\.json/);
+  assert.match(html, /id="home-view"[^>]*class="view active"/);
+  assert.match(javascript, /HOME_CACHE_KEY/);
   assert.match(html, /boot-warmup\.js/);
   assert.match(javascript, /studioKey/);
   assert.match(javascript, /x-kalpi-studio/);

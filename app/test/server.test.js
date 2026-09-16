@@ -785,6 +785,23 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   assert.equal(presentationResponse.status, 404);
 });
 
+test("home route creates a guest session without the full catalog", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-home-route-"));
+  const running = await start(dataDir, { value: Date.parse("2026-09-15T12:00:00.000Z") }, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const home = await api(running.base, "/api/home");
+  assert.equal(home.status, 200);
+  assert.match(home.body.token, /^[0-9a-f-]{36}$/i);
+  assert.ok(home.body.state.displayName);
+  assert.equal(home.body.state.progression.rank, "אזרח סקרן");
+  assert.equal(home.body.catalog, undefined);
+  const again = await api(running.base, "/api/home", { token: home.body.token });
+  assert.equal(again.body.token, home.body.token);
+});
+
 test("bootstrap creates a guest session in one request", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-boot-session-"));
   const running = await start(dataDir, { value: Date.parse("2026-09-15T12:00:00.000Z") }, { debugEnabled: false });

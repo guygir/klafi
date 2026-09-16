@@ -1084,6 +1084,23 @@ export async function createKalpiApp({
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/home") {
+        const clientAddress = request.socket?.remoteAddress || "unknown";
+        let token = bearer(request);
+        await store.hydrateSession(token);
+        if (!store.getSession(token)) {
+          const limit = rateLimit(`session:${clientAddress}`, 20, 10 * 60 * 1000, now());
+          if (!limit.allowed) {
+            response.setHeader("retry-after", String(limit.retryAfter));
+            json(response, 429, { error: "RATE_LIMITED" });
+            return;
+          }
+          token = await store.createSession(new Date(now()).toISOString());
+        }
+        json(response, 200, { token, state: stateFor(store.getSession(token)) });
+        return;
+      }
+
       if (request.method === "GET" && url.pathname === "/api/game-config") {
         json(response, 200, publicGameConfig());
         return;
