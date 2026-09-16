@@ -968,8 +968,23 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const health = await api(first.base, "/api/health");
   assert.equal(health.status, 200);
   assert.equal(health.body.backend, "postgres");
-  const cardId = (await api(first.base, "/api/catalog")).body.cards.find(({ idleEligible }) => idleEligible).id;
-  await api(first.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId } });
+  const idleCards = (await api(first.base, "/api/catalog")).body.cards.filter(({ idleEligible }) => idleEligible);
+  const cardId = idleCards[0].id;
+  const secondCardId = idleCards[1].id;
+  const secondCreated = await api(first.base, "/api/session", { method: "POST" });
+  const secondToken = secondCreated.body.token;
+  const [firstUnlock, secondUnlock] = await Promise.all([
+    api(first.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId } }),
+    api(first.base, "/api/debug/unlock-card", { token: secondToken, method: "POST", body: { cardId: secondCardId } }),
+  ]);
+  assert.equal(firstUnlock.status, 200);
+  assert.equal(secondUnlock.status, 200);
+  const recorded = await api(first.base, "/api/events", {
+    token,
+    method: "POST",
+    body: { type: "back_completed", cardId },
+  });
+  assert.equal(recorded.status, 201);
   await first.close();
   const second = await start(dataDir, clock, { databaseUrl });
   t.after(async () => {
@@ -980,5 +995,9 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   assert.equal(state.status, 200);
   assert.ok(state.body.displayName);
   assert.equal(state.body.inventory[cardId], 1);
+  assert.equal(state.body.achievements.find(({ id }) => id === "first-rip").earned, true);
   assert.equal(state.body.quizAvailable, false);
+  const restoredSecond = await api(second.base, "/api/state", { token: secondToken });
+  assert.equal(restoredSecond.status, 200);
+  assert.equal(restoredSecond.body.inventory[secondCardId], 1);
 });
