@@ -448,6 +448,7 @@ async function bootstrap() {
   captureStudioSecret();
   applyCachedHome();
   showView("home");
+  const catalogPromise = hydrateCatalog().catch(() => null);
   try {
     await loadShell();
     renderAdvocacy();
@@ -457,7 +458,7 @@ async function bootstrap() {
     applyHomePayload(home);
     renderProfile();
     renderHome();
-    hydrateCatalog().catch(() => {});
+    await catalogPromise;
   } catch (error) {
     try {
       await hydrateCatalog();

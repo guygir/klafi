@@ -8,9 +8,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
 
 test("client selectors match the HTML and preserve Alpha UX constraints", async () => {
-  const [html, javascript, baseCss, themeCss] = await Promise.all([
+  const [html, javascript, warmup, baseCss, themeCss] = await Promise.all([
     readFile(path.join(publicDir, "index.html"), "utf8"),
     readFile(path.join(publicDir, "app.js"), "utf8"),
+    readFile(path.join(publicDir, "boot-warmup.js"), "utf8"),
     readFile(path.join(publicDir, "styles.css"), "utf8"),
     readFile(path.join(publicDir, "theme-pack-v2.css"), "utf8"),
   ]);
@@ -87,6 +88,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="home-view"[^>]*class="view active"/);
   assert.match(javascript, /HOME_CACHE_KEY/);
   assert.match(html, /boot-warmup\.js/);
+  assert.match(warmup, /\/api\/catalog/);
+  assert.match(warmup, /\/api\/home/);
   assert.match(javascript, /studioKey/);
   assert.match(javascript, /x-kalpi-studio/);
   assert.match(html, /data-studio-only/);

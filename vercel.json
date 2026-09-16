@@ -19,6 +19,6 @@
     }
   },
   "crons": [
-    { "path": "/api/health", "schedule": "0 8 * * *" }
+    { "path": "/api/catalog", "schedule": "0 8 * * *" }
   ]
 }

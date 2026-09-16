@@ -22,7 +22,7 @@ The [Dockerfile](../../Dockerfile) remains the local/container path. Koyeb is a 
 
 The PostgreSQL adapter now keeps player writes on their own tables (`kalpi_sessions`, inventory, instances, packs, trades, events, factions). A leftover `kalpi_runtime_state` JSONB row is imported once, then ignored. Studio release/unlock config persists in `kalpi_studio_config`. Guest play still uses the browser token; account bind is optional and not required.
 
-Home does not wait on the fat game function. Static `/shell.json` (CDN) paints level chrome; `api/health.js` and `api/home.js` are small routes that only touch one session row. Pack pulls, trades and the binder catalog still go through the authoritative Node function — do not move those writes to a browser Supabase anon key.
+Home does not wait on the fat game function. Static `/shell.json` (CDN) paints level chrome; `api/health.js` and `api/home.js` are small routes that only touch one session row. Pack pulls, trades and the binder catalog still go through the authoritative Node function — do not move those writes to a browser Supabase anon key. Entering Home immediately pings `/api/catalog` so that isolate is already booting while the player reads the screen. Vercel Hobby does not pre-warm instances; Pro Fluid does. The daily cron hits `/api/catalog` for the same reason.
 
 ## Required environment
 
