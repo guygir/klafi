@@ -181,10 +181,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /hebrew-quality-15/);
+  assert.match(html, /hebrew-quality-16/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
+  assert.match(javascript, /function hydrateExtras/);
   assert.match(javascript, /\/catalog\.json/);
+  assert.match(javascript, /request\("\/api\/events"\)/);
+  assert.match(javascript, /request\("\/api\/trades"\)/);
+  assert.match(javascript, /request\("\/api\/leaderboards"\)/);
+  assert.match(javascript, /hydrateExtras\(\)\.catch/);
   assert.match(javascript, /טוענים את האלבום/);
   assert.match(javascript, /searchParams\.set\("view"/);
   assert.match(javascript, /Promise\.allSettled\(\[settlePromise, ripPromise\]\)/);

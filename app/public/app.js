@@ -505,20 +505,52 @@ async function loadStaticCatalog() {
   return catalogHydrate;
 }
 
+function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state }) {
+  if (events) model.events = events.events || events;
+  if (trades) model.trades = trades.trades || trades;
+  if (leaderboards) model.leaderboards = leaderboards;
+  if (activity) model.activity = activity;
+  if (specials) model.specials = specials;
+  if (state) model.serverState = { ...model.serverState, ...state };
+}
+
+function paintExtras() {
+  renderProfile();
+  renderHome();
+  renderBinder();
+  renderAchievements();
+  renderEvents();
+  renderGrowth();
+  renderStudio();
+}
+
 async function hydrateExtras() {
   if (model.extrasReady) return model;
   if (!extrasHydrate) {
-    extrasHydrate = request("/api/bootstrap").then((boot) => {
+    extrasHydrate = Promise.all([
+      request("/api/events"),
+      request("/api/trades"),
+      request("/api/leaderboards"),
+      request("/api/activity"),
+      request("/api/specials"),
+      request("/api/state"),
+    ]).then(async ([events, trades, leaderboards, activity, specials, state]) => {
+      applyExtrasPayload({ events, trades, leaderboards, activity, specials, state });
+      model.extrasReady = true;
+      if (studioSecret()) {
+        try {
+          model.studioContent = await request("/api/studio/content");
+        } catch {
+          /* Studio stays closed without the secret. */
+        }
+      }
+      paintExtras();
+      return model;
+    }).catch(async () => {
+      const boot = await request("/api/bootstrap");
       applyFullBoot(boot);
       model.extrasReady = true;
-      renderProfile();
-      renderAdvocacy();
-      renderHome();
-      renderBinder();
-      renderAchievements();
-      renderEvents();
-      renderGrowth();
-      renderStudio();
+      paintExtras();
       handleInboundLink();
       return boot;
     }).finally(() => {
@@ -544,7 +576,6 @@ async function bootstrap() {
   else showView("home");
   const catalogPromise = loadStaticCatalog().catch(() => null);
   const extrasNeeded = inboundView && inboundView !== "home" && inboundView !== "binder";
-  const extrasPromise = extrasNeeded ? hydrateExtras().catch(() => null) : null;
   try {
     await loadShell();
     renderAdvocacy();
@@ -557,6 +588,7 @@ async function bootstrap() {
     renderProfile();
     renderHome();
     renderBinder();
+    const extrasPromise = hydrateExtras().catch(() => null);
     if (extrasNeeded) await extrasPromise;
   } catch (error) {
     try {
