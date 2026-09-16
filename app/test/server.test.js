@@ -116,6 +116,8 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   assert.equal(first.body.cards.length, 1);
   assert.equal(first.body.state.unseenCount, 1);
   assert.equal(first.body.state.idleCapacity, IDLE_BACKLOG_CAP);
+  assert.equal(first.body.state.instances, undefined);
+  assert.equal(first.body.state.achievements, undefined);
 
   const replay = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(replay.body.newlySettledCount, 0);
