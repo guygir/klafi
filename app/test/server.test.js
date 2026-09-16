@@ -104,6 +104,10 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
     await rm(dataDir, { recursive: true, force: true });
   });
 
+  const unauthorized = await api(running.base, "/api/idle/settle", { method: "POST" });
+  assert.equal(unauthorized.status, 401);
+  assert.equal(unauthorized.body.error, "INVALID_SESSION");
+
   const created = await api(running.base, "/api/session", { method: "POST" });
   const token = created.body.token;
   const first = await api(running.base, "/api/idle/settle", { token, method: "POST" });

@@ -870,6 +870,7 @@ export async function createKalpiApp({
         queue: current.instances.filter(({ instanceId }) => unseen.has(instanceId)),
       };
     });
+    if (!result) return { error: "INVALID_SESSION", status: 401 };
     if (result.granted.length) {
       await store.incrementFaction(store.getSession(token)?.factionId, result.granted.length);
       await store.recordEvent({
@@ -1068,6 +1069,23 @@ export async function createKalpiApp({
         return;
       }
 
+      if (request.method === "POST" && url.pathname === "/api/idle/settle") {
+        const token = bearer(request);
+        const limit = rateLimit(`write:${token}`, 120, 60 * 1000, now());
+        if (!limit.allowed) {
+          response.setHeader("retry-after", String(limit.retryAfter));
+          json(response, 429, { error: "RATE_LIMITED" });
+          return;
+        }
+        const idleReturn = await settleIdle(token);
+        if (idleReturn.error) {
+          json(response, idleReturn.status || 503, { error: idleReturn.error });
+          return;
+        }
+        json(response, 200, idleReturn);
+        return;
+      }
+
       if (url.pathname.startsWith("/api/")) {
         const token = bearer(request);
         await store.hydrateSession(token);
@@ -1131,16 +1149,6 @@ export async function createKalpiApp({
               : current.favorites.filter((id) => id !== cardId);
           });
           json(response, 200, stateFor(store.getSession(token)));
-          return;
-        }
-
-        if (request.method === "POST" && url.pathname === "/api/idle/settle") {
-          const idleReturn = await settleIdle(token);
-          if (idleReturn.error) {
-            json(response, 503, { error: idleReturn.error });
-            return;
-          }
-          json(response, 200, idleReturn);
           return;
         }
 
