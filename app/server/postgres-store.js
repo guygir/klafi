@@ -1,6 +1,7 @@
 import pg from "pg";
 import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { normalizeState } from "./store.js";
 
 const { Pool } = pg;
@@ -63,6 +64,42 @@ function extrasFromSession(session) {
   };
 }
 
+function recordsBy(items, key) {
+  return new Map(items.map((item) => [item[key], item]));
+}
+
+function changedRecords(previous, next, key) {
+  const before = recordsBy(previous, key);
+  return next.filter((item) => JSON.stringify(before.get(item[key])) !== JSON.stringify(item));
+}
+
+function removedRecordIds(previous, next, key) {
+  const remaining = new Set(next.map((item) => item[key]));
+  return previous.map((item) => item[key]).filter((id) => !remaining.has(id));
+}
+
+export function sessionDeltas(previous, session) {
+  const beforeInventory = previous.inventory || {};
+  const nextInventory = session.inventory || {};
+  const inventoryUpserts = Object.entries(nextInventory)
+    .filter(([cardId, copies]) => copies > 0 && beforeInventory[cardId] !== copies)
+    .map(([cardId, copies]) => ({ cardId, copies }));
+  const inventoryDeletes = Object.keys(beforeInventory)
+    .filter((cardId) => !nextInventory[cardId]);
+  const beforeInstances = (previous.instances || []).slice(-500);
+  const nextInstances = (session.instances || []).slice(-500);
+  const beforePacks = (previous.packs || []).slice(-100);
+  const nextPacks = (session.packs || []).slice(-100);
+  return {
+    inventoryUpserts,
+    inventoryDeletes,
+    instanceUpserts: changedRecords(beforeInstances, nextInstances, "instanceId"),
+    instanceDeletes: removedRecordIds(beforeInstances, nextInstances, "instanceId"),
+    packUpserts: changedRecords(beforePacks, nextPacks, "packId"),
+    packDeletes: removedRecordIds(beforePacks, nextPacks, "packId"),
+  };
+}
+
 export class PostgresStore {
   constructor(connectionString, { ssl = false } = {}) {
     this.pool = new Pool({
@@ -70,13 +107,12 @@ export class PostgresStore {
       ssl: ssl ? { rejectUnauthorized: false } : undefined,
       max: Number(process.env.DATABASE_POOL_SIZE || 10),
     });
-    this.activeClient = null;
+    this.transaction = new AsyncLocalStorage();
     this.sessionCache = new Map();
-    this.queue = Promise.resolve();
   }
 
   executor() {
-    return this.activeClient || this.pool;
+    return this.transaction.getStore() || this.pool;
   }
 
   remember(token, session) {
@@ -337,26 +373,99 @@ export class PostgresStore {
     };
   }
 
-  async saveSession(token, session) {
+  async saveSession(token, session, previous) {
+    if (!previous) throw new Error("SESSION_SNAPSHOT_REQUIRED");
     const client = this.executor();
+    const deltas = sessionDeltas(previous, session);
     await client.query(
-      `UPDATE kalpi_sessions SET
-         display_name = $2,
-         avatar_id = $3,
-         next_daily_at = $4,
-         dry_packs = $5,
-         pack_count = $6,
-         faction_id = $7,
-         trade_count = $8,
-         idle_anchor_at = $9,
-         next_idle_at = $10,
-         idle_duplicate_streak = $11,
-         idle_pull_count = $12,
-         highest_rank = $13,
-         quiz_won_day = $14,
-         extras = $15::jsonb,
-         updated_at = NOW()
-       WHERE token = $1`,
+      `WITH session_update AS (
+         UPDATE kalpi_sessions SET
+           display_name = $2,
+           avatar_id = $3,
+           next_daily_at = $4,
+           dry_packs = $5,
+           pack_count = $6,
+           faction_id = $7,
+           trade_count = $8,
+           idle_anchor_at = $9,
+           next_idle_at = $10,
+           idle_duplicate_streak = $11,
+           idle_pull_count = $12,
+           highest_rank = $13,
+           quiz_won_day = $14,
+           extras = $15::jsonb,
+           updated_at = NOW()
+         WHERE token = $1
+         RETURNING token
+       ),
+       inventory_input AS (
+         SELECT item->>'cardId' AS card_id, (item->>'copies')::integer AS copies
+         FROM jsonb_array_elements($16::jsonb) AS item
+       ),
+       inventory_upsert AS (
+         INSERT INTO kalpi_inventory (session_token, card_id, copies)
+         SELECT $1, card_id, copies FROM inventory_input
+         ON CONFLICT (session_token, card_id) DO UPDATE SET copies = EXCLUDED.copies
+         RETURNING card_id
+       ),
+       inventory_delete AS (
+         DELETE FROM kalpi_inventory
+         WHERE session_token = $1 AND card_id = ANY($17::text[])
+         RETURNING card_id
+       ),
+       instance_input AS (
+         SELECT
+           item->>'instanceId' AS instance_id,
+           item->>'cardId' AS card_id,
+           item->>'finish' AS finish,
+           (item->>'pulledAt')::timestamptz AS pulled_at,
+           COALESCE((item->>'isNew')::boolean, false) AS is_new,
+           NULLIF(item->>'acquiredBy', '') AS acquired_by,
+           NULLIF(item->>'seenAt', '')::timestamptz AS seen_at
+         FROM jsonb_array_elements($18::jsonb) AS item
+       ),
+       instance_upsert AS (
+         INSERT INTO kalpi_instances (
+           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at
+         )
+         SELECT instance_id, $1, card_id, finish, pulled_at, is_new, acquired_by, seen_at
+         FROM instance_input
+         ON CONFLICT (instance_id) DO UPDATE SET
+           finish = EXCLUDED.finish,
+           is_new = EXCLUDED.is_new,
+           acquired_by = EXCLUDED.acquired_by,
+           seen_at = EXCLUDED.seen_at
+         RETURNING instance_id
+       ),
+       instance_delete AS (
+         DELETE FROM kalpi_instances
+         WHERE session_token = $1 AND instance_id = ANY($19::text[])
+         RETURNING instance_id
+       ),
+       pack_input AS (
+         SELECT
+           item->>'packId' AS pack_id,
+           NULLIF(item->>'mode', '') AS mode,
+           (item->>'pulledAt')::timestamptz AS pulled_at,
+           NULLIF(item->>'nextDailyAt', '')::timestamptz AS next_daily_at,
+           COALESCE(item->'cards', '[]'::jsonb) AS cards
+         FROM jsonb_array_elements($20::jsonb) AS item
+       ),
+       pack_upsert AS (
+         INSERT INTO kalpi_packs (pack_id, session_token, mode, pulled_at, next_daily_at, cards)
+         SELECT pack_id, $1, mode, pulled_at, next_daily_at, cards FROM pack_input
+         ON CONFLICT (pack_id) DO UPDATE SET
+           mode = EXCLUDED.mode,
+           next_daily_at = EXCLUDED.next_daily_at,
+           cards = EXCLUDED.cards
+         RETURNING pack_id
+       ),
+       pack_delete AS (
+         DELETE FROM kalpi_packs
+         WHERE session_token = $1 AND pack_id = ANY($21::text[])
+         RETURNING pack_id
+       )
+       SELECT token FROM session_update`,
       [
         token,
         session.displayName,
@@ -373,72 +482,32 @@ export class PostgresStore {
         session.highestRank || 1,
         session.quizWonDay,
         JSON.stringify(extrasFromSession(session)),
+        JSON.stringify(deltas.inventoryUpserts),
+        deltas.inventoryDeletes,
+        JSON.stringify(deltas.instanceUpserts),
+        deltas.instanceDeletes,
+        JSON.stringify(deltas.packUpserts),
+        deltas.packDeletes,
       ],
     );
-    await client.query("DELETE FROM kalpi_inventory WHERE session_token = $1", [token]);
-    for (const [cardId, copies] of Object.entries(session.inventory || {})) {
-      if (!copies) continue;
-      await client.query(
-        "INSERT INTO kalpi_inventory (session_token, card_id, copies) VALUES ($1,$2,$3)",
-        [token, cardId, copies],
-      );
-    }
-    await client.query("DELETE FROM kalpi_instances WHERE session_token = $1", [token]);
-    for (const instance of (session.instances || []).slice(-500)) {
-      await client.query(
-        `INSERT INTO kalpi_instances (
-           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [
-          instance.instanceId,
-          token,
-          instance.cardId,
-          instance.finish,
-          instance.pulledAt,
-          Boolean(instance.isNew),
-          instance.acquiredBy || null,
-          instance.seenAt || null,
-        ],
-      );
-    }
-    await client.query("DELETE FROM kalpi_packs WHERE session_token = $1", [token]);
-    for (const pack of (session.packs || []).slice(-100)) {
-      await client.query(
-        `INSERT INTO kalpi_packs (pack_id, session_token, mode, pulled_at, next_daily_at, cards)
-         VALUES ($1,$2,$3,$4,$5,$6::jsonb)`,
-        [
-          pack.packId,
-          token,
-          pack.mode || null,
-          pack.pulledAt,
-          pack.nextDailyAt || null,
-          JSON.stringify(pack.cards || []),
-        ],
-      );
-    }
     this.remember(token, session);
   }
 
   exclusive(operation) {
-    const run = async () => {
-      const client = await this.pool.connect();
+    if (this.transaction.getStore()) return operation();
+    return this.pool.connect().then(async (client) => {
       try {
         await client.query("BEGIN");
-        this.activeClient = client;
-        const result = await operation();
+        const result = await this.transaction.run(client, operation);
         await client.query("COMMIT");
         return result;
       } catch (error) {
         await client.query("ROLLBACK");
         throw error;
       } finally {
-        this.activeClient = null;
         client.release();
       }
-    };
-    const next = this.queue.then(run, run);
-    this.queue = next.catch(() => {});
-    return next;
+    });
   }
 
   async createSession(now) {
@@ -455,33 +524,44 @@ export class PostgresStore {
     const run = async () => {
       const session = await this.loadSession(token, { forUpdate: true });
       if (!session) return null;
+      const previous = structuredClone(session);
       const result = await mutator(session);
-      await this.saveSession(token, session);
+      await this.saveSession(token, session, previous);
       return result;
     };
-    return this.activeClient ? run() : this.exclusive(run);
+    return this.transaction.getStore() ? run() : this.exclusive(run);
   }
 
   async recordEvent(event) {
     return this.exclusive(async () => {
-      await this.executor().query(
-        `INSERT INTO kalpi_events (event_id, type, session_token, payload, recorded_at)
-         VALUES ($1,$2,$3,$4::jsonb,$5)
-         ON CONFLICT (event_id) DO NOTHING`,
+      const eventId = event.eventId || randomUUID();
+      const result = await this.executor().query(
+        `WITH inserted AS (
+           INSERT INTO kalpi_events (event_id, type, session_token, payload, recorded_at)
+           VALUES ($1,$2,$3,$4::jsonb,$5)
+           ON CONFLICT (event_id) DO NOTHING
+           RETURNING 1
+         )
+         UPDATE kalpi_sessions
+         SET extras = jsonb_set(
+           extras,
+           ARRAY['eventCounts', $2],
+           to_jsonb(COALESCE((extras #>> ARRAY['eventCounts', $2])::integer, 0) + 1),
+           true
+         )
+         WHERE token = $3 AND EXISTS (SELECT 1 FROM inserted)
+         RETURNING token`,
         [
-          event.eventId || randomUUID(),
+          eventId,
           event.type,
           event.sessionToken || null,
           JSON.stringify(event),
           event.recordedAt,
         ],
       );
-      if (event.sessionToken) {
-        const session = await this.loadSession(event.sessionToken, { forUpdate: true });
-        if (session) {
-          session.eventCounts[event.type] = (session.eventCounts[event.type] ?? 0) + 1;
-          await this.saveSession(event.sessionToken, session);
-        }
+      const cached = this.getSession(event.sessionToken);
+      if (result.rowCount && cached) {
+        cached.eventCounts[event.type] = (cached.eventCounts[event.type] ?? 0) + 1;
       }
       return event;
     });
@@ -579,6 +659,7 @@ export class PostgresStore {
       if (!trade || trade.ownerToken !== sessionToken || trade.status !== "open" || !session?.inventory[trade.offeredCardId]) {
         return null;
       }
+      const previous = structuredClone(session);
       session.inventory[trade.offeredCardId] -= 1;
       if (!session.inventory[trade.offeredCardId]) delete session.inventory[trade.offeredCardId];
       session.inventory[trade.wantedCardId] = (session.inventory[trade.wantedCardId] ?? 0) + 1;
@@ -594,7 +675,7 @@ export class PostgresStore {
       trade.status = "matched-demo";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = "simulated-matching-user";
-      await this.saveSession(sessionToken, session);
+      await this.saveSession(sessionToken, session, previous);
       await this.executor().query(
         `UPDATE kalpi_trades SET status = $2, accepted_at = $3, accepted_by = $4 WHERE trade_id = $1`,
         [tradeId, trade.status, trade.acceptedAt, trade.acceptedBy],
@@ -619,6 +700,8 @@ export class PostgresStore {
       const owner = await this.loadSession(trade.ownerToken);
       const accepter = await this.loadSession(sessionToken);
       if (!owner?.inventory[trade.offeredCardId] || !accepter?.inventory[trade.wantedCardId]) return null;
+      const previousOwner = structuredClone(owner);
+      const previousAccepter = structuredClone(accepter);
       const transfer = (from, to, cardId, finish, acquiredBy) => {
         from.inventory[cardId] -= 1;
         if (!from.inventory[cardId]) delete from.inventory[cardId];
@@ -640,8 +723,8 @@ export class PostgresStore {
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = sessionToken;
-      await this.saveSession(trade.ownerToken, owner);
-      await this.saveSession(sessionToken, accepter);
+      await this.saveSession(trade.ownerToken, owner, previousOwner);
+      await this.saveSession(sessionToken, accepter, previousAccepter);
       await this.executor().query(
         `UPDATE kalpi_trades SET status = $2, accepted_at = $3, accepted_by = $4 WHERE trade_id = $1`,
         [tradeId, trade.status, trade.acceptedAt, trade.acceptedBy],
