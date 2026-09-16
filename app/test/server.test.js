@@ -982,7 +982,7 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const recorded = await api(first.base, "/api/events", {
     token,
     method: "POST",
-    body: { type: "back_completed", cardId },
+    body: { type: "source_opened", cardId },
   });
   assert.equal(recorded.status, 201);
   await first.close();
@@ -995,7 +995,7 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   assert.equal(state.status, 200);
   assert.ok(state.body.displayName);
   assert.equal(state.body.inventory[cardId], 1);
-  assert.equal(state.body.achievements.find(({ id }) => id === "first-rip").earned, true);
+  assert.equal(state.body.achievements.find(({ id }) => id === "source-check").earned, true);
   assert.equal(state.body.quizAvailable, false);
   const restoredSecond = await api(second.base, "/api/state", { token: secondToken });
   assert.equal(restoredSecond.status, 200);
