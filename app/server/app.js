@@ -543,6 +543,25 @@ function publicState(session, now, cards, config = {}) {
   };
 }
 
+function publicIdleState(session, now, cards, config = {}) {
+  const eligibleCards = activeIdleCards(cards, now);
+  const eligibleIds = new Set(eligibleCards.map(({ id }) => id));
+  const progression = progressionState(session, cards, config, now);
+  return {
+    displayName: session.displayName,
+    avatarId: session.avatarId || "kid-boy",
+    inventory: session.inventory,
+    favorites: session.favorites ?? [],
+    ownedUnique: Object.keys(session.inventory).filter((id) => eligibleIds.has(id)).length,
+    totalCards: eligibleCards.length,
+    nextIdleAt: session.nextIdleAt,
+    idleCapacity: IDLE_BACKLOG_CAP,
+    unseenCount: session.unseenPulls?.length ?? 0,
+    progression,
+    avatars: publicAvatars(session, config.avatars, progression.level),
+  };
+}
+
 function jerusalemDay(ms) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(ms));
 }
@@ -867,33 +886,22 @@ export async function createKalpiApp({
       current.packs = current.packs.slice(-100);
       current.instances = current.instances.slice(-500);
       syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
-      const unseen = new Set(current.unseenPulls);
+      const instancesById = new Map(current.instances.map((instance) => [instance.instanceId, instance]));
       return {
         granted,
-        queue: current.instances.filter(({ instanceId }) => unseen.has(instanceId)),
+        queue: current.unseenPulls.map((instanceId) => instancesById.get(instanceId)).filter(Boolean),
       };
     });
     if (!result) return { error: "INVALID_SESSION", status: 401 };
     if (result.granted.length) {
-      await Promise.all([
-        store.incrementFaction(store.getSession(token)?.factionId, result.granted.length),
-        store.recordEvent({
-          eventId: randomUUID(),
-          type: "idle_settled",
-          sessionToken: token,
-          cardId: null,
-          packId: null,
-          referralCode: null,
-          count: result.granted.length,
-          recordedAt: new Date(currentMs).toISOString(),
-        }),
-      ]);
+      await store.incrementFaction(store.getSession(token)?.factionId, result.granted.length);
     }
+    const session = store.getSession(token);
     return {
       mode: "idle-return",
       newlySettledCount: result.granted.length,
       cards: result.queue,
-      state: stateFor(store.getSession(token)),
+      state: publicIdleState(session, currentMs, allCards, runtimeProgression()),
     };
   }
   function grantCard(session, pull, { acquiredBy, pulledAt }) {

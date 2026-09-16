@@ -3,7 +3,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
-const STATIC_DATA_VERSION = "fluid-play-1";
+const STATIC_DATA_VERSION = "fluid-play-2";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -365,10 +365,12 @@ function applyCachedHome() {
 }
 
 async function loadShell() {
-  const shell = await fetch(`/shell.json?v=${STATIC_DATA_VERSION}`, { cache: "force-cache" }).then((response) => {
+  const warmedShell = window.__kalpiWarmup?.shell;
+  if (window.__kalpiWarmup) window.__kalpiWarmup.shell = null;
+  const shell = await (warmedShell || fetch(`/shell.json?v=${STATIC_DATA_VERSION}`, { cache: "force-cache" }).then((response) => {
     if (!response.ok) throw new Error("SHELL_MISSING");
     return response.json();
-  });
+  }));
   model.gameConfig = { ...model.gameConfig, ...shell.gameConfig };
   model.editorial = shell.editorial || model.editorial;
   if (!model.serverState && shell.totals) {
@@ -434,7 +436,6 @@ function applyFullBoot(boot) {
 let catalogHydrate = null;
 let homeHydrate = null;
 let extrasHydrate = null;
-let extrasPrefetchTimer = null;
 let catalogFailed = false;
 const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
 
@@ -548,8 +549,6 @@ function paintExtras() {
 
 async function hydrateExtras() {
   if (model.extrasReady) return model;
-  clearTimeout(extrasPrefetchTimer);
-  extrasPrefetchTimer = null;
   if (!extrasHydrate) {
     extrasHydrate = Promise.allSettled([
       request("/api/events"),
@@ -592,13 +591,6 @@ async function hydrateCatalog() {
   }
 }
 
-function scheduleExtrasPrefetch() {
-  clearTimeout(extrasPrefetchTimer);
-  extrasPrefetchTimer = setTimeout(() => {
-    hydrateHome().then(() => hydrateExtras()).catch(() => {});
-  }, 5000);
-}
-
 async function bootstrap() {
   captureStudioSecret();
   applyCachedHome();
@@ -616,10 +608,7 @@ async function bootstrap() {
     if (inboundView === "binder") renderBinder();
     const homePromise = hydrateHome();
     if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
-    else {
-      homePromise.catch(() => null);
-      scheduleExtrasPrefetch();
-    }
+    else homePromise.catch(() => null);
   } catch (error) {
     try {
       await hydrateCatalog();
@@ -1342,8 +1331,6 @@ function playHomePackRip({ holdAtEnd = false } = {}) {
 
 async function openIdleReturn(opening = "regular") {
   if (!model.catalog.length) loadStaticCatalog().catch(() => {});
-  clearTimeout(extrasPrefetchTimer);
-  extrasPrefetchTimer = null;
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
   elements.openPack.textContent = "פותחים…";
@@ -1353,6 +1340,9 @@ async function openIdleReturn(opening = "regular") {
     const settled = await request("/api/idle/settle", { method: "POST" });
     applyHomePayload({ state: settled.state });
     model.idleQueue = settled.cards || [];
+    const knownInstances = new Map((model.serverState?.instances || []).map((instance) => [instance.instanceId, instance]));
+    for (const instance of model.idleQueue) knownInstances.set(instance.instanceId, instance);
+    model.serverState.instances = [...knownInstances.values()].slice(-500);
     if (!model.idleQueue.length) {
       rip.release();
       renderHome();

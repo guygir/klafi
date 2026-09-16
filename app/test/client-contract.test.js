@@ -182,15 +182,16 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /fluid-play-1/);
+  assert.match(html, /fluid-play-2/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
   assert.match(javascript, /function hydrateExtras/);
   assert.match(javascript, /Promise\.allSettled\(\[/);
-  assert.match(javascript, /function scheduleExtrasPrefetch/);
-  assert.match(javascript, /clearTimeout\(extrasPrefetchTimer\)/);
+  assert.doesNotMatch(javascript, /scheduleExtrasPrefetch/);
+  assert.doesNotMatch(javascript, /extrasPrefetchTimer/);
   assert.match(javascript, /\/catalog\.json/);
   assert.match(javascript, /cache: "force-cache"/);
+  assert.match(javascript, /const warmedShell = window\.__kalpiWarmup\?\.shell/);
   assert.match(javascript, /const warmedCatalog = window\.__kalpiWarmup\?\.catalog/);
   assert.match(javascript, /const warmedHome = window\.__kalpiWarmup\?\.home/);
   assert.match(javascript, /const due = !timeUntil\(model\.serverState\?\.nextIdleAt\)/);
@@ -204,6 +205,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /await rip\.finished/);
   assert.match(javascript, /if \(!model\.token\) await hydrateHome\(\)/);
   assert.match(warmup, /\/catalog\.json/);
+  assert.match(warmup, /\/shell\.json/);
   assert.match(warmup, /window\.__kalpiWarmup/);
   assert.match(warmup, /cache: "force-cache"/);
   assert.match(css, /\.binder-slot\.is-loading/);
