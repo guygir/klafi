@@ -434,6 +434,7 @@ function applyFullBoot(boot) {
 let catalogHydrate = null;
 let homeHydrate = null;
 let extrasHydrate = null;
+let extrasPrefetchTimer = null;
 let catalogFailed = false;
 const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
 
@@ -547,17 +548,22 @@ function paintExtras() {
 
 async function hydrateExtras() {
   if (model.extrasReady) return model;
+  clearTimeout(extrasPrefetchTimer);
+  extrasPrefetchTimer = null;
   if (!extrasHydrate) {
-    extrasHydrate = Promise.all([
+    extrasHydrate = Promise.allSettled([
       request("/api/events"),
       request("/api/trades"),
       request("/api/leaderboards"),
       request("/api/activity"),
       request("/api/specials"),
       request("/api/state"),
-    ]).then(async ([events, trades, leaderboards, activity, specials, state]) => {
+    ]).then(async (results) => {
+      const [events, trades, leaderboards, activity, specials, state] = results.map((result) =>
+        result.status === "fulfilled" ? result.value : null
+      );
       applyExtrasPayload({ events, trades, leaderboards, activity, specials, state });
-      model.extrasReady = true;
+      model.extrasReady = results.every(({ status }) => status === "fulfilled");
       if (studioSecret()) {
         try {
           model.studioContent = await request("/api/studio/content");
@@ -567,13 +573,6 @@ async function hydrateExtras() {
       }
       paintExtras();
       return model;
-    }).catch(async () => {
-      const boot = await request("/api/bootstrap");
-      applyFullBoot(boot);
-      model.extrasReady = true;
-      paintExtras();
-      handleInboundLink();
-      return boot;
     }).finally(() => {
       extrasHydrate = null;
     });
@@ -585,8 +584,19 @@ async function hydrateCatalog() {
   try {
     return await loadStaticCatalog();
   } catch {
-    return hydrateExtras();
+    const boot = await request("/api/bootstrap");
+    applyFullBoot(boot);
+    paintExtras();
+    handleInboundLink();
+    return boot;
   }
+}
+
+function scheduleExtrasPrefetch() {
+  clearTimeout(extrasPrefetchTimer);
+  extrasPrefetchTimer = setTimeout(() => {
+    hydrateHome().then(() => hydrateExtras()).catch(() => {});
+  }, 5000);
 }
 
 async function bootstrap() {
@@ -605,9 +615,11 @@ async function bootstrap() {
     await catalogPromise;
     if (inboundView === "binder") renderBinder();
     const homePromise = hydrateHome();
-    const extrasPromise = homePromise.then(() => hydrateExtras()).catch(() => null);
-    if (extrasNeeded) await extrasPromise;
-    else homePromise.catch(() => null);
+    if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
+    else {
+      homePromise.catch(() => null);
+      scheduleExtrasPrefetch();
+    }
   } catch (error) {
     try {
       await hydrateCatalog();
@@ -1330,6 +1342,8 @@ function playHomePackRip({ holdAtEnd = false } = {}) {
 
 async function openIdleReturn(opening = "regular") {
   if (!model.catalog.length) loadStaticCatalog().catch(() => {});
+  clearTimeout(extrasPrefetchTimer);
+  extrasPrefetchTimer = null;
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
   elements.openPack.textContent = "פותחים…";

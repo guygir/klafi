@@ -185,6 +185,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
   assert.match(javascript, /function hydrateExtras/);
+  assert.match(javascript, /Promise\.allSettled\(\[/);
+  assert.match(javascript, /function scheduleExtrasPrefetch/);
+  assert.match(javascript, /clearTimeout\(extrasPrefetchTimer\)/);
   assert.match(javascript, /\/catalog\.json/);
   assert.match(javascript, /cache: "force-cache"/);
   assert.match(javascript, /const warmedCatalog = window\.__kalpiWarmup\?\.catalog/);
