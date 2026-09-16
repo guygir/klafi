@@ -108,6 +108,7 @@ export class PostgresStore {
       max: Number(process.env.DATABASE_POOL_SIZE || 10),
     });
     this.transaction = new AsyncLocalStorage();
+    this.requestSessions = new AsyncLocalStorage();
     this.sessionCache = new Map();
   }
 
@@ -116,8 +117,12 @@ export class PostgresStore {
   }
 
   remember(token, session) {
-    if (token && session) this.sessionCache.set(token, session);
+    if (token && session) (this.requestSessions.getStore() || this.sessionCache).set(token, session);
     return session;
+  }
+
+  withRequest(operation) {
+    return this.requestSessions.run(new Map(), operation);
   }
 
   async init() {
@@ -286,7 +291,7 @@ export class PostgresStore {
   }
 
   async refresh() {
-    this.sessionCache.clear();
+    (this.requestSessions.getStore() || this.sessionCache).clear();
   }
 
   async health() {
@@ -296,13 +301,15 @@ export class PostgresStore {
 
   async hydrateSession(token) {
     if (!token) return null;
-    if (this.sessionCache.has(token)) return this.sessionCache.get(token);
+    const sessions = this.requestSessions.getStore() || this.sessionCache;
+    if (sessions.has(token)) return sessions.get(token);
     const session = await this.loadSession(token);
     return session ? this.remember(token, session) : null;
   }
 
   getSession(token) {
-    return token ? this.sessionCache.get(token) ?? null : null;
+    const sessions = this.requestSessions.getStore() || this.sessionCache;
+    return token ? sessions.get(token) ?? null : null;
   }
 
   async loadSession(token, { forUpdate = false } = {}) {

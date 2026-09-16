@@ -950,7 +950,7 @@ export async function createKalpiApp({
     };
   }
 
-  return async function handler(request, response) {
+  const handleRequest = async function handler(request, response) {
     const requestId = randomUUID();
     response.setHeader("x-request-id", requestId);
     try {
@@ -1891,6 +1891,9 @@ export async function createKalpiApp({
       else response.end();
     }
   };
+  return store.withRequest
+    ? (request, response) => store.withRequest(() => handleRequest(request, response))
+    : handleRequest;
 }
 
 export { DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, LEVEL_RATIOS, RANK_TITLES };

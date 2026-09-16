@@ -989,6 +989,17 @@ test("postgres store keeps a session after a second process boots", async (t) =>
     body: { type: "source_opened", cardId },
   });
   assert.equal(recorded.status, 201);
+  const bulkSessions = await Promise.all(
+    Array.from({ length: 12 }, () => api(first.base, "/api/session", { method: "POST" })),
+  );
+  const bulkPulls = await Promise.all(
+    bulkSessions.map(({ body }) => api(first.base, "/api/idle/settle", {
+      token: body.token,
+      method: "POST",
+    })),
+  );
+  assert.deepEqual(bulkPulls.map(({ status }) => status), Array(12).fill(200));
+  assert.equal(bulkPulls.reduce((total, { body }) => total + body.newlySettledCount, 0), 12);
   await first.close();
   const second = await start(dataDir, clock, { databaseUrl });
   t.after(async () => {
