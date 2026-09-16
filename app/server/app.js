@@ -979,7 +979,10 @@ export async function createKalpiApp({
       },
     });
     if (studioContentPath && !databaseUrl) {
-      await writeJsonAtomic(studioContentPath, studioContent);
+      const canonicalStudio = path.resolve(path.dirname(cardsPath), "studio-content.json");
+      if (path.resolve(studioContentPath) !== canonicalStudio) {
+        await writeJsonAtomic(studioContentPath, studioContent);
+      }
     }
   }
 
