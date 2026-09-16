@@ -1037,6 +1037,25 @@ h1 {
 }
 
 .empty-note { padding: 30px; border: 1px dashed var(--rule); text-align: center; }
+.empty-note.is-loading {
+  border-style: solid;
+  border-color: rgba(31, 79, 74, 0.28);
+  color: var(--civic);
+  font-weight: 600;
+}
+.empty-note.is-failed {
+  border-color: var(--danger-mute);
+  color: var(--danger-mute);
+}
+.binder-slot.is-loading {
+  pointer-events: none;
+  animation: binder-well-wait 1.6s ease-in-out infinite;
+}
+.binder-slot.is-loading .missing-code { letter-spacing: 0.28em; }
+@keyframes binder-well-wait {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.42; }
+}
 
 .workspace-head,
 .review-head {

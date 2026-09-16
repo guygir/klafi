@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=hebrew-quality-13" />
+  <link rel="stylesheet" href="/styles.css?v=hebrew-quality-14" />
   <link rel="stylesheet" href="/theme-pack-v2.css?v=9" />
 </head>
 <body>
@@ -168,6 +168,7 @@
       <section id="achievements-view" class="view">
         <p class="eyebrow">הישגים</p>
         <h1>התגים שלי.</h1>
+        <p id="achievements-empty" class="empty-note" hidden>טוענים את התגים…</p>
         <div id="achievement-grid" class="achievement-grid"></div>
         <div id="achievement-pager" class="view-pager" aria-label="עמודי ההישגים"></div>
       </section>
@@ -198,6 +199,7 @@
             <h1>משחקים יחד.</h1>
           </div>
         </div>
+        <p id="growth-empty" class="empty-note" hidden>טוענים את הקהילה…</p>
         <div id="community-tabs" class="contained-tabs" role="tablist" aria-label="אזורי הקהילה">
           <button type="button" role="tab" data-community-page="trade" class="active">החלפות</button>
           <button type="button" role="tab" data-community-page="open-trades">הצעות פתוחות</button>
@@ -502,6 +504,6 @@
   <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="metadata" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
     <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
   </video>
-  <script type="module" src="/app.js?v=hebrew-quality-13"></script>
+  <script type="module" src="/app.js?v=hebrew-quality-14"></script>
 </body>
 </html>

@@ -122,6 +122,7 @@ const elements = {
   binderGrid: document.querySelector("#binder-grid"),
   binderPager: document.querySelector("#binder-pager"),
   binderEmpty: document.querySelector("#binder-empty"),
+  achievementsEmpty: document.querySelector("#achievements-empty"),
   achievementGrid: document.querySelector("#achievement-grid"),
   achievementPager: document.querySelector("#achievement-pager"),
   communityTabs: document.querySelector("#community-tabs"),
@@ -157,6 +158,7 @@ const elements = {
   creatorCode: document.querySelector("#creator-code"),
   copyCreatorLink: document.querySelector("#copy-creator-link"),
   creatorLinkPreview: document.querySelector("#creator-link-preview"),
+  growthEmpty: document.querySelector("#growth-empty"),
   growthMetrics: document.querySelector("#growth-metrics"),
   factionSelect: document.querySelector("#faction-select"),
   saveFaction: document.querySelector("#save-faction"),
@@ -421,11 +423,56 @@ function applyFullBoot(boot) {
 }
 
 let catalogHydrate = null;
+let catalogFailed = false;
+const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
+
+function catalogReady() {
+  return Boolean(model.catalog.length && model.serverState);
+}
+
+function requestedPlayerView() {
+  const params = new URLSearchParams(location.search);
+  if (params.get("gift") || params.get("card")) return "";
+  const view = params.get("view");
+  return PLAYER_VIEWS.includes(view) ? view : "";
+}
+
+function persistPlayerView(name) {
+  const url = new URL(location.href);
+  if (PLAYER_VIEWS.includes(name) && name !== "home") url.searchParams.set("view", name);
+  else url.searchParams.delete("view");
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  const current = `${location.pathname}${location.search}${location.hash}`;
+  if (next !== current) history.replaceState({}, "", next);
+}
+
+function paintPlayerView(name) {
+  if (name === "home") renderHome();
+  else if (name === "binder") renderBinder();
+  else if (name === "achievements") renderAchievements();
+  else if (name === "events") renderEvents();
+  else if (name === "growth") renderGrowth();
+  else if (name === "studio") renderStudio();
+  showView(name);
+}
+
+function pendingCopy(loading, failed) {
+  return catalogFailed ? failed : loading;
+}
+
+function setEmptyNote(element, copy, { pending = false, failed = false, hidden = false } = {}) {
+  if (!element) return;
+  element.hidden = hidden;
+  if (copy) element.textContent = copy;
+  element.classList.toggle("is-loading", pending && !failed && !hidden);
+  element.classList.toggle("is-failed", failed && !hidden);
+}
 
 async function hydrateCatalog() {
   if (model.catalog.length) return model;
   if (!catalogHydrate) {
     catalogHydrate = request("/api/bootstrap").then((boot) => {
+      catalogFailed = false;
       applyFullBoot(boot);
       renderProfile();
       renderAdvocacy();
@@ -437,6 +484,13 @@ async function hydrateCatalog() {
       renderStudio();
       handleInboundLink();
       return boot;
+    }).catch((error) => {
+      catalogFailed = true;
+      renderBinder();
+      renderAchievements();
+      renderEvents();
+      renderGrowth();
+      throw error;
     }).finally(() => {
       catalogHydrate = null;
     });
@@ -447,7 +501,9 @@ async function hydrateCatalog() {
 async function bootstrap() {
   captureStudioSecret();
   applyCachedHome();
-  showView("home");
+  const inboundView = requestedPlayerView();
+  if (inboundView && inboundView !== "home") paintPlayerView(inboundView);
+  else showView("home");
   const catalogPromise = hydrateCatalog().catch(() => null);
   try {
     await loadShell();
@@ -458,11 +514,12 @@ async function bootstrap() {
     applyHomePayload(home);
     renderProfile();
     renderHome();
+    if (inboundView === "binder") renderBinder();
     await catalogPromise;
   } catch (error) {
     try {
       await hydrateCatalog();
-      showView("home");
+      paintPlayerView(inboundView || "home");
     } catch {
       showError("לא הצלחנו לפתוח את המשחק.", describeError(error));
     }
@@ -510,7 +567,7 @@ function handleInboundLink() {
     return;
   }
   const requestedView = params.get("view");
-  if (["home", "binder", "achievements", "events", "growth", "studio"].includes(requestedView)) {
+  if (PLAYER_VIEWS.includes(requestedView)) {
     elements.navButtons.find((button) => button.dataset.nav === requestedView)?.click();
   }
 }
@@ -591,6 +648,7 @@ function queueCardTextFit(root = document) {
 
 function showView(name) {
   model.holdGeneration += 1;
+  persistPlayerView(name);
   document.querySelector("#app").classList.toggle("home-active", name === "home");
   for (const view of elements.views) {
     view.classList.toggle("active", view.id === `${name}-view`);
@@ -1492,13 +1550,39 @@ function binderCardMarkup(card) {
     <div class="binder-shared-card">${displayCardMarkup(card)}</div>`;
 }
 
+function renderPendingWells(count = 6) {
+  return Array.from({ length: count }, () =>
+    `<div class="binder-slot is-loading" aria-hidden="true"><span class="missing-code">···</span></div>`
+  ).join("");
+}
+
 function renderBinder() {
-  if (!model.catalog.length || !model.serverState) return;
+  const binderView = document.querySelector("#binder-view");
+  if (!catalogReady()) {
+    if (model.serverState?.totalCards) {
+      const { owned, total, percent } = completion();
+      elements.binderPercent.textContent = `${percent}%`;
+      elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
+    } else {
+      elements.binderPercent.textContent = "…";
+      elements.binderCount.textContent = "טוענים את הסדרה";
+    }
+    elements.binderFilters.innerHTML = "";
+    elements.binderPager.innerHTML = "";
+    elements.binderGrid.innerHTML = catalogFailed ? "" : renderPendingWells();
+    setEmptyNote(elements.binderEmpty, pendingCopy("טוענים את האלבום…", "לא הצלחנו לטעון את האלבום."), {
+      pending: !catalogFailed,
+      failed: catalogFailed,
+    });
+    binderView?.setAttribute("aria-busy", catalogFailed ? "false" : "true");
+    return;
+  }
+  binderView?.setAttribute("aria-busy", "false");
   const { owned, total, percent } = completion();
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = `${owned} קלפים שונים מתוך ${total} בסדרה הפעילה כרגע`;
   elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
-  elements.binderEmpty.hidden = owned > 0;
+  setEmptyNote(elements.binderEmpty, "פתחו חבילה כדי להתחיל.", { hidden: owned > 0 });
 
   const favorites = new Set(model.serverState.favorites || []);
   const playerCards = model.catalog.filter((card) =>
@@ -1751,6 +1835,16 @@ function hebrewBadge(badge) {
 }
 
 function renderAchievements() {
+  if (!catalogReady()) {
+    if (elements.achievementGrid) elements.achievementGrid.innerHTML = "";
+    if (elements.achievementPager) elements.achievementPager.innerHTML = "";
+    setEmptyNote(elements.achievementsEmpty, pendingCopy("טוענים את התגים…", "לא הצלחנו לטעון את התגים."), {
+      pending: !catalogFailed,
+      failed: catalogFailed,
+    });
+    return;
+  }
+  setEmptyNote(elements.achievementsEmpty, "", { hidden: true });
   if (!model.serverState || !elements.achievementGrid) return;
   const badges = model.serverState.achievements || [];
   const pageSize = 4;
@@ -1781,6 +1875,20 @@ function creatorLink() {
 }
 
 function renderGrowth() {
+  const communityTabs = elements.communityTabs;
+  const growthGrid = document.querySelector(".growth-grid");
+  if (!catalogReady()) {
+    setEmptyNote(elements.growthEmpty, pendingCopy("טוענים את הקהילה…", "לא הצלחנו לטעון את הקהילה."), {
+      pending: !catalogFailed,
+      failed: catalogFailed,
+    });
+    communityTabs?.setAttribute("hidden", "");
+    growthGrid?.setAttribute("hidden", "");
+    return;
+  }
+  communityTabs?.removeAttribute("hidden");
+  growthGrid?.removeAttribute("hidden");
+  setEmptyNote(elements.growthEmpty, "", { hidden: true });
   if (!model.catalog.length || !model.serverState || !elements.tradePreview) return;
   const duplicate = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 1);
   const owned = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 0);
@@ -1958,6 +2066,13 @@ function renderGrowth() {
 
 function renderEvents() {
   if (!elements.activeEvent) return;
+  if (!catalogReady()) {
+    elements.activeEvent.innerHTML = `<p class="empty-note ${catalogFailed ? "is-failed" : "is-loading"}">${pendingCopy("טוענים את האירועים…", "לא הצלחנו לטעון את האירועים.")}</p>`;
+    elements.eventPull.hidden = true;
+    if (elements.eventCards) elements.eventCards.innerHTML = "";
+    if (elements.eventUpcoming) elements.eventUpcoming.innerHTML = "";
+    return;
+  }
   const active = model.events.find((event) => event.active);
   if (!active) {
     elements.activeEvent.innerHTML = "<h2>אין אירוע פעיל כרגע.</h2><p>האירוע הבא יופיע כאן.</p>";
