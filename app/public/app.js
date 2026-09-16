@@ -1,6 +1,8 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
+const STUDIO_KEY = "kalpi-studio-secret";
+const HOME_CACHE_KEY = "kalpi-home-cache";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -39,6 +41,7 @@ const model = {
   holdGeneration: 0,
   renderedLevel: null,
   selectedAvatarId: null,
+  extrasReady: false,
 };
 let showcaseTimers = [];
 let packTimers = [];
@@ -120,6 +123,7 @@ const elements = {
   binderGrid: document.querySelector("#binder-grid"),
   binderPager: document.querySelector("#binder-pager"),
   binderEmpty: document.querySelector("#binder-empty"),
+  achievementsEmpty: document.querySelector("#achievements-empty"),
   achievementGrid: document.querySelector("#achievement-grid"),
   achievementPager: document.querySelector("#achievement-pager"),
   communityTabs: document.querySelector("#community-tabs"),
@@ -155,6 +159,7 @@ const elements = {
   creatorCode: document.querySelector("#creator-code"),
   copyCreatorLink: document.querySelector("#copy-creator-link"),
   creatorLinkPreview: document.querySelector("#creator-link-preview"),
+  growthEmpty: document.querySelector("#growth-empty"),
   growthMetrics: document.querySelector("#growth-metrics"),
   factionSelect: document.querySelector("#faction-select"),
   saveFaction: document.querySelector("#save-faction"),
@@ -162,11 +167,14 @@ const elements = {
   collectorBoard: document.querySelector("#collector-board"),
   dailyChallengeTitle: document.querySelector("#daily-challenge-title"),
   dailyChallengeLeaderArt: document.querySelector("#daily-challenge-leader-art"),
+  dailyChallengeRecap: document.querySelector("#daily-challenge-recap"),
   dailyChallengeBoard: document.querySelector("#daily-challenge-board"),
   specialsGrid: document.querySelector("#specials-grid"),
   studioSponsor: document.querySelector("#studio-sponsor"),
   studioViewpoint: document.querySelector("#studio-viewpoint"),
   studioReleaseStatus: document.querySelector("#studio-release-status"),
+  studioReleaseSets: document.querySelector("#studio-release-sets"),
+  saveReleaseSets: document.querySelector("#save-release-sets"),
   debugClock: document.querySelector("#debug-clock"),
   headerDebugReset: document.querySelector("#header-debug-reset"),
   runGuidedDemo: document.querySelector("#run-guided-demo"),
@@ -267,11 +275,25 @@ function applyVisualConfig() {
   queueCardTextFit(app);
 }
 
+function studioSecret() {
+  return localStorage.getItem(STUDIO_KEY);
+}
+
+function captureStudioSecret() {
+  const url = new URL(location.href);
+  const key = url.searchParams.get("studioKey");
+  if (!key) return;
+  localStorage.setItem(STUDIO_KEY, key);
+  url.searchParams.delete("studioKey");
+  history.replaceState({}, "", url);
+}
+
 async function request(path, options = {}) {
   const response = await fetch(path, {
     ...options,
     headers: {
       ...(model.token ? { authorization: `Bearer ${model.token}` } : {}),
+      ...(studioSecret() ? { "x-kalpi-studio": studioSecret() } : {}),
       ...options.headers,
     },
   });
@@ -301,54 +323,280 @@ async function ensureSession() {
   model.serverState = await request("/api/state");
 }
 
-async function bootstrap() {
-  showView("loading");
+function applyHomePayload(home) {
+  if (home.token) {
+    model.token = home.token;
+    localStorage.setItem(SESSION_KEY, home.token);
+  }
+  if (home.state) {
+    model.serverState = { ...model.serverState, ...home.state };
+    localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
+      token: model.token,
+      state: {
+        displayName: home.state.displayName,
+        avatarId: home.state.avatarId,
+        ownedUnique: home.state.ownedUnique,
+        totalCards: home.state.totalCards,
+        unseenCount: home.state.unseenCount,
+        nextIdleAt: home.state.nextIdleAt,
+        idleCapacity: home.state.idleCapacity,
+        progression: home.state.progression,
+        avatars: home.state.avatars,
+        inventory: home.state.inventory || {},
+        favorites: home.state.favorites || [],
+      },
+    }));
+  }
+}
+
+function applyCachedHome() {
   try {
-    await ensureSession();
-    const [{ cards }, editorial, activity, studioContent, gameConfig, leaderboards, specials, idleReturn] = await Promise.all([
-      request("/api/catalog"),
-      request("/api/editorial"),
-      request("/api/activity"),
-      request("/api/studio/content").catch((error) => {
-        if (error.status === 404) return null;
-        throw error;
-      }),
-      request("/api/game-config"),
-      request("/api/leaderboards"),
-      request("/api/specials"),
-      request("/api/idle/settle", { method: "POST" }),
-    ]);
-    model.editorial = editorial;
-    model.activity = activity;
-    model.studioContent = studioContent;
-    model.gameConfig = gameConfig;
-    document.querySelectorAll("[data-debug-only]").forEach((element) => {
-      element.hidden = !studioContent?.debugEnabled;
+    const cached = JSON.parse(localStorage.getItem(HOME_CACHE_KEY) || "null");
+    if (!cached?.state) return;
+    if (cached.token && !model.token) {
+      model.token = cached.token;
+      localStorage.setItem(SESSION_KEY, cached.token);
+    }
+    model.serverState = { ...model.serverState, ...cached.state };
+  } catch {
+    localStorage.removeItem(HOME_CACHE_KEY);
+  }
+}
+
+async function loadShell() {
+  const shell = await fetch("/shell.json", { cache: "no-store" }).then((response) => {
+    if (!response.ok) throw new Error("SHELL_MISSING");
+    return response.json();
+  });
+  model.gameConfig = { ...model.gameConfig, ...shell.gameConfig };
+  model.editorial = shell.editorial || model.editorial;
+  if (!model.serverState && shell.totals) {
+    model.serverState = {
+      ownedUnique: 0,
+      totalCards: shell.totals.idleEligible,
+      unseenCount: 0,
+      idleCapacity: 8,
+      progression: {
+        level: 1,
+        totalLevels: Math.max(2, shell.gameConfig?.progression?.rankNames?.length || 5),
+        rank: shell.gameConfig?.progression?.rankNames?.[0] || "אזרח סקרן",
+        unique: 0,
+        start: 0,
+        target: 1,
+        remaining: 1,
+        percent: 0,
+        teaser: shell.gameConfig?.progression?.teaser,
+      },
+    };
+  } else if (shell.totals && model.serverState && !model.serverState.totalCards) {
+    model.serverState.totalCards = shell.totals.idleEligible;
+  }
+  applyVisualConfig();
+}
+
+function applyCatalog(cards) {
+  if (!cards?.length) return;
+  model.catalog = cards;
+  model.byId = new Map(cards.map((card) => [card.id, card]));
+}
+
+function applyFullBoot(boot) {
+  if (boot.token) {
+    model.token = boot.token;
+    localStorage.setItem(SESSION_KEY, boot.token);
+  }
+  const { cards } = boot.catalog;
+  model.editorial = boot.editorial;
+  model.activity = boot.activity;
+  model.studioContent = boot.studioContent;
+  model.gameConfig = boot.gameConfig;
+  document.querySelectorAll("[data-debug-only]").forEach((element) => {
+    element.hidden = !boot.studioContent?.debugEnabled;
+  });
+  document.querySelectorAll("[data-studio-only]").forEach((element) => {
+    element.hidden = !boot.studioContent?.studioEnabled;
+  });
+  applyVisualConfig();
+  model.leaderboards = boot.leaderboards;
+  model.specials = boot.specials;
+  model.serverState = boot.idleReturn.state;
+  model.idleQueue = boot.idleReturn.cards || [];
+  model.trades = boot.trades || [];
+  model.events = boot.events || [];
+  applyCatalog(cards);
+  populateRevealTimingInputs();
+  populateLevelIncrements();
+  populateStudioMeta();
+  applyHomePayload({ token: boot.token, state: boot.idleReturn.state });
+}
+
+let catalogHydrate = null;
+let extrasHydrate = null;
+let catalogFailed = false;
+const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
+
+function catalogReady() {
+  return Boolean(model.catalog.length);
+}
+
+function ownershipReady() {
+  return Boolean(model.serverState?.inventory);
+}
+
+function requestedPlayerView() {
+  const params = new URLSearchParams(location.search);
+  if (params.get("gift") || params.get("card")) return "";
+  const view = params.get("view");
+  return PLAYER_VIEWS.includes(view) ? view : "";
+}
+
+function persistPlayerView(name) {
+  const url = new URL(location.href);
+  if (PLAYER_VIEWS.includes(name) && name !== "home") url.searchParams.set("view", name);
+  else url.searchParams.delete("view");
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  const current = `${location.pathname}${location.search}${location.hash}`;
+  if (next !== current) history.replaceState({}, "", next);
+}
+
+function paintPlayerView(name) {
+  if (name === "home") renderHome();
+  else if (name === "binder") renderBinder();
+  else if (name === "achievements") renderAchievements();
+  else if (name === "events") renderEvents();
+  else if (name === "growth") renderGrowth();
+  else if (name === "studio") renderStudio();
+  showView(name);
+}
+
+function pendingCopy(loading, failed) {
+  return catalogFailed ? failed : loading;
+}
+
+function setEmptyNote(element, copy, { pending = false, failed = false, hidden = false } = {}) {
+  if (!element) return;
+  element.hidden = hidden;
+  if (copy) element.textContent = copy;
+  element.classList.toggle("is-loading", pending && !failed && !hidden);
+  element.classList.toggle("is-failed", failed && !hidden);
+}
+
+async function loadStaticCatalog() {
+  if (model.catalog.length) return model;
+  if (!catalogHydrate) {
+    catalogHydrate = fetch("/catalog.json", { cache: "no-store" }).then((response) => {
+      if (!response.ok) throw new Error("CATALOG_MISSING");
+      return response.json();
+    }).then((payload) => {
+      catalogFailed = false;
+      applyCatalog(payload.cards || payload);
+      renderBinder();
+      renderHome();
+      handleInboundLink();
+      return model;
+    }).catch((error) => {
+      catalogFailed = true;
+      renderBinder();
+      throw error;
+    }).finally(() => {
+      catalogHydrate = null;
     });
-    applyVisualConfig();
-    model.leaderboards = leaderboards;
-    model.specials = specials;
-    model.serverState = idleReturn.state;
-    model.idleQueue = idleReturn.cards || [];
-    model.trades = (await request("/api/trades")).trades;
-    model.events = (await request("/api/events")).events;
-    model.catalog = cards;
-    model.byId = new Map(cards.map((card) => [card.id, card]));
-    populateRevealTimingInputs();
-    populateLevelIncrements();
-    populateStudioMeta();
-    renderProfile();
+  }
+  return catalogHydrate;
+}
+
+function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state }) {
+  if (events) model.events = events.events || events;
+  if (trades) model.trades = trades.trades || trades;
+  if (leaderboards) model.leaderboards = leaderboards;
+  if (activity) model.activity = activity;
+  if (specials) model.specials = specials;
+  if (state) model.serverState = { ...model.serverState, ...state };
+}
+
+function paintExtras() {
+  renderProfile();
+  renderHome();
+  renderBinder();
+  renderAchievements();
+  renderEvents();
+  renderGrowth();
+  renderStudio();
+}
+
+async function hydrateExtras() {
+  if (model.extrasReady) return model;
+  if (!extrasHydrate) {
+    extrasHydrate = Promise.all([
+      request("/api/events"),
+      request("/api/trades"),
+      request("/api/leaderboards"),
+      request("/api/activity"),
+      request("/api/specials"),
+      request("/api/state"),
+    ]).then(async ([events, trades, leaderboards, activity, specials, state]) => {
+      applyExtrasPayload({ events, trades, leaderboards, activity, specials, state });
+      model.extrasReady = true;
+      if (studioSecret()) {
+        try {
+          model.studioContent = await request("/api/studio/content");
+        } catch {
+          /* Studio stays closed without the secret. */
+        }
+      }
+      paintExtras();
+      return model;
+    }).catch(async () => {
+      const boot = await request("/api/bootstrap");
+      applyFullBoot(boot);
+      model.extrasReady = true;
+      paintExtras();
+      handleInboundLink();
+      return boot;
+    }).finally(() => {
+      extrasHydrate = null;
+    });
+  }
+  return extrasHydrate;
+}
+
+async function hydrateCatalog() {
+  try {
+    return await loadStaticCatalog();
+  } catch {
+    return hydrateExtras();
+  }
+}
+
+async function bootstrap() {
+  captureStudioSecret();
+  applyCachedHome();
+  const inboundView = requestedPlayerView();
+  if (inboundView && inboundView !== "home") paintPlayerView(inboundView);
+  else showView("home");
+  const catalogPromise = loadStaticCatalog().catch(() => null);
+  const extrasNeeded = inboundView && inboundView !== "home" && inboundView !== "binder";
+  try {
+    await loadShell();
     renderAdvocacy();
+    renderProfile();
+    renderHome();
+    await catalogPromise;
+    if (inboundView === "binder") renderBinder();
+    const home = await request("/api/home");
+    applyHomePayload(home);
+    renderProfile();
     renderHome();
     renderBinder();
-    renderAchievements();
-    renderEvents();
-    renderGrowth();
-    renderStudio();
-    showView("home");
-    handleInboundLink();
+    const extrasPromise = hydrateExtras().catch(() => null);
+    if (extrasNeeded) await extrasPromise;
   } catch (error) {
-    showError("לא הצלחנו לפתוח את המשחק.", describeError(error));
+    try {
+      await hydrateCatalog();
+      paintPlayerView(inboundView || "home");
+    } catch {
+      showError("לא הצלחנו לפתוח את המשחק.", describeError(error));
+    }
   }
 }
 
@@ -393,7 +641,7 @@ function handleInboundLink() {
     return;
   }
   const requestedView = params.get("view");
-  if (["home", "binder", "achievements", "events", "growth", "studio"].includes(requestedView)) {
+  if (PLAYER_VIEWS.includes(requestedView)) {
     elements.navButtons.find((button) => button.dataset.nav === requestedView)?.click();
   }
 }
@@ -474,6 +722,7 @@ function queueCardTextFit(root = document) {
 
 function showView(name) {
   model.holdGeneration += 1;
+  persistPlayerView(name);
   document.querySelector("#app").classList.toggle("home-active", name === "home");
   for (const view of elements.views) {
     view.classList.toggle("active", view.id === `${name}-view`);
@@ -775,16 +1024,90 @@ function renderSiteCardPeeks() {
   queueCardTextFit(elements.siteCardPeeks);
 }
 
+function partyRegister() {
+  if (model.studioContent?.parties?.length) return model.studioContent.parties;
+  if (model.gameConfig?.parties?.length) return model.gameConfig.parties;
+  const parties = new Map();
+  for (const card of model.catalog || []) {
+    if (!card.set || card.set === "SYS" || String(card.set).startsWith("special-")) continue;
+    if (parties.has(card.set)) continue;
+    parties.set(card.set, {
+      id: card.set,
+      displayNameHe: card.setNameHe || card.set,
+      displayNameEn: card.setName || card.set,
+      requestedLetters: card.letters ? [card.letters] : [],
+      pip: card.pip || null,
+    });
+  }
+  return [...parties.values()];
+}
+
+function partyDisplayName(partyId, fallback = "הסיעה היומית") {
+  if (!partyId) return fallback;
+  const fromRegister = partyRegister().find(({ id }) => id === partyId)?.displayNameHe;
+  if (fromRegister) return fromRegister;
+  const challenge = model.leaderboards?.dailyChallenge;
+  if (challenge?.targetPartyId === partyId && challenge.targetPartyNameHe) return challenge.targetPartyNameHe;
+  const fromCatalog = model.catalog.find((card) => card.set === partyId)?.setNameHe;
+  return fromCatalog || partyId;
+}
+
+function challengeRecap() {
+  const leaders = model.leaderboards?.dailyChallenge?.leaders || [];
+  const current = leaders.find(({ current }) => current);
+  const ranked = [...leaders].sort((a, b) => b.cards - a.cards);
+  const place = current ? ranked.findIndex((entry) => entry.current) + 1 : null;
+  const counts = leaders.map(({ cards }) => Number(cards) || 0);
+  const peak = Math.max(0, ...counts);
+  const lastBin = Math.min(4, Math.max(peak, 1));
+  const binFor = (value) => (lastBin === 4 && peak > 4 && value >= 4 ? 4 : value);
+  const bins = Array.from({ length: lastBin + 1 }, (_, cards) => ({
+    label: cards === 4 && peak > 4 ? "4+" : String(cards),
+    count: counts.filter((value) => binFor(value) === cards).length,
+    you: Boolean(current && binFor(current.cards) === cards),
+  }));
+  const field = Math.max(1, ...bins.map(({ count }) => count));
+  const meta = current
+    ? `${current.cards} קלפים · מקום ${place}`
+    : "עוד לא משכתם מהסיעה";
+  return { current, place, bins, field, meta, players: leaders.length };
+}
+
+function renderChallengeRecap() {
+  if (!elements.dailyChallengeRecap) return;
+  const recap = challengeRecap();
+  elements.dailyChallengeRecap.hidden = false;
+  elements.dailyChallengeRecap.style.setProperty("--bins", String(recap.bins.length));
+  const score = recap.current ? recap.current.cards : 0;
+  const place = recap.place
+    ? `מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`
+    : "עוד לא בטבלה";
+  elements.dailyChallengeRecap.innerHTML = `
+    <div class="challenge-recap-score">
+      <small>היום אספתם מהסיעה</small>
+      <strong>${score}<span>קלפים</span></strong>
+      <b class="challenge-recap-place">${escapeHtml(place)}</b>
+    </div>
+    <div class="challenge-hist">
+      <small>איך כולם משכו היום</small>
+      <div class="challenge-hist-plot" aria-hidden="true">
+        ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
+          <b style="height:${Math.max(8, Math.round((bin.count / recap.field) * 100))}%; animation-delay:${index * 45}ms"></b>
+        </div>`).join("")}
+      </div>
+      <div class="challenge-hist-axis">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
+    </div>
+  `;
+}
+
 function renderTodayDocket() {
   if (!elements.todayChallengeHook) return;
-  const partyNames = Object.fromEntries((model.studioContent?.parties || [])
-    .map((party) => [party.id, party.displayNameHe]));
   const challenge = model.leaderboards?.dailyChallenge;
-  const challengeParty = partyNames[challenge?.targetPartyId] || challenge?.targetPartyId || "הסיעה היומית";
+  const challengeParty = partyDisplayName(challenge?.targetPartyId);
   const challengeLeaders = challenge?.leaders?.slice(0, 3) || [];
   const challengeLeader = challengeLeaders[0];
   const challengeCurrent = challenge?.leaders?.find(({ current }) => current);
-  const party = model.studioContent?.parties.find(({ id }) => id === challenge?.targetPartyId);
+  const party = partyRegister().find(({ id }) => id === challenge?.targetPartyId);
   const challengeCard = model.catalog.find((card) => card.set === challenge?.targetPartyId && card.artKey)
     || {
       id: `${party?.id || "SYS"}-TODAY`,
@@ -800,7 +1123,8 @@ function renderTodayDocket() {
     elements.todayChallengeVisual.innerHTML = artMarkup(challengeCard, true);
   }
   elements.todayChallengeHook.textContent = challengeParty;
-  elements.todayChallengeMeta.textContent = "";
+  const recap = challengeRecap();
+  elements.todayChallengeMeta.textContent = recap.meta;
 
   const activeEvent = model.events.find((event) => event.active);
   elements.todayEventHook.textContent = activeEvent ? `${activeEvent.nameHe} פתוח` : "האירוע הבא בדרך";
@@ -962,11 +1286,16 @@ function playHomePackRip() {
 }
 
 async function openIdleReturn(opening = "regular") {
+  if (!model.catalog.length) loadStaticCatalog().catch(() => {});
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
   elements.openPack.textContent = "אוספים…";
+  const settlePromise = request("/api/idle/settle", { method: "POST" });
+  const ripPromise = opening === "fancy" ? playHomePackRip() : Promise.resolve();
   try {
-    const settled = await request("/api/idle/settle", { method: "POST" });
+    const [settleResult] = await Promise.allSettled([settlePromise, ripPromise]);
+    if (settleResult.status === "rejected") throw settleResult.reason;
+    const settled = settleResult.value;
     model.serverState = settled.state;
     model.idleQueue = settled.cards || [];
     if (!model.idleQueue.length) {
@@ -982,7 +1311,6 @@ async function openIdleReturn(opening = "regular") {
     };
     model.currentCardIndex = 0;
     model.previewMode = false;
-    if (opening === "fancy") await playHomePackRip();
     showView("pack");
     startWalkout();
   } catch (error) {
@@ -1111,8 +1439,10 @@ async function handlePackAction() {
         showToast("הקלף נוסף לאוסף.");
       }
     } else {
+      model.leaderboards = await request("/api/leaderboards");
       renderHome();
       renderBinder();
+      renderGrowth();
       showView("binder");
       recordEvent("binder_reached", { packId: model.currentPack.packId });
       renderProgression({ announce: true });
@@ -1290,17 +1620,49 @@ function binderCardMarkup(card) {
     <div class="binder-shared-card">${displayCardMarkup(card)}</div>`;
 }
 
+function renderPendingWells(count = 6) {
+  return Array.from({ length: count }, () =>
+    `<div class="binder-slot is-loading" aria-hidden="true"><span class="missing-code">···</span></div>`
+  ).join("");
+}
+
 function renderBinder() {
-  if (!model.catalog.length || !model.serverState) return;
+  const binderView = document.querySelector("#binder-view");
+  if (!catalogReady()) {
+    if (model.serverState?.totalCards) {
+      const { owned, total, percent } = completion();
+      elements.binderPercent.textContent = `${percent}%`;
+      elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
+    } else {
+      elements.binderPercent.textContent = "…";
+      elements.binderCount.textContent = "טוענים את הסדרה";
+    }
+    elements.binderFilters.innerHTML = "";
+    elements.binderPager.innerHTML = "";
+    elements.binderGrid.innerHTML = catalogFailed ? "" : renderPendingWells();
+    setEmptyNote(elements.binderEmpty, pendingCopy("טוענים את האלבום…", "לא הצלחנו לטעון את האלבום."), {
+      pending: !catalogFailed,
+      failed: catalogFailed,
+    });
+    binderView?.setAttribute("aria-busy", catalogFailed ? "false" : "true");
+    return;
+  }
+  const waitingOwnership = !ownershipReady();
+  binderView?.setAttribute("aria-busy", waitingOwnership ? "true" : "false");
+  const inventory = model.serverState?.inventory || {};
   const { owned, total, percent } = completion();
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = `${owned} קלפים שונים מתוך ${total} בסדרה הפעילה כרגע`;
   elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
-  elements.binderEmpty.hidden = owned > 0;
+  setEmptyNote(
+    elements.binderEmpty,
+    waitingOwnership ? "טוענים את האוסף…" : "פתחו חבילה כדי להתחיל.",
+    { pending: waitingOwnership, hidden: !waitingOwnership && owned > 0 },
+  );
 
-  const favorites = new Set(model.serverState.favorites || []);
+  const favorites = new Set(model.serverState?.favorites || []);
   const playerCards = model.catalog.filter((card) =>
-    card.idleEligible || card.eventOnly || model.serverState.inventory[card.id]);
+    card.idleEligible || card.eventOnly || inventory[card.id]);
   const releaseIds = [...new Set(playerCards.map((card) => card.releaseSetId).filter(Boolean))];
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
@@ -1328,7 +1690,7 @@ function renderBinder() {
           : set === "SPECIALS"
             ? card.eventOnly
             : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
-        return inSet && model.serverState.inventory[card.id];
+        return inSet && inventory[card.id];
       }).length;
     return `<button type="button" role="tab" aria-selected="${model.binderFilter === set}" class="${model.binderFilter === set ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
   }).join("");
@@ -1340,11 +1702,11 @@ function renderBinder() {
         ? card.releaseSetId === model.binderFilter.slice(8)
         : card.set === model.binderFilter));
   elements.binderGrid.innerHTML = visible.map((card) => {
-    const count = model.serverState.inventory[card.id] ?? 0;
+    const count = inventory[card.id] ?? 0;
     if (!count) {
       return `<div class="binder-slot" aria-label="${escapeHtml(cardCode(card))} חסר">
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
-        ${model.editorial?.debugEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">unlock</button>` : ""}
+        ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">unlock</button>` : ""}
       </div>`;
     }
     const favorite = favorites.has(card.id);
@@ -1364,9 +1726,10 @@ function renderBinder() {
     ? '<span class="binder-scroll-hint">עוד קלפים מחכים למטה ↓</span>'
     : "";
 
-  const earned = (model.serverState.achievements || []).filter(({ earned }) => earned);
+  const earned = (model.serverState?.achievements || []).filter(({ earned }) => earned);
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
-  const starCounter = `<span class="collection-star-count" role="button" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${model.serverState.starCount} כוכבי אוסף. ${starExplanation}"><b>★</b><strong>${model.serverState.starCount ?? 0}</strong></span>`;
+  const starCount = model.serverState?.starCount ?? 0;
+  const starCounter = `<span class="collection-star-count" role="button" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b>★</b><strong>${starCount}</strong></span>`;
   const visibleBadges = earned.slice(0, 3);
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
   rail.innerHTML = starCounter + visibleBadges.map((badge) => {
@@ -1549,6 +1912,16 @@ function hebrewBadge(badge) {
 }
 
 function renderAchievements() {
+  if (!model.serverState?.achievements) {
+    if (elements.achievementGrid) elements.achievementGrid.innerHTML = "";
+    if (elements.achievementPager) elements.achievementPager.innerHTML = "";
+    setEmptyNote(elements.achievementsEmpty, pendingCopy("טוענים את התגים…", "לא הצלחנו לטעון את התגים."), {
+      pending: !catalogFailed,
+      failed: catalogFailed,
+    });
+    return;
+  }
+  setEmptyNote(elements.achievementsEmpty, "", { hidden: true });
   if (!model.serverState || !elements.achievementGrid) return;
   const badges = model.serverState.achievements || [];
   const pageSize = 4;
@@ -1579,6 +1952,20 @@ function creatorLink() {
 }
 
 function renderGrowth() {
+  const communityTabs = elements.communityTabs;
+  const growthGrid = document.querySelector(".growth-grid");
+  if (!model.extrasReady) {
+    setEmptyNote(elements.growthEmpty, pendingCopy("טוענים את הקהילה…", "לא הצלחנו לטעון את הקהילה."), {
+      pending: !catalogFailed,
+      failed: catalogFailed,
+    });
+    communityTabs?.setAttribute("hidden", "");
+    growthGrid?.setAttribute("hidden", "");
+    return;
+  }
+  communityTabs?.removeAttribute("hidden");
+  growthGrid?.removeAttribute("hidden");
+  setEmptyNote(elements.growthEmpty, "", { hidden: true });
   if (!model.catalog.length || !model.serverState || !elements.tradePreview) return;
   const duplicate = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 1);
   const owned = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 0);
@@ -1681,16 +2068,16 @@ function renderGrowth() {
   }).join("") : '<p class="work-note">אין כרגע הצעות פתוחות.</p>';
 
   const selectedFaction = model.serverState.factionId;
+  const parties = partyRegister();
   elements.factionSelect.innerHTML = [
     '<option value="">ללא סיעה</option>',
-    ...(model.studioContent?.parties || []).map((party) => `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml(party.displayNameHe)} · ${escapeHtml(party.requestedLetters.join(" / "))}</option>`),
+    ...parties.map((party) => `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml(party.displayNameHe)} · ${escapeHtml((party.requestedLetters || []).join(" / "))}</option>`),
   ].join("");
-  const factionNames = Object.fromEntries((model.studioContent?.parties || []).map((party) => [party.id, party.displayNameHe]));
   const factionEntries = model.leaderboards?.factions?.slice(0, 6) || [];
   const factionMaximum = Math.max(1, ...factionEntries.map(({ packs }) => packs));
   elements.factionBoard.innerHTML = factionEntries.length
     ? factionEntries.map((entry, index) => `<div class="faction-chart-row">
-        <span>${index + 1}. ${escapeHtml(factionNames[entry.partyId] || entry.partyId)}</span>
+        <span>${index + 1}. ${escapeHtml(partyDisplayName(entry.partyId, entry.partyId))}</span>
         <i aria-hidden="true"><b style="width:${Math.max(4, Math.round((entry.packs / factionMaximum) * 100))}%"></b></i>
         <strong>${entry.packs}</strong>
       </div>`).join("")
@@ -1709,7 +2096,8 @@ function renderGrowth() {
     card.set === challenge?.targetPartyId && card.releaseSetId === "party-leaders");
   elements.dailyChallengeLeaderArt.innerHTML = challengeLeaderCard ? artMarkup(challengeLeaderCard, true) : "";
   elements.dailyChallengeLeaderArt.style.setProperty("--pip", challengeLeaderCard?.pip || "#1f4f4a");
-  elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${factionNames[challenge?.targetPartyId] || challenge?.targetPartyId || "הסיעה היומית"}?`;
+  elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
+  renderChallengeRecap();
   elements.dailyChallengeBoard.innerHTML = challenge?.leaders?.length
     ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="${entry.current ? "current-player" : ""}"><span>${index + 1}. ${escapeHtml(entry.label)}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
     : '<p class="work-note">עוד אין משיכות מהסיעה היומית.</p>';
@@ -1755,6 +2143,13 @@ function renderGrowth() {
 
 function renderEvents() {
   if (!elements.activeEvent) return;
+  if (!model.extrasReady) {
+    elements.activeEvent.innerHTML = `<p class="empty-note ${catalogFailed ? "is-failed" : "is-loading"}">${pendingCopy("טוענים את האירועים…", "לא הצלחנו לטעון את האירועים.")}</p>`;
+    elements.eventPull.hidden = true;
+    if (elements.eventCards) elements.eventCards.innerHTML = "";
+    if (elements.eventUpcoming) elements.eventUpcoming.innerHTML = "";
+    return;
+  }
   const active = model.events.find((event) => event.active);
   if (!active) {
     elements.activeEvent.innerHTML = "<h2>אין אירוע פעיל כרגע.</h2><p>האירוע הבא יופיע כאן.</p>";
@@ -1856,6 +2251,41 @@ function populateLevelIncrements() {
       <input type="number" min="0" max="20" data-level-increment="${escapeHtml(set.id)}" value="${increments[set.id] ?? 0}" />
     </label>`).join("")}
     <p class="work-note">Max level = sum of increments for sets that are currently idle-eligible. First set ${increments["party-leaders"] ?? 5}; each later set adds its own increment.</p>`;
+  populateReleaseSets();
+}
+
+function populateReleaseSets() {
+  if (!elements.studioReleaseSets) return;
+  const sets = model.gameConfig.releaseSets || [];
+  elements.studioReleaseSets.innerHTML = sets.map((set) => `
+    <label class="studio-release-row">
+      <b>${escapeHtml(set.nameHe)}</b>
+      <select data-release-state="${escapeHtml(set.id)}">
+        <option value="held"${set.runtimeState === "held" ? " selected" : ""}>held</option>
+        <option value="active"${set.runtimeState === "active" ? " selected" : ""}>active</option>
+      </select>
+      <input data-release-from="${escapeHtml(set.id)}" type="datetime-local" value="${escapeHtml(toDatetimeLocal(set.runtimeAvailableFrom || set.plannedPublishAt))}" />
+    </label>`).join("");
+}
+
+function toDatetimeLocal(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function readStudioReleaseSets() {
+  return (model.gameConfig.releaseSets || []).map((set) => {
+    const state = elements.studioReleaseSets?.querySelector(`[data-release-state="${CSS.escape(set.id)}"]`)?.value;
+    const from = elements.studioReleaseSets?.querySelector(`[data-release-from="${CSS.escape(set.id)}"]`)?.value;
+    return {
+      id: set.id,
+      runtimeState: state === "active" ? "active" : "held",
+      runtimeAvailableFrom: from ? new Date(from).toISOString() : null,
+    };
+  });
 }
 
 function readStudioProgression() {
@@ -1884,6 +2314,7 @@ async function saveVisualConfig() {
         revealTiming: readStudioRevealDelays(),
         visual,
         progression: readStudioProgression(),
+        releaseSets: readStudioReleaseSets(),
       }),
     });
     applyVisualConfig();
@@ -1909,6 +2340,7 @@ async function saveRevealDelays() {
         revealTiming,
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
+        releaseSets: readStudioReleaseSets(),
       }),
     });
     populateRevealTimingInputs();
@@ -2049,7 +2481,7 @@ function studioCardMarkup(party, member, card) {
         ${studioField("Review status", "review.contentStatus", card.review?.contentStatus, { type: "select", options: ["blank", "researched", "review-needed", "reviewed", "approved", "rejected"] })}
       </div>
       <div class="studio-card-actions">
-        <button type="button" data-save-studio-card="${card.id}"${model.studioContent.debugEnabled ? "" : " disabled"}>Save card</button>
+        <button type="button" data-save-studio-card="${card.id}"${model.studioContent.studioEnabled ? "" : " disabled"}>Save card</button>
         <button type="button" data-copy-studio-card="${card.id}"${populated ? "" : " disabled"}>Copy Weave prompt</button>
         ${card.quote.sourceUrl ? `<a href="${escapeHtml(card.quote.sourceUrl)}" target="_blank" rel="noopener">Inspect source ↗</a>` : ""}
       </div>
@@ -2164,7 +2596,7 @@ function specialStudioCardMarkup(card) {
         ${specialStudioField("Review status", "contentStatus", card.contentStatus, { type: "select", options: ["draft", "review-needed", "approved", "rejected"] })}
       </div>
       <div class="studio-card-actions">
-        <button type="button" data-save-studio-special="${card.id}"${model.studioContent?.debugEnabled ? "" : " disabled"}>Save live card</button>
+        <button type="button" data-save-studio-special="${card.id}"${model.studioContent?.studioEnabled ? "" : " disabled"}>Save live card</button>
         <a href="${escapeHtml(card.sourceUrl)}" target="_blank" rel="noopener">Inspect source ↗</a>
       </div>
       <p class="concept-note">Fact cards retain their source, measurement unit and caveat in the live runtime record.</p>
@@ -2302,6 +2734,7 @@ async function saveLevelIncrements() {
         revealTiming: readStudioRevealDelays(),
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
+        releaseSets: readStudioReleaseSets(),
       }),
     });
     populateLevelIncrements();
@@ -2375,6 +2808,27 @@ function exportAllQuotes() {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   showToast(`Exported ${rows.length} quote rows for Excel.`);
+}
+
+async function saveReleaseSets() {
+  try {
+    model.gameConfig = await request("/api/studio/config", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        revealTiming: readStudioRevealDelays(),
+        visual: readStudioVisualConfig(),
+        progression: readStudioProgression(),
+        releaseSets: readStudioReleaseSets(),
+      }),
+    });
+    populateReleaseSets();
+    renderHome();
+    renderBinder();
+    showToast("Release calendar published.");
+  } catch (error) {
+    showToast(error.status === 404 ? "Studio configuration is disabled without the ops key." : "Could not publish the set calendar.");
+  }
 }
 
 function renderStudio() {
@@ -2945,7 +3399,9 @@ for (const preview of [elements.tradeOfferedPreview, elements.tradeWantedPreview
 document.querySelector(".today-docket").addEventListener("click", (event) => {
   const hook = event.target.closest("[data-today-nav]");
   if (!hook) return;
+  if (hook.dataset.communityPage) model.communityPage = hook.dataset.communityPage;
   elements.navButtons.find((button) => button.dataset.nav === hook.dataset.todayNav)?.click();
+  if (hook.dataset.communityPage) renderGrowth();
 });
 elements.tradeOfferedSet.addEventListener("change", renderGrowth);
 elements.tradeWantedSet.addEventListener("change", renderGrowth);
@@ -2987,6 +3443,7 @@ Object.values(revealDelayInputs()).forEach((input) => input.addEventListener("ch
 Object.values(visualConfigInputs()).forEach((input) => input.addEventListener("change", saveVisualConfig));
 elements.levelIncrements?.addEventListener("change", saveLevelIncrements);
 elements.levelExponent?.addEventListener("change", saveLevelIncrements);
+elements.saveReleaseSets?.addEventListener("click", saveReleaseSets);
 elements.studioPartyTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-studio-party]");
   if (!button) return;
@@ -3041,6 +3498,8 @@ elements.cardReviewList.addEventListener("click", (event) => {
 
 elements.navButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    if (button.dataset.nav === "binder") loadStaticCatalog().catch(() => {});
+    else if (button.dataset.nav !== "home") hydrateExtras().catch(() => {});
     if (button.dataset.nav === "home") {
       renderHome();
       showView("home");

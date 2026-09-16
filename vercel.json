@@ -1,16 +1,24 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
+  "fluid": true,
   "installCommand": "npm ci --prefix app",
   "buildCommand": "node scripts/prepare-vercel-static.mjs",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api?__kalpi_path=/api/:path*" }
   ],
   "functions": {
+    "api/health.js": { "maxDuration": 5 },
+    "api/home.js": {
+      "includeFiles": "{app/public/shell.json,app/server/**}",
+      "maxDuration": 10
+    },
     "api/index.js": {
       "includeFiles": "{app/data/**,app/server/**}",
-      "maxDuration": 10,
-      "memory": 1024
+      "maxDuration": 10
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/catalog", "schedule": "0 8 * * *" }
+  ]
 }

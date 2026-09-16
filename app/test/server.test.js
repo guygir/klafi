@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { createKalpiApp, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES } from "../server/app.js";
+import { createKalpiApp, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES, publicPartyRegister } from "../server/app.js";
 import { createRuntimeHandler } from "../server/runtime.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -16,6 +16,7 @@ async function start(dataDir, clock, {
   debugEnabled = true,
   quizEnabled = false,
   databaseUrl = null,
+  studioSecret = null,
   studioContentPath = path.join(appRoot, "data/studio-content.json"),
   cardsPath = path.join(appRoot, "data/cards.json"),
   specialsPath = path.join(appRoot, "data/specials-content.json"),
@@ -41,6 +42,7 @@ async function start(dataDir, clock, {
     debugEnabled,
     quizEnabled,
     databaseUrl,
+    studioSecret,
     now: () => clock.value,
     rng: () => 0,
   });
@@ -54,11 +56,12 @@ async function start(dataDir, clock, {
   };
 }
 
-async function api(base, route, { token, method = "GET", body } = {}) {
+async function api(base, route, { token, method = "GET", body, studio } = {}) {
   const response = await fetch(`${base}${route}`, {
     method,
     headers: {
       ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(studio ? { "x-kalpi-studio": studio } : {}),
       ...(body ? { "content-type": "application/json" } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -72,6 +75,24 @@ test("runtime factory builds the same Node handler Vercel uses", async () => {
   const handler = await createRuntimeHandler({ loadDotEnv: false });
   process.env.NODE_ENV = previous;
   assert.equal(typeof handler, "function");
+});
+
+test("public party register keeps Hebrew names without opening Studio", () => {
+  const fromStudio = publicPartyRegister({
+    parties: [{ id: "RZ", displayNameHe: "הציונות הדתית וזהות", displayNameEn: "RZ", requestedLetters: ["ט"], pip: "#6B4A8B" }],
+  });
+  assert.equal(fromStudio[0].displayNameHe, "הציונות הדתית וזהות");
+  const fromCatalog = publicPartyRegister(null, [
+    { set: "SYS", setNameHe: "יסודות" },
+    { set: "RZ", setNameHe: "הציונות הדתית וזהות", setName: "Religious Zionism–Zehut", letters: "ט", pip: "#6B4A8B" },
+  ]);
+  assert.deepEqual(fromCatalog, [{
+    id: "RZ",
+    displayNameHe: "הציונות הדתית וזהות",
+    displayNameEn: "Religious Zionism–Zehut",
+    requestedLetters: ["ט"],
+    pip: "#6B4A8B",
+  }]);
 });
 
 test("idle settlement caps unseen cards and acknowledges reveals safely", async (t) => {
@@ -445,6 +466,8 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(leaderboards.status, 200);
   assert.equal(leaderboards.body.factions.find(({ partyId }) => partyId === "LIK").packs, 1);
   assert.equal(leaderboards.body.dailyChallenge.day, "2026-09-03");
+  assert.equal(leaderboards.body.dailyChallenge.targetPartyNameHe, catalog.body.cards.find(({ set }) => set === leaderboards.body.dailyChallenge.targetPartyId)?.setNameHe);
+  assert.match(leaderboards.body.dailyChallenge.targetPartyNameHe, /[א-ת]/);
   const currentChallengeEntry = leaderboards.body.dailyChallenge.leaders.find(({ current }) => current);
   assert.equal(currentChallengeEntry.label, "גיא בדיקה");
   const expectedChallengeCards = pull.body.cards
@@ -713,6 +736,19 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   const created = await api(running.base, "/api/session", { method: "POST" });
   assert.equal((await api(running.base, "/api/studio/content")).status, 404);
   assert.equal((await api(running.base, "/api/presentation/content")).status, 404);
+  const boot = await api(running.base, "/api/bootstrap", { token: created.body.token });
+  assert.equal(boot.status, 200);
+  assert.equal(boot.body.studioContent, null);
+  assert.equal(boot.body.gameConfig.parties.find(({ id }) => id === "RZ").displayNameHe, "הציונות הדתית וזהות");
+  assert.ok(boot.body.catalog.cards.length);
+  assert.ok(boot.body.idleReturn.state);
+  const publicConfig = await api(running.base, "/api/game-config");
+  assert.equal(publicConfig.status, 200);
+  const rz = publicConfig.body.parties.find(({ id }) => id === "RZ");
+  assert.equal(rz.displayNameHe, "הציונות הדתית וזהות");
+  const publicBoards = await api(running.base, "/api/leaderboards", { token: created.body.token });
+  assert.match(publicBoards.body.dailyChallenge.targetPartyNameHe, /[א-ת]/);
+  assert.notEqual(publicBoards.body.dailyChallenge.targetPartyNameHe, publicBoards.body.dailyChallenge.targetPartyId);
   assert.equal((await fetch(`${running.base}/project-docs/presentation/poc-response/index.html`)).status, 404);
   const health = await fetch(`${running.base}/api/health`);
   assert.equal(health.status, 200);
@@ -747,6 +783,86 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
     body: { fields: { "s01-t001": "blocked" } },
   });
   assert.equal(presentationResponse.status, 404);
+});
+
+test("home route creates a guest session without the full catalog", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-home-route-"));
+  const running = await start(dataDir, { value: Date.parse("2026-09-15T12:00:00.000Z") }, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const home = await api(running.base, "/api/home");
+  assert.equal(home.status, 200);
+  assert.match(home.body.token, /^[0-9a-f-]{36}$/i);
+  assert.ok(home.body.state.displayName);
+  assert.equal(home.body.state.progression.rank, "אזרח סקרן");
+  assert.equal(home.body.catalog, undefined);
+  assert.equal(typeof home.body.state.inventory, "object");
+  const again = await api(running.base, "/api/home", { token: home.body.token });
+  assert.equal(again.body.token, home.body.token);
+});
+
+test("bootstrap creates a guest session in one request", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-boot-session-"));
+  const running = await start(dataDir, { value: Date.parse("2026-09-15T12:00:00.000Z") }, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const boot = await api(running.base, "/api/bootstrap");
+  assert.equal(boot.status, 200);
+  assert.match(boot.body.token, /^[0-9a-f-]{36}$/i);
+  assert.ok(boot.body.idleReturn.state.displayName);
+  assert.equal(boot.body.studioContent, null);
+  const again = await api(running.base, "/api/bootstrap", { token: boot.body.token });
+  assert.equal(again.body.token, boot.body.token);
+  assert.equal(again.body.idleReturn.state.displayName, boot.body.idleReturn.state.displayName);
+});
+
+test("production Studio opens with STUDIO_SECRET for unlock and set calendar", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-studio-secret-"));
+  const studioContentPath = path.join(dataDir, "studio-content.json");
+  await copyFile(path.join(appRoot, "data/studio-content.json"), studioContentPath);
+  const running = await start(dataDir, { value: Date.parse("2026-09-15T12:00:00.000Z") }, {
+    debugEnabled: false,
+    studioSecret: "ops-test-secret",
+    studioContentPath,
+  });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const boot = await api(running.base, "/api/bootstrap", { studio: "ops-test-secret" });
+  assert.equal(boot.status, 200);
+  assert.equal(boot.body.studioContent.studioEnabled, true);
+  const token = boot.body.token;
+  const denied = await api(running.base, "/api/studio/config", {
+    token,
+    method: "POST",
+    body: { revealTiming: { quote: 1, party: 2, name: 3, portrait: 4 } },
+  });
+  assert.equal(denied.status, 404);
+  const saved = await api(running.base, "/api/studio/config", {
+    token,
+    studio: "ops-test-secret",
+    method: "POST",
+    body: {
+      revealTiming: { quote: 80, party: 0, name: 600, portrait: 400 },
+      releaseSets: [{ id: "party-slot-2", runtimeState: "active", runtimeAvailableFrom: "2026-09-15T00:00:00.000Z" }],
+    },
+  });
+  assert.equal(saved.status, 200);
+  assert.equal(saved.body.releaseSets.find(({ id }) => id === "party-slot-2").runtimeState, "active");
+  const cardId = boot.body.catalog.cards.find(({ idleEligible }) => idleEligible).id;
+  const unlocked = await api(running.base, "/api/debug/unlock-card", {
+    token,
+    studio: "ops-test-secret",
+    method: "POST",
+    body: { cardId },
+  });
+  assert.equal(unlocked.status, 200);
+  assert.equal(unlocked.body.inventory[cardId], 1);
 });
 
 test("quiz routes stay closed unless explicitly enabled", async (t) => {
@@ -815,10 +931,32 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const databaseUrl = process.env.KALPI_TEST_DATABASE_URL
     || "postgresql://kalpi:change-me@127.0.0.1:5432/kalpi_test";
   const { default: pg } = await import("pg");
-  const pool = new pg.Pool({ connectionString: databaseUrl });
+  const pool = new pg.Pool({ connectionString: databaseUrl, connectionTimeoutMillis: 2000 });
   try {
     await pool.query("SELECT 1");
-    await pool.query("DROP TABLE IF EXISTS kalpi_runtime_state, kalpi_schema_migrations");
+  } catch (error) {
+    await pool.end().catch(() => {});
+    if (["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN"].includes(error.code)) {
+      t.skip("Postgres is not available");
+      return;
+    }
+    throw error;
+  }
+  try {
+    await pool.query(`
+      DROP TABLE IF EXISTS
+        kalpi_studio_config,
+        kalpi_events,
+        kalpi_trades,
+        kalpi_packs,
+        kalpi_instances,
+        kalpi_inventory,
+        kalpi_factions,
+        kalpi_sessions,
+        kalpi_runtime_state,
+        kalpi_schema_migrations
+      CASCADE
+    `);
   } finally {
     await pool.end();
   }
@@ -830,6 +968,8 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const health = await api(first.base, "/api/health");
   assert.equal(health.status, 200);
   assert.equal(health.body.backend, "postgres");
+  const cardId = (await api(first.base, "/api/catalog")).body.cards.find(({ idleEligible }) => idleEligible).id;
+  await api(first.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId } });
   await first.close();
   const second = await start(dataDir, clock, { databaseUrl });
   t.after(async () => {
@@ -839,5 +979,6 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const state = await api(second.base, "/api/state", { token });
   assert.equal(state.status, 200);
   assert.ok(state.body.displayName);
+  assert.equal(state.body.inventory[cardId], 1);
   assert.equal(state.body.quizAvailable, false);
 });

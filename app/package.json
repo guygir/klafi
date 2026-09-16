@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:data": "node scripts/build-runtime-catalog.mjs --activate",
+    "build:shell": "node ../scripts/build-shell.mjs && node ../scripts/build-catalog.mjs",
+    "build:data": "node scripts/build-runtime-catalog.mjs --activate && node ../scripts/build-shell.mjs && node ../scripts/build-catalog.mjs",
     "build:alpha": "node scripts/build-cards.mjs",
     "build:studio": "node scripts/build-studio-content.mjs",
     "build:catalog": "node scripts/build-runtime-catalog.mjs",

@@ -8,9 +8,10 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
 
 test("client selectors match the HTML and preserve Alpha UX constraints", async () => {
-  const [html, javascript, baseCss, themeCss] = await Promise.all([
+  const [html, javascript, warmup, baseCss, themeCss] = await Promise.all([
     readFile(path.join(publicDir, "index.html"), "utf8"),
     readFile(path.join(publicDir, "app.js"), "utf8"),
+    readFile(path.join(publicDir, "boot-warmup.js"), "utf8"),
     readFile(path.join(publicDir, "styles.css"), "utf8"),
     readFile(path.join(publicDir, "theme-pack-v2.css"), "utf8"),
   ]);
@@ -81,7 +82,20 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /"01 \/ 04 · quote"/);
   assert.match(javascript, /"04 \/ 04 · portrait"/);
   assert.doesNotMatch(javascript, /REVEAL_TIMING_KEY/);
-  assert.match(javascript, /\/api\/game-config/);
+  assert.match(javascript, /\/api\/bootstrap/);
+  assert.match(javascript, /\/api\/home/);
+  assert.match(javascript, /\/shell\.json/);
+  assert.match(html, /id="home-view"[^>]*class="view active"/);
+  assert.match(javascript, /HOME_CACHE_KEY/);
+  assert.match(html, /boot-warmup\.js/);
+  assert.match(warmup, /\/api\/catalog/);
+  assert.match(warmup, /\/api\/home/);
+  assert.match(javascript, /studioKey/);
+  assert.match(javascript, /x-kalpi-studio/);
+  assert.match(html, /data-studio-only/);
+  assert.match(html, /id="studio-release-sets"/);
+  assert.match(javascript, /function populateReleaseSets/);
+  assert.match(html, /חשבון הוא אופציונלי/);
   assert.match(javascript, /\/api\/studio\/config/);
   assert.match(javascript, /updateStudioCardPreview/);
   assert.match(javascript, /\["quote\.displayText", "art\.artKey"\]/);
@@ -117,6 +131,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /\/api\/events\/.*\/pull/);
   assert.match(html, /id="trade-offered-set"/);
   assert.match(html, /id="trade-wanted-set"/);
+  assert.match(javascript, /function partyDisplayName/);
+  assert.match(javascript, /function partyRegister/);
+  assert.match(javascript, /model\.gameConfig\?\.parties/);
+  assert.match(javascript, /targetPartyNameHe/);
+  assert.match(javascript, /function challengeRecap/);
+  assert.match(javascript, /function renderChallengeRecap/);
+  assert.match(html, /id="daily-challenge-recap"/);
   assert.match(html, /id="today-challenge-hook"/);
   assert.match(html, /id="today-event-hook"/);
   assert.match(html, /id="today-leader-hook"/);
@@ -160,7 +181,23 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /hebrew-quality-13/);
+  assert.match(html, /hebrew-quality-16/);
+  assert.match(javascript, /function catalogReady/);
+  assert.match(javascript, /function loadStaticCatalog/);
+  assert.match(javascript, /function hydrateExtras/);
+  assert.match(javascript, /\/catalog\.json/);
+  assert.match(javascript, /request\("\/api\/events"\)/);
+  assert.match(javascript, /request\("\/api\/trades"\)/);
+  assert.match(javascript, /request\("\/api\/leaderboards"\)/);
+  assert.match(javascript, /hydrateExtras\(\)\.catch/);
+  assert.match(javascript, /טוענים את האלבום/);
+  assert.match(javascript, /searchParams\.set\("view"/);
+  assert.match(javascript, /Promise\.allSettled\(\[settlePromise, ripPromise\]\)/);
+  assert.match(warmup, /\/catalog\.json/);
+  assert.match(css, /\.binder-slot\.is-loading/);
+  assert.match(css, /binder-well-wait/);
+  assert.match(html, /id="achievements-empty"/);
+  assert.match(html, /id="growth-empty"/);
   assert.match(html, /id="quiz-fail"/);
   assert.match(html, /id="level-unlocks"/);
   assert.match(html, /id="open-pending-level"/);
