@@ -28,6 +28,7 @@ export function normalizeState(value = {}) {
     session.idleAnchorAt ??= null;
     session.nextIdleAt ??= null;
     session.unseenPulls ??= [];
+    session.preparedPulls ??= [];
     session.idleDuplicateStreak ??= 0;
     session.idlePullCount ??= 0;
     session.highestRank ??= 1;
@@ -107,6 +108,7 @@ export class JsonStore {
         idleAnchorAt: now,
         nextIdleAt: null,
         unseenPulls: [],
+        preparedPulls: [],
         idleDuplicateStreak: 0,
         idlePullCount: 0,
         highestRank: 1,

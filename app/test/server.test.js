@@ -116,17 +116,24 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   assert.equal(first.body.cards.length, 1);
   assert.equal(first.body.state.unseenCount, 1);
   assert.equal(first.body.state.idleCapacity, IDLE_BACKLOG_CAP);
+  assert.equal(first.body.state.preparedPulls.length, IDLE_BACKLOG_CAP - 1);
+  assert.equal(
+    Date.parse(first.body.state.preparedPulls[0].availableAt),
+    clock.value + IDLE_INTERVAL_MS,
+  );
   assert.equal(first.body.state.instances, undefined);
   assert.equal(first.body.state.achievements, undefined);
 
   const replay = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(replay.body.newlySettledCount, 0);
   assert.equal(replay.body.cards[0].instanceId, first.body.cards[0].instanceId);
+  assert.deepEqual(replay.body.state.preparedPulls, first.body.state.preparedPulls);
 
   clock.value += 30 * 60 * 60 * 1000;
   const capped = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(capped.body.cards.length, IDLE_BACKLOG_CAP);
   assert.equal(capped.body.newlySettledCount, IDLE_BACKLOG_CAP - 1);
+  assert.equal(capped.body.state.preparedPulls.length, 0);
   assert.ok(Date.parse(capped.body.state.nextIdleAt) > clock.value);
 
   const seen = await api(running.base, "/api/idle/seen", {

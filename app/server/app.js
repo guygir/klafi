@@ -529,6 +529,7 @@ function publicState(session, now, cards, config = {}) {
     idleIntervalMs: IDLE_INTERVAL_MS,
     idleCapacity: IDLE_BACKLOG_CAP,
     unseenCount: session.unseenPulls?.length ?? 0,
+    preparedPulls: session.preparedPulls ?? [],
     idlePullCount: session.idlePullCount ?? 0,
     factionId: session.factionId,
     tradeCount: session.tradeCount,
@@ -557,6 +558,7 @@ function publicIdleState(session, now, cards, config = {}) {
     nextIdleAt: session.nextIdleAt,
     idleCapacity: IDLE_BACKLOG_CAP,
     unseenCount: session.unseenPulls?.length ?? 0,
+    preparedPulls: session.preparedPulls ?? [],
     progression,
     avatars: publicAvatars(session, config.avatars, progression.level),
   };
@@ -845,44 +847,78 @@ export async function createKalpiApp({
     if (!pool.length) return { error: "NO_ACTIVE_RELEASE" };
     const result = await store.withSession(token, (current) => {
       current.unseenPulls ??= [];
+      current.preparedPulls = (current.preparedPulls || [])
+        .filter((pull) => pull?.instanceId && pull?.cardId && Number.isFinite(Date.parse(pull.availableAt)))
+        .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));
       current.idleDuplicateStreak ??= 0;
       current.idlePullCount ??= 0;
-      const fallbackAnchor = Date.parse(current.idleAnchorAt || current.createdAt);
-      const nextAtMs = current.nextIdleAt
-        ? Date.parse(current.nextIdleAt)
-        : Number.isFinite(fallbackAnchor) ? fallbackAnchor : currentMs;
-      const dueIntervals = currentMs >= nextAtMs
-        ? Math.floor((currentMs - nextAtMs) / IDLE_INTERVAL_MS) + 1
-        : 0;
-      const freeSlots = Math.max(0, IDLE_BACKLOG_CAP - current.unseenPulls.length);
-      const grantCount = Math.min(dueIntervals, freeSlots);
+      const fallbackAnchor = Date.parse(current.nextIdleAt || current.idleAnchorAt || current.createdAt);
+      const anchorAt = Number.isFinite(fallbackAnchor) ? fallbackAnchor : currentMs;
+      let scheduleAt = current.preparedPulls.length
+        ? Date.parse(current.preparedPulls.at(-1).availableAt) + IDLE_INTERVAL_MS
+        : anchorAt;
+
+      const fillPreparedQueue = () => {
+        const simulatedInventory = { ...current.inventory };
+        let simulatedDuplicateStreak = current.idleDuplicateStreak;
+        for (const prepared of current.preparedPulls) {
+          const isNew = !simulatedInventory[prepared.cardId];
+          simulatedInventory[prepared.cardId] = (simulatedInventory[prepared.cardId] ?? 0) + 1;
+          simulatedDuplicateStreak = isNew ? 0 : simulatedDuplicateStreak + 1;
+        }
+        const preparedCapacity = Math.max(0, IDLE_BACKLOG_CAP - current.unseenPulls.length);
+        while (current.preparedPulls.length < preparedCapacity) {
+          const pull = generateIdlePull({
+            cards: pool,
+            inventory: simulatedInventory,
+            duplicateStreak: simulatedDuplicateStreak,
+            rng,
+          });
+          const isNew = !simulatedInventory[pull.cardId];
+          current.preparedPulls.push({
+            instanceId: randomUUID(),
+            cardId: pull.cardId,
+            finish: pull.finish,
+            isNew,
+            acquiredBy: "idle",
+            availableAt: new Date(scheduleAt).toISOString(),
+            preparedAt: new Date(currentMs).toISOString(),
+          });
+          simulatedInventory[pull.cardId] = (simulatedInventory[pull.cardId] ?? 0) + 1;
+          simulatedDuplicateStreak = isNew ? 0 : simulatedDuplicateStreak + 1;
+          scheduleAt += IDLE_INTERVAL_MS;
+        }
+      };
+
+      fillPreparedQueue();
       const granted = [];
-      for (let index = 0; index < grantCount; index += 1) {
-        const pull = generateIdlePull({
-          cards: pool,
-          inventory: current.inventory,
-          duplicateStreak: current.idleDuplicateStreak,
-          rng,
+      while (
+        current.unseenPulls.length < IDLE_BACKLOG_CAP
+        && Date.parse(current.preparedPulls[0]?.availableAt) <= currentMs
+      ) {
+        const prepared = current.preparedPulls.shift();
+        const instance = grantCard(current, prepared, {
+          acquiredBy: "idle",
+          pulledAt: prepared.availableAt,
+          instanceId: prepared.instanceId,
         });
-        const pulledAt = new Date(Math.min(currentMs, nextAtMs + (index * IDLE_INTERVAL_MS))).toISOString();
-        const instance = grantCard(current, pull, { acquiredBy: "idle", pulledAt });
         current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
         current.idlePullCount += 1;
         current.packs.push({
           packId: `idle-${instance.instanceId}`,
           mode: "idle",
-          pulledAt,
+          pulledAt: prepared.availableAt,
           nextDailyAt: null,
           cards: [instance],
         });
         granted.push(instance);
       }
-      if (dueIntervals) {
-        current.nextIdleAt = new Date(nextAtMs + (dueIntervals * IDLE_INTERVAL_MS)).toISOString();
-      } else if (!current.nextIdleAt) {
-        current.nextIdleAt = new Date(nextAtMs).toISOString();
+      if (current.unseenPulls.length >= IDLE_BACKLOG_CAP && scheduleAt <= currentMs) {
+        scheduleAt = currentMs + IDLE_INTERVAL_MS;
       }
-      current.idleAnchorAt ??= new Date(nextAtMs).toISOString();
+      fillPreparedQueue();
+      current.nextIdleAt = current.preparedPulls[0]?.availableAt ?? new Date(scheduleAt).toISOString();
+      current.idleAnchorAt ??= new Date(anchorAt).toISOString();
       current.packs = current.packs.slice(-100);
       current.instances = current.instances.slice(-500);
       syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
@@ -904,11 +940,11 @@ export async function createKalpiApp({
       state: publicIdleState(session, currentMs, allCards, runtimeProgression()),
     };
   }
-  function grantCard(session, pull, { acquiredBy, pulledAt }) {
+  function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID() }) {
     const isNew = !session.inventory[pull.cardId];
     session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
     const instance = {
-      instanceId: randomUUID(),
+      instanceId,
       cardId: pull.cardId,
       finish: pull.finish,
       pulledAt,

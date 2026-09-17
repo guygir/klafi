@@ -109,6 +109,7 @@ async function loadSession(db, token) {
     nextIdleAt: row.next_idle_at ? new Date(row.next_idle_at).toISOString() : null,
     inventory: row.inventory_state || {},
     unseenPulls: extras.unseenPulls || [],
+    preparedPulls: extras.preparedPulls || [],
     pendingRankRewards: extras.pendingRankRewards || [],
     favorites: extras.favorites || [],
   };
@@ -132,6 +133,7 @@ async function createSession(db, now) {
       nextIdleAt: null,
       inventory: {},
       unseenPulls: [],
+      preparedPulls: [],
       pendingRankRewards: [],
       favorites: [],
     },
