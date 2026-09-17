@@ -1646,10 +1646,6 @@ async function handlePackAction() {
       }).catch(() => {
         scheduleIdleRefill({ priority: "urgent" });
       });
-      request("/api/leaderboards").then((leaderboards) => {
-        model.leaderboards = leaderboards;
-        renderGrowth();
-      }).catch(() => {});
     } else {
       model.leaderboards = await request("/api/leaderboards");
       renderHome();
