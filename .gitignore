@@ -4,6 +4,7 @@
 .env.*.local
 app/.runtime/
 app/node_modules/
+backups/
 /public/
 .vercel
 *.log
