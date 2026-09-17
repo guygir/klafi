@@ -235,7 +235,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="open-pending-level"/);
   assert.match(javascript, /klafi-seen-level-dialog/);
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
-  assert.match(html, /שעון ירושלים/);
+  assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
   assert.match(themeCss, /\.card-dialog \.kalpi-card[^}]*width:\s*min\(370px,\s*100%\)/s);
   assert.match(themeCss, /\.new-stamp[^}]*top:\s*50%[^}]*translateY\(-50%\)/s);
