@@ -125,7 +125,9 @@ export function sessionDeltas(previous, session) {
 
 export class PostgresStore {
   constructor(connectionString, { ssl = false } = {}) {
-    this.pool = guardPool(new Pool(postgresPoolOptions(connectionString, { ssl })));
+    const poolOptions = postgresPoolOptions(connectionString, { ssl });
+    this.transactionPooling = poolOptions.connectionString !== connectionString;
+    this.pool = guardPool(new Pool(poolOptions));
     this.transaction = new AsyncLocalStorage();
     this.requestSessions = new AsyncLocalStorage();
     this.sessionCache = new Map();
@@ -162,6 +164,9 @@ export class PostgresStore {
         appliedVersions = new Set(appliedResult.rows.map(({ version }) => version));
       }
       if (appliedVersions.size !== versions.length) {
+        if (this.transactionPooling) {
+          throw new Error("Database migrations require the Supabase session pooler on port 5432.");
+        }
         await client.query("SELECT pg_advisory_lock(hashtext('kalpi-schema-migrations'))");
         migrationLock = true;
         await client.query(`

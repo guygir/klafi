@@ -4,10 +4,11 @@
 
 - **Vercel Hobby** from GitHub `guygir/klafi`. Static files (HTML, JS, CSS, card art) are copied to `/public` at build time. `/api/*` rewrites to [api/index.js](../../api/index.js), which reuses `createKalpiApp`.
 - **Supabase free Postgres** created on supabase.com (not Vercel Marketplace — Marketplace `free` is disabled and would bill through Vercel). Set `DATABASE_URL` only in the Vercel project (never commit the live URI).
-  - Prefer the **session pooler** on port **5432** (`*.pooler.supabase.com`). Vercel functions are IPv4; the direct `db.*:5432` host is often IPv6-only.
-  - Do **not** use the transaction pooler on port **6543**. It can break `FOR UPDATE` and advisory locks.
+  - Keep the **session pooler** URL on port **5432** (`*.pooler.supabase.com`) in `DATABASE_URL` so migrations can use session-scoped advisory locks.
+  - On Vercel, application traffic automatically changes that URL to Supavisor **transaction mode** on port **6543**. Explicit `BEGIN`/`COMMIT` transactions, including `FOR UPDATE`, remain pinned to one database connection. Queries intentionally omit named prepared statements.
+  - A deployment with missing migrations fails closed on transaction mode; run migrations through session mode before serving traffic.
   - `DATABASE_SSL=1`
-  - `DATABASE_POOL_SIZE=5`
+  - `DATABASE_POOL_SIZE=5` (Vercel clamps each function instance to one client connection)
   - `NODE_ENV=production`, `KALPI_DEBUG=0`, `QUIZ_ENABLED=0`
   - Optional `STUDIO_SECRET` to open Studio unlock + set calendar in production (send as `x-kalpi-studio`, or open `/?studioKey=...` once). Leave unset to keep Studio closed.
 
