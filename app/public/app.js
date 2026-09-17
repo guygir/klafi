@@ -725,7 +725,10 @@ async function bootstrap() {
       const priority = !hasPreparedBuffer || missingDueCard
         ? "urgent"
         : cachedDueCount() > 1 ? "backlog" : "buffered";
-      scheduleIdleRefill({ priority });
+      const cachedBufferSize = model.idleQueue.length + (model.serverState?.preparedPulls || []).length;
+      if (priority !== "buffered" || cachedBufferSize < (model.serverState?.idleCapacity || 8)) {
+        scheduleIdleRefill({ priority });
+      }
     }).catch(() => {});
     if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
     else homePromise.catch(() => null);
