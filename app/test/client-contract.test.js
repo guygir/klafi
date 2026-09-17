@@ -146,7 +146,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /collectorCrowd/);
   assert.match(html, /id="daily-challenge-recap"/);
   assert.match(html, /id="today-challenge-hook"/);
-  assert.match(html, /id="today-event-hook"/);
+  assert.doesNotMatch(html, /id="today-event-hook"/);
   assert.match(html, /id="today-leader-hook"/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(html, /id="today-challenge-visual"/);
