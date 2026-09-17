@@ -543,6 +543,11 @@ function nextCachedIdleCard(current = Date.now()) {
   return instance ? { instance, prepared: true } : null;
 }
 
+function cachedDueCount(current = Date.now()) {
+  return model.idleQueue.length + (model.serverState?.preparedPulls || [])
+    .filter(({ availableAt }) => Date.parse(availableAt) <= current).length;
+}
+
 function prefetchIdleAssets() {
   if (!model.catalog.length) return;
   const pulls = [...model.idleQueue, ...(model.serverState?.preparedPulls || [])];
@@ -571,12 +576,16 @@ async function hydrateIdleQueue() {
   return idleHydrate;
 }
 
-function scheduleIdleRefill({ urgent = false } = {}) {
+function scheduleIdleRefill({ priority = "buffered" } = {}) {
   clearTimeout(idleRefillTimer);
-  const delay = urgent ? 0 : 15_000 + Math.floor(Math.random() * 45_000);
+  const delay = priority === "urgent"
+    ? 0
+    : priority === "backlog"
+      ? 500 + Math.floor(Math.random() * 2000)
+      : 15_000 + Math.floor(Math.random() * 45_000);
   idleRefillTimer = setTimeout(() => {
     hydrateIdleQueue().catch(() => {
-      scheduleIdleRefill({ urgent: false });
+      scheduleIdleRefill({ priority: "buffered" });
     });
   }, delay);
 }
@@ -666,7 +675,10 @@ async function bootstrap() {
       const missingDueCard = !nextCachedIdleCard()
         && Boolean(model.serverState?.nextIdleAt)
         && Date.parse(model.serverState.nextIdleAt) <= Date.now();
-      scheduleIdleRefill({ urgent: !hasPreparedBuffer || missingDueCard });
+      const priority = !hasPreparedBuffer || missingDueCard
+        ? "urgent"
+        : cachedDueCount() > 1 ? "backlog" : "buffered";
+      scheduleIdleRefill({ priority });
     }).catch(() => {});
     if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
     else homePromise.catch(() => null);
@@ -1398,10 +1410,12 @@ async function openIdleReturn(opening = "regular") {
   const cached = nextCachedIdleCard();
   const rip = playHomePackRip({ holdAtEnd: !cached });
   try {
-    const settlement = hydrateIdleQueue().then(
-      (value) => ({ value }),
-      (error) => ({ error }),
-    );
+    const settlement = cached && !cached.prepared
+      ? Promise.resolve({ value: { cards: model.idleQueue, state: model.serverState } })
+      : hydrateIdleQueue().then(
+        (value) => ({ value }),
+        (error) => ({ error }),
+      );
     let selected = cached?.instance;
     if (!selected) {
       const outcome = await settlement;
@@ -1585,9 +1599,9 @@ async function handlePackAction() {
         applyHomePayload({ state });
         renderHome();
         renderBinder();
-        scheduleIdleRefill({ urgent: false });
+        scheduleIdleRefill({ priority: "buffered" });
       }).catch(() => {
-        scheduleIdleRefill({ urgent: true });
+        scheduleIdleRefill({ priority: "urgent" });
       });
       request("/api/leaderboards").then((leaderboards) => {
         model.leaderboards = leaderboards;

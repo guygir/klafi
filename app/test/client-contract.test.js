@@ -203,8 +203,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /טוענים את האלבום/);
   assert.match(javascript, /searchParams\.set\("view"/);
   assert.match(javascript, /function nextCachedIdleCard/);
+  assert.match(javascript, /function cachedDueCount/);
   assert.match(javascript, /function hydrateIdleQueue/);
   assert.match(javascript, /function scheduleIdleRefill/);
+  assert.match(javascript, /cachedDueCount\(\) > 1 \? "backlog"/);
   assert.match(javascript, /playHomePackRip\(\{ holdAtEnd: !cached \}\)/);
   assert.match(javascript, /await rip\.finished/);
   assert.match(javascript, /if \(!model\.token\) await hydrateHome\(\)/);
