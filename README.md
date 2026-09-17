@@ -19,7 +19,7 @@ npm install
 npm run poc
 ```
 
-Open **http://127.0.0.1:4173**. `/api/health` should report `"backend":"postgres"`. Quiz extra-packs are off (`QUIZ_ENABLED=0`). Public host: Vercel Hobby + Supabase (session pooler `:5432`). Run `npm test` in `app/` for generated content audits plus pack/server/client tests. JSON file fallback remains only when `DATABASE_URL` is unset.
+Open **http://127.0.0.1:4173**. `/api/health` should report `"backend":"postgres"`. Quiz extra-packs are off (`QUIZ_ENABLED=0`). Public host: Vercel Hobby + Supabase; configuration keeps the session-pooler URL for migrations, while Vercel runtime traffic uses transaction mode. Run `npm test` in `app/` for generated content audits plus pack/server/client tests. JSON file fallback remains only when `DATABASE_URL` is unset.
 
 Use the bottom navigation: **Today** for the pack, **Binder** for the collection, **Growth** for trading/creator links/funnel activity, and **Studio** for sponsor configuration status, card review, walkout replay, and debug reset. Full implementation map: [docs/product/poc-implementation-review.md](docs/product/poc-implementation-review.md).
 
@@ -90,7 +90,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 
 **Mandatory / production first**
 1. [x] GitHub repo https://github.com/guygir/klafi + local PostgreSQL store (`DATABASE_URL`, docker-compose, persist-across-restart test).
-2. [x] Public URL https://klafi.vercel.app (Vercel Hobby + Supabase session pooler). `/api/health` is `backend=postgres`. Quiz and debug stay off.
+2. [x] Public URL https://klafi.vercel.app (Vercel Hobby + Supabase transaction-pooled runtime). `/api/health` is `backend=postgres`. Quiz and debug stay off.
 3. Production advocacy identity configured for live.
 4. CEC / rights / likeness / source approval (release blockers).
 5. Account recovery, moderation, public rate limits.
