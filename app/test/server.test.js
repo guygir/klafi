@@ -227,7 +227,7 @@ test("prepared idle pulls ignore client card choices", async (t) => {
 test("correction reports persist once and remain reviewable", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-report-test-"));
   const clock = { value: Date.parse("2026-09-17T12:00:00.000Z") };
-  const running = await start(dataDir, clock, { studioSecret: "review-secret" });
+  const running = await start(dataDir, clock, { debugEnabled: false, studioSecret: "review-secret" });
   t.after(async () => {
     await running.close();
     await rm(dataDir, { recursive: true, force: true });

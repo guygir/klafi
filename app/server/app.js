@@ -1956,7 +1956,10 @@ export async function createKalpiApp({
                     recordedAt: packResult.body.pulledAt,
                   }),
                 ]);
-                packResult.body.state = stateFor(store.getSession(token));
+                return {
+                  ...packResult,
+                  body: { ...packResult.body, state: stateFor(store.getSession(token)) },
+                };
               }
               return packResult;
             },
