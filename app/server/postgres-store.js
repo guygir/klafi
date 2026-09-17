@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { normalizeState } from "./store.js";
+import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 
 const { Pool } = pg;
 
@@ -122,11 +123,7 @@ export function sessionDeltas(previous, session) {
 
 export class PostgresStore {
   constructor(connectionString, { ssl = false } = {}) {
-    this.pool = new Pool({
-      connectionString,
-      ssl: ssl ? { rejectUnauthorized: false } : undefined,
-      max: Number(process.env.DATABASE_POOL_SIZE || 10),
-    });
+    this.pool = guardPool(new Pool(postgresPoolOptions(connectionString, { ssl })));
     this.transaction = new AsyncLocalStorage();
     this.requestSessions = new AsyncLocalStorage();
     this.sessionCache = new Map();
@@ -148,38 +145,56 @@ export class PostgresStore {
   async init() {
     const client = await this.pool.connect();
     let studioConfig = null;
+    let migrationLock = false;
     try {
-      await client.query(`
-        SELECT pg_advisory_lock(hashtext('kalpi-schema-migrations'));
-        CREATE TABLE IF NOT EXISTS kalpi_schema_migrations (
-          version TEXT PRIMARY KEY,
-          applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-      `);
-      const appliedResult = await client.query(
-        "SELECT version FROM kalpi_schema_migrations WHERE version = ANY($1::text[])",
-        [MIGRATIONS.map(([version]) => version)],
+      const versions = MIGRATIONS.map(([version]) => version);
+      const schemaResult = await client.query(
+        "SELECT to_regclass('public.kalpi_schema_migrations') AS migrations",
       );
-      const appliedVersions = new Set(appliedResult.rows.map(({ version }) => version));
-      for (const [version, fileName] of MIGRATIONS) {
-        if (appliedVersions.has(version)) continue;
-        const sql = await readFile(new URL(`./migrations/${fileName}`, import.meta.url), "utf8");
-        await client.query("BEGIN");
-        try {
-          await client.query(sql);
-          await client.query(
-            "INSERT INTO kalpi_schema_migrations (version) VALUES ($1)",
-            [version],
-          );
-          await client.query("COMMIT");
-        } catch (error) {
-          await client.query("ROLLBACK");
-          throw error;
+      let appliedVersions = new Set();
+      if (schemaResult.rows[0]?.migrations) {
+        const appliedResult = await client.query(
+          "SELECT version FROM kalpi_schema_migrations WHERE version = ANY($1::text[])",
+          [versions],
+        );
+        appliedVersions = new Set(appliedResult.rows.map(({ version }) => version));
+      }
+      if (appliedVersions.size !== versions.length) {
+        await client.query("SELECT pg_advisory_lock(hashtext('kalpi-schema-migrations'))");
+        migrationLock = true;
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS kalpi_schema_migrations (
+            version TEXT PRIMARY KEY,
+            applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          )
+        `);
+        const appliedResult = await client.query(
+          "SELECT version FROM kalpi_schema_migrations WHERE version = ANY($1::text[])",
+          [versions],
+        );
+        appliedVersions = new Set(appliedResult.rows.map(({ version }) => version));
+        for (const [version, fileName] of MIGRATIONS) {
+          if (appliedVersions.has(version)) continue;
+          const sql = await readFile(new URL(`./migrations/${fileName}`, import.meta.url), "utf8");
+          await client.query("BEGIN");
+          try {
+            await client.query(sql);
+            await client.query(
+              "INSERT INTO kalpi_schema_migrations (version) VALUES ($1)",
+              [version],
+            );
+            await client.query("COMMIT");
+          } catch (error) {
+            await client.query("ROLLBACK");
+            throw error;
+          }
         }
       }
       studioConfig = await this.importLegacyState(client);
     } finally {
-      await client.query("SELECT pg_advisory_unlock(hashtext('kalpi-schema-migrations'))").catch(() => {});
+      if (migrationLock) {
+        await client.query("SELECT pg_advisory_unlock(hashtext('kalpi-schema-migrations'))").catch(() => {});
+      }
       client.release();
     }
     return { studioConfig };

@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { slimPublicState } from "./slim-state.js";
+import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 
 const { Pool } = pg;
 const SECURITY_HEADERS = Object.freeze({
@@ -41,17 +42,17 @@ async function loadShell() {
 
 function getPool() {
   if (!process.env.DATABASE_URL) return null;
-  pool ??= new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_SSL === "1" ? { rejectUnauthorized: false } : undefined,
-    max: Number(process.env.DATABASE_POOL_SIZE || 5),
-  });
+  pool ??= guardPool(new Pool(postgresPoolOptions(process.env.DATABASE_URL, {
+    ssl: process.env.DATABASE_SSL === "1",
+  })));
   return pool;
 }
 
 async function ensureReady(db) {
-  ready ??= db.query(`
-    CREATE TABLE IF NOT EXISTS kalpi_sessions (
+  ready ??= db.query("SELECT 1 FROM kalpi_sessions LIMIT 0").catch(async (error) => {
+    if (error.code !== "42P01") throw error;
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS kalpi_sessions (
       token TEXT PRIMARY KEY,
       display_name TEXT NOT NULL,
       avatar_id TEXT NOT NULL DEFAULT 'kid-boy',
@@ -75,8 +76,9 @@ async function ensureReady(db) {
       card_id TEXT NOT NULL,
       copies INTEGER NOT NULL CHECK (copies > 0),
       PRIMARY KEY (session_token, card_id)
-    )
-  `).catch((error) => {
+      )
+    `);
+  }).catch((error) => {
     ready = null;
     throw error;
   });
