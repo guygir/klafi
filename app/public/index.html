@@ -86,7 +86,6 @@
           <button id="open-pack" class="primary-action" type="button">פתיחת קלף</button>
           <button id="open-pack-fancy" class="secondary-action" type="button" hidden>פתיחת וידאו</button>
           <button id="open-bibi-pack" class="debug-pack-action" type="button" hidden>פתיחת חבילת ביבי</button>
-          <button id="open-quiz" class="secondary-action" type="button" hidden aria-hidden="true">חידון כבוי</button>
           <button id="open-pending-level" class="secondary-action" type="button" hidden>פרס רמה מחכה</button>
           <p id="cooldown-copy" class="action-note">הקלף הבא בעוד 03:00:00</p>
         </div>
@@ -102,13 +101,6 @@
               <strong id="today-challenge-hook">הסיעה של היום</strong>
               <small id="today-challenge-meta">הטבלה נפתחת</small>
               <em class="today-docket-go">למירוץ</em>
-            </button>
-            <button type="button" class="today-docket-row live" data-today-nav="events">
-              <span class="today-docket-visual event-visual" aria-hidden="true"><img src="/design-assets/pack-wrapper-transparent.png" alt="" loading="lazy" /></span>
-              <span class="today-docket-label">עכשיו:<i class="live-pulse" aria-hidden="true"></i></span>
-              <strong id="today-event-hook">בודקים מה פתוח</strong>
-              <small id="today-event-meta">לזמן מוגבל</small>
-              <em class="today-docket-go">פותחים</em>
             </button>
             <button type="button" class="today-docket-row" data-today-nav="growth" data-community-page="collectors">
               <span class="today-docket-visual" aria-hidden="true"><img src="/design-assets/hero-art-knesset.png" alt="" loading="lazy" /></span>
@@ -171,25 +163,6 @@
         <p id="achievements-empty" class="empty-note" hidden>טוענים את התגים…</p>
         <div id="achievement-grid" class="achievement-grid"></div>
         <div id="achievement-pager" class="view-pager" aria-label="עמודי ההישגים"></div>
-      </section>
-
-      <section id="events-view" class="view">
-        <p class="eyebrow">לזמן מוגבל</p>
-        <h1>אירועים.</h1>
-        <p class="lede event-explainer">עכשיו · האוסף · בהמשך. קלף אירוע אחד ביום, מחוץ לאיסוף האוטומטי.</p>
-        <div id="event-tabs" class="contained-tabs" role="tablist" aria-label="עמודי האירועים">
-          <button type="button" role="tab" data-event-page="active" class="active">עכשיו</button>
-          <button type="button" role="tab" data-event-page="collection">האוסף</button>
-          <button type="button" role="tab" data-event-page="upcoming">בהמשך</button>
-        </div>
-        <div id="active-event" class="active-event"></div>
-        <button id="event-pull" class="primary-action narrow" type="button">פתיחת קלף האירוע</button>
-        <div id="event-cards" class="event-cards"></div>
-        <div id="event-upcoming" class="event-upcoming"></div>
-        <details class="specials-catalog">
-          <summary>כל סדרות המיוחדים</summary>
-          <div id="specials-grid" class="specials-grid"></div>
-        </details>
       </section>
 
       <section id="growth-view" class="view">
@@ -429,7 +402,6 @@
         <button type="button" data-nav="home" class="active"><span>◫</span>היום</button>
         <button type="button" data-nav="binder"><span>▦</span>אוסף</button>
         <button type="button" data-nav="achievements"><span>◇</span>הישגים</button>
-        <button type="button" data-nav="events"><span>★</span>אירועים</button>
         <button type="button" data-nav="growth"><span>↗</span>קהילה</button>
       </nav>
       <span id="advocacy-short" class="visually-hidden">מהדורת עמדה גלויה</span>
@@ -457,19 +429,6 @@
     <ul id="level-unlocks" class="level-unlocks"></ul>
     <p id="level-dialog-reward"></p>
     <button id="claim-level" class="primary-action" type="button">קבלת הפרס</button>
-  </dialog>
-
-  <dialog id="quiz-dialog" class="policy-dialog quiz-dialog">
-    <button id="close-quiz" class="dialog-close" type="button" aria-label="סגירה">×</button>
-    <p class="eyebrow">חידון על קלף מהאוסף</p>
-    <h2 id="quiz-title">שתי שאלות מהקלף. חמש דקות.</h2>
-    <p class="quiz-rule">השאלות נלקחות מנתוני הקלף שכבר אספתם — רשימה, מקום, או נושא. זה לא סקר. חבילה נוספת אחת לכל יום אזרחי בישראל (שעון ירושלים), לא אירוע מיוחד.</p>
-    <p id="quiz-clock" class="quiz-clock" aria-live="polite">05:00</p>
-    <div id="quiz-card" class="quiz-card"></div>
-    <div id="quiz-questions" class="quiz-questions"></div>
-    <p id="quiz-fail" class="quiz-fail" hidden></p>
-    <button id="quiz-submit" class="primary-action" type="button">בדיקת התשובות</button>
-    <p id="quiz-status" class="work-note"></p>
   </dialog>
 
   <dialog id="profile-dialog" class="policy-dialog">
@@ -504,6 +463,6 @@
   <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="auto" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
     <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
   </video>
-  <script type="module" src="/app.js?v=core-pipeline-1"></script>
+  <script type="module" src="/app.js?v=deferred-ui-1"></script>
 </body>
 </html>

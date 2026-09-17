@@ -98,7 +98,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 
 **Active product sequence**
 7. Unified card pipeline, taller cards, no fake social counts. **In progress.** One canonical presentation contract now drives Today, Binder, detail, sharing, Events and trades; every HTML surface uses the same tall-card renderer.
-8. Learning loop: polish the two-question owned-card quiz, five-minute clock, one extra pack per Jerusalem day, comprehension feedback and learning-linked achievements.
+8. Learning loop: two-question owned-card quiz, five-minute clock, one reward per Jerusalem day, comprehension feedback and learning-linked achievements. **Deferred by product decision; player option removed while the server implementation remains parked.**
 9. Hebrew, trust and accessibility pass: player copy, advocacy disclosure, source receipts, CEC/status labels, keyboard/reduced-motion behavior and screen-reader labels.
 10. Recurring phone + desktop QA and launch hardening after every slice: real-device WhatsApp/Instagram handoff, recovery, moderation, durable public rate limits, abuse reporting, monitoring, backup and rollback.
 11. Community loop: anonymous faction tally, honest country leaderboard, real transactional trading/gifting, sharing/referrals and creator acquisition links.
@@ -107,7 +107,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 12. Verified real-life party / kalpi work → pack bundle.
 13. Disclosed survey + published scoring table → matched-list party pack.
 14. Numbered holos / streaks / CEC pulse (no live polls in our voice).
-15. Platform/live-ops expansion: PWA + push notifications, groups/leagues/seasonal ladders, event-controlled Specials and coordinated creator seeding.
+15. Platform/live-ops expansion: PWA + push notifications, groups/leagues/seasonal ladders, event-controlled Specials and coordinated creator seeding. **The Events player surface is deferred; its server and Studio implementation remain parked.**
 16. Final art pass: remaining KALPI → KLAFI assets, numbered-foil/rip polish and Weavy/Figma Weave promo exports.
 
 ### Later (designed, not Alpha)

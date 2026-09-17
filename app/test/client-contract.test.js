@@ -65,7 +65,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /model\.packPhase = "sealed";\s+renderPack\(\);\s+showView\("pack"\)/);
   assert.match(html, /data-nav="growth"/);
   assert.match(html, /data-nav="achievements"/);
-  assert.match(html, /data-nav="events"/);
+  assert.doesNotMatch(html, /data-nav="events"/);
   assert.match(html, /data-nav="studio"/);
   assert.match(html, /Reset daily pack now/);
   assert.match(html, /id="header-debug-reset"/);
@@ -115,10 +115,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /https:\/\/wa\.me\/\?text=/);
   assert.match(html, /id="earned-badge-rail"/);
   assert.match(html, /id="open-bibi-pack"/);
-  assert.match(html, /id="open-quiz"/);
-  assert.match(javascript, /elements\.openQuiz\.hidden = true/);
-  assert.match(html, /חידון כבוי/);
-  assert.match(html, /id="quiz-dialog"/);
+  assert.doesNotMatch(html, /id="open-quiz"/);
+  assert.doesNotMatch(html, /id="quiz-dialog"/);
   assert.match(javascript, /\/api\/packs\/bibi-demo/);
   assert.match(javascript, /badgeArtwork/);
   assert.doesNotMatch(javascript, /function badgeSymbol/);
@@ -132,7 +130,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /ברשותכם עותק אחד/);
   assert.match(html, /החלפות/);
   assert.match(html, /מלחמת הסיעות/);
-  assert.match(html, /כל סדרות המיוחדים/);
+  assert.doesNotMatch(html, /כל סדרות המיוחדים/);
   assert.match(html, /id="level-progress"/);
   assert.match(javascript, /\/api\/events\/.*\/pull/);
   assert.match(html, /id="trade-offered-set"/);
@@ -169,7 +167,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /הקלף לא נוסף לאוסף שלכם/);
   assert.match(javascript, /גלה עוד \$\{progression\.remaining\} קלפים חדשים כדי להתקדם לרמה הבאה/);
   assert.match(html, /data-today-nav="growth"/);
-  assert.match(html, /data-today-nav="events"/);
+  assert.doesNotMatch(html, /data-today-nav="events"/);
   assert.match(javascript, /data-trade-card/);
   assert.match(javascript, /openCardDialog\(card\.dataset\.tradeCard\)/);
   assert.match(css, /\.app-shell\.home-active \.level-strip/);
@@ -204,7 +202,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /const warmedCatalog = window\.__kalpiWarmup\?\.catalog/);
   assert.match(javascript, /const warmedHome = window\.__kalpiWarmup\?\.home/);
   assert.match(javascript, /const due = !timeUntil\(model\.serverState\?\.nextIdleAt\)/);
-  assert.match(javascript, /request\("\/api\/events"\)/);
+  assert.match(javascript, /studioSecret\(\) \? request\("\/api\/events"\)/);
   assert.match(javascript, /request\("\/api\/trades"\)/);
   assert.match(javascript, /request\("\/api\/leaderboards"\)/);
   assert.match(javascript, /hydrateExtras\(\)\.catch/);
@@ -232,7 +230,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /binder-well-wait/);
   assert.match(html, /id="achievements-empty"/);
   assert.match(html, /id="growth-empty"/);
-  assert.match(html, /id="quiz-fail"/);
+  assert.doesNotMatch(html, /id="quiz-fail"/);
   assert.match(html, /id="level-unlocks"/);
   assert.match(html, /id="open-pending-level"/);
   assert.match(javascript, /klafi-seen-level-dialog/);

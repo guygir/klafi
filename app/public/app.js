@@ -86,8 +86,6 @@ const elements = {
   todayChallengeVisual: document.querySelector("#today-challenge-visual"),
   todayChallengeHook: document.querySelector("#today-challenge-hook"),
   todayChallengeMeta: document.querySelector("#today-challenge-meta"),
-  todayEventHook: document.querySelector("#today-event-hook"),
-  todayEventMeta: document.querySelector("#today-event-meta"),
   todayLeaderHook: document.querySelector("#today-leader-hook"),
   todayLeaderMeta: document.querySelector("#today-leader-meta"),
   homePack: document.querySelector("#home-pack"),
@@ -96,17 +94,7 @@ const elements = {
   openPack: document.querySelector("#open-pack"),
   openPackFancy: document.querySelector("#open-pack-fancy"),
   openBibiPack: document.querySelector("#open-bibi-pack"),
-  openQuiz: document.querySelector("#open-quiz"),
   openPendingLevel: document.querySelector("#open-pending-level"),
-  quizDialog: document.querySelector("#quiz-dialog"),
-  closeQuiz: document.querySelector("#close-quiz"),
-  quizTitle: document.querySelector("#quiz-title"),
-  quizClock: document.querySelector("#quiz-clock"),
-  quizCard: document.querySelector("#quiz-card"),
-  quizQuestions: document.querySelector("#quiz-questions"),
-  quizFail: document.querySelector("#quiz-fail"),
-  quizSubmit: document.querySelector("#quiz-submit"),
-  quizStatus: document.querySelector("#quiz-status"),
   cooldownCopy: document.querySelector("#cooldown-copy"),
   packStep: document.querySelector("#pack-step"),
   packHeading: document.querySelector("#pack-heading"),
@@ -143,11 +131,6 @@ const elements = {
   levelDialogReward: document.querySelector("#level-dialog-reward"),
   closeLevel: document.querySelector("#close-level"),
   claimLevel: document.querySelector("#claim-level"),
-  activeEvent: document.querySelector("#active-event"),
-  eventTabs: document.querySelector("#event-tabs"),
-  eventPull: document.querySelector("#event-pull"),
-  eventCards: document.querySelector("#event-cards"),
-  eventUpcoming: document.querySelector("#event-upcoming"),
   tradePreview: document.querySelector("#trade-preview"),
   tradeOfferedPreview: document.querySelector("#trade-offered-preview"),
   tradeWantedPreview: document.querySelector("#trade-wanted-preview"),
@@ -171,7 +154,6 @@ const elements = {
   dailyChallengeLeaderArt: document.querySelector("#daily-challenge-leader-art"),
   dailyChallengeRecap: document.querySelector("#daily-challenge-recap"),
   dailyChallengeBoard: document.querySelector("#daily-challenge-board"),
-  specialsGrid: document.querySelector("#specials-grid"),
   studioSponsor: document.querySelector("#studio-sponsor"),
   studioViewpoint: document.querySelector("#studio-viewpoint"),
   studioReleaseStatus: document.querySelector("#studio-release-status"),
@@ -446,7 +428,7 @@ let idleRefillTimer = null;
 let idleSeenHydrate = null;
 let idleSeenRetryTimer = null;
 let catalogFailed = false;
-const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
+const PLAYER_VIEWS = ["home", "binder", "achievements", "growth", "studio"];
 
 function catalogReady() {
   return Boolean(model.catalog.length);
@@ -659,11 +641,11 @@ async function hydrateExtras() {
   if (model.extrasReady) return model;
   if (!extrasHydrate) {
     extrasHydrate = Promise.allSettled([
-      request("/api/events"),
+      studioSecret() ? request("/api/events") : Promise.resolve({ events: [] }),
       request("/api/trades"),
       request("/api/leaderboards"),
       request("/api/activity"),
-      request("/api/specials"),
+      studioSecret() ? request("/api/specials") : Promise.resolve({ sets: [], cards: [] }),
       request("/api/state"),
     ]).then(async (results) => {
       const [events, trades, leaderboards, activity, specials, state] = results.map((result) =>
@@ -1272,11 +1254,6 @@ function renderTodayDocket() {
   elements.todayChallengeHook.textContent = challengeParty;
   const recap = challengeRecap();
   elements.todayChallengeMeta.textContent = recap.meta;
-
-  const activeEvent = model.events.find((event) => event.active);
-  elements.todayEventHook.textContent = activeEvent ? `${activeEvent.nameHe} פתוח` : "האירוע הבא בדרך";
-  elements.todayEventMeta.textContent = "";
-  document.querySelector(".today-docket-row.live")?.classList.toggle("hot", Boolean(activeEvent));
 
   const leader = model.leaderboards?.collectors?.[0];
   const currentCollector = model.leaderboards?.collectors?.find(({ current }) => current);
@@ -2342,7 +2319,7 @@ function renderGrowth() {
     records: "עובדות מספריות ורקורדים עם יחידת המדידה וההסתייגות על הקלף.",
     "current-ministers": "תפקיד נוכחי לצד תוצאה שנמדדה בתקופת הכהונה, ללא טענת סיבתיות אוטומטית.",
   };
-  elements.specialsGrid.innerHTML = (model.specials.sets || []).map((set) => `
+  if (elements.specialsGrid) elements.specialsGrid.innerHTML = (model.specials.sets || []).map((set) => `
     <section class="special-set">
       <header><span>P</span><div><h3>${escapeHtml(set.nameHe)}</h3></div></header>
       <p>${escapeHtml(specialDescriptions[set.id] || "")}</p>
@@ -3546,7 +3523,7 @@ elements.openPackFancy.addEventListener("click", () => openIdleReturn("fancy"));
 elements.sharedOpenGame.addEventListener("click", leaveSharedCard);
 elements.openBibiPack.addEventListener("click", openBibiDebugPack);
 elements.packAction.addEventListener("click", handlePackAction);
-elements.eventPull.addEventListener("click", pullEventCard);
+elements.eventPull?.addEventListener("click", pullEventCard);
 elements.retry.addEventListener("click", bootstrap);
 elements.openQuiz?.addEventListener("click", openQuizDialog);
 elements.closeQuiz?.addEventListener("click", () => {
@@ -3781,7 +3758,7 @@ elements.communityTabs.addEventListener("click", (event) => {
   renderGrowth();
 });
 
-elements.eventTabs.addEventListener("click", (event) => {
+elements.eventTabs?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-event-page]");
   if (!button) return;
   model.eventPage = button.dataset.eventPage;
