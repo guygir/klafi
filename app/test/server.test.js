@@ -165,6 +165,33 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   assert.equal(next.body.cards.length, 1);
 });
 
+test("prepared idle pulls ignore client card choices", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-prepared-authority-test-"));
+  const clock = { value: Date.parse("2026-09-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const created = await api(running.base, "/api/session", { method: "POST" });
+  const token = created.body.token;
+  const initial = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  const scheduled = initial.body.state.preparedPulls[0];
+  clock.value = Date.parse(scheduled.availableAt);
+
+  const settled = await api(running.base, "/api/idle/settle", {
+    token,
+    method: "POST",
+    body: { cardId: "SYS-C-01", instanceId: "client-chosen-instance" },
+  });
+
+  assert.equal(settled.body.newlySettledCount, 1);
+  assert.equal(settled.body.cards.at(-1).instanceId, scheduled.instanceId);
+  assert.equal(settled.body.cards.at(-1).cardId, scheduled.cardId);
+  assert.notEqual(settled.body.cards.at(-1).instanceId, "client-chosen-instance");
+});
+
 test("legacy sessions migrate into the capped idle queue without losing inventory", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-idle-migration-"));
   const clock = { value: Date.parse("2026-09-10T18:00:00.000Z") };
