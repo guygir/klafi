@@ -3,6 +3,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
+const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const STATIC_DATA_VERSION = "prepared-pulls-1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
@@ -442,6 +443,8 @@ let homeHydrate = null;
 let extrasHydrate = null;
 let idleHydrate = null;
 let idleRefillTimer = null;
+let idleSeenHydrate = null;
+let idleSeenRetryTimer = null;
 let catalogFailed = false;
 const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
 
@@ -559,6 +562,48 @@ function prefetchIdleAssets() {
   }
 }
 
+function pendingIdleSeen() {
+  try {
+    const value = JSON.parse(localStorage.getItem(PENDING_IDLE_SEEN_KEY) || "[]");
+    return Array.isArray(value) ? value.filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberPendingIdleSeen(instanceIds) {
+  const pending = [...new Set([...pendingIdleSeen(), ...instanceIds])];
+  localStorage.setItem(PENDING_IDLE_SEEN_KEY, JSON.stringify(pending));
+}
+
+function flushPendingIdleSeen() {
+  if (idleSeenHydrate) return idleSeenHydrate;
+  const instanceIds = pendingIdleSeen();
+  if (!model.token || !instanceIds.length) return Promise.resolve(null);
+  clearTimeout(idleSeenRetryTimer);
+  idleSeenHydrate = request("/api/idle/seen", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ instanceIds }),
+  }).then((state) => {
+    const acknowledged = new Set(instanceIds);
+    const remaining = pendingIdleSeen().filter((instanceId) => !acknowledged.has(instanceId));
+    localStorage.setItem(PENDING_IDLE_SEEN_KEY, JSON.stringify(remaining));
+    model.idleQueue = model.idleQueue.filter(({ instanceId }) => !acknowledged.has(instanceId));
+    applyHomePayload({ state });
+    renderHome();
+    renderBinder();
+    scheduleIdleRefill({ priority: "buffered" });
+    return state;
+  }).catch((error) => {
+    idleSeenRetryTimer = setTimeout(() => flushPendingIdleSeen().catch(() => {}), 5000 + Math.floor(Math.random() * 10_000));
+    throw error;
+  }).finally(() => {
+    idleSeenHydrate = null;
+  });
+  return idleSeenHydrate;
+}
+
 async function hydrateIdleQueue() {
   if (!idleHydrate) {
     idleHydrate = (async () => {
@@ -568,6 +613,7 @@ async function hydrateIdleQueue() {
       applyHomePayload({ ...settled, state: settled.state });
       prefetchIdleAssets();
       renderHome();
+      flushPendingIdleSeen().catch(() => {});
       return settled;
     })().finally(() => {
       idleHydrate = null;
@@ -671,6 +717,7 @@ async function bootstrap() {
     const homePromise = hydrateHome();
     homePromise.then(() => {
       prefetchIdleAssets();
+      if (pendingIdleSeen().length) flushPendingIdleSeen().catch(() => {});
       const hasPreparedBuffer = model.idleQueue.length || (model.serverState?.preparedPulls || []).length;
       const missingDueCard = !nextCachedIdleCard()
         && Boolean(model.serverState?.nextIdleAt)
@@ -1588,18 +1635,10 @@ async function handlePackAction() {
           }
         })
         : Promise.resolve();
+      rememberPendingIdleSeen(instanceIds);
       ownershipReady.then(() => {
         model.idleQueue = model.idleQueue.filter(({ instanceId }) => !opened.has(instanceId));
-        return request("/api/idle/seen", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ instanceIds }),
-        });
-      }).then((state) => {
-        applyHomePayload({ state });
-        renderHome();
-        renderBinder();
-        scheduleIdleRefill({ priority: "buffered" });
+        return flushPendingIdleSeen();
       }).catch(() => {
         scheduleIdleRefill({ priority: "urgent" });
       });

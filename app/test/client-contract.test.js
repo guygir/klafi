@@ -206,6 +206,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function cachedDueCount/);
   assert.match(javascript, /function hydrateIdleQueue/);
   assert.match(javascript, /function scheduleIdleRefill/);
+  assert.match(javascript, /function flushPendingIdleSeen/);
+  assert.match(javascript, /PENDING_IDLE_SEEN_KEY/);
   assert.match(javascript, /cachedDueCount\(\) > 1 \? "backlog"/);
   assert.match(javascript, /playHomePackRip\(\{ holdAtEnd: !cached \}\)/);
   assert.match(javascript, /await rip\.finished/);
