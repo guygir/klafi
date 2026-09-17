@@ -3,6 +3,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
+const STATIC_DATA_VERSION = "fluid-play-2";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -364,10 +365,12 @@ function applyCachedHome() {
 }
 
 async function loadShell() {
-  const shell = await fetch("/shell.json", { cache: "no-store" }).then((response) => {
+  const warmedShell = window.__kalpiWarmup?.shell;
+  if (window.__kalpiWarmup) window.__kalpiWarmup.shell = null;
+  const shell = await (warmedShell || fetch(`/shell.json?v=${STATIC_DATA_VERSION}`, { cache: "force-cache" }).then((response) => {
     if (!response.ok) throw new Error("SHELL_MISSING");
     return response.json();
-  });
+  }));
   model.gameConfig = { ...model.gameConfig, ...shell.gameConfig };
   model.editorial = shell.editorial || model.editorial;
   if (!model.serverState && shell.totals) {
@@ -431,6 +434,7 @@ function applyFullBoot(boot) {
 }
 
 let catalogHydrate = null;
+let homeHydrate = null;
 let extrasHydrate = null;
 let catalogFailed = false;
 const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
@@ -484,10 +488,12 @@ function setEmptyNote(element, copy, { pending = false, failed = false, hidden =
 async function loadStaticCatalog() {
   if (model.catalog.length) return model;
   if (!catalogHydrate) {
-    catalogHydrate = fetch("/catalog.json", { cache: "no-store" }).then((response) => {
+    const warmedCatalog = window.__kalpiWarmup?.catalog;
+    if (window.__kalpiWarmup) window.__kalpiWarmup.catalog = null;
+    catalogHydrate = (warmedCatalog || fetch(`/catalog.json?v=${STATIC_DATA_VERSION}`, { cache: "force-cache" }).then((response) => {
       if (!response.ok) throw new Error("CATALOG_MISSING");
       return response.json();
-    }).then((payload) => {
+    })).then((payload) => {
       catalogFailed = false;
       applyCatalog(payload.cards || payload);
       renderBinder();
@@ -503,6 +509,23 @@ async function loadStaticCatalog() {
     });
   }
   return catalogHydrate;
+}
+
+async function hydrateHome() {
+  if (!homeHydrate) {
+    const warmedHome = window.__kalpiWarmup?.home;
+    if (window.__kalpiWarmup) window.__kalpiWarmup.home = null;
+    homeHydrate = (warmedHome || request("/api/home")).then((home) => {
+      applyHomePayload(home);
+      renderProfile();
+      renderHome();
+      renderBinder();
+      return home;
+    }).finally(() => {
+      homeHydrate = null;
+    });
+  }
+  return homeHydrate;
 }
 
 function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state }) {
@@ -527,16 +550,19 @@ function paintExtras() {
 async function hydrateExtras() {
   if (model.extrasReady) return model;
   if (!extrasHydrate) {
-    extrasHydrate = Promise.all([
+    extrasHydrate = Promise.allSettled([
       request("/api/events"),
       request("/api/trades"),
       request("/api/leaderboards"),
       request("/api/activity"),
       request("/api/specials"),
       request("/api/state"),
-    ]).then(async ([events, trades, leaderboards, activity, specials, state]) => {
+    ]).then(async (results) => {
+      const [events, trades, leaderboards, activity, specials, state] = results.map((result) =>
+        result.status === "fulfilled" ? result.value : null
+      );
       applyExtrasPayload({ events, trades, leaderboards, activity, specials, state });
-      model.extrasReady = true;
+      model.extrasReady = results.every(({ status }) => status === "fulfilled");
       if (studioSecret()) {
         try {
           model.studioContent = await request("/api/studio/content");
@@ -546,13 +572,6 @@ async function hydrateExtras() {
       }
       paintExtras();
       return model;
-    }).catch(async () => {
-      const boot = await request("/api/bootstrap");
-      applyFullBoot(boot);
-      model.extrasReady = true;
-      paintExtras();
-      handleInboundLink();
-      return boot;
     }).finally(() => {
       extrasHydrate = null;
     });
@@ -564,7 +583,11 @@ async function hydrateCatalog() {
   try {
     return await loadStaticCatalog();
   } catch {
-    return hydrateExtras();
+    const boot = await request("/api/bootstrap");
+    applyFullBoot(boot);
+    paintExtras();
+    handleInboundLink();
+    return boot;
   }
 }
 
@@ -583,13 +606,9 @@ async function bootstrap() {
     renderHome();
     await catalogPromise;
     if (inboundView === "binder") renderBinder();
-    const home = await request("/api/home");
-    applyHomePayload(home);
-    renderProfile();
-    renderHome();
-    renderBinder();
-    const extrasPromise = hydrateExtras().catch(() => null);
-    if (extrasNeeded) await extrasPromise;
+    const homePromise = hydrateHome();
+    if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
+    else homePromise.catch(() => null);
   } catch (error) {
     try {
       await hydrateCatalog();
@@ -974,7 +993,8 @@ async function submitQuiz() {
 function renderHome() {
   const { owned, total, percent } = completion();
   const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
-  const available = unseen > 0;
+  const due = !timeUntil(model.serverState?.nextIdleAt);
+  const available = unseen > 0 || due;
   elements.collectionCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה · ${percent}%`;
   elements.collectionProgress.style.width = `${percent}%`;
   elements.openPack.disabled = !available;
@@ -1257,52 +1277,79 @@ function sealedPackMarkup(extraClass = "") {
     </div>`;
 }
 
-function playHomePackRip() {
+function playHomePackRip({ holdAtEnd = false } = {}) {
   const video = elements.homePackRip;
-  if (!video || matchMedia("(prefers-reduced-motion: reduce)").matches) return Promise.resolve();
+  if (!video || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return { finished: Promise.resolve(), release() {} };
+  }
   elements.homePack.hidden = true;
   elements.homePackRipBackdrop.hidden = false;
   video.hidden = false;
   video.currentTime = 0;
   elements.openPackFancy.textContent = "פותחים…";
 
-  return new Promise((resolve) => {
-    let timer;
-    const finish = () => {
-      clearTimeout(timer);
-      video.removeEventListener("ended", finish);
-      video.removeEventListener("error", finish);
-      video.pause();
-      video.hidden = true;
-      elements.homePackRipBackdrop.hidden = true;
-      elements.homePack.hidden = false;
-      resolve();
-    };
+  let timer;
+  let finished = false;
+  let resolveFinished;
+  const cleanup = () => {
+    clearTimeout(timer);
+    video.removeEventListener("ended", finish);
+    video.removeEventListener("error", finish);
+    video.pause();
+    video.hidden = true;
+    elements.homePackRipBackdrop.hidden = true;
+    elements.homePack.hidden = false;
+  };
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    video.pause();
+    if (!holdAtEnd) cleanup();
+    resolveFinished();
+  };
+  const finishedPromise = new Promise((resolve) => {
+    resolveFinished = resolve;
     video.addEventListener("ended", finish);
     video.addEventListener("error", finish);
     timer = setTimeout(finish, 10000);
     video.play().catch(finish);
   });
+  return {
+    finished: finishedPromise,
+    release() {
+      if (!finished) {
+        finished = true;
+        resolveFinished();
+      }
+      video.removeEventListener("ended", finish);
+      video.removeEventListener("error", finish);
+      cleanup();
+    },
+  };
 }
 
 async function openIdleReturn(opening = "regular") {
   if (!model.catalog.length) loadStaticCatalog().catch(() => {});
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
-  elements.openPack.textContent = "אוספים…";
-  const settlePromise = request("/api/idle/settle", { method: "POST" });
-  const ripPromise = opening === "fancy" ? playHomePackRip() : Promise.resolve();
+  elements.openPack.textContent = "פותחים…";
+  const rip = playHomePackRip({ holdAtEnd: true });
   try {
-    const [settleResult] = await Promise.allSettled([settlePromise, ripPromise]);
-    if (settleResult.status === "rejected") throw settleResult.reason;
-    const settled = settleResult.value;
-    model.serverState = settled.state;
+    if (!model.token) await hydrateHome();
+    const settled = await request("/api/idle/settle", { method: "POST" });
+    applyHomePayload({ state: settled.state });
     model.idleQueue = settled.cards || [];
+    const knownInstances = new Map((model.serverState?.instances || []).map((instance) => [instance.instanceId, instance]));
+    for (const instance of model.idleQueue) knownInstances.set(instance.instanceId, instance);
+    model.serverState.instances = [...knownInstances.values()].slice(-500);
     if (!model.idleQueue.length) {
+      rip.release();
       renderHome();
       showToast("הקלף הבא עדיין נאסף.");
       return;
     }
+    await rip.finished;
     model.currentPack = {
       packId: `idle-return-${Date.now()}`,
       mode: "idle-return",
@@ -1311,9 +1358,11 @@ async function openIdleReturn(opening = "regular") {
     };
     model.currentCardIndex = 0;
     model.previewMode = false;
+    rip.release();
     showView("pack");
     startWalkout();
   } catch (error) {
+    rip.release();
     renderHome();
     showToast("לא הצלחנו לטעון את הקלפים שנאספו.");
   }
@@ -1347,7 +1396,9 @@ async function openBibiDebugPack() {
     model.currentCardIndex = 0;
     model.previewMode = false;
     model.currentPack.cards = model.currentPack.cards.slice(0, 1);
-    await playHomePackRip();
+    const rip = playHomePackRip();
+    await rip.finished;
+    rip.release();
     showView("pack");
     startWalkout();
   } catch (error) {
@@ -1418,14 +1469,13 @@ async function handlePackAction() {
       showToast("Guided demo complete. Daily state was not changed.");
     } else if (model.currentPack.mode === "idle-return" || model.currentPack.mode === "level-reward" || model.currentPack.mode === "quiz") {
       const instanceIds = model.currentPack.cards.map(({ instanceId }) => instanceId).filter(Boolean);
-      model.serverState = await request("/api/idle/seen", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ instanceIds }),
-      });
       const opened = new Set(instanceIds);
       model.idleQueue = model.idleQueue.filter(({ instanceId }) => !opened.has(instanceId));
-      model.leaderboards = await request("/api/leaderboards");
+      model.serverState = {
+        ...model.serverState,
+        unseenCount: Math.max(0, (model.serverState?.unseenCount || 0) - opened.size),
+      };
+      applyHomePayload({ state: model.serverState });
       renderHome();
       renderBinder();
       renderAchievements();
@@ -1438,6 +1488,19 @@ async function handlePackAction() {
         showView("binder");
         showToast("הקלף נוסף לאוסף.");
       }
+      request("/api/idle/seen", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ instanceIds }),
+      }).then((state) => {
+        applyHomePayload({ state });
+        renderHome();
+        renderBinder();
+      }).catch(() => {});
+      request("/api/leaderboards").then((leaderboards) => {
+        model.leaderboards = leaderboards;
+        renderGrowth();
+      }).catch(() => {});
     } else {
       model.leaderboards = await request("/api/leaderboards");
       renderHome();

@@ -84,6 +84,7 @@ function json(response, status, value) {
 
 const STATELESS_API_PATHS = new Set([
   "/api/health",
+  "/api/warm",
   "/api/catalog",
   "/api/specials",
   "/api/editorial",
@@ -542,6 +543,25 @@ function publicState(session, now, cards, config = {}) {
   };
 }
 
+function publicIdleState(session, now, cards, config = {}) {
+  const eligibleCards = activeIdleCards(cards, now);
+  const eligibleIds = new Set(eligibleCards.map(({ id }) => id));
+  const progression = progressionState(session, cards, config, now);
+  return {
+    displayName: session.displayName,
+    avatarId: session.avatarId || "kid-boy",
+    inventory: session.inventory,
+    favorites: session.favorites ?? [],
+    ownedUnique: Object.keys(session.inventory).filter((id) => eligibleIds.has(id)).length,
+    totalCards: eligibleCards.length,
+    nextIdleAt: session.nextIdleAt,
+    idleCapacity: IDLE_BACKLOG_CAP,
+    unseenCount: session.unseenPulls?.length ?? 0,
+    progression,
+    avatars: publicAvatars(session, config.avatars, progression.level),
+  };
+}
+
 function jerusalemDay(ms) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(ms));
 }
@@ -744,8 +764,10 @@ export async function createKalpiApp({
   const store = databaseUrl
     ? new PostgresStore(databaseUrl, { ssl: databaseSsl })
     : new JsonStore(path.join(dataDir, "state.json"));
-  await store.init();
-  const studioOverlay = await store.getStudioConfig();
+  const initialized = await store.init();
+  const studioOverlay = initialized && Object.hasOwn(initialized, "studioConfig")
+    ? initialized.studioConfig
+    : await store.getStudioConfig();
   if (studioContent && studioOverlay?.gameConfig) {
     studioContent.gameConfig = {
       ...studioContent.gameConfig,
@@ -864,30 +886,22 @@ export async function createKalpiApp({
       current.packs = current.packs.slice(-100);
       current.instances = current.instances.slice(-500);
       syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
-      const unseen = new Set(current.unseenPulls);
+      const instancesById = new Map(current.instances.map((instance) => [instance.instanceId, instance]));
       return {
         granted,
-        queue: current.instances.filter(({ instanceId }) => unseen.has(instanceId)),
+        queue: current.unseenPulls.map((instanceId) => instancesById.get(instanceId)).filter(Boolean),
       };
     });
+    if (!result) return { error: "INVALID_SESSION", status: 401 };
     if (result.granted.length) {
       await store.incrementFaction(store.getSession(token)?.factionId, result.granted.length);
-      await store.recordEvent({
-        eventId: randomUUID(),
-        type: "idle_settled",
-        sessionToken: token,
-        cardId: null,
-        packId: null,
-        referralCode: null,
-        count: result.granted.length,
-        recordedAt: new Date(currentMs).toISOString(),
-      });
     }
+    const session = store.getSession(token);
     return {
       mode: "idle-return",
       newlySettledCount: result.granted.length,
       cards: result.queue,
-      state: stateFor(store.getSession(token)),
+      state: publicIdleState(session, currentMs, allCards, runtimeProgression()),
     };
   }
   function grantCard(session, pull, { acquiredBy, pulledAt }) {
@@ -949,7 +963,7 @@ export async function createKalpiApp({
     };
   }
 
-  return async function handler(request, response) {
+  const handleRequest = async function handler(request, response) {
     const requestId = randomUUID();
     response.setHeader("x-request-id", requestId);
     try {
@@ -969,6 +983,11 @@ export async function createKalpiApp({
       if (request.method === "GET" && url.pathname === "/api/health") {
         const health = await store.health();
         json(response, 200, { status: health.ok ? "ok" : "degraded", backend: health.backend || "json" });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/warm") {
+        json(response, 200, { status: "ready" });
         return;
       }
 
@@ -1068,6 +1087,23 @@ export async function createKalpiApp({
         return;
       }
 
+      if (request.method === "POST" && url.pathname === "/api/idle/settle") {
+        const token = bearer(request);
+        const limit = rateLimit(`write:${token}`, 120, 60 * 1000, now());
+        if (!limit.allowed) {
+          response.setHeader("retry-after", String(limit.retryAfter));
+          json(response, 429, { error: "RATE_LIMITED" });
+          return;
+        }
+        const idleReturn = await settleIdle(token);
+        if (idleReturn.error) {
+          json(response, idleReturn.status || 503, { error: idleReturn.error });
+          return;
+        }
+        json(response, 200, idleReturn);
+        return;
+      }
+
       if (url.pathname.startsWith("/api/")) {
         const token = bearer(request);
         await store.hydrateSession(token);
@@ -1131,16 +1167,6 @@ export async function createKalpiApp({
               : current.favorites.filter((id) => id !== cardId);
           });
           json(response, 200, stateFor(store.getSession(token)));
-          return;
-        }
-
-        if (request.method === "POST" && url.pathname === "/api/idle/settle") {
-          const idleReturn = await settleIdle(token);
-          if (idleReturn.error) {
-            json(response, 503, { error: idleReturn.error });
-            return;
-          }
-          json(response, 200, idleReturn);
           return;
         }
 
@@ -1835,16 +1861,18 @@ export async function createKalpiApp({
             return;
           }
           if (result.status === 201) {
-            await store.incrementFaction(store.getSession(token)?.factionId);
-            await store.recordEvent({
-              eventId: randomUUID(),
-              type: "pack_opened",
-              sessionToken: token,
-              cardId: null,
-              packId: result.body.packId,
-              referralCode: null,
-              recordedAt: result.body.pulledAt,
-            });
+            await Promise.all([
+              store.incrementFaction(store.getSession(token)?.factionId),
+              store.recordEvent({
+                eventId: randomUUID(),
+                type: "pack_opened",
+                sessionToken: token,
+                cardId: null,
+                packId: result.body.packId,
+                referralCode: null,
+                recordedAt: result.body.pulledAt,
+              }),
+            ]);
           }
           json(response, result.status, result.body);
           return;
@@ -1883,6 +1911,9 @@ export async function createKalpiApp({
       else response.end();
     }
   };
+  return store.withRequest
+    ? (request, response) => store.withRequest(() => handleRequest(request, response))
+    : handleRequest;
 }
 
 export { DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, LEVEL_RATIOS, RANK_TITLES };

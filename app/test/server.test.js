@@ -104,6 +104,10 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
     await rm(dataDir, { recursive: true, force: true });
   });
 
+  const unauthorized = await api(running.base, "/api/idle/settle", { method: "POST" });
+  assert.equal(unauthorized.status, 401);
+  assert.equal(unauthorized.body.error, "INVALID_SESSION");
+
   const created = await api(running.base, "/api/session", { method: "POST" });
   const token = created.body.token;
   const first = await api(running.base, "/api/idle/settle", { token, method: "POST" });
@@ -112,6 +116,8 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   assert.equal(first.body.cards.length, 1);
   assert.equal(first.body.state.unseenCount, 1);
   assert.equal(first.body.state.idleCapacity, IDLE_BACKLOG_CAP);
+  assert.equal(first.body.state.instances, undefined);
+  assert.equal(first.body.state.achievements, undefined);
 
   const replay = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(replay.body.newlySettledCount, 0);
@@ -801,6 +807,8 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(typeof home.body.state.inventory, "object");
   const again = await api(running.base, "/api/home", { token: home.body.token });
   assert.equal(again.body.token, home.body.token);
+  const warm = await api(running.base, "/api/warm");
+  assert.deepEqual(warm, { status: 200, body: { status: "ready" } });
 });
 
 test("bootstrap creates a guest session in one request", async (t) => {
@@ -968,8 +976,34 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const health = await api(first.base, "/api/health");
   assert.equal(health.status, 200);
   assert.equal(health.body.backend, "postgres");
-  const cardId = (await api(first.base, "/api/catalog")).body.cards.find(({ idleEligible }) => idleEligible).id;
-  await api(first.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId } });
+  const idleCards = (await api(first.base, "/api/catalog")).body.cards.filter(({ idleEligible }) => idleEligible);
+  const cardId = idleCards[0].id;
+  const secondCardId = idleCards[1].id;
+  const secondCreated = await api(first.base, "/api/session", { method: "POST" });
+  const secondToken = secondCreated.body.token;
+  const [firstUnlock, secondUnlock] = await Promise.all([
+    api(first.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId } }),
+    api(first.base, "/api/debug/unlock-card", { token: secondToken, method: "POST", body: { cardId: secondCardId } }),
+  ]);
+  assert.equal(firstUnlock.status, 200);
+  assert.equal(secondUnlock.status, 200);
+  const recorded = await api(first.base, "/api/events", {
+    token,
+    method: "POST",
+    body: { type: "source_opened", cardId },
+  });
+  assert.equal(recorded.status, 201);
+  const bulkSessions = await Promise.all(
+    Array.from({ length: 12 }, () => api(first.base, "/api/session", { method: "POST" })),
+  );
+  const bulkPulls = await Promise.all(
+    bulkSessions.map(({ body }) => api(first.base, "/api/idle/settle", {
+      token: body.token,
+      method: "POST",
+    })),
+  );
+  assert.deepEqual(bulkPulls.map(({ status }) => status), Array(12).fill(200));
+  assert.equal(bulkPulls.reduce((total, { body }) => total + body.newlySettledCount, 0), 12);
   await first.close();
   const second = await start(dataDir, clock, { databaseUrl });
   t.after(async () => {
@@ -980,5 +1014,9 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   assert.equal(state.status, 200);
   assert.ok(state.body.displayName);
   assert.equal(state.body.inventory[cardId], 1);
+  assert.equal(state.body.achievements.find(({ id }) => id === "source-check").earned, true);
   assert.equal(state.body.quizAvailable, false);
+  const restoredSecond = await api(second.base, "/api/state", { token: secondToken });
+  assert.equal(restoredSecond.status, 200);
+  assert.equal(restoredSecond.body.inventory[secondCardId], 1);
 });
