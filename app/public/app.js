@@ -1211,10 +1211,11 @@ function challengeRecap() {
     you: Boolean(current && binFor(current.cards) === cards),
   }));
   const field = Math.max(1, ...bins.map(({ count }) => count));
+  const hasCrowd = leaders.length >= 2;
   const meta = current
-    ? `${current.cards} קלפים · מקום ${place}`
+    ? `${current.cards} קלפים · ${hasCrowd ? `מקום ${place}` : "מחכים לשחקנים נוספים"}`
     : "עוד לא משכתם מהסיעה";
-  return { current, place, bins, field, meta, players: leaders.length };
+  return { current, place, bins, field, meta, players: leaders.length, hasCrowd };
 }
 
 function renderChallengeRecap() {
@@ -1223,7 +1224,9 @@ function renderChallengeRecap() {
   elements.dailyChallengeRecap.hidden = false;
   elements.dailyChallengeRecap.style.setProperty("--bins", String(recap.bins.length));
   const score = recap.current ? recap.current.cards : 0;
-  const place = recap.place
+  const place = !recap.hasCrowd
+    ? "מחכים לשחקנים נוספים"
+    : recap.place
     ? `מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`
     : "עוד לא בטבלה";
   elements.dailyChallengeRecap.innerHTML = `
@@ -1232,7 +1235,7 @@ function renderChallengeRecap() {
       <strong>${score}<span>קלפים</span></strong>
       <b class="challenge-recap-place">${escapeHtml(place)}</b>
     </div>
-    <div class="challenge-hist">
+    ${recap.hasCrowd ? `<div class="challenge-hist">
       <small>איך כולם משכו היום</small>
       <div class="challenge-hist-plot" aria-hidden="true">
         ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
@@ -1240,7 +1243,7 @@ function renderChallengeRecap() {
         </div>`).join("")}
       </div>
       <div class="challenge-hist-axis">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
-    </div>
+    </div>` : ""}
   `;
 }
 
@@ -1277,7 +1280,10 @@ function renderTodayDocket() {
 
   const leader = model.leaderboards?.collectors?.[0];
   const currentCollector = model.leaderboards?.collectors?.find(({ current }) => current);
-  elements.todayLeaderHook.textContent = currentCollector?.rank
+  const collectorCrowd = (model.leaderboards?.collectors?.length || 0) >= 2;
+  elements.todayLeaderHook.textContent = !collectorCrowd
+    ? "הטבלה מחכה לשחקנים נוספים"
+    : currentCollector?.rank
     ? `אתם מקום ${currentCollector.rank}`
     : leader?.current
       ? "אתם מקום 1"
@@ -1843,7 +1849,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
 
 function binderCardMarkup(card) {
   return `
-    <div class="binder-shared-card">${displayCardMarkup(card)}</div>`;
+    <div class="binder-shared-card">${displayCardMarkup(card, "binder")}</div>`;
 }
 
 function renderPendingWells(count = 6) {

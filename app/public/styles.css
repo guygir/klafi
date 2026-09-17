@@ -630,7 +630,7 @@ h1 {
 .walkout-silhouette {
   position: relative;
   width: min(300px, 68vw);
-  aspect-ratio: 63 / 75;
+  aspect-ratio: 63 / 96;
   margin: 0 auto;
   overflow: hidden;
   border: 1px solid rgba(244, 239, 228, 0.38);
@@ -706,7 +706,7 @@ h1 {
   top: 52px;
   left: 50%;
   width: 164px;
-  aspect-ratio: 63 / 88;
+  aspect-ratio: 63 / 96;
   border: 2px solid var(--rule);
   border-radius: 9px;
   background:
@@ -732,7 +732,7 @@ h1 {
   --pip: var(--civic);
   position: relative;
   width: min(330px, calc(100vw - 42px));
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 63 / 96;
   border: 2px solid var(--rule);
   border-radius: 13px;
   background: var(--paper);
@@ -951,7 +951,7 @@ h1 {
 
 .binder-slot {
   position: relative;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 63 / 96;
   overflow: hidden;
   padding: 0;
   border: 1px dashed rgba(44, 51, 48, 0.34);
