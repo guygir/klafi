@@ -40,6 +40,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /reveal: stage === "portrait"/);
   assert.match(javascript, /binder-shared-card/);
   assert.match(javascript, /studio-shared-card/);
+  assert.match(javascript, /function cardPresentation/);
+  assert.match(javascript, /displayCardMarkup\(card, "event"\)/);
+  assert.match(javascript, /const presentation = cardPresentation\(card\)/);
   assert.equal((javascript.match(/class="card-face front"/g) || []).length, 1, "all surfaces must share one card renderer");
   assert.doesNotMatch(javascript, /miniCardMarkup/);
   assert.doesNotMatch(javascript, /class="mini-card"/);
@@ -182,7 +185,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /prepared-pulls-1/);
+  assert.match(html, /core-pipeline-1/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);

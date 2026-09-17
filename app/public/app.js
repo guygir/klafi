@@ -4,7 +4,7 @@ const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
-const STATIC_DATA_VERSION = "prepared-pulls-1";
+const STATIC_DATA_VERSION = "core-pipeline-1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -1798,27 +1798,45 @@ function displayedCardQuote(card) {
   return `״${text.replace(/^״|״$/g, "")}״`;
 }
 
+function cardPresentation(card, instance = {}) {
+  const finishLabel = instance.finish ?? card.rarity;
+  return {
+    title: cardTitle(card),
+    subtitle: card.subtitleHe || card.subtitle || "",
+    quote: displayedCardQuote(card),
+    rawQuote: String(card.walkout?.text || "").trim(),
+    code: cardCode(card),
+    setName: cardSetName(card),
+    typeLabel: card.typeHe || "קלף",
+    finishLabel,
+    finishClass: String(finishLabel ?? "Common").split(/\s|\//)[0].toLowerCase(),
+    rarityMark: rarityMark(finishLabel),
+    rarityName: rarityNameHe(finishLabel),
+    pip: card.pip,
+    artKey: card.artKey || null,
+  };
+}
+
 function displayCardMarkup(card, surface = "display") {
   return cardMarkup(card, { finish: card.rarity }, { progressiveStage: "portrait", surface });
 }
 
 function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full" } = {}) {
-  const finish = (instance.finish ?? card.rarity.split(/\s|\//)[0]).toLowerCase();
-  const finishLabel = instance.finish ?? card.rarity;
+  const presentation = cardPresentation(card, instance);
   const stage = progressiveStage || "portrait";
   const progressive = `progressive-card stage-${stage}`;
   return `
-    <article class="kalpi-card ${finish} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" style="--pip:${card.pip}" aria-label="קלף ${escapeHtml(cardTitle(card))}">
+    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}">
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
           ${artMarkup(card)}
-          <div class="card-image-meta"><span>${escapeHtml(cardCode(card))}</span><strong aria-label="${rarityNameHe(finishLabel)}">${rarityMark(finishLabel)}</strong></div>
+          <div class="card-image-meta"><span>${escapeHtml(presentation.code)}</span><strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong></div>
           ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
         </div>
-        <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(displayedCardQuote(card))}</blockquote>
-        <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${card.pip}">${escapeHtml(cardSetName(card))}${card.type === "Quote" ? ` · ${escapeHtml(card.subtitleHe || card.subtitle)}` : ""}</p>
-        <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(cardTitle(card))}</h2>
+        <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
+        <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
+        <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
       </section>
     </article>`;
 }
@@ -2371,10 +2389,7 @@ function renderEvents() {
     elements.eventPull.dataset.eventId = active.id;
     elements.eventPull.textContent = active.claimedToday ? "הקלף היומי כבר נאסף" : "פתיחת קלף האירוע";
     elements.eventCards.innerHTML = active.cards.map((card) => `
-      <article class="event-card">
-        <strong>${escapeHtml(cardTitle(card))}</strong>
-        <blockquote>${escapeHtml(card.walkout.text)}</blockquote>
-      </article>`).join("");
+      <article class="event-card">${displayCardMarkup(card, "event")}</article>`).join("");
   }
   const upcoming = model.events.filter((event) => !event.active && Date.parse(event.opensAt) > Date.now());
   const past = model.events.filter((event) => !event.active && Date.parse(event.opensAt) <= Date.now());
@@ -3287,6 +3302,7 @@ async function loadImage(url) {
 }
 
 async function makeShareImage(card) {
+  const presentation = cardPresentation(card);
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
   canvas.height = 1350;
@@ -3298,13 +3314,13 @@ async function makeShareImage(card) {
   context.strokeStyle = "#1a1f1c";
   context.lineWidth = 6;
   context.strokeRect(54, 54, 972, 1242);
-  context.fillStyle = card.pip;
+  context.fillStyle = presentation.pip;
   context.fillRect(84, 86, 18, 100);
 
   context.fillStyle = "#1a1f1c";
   context.font = "600 34px 'IBM Plex Sans'";
   context.textAlign = "center";
-  context.fillText(`${card.typeHe || "קלף"} · ${cardCode(card)}`, 310, 130);
+  context.fillText(`${presentation.typeLabel} · ${presentation.code}`, 310, 130);
   context.fillText("קְלָפִי · KLAFI · 2026", 790, 130);
   context.textAlign = "right";
 
@@ -3313,7 +3329,7 @@ async function makeShareImage(card) {
   context.fillText(card.walkout.kind === "quote" ? "הציטוט לפני השם" : "העובדה לפני הזהות", 996, 205);
   context.fillStyle = "#1a1f1c";
   context.font = "600 42px Fraunces";
-  const quoteEnd = wrapCanvasText(context, card.walkout.text, 996, 260, 912, 48, 3);
+  const quoteEnd = wrapCanvasText(context, presentation.rawQuote, 996, 260, 912, 48, 3);
 
   const artX = 84;
   const artY = Math.max(390, quoteEnd + 36);
@@ -3321,9 +3337,9 @@ async function makeShareImage(card) {
   const artHeight = 470;
   context.fillStyle = "#e7dfd0";
   context.fillRect(artX, artY, artWidth, artHeight);
-  if (card.artKey) {
+  if (presentation.artKey) {
     try {
-      const image = await loadImage(`/design-assets/${encodeURIComponent(card.artKey)}`);
+      const image = await loadImage(`/design-assets/${encodeURIComponent(presentation.artKey)}`);
       const scale = Math.max(artWidth / image.width, artHeight / image.height);
       const width = image.width * scale;
       const height = image.height * scale;
@@ -3337,8 +3353,8 @@ async function makeShareImage(card) {
       // The typographic fallback below still produces a valid share image.
     }
   }
-  if (!card.artKey) {
-    context.fillStyle = card.pip;
+  if (!presentation.artKey) {
+    context.fillStyle = presentation.pip;
     context.textAlign = "center";
     context.font = "600 190px Fraunces";
     context.fillText(placeholderMark(card), 540, 610);
@@ -3347,10 +3363,10 @@ async function makeShareImage(card) {
 
   context.fillStyle = "#1a1f1c";
   context.font = "600 62px Fraunces";
-  const titleEnd = wrapCanvasText(context, cardTitle(card), 996, artY + artHeight + 74, 912, 66, 2);
+  const titleEnd = wrapCanvasText(context, presentation.title, 996, artY + artHeight + 74, 912, 66, 2);
   context.font = "500 27px 'IBM Plex Sans'";
   context.fillStyle = "#2c3330";
-  const subtitleEnd = wrapCanvasText(context, card.subtitleHe || card.subtitle, 996, titleEnd + 18, 912, 36, 2);
+  const subtitleEnd = wrapCanvasText(context, presentation.subtitle, 996, titleEnd + 18, 912, 36, 2);
   context.fillStyle = "#1f4f4a";
   context.font = "600 22px 'IBM Plex Sans'";
   context.fillText("מקור מצורף לקלף", 996, subtitleEnd + 52);
