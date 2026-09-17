@@ -235,9 +235,10 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .new-stamp {
-  top: auto;
-  bottom: clamp(6px, 2.8cqw, 10px);
+  top: 50%;
+  bottom: auto;
   right: clamp(8px, 3.5cqw, 14px);
+  transform: translateY(-50%);
   padding: clamp(2px, 1cqw, 4px) clamp(4px, 1.8cqw, 7px);
   border-color: var(--pack-gold, #b38d3f);
   background: color-mix(in srgb, var(--pack-paper, #eee5d4) 92%, transparent);
@@ -330,7 +331,13 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .card-dialog .kalpi-card,
 #app[data-card-frame="tall-v2"] .shared-card .kalpi-card {
-  width: min(370px, calc(100vw - 54px));
+  width: min(370px, 100%);
+}
+
+#app[data-card-frame="tall-v2"] .card-dialog #dialog-card {
+  display: grid;
+  min-width: 0;
+  place-items: center;
 }
 
 #app[data-card-frame="tall-v2"] .trade-choice-preview button,
