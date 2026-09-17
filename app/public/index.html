@@ -56,7 +56,7 @@
     <main id="main" tabindex="-1">
       <section id="loading-view" class="view centered" aria-live="polite">
         <div class="ballot-loader" aria-hidden="true"><span></span></div>
-        <p class="eyebrow">החבילה נשמרת בשרת</p>
+        <p class="eyebrow">הקלף נשמר בשרת</p>
         <h1>מכינים את הקלפים.</h1>
       </section>
 
@@ -116,15 +116,15 @@
       <section id="pack-view" class="view">
         <div class="pack-header">
           <div>
-            <p class="eyebrow" id="pack-step">החבילה סגורה</p>
-            <h1 id="pack-heading">קורעים ופותחים.</h1>
+            <p class="eyebrow" id="pack-step">קלף אחד</p>
+            <h1 id="pack-heading">פותחים.</h1>
           </div>
           <span id="pack-counter" class="pack-counter">0 / 1</span>
         </div>
         <div id="rip-stage" class="rip-stage" aria-live="polite"></div>
         <div class="action-dock">
           <button id="pack-action" class="primary-action" type="button">קריעת החבילה</button>
-          <p id="pack-hint" class="action-note">הקלפים כבר נשמרו.</p>
+          <p id="pack-hint" class="action-note">הקלף כבר נשמר.</p>
         </div>
       </section>
 
@@ -155,7 +155,7 @@
         <div id="binder-filters" class="filter-strip" role="tablist" aria-label="סינון האוסף לפי סדרה"></div>
         <div id="binder-grid" class="binder-grid"></div>
         <div id="binder-pager" class="view-pager" aria-label="עמודי האוסף"></div>
-        <p id="binder-empty" class="empty-note" hidden>פתחו חבילה כדי להתחיל.</p>
+        <p id="binder-empty" class="empty-note" hidden>פתחו קלף כדי להתחיל.</p>
       </section>
 
       <section id="achievements-view" class="view">
@@ -229,7 +229,7 @@
           </article>
           <article id="community-panel-faction" class="work-card faction-desk" role="tabpanel" aria-labelledby="community-tab-faction" tabindex="0">
             <p class="work-kicker">מלחמת הסיעות</p>
-            <h2>למי החבילה שלכם נספרת?</h2>
+            <h2>לאיזו סיעה ייספר הקלף הבא?</h2>
             <label class="field-label" for="faction-select">בחירה אנונימית</label>
             <select id="faction-select"></select>
             <button id="save-faction" class="primary-action" type="button">בחירה</button>
@@ -427,7 +427,7 @@
     <button id="close-level" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">עליתם רמה</p>
     <h2 id="level-dialog-title">רמה חדשה</h2>
-    <img class="level-reward-pack" src="/design-assets/pack-wrapper-transparent.png" alt="חבילת בונוס" />
+    <img class="level-reward-pack" src="/design-assets/pack-wrapper-transparent.png" alt="קלף בונוס" />
     <ul id="level-unlocks" class="level-unlocks"></ul>
     <p id="level-dialog-reward"></p>
     <button id="claim-level" class="primary-action" type="button">קבלת הפרס</button>
@@ -465,6 +465,6 @@
   <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="auto" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
     <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
   </video>
-  <script type="module" src="/app.js?v=step9-trust-1"></script>
+  <script type="module" src="/app.js?v=step9-trust-2"></script>
 </body>
 </html>

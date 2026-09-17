@@ -1304,7 +1304,7 @@ function levelUnlockItems(fromLevel, toLevel) {
   for (let level = fromLevel + 1; level <= toLevel; level += 1) {
     const rank = ranks[level - 1];
     if (rank) items.push(`דרגה חדשה · ${rank}`);
-    items.push("חבילת בונוס");
+    items.push("קלף בונוס");
     avatars
       .filter((avatar) => Number(avatar.unlockLevel) === level)
       .forEach((avatar) => items.push(`אווטאר חדש · ${avatar.nameHe}`));
@@ -1320,7 +1320,7 @@ function fillLevelDialog(progression, fromLevel) {
     elements.levelUnlocks.hidden = !items.length;
     elements.levelUnlocks.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   }
-  elements.levelDialogReward.textContent = items.length ? "אפשר לקבל את חבילת הבונוס עכשיו." : (progression.reward || "");
+  elements.levelDialogReward.textContent = items.length ? "אפשר לקבל את קלף הבונוס עכשיו." : (progression.reward || "");
 }
 
 function renderPendingLevelCue() {
@@ -1555,7 +1555,7 @@ function renderPack() {
     elements.packStep.textContent = isDemo ? "חבילת הדגמה" : "קלף אחד";
     elements.packHeading.textContent = "פותחים.";
     elements.ripStage.innerHTML = sealedPackMarkup();
-    setPackAction("קריעת החבילה", false, "הקלפים כבר נשמרו.");
+    setPackAction("קריעת החבילה", false, count === 1 ? "הקלף כבר נשמר." : "הקלפים כבר נשמרו.");
   } else if (phase === "tearing") {
     elements.ripStage.innerHTML = sealedPackMarkup("tearing");
     setPackAction("פותחים…", true, "");
@@ -1950,7 +1950,7 @@ function renderBinder() {
   elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
   setEmptyNote(
     elements.binderEmpty,
-    waitingOwnership ? "טוענים את האוסף…" : "פתחו חבילה כדי להתחיל.",
+    waitingOwnership ? "טוענים את האוסף…" : "פתחו קלף כדי להתחיל.",
     { pending: waitingOwnership, hidden: !waitingOwnership && owned > 0 },
   );
 
@@ -2324,7 +2324,7 @@ function renderGrowth() {
   const wantedCards = model.catalog.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
   elements.tradeOfferedCard.innerHTML = offeredCards.length
     ? offeredCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("")
-    : '<option value="">פתחו חבילה קודם</option>';
+    : '<option value="">אספו קלף קודם</option>';
   if (offeredCards.some(({ id }) => id === offeredValue)) elements.tradeOfferedCard.value = offeredValue;
   elements.tradeWantedCard.innerHTML = wantedCards
     .map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("");
@@ -3264,7 +3264,7 @@ async function saveFaction() {
     });
     renderBinder();
     renderGrowth();
-    showToast(model.serverState.factionId ? "הסיעה נשמרה. החבילה הבאה תיספר." : "בחירת הסיעה בוטלה.");
+    showToast(model.serverState.factionId ? "הסיעה נשמרה. הקלף הבא ייספר." : "בחירת הסיעה בוטלה.");
   } catch {
     showToast("לא הצלחנו לשמור את הסיעה.");
   }

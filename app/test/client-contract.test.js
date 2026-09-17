@@ -24,6 +24,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
 
   assert.doesNotMatch(html, /skip remaining backs/i);
   assert.doesNotMatch(html, /\benergy\b/i);
+  assert.doesNotMatch(html, /פתחו חבילה כדי להתחיל|חבילת בונוס/);
+  assert.match(javascript, /קלף בונוס/);
+  assert.match(javascript, /הקלף הבא ייספר/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /--pip/);
   assert.match(html, /aria-live/);
