@@ -32,6 +32,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     ownedUniqueAll: Object.keys(inventory).length,
     totalCards: idleTotal,
     unseenCount: session.unseenPulls?.length ?? 0,
+    preparedPulls: session.preparedPulls || [],
     idleCapacity: IDLE_CAPACITY,
     nextIdleAt: session.nextIdleAt,
     packAvailable: Boolean((session.unseenPulls || []).length),

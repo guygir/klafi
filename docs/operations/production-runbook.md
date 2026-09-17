@@ -4,10 +4,11 @@
 
 - **Vercel Hobby** from GitHub `guygir/klafi`. Static files (HTML, JS, CSS, card art) are copied to `/public` at build time. `/api/*` rewrites to [api/index.js](../../api/index.js), which reuses `createKalpiApp`.
 - **Supabase free Postgres** created on supabase.com (not Vercel Marketplace — Marketplace `free` is disabled and would bill through Vercel). Set `DATABASE_URL` only in the Vercel project (never commit the live URI).
-  - Prefer the **session pooler** on port **5432** (`*.pooler.supabase.com`). Vercel functions are IPv4; the direct `db.*:5432` host is often IPv6-only.
-  - Do **not** use the transaction pooler on port **6543**. It can break `FOR UPDATE` and advisory locks.
+  - Keep the **session pooler** URL on port **5432** (`*.pooler.supabase.com`) in `DATABASE_URL` so migrations can use session-scoped advisory locks.
+  - On Vercel, application traffic automatically changes that URL to Supavisor **transaction mode** on port **6543**. Explicit `BEGIN`/`COMMIT` transactions, including `FOR UPDATE`, remain pinned to one database connection. Queries intentionally omit named prepared statements.
+  - A deployment with missing migrations fails closed on transaction mode; run migrations through session mode before serving traffic.
   - `DATABASE_SSL=1`
-  - `DATABASE_POOL_SIZE=5`
+  - `DATABASE_POOL_SIZE=5` (Vercel clamps each function instance to one client connection)
   - `NODE_ENV=production`, `KALPI_DEBUG=0`, `QUIZ_ENABLED=0`
   - Optional `STUDIO_SECRET` to open Studio unlock + set calendar in production (send as `x-kalpi-studio`, or open `/?studioKey=...` once). Leave unset to keep Studio closed.
 
@@ -22,7 +23,7 @@ The [Dockerfile](../../Dockerfile) remains the local/container path. Koyeb is a 
 
 The PostgreSQL adapter now keeps player writes on their own tables (`kalpi_sessions`, inventory, instances, packs, trades, events, factions). A leftover `kalpi_runtime_state` JSONB row is imported once, then ignored. Studio release/unlock config persists in `kalpi_studio_config`. Guest play still uses the browser token; account bind is optional and not required.
 
-Home does not wait on the fat game function. Static `/shell.json` and `/catalog.json` (CDN) paint Home chrome and the Binder grid; `api/health.js` and `api/home.js` are small routes that only touch one session row and return that player's inventory. Pack pulls stay on the authoritative Node function and run behind the rip animation — do not move those writes to a browser Supabase anon key. Entering Home pings the tiny `/api/warm` route on the pack isolate while the player reads the screen; it no longer downloads and discards the 391 KB API catalog just to wake that isolate. Optional events, trades, leaderboards, activity and specials reads are delayed so they do not contend with the first pull. Accepting a trade or claiming an event card is still a server write, same as a pull. The active tab is kept in `?view=`. Vercel Hobby does not pre-warm instances; Pro Fluid does. Cloudflare Workers Free exists (100k req/day, 10ms CPU) but is not an always-on Node box and cannot host this pack isolate as-is. The daily cron hits `/api/warm` for the same reason.
+Home does not wait on the fat game function. Static `/shell.json` and `/catalog.json` (CDN) paint Home chrome and the Binder grid; `api/health.js` and `api/home.js` are small routes that only touch one session row and return that player's inventory plus its prepared idle schedule. The authoritative Node function preselects a strict queue of up to eight cards with fixed instance IDs and three-hour availability times. Prepared cards are not inventory until due; a browser may inspect or repaint its cache, but it cannot alter server ownership or queue order. Already-materialized cards reveal without a pull request on the tap path. Missing queues refill immediately, stale multi-card backlogs within 0.5–2.5 seconds, and healthy buffers after a 15–60 second jitter. Repeat-player Home refreshes are also staggered to avoid connection bursts. Optional events, trades, leaderboards, activity and specials reads remain delayed. Accepting a trade or claiming an event card is still a server write. The active tab is kept in `?view=`. Vercel Hobby does not pre-warm instances; Pro Fluid does. Cloudflare Workers Free exists (100k req/day, 10ms CPU) but is not an always-on Node box and cannot host this pack isolate as-is. The daily cron keeps `/api/warm` only as a low-frequency deployment health check.
 
 ## Required environment
 

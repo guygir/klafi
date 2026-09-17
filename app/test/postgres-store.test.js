@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { sessionDeltas } from "../server/postgres-store.js";
+import { postgresPoolOptions, runtimeConnectionString } from "../server/postgres-pool.js";
 
 function instance(id, overrides = {}) {
   return {
@@ -91,4 +92,27 @@ test("session deltas detect scalar and extras-only player changes", () => {
   };
 
   assert.equal(sessionDeltas(previous, next).sessionChanged, true);
+});
+
+test("serverless pools hold at most one short-lived database connection", () => {
+  const options = postgresPoolOptions("postgresql://example.invalid/test", {
+    ssl: true,
+    serverless: true,
+  });
+
+  assert.equal(options.max, 1);
+  assert.equal(options.allowExitOnIdle, true);
+  assert.ok(options.connectionTimeoutMillis < 10_000);
+  assert.ok(options.idleTimeoutMillis < 10_000);
+  assert.deepEqual(options.ssl, { rejectUnauthorized: false });
+});
+
+test("serverless Supabase traffic uses transaction pooling", () => {
+  const sessionUrl = "postgresql://postgres.project:secret@aws-0-region.pooler.supabase.com:5432/postgres";
+
+  assert.equal(
+    runtimeConnectionString(sessionUrl, { serverless: true }),
+    "postgresql://postgres.project:secret@aws-0-region.pooler.supabase.com:6543/postgres",
+  );
+  assert.equal(runtimeConnectionString(sessionUrl, { serverless: false }), sessionUrl);
 });

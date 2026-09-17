@@ -116,17 +116,24 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   assert.equal(first.body.cards.length, 1);
   assert.equal(first.body.state.unseenCount, 1);
   assert.equal(first.body.state.idleCapacity, IDLE_BACKLOG_CAP);
+  assert.equal(first.body.state.preparedPulls.length, IDLE_BACKLOG_CAP - 1);
+  assert.equal(
+    Date.parse(first.body.state.preparedPulls[0].availableAt),
+    clock.value + IDLE_INTERVAL_MS,
+  );
   assert.equal(first.body.state.instances, undefined);
   assert.equal(first.body.state.achievements, undefined);
 
   const replay = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(replay.body.newlySettledCount, 0);
   assert.equal(replay.body.cards[0].instanceId, first.body.cards[0].instanceId);
+  assert.deepEqual(replay.body.state.preparedPulls, first.body.state.preparedPulls);
 
   clock.value += 30 * 60 * 60 * 1000;
   const capped = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(capped.body.cards.length, IDLE_BACKLOG_CAP);
   assert.equal(capped.body.newlySettledCount, IDLE_BACKLOG_CAP - 1);
+  assert.equal(capped.body.state.preparedPulls.length, 0);
   assert.ok(Date.parse(capped.body.state.nextIdleAt) > clock.value);
 
   const seen = await api(running.base, "/api/idle/seen", {
@@ -156,6 +163,33 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   const next = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(next.body.newlySettledCount, 1);
   assert.equal(next.body.cards.length, 1);
+});
+
+test("prepared idle pulls ignore client card choices", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-prepared-authority-test-"));
+  const clock = { value: Date.parse("2026-09-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const created = await api(running.base, "/api/session", { method: "POST" });
+  const token = created.body.token;
+  const initial = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  const scheduled = initial.body.state.preparedPulls[0];
+  clock.value = Date.parse(scheduled.availableAt);
+
+  const settled = await api(running.base, "/api/idle/settle", {
+    token,
+    method: "POST",
+    body: { cardId: "SYS-C-01", instanceId: "client-chosen-instance" },
+  });
+
+  assert.equal(settled.body.newlySettledCount, 1);
+  assert.equal(settled.body.cards.at(-1).instanceId, scheduled.instanceId);
+  assert.equal(settled.body.cards.at(-1).cardId, scheduled.cardId);
+  assert.notEqual(settled.body.cards.at(-1).instanceId, "client-chosen-instance");
 });
 
 test("legacy sessions migrate into the capped idle queue without losing inventory", async (t) => {

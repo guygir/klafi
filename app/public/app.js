@@ -3,7 +3,8 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
-const STATIC_DATA_VERSION = "fluid-play-2";
+const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
+const STATIC_DATA_VERSION = "prepared-pulls-1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -331,8 +332,10 @@ function applyHomePayload(home) {
   }
   if (home.state) {
     model.serverState = { ...model.serverState, ...home.state };
+    if (home.cards) model.idleQueue = home.cards;
     localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
       token: model.token,
+      cards: model.idleQueue,
       state: {
         displayName: home.state.displayName,
         avatarId: home.state.avatarId,
@@ -340,6 +343,7 @@ function applyHomePayload(home) {
         totalCards: home.state.totalCards,
         unseenCount: home.state.unseenCount,
         nextIdleAt: home.state.nextIdleAt,
+        preparedPulls: home.state.preparedPulls || [],
         idleCapacity: home.state.idleCapacity,
         progression: home.state.progression,
         avatars: home.state.avatars,
@@ -359,6 +363,7 @@ function applyCachedHome() {
       localStorage.setItem(SESSION_KEY, cached.token);
     }
     model.serverState = { ...model.serverState, ...cached.state };
+    model.idleQueue = cached.cards || [];
   } catch {
     localStorage.removeItem(HOME_CACHE_KEY);
   }
@@ -436,6 +441,10 @@ function applyFullBoot(boot) {
 let catalogHydrate = null;
 let homeHydrate = null;
 let extrasHydrate = null;
+let idleHydrate = null;
+let idleRefillTimer = null;
+let idleSeenHydrate = null;
+let idleSeenRetryTimer = null;
 let catalogFailed = false;
 const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
 
@@ -496,6 +505,7 @@ async function loadStaticCatalog() {
     })).then((payload) => {
       catalogFailed = false;
       applyCatalog(payload.cards || payload);
+      prefetchIdleAssets();
       renderBinder();
       renderHome();
       handleInboundLink();
@@ -526,6 +536,104 @@ async function hydrateHome() {
     });
   }
   return homeHydrate;
+}
+
+function nextCachedIdleCard(current = Date.now()) {
+  if (model.idleQueue.length) return { instance: model.idleQueue[0], prepared: false };
+  const prepared = [...(model.serverState?.preparedPulls || [])]
+    .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));
+  const instance = prepared.find(({ availableAt }) => Date.parse(availableAt) <= current);
+  return instance ? { instance, prepared: true } : null;
+}
+
+function cachedDueCount(current = Date.now()) {
+  return model.idleQueue.length + (model.serverState?.preparedPulls || [])
+    .filter(({ availableAt }) => Date.parse(availableAt) <= current).length;
+}
+
+function prefetchIdleAssets() {
+  if (!model.catalog.length) return;
+  const pulls = [...model.idleQueue, ...(model.serverState?.preparedPulls || [])];
+  for (const { cardId } of pulls) {
+    const artKey = model.byId.get(cardId)?.artKey;
+    if (!artKey) continue;
+    const image = new Image();
+    image.src = `/design-assets/${encodeURIComponent(artKey)}`;
+  }
+}
+
+function pendingIdleSeen() {
+  try {
+    const value = JSON.parse(localStorage.getItem(PENDING_IDLE_SEEN_KEY) || "[]");
+    return Array.isArray(value) ? value.filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberPendingIdleSeen(instanceIds) {
+  const pending = [...new Set([...pendingIdleSeen(), ...instanceIds])];
+  localStorage.setItem(PENDING_IDLE_SEEN_KEY, JSON.stringify(pending));
+}
+
+function flushPendingIdleSeen() {
+  if (idleSeenHydrate) return idleSeenHydrate;
+  const instanceIds = pendingIdleSeen();
+  if (!model.token || !instanceIds.length) return Promise.resolve(null);
+  clearTimeout(idleSeenRetryTimer);
+  idleSeenHydrate = request("/api/idle/seen", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ instanceIds }),
+  }).then((state) => {
+    const acknowledged = new Set(instanceIds);
+    const remaining = pendingIdleSeen().filter((instanceId) => !acknowledged.has(instanceId));
+    localStorage.setItem(PENDING_IDLE_SEEN_KEY, JSON.stringify(remaining));
+    model.idleQueue = model.idleQueue.filter(({ instanceId }) => !acknowledged.has(instanceId));
+    applyHomePayload({ state });
+    renderHome();
+    renderBinder();
+    scheduleIdleRefill({ priority: "buffered" });
+    return state;
+  }).catch((error) => {
+    idleSeenRetryTimer = setTimeout(() => flushPendingIdleSeen().catch(() => {}), 5000 + Math.floor(Math.random() * 10_000));
+    throw error;
+  }).finally(() => {
+    idleSeenHydrate = null;
+  });
+  return idleSeenHydrate;
+}
+
+async function hydrateIdleQueue() {
+  if (!idleHydrate) {
+    idleHydrate = (async () => {
+      if (!model.token) await hydrateHome();
+      const settled = await request("/api/idle/settle", { method: "POST" });
+      model.idleQueue = settled.cards || [];
+      applyHomePayload({ ...settled, state: settled.state });
+      prefetchIdleAssets();
+      renderHome();
+      flushPendingIdleSeen().catch(() => {});
+      return settled;
+    })().finally(() => {
+      idleHydrate = null;
+    });
+  }
+  return idleHydrate;
+}
+
+function scheduleIdleRefill({ priority = "buffered" } = {}) {
+  clearTimeout(idleRefillTimer);
+  const delay = priority === "urgent"
+    ? 0
+    : priority === "backlog"
+      ? 500 + Math.floor(Math.random() * 2000)
+      : 15_000 + Math.floor(Math.random() * 45_000);
+  idleRefillTimer = setTimeout(() => {
+    hydrateIdleQueue().catch(() => {
+      scheduleIdleRefill({ priority: "buffered" });
+    });
+  }, delay);
 }
 
 function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state }) {
@@ -607,6 +715,22 @@ async function bootstrap() {
     await catalogPromise;
     if (inboundView === "binder") renderBinder();
     const homePromise = hydrateHome();
+    homePromise.then(() => {
+      prefetchIdleAssets();
+      if (pendingIdleSeen().length) flushPendingIdleSeen().catch(() => {});
+      const hasPreparedBuffer = model.idleQueue.length || (model.serverState?.preparedPulls || []).length;
+      const missingDueCard = !nextCachedIdleCard()
+        && Boolean(model.serverState?.nextIdleAt)
+        && Date.parse(model.serverState.nextIdleAt) <= Date.now();
+      const priority = !hasPreparedBuffer || missingDueCard
+        ? "urgent"
+        : cachedDueCount() > 1 ? "backlog" : "buffered";
+      const cachedBufferSize = model.idleQueue.length + (model.serverState?.preparedPulls || []).length;
+      const hasMaterializedCard = model.idleQueue.length > 0;
+      if (!hasMaterializedCard && (priority !== "buffered" || cachedBufferSize < (model.serverState?.idleCapacity || 8))) {
+        scheduleIdleRefill({ priority });
+      }
+    }).catch(() => {});
     if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
     else homePromise.catch(() => null);
   } catch (error) {
@@ -1334,16 +1458,34 @@ async function openIdleReturn(opening = "regular") {
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
   elements.openPack.textContent = "פותחים…";
-  const rip = playHomePackRip({ holdAtEnd: true });
+  const cached = nextCachedIdleCard();
+  const rip = playHomePackRip({ holdAtEnd: !cached });
   try {
-    if (!model.token) await hydrateHome();
-    const settled = await request("/api/idle/settle", { method: "POST" });
-    applyHomePayload({ state: settled.state });
-    model.idleQueue = settled.cards || [];
-    const knownInstances = new Map((model.serverState?.instances || []).map((instance) => [instance.instanceId, instance]));
-    for (const instance of model.idleQueue) knownInstances.set(instance.instanceId, instance);
-    model.serverState.instances = [...knownInstances.values()].slice(-500);
-    if (!model.idleQueue.length) {
+    const settlement = cached && !cached.prepared
+      ? Promise.resolve({ value: { cards: model.idleQueue, state: model.serverState } })
+      : hydrateIdleQueue().then(
+        (value) => ({ value }),
+        (error) => ({ error }),
+      );
+    let selected = cached?.instance;
+    if (!selected) {
+      const outcome = await settlement;
+      if (outcome.error) throw outcome.error;
+      const settled = outcome.value;
+      selected = settled.cards?.[0];
+    } else if (cached.prepared) {
+      model.serverState.preparedPulls = (model.serverState.preparedPulls || [])
+        .filter(({ instanceId }) => instanceId !== selected.instanceId);
+      model.serverState.inventory = { ...(model.serverState.inventory || {}) };
+      model.serverState.inventory[selected.cardId] = (model.serverState.inventory[selected.cardId] ?? 0) + 1;
+      model.serverState.unseenCount = (model.serverState.unseenCount || 0) + 1;
+      model.serverState.instances = [
+        ...(model.serverState.instances || []),
+        { ...selected, pulledAt: selected.availableAt, seenAt: null },
+      ].slice(-500);
+      applyHomePayload({ state: model.serverState });
+    }
+    if (!selected) {
       rip.release();
       renderHome();
       showToast("הקלף הבא עדיין נאסף.");
@@ -1354,7 +1496,9 @@ async function openIdleReturn(opening = "regular") {
       packId: `idle-return-${Date.now()}`,
       mode: "idle-return",
       pulledAt: new Date().toISOString(),
-      cards: model.idleQueue.slice(0, 1),
+      cards: [selected],
+      settlement,
+      preparedReveal: Boolean(cached?.prepared),
     };
     model.currentCardIndex = 0;
     model.previewMode = false;
@@ -1488,19 +1632,20 @@ async function handlePackAction() {
         showView("binder");
         showToast("הקלף נוסף לאוסף.");
       }
-      request("/api/idle/seen", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ instanceIds }),
-      }).then((state) => {
-        applyHomePayload({ state });
-        renderHome();
-        renderBinder();
-      }).catch(() => {});
-      request("/api/leaderboards").then((leaderboards) => {
-        model.leaderboards = leaderboards;
-        renderGrowth();
-      }).catch(() => {});
+      const ownershipReady = model.currentPack.mode === "idle-return" && model.currentPack.preparedReveal
+        ? model.currentPack.settlement.then((outcome) => {
+          if (outcome.error || !outcome.value?.cards?.some(({ instanceId }) => opened.has(instanceId))) {
+            throw outcome.error || new Error("PREPARED_PULL_NOT_MATERIALIZED");
+          }
+        })
+        : Promise.resolve();
+      rememberPendingIdleSeen(instanceIds);
+      ownershipReady.then(() => {
+        model.idleQueue = model.idleQueue.filter(({ instanceId }) => !opened.has(instanceId));
+        return flushPendingIdleSeen();
+      }).catch(() => {
+        scheduleIdleRefill({ priority: "urgent" });
+      });
     } else {
       model.leaderboards = await request("/api/leaderboards");
       renderHome();
