@@ -1831,7 +1831,10 @@ function partyTrustLabel(card) {
 
 function partyStatusShort(party) {
   if (party?.finalLetters?.length) return "אותיות מאושרות במאגר";
-  if (party?.filingStatus === "submitted-pending-cec-review") return "הוגשה · טרם אושרה בוועדת הבחירות";
+  if (party?.filingStatus === "submitted-pending-cec-review") {
+    const asOf = formatTrustDate(party.asOfDate);
+    return `במאגר: הוגשה וממתינה לבדיקת ועדת הבחירות${asOf ? ` (${asOf})` : ""}`;
+  }
   return "";
 }
 

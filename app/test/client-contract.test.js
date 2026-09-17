@@ -188,6 +188,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /window\.scrollTo/);
   assert.match(html, /id="binder-pager"/);
   assert.match(html, /id="community-tabs"/);
+  assert.match(html, /role="tabpanel"/);
+  assert.match(html, /aria-controls="community-panel-trade"/);
+  assert.match(html, /aria-current="page"/);
+  assert.match(javascript, /function moveTabFocus/);
+  assert.match(javascript, /button\.tabIndex = active \? 0 : -1/);
+  assert.doesNotMatch(javascript, /collection-star-count" role="button"/);
+  assert.doesNotMatch(javascript, /badge-medallion" role="button"/);
   assert.doesNotMatch(javascript, /textAlign = "left"/);
   assert.match(css, /4\.2cqw/);
   assert.doesNotMatch(css, /4\.2vw/);
@@ -247,7 +254,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(themeCss, /\.new-stamp[^}]*top:\s*50%[^}]*translateY\(-50%\)/s);
   assert.doesNotMatch(themeCss, /#pack-view \.walkout-receipt\s*\{\s*display:\s*none/);
   assert.match(javascript, /הציטוט קוצר/);
-  assert.match(javascript, /טרם אושרה בוועדת הבחירות/);
+  assert.match(javascript, /ממתינה לבדיקת ועדת הבחירות/);
   assert.match(html, /data-theme="pack-v2"/);
   assert.match(html, /id="visual-theme"/);
   assert.match(html, /id="visual-card-frame"/);
