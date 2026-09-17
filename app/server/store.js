@@ -1,23 +1,28 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 export const EMPTY_STATE = {
-  version: 5,
+  version: 6,
   sessions: {},
   analytics: { events: [] },
   trades: [],
   factions: {},
+  reports: [],
+  idempotency: {},
 };
 
 export function normalizeState(value = {}) {
   const state = { ...structuredClone(EMPTY_STATE), ...value };
-  state.version = 5;
+  state.version = 6;
   state.sessions ??= {};
   state.analytics ??= { events: [] };
   state.analytics.events ??= [];
   state.trades ??= [];
   state.factions ??= {};
+  state.reports ??= [];
+  state.idempotency ??= {};
   for (const [token, session] of Object.entries(state.sessions)) {
     session.eventCounts ??= {};
     session.factionId ??= null;
@@ -53,6 +58,7 @@ export class JsonStore {
     this.filePath = filePath;
     this.state = structuredClone(EMPTY_STATE);
     this.queue = Promise.resolve();
+    this.transaction = new AsyncLocalStorage();
   }
 
   async init() {
@@ -131,6 +137,71 @@ export class JsonStore {
       const result = await mutator(session);
       await this.persist();
       return result;
+    });
+  }
+
+  async idempotent(token, key, route, operation) {
+    if (!key) return { ...(await operation()), replayed: false };
+    return this.exclusive(async () => {
+      const storageKey = `${token}:${key}`;
+      const existing = this.state.idempotency[storageKey];
+      if (existing) {
+        if (existing.route !== route) {
+          return { status: 409, body: { error: "IDEMPOTENCY_KEY_REUSED" }, replayed: true };
+        }
+        return { status: existing.status, body: existing.body, replayed: true };
+      }
+      const result = await operation();
+      this.state.idempotency[storageKey] = {
+        route,
+        status: result.status,
+        body: result.body,
+        createdAt: new Date().toISOString(),
+      };
+      const keys = Object.keys(this.state.idempotency);
+      for (const expired of keys.slice(0, Math.max(0, keys.length - 5000))) {
+        delete this.state.idempotency[expired];
+      }
+      await this.persist();
+      return { ...result, replayed: false };
+    });
+  }
+
+  async submitReport(report) {
+    return this.exclusive(async () => {
+      const existing = this.state.reports.find(({ reportId }) => reportId === report.reportId);
+      if (!existing) {
+        this.state.reports.push({
+          ...report,
+          status: "open",
+          reviewerNote: null,
+          updatedAt: report.createdAt,
+        });
+        await this.persist();
+      }
+      return { reportId: report.reportId, queued: true, replayed: Boolean(existing) };
+    });
+  }
+
+  async listReports() {
+    const priority = { open: 0, reviewing: 1, resolved: 2, rejected: 2 };
+    return [...this.state.reports]
+      .sort((left, right) => (
+        (priority[left.status] ?? 3) - (priority[right.status] ?? 3)
+        || Date.parse(left.createdAt) - Date.parse(right.createdAt)
+      ))
+      .slice(0, 500);
+  }
+
+  async updateReport(reportId, status, reviewerNote, updatedAt) {
+    return this.exclusive(async () => {
+      const report = this.state.reports.find((candidate) => candidate.reportId === reportId);
+      if (!report) return false;
+      report.status = status;
+      report.reviewerNote = reviewerNote;
+      report.updatedAt = updatedAt;
+      await this.persist();
+      return true;
     });
   }
 
@@ -378,7 +449,9 @@ export class JsonStore {
   }
 
   exclusive(operation) {
-    const next = this.queue.then(operation, operation);
+    if (this.transaction.getStore()) return operation();
+    const run = () => this.transaction.run(true, operation);
+    const next = this.queue.then(run, run);
     this.queue = next.catch(() => {});
     return next;
   }

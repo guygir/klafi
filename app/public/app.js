@@ -4,7 +4,9 @@ const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
-const STATIC_DATA_VERSION = "core-pipeline-1";
+const PENDING_REPORTS_KEY = "kalpi-pending-reports";
+const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
+const STATIC_DATA_VERSION = "launch-safety-1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -205,7 +207,16 @@ const elements = {
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
   dialogInstagram: document.querySelector("#dialog-instagram"),
   dialogGift: document.querySelector("#dialog-gift"),
+  dialogReport: document.querySelector("#dialog-report"),
   closeDialog: document.querySelector("#close-dialog"),
+  reportDialog: document.querySelector("#report-dialog"),
+  reportForm: document.querySelector("#report-form"),
+  reportCardLabel: document.querySelector("#report-card-label"),
+  reportCategory: document.querySelector("#report-category"),
+  reportDetails: document.querySelector("#report-details"),
+  reportStatus: document.querySelector("#report-status"),
+  submitReport: document.querySelector("#submit-report"),
+  closeReport: document.querySelector("#close-report"),
   toast: document.querySelector("#toast"),
   bottomNav: document.querySelector(".bottom-nav"),
 };
@@ -291,6 +302,89 @@ async function request(path, options = {}) {
     throw error;
   }
   return body;
+}
+
+function clientOperationId(prefix) {
+  return globalThis.crypto?.randomUUID?.() || `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function pendingMutationKey(scope) {
+  let pending = {};
+  try {
+    pending = JSON.parse(localStorage.getItem(PENDING_MUTATIONS_KEY) || "{}");
+  } catch {
+    pending = {};
+  }
+  if (!pending[scope]) {
+    pending[scope] = clientOperationId(scope);
+    localStorage.setItem(PENDING_MUTATIONS_KEY, JSON.stringify(pending));
+  }
+  return pending[scope];
+}
+
+function clearPendingMutation(scope) {
+  try {
+    const pending = JSON.parse(localStorage.getItem(PENDING_MUTATIONS_KEY) || "{}");
+    delete pending[scope];
+    localStorage.setItem(PENDING_MUTATIONS_KEY, JSON.stringify(pending));
+  } catch {
+    localStorage.removeItem(PENDING_MUTATIONS_KEY);
+  }
+}
+
+function pendingReports() {
+  try {
+    const reports = JSON.parse(localStorage.getItem(PENDING_REPORTS_KEY) || "[]");
+    return Array.isArray(reports) ? reports : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberPendingReport(report) {
+  const pending = pendingReports().filter(({ reportId }) => reportId !== report.reportId);
+  pending.push(report);
+  localStorage.setItem(PENDING_REPORTS_KEY, JSON.stringify(pending));
+}
+
+let reportFlush = null;
+let reportRetryTimer = null;
+function flushPendingReports() {
+  if (reportFlush) return reportFlush;
+  if (!model.token || !pendingReports().length) return Promise.resolve([]);
+  clearTimeout(reportRetryTimer);
+  reportFlush = (async () => {
+    const delivered = [];
+    for (const report of pendingReports()) {
+      try {
+        await request("/api/reports", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-idempotency-key": report.reportId,
+          },
+          body: JSON.stringify(report),
+        });
+        const remaining = pendingReports().filter(({ reportId }) => reportId !== report.reportId);
+        localStorage.setItem(PENDING_REPORTS_KEY, JSON.stringify(remaining));
+        delivered.push(report.reportId);
+      } catch (error) {
+        if (error.status >= 400 && error.status < 500 && ![408, 429].includes(error.status)) {
+          const remaining = pendingReports().filter(({ reportId }) => reportId !== report.reportId);
+          localStorage.setItem(PENDING_REPORTS_KEY, JSON.stringify(remaining));
+          continue;
+        }
+        throw error;
+      }
+    }
+    return delivered;
+  })().catch((error) => {
+    reportRetryTimer = setTimeout(() => flushPendingReports().catch(() => {}), 15_000 + Math.floor(Math.random() * 30_000));
+    throw error;
+  }).finally(() => {
+    reportFlush = null;
+  });
+  return reportFlush;
 }
 
 async function ensureSession() {
@@ -702,6 +796,7 @@ async function bootstrap() {
     homePromise.then(() => {
       prefetchIdleAssets();
       if (pendingIdleSeen().length) flushPendingIdleSeen().catch(() => {});
+      if (pendingReports().length) flushPendingReports().catch(() => {});
       const hasPreparedBuffer = model.idleQueue.length || (model.serverState?.preparedPulls || []).length;
       const missingDueCard = !nextCachedIdleCard()
         && Boolean(model.serverState?.nextIdleAt)
@@ -3342,6 +3437,53 @@ function renderDialogCard() {
   elements.dialogGift.hidden = ownedCount < 2;
 }
 
+function openReportDialog() {
+  const card = model.byId.get(model.dialogCardId);
+  if (!card) return;
+  elements.dialog.close();
+  elements.reportForm.reset();
+  elements.reportStatus.textContent = "";
+  elements.reportCardLabel.textContent = `${cardTitle(card)} · ${card.id}`;
+  elements.reportDialog.showModal();
+  elements.reportCategory.focus();
+}
+
+async function submitCorrectionReport(event) {
+  event.preventDefault();
+  const card = model.byId.get(model.dialogCardId);
+  if (!card) return;
+  const url = new URL(location.href);
+  url.searchParams.delete("studioKey");
+  const report = {
+    reportId: clientOperationId("report"),
+    cardId: card.id,
+    category: elements.reportCategory.value,
+    details: elements.reportDetails.value.trim(),
+    pagePath: `${url.pathname}${url.search}`,
+  };
+  if (report.details.length < 5) {
+    elements.reportStatus.textContent = "כתבו לפחות כמה מילים כדי שנוכל לבדוק.";
+    elements.reportDetails.focus();
+    return;
+  }
+
+  elements.submitReport.disabled = true;
+  elements.reportStatus.textContent = "שומרים את הדיווח…";
+  rememberPendingReport(report);
+  try {
+    await flushPendingReports();
+    elements.reportStatus.textContent = "";
+    elements.reportDialog.close();
+    showToast("הדיווח התקבל ונכנס לבדיקה.");
+  } catch {
+    elements.reportStatus.textContent = "";
+    elements.reportDialog.close();
+    showToast("הדיווח נשמר במכשיר ויישלח אוטומטית.");
+  } finally {
+    elements.submitReport.disabled = false;
+  }
+}
+
 function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
@@ -3659,12 +3801,20 @@ elements.saveAchievements?.addEventListener("click", saveStudioAchievements);
 elements.saveEvents?.addEventListener("click", saveStudioEvents);
 elements.closeProfile.addEventListener("click", () => elements.profileDialog.close());
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
+elements.dialogReport.addEventListener("click", openReportDialog);
+elements.closeReport.addEventListener("click", () => elements.reportDialog.close());
+elements.reportForm.addEventListener("submit", submitCorrectionReport);
 elements.closeLevel.addEventListener("click", () => elements.levelDialog.close());
 elements.openPendingLevel?.addEventListener("click", openPendingLevelDialog);
 elements.claimLevel.addEventListener("click", async () => {
   elements.claimLevel.disabled = true;
+  const mutationScope = "level-reward";
   try {
-    const reward = await request("/api/rewards/level", { method: "POST" });
+    const reward = await request("/api/rewards/level", {
+      method: "POST",
+      headers: { "x-idempotency-key": pendingMutationKey(mutationScope) },
+    });
+    clearPendingMutation(mutationScope);
     model.serverState = reward.state;
     model.currentPack = {
       packId: `rank-${reward.rank}`,
@@ -3946,6 +4096,8 @@ document.addEventListener("click", (event) => {
   const sourceLink = event.target.closest("[data-source-card]");
   if (sourceLink) recordEvent("source_opened", { cardId: sourceLink.dataset.sourceCard });
 });
+window.addEventListener("online", () => flushPendingReports().catch(() => {}));
 
 bootstrap();
+flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));

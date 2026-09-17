@@ -203,7 +203,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /core-pipeline-1/);
+  assert.match(html, /launch-safety-1/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -229,6 +229,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function scheduleIdleRefill/);
   assert.match(javascript, /function flushPendingIdleSeen/);
   assert.match(javascript, /PENDING_IDLE_SEEN_KEY/);
+  assert.match(javascript, /function flushPendingReports/);
+  assert.match(javascript, /PENDING_REPORTS_KEY/);
+  assert.match(javascript, /x-idempotency-key/);
   assert.match(javascript, /cachedDueCount\(\) > 1 \? "backlog"/);
   assert.match(javascript, /cachedBufferSize < \(model\.serverState\?\.idleCapacity \|\| 8\)/);
   assert.match(javascript, /const hasMaterializedCard = model\.idleQueue\.length > 0/);
@@ -252,7 +255,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /step9-trust-1/);
+  assert.match(html, /launch-safety-1/);
+  assert.match(html, /id="report-dialog"/);
+  assert.match(html, /דיווח על טעות בקלף/);
   assert.match(themeCss, /\.card-dialog \.kalpi-card[^}]*width:\s*min\(370px,\s*100%\)/s);
   assert.match(themeCss, /\.new-stamp[^}]*top:\s*50%[^}]*translateY\(-50%\)/s);
   assert.doesNotMatch(themeCss, /#pack-view \.walkout-receipt\s*\{\s*display:\s*none/);

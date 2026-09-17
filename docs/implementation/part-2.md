@@ -23,8 +23,8 @@ Later (Hebrew live, accounts, energy board) we can grow the server. The client s
 **Where the pull happens, the server pulls.** The saved result must not have gone through the player.
 
 ```
-player taps “Open” → POST /packs/daily (auth or guest token)
-server: check clock / pity / rate limit
+player taps “Open” → POST /packs/daily (auth or guest token + idempotency key)
+server: check clock / pity / prior response for that key
 server: RNG + pack mix + persist inventory
 server: return the six card ids
 client: play the rip animation on those ids
