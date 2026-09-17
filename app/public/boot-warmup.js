@@ -1,6 +1,6 @@
 const token = localStorage.getItem("kalpi-alpha-session");
 const headers = token ? { authorization: `Bearer ${token}` } : {};
-const staticDataVersion = "prepared-pulls-1";
+const staticDataVersion = "core-pipeline-1";
 const json = async (response) => {
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "WARMUP_FAILED");

@@ -39,7 +39,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /progressiveStage: "blank"/);
   assert.doesNotMatch(javascript, /reveal: stage === "portrait"/);
   assert.match(javascript, /binder-shared-card/);
+  assert.match(javascript, /displayCardMarkup\(card, "binder"\)/);
   assert.match(javascript, /studio-shared-card/);
+  assert.match(javascript, /function cardPresentation/);
+  assert.match(javascript, /displayCardMarkup\(card, "event"\)/);
+  assert.match(javascript, /const presentation = cardPresentation\(card\)/);
   assert.equal((javascript.match(/class="card-face front"/g) || []).length, 1, "all surfaces must share one card renderer");
   assert.doesNotMatch(javascript, /miniCardMarkup/);
   assert.doesNotMatch(javascript, /class="mini-card"/);
@@ -48,6 +52,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.card-name-zone[^}]*background: var\(--civic\)/);
   assert.match(css, /\.binder-card-tools[^}]*left: 50%/);
   assert.match(css, /\.binder-card-tools \.dupe-count[^}]*position: static/);
+  assert.match(css, /\.binder-slot\s*\{[^}]*aspect-ratio:\s*63\s*\/\s*96/s);
   assert.match(javascript, /data-favorite-card/);
   assert.match(javascript, /setLabels\.FAVORITES = "פייבוריטים"/);
   assert.match(javascript, /setTimeout\(startWalkout/);
@@ -138,6 +143,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /targetPartyNameHe/);
   assert.match(javascript, /function challengeRecap/);
   assert.match(javascript, /function renderChallengeRecap/);
+  assert.match(javascript, /hasCrowd = leaders\.length >= 2/);
+  assert.match(javascript, /recap\.hasCrowd \? `<div class="challenge-hist">/);
+  assert.match(javascript, /collectorCrowd/);
   assert.match(html, /id="daily-challenge-recap"/);
   assert.match(html, /id="today-challenge-hook"/);
   assert.match(html, /id="today-event-hook"/);
@@ -182,7 +190,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /prepared-pulls-1/);
+  assert.match(html, /core-pipeline-1/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
