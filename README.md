@@ -99,8 +99,8 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 **Active product sequence**
 7. Unified card pipeline, taller cards, no fake social counts. **In progress.** One canonical presentation contract now drives Today, Binder, detail, sharing, Events and trades; every HTML surface uses the same tall-card renderer.
 8. Learning loop: two-question owned-card quiz, five-minute clock, one reward per Jerusalem day, comprehension feedback and learning-linked achievements. **Deferred by product decision; player option removed while the server implementation remains parked.**
-9. Hebrew, trust and accessibility pass: player copy, advocacy disclosure, source receipts, CEC/status labels, keyboard/reduced-motion behavior and screen-reader labels.
-10. Recurring phone + desktop QA and launch hardening after every slice: real-device WhatsApp/Instagram handoff, recovery, moderation, durable public rate limits, abuse reporting, monitoring, backup and rollback.
+9. Hebrew, trust and accessibility pass: player copy, advocacy disclosure, source receipts, dated CEC/status labels, keyboard/reduced-motion behavior and screen-reader labels. **In progress.**
+10. Recurring phone + desktop QA and launch hardening after every slice: real-device WhatsApp/Instagram handoff, recovery, moderation, durable public rate limits, a durable correction/report queue, monitoring, backup and rollback.
 11. Community loop: anonymous faction tally, honest country leaderboard, real transactional trading/gifting, sharing/referrals and creator acquisition links.
 
 **Later — already accounted for**

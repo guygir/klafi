@@ -79,9 +79,21 @@ test("runtime factory builds the same Node handler Vercel uses", async () => {
 
 test("public party register keeps Hebrew names without opening Studio", () => {
   const fromStudio = publicPartyRegister({
-    parties: [{ id: "RZ", displayNameHe: "הציונות הדתית וזהות", displayNameEn: "RZ", requestedLetters: ["ט"], pip: "#6B4A8B" }],
+    parties: [{
+      id: "RZ",
+      displayNameHe: "הציונות הדתית וזהות",
+      displayNameEn: "RZ",
+      requestedLetters: ["ט"],
+      finalLetters: null,
+      letterStatus: "protected",
+      filingStatus: "submitted-pending-cec-review",
+      asOfDate: "2026-09-09",
+      pip: "#6B4A8B",
+    }],
   });
   assert.equal(fromStudio[0].displayNameHe, "הציונות הדתית וזהות");
+  assert.equal(fromStudio[0].filingStatus, "submitted-pending-cec-review");
+  assert.equal(fromStudio[0].letterStatus, "protected");
   const fromCatalog = publicPartyRegister(null, [
     { set: "SYS", setNameHe: "יסודות" },
     { set: "RZ", setNameHe: "הציונות הדתית וזהות", setName: "Religious Zionism–Zehut", letters: "ט", pip: "#6B4A8B" },

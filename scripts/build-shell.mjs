@@ -14,11 +14,16 @@ const seen = new Set();
 for (const card of cards) {
   if (!card.set || card.set === "SYS" || String(card.set).startsWith("special-") || seen.has(card.set)) continue;
   seen.add(card.set);
+  const party = studio.parties?.find(({ id }) => id === card.set);
   parties.push({
     id: card.set,
     displayNameHe: card.setNameHe || card.set,
     displayNameEn: card.setName || card.set,
-    requestedLetters: card.letters ? [card.letters] : [],
+    requestedLetters: party?.requestedLetters || (card.letters ? [card.letters] : []),
+    finalLetters: party?.finalLetters || null,
+    letterStatus: party?.letterStatus || null,
+    filingStatus: party?.filingStatus || null,
+    asOfDate: party?.asOfDate || null,
     pip: card.pip || null,
   });
 }

@@ -299,7 +299,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] #pack-view .walkout-content {
   display: grid;
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   place-items: center;
 }
 
@@ -312,7 +312,12 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] #pack-view .walkout-receipt {
-  display: none;
+  width: min(350px, calc(100vw - 42px));
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.25;
 }
 
 #app[data-card-frame="tall-v2"] #pack-view > .action-dock {

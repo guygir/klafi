@@ -105,6 +105,7 @@ const elements = {
   sharedTitle: document.querySelector("#shared-title"),
   sharedCard: document.querySelector("#shared-card"),
   sharedNotice: document.querySelector("#shared-notice"),
+  sharedTrust: document.querySelector("#shared-trust"),
   sharedSource: document.querySelector("#shared-source"),
   sharedOpenGame: document.querySelector("#shared-open-game"),
   binderPercent: document.querySelector("#binder-percent"),
@@ -198,6 +199,7 @@ const elements = {
   dialog: document.querySelector("#card-dialog"),
   dialogCard: document.querySelector("#dialog-card"),
   dialogOwnership: document.querySelector("#dialog-ownership"),
+  dialogTrust: document.querySelector("#dialog-trust"),
   dialogSource: document.querySelector("#dialog-source"),
   dialogShare: document.querySelector("#dialog-share"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
@@ -778,7 +780,9 @@ function showSharedCard(cardId, isTradeIntent = false) {
   elements.sharedNotice.textContent = isTradeIntent
     ? "זו תצוגה של הצעת החלפה. הבעלות לא השתנתה והקלף לא נוסף לאוסף שלכם."
     : "זו תצוגת שיתוף בלבד. הקלף לא נוסף לאוסף שלכם.";
-  elements.sharedSource.href = card.walkout.sourceUrl;
+  elements.sharedTrust.textContent = cardTrustSummary(card);
+  elements.sharedTrust.hidden = !elements.sharedTrust.textContent;
+  configureSourceLink(elements.sharedSource, card);
   elements.sharedSource.dataset.sourceCard = card.id;
   showView("shared");
   queueCardTextFit(elements.sharedCard);
@@ -853,7 +857,12 @@ function showView(name) {
     view.classList.toggle("active", view.id === `${name}-view`);
   }
   for (const button of elements.navButtons) {
-    button.classList.toggle("active", button.dataset.nav === name);
+    const active = button.dataset.nav === name;
+    button.classList.toggle("active", active);
+    if (button.closest(".bottom-nav")) {
+      if (active) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    }
   }
   elements.bottomNav.hidden = !["home", "binder", "achievements", "events", "growth"].includes(name);
   requestAnimationFrame(() => {
@@ -1693,7 +1702,10 @@ function renderWalkoutStage() {
   const card = model.byId.get(instance.cardId);
   const stage = WALKOUT_STAGES[model.walkoutStage];
   const walkout = card.walkout;
-  const sourceLink = `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}">למקור ↗</a>`;
+  const sourceName = walkout.sourceLabel ? `: ${walkout.sourceLabel}` : "";
+  const sourceLink = walkout.sourceUrl
+    ? `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}" aria-label="${escapeHtml(`פתיחת המקור${sourceName} בכרטיסייה חדשה`)}">למקור המצורף ↗</a>`
+    : "";
   const contentClass = card.releaseTier === "critique"
     ? "פרשנות/ביקורת"
     : walkout.kind === "quote" ? "ציטוט" : "עובדתי";
@@ -1716,7 +1728,7 @@ function renderWalkoutStage() {
         <div class="walkout-content">
           ${cardMarkup(card, instance, { progressiveStage: "blank", surface: "walkout" })}
           <div class="walkout-receipt">
-            <span>${escapeHtml([contentClass, releaseName, walkout.date].filter(Boolean).join(" · "))}</span>
+            <span>${escapeHtml([contentClass, ...cardTrustReceipt(card), releaseName, formatTrustDate(walkout.date)].filter(Boolean).join(" · "))}</span>
             ${sourceLink}
           </div>
         </div>
@@ -1778,7 +1790,76 @@ function displayedCardQuote(card) {
   const text = String(card.walkout.text || "").trim();
   if (!text) return "";
   if (card.type !== "Quote") return text;
-  return `״${text.replace(/^״|״$/g, "")}״`;
+  const bare = text.replace(/^״|״$/g, "");
+  const needsMarker = ["shortened", "attributed-paraphrase"].includes(card.walkout?.quoteStatus);
+  const marked = needsMarker && !bare.endsWith("*") ? `${bare}*` : bare;
+  return `״${marked}״`;
+}
+
+function formatTrustDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return value || "";
+  return new Date(`${value}T12:00:00`).toLocaleDateString("he-IL");
+}
+
+function quoteTrustLabel(card) {
+  return {
+    shortened: "* הציטוט קוצר; הנוסח וההקשר המלאים נמצאים במקור.",
+    "attributed-paraphrase": "* ניסוח מיוחס או פרפרזה, לא תמלול מילולי מאומת.",
+  }[card.walkout?.quoteStatus] || "";
+}
+
+function partyTrustLabel(card) {
+  if (!card.set || card.set === "SYS" || String(card.set).startsWith("special-")) return "";
+  const party = partyRegister().find(({ id }) => id === card.set);
+  if (!party?.filingStatus && !party?.letterStatus) return "";
+  const letters = (party.finalLetters || party.requestedLetters || []).join(" / ");
+  const letterStatus = {
+    protected: "אותיות מוגנות",
+    requested: "אותיות מבוקשות",
+    disputed: "אותיות במחלוקת",
+  }[party.letterStatus] || "אותיות הרשימה";
+  const filingStatus = party.finalLetters?.length
+    ? "אותיות שאושרו במאגר"
+    : party.filingStatus === "submitted-pending-cec-review"
+      ? "הרשימה הוגשה; במאגר היא עדיין ממתינה לבדיקת ועדת הבחירות"
+      : "סטטוס הרשימה טרם אומת במאגר";
+  const asOf = formatTrustDate(party.asOfDate);
+  return [filingStatus, letters ? `${letterStatus}: ${letters}` : "", asOf ? `נכון ל־${asOf}` : ""]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function partyStatusShort(party) {
+  if (party?.finalLetters?.length) return "אותיות מאושרות במאגר";
+  if (party?.filingStatus === "submitted-pending-cec-review") return "הוגשה · טרם אושרה בוועדת הבחירות";
+  return "";
+}
+
+function cardTrustSummary(card) {
+  return [quoteTrustLabel(card), partyTrustLabel(card)].filter(Boolean).join(" ");
+}
+
+function cardTrustReceipt(card) {
+  const quoteStatus = {
+    shortened: "ציטוט מקוצר*",
+    "attributed-paraphrase": "ניסוח מיוחס*",
+  }[card.walkout?.quoteStatus];
+  const party = partyRegister().find(({ id }) => id === card.set);
+  const filingStatus = partyStatusShort(party);
+  return [quoteStatus, filingStatus].filter(Boolean);
+}
+
+function configureSourceLink(link, card) {
+  const sourceUrl = card.walkout?.sourceUrl;
+  link.hidden = !sourceUrl;
+  if (!sourceUrl) {
+    link.removeAttribute("href");
+    return;
+  }
+  link.href = sourceUrl;
+  link.textContent = "למקור המצורף ↗";
+  const sourceName = card.walkout?.sourceLabel ? `: ${card.walkout.sourceLabel}` : "";
+  link.setAttribute("aria-label", `פתיחת המקור${sourceName} בכרטיסייה חדשה`);
 }
 
 function cardPresentation(card, instance = {}) {
@@ -1795,6 +1876,7 @@ function cardPresentation(card, instance = {}) {
     finishClass: String(finishLabel ?? "Common").split(/\s|\//)[0].toLowerCase(),
     rarityMark: rarityMark(finishLabel),
     rarityName: rarityNameHe(finishLabel),
+    trustLabel: cardTrustSummary(card),
     pip: card.pip,
     artKey: card.artKey || null,
   };
@@ -1809,7 +1891,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
   const stage = progressiveStage || "portrait";
   const progressive = `progressive-card stage-${stage}`;
   return `
-    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}">
+    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}${presentation.trustLabel ? `. ${escapeHtml(presentation.trustLabel)}` : ""}">
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
@@ -1901,7 +1983,8 @@ function renderBinder() {
             : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
         return inSet && inventory[card.id];
       }).length;
-    return `<button type="button" role="tab" aria-selected="${model.binderFilter === set}" class="${model.binderFilter === set ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
+    const active = model.binderFilter === set;
+    return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
   }).join("");
 
   const visible = playerCards.filter((card) => model.binderFilter === "ALL"
@@ -1938,13 +2021,13 @@ function renderBinder() {
   const earned = (model.serverState?.achievements || []).filter(({ earned }) => earned);
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
   const starCount = model.serverState?.starCount ?? 0;
-  const starCounter = `<span class="collection-star-count" role="button" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b>★</b><strong>${starCount}</strong></span>`;
+  const starCounter = `<span class="collection-star-count" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b aria-hidden="true">★</b><strong>${starCount}</strong></span>`;
   const visibleBadges = earned.slice(0, 3);
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
   rail.innerHTML = starCounter + visibleBadges.map((badge) => {
     const copy = hebrewBadge(badge);
     return `
-    <span class="badge-medallion" role="button" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
+    <span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
   }).join("") + (earned.length > visibleBadges.length
     ? `<button class="badge-overflow" type="button" data-open-achievements aria-label="עוד ${earned.length - visibleBadges.length} הישגים">+${earned.length - visibleBadges.length}</button>`
     : "");
@@ -2280,7 +2363,14 @@ function renderGrowth() {
   const parties = partyRegister();
   elements.factionSelect.innerHTML = [
     '<option value="">ללא סיעה</option>',
-    ...parties.map((party) => `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml(party.displayNameHe)} · ${escapeHtml((party.requestedLetters || []).join(" / "))}</option>`),
+    ...parties.map((party) => {
+      const status = partyStatusShort(party);
+      return `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml([
+        party.displayNameHe,
+        (party.finalLetters || party.requestedLetters || []).join(" / "),
+        status,
+      ].filter(Boolean).join(" · "))}</option>`;
+    }),
   ].join("");
   const factionEntries = model.leaderboards?.factions?.slice(0, 6) || [];
   const factionMaximum = Math.max(1, ...factionEntries.map(({ packs }) => packs));
@@ -2344,6 +2434,7 @@ function renderGrowth() {
     const active = button.dataset.communityPage === model.communityPage;
     button.classList.toggle("active", active);
     button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
   });
   queueCardTextFit(elements.tradePreview);
   queueCardTextFit(elements.tradeOfferedPreview);
@@ -3238,7 +3329,9 @@ function renderDialogCard() {
     : ownedCount === 1
       ? "ברשותכם עותק אחד."
       : `ברשותכם ${ownedCount} עותקים.`;
-  elements.dialogSource.href = card.walkout.sourceUrl;
+  elements.dialogTrust.textContent = cardTrustSummary(card);
+  elements.dialogTrust.hidden = !elements.dialogTrust.textContent;
+  configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
   elements.dialogShare.hidden = ownedCount < 1;
   elements.dialogWhatsapp.hidden = ownedCount < 1;
@@ -3809,7 +3902,29 @@ elements.advocacyDialog.addEventListener("click", (event) => {
 elements.profileDialog.addEventListener("click", (event) => {
   if (event.target === elements.profileDialog) elements.profileDialog.close();
 });
+
+function moveTabFocus(event) {
+  const current = event.target.closest('[role="tab"]');
+  const tablist = current?.closest('[role="tablist"]');
+  if (!current || !tablist || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return false;
+  const tabs = [...tablist.querySelectorAll('[role="tab"]:not(:disabled)')].filter((tab) => !tab.hidden);
+  const currentIndex = tabs.indexOf(current);
+  if (currentIndex < 0) return false;
+  const rtl = getComputedStyle(tablist).direction === "rtl";
+  const step = event.key === "ArrowLeft" ? (rtl ? 1 : -1) : (rtl ? -1 : 1);
+  const nextIndex = event.key === "Home"
+    ? 0
+    : event.key === "End"
+      ? tabs.length - 1
+      : (currentIndex + step + tabs.length) % tabs.length;
+  event.preventDefault();
+  tabs[nextIndex].focus();
+  tabs[nextIndex].click();
+  return true;
+}
+
 document.addEventListener("keydown", (event) => {
+  if (moveTabFocus(event)) return;
   const packIsOpen = document.querySelector("#pack-view").classList.contains("active");
   if (event.key === "ArrowRight" && packIsOpen && !elements.packAction.disabled && !elements.dialog.open && !elements.advocacyDialog.open && !elements.profileDialog.open) {
     event.preventDefault();

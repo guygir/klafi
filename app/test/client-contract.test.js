@@ -42,6 +42,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /displayCardMarkup\(card, "binder"\)/);
   assert.match(javascript, /studio-shared-card/);
   assert.match(javascript, /function cardPresentation/);
+  assert.match(javascript, /function quoteTrustLabel/);
+  assert.match(javascript, /function partyTrustLabel/);
+  assert.match(javascript, /function configureSourceLink/);
   assert.match(javascript, /displayCardMarkup\(card, "event"\)/);
   assert.match(javascript, /const presentation = cardPresentation\(card\)/);
   assert.equal((javascript.match(/class="card-face front"/g) || []).length, 1, "all surfaces must share one card renderer");
@@ -162,6 +165,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="profile-dialog"/);
   assert.match(javascript, /\/api\/profile/);
   assert.match(html, /id="shared-view"/);
+  assert.match(html, /id="shared-trust"/);
+  assert.match(html, /id="dialog-trust"/);
   assert.match(javascript, /function showSharedCard/);
   assert.match(javascript, /תצוגת שיתוף בלבד/);
   assert.match(javascript, /הקלף לא נוסף לאוסף שלכם/);
@@ -237,8 +242,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
+  assert.match(html, /step9-trust-1/);
   assert.match(themeCss, /\.card-dialog \.kalpi-card[^}]*width:\s*min\(370px,\s*100%\)/s);
   assert.match(themeCss, /\.new-stamp[^}]*top:\s*50%[^}]*translateY\(-50%\)/s);
+  assert.doesNotMatch(themeCss, /#pack-view \.walkout-receipt\s*\{\s*display:\s*none/);
+  assert.match(javascript, /הציטוט קוצר/);
+  assert.match(javascript, /טרם אושרה בוועדת הבחירות/);
   assert.match(html, /data-theme="pack-v2"/);
   assert.match(html, /id="visual-theme"/);
   assert.match(html, /id="visual-card-frame"/);

@@ -102,11 +102,25 @@ function secretsMatch(provided, expected) {
 
 export function publicPartyRegister(studioContent, cards = []) {
   if (studioContent?.parties?.length) {
-    return studioContent.parties.map(({ id, displayNameHe, displayNameEn, requestedLetters, pip }) => ({
+    return studioContent.parties.map(({
+      id,
+      displayNameHe,
+      displayNameEn,
+      requestedLetters,
+      finalLetters,
+      letterStatus,
+      filingStatus,
+      asOfDate,
+      pip,
+    }) => ({
       id,
       displayNameHe,
       displayNameEn,
       requestedLetters: requestedLetters || [],
+      finalLetters: finalLetters || null,
+      letterStatus: letterStatus || null,
+      filingStatus: filingStatus || null,
+      asOfDate: asOfDate || null,
       pip,
     }));
   }

@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=hebrew-quality-15" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=10" />
+  <link rel="stylesheet" href="/styles.css?v=step9-trust-1" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=step9-trust-1" />
 </head>
 <body>
   <div class="paper-noise" aria-hidden="true"></div>
@@ -133,6 +133,7 @@
         <h1 id="shared-title">רק מסתכלים.</h1>
         <div id="shared-card" class="shared-card"></div>
         <p id="shared-notice" class="shared-notice">הקלף הזה לא נוסף לאוסף שלכם.</p>
+        <p id="shared-trust" class="card-trust-note"></p>
         <a id="shared-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
         <button id="shared-open-game" class="primary-action narrow" type="button">לאיסוף שלי</button>
       </section>
@@ -174,14 +175,14 @@
         </div>
         <p id="growth-empty" class="empty-note" hidden>טוענים את הקהילה…</p>
         <div id="community-tabs" class="contained-tabs" role="tablist" aria-label="אזורי הקהילה">
-          <button type="button" role="tab" data-community-page="trade" class="active">החלפות</button>
-          <button type="button" role="tab" data-community-page="open-trades">הצעות פתוחות</button>
-          <button type="button" role="tab" data-community-page="faction">סיעות</button>
-          <button type="button" role="tab" data-community-page="collectors">אספנים</button>
-          <button type="button" role="tab" data-community-page="challenge">האתגר היומי</button>
+          <button id="community-tab-trade" type="button" role="tab" aria-selected="true" aria-controls="community-panel-trade" tabindex="0" data-community-page="trade" class="active">החלפות</button>
+          <button id="community-tab-open-trades" type="button" role="tab" aria-selected="false" aria-controls="community-panel-open-trades" tabindex="-1" data-community-page="open-trades">הצעות פתוחות</button>
+          <button id="community-tab-faction" type="button" role="tab" aria-selected="false" aria-controls="community-panel-faction" tabindex="-1" data-community-page="faction">סיעות</button>
+          <button id="community-tab-collectors" type="button" role="tab" aria-selected="false" aria-controls="community-panel-collectors" tabindex="-1" data-community-page="collectors">אספנים</button>
+          <button id="community-tab-challenge" type="button" role="tab" aria-selected="false" aria-controls="community-panel-challenge" tabindex="-1" data-community-page="challenge">האתגר היומי</button>
         </div>
         <div class="growth-grid">
-          <article class="work-card trade-desk">
+          <article id="community-panel-trade" class="work-card trade-desk" role="tabpanel" aria-labelledby="community-tab-trade" tabindex="0">
             <p class="work-kicker">החלפות</p>
             <h2>מה נותנים ומה רוצים?</h2>
             <div id="trade-preview" class="trade-preview" hidden></div>
@@ -208,7 +209,7 @@
               <button id="trade-demo" class="secondary-action" type="button">העתקת קישור</button>
             </div>
           </article>
-          <article class="work-card open-trades-desk" hidden>
+          <article id="community-panel-open-trades" class="work-card open-trades-desk" role="tabpanel" aria-labelledby="community-tab-open-trades" tabindex="0" hidden>
             <p class="work-kicker">הצעות פתוחות</p>
             <h2>עסקאות שמחכות לכם.</h2>
             <div id="trade-board" class="trade-board"></div>
@@ -226,7 +227,7 @@
             <p class="work-kicker">פעילות מקומית</p>
             <div id="growth-metrics" class="metric-ledger"></div>
           </article>
-          <article class="work-card faction-desk">
+          <article id="community-panel-faction" class="work-card faction-desk" role="tabpanel" aria-labelledby="community-tab-faction" tabindex="0">
             <p class="work-kicker">מלחמת הסיעות</p>
             <h2>למי החבילה שלכם נספרת?</h2>
             <label class="field-label" for="faction-select">בחירה אנונימית</label>
@@ -234,11 +235,11 @@
             <button id="save-faction" class="primary-action" type="button">בחירה</button>
             <div id="faction-board" class="leaderboard-list"></div>
           </article>
-          <article class="work-card leaderboard-desk">
+          <article id="community-panel-collectors" class="work-card leaderboard-desk" role="tabpanel" aria-labelledby="community-tab-collectors" tabindex="0">
             <p class="work-kicker">טבלת האספנים</p>
             <div id="collector-board" class="leaderboard-list"></div>
           </article>
-          <article class="work-card daily-challenge-desk">
+          <article id="community-panel-challenge" class="work-card daily-challenge-desk" role="tabpanel" aria-labelledby="community-tab-challenge" tabindex="0">
             <p class="work-kicker">האתגר היומי</p>
             <div id="daily-challenge-leader-art" class="daily-challenge-leader-art" aria-hidden="true"></div>
             <h2 id="daily-challenge-title">מי אסף הכי הרבה?</h2>
@@ -399,10 +400,10 @@
     </main>
     <div class="top-nav-row">
       <nav class="bottom-nav" aria-label="ניווט ראשי">
-        <button type="button" data-nav="home" class="active"><span>◫</span>היום</button>
-        <button type="button" data-nav="binder"><span>▦</span>אוסף</button>
-        <button type="button" data-nav="achievements"><span>◇</span>הישגים</button>
-        <button type="button" data-nav="growth"><span>↗</span>קהילה</button>
+        <button type="button" data-nav="home" class="active" aria-current="page"><span aria-hidden="true">◫</span>היום</button>
+        <button type="button" data-nav="binder"><span aria-hidden="true">▦</span>אוסף</button>
+        <button type="button" data-nav="achievements"><span aria-hidden="true">◇</span>הישגים</button>
+        <button type="button" data-nav="growth"><span aria-hidden="true">↗</span>קהילה</button>
       </nav>
       <span id="advocacy-short" class="visually-hidden">מהדורת עמדה גלויה</span>
       <button id="open-advocacy" class="advocacy-info" type="button" aria-label="גילוי נאות: איך נבחר התוכן?" title="איך נבחר התוכן?">ⓘ</button>
@@ -412,6 +413,7 @@
     <button id="close-dialog" class="dialog-close" type="button" aria-label="סגירת הקלף">×</button>
     <div id="dialog-card"></div>
     <p id="dialog-ownership" class="dialog-ownership"></p>
+    <p id="dialog-trust" class="card-trust-note"></p>
     <a id="dialog-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
     <div class="dialog-actions">
       <button id="dialog-share" class="primary-action" type="button">שיתוף הקלף</button>
@@ -463,6 +465,6 @@
   <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="auto" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
     <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
   </video>
-  <script type="module" src="/app.js?v=deferred-ui-1"></script>
+  <script type="module" src="/app.js?v=step9-trust-1"></script>
 </body>
 </html>
