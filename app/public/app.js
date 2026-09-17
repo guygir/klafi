@@ -726,7 +726,8 @@ async function bootstrap() {
         ? "urgent"
         : cachedDueCount() > 1 ? "backlog" : "buffered";
       const cachedBufferSize = model.idleQueue.length + (model.serverState?.preparedPulls || []).length;
-      if (priority !== "buffered" || cachedBufferSize < (model.serverState?.idleCapacity || 8)) {
+      const hasMaterializedCard = model.idleQueue.length > 0;
+      if (!hasMaterializedCard && (priority !== "buffered" || cachedBufferSize < (model.serverState?.idleCapacity || 8))) {
         scheduleIdleRefill({ priority });
       }
     }).catch(() => {});

@@ -210,6 +210,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /PENDING_IDLE_SEEN_KEY/);
   assert.match(javascript, /cachedDueCount\(\) > 1 \? "backlog"/);
   assert.match(javascript, /cachedBufferSize < \(model\.serverState\?\.idleCapacity \|\| 8\)/);
+  assert.match(javascript, /const hasMaterializedCard = model\.idleQueue\.length > 0/);
   assert.match(javascript, /playHomePackRip\(\{ holdAtEnd: !cached \}\)/);
   assert.match(javascript, /await rip\.finished/);
   assert.match(javascript, /if \(!model\.token\) await hydrateHome\(\)/);
