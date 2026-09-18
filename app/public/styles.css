@@ -1861,6 +1861,12 @@ h1 {
   font: 500 13px/1.45 "IBM Plex Sans Hebrew", sans-serif;
   white-space: pre-wrap;
 }
+.share-sheet-caption [dir="ltr"] {
+  display: block;
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: center;
+}
 .share-sheet-actions {
   grid-template-columns: 1fr 1fr;
 }
