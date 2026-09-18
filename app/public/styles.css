@@ -2205,18 +2205,24 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   position: absolute;
   z-index: 3;
   inset: 12px 12px auto;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   direction: ltr;
   gap: 8px;
+}
+.card-meta-mid {
+  display: grid;
+  min-width: 0;
+  place-items: center;
 }
 .card-meta-end {
   display: inline-flex;
   align-items: center;
+  justify-self: end;
   gap: 4px;
 }
-.card-image-meta span,
+.card-image-meta .card-code-tag,
 .card-image-meta strong,
 .card-image-meta .card-copies-tag,
 .card-heart-slot,
@@ -2248,12 +2254,10 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   font-size: clamp(9px, 4.2cqw, 13px);
 }
 .card-heart-slot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  position: static;
   visibility: hidden;
   pointer-events: none;
-  transform: translate(-50%, -50%);
+  transform: none;
 }
 .card-identity-stack { display: contents; }
 .card-rarity-zone,

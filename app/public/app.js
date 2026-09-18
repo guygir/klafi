@@ -999,14 +999,12 @@ function syncBinderHeartTools(root = elements.binderGrid) {
     const copies = slot.querySelector(".card-copies-tag");
     const star = [...slot.querySelectorAll(".card-image-meta strong")]
       .find((node) => getComputedStyle(node).display !== "none");
-    const code = slot.querySelector(".card-image-meta span");
-    const sample = copies || star || code || mark;
+    const sample = copies || star || mark;
     if (!tools || !heart || !mark || !sample) return;
     const slotBox = slot.getBoundingClientRect();
     const markBox = mark.getBoundingClientRect();
     const sampleBox = sample.getBoundingClientRect();
-    const codeBox = code?.getBoundingClientRect();
-    const size = Math.round(Math.max(sampleBox.width, sampleBox.height, codeBox?.height || 0));
+    const size = Math.round(Math.max(sampleBox.width, sampleBox.height));
     heart.style.width = `${size}px`;
     heart.style.height = `${size}px`;
     heart.style.minWidth = `${size}px`;
@@ -2091,8 +2089,8 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
         <div class="card-image-zone">
           ${artMarkup(card)}
           <div class="card-image-meta">
-            <span>${escapeHtml(presentation.code)}</span>
-            ${surface === "binder" ? `<i class="card-heart-slot" aria-hidden="true"></i>` : ""}
+            <span class="card-code-tag">${escapeHtml(presentation.code)}</span>
+            <span class="card-meta-mid">${surface === "binder" ? `<i class="card-heart-slot" aria-hidden="true"></i>` : ""}</span>
             <span class="card-meta-end">
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
               <strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>
