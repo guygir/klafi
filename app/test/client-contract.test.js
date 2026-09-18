@@ -56,8 +56,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /class="concept-stage"/);
   assert.match(css, /\.card-image-meta strong/);
   assert.match(css, /\.card-name-zone[^}]*background: var\(--civic\)/);
-  assert.match(css, /\.binder-card-tools[^}]*right: 3\.4cqw/);
-  assert.doesNotMatch(css, /\.binder-card-tools[^}]*left: 50%/);
+  assert.match(css, /\.binder-card-tools[^}]*left: 50%/);
   assert.match(javascript, /card-heart-slot/);
   assert.match(javascript, /function syncBinderHeartTools/);
   assert.match(javascript, /if \(frame\?\.dataset\.cardFrame === "fullart-v1"\) return/);
@@ -65,7 +64,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(themeCss, /card-identity-stack[\s\S]{0,280}?gap:\s*2cqw/);
   assert.doesNotMatch(html, /id="dialog-share"/);
   assert.match(html, /share-icon-button/);
-  assert.match(html, /id="dialog-gift"/);
+  assert.doesNotMatch(html, /id="dialog-gift"/);
   assert.match(css, /\.binder-card-tools \.dupe-count[^}]*position: static/);
   assert.match(css, /\.binder-slot\s*\{[^}]*aspect-ratio:\s*63\s*\/\s*96/s);
   assert.match(javascript, /data-favorite-card/);
@@ -216,7 +215,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-4/);
+  assert.match(html, /card-surface-5/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -268,7 +267,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-4/);
+  assert.match(html, /card-surface-5/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

@@ -207,7 +207,6 @@ const elements = {
   dialogSource: document.querySelector("#dialog-source"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
   dialogInstagram: document.querySelector("#dialog-instagram"),
-  dialogGift: document.querySelector("#dialog-gift"),
   binderFlipFrame: document.querySelector("#binder-flip-frame"),
   shareSheet: document.querySelector("#share-sheet"),
   shareSheetTitle: document.querySelector("#share-sheet-title"),
@@ -1000,7 +999,9 @@ function syncBinderHeartTools(root = elements.binderGrid) {
     const slotBox = slot.getBoundingClientRect();
     const markBox = mark.getBoundingClientRect();
     tools.style.top = `${markBox.top - slotBox.top}px`;
-    tools.style.right = `${slotBox.right - markBox.right}px`;
+    tools.style.left = `${markBox.left - slotBox.left}px`;
+    tools.style.right = "auto";
+    tools.style.transform = "none";
   });
 }
 
@@ -2075,10 +2076,10 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
           ${artMarkup(card)}
           <div class="card-image-meta">
             <span>${escapeHtml(presentation.code)}</span>
+            ${surface === "binder" ? `<i class="card-heart-slot" aria-hidden="true"></i>` : ""}
             <span class="card-meta-end">
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
               <strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>
-              ${surface === "binder" ? `<i class="card-heart-slot" aria-hidden="true"></i>` : ""}
             </span>
           </div>
           ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
@@ -3565,8 +3566,6 @@ function renderDialogCard() {
   elements.dialogSource.dataset.sourceCard = card.id;
   elements.dialogWhatsapp.hidden = ownedCount < 1;
   elements.dialogInstagram.hidden = ownedCount < 1;
-  elements.dialogGift.hidden = ownedCount < 1;
-  elements.dialogGift.disabled = ownedCount < 2;
 }
 
 function openReportDialog() {
@@ -4171,7 +4170,6 @@ elements.shareSheetSave?.addEventListener("click", () => {
 elements.shareSheet?.addEventListener("click", (event) => {
   if (event.target === elements.shareSheet) closeShareSheet();
 });
-elements.dialogGift.addEventListener("click", offerDuplicate);
 elements.openTrustLegend.addEventListener("click", () => elements.trustDialog.showModal());
 elements.closeTrust.addEventListener("click", () => elements.trustDialog.close());
 elements.openAdvocacy.addEventListener("click", () => elements.advocacyDialog.showModal());

@@ -255,9 +255,11 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .binder-card-tools {
-  top: 3.4cqw;
-  right: 3.4cqw;
+  top: var(--heart-gutter, 3.4cqw);
+  left: 50%;
+  right: auto;
   gap: 2cqw;
+  transform: translateX(-50%);
 }
 
 #app[data-card-frame="tall-v2"] .binder-card-tools .dupe-count,
@@ -1219,9 +1221,9 @@ body:has(#app[data-theme="pack-v2"]) {
   background: transparent;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
-  font-size: clamp(12px, 5.2cqw, 20px);
+  font-size: clamp(16px, 7.2cqw, 26px);
   font-weight: 600;
-  line-height: 1.15;
+  line-height: 1.12;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
   white-space: normal;
 }
@@ -1267,7 +1269,7 @@ body:has(#app[data-theme="pack-v2"]) {
   padding: 0;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
-  font-size: clamp(9px, 3.5cqw, 13px);
+  font-size: clamp(12px, 5.2cqw, 18px);
   font-weight: 600;
   line-height: 1.2;
 }

@@ -2246,8 +2246,12 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   font-size: clamp(9px, 4.2cqw, 13px);
 }
 .card-heart-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   visibility: hidden;
   pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 .card-identity-stack { display: contents; }
 .card-rarity-zone,
@@ -2361,13 +2365,13 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   position: absolute;
   z-index: 10;
   top: var(--heart-gutter, 3.4cqw);
-  right: var(--heart-gutter, 3.4cqw);
-  left: auto;
+  left: 50%;
+  right: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  transform: none;
+  transform: translateX(-50%);
   pointer-events: none;
 }
 .binder-card-tools .dupe-count {
