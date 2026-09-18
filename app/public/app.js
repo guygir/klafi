@@ -977,12 +977,17 @@ function fitCardText(element) {
   let low = Math.max(scale.floor, frameWidth * scale.low);
   let high = Math.min(scale.ceiling, frameWidth * scale.high);
   if (high < low) high = low;
+  const fitsAt = (size) => {
+    element.style.fontSize = `${size}px`;
+    return element.scrollHeight <= element.clientHeight + 1
+      && element.scrollWidth <= element.clientWidth + 1;
+  };
+  if (isFullart && role === "quote") {
+    if (fitsAt(high)) return;
+  }
   for (let index = 0; index < 9; index += 1) {
     const size = (low + high) / 2;
-    element.style.fontSize = `${size}px`;
-    const fits = element.scrollHeight <= element.clientHeight + 1
-      && element.scrollWidth <= element.clientWidth + 1;
-    if (fits) low = size;
+    if (fitsAt(size)) low = size;
     else high = size;
   }
   element.style.fontSize = `${low}px`;
@@ -3853,10 +3858,10 @@ function fitShareQuote(context, quote, maxWidth, maxHeight, high, low) {
 function paintFullartShareIdentity(context, card, presentation, { x, y, width, height }) {
   const fade = context.createLinearGradient(0, y, 0, y + height);
   fade.addColorStop(0, "rgba(0, 0, 0, 0)");
-  fade.addColorStop(0.68, "rgba(0, 0, 0, 0)");
-  fade.addColorStop(0.74, "rgba(0, 0, 0, 0.18)");
-  fade.addColorStop(0.84, "rgba(0, 0, 0, 0.72)");
-  fade.addColorStop(0.92, "#000");
+  fade.addColorStop(0.58, "rgba(0, 0, 0, 0)");
+  fade.addColorStop(0.66, "rgba(0, 0, 0, 0.22)");
+  fade.addColorStop(0.78, "rgba(0, 0, 0, 0.78)");
+  fade.addColorStop(0.88, "#000");
   fade.addColorStop(1, "#000");
   context.fillStyle = fade;
   context.fillRect(x, y, width, height);
@@ -3877,10 +3882,7 @@ function paintFullartShareIdentity(context, card, presentation, { x, y, width, h
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillText(presentation.code, pillX + codeWidth / 2, pillY + pillHeight / 2);
-  context.textBaseline = "alphabetic";
 
-  const stackTop = y + height * 0.7 + height * 0.01;
-  const stackHeight = height * 0.3 - height * 0.024;
   const textWidth = width * 0.87;
   const centerX = x + width / 2;
   const nameSize = width * 0.08;
@@ -3890,49 +3892,52 @@ function paintFullartShareIdentity(context, card, presentation, { x, y, width, h
     card.type === "Quote" ? presentation.subtitle : "",
     presentation.code,
   ].filter(Boolean).join(" · ");
+  const nameBand = { top: y + height * 0.64, height: height * 0.06 };
+  const partyY = y + height * 0.725;
+  const rarityY = y + height * 0.775;
+  const quoteBox = { top: y + height * 0.80, height: height * 0.20 };
   context.font = `600 ${nameSize}px 'Noto Serif Hebrew', Fraunces, serif`;
   const nameLines = measureWrappedLines(context, presentation.title, textWidth, 2);
-  const nameHeight = nameLines.length * nameSize * 1.15;
-  const partyHeight = metaSize * 1.15;
-  const rarityHeight = metaSize * 1.15;
   const quoteFit = fitShareQuote(
     context,
     presentation.quote,
     textWidth,
-    stackHeight * 0.42,
+    quoteBox.height * 0.82,
     width * 0.064,
     width * 0.042,
   );
-  const quoteHeight = Math.max(quoteFit.lineHeight, quoteFit.lines.length * quoteFit.lineHeight);
-  const used = nameHeight + partyHeight + rarityHeight + quoteHeight;
-  const gap = Math.max(width * 0.008, (stackHeight - used) / 5);
-  let cursor = stackTop + gap;
 
   context.textAlign = "center";
+  context.textBaseline = "middle";
   context.fillStyle = "#f7f2e8";
   context.font = `600 ${nameSize}px 'Noto Serif Hebrew', Fraunces, serif`;
-  drawWrappedLines(context, nameLines, centerX, cursor + nameSize * 0.86, nameSize * 1.15);
-  cursor += nameHeight + gap;
+  const nameBlock = nameLines.length * nameSize * 1.15;
+  const nameStart = nameBand.top + (nameBand.height - nameBlock) / 2 + nameSize * 0.42;
+  context.textBaseline = "alphabetic";
+  drawWrappedLines(context, nameLines, centerX, nameStart, nameSize * 1.15);
 
   context.fillStyle = "rgba(247, 242, 232, 0.72)";
   context.font = `500 ${metaSize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
-  context.fillText(partyLine, centerX, cursor + metaSize * 0.86);
+  context.textBaseline = "middle";
+  context.fillText(partyLine, centerX, partyY);
   const partyWidth = context.measureText(partyLine).width;
   const pip = Math.max(4, width * 0.011);
   context.fillStyle = presentation.pip || "#1f4f4a";
   context.beginPath();
-  context.arc(centerX + partyWidth / 2 + pip * 1.6, cursor + metaSize * 0.55, pip, 0, Math.PI * 2);
+  context.arc(centerX + partyWidth / 2 + pip * 1.6, partyY, pip, 0, Math.PI * 2);
   context.fill();
-  cursor += partyHeight + gap;
 
   context.fillStyle = "#c4a35a";
   context.font = `500 ${metaSize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
-  context.fillText(`${presentation.rarityMark} ${presentation.rarityName}`, centerX, cursor + metaSize * 0.86);
-  cursor += rarityHeight + gap;
+  context.fillText(`${presentation.rarityMark} ${presentation.rarityName}`, centerX, rarityY);
 
   context.fillStyle = "#f7f2e8";
   context.font = `600 ${quoteFit.size}px 'Noto Serif Hebrew', Fraunces, serif`;
-  drawWrappedLines(context, quoteFit.lines, centerX, cursor + quoteFit.size * 0.86, quoteFit.lineHeight);
+  context.textBaseline = "alphabetic";
+  const quoteBlock = quoteFit.lines.length * quoteFit.lineHeight;
+  const quoteStart = quoteBox.top + (quoteBox.height - quoteBlock) / 2 + quoteFit.size * 0.86;
+  drawWrappedLines(context, quoteFit.lines, centerX, quoteStart, quoteFit.lineHeight);
+  context.textBaseline = "alphabetic";
 }
 
 function paintTallShareIdentity(context, card, presentation, { x, y, width, height }) {
