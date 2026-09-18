@@ -46,6 +46,7 @@ const model = {
   renderedLevel: null,
   selectedAvatarId: null,
   extrasReady: false,
+  reports: [],
 };
 let showcaseTimers = [];
 let packTimers = [];
@@ -194,6 +195,8 @@ const elements = {
   editorialSample: document.querySelector("#editorial-sample"),
   reviewFilter: document.querySelector("#review-filter"),
   cardReviewList: document.querySelector("#card-review-list"),
+  studioReportList: document.querySelector("#studio-report-list"),
+  studioReportEmpty: document.querySelector("#studio-report-empty"),
   errorTitle: document.querySelector("#error-title"),
   errorCopy: document.querySelector("#error-copy"),
   retry: document.querySelector("#retry"),
@@ -3267,6 +3270,57 @@ function renderStudio() {
     </article>`).join("");
   renderContentStudio();
   renderSpecialStudio();
+  renderStudioReports();
+  if (studioSecret()) hydrateStudioReports().catch(() => {});
+}
+
+function reportCategoryLabel(category) {
+  return {
+    source: "Source or date",
+    quote: "Quote or wording",
+    identity: "Name, role, or list",
+    display: "Display",
+    other: "Other",
+  }[category] || category;
+}
+
+function renderStudioReports() {
+  if (!elements.studioReportList) return;
+  const reports = model.reports || [];
+  if (elements.studioReportEmpty) {
+    elements.studioReportEmpty.hidden = reports.length > 0;
+    elements.studioReportEmpty.textContent = reports.length
+      ? ""
+      : "No player reports yet.";
+  }
+  elements.studioReportList.innerHTML = reports.map((report) => `
+    <article class="review-row" data-studio-report="${escapeHtml(report.reportId)}">
+      <div class="review-code">${escapeHtml(report.cardId || "—")}<br /><span class="status-chip">${escapeHtml(report.status)}</span></div>
+      <div class="review-title"><strong>${escapeHtml(reportCategoryLabel(report.category))}</strong><small>${escapeHtml(report.createdAt || "")}${report.pagePath ? ` · ${escapeHtml(report.pagePath)}` : ""}</small></div>
+      <div class="review-source">${escapeHtml(report.details)}${report.reviewerNote ? `<br /><em>${escapeHtml(report.reviewerNote)}</em>` : ""}</div>
+      <div class="review-actions">
+        <button type="button" data-report-status="reviewing">Review</button>
+        <button type="button" data-report-status="resolved">Resolve</button>
+        <button type="button" data-report-status="rejected">Reject</button>
+      </div>
+    </article>`).join("");
+}
+
+async function hydrateStudioReports() {
+  if (!studioSecret()) return;
+  const payload = await request("/api/studio/reports");
+  model.reports = payload.reports || [];
+  renderStudioReports();
+}
+
+async function updateStudioReport(reportId, status) {
+  await request(`/api/studio/reports/${encodeURIComponent(reportId)}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ status, reviewerNote: status === "resolved" ? "Verified against the source record." : null }),
+  });
+  await hydrateStudioReports();
+  showToast(status === "resolved" ? "Report marked resolved." : `Report marked ${status}.`);
 }
 
 async function createTradePreview() {
@@ -3947,6 +4001,15 @@ elements.reviewFilter.addEventListener("change", () => {
 elements.cardReviewList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-review-walkout]");
   if (button) startSharedWalkout(button.dataset.reviewWalkout);
+});
+
+elements.studioReportList?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-report-status]");
+  const row = event.target.closest("[data-studio-report]");
+  if (!button || !row) return;
+  updateStudioReport(row.dataset.studioReport, button.dataset.reportStatus).catch(() => {
+    showToast("Could not update the report.");
+  });
 });
 
 elements.navButtons.forEach((button) => {
