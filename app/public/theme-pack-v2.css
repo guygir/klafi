@@ -373,7 +373,10 @@ body:has(#app[data-theme="pack-v2"]) {
   gap: 2cqw;
 }
 
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-code-tag {
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-code-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+  width: max-content;
+  min-width: 0;
   max-width: 64%;
   height: 8cqw;
   min-height: 8cqw;
@@ -386,8 +389,11 @@ body:has(#app[data-theme="pack-v2"]) {
   white-space: nowrap;
 }
 
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-code-tag {
+  justify-self: start;
+}
+
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag,
 #app[data-card-frame="tall-v2"] .binder-slot:has(.kalpi-card:not([data-card-surface="walkout"])) .favorite-heart {
   width: 8cqw;
   min-width: 8cqw;

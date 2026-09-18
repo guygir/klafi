@@ -995,19 +995,17 @@ function syncBinderHeartTools(root = elements.binderGrid) {
   root?.querySelectorAll(".binder-slot.owned").forEach((slot) => {
     const tools = slot.querySelector(".binder-card-tools");
     const heart = slot.querySelector(".favorite-heart");
-    const mark = slot.querySelector(".card-heart-slot");
     const copies = slot.querySelector(".card-copies-tag");
     const star = [...slot.querySelectorAll(".card-image-meta strong")]
       .find((node) => getComputedStyle(node).display !== "none");
     const code = slot.querySelector(".card-code-tag");
-    const sample = copies || star || mark;
-    if (!tools || !heart || !mark || !sample || !code) return;
+    const sample = copies || star || code;
+    if (!tools || !heart || !code || !sample) return;
     const slotBox = slot.getBoundingClientRect();
     const sampleBox = sample.getBoundingClientRect();
     const codeBox = code.getBoundingClientRect();
-    const endBox = (copies || star || slot.querySelector(".card-meta-end"))?.getBoundingClientRect();
-    const size = Math.round(Math.max(sampleBox.width, sampleBox.height));
-    const midX = endBox ? (codeBox.right + endBox.left) / 2 : codeBox.right + size;
+    const size = Math.round(codeBox.height || sampleBox.height);
+    const midX = (slotBox.left + slotBox.right) / 2;
     const midY = (codeBox.top + codeBox.bottom) / 2;
     heart.style.width = `${size}px`;
     heart.style.height = `${size}px`;
