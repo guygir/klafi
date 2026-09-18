@@ -410,7 +410,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.ok(catalog.body.cards.every(({ titleHe, setNameHe, typeHe, displayCode }) => titleHe && setNameHe && typeHe && displayCode));
   const specials = await api(running.base, "/api/specials");
   assert.equal(specials.status, 200);
-  assert.equal(specials.body.sets.length, 6);
+  assert.equal(specials.body.sets.length, 7);
   assert.ok(specials.body.cards.length >= 17);
   assert.ok(specials.body.sets.every(({ packEligible }) => packEligible === false));
   assert.ok(specials.body.cards.some(({ id }) => id === "REC-BEN-GVIR-LEGAL-01"));

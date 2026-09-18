@@ -288,11 +288,16 @@ function isFirstSetCard(card) {
   return card?.releaseSetId === "party-leaders";
 }
 
+function usesFullartFrame(card) {
+  return ["party-leaders", "party-slot-2", "decisions", "records"].includes(card?.releaseSetId);
+}
+
 function debugFullartEnabled() {
   return localStorage.getItem(DEBUG_CARD_FRAME_KEY) === "fullart-v1";
 }
 
 function cardDisplayFrame(card) {
+  if (usesFullartFrame(card)) return "fullart-v1";
   if (isFirstSetCard(card) && debugFullartEnabled()) return "fullart-v1";
   return document.querySelector("#app")?.dataset.cardFrame || "tall-v2";
 }
