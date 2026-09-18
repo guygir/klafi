@@ -255,22 +255,21 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .binder-card-tools {
-  top: clamp(5px, 2.5cqw, 10px);
-  gap: clamp(3px, 1.5cqw, 6px);
+  top: 3.4cqw;
+  right: 3.4cqw;
+  gap: 2cqw;
 }
 
 #app[data-card-frame="tall-v2"] .binder-card-tools .dupe-count,
-#app[data-card-frame="tall-v2"] .favorite-heart {
-  min-width: clamp(22px, 13cqw, 34px);
-  height: clamp(22px, 13cqw, 34px);
-  border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 65%, var(--pack-umber, #3c3026));
-  background: color-mix(in srgb, var(--pack-paper, #eee5d4) 94%, transparent);
+#app[data-card-frame="tall-v2"] .binder-card-tools .favorite-heart,
+#app[data-card-frame="tall-v2"] .card-heart-slot {
+  width: 8.4cqw;
+  min-width: 8.4cqw;
+  height: 8.4cqw;
+  border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 38%, transparent);
+  background: color-mix(in srgb, var(--pack-paper, #eee5d4) 38%, transparent);
   color: var(--pack-umber, #3c3026);
-  font-size: clamp(11px, 7cqw, 18px);
-}
-
-#app[data-card-frame="tall-v2"] .favorite-heart {
-  width: clamp(22px, 13cqw, 34px);
+  font-size: 7.4cqw;
 }
 
 #app[data-card-frame="tall-v2"] .favorite-heart.active {
@@ -374,7 +373,9 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta span,
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-heart-slot,
+#app[data-card-frame="tall-v2"] .binder-slot:has(.kalpi-card:not([data-card-surface="walkout"])) .favorite-heart {
   max-width: 64%;
   padding: 1.1cqw 1.8cqw;
   overflow: hidden;
@@ -386,10 +387,13 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-heart-slot,
+#app[data-card-frame="tall-v2"] .binder-slot:has(.kalpi-card:not([data-card-surface="walkout"])) .favorite-heart {
   width: 8.4cqw;
   min-width: 8.4cqw;
   max-width: none;
+  height: 8.4cqw;
   flex: 0 0 auto;
   padding: 0;
   font-size: 7.4cqw;
@@ -1158,14 +1162,20 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="fullart-v1"] .card-image-meta span,
-#app[data-card-frame="fullart-v1"] .card-image-meta strong,
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
+#app[data-card-frame="fullart-v1"] .card-heart-slot,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta span,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta strong,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag {
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-heart-slot,
+#app .binder-slot:has([data-card-frame="fullart-v1"]) .favorite-heart {
   border-color: rgba(247, 242, 232, 0.28);
   background: rgba(5, 5, 5, 0.36);
   color: #f7f2e8;
+}
+
+#app[data-card-frame="fullart-v1"] .card-image-meta strong,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta strong {
+  display: none;
 }
 
 #app[data-card-frame="fullart-v1"] .card-identity-stack,
@@ -1176,10 +1186,10 @@ body:has(#app[data-theme="pack-v2"]) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.7cqw;
+  justify-content: flex-end;
+  gap: 2cqw;
   min-height: 0;
-  padding: 1.4% 6% 4%;
+  padding: 0 6.5% 4.2%;
   text-align: center;
 }
 
@@ -1209,20 +1219,24 @@ body:has(#app[data-theme="pack-v2"]) {
   background: transparent;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
-  font-size: clamp(13px, 5.6cqw, 22px);
-  font-weight: 700;
-  line-height: 1.08;
+  font-size: clamp(12px, 5.2cqw, 20px);
+  font-weight: 600;
+  line-height: 1.15;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
   white-space: normal;
 }
 
 #app[data-card-frame="fullart-v1"] .card-party-zone,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-party-zone {
+#app[data-card-frame="fullart-v1"] .card-rarity-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-party-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone {
   justify-content: center;
-  color: rgba(247, 242, 232, 0.7);
-  font-size: clamp(8px, 3.4cqw, 13px);
+  color: rgba(247, 242, 232, 0.72);
+  font-family: "IBM Plex Sans Hebrew", sans-serif;
+  font-size: clamp(9px, 3.5cqw, 13px);
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.2;
+  letter-spacing: 0;
   white-space: normal;
 }
 
@@ -1235,31 +1249,27 @@ body:has(#app[data-theme="pack-v2"]) {
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1.4cqw;
+  gap: 1.2cqw;
   color: var(--foil);
-  font-family: "IBM Plex Sans Hebrew", sans-serif;
-  font-size: clamp(9px, 3.6cqw, 13px);
-  font-weight: 600;
-  letter-spacing: 0.04em;
 }
 
 #app[data-card-frame="fullart-v1"] .card-rarity-zone strong,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone strong {
-  font-size: 1.15em;
-  letter-spacing: 0.08em;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
 }
 
 #app[data-card-frame="fullart-v1"] .card-quote-zone,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-quote-zone {
   min-height: 0;
-  margin-top: auto;
-  padding-top: 1%;
+  margin: 0;
+  padding: 0;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
-  font-size: clamp(9px, 3.6cqw, 15px);
+  font-size: clamp(9px, 3.5cqw, 13px);
   font-weight: 600;
-  line-height: 1.22;
+  line-height: 1.2;
 }
 
 #app[data-card-frame="fullart-v1"] .new-stamp,

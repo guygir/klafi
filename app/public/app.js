@@ -205,7 +205,6 @@ const elements = {
   dialog: document.querySelector("#card-dialog"),
   dialogCard: document.querySelector("#dialog-card"),
   dialogSource: document.querySelector("#dialog-source"),
-  dialogShare: document.querySelector("#dialog-share"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
   dialogInstagram: document.querySelector("#dialog-instagram"),
   dialogGift: document.querySelector("#dialog-gift"),
@@ -957,6 +956,7 @@ function describeError(error) {
 
 function fitCardText(element) {
   const frame = element.closest(".kalpi-card");
+  if (frame?.dataset.cardFrame === "fullart-v1") return;
   const frameWidth = frame?.clientWidth ?? 0;
   if (!frameWidth || !element.clientWidth || !element.clientHeight) return;
   const role = element.dataset.fitCardText;
@@ -2064,6 +2064,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-meta-end">
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
               <strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>
+              ${surface === "binder" ? `<i class="card-heart-slot" aria-hidden="true"></i>` : ""}
             </span>
           </div>
           ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
@@ -3548,10 +3549,10 @@ function renderDialogCard() {
   elements.dialogCard.innerHTML = displayCardMarkup(card);
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
-  elements.dialogShare.hidden = ownedCount < 1;
   elements.dialogWhatsapp.hidden = ownedCount < 1;
   elements.dialogInstagram.hidden = ownedCount < 1;
-  elements.dialogGift.hidden = ownedCount < 2;
+  elements.dialogGift.hidden = ownedCount < 1;
+  elements.dialogGift.disabled = ownedCount < 2;
 }
 
 function openReportDialog() {
@@ -3952,22 +3953,24 @@ async function sendPendingShare() {
   }
 }
 
-async function runShareAction(button, idleLabel, work) {
+async function runShareAction(button, work) {
+  const markup = button.innerHTML;
   button.disabled = true;
-  button.textContent = "מכינים שיתוף…";
+  button.setAttribute("aria-busy", "true");
   try {
     await work();
   } catch (error) {
     if (error.name !== "AbortError") showToast("לא הצלחנו להכין את השיתוף.");
   } finally {
     button.disabled = false;
-    button.textContent = idleLabel;
+    button.removeAttribute("aria-busy");
+    button.innerHTML = markup;
   }
 }
 
-async function sharePreparedCard(button, idleLabel, { channel, makeImage, fileName, eventChannel }) {
+async function sharePreparedCard(button, { channel, makeImage, fileName, eventChannel }) {
   const card = model.byId.get(model.dialogCardId);
-  await runShareAction(button, idleLabel, async () => {
+  await runShareAction(button, async () => {
     const blob = await makeImage(card);
     const file = new File([blob], fileName(card), { type: "image/png" });
     const { title, text, url } = shareCaption(card);
@@ -3994,28 +3997,8 @@ async function sharePreparedCard(button, idleLabel, { channel, makeImage, fileNa
   });
 }
 
-async function shareDialogCard() {
-  const card = model.byId.get(model.dialogCardId);
-  await runShareAction(elements.dialogShare, "שיתוף הקלף", async () => {
-    const blob = await makeWhatsAppImage(card);
-    const file = new File([blob], `kalpi-${card.id}.png`, { type: "image/png" });
-    const { title, text, url } = shareCaption(card);
-    if (canShareFiles(file)) {
-      await navigator.share({ title, text, files: [file] });
-    } else if (navigator.share) {
-      downloadBlob(blob, file.name);
-      await navigator.share({ title, text, url });
-    } else {
-      downloadBlob(blob, file.name);
-      const copied = await copyText(url);
-      showToast(copied ? "התמונה נשמרה והקישור הועתק." : "התמונה נשמרה.");
-    }
-    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode() });
-  });
-}
-
 async function shareToWhatsApp() {
-  await sharePreparedCard(elements.dialogWhatsapp, "וואטסאפ", {
+  await sharePreparedCard(elements.dialogWhatsapp, {
     channel: "whatsapp",
     makeImage: makeWhatsAppImage,
     fileName: (card) => `kalpi-${card.id}.png`,
@@ -4024,7 +4007,7 @@ async function shareToWhatsApp() {
 }
 
 async function shareToInstagram() {
-  await sharePreparedCard(elements.dialogInstagram, "סטורי", {
+  await sharePreparedCard(elements.dialogInstagram, {
     channel: "instagram",
     makeImage: makeStoryImage,
     fileName: (card) => `kalpi-${card.id}-story.png`,
@@ -4159,7 +4142,6 @@ elements.claimLevel.addEventListener("click", async () => {
     elements.claimLevel.disabled = false;
   }
 });
-elements.dialogShare.addEventListener("click", shareDialogCard);
 elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);
 elements.dialogInstagram.addEventListener("click", shareToInstagram);
 elements.binderFlipFrame?.addEventListener("click", toggleBinderCardFrame);
