@@ -210,6 +210,13 @@ const elements = {
   dialogInstagram: document.querySelector("#dialog-instagram"),
   dialogGift: document.querySelector("#dialog-gift"),
   binderFlipFrame: document.querySelector("#binder-flip-frame"),
+  shareSheet: document.querySelector("#share-sheet"),
+  shareSheetTitle: document.querySelector("#share-sheet-title"),
+  shareSheetImage: document.querySelector("#share-sheet-image"),
+  shareSheetCaption: document.querySelector("#share-sheet-caption"),
+  shareSheetSend: document.querySelector("#share-sheet-send"),
+  shareSheetSave: document.querySelector("#share-sheet-save"),
+  closeShareSheet: document.querySelector("#close-share-sheet"),
   dialogReport: document.querySelector("#dialog-report"),
   closeDialog: document.querySelector("#close-dialog"),
   trustDialog: document.querySelector("#trust-dialog"),
@@ -280,7 +287,7 @@ function applyVisualConfig() {
 }
 
 function isFirstSetCard(card) {
-  return card?.releaseSetId === "party-leaders" || card?.idleEligible === true;
+  return card?.releaseSetId === "party-leaders";
 }
 
 function debugFullartEnabled() {
@@ -892,9 +899,17 @@ async function recordEvent(type, details = {}) {
   }
 }
 
+function inboundShareCardId() {
+  const params = new URLSearchParams(location.search);
+  const fromPath = location.pathname.match(/^\/share\/([^/]+)$/);
+  const gift = params.get("gift");
+  if (gift && gift !== "1") return gift;
+  return params.get("card") ?? (fromPath ? decodeURIComponent(fromPath[1]) : null);
+}
+
 function handleInboundLink() {
   const params = new URLSearchParams(location.search);
-  const cardId = params.get("gift") ?? params.get("card");
+  const cardId = inboundShareCardId();
   const referralCode = params.get("ref");
   if (referralCode && !sessionStorage.getItem(`kalpi-ref-${referralCode}`)) {
     sessionStorage.setItem(`kalpi-ref-${referralCode}`, "1");
@@ -3724,60 +3739,199 @@ function downloadBlob(blob, name) {
   setTimeout(() => URL.revokeObjectURL(href), 1000);
 }
 
-async function makeStoryImage(card) {
+async function readyShareFonts() {
+  try {
+    await document.fonts?.ready;
+  } catch {
+    // Canvas still exports with fallback faces.
+  }
+}
+
+async function canvasToPng(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Canvas export failed"))), "image/png");
+  });
+}
+
+async function paintSharePortrait(card, { width, height, fadeFrom, nameY, footerY }) {
+  await readyShareFonts();
   const presentation = cardPresentation(card);
   const shareUrl = makeDeepLink("card", card.id);
   const canvas = document.createElement("canvas");
-  canvas.width = 1080;
-  canvas.height = 1920;
+  canvas.width = width;
+  canvas.height = height;
   const context = canvas.getContext("2d");
   context.direction = "rtl";
   context.fillStyle = "#050505";
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillRect(0, 0, width, height);
 
   if (presentation.artKey) {
     try {
       const image = await loadImage(`/design-assets/${encodeURIComponent(presentation.artKey)}`);
-      const scale = Math.max(canvas.width / image.width, 1320 / image.height);
-      const width = image.width * scale;
-      const height = image.height * scale;
-      context.drawImage(image, (canvas.width - width) / 2, 0, width, height);
+      const coverHeight = Math.round(height * 0.78);
+      const scale = Math.max(width / image.width, coverHeight / image.height);
+      const drawWidth = image.width * scale;
+      const drawHeight = image.height * scale;
+      context.drawImage(image, (width - drawWidth) / 2, 0, drawWidth, drawHeight);
     } catch {
       context.fillStyle = presentation.pip;
       context.font = "600 220px Fraunces";
       context.textAlign = "center";
-      context.fillText(placeholderMark(card), 540, 640);
+      context.fillText(placeholderMark(card), width / 2, height * 0.38);
     }
   }
 
-  const fade = context.createLinearGradient(0, 980, 0, 1920);
+  const fade = context.createLinearGradient(0, fadeFrom, 0, height);
   fade.addColorStop(0, "rgba(0, 0, 0, 0)");
-  fade.addColorStop(0.28, "rgba(0, 0, 0, 0.35)");
-  fade.addColorStop(0.58, "rgba(0, 0, 0, 0.88)");
+  fade.addColorStop(0.22, "rgba(0, 0, 0, 0.28)");
+  fade.addColorStop(0.55, "rgba(0, 0, 0, 0.86)");
   fade.addColorStop(1, "#000");
   context.fillStyle = fade;
-  context.fillRect(0, 980, canvas.width, 940);
+  context.fillRect(0, fadeFrom, width, height - fadeFrom);
 
   context.textAlign = "center";
   context.fillStyle = "#f7f2e8";
-  context.font = "700 64px 'Noto Serif Hebrew', Fraunces, serif";
-  const nameEnd = wrapCanvasText(context, presentation.title, 540, 1280, 900, 72, 2);
+  context.font = `700 ${Math.round(width * 0.058)}px 'Noto Serif Hebrew', Fraunces, serif`;
+  const nameEnd = wrapCanvasText(context, presentation.title, width / 2, nameY, width * 0.84, Math.round(width * 0.066), 2);
   context.fillStyle = "rgba(247, 242, 232, 0.72)";
-  context.font = "500 28px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif";
+  context.font = `500 ${Math.round(width * 0.026)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
   const party = [presentation.setName, presentation.subtitle, presentation.code].filter(Boolean).join(" · ");
-  wrapCanvasText(context, party, 540, nameEnd + 18, 900, 36, 2);
+  wrapCanvasText(context, party, width / 2, nameEnd + 16, width * 0.84, Math.round(width * 0.034), 2);
   context.fillStyle = "#c4a35a";
-  context.font = "600 26px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif";
-  context.fillText(`${presentation.rarityMark}  ${presentation.rarityName}`, 540, nameEnd + 86);
+  context.font = `600 ${Math.round(width * 0.024)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  context.fillText(`${presentation.rarityMark}  ${presentation.rarityName}`, width / 2, nameEnd + 78);
   context.fillStyle = "#f7f2e8";
-  context.font = "600 40px 'Noto Serif Hebrew', Fraunces, serif";
-  wrapCanvasText(context, presentation.rawQuote, 540, nameEnd + 150, 860, 50, 4);
-  context.fillStyle = "rgba(247, 242, 232, 0.7)";
-  context.font = "600 28px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif";
-  context.fillText("קְלָפִי", 540, 1810);
-  context.font = "500 22px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif";
-  context.fillText(shareUrl.replace(/^https?:\/\//, ""), 540, 1850);
-  return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  context.font = `600 ${Math.round(width * 0.036)}px 'Noto Serif Hebrew', Fraunces, serif`;
+  wrapCanvasText(context, presentation.rawQuote, width / 2, nameEnd + 136, width * 0.8, Math.round(width * 0.046), 4);
+  context.fillStyle = "rgba(247, 242, 232, 0.74)";
+  context.font = `600 ${Math.round(width * 0.026)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  context.fillText("קְלָפִי", width / 2, footerY);
+  context.font = `500 ${Math.round(width * 0.02)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  context.fillText(shareUrl.replace(/^https?:\/\//, ""), width / 2, footerY + 36);
+  return canvasToPng(canvas);
+}
+
+async function makeStoryImage(card) {
+  return paintSharePortrait(card, {
+    width: 1080,
+    height: 1920,
+    fadeFrom: 1080,
+    nameY: 1320,
+    footerY: 1810,
+  });
+}
+
+async function makeWhatsAppImage(card) {
+  return paintSharePortrait(card, {
+    width: 1080,
+    height: 1350,
+    fadeFrom: 720,
+    nameY: 920,
+    footerY: 1260,
+  });
+}
+
+function canShareFiles(file) {
+  try {
+    return Boolean(navigator.share && navigator.canShare?.({ files: [file] }));
+  } catch {
+    return false;
+  }
+}
+
+async function copyShareImage(blob) {
+  if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") return false;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const pendingShare = {
+  channel: null,
+  blob: null,
+  file: null,
+  title: "",
+  text: "",
+  url: "",
+};
+
+function revokeSharePreview() {
+  const current = elements.shareSheetImage?.dataset.objectUrl;
+  if (current) URL.revokeObjectURL(current);
+  if (elements.shareSheetImage) {
+    elements.shareSheetImage.removeAttribute("src");
+    delete elements.shareSheetImage.dataset.objectUrl;
+  }
+}
+
+function openShareSheet({ channel, blob, file, title, text, url }) {
+  pendingShare.channel = channel;
+  pendingShare.blob = blob;
+  pendingShare.file = file;
+  pendingShare.title = title;
+  pendingShare.text = text;
+  pendingShare.url = url;
+  revokeSharePreview();
+  const preview = URL.createObjectURL(blob);
+  elements.shareSheetImage.src = preview;
+  elements.shareSheetImage.dataset.objectUrl = preview;
+  elements.shareSheetCaption.textContent = text;
+  elements.shareSheetTitle.textContent = channel === "instagram" ? "העלו לסטורי" : "שלחו בוואטסאפ";
+  elements.shareSheetSend.textContent = channel === "instagram" ? "פתיחת אינסטגרם" : "פתיחת וואטסאפ";
+  elements.shareSheet.showModal();
+}
+
+function closeShareSheet() {
+  elements.shareSheet?.close();
+  revokeSharePreview();
+}
+
+function openWhatsAppText(text) {
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+}
+
+function openInstagramStory() {
+  window.open("instagram://story-camera", "_blank", "noopener");
+  window.setTimeout(() => {
+    if (document.visibilityState === "visible") {
+      window.open("https://www.instagram.com/", "_blank", "noopener");
+    }
+  }, 700);
+}
+
+async function sendPendingShare() {
+  if (pendingShare.channel === "whatsapp") {
+    if (canShareFiles(pendingShare.file)) {
+      try {
+        await navigator.share({ title: pendingShare.title, text: pendingShare.text, files: [pendingShare.file] });
+        closeShareSheet();
+        return;
+      } catch (error) {
+        if (error.name === "AbortError") return;
+      }
+    }
+    await copyText(pendingShare.text);
+    openWhatsAppText(pendingShare.text);
+    showToast("וואטסאפ נפתח עם הטקסט והקישור. צרפו את התמונה מהשמירה.");
+    return;
+  }
+  if (pendingShare.channel === "instagram") {
+    if (canShareFiles(pendingShare.file)) {
+      try {
+        await navigator.share({ title: pendingShare.title, text: pendingShare.text, files: [pendingShare.file] });
+        closeShareSheet();
+        return;
+      } catch (error) {
+        if (error.name === "AbortError") return;
+      }
+    }
+    await copyText(pendingShare.url);
+    openInstagramStory();
+    showToast("העלו את התמונה לסטורי. הקישור כתוב עליה וגם הועתק.");
+  }
 }
 
 async function runShareAction(button, idleLabel, work) {
@@ -3793,15 +3947,46 @@ async function runShareAction(button, idleLabel, work) {
   }
 }
 
+async function sharePreparedCard(button, idleLabel, { channel, makeImage, fileName, eventChannel }) {
+  const card = model.byId.get(model.dialogCardId);
+  await runShareAction(button, idleLabel, async () => {
+    const blob = await makeImage(card);
+    const file = new File([blob], fileName(card), { type: "image/png" });
+    const { title, text, url } = shareCaption(card);
+    if (canShareFiles(file)) {
+      try {
+        await navigator.share({ title, text, files: [file] });
+        showToast(channel === "instagram"
+          ? "בחרו Instagram Story. הקישור כתוב על התמונה."
+          : "בחרו וואטסאפ — התמונה, הטקסט והקישור מוכנים.");
+        await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: eventChannel });
+        return;
+      } catch (error) {
+        if (error.name === "AbortError") return;
+      }
+    }
+    downloadBlob(blob, file.name);
+    await copyText(channel === "instagram" ? url : text);
+    await copyShareImage(blob);
+    openShareSheet({ channel, blob, file, title, text, url });
+    showToast(channel === "instagram"
+      ? "הסטורי מוכן. שמרו והעלו לאינסטגרם — הקישור על התמונה."
+      : "התמונה נשמרה. שלחו בוואטסאפ עם הטקסט והקישור.");
+    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: eventChannel });
+  });
+}
+
 async function shareDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   await runShareAction(elements.dialogShare, "שיתוף הקלף", async () => {
-    const blob = await makeShareImage(card);
-    if (!blob) throw new Error("Canvas export failed");
+    const blob = await makeWhatsAppImage(card);
     const file = new File([blob], `kalpi-${card.id}.png`, { type: "image/png" });
     const { title, text, url } = shareCaption(card);
-    if (navigator.canShare?.({ files: [file] })) {
+    if (canShareFiles(file)) {
       await navigator.share({ title, text, files: [file] });
+    } else if (navigator.share) {
+      downloadBlob(blob, file.name);
+      await navigator.share({ title, text, url });
     } else {
       downloadBlob(blob, file.name);
       const copied = await copyText(url);
@@ -3812,55 +3997,20 @@ async function shareDialogCard() {
 }
 
 async function shareToWhatsApp() {
-  const card = model.byId.get(model.dialogCardId);
-  await runShareAction(elements.dialogWhatsapp, "וואטסאפ", async () => {
-    const blob = await makeShareImage(card);
-    if (!blob) throw new Error("Canvas export failed");
-    const file = new File([blob], `kalpi-${card.id}.png`, { type: "image/png" });
-    const { title, text } = shareCaption(card);
-    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-      await navigator.share({ title, text, files: [file] });
-      showToast("בחרו וואטסאפ — התמונה, הטקסט והקישור מוכנים.");
-    } else if (navigator.share) {
-      downloadBlob(blob, file.name);
-      await navigator.share({ title, text });
-      showToast("התמונה נשמרה. צרפו אותה להודעת הוואטסאפ.");
-    } else {
-      downloadBlob(blob, file.name);
-      await copyText(text);
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
-      showToast("התמונה נשמרה ו־WhatsApp נפתח עם הטקסט והקישור.");
-    }
-    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: "whatsapp" });
+  await sharePreparedCard(elements.dialogWhatsapp, "וואטסאפ", {
+    channel: "whatsapp",
+    makeImage: makeWhatsAppImage,
+    fileName: (card) => `kalpi-${card.id}.png`,
+    eventChannel: "whatsapp",
   });
 }
 
 async function shareToInstagram() {
-  const card = model.byId.get(model.dialogCardId);
-  await runShareAction(elements.dialogInstagram, "סטורי", async () => {
-    const blob = await makeStoryImage(card);
-    if (!blob) throw new Error("Canvas export failed");
-    const file = new File([blob], `kalpi-${card.id}-story.png`, { type: "image/png" });
-    const { text, url } = shareCaption(card);
-    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-      await navigator.share({
-        title: `קְלָפִי · ${cardTitle(card)}`,
-        text: `${text}`,
-        files: [file],
-      });
-      showToast("בחרו Instagram Story. הקישור כתוב על התמונה.");
-    } else {
-      downloadBlob(blob, file.name);
-      await copyText(url);
-      window.open("instagram://story-camera", "_blank", "noopener");
-      window.setTimeout(() => {
-        if (document.visibilityState === "visible") {
-          window.open("https://www.instagram.com/", "_blank", "noopener");
-        }
-      }, 700);
-      showToast("הסטורי נשמר. העלו אותו לאינסטגרם — הקישור הועתק.");
-    }
-    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: "instagram" });
+  await sharePreparedCard(elements.dialogInstagram, "סטורי", {
+    channel: "instagram",
+    makeImage: makeStoryImage,
+    fileName: (card) => `kalpi-${card.id}-story.png`,
+    eventChannel: "instagram",
   });
 }
 
@@ -3869,9 +4019,9 @@ function referralCode() {
 }
 
 function makeDeepLink(kind, cardId) {
-  const url = new URL(location.origin);
-  url.searchParams.set(kind, cardId);
+  const url = new URL(`/share/${encodeURIComponent(cardId)}`, location.origin);
   url.searchParams.set("ref", referralCode());
+  if (kind === "gift") url.searchParams.set("gift", "1");
   return url.toString();
 }
 
@@ -3995,6 +4145,18 @@ elements.dialogShare.addEventListener("click", shareDialogCard);
 elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);
 elements.dialogInstagram.addEventListener("click", shareToInstagram);
 elements.binderFlipFrame?.addEventListener("click", toggleBinderCardFrame);
+elements.closeShareSheet?.addEventListener("click", closeShareSheet);
+elements.shareSheetSend?.addEventListener("click", () => {
+  sendPendingShare().catch(() => showToast("לא הצלחנו לפתוח את השיתוף."));
+});
+elements.shareSheetSave?.addEventListener("click", () => {
+  if (!pendingShare.blob || !pendingShare.file) return;
+  downloadBlob(pendingShare.blob, pendingShare.file.name);
+  showToast("התמונה נשמרה.");
+});
+elements.shareSheet?.addEventListener("click", (event) => {
+  if (event.target === elements.shareSheet) closeShareSheet();
+});
 elements.dialogGift.addEventListener("click", offerDuplicate);
 elements.openTrustLegend.addEventListener("click", () => elements.trustDialog.showModal());
 elements.closeTrust.addEventListener("click", () => elements.trustDialog.close());
@@ -4283,4 +4445,8 @@ window.__kalpiDebug = {
     renderBinder();
     if (elements.dialog.open || model.dialogCardId === cardId) openCardDialog(cardId);
   },
+  makeWhatsAppImage,
+  makeStoryImage,
+  shareToWhatsApp,
+  shareToInstagram,
 };

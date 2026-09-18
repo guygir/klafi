@@ -430,6 +430,14 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   const pageHtml = await page.text();
   assert.match(pageHtml, /פתיחת קלף/);
   assert.match(pageHtml, /קלף אחד בכל שלוש שעות/);
+  const sharePage = await fetch(`${running.base}/share/LIK-M01-Q01`);
+  assert.equal(sharePage.status, 200);
+  assert.match(sharePage.headers.get("content-type"), /^text\/html/);
+  const shareHtml = await sharePage.text();
+  assert.match(shareHtml, /property="og:image"/);
+  assert.match(shareHtml, /og:title" content="קְלָפִי · /);
+  assert.match(shareHtml, /card=LIK-M01-Q01/);
+  assert.equal((await fetch(`${running.base}/share/not-a-card`)).status, 404);
   const clientScript = await fetch(`${running.base}/app.js?v=test`);
   assert.match(clientScript.headers.get("cache-control"), /no-cache/);
   const stylesheet = await fetch(`${running.base}/styles.css?v=test`);

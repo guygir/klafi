@@ -498,11 +498,11 @@ h1 {
 
 .binder-flip-frame {
   flex: 0 0 auto;
-  min-height: 36px;
-  padding: 6px 10px;
+  min-height: 32px;
+  padding: 5px 9px;
   border: 1px dashed color-mix(in srgb, var(--rule) 45%, transparent);
   border-radius: 8px;
-  background: transparent;
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
   color: var(--ink);
   font: 600 11px/1 "IBM Plex Sans Hebrew", sans-serif;
   cursor: pointer;
@@ -1842,6 +1842,28 @@ h1 {
 }
 
 .dialog-actions .full { grid-column: 1 / -1; }
+.share-sheet {
+  width: min(390px, calc(100% - 24px));
+  padding-top: 36px;
+}
+.share-sheet img {
+  display: block;
+  width: 100%;
+  max-height: min(58dvh, 520px);
+  margin: 12px 0 10px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #111;
+}
+.share-sheet-caption {
+  margin: 0 0 12px;
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+  font: 500 13px/1.45 "IBM Plex Sans Hebrew", sans-serif;
+  white-space: pre-wrap;
+}
+.share-sheet-actions {
+  grid-template-columns: 1fr 1fr;
+}
 
 .policy-dialog {
   width: min(560px, calc(100% - 24px));
@@ -2166,21 +2188,24 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: clamp(16px, 7.4cqw, 22px);
-  padding: 3px 6px;
-  border: 1px solid rgba(244, 239, 228, 0.38);
+  box-sizing: border-box;
+  min-height: clamp(18px, 8cqw, 24px);
+  padding: 3px 7px;
+  border: 1px solid rgba(244, 239, 228, 0.32);
   border-radius: 999px;
-  background: rgba(26, 31, 28, 0.38);
+  background: rgba(26, 31, 28, 0.34);
   color: var(--paper);
   font: 600 clamp(7px, 3.4cqw, 11px)/1 "IBM Plex Sans Hebrew", sans-serif;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(7px);
 }
 .card-image-meta strong,
 .card-image-meta .card-copies-tag {
+  width: clamp(18px, 8cqw, 24px);
   min-width: clamp(18px, 8cqw, 24px);
-  border-color: rgba(196, 163, 90, 0.45);
+  padding: 0;
+  border-color: rgba(196, 163, 90, 0.4);
   color: var(--paper);
-  font-size: clamp(8px, 4cqw, 13px);
+  font-size: clamp(9px, 4.2cqw, 13px);
 }
 .card-identity-stack { display: contents; }
 .card-rarity-zone,

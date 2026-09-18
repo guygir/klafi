@@ -5,13 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#1f4f4a" />
   <meta name="description" content="קְלָפִי — אוספים את הבחירות." />
+  <meta property="og:title" content="קְלָפִי · KLAFI" />
+  <meta property="og:description" content="אוספים את הבחירות." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
+  <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-2"></script>
+  <script src="/boot-warmup.js?v=card-surface-3"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-2" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-2" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-3" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-3" />
 </head>
 <body>
   <div class="paper-noise" aria-hidden="true"></div>
@@ -147,6 +152,7 @@
             <strong id="binder-percent">0%</strong>
             <span id="binder-count">0 מתוך 14 בסדרה הפעילה</span>
           </div>
+          <button id="binder-flip-frame" class="binder-flip-frame" type="button" aria-pressed="false" title="כפתור זמני: השוואת הגרסה המקורית לאמנות מלאה">אמנות מלאה</button>
           <div id="earned-badge-list" class="earned-badge-list"></div>
         </div>
         <div class="binder-head">
@@ -154,7 +160,6 @@
             <p class="eyebrow">האוסף שלי</p>
             <h1>האלבום.</h1>
           </div>
-          <button id="binder-flip-frame" class="binder-flip-frame" type="button" aria-pressed="false" title="כפתור זמני: השוואת הגרסה המקורית לאמנות מלאה">אמנות מלאה</button>
         </div>
         <div id="binder-filters" class="filter-strip" role="tablist" aria-label="סינון האוסף לפי סדרה"></div>
         <div id="binder-grid" class="binder-grid"></div>
@@ -513,6 +518,17 @@
   <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="auto" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
     <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
   </video>
-  <script type="module" src="/app.js?v=card-surface-2"></script>
+  <dialog id="share-sheet" class="policy-dialog share-sheet" aria-labelledby="share-sheet-title">
+    <button id="close-share-sheet" class="dialog-close" type="button" aria-label="סגירת השיתוף">×</button>
+    <p class="eyebrow">שיתוף</p>
+    <h2 id="share-sheet-title">שלחו את הקלף</h2>
+    <img id="share-sheet-image" alt="תמונת השיתוף" />
+    <p id="share-sheet-caption" class="share-sheet-caption"></p>
+    <div class="dialog-actions share-sheet-actions">
+      <button id="share-sheet-send" class="primary-action" type="button">שליחה</button>
+      <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
+    </div>
+  </dialog>
+  <script type="module" src="/app.js?v=card-surface-3"></script>
 </body>
 </html>

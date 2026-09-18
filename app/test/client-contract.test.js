@@ -207,7 +207,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-2/);
+  assert.match(html, /card-surface-3/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -259,7 +259,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-2/);
+  assert.match(html, /card-surface-3/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
@@ -281,7 +281,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function applyVisualConfig/);
   assert.match(javascript, /function shareToInstagram/);
   assert.match(javascript, /function makeStoryImage/);
+  assert.match(javascript, /function makeWhatsAppImage/);
+  assert.match(javascript, /\/share\/\$\{encodeURIComponent\(cardId\)\}/);
+  assert.match(html, /id="share-sheet"/);
   assert.match(html, /id="binder-flip-frame"/);
+  assert.ok(
+    html.indexOf('id="earned-badge-rail"') < html.indexOf('id="binder-flip-frame"')
+      && html.indexOf('id="binder-flip-frame"') < html.indexOf('class="binder-head"'),
+    "debug full-art flip must stay visible in the binder rail, not the hidden head",
+  );
   assert.match(javascript, /DEBUG_CARD_FRAME_KEY/);
   assert.match(html, /fullart-v1/);
   assert.match(javascript, /card-identity-stack/);

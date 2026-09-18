@@ -180,21 +180,24 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="tall-v2"] .card-image-meta span,
 #app[data-card-frame="tall-v2"] .card-image-meta strong,
 #app[data-card-frame="tall-v2"] .card-image-meta .card-copies-tag {
-  min-height: clamp(18px, 7.6cqw, 24px);
+  box-sizing: border-box;
+  min-height: clamp(18px, 8cqw, 24px);
   padding: clamp(2px, 1.1cqw, 5px) clamp(5px, 1.8cqw, 8px);
-  border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 38%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--pack-paper, #eee5d4) 52%, transparent);
+  background: color-mix(in srgb, var(--pack-paper, #eee5d4) 38%, transparent);
   color: var(--pack-umber, #3c3026);
   font: 600 clamp(8px, 3.4cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
   letter-spacing: 0.02em;
   box-shadow: none;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(7px);
 }
 
 #app[data-card-frame="tall-v2"] .card-image-meta strong,
 #app[data-card-frame="tall-v2"] .card-image-meta .card-copies-tag {
+  width: clamp(18px, 8cqw, 26px);
   min-width: clamp(18px, 8cqw, 26px);
+  padding: 0;
   color: var(--pack-seal, #175b56);
   font-size: clamp(9px, 4.2cqw, 14px);
   letter-spacing: 0;
@@ -384,8 +387,11 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong,
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+  width: 8.4cqw;
+  min-width: 8.4cqw;
   max-width: none;
   flex: 0 0 auto;
+  padding: 0;
   font-size: 7.4cqw;
 }
 
@@ -1135,10 +1141,10 @@ body:has(#app[data-theme="pack-v2"]) {
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0) 58%,
-    rgba(0, 0, 0, 0.22) 68%,
-    rgba(0, 0, 0, 0.62) 78%,
-    #000 88%
+    rgba(0, 0, 0, 0) 68%,
+    rgba(0, 0, 0, 0.18) 74%,
+    rgba(0, 0, 0, 0.72) 84%,
+    #000 92%
   );
 }
 
@@ -1162,7 +1168,7 @@ body:has(#app[data-theme="pack-v2"]) {
 .kalpi-card[data-card-frame="fullart-v1"] .card-identity-stack {
   position: absolute;
   z-index: 4;
-  inset: 70% 0 0;
+  inset: 72% 0 0;
   display: flex;
   flex-direction: column;
   align-items: center;
