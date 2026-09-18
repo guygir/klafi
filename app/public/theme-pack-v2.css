@@ -268,6 +268,7 @@ body:has(#app[data-theme="pack-v2"]) {
   width: 8.4cqw;
   min-width: 8.4cqw;
   height: 8.4cqw;
+  min-height: 8.4cqw;
   border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 38%, transparent);
   background: color-mix(in srgb, var(--pack-paper, #eee5d4) 38%, transparent);
   color: var(--pack-umber, #3c3026);
@@ -373,11 +374,7 @@ body:has(#app[data-theme="pack-v2"]) {
   gap: 2cqw;
 }
 
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta span,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-heart-slot,
-#app[data-card-frame="tall-v2"] .binder-slot:has(.kalpi-card:not([data-card-surface="walkout"])) .favorite-heart {
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta span {
   max-width: 64%;
   padding: 1.1cqw 1.8cqw;
   overflow: hidden;
@@ -396,9 +393,12 @@ body:has(#app[data-theme="pack-v2"]) {
   min-width: 8.4cqw;
   max-width: none;
   height: 8.4cqw;
+  min-height: 8.4cqw;
   flex: 0 0 auto;
   padding: 0;
+  border-width: max(1px, 0.5cqw);
   font-size: 7.4cqw;
+  line-height: 1;
 }
 
 /* Signature beat: ink appears through the ballot line on the persistent card. */
@@ -1184,14 +1184,14 @@ body:has(#app[data-theme="pack-v2"]) {
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-identity-stack {
   position: absolute;
   z-index: 4;
-  inset: 72% 0 0;
+  inset: 70% 0 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  gap: 2cqw;
+  justify-content: space-evenly;
+  gap: 0;
   min-height: 0;
-  padding: 0 6.5% 4.2%;
+  padding: 3.2% 6.5%;
   text-align: center;
 }
 
@@ -1221,9 +1221,10 @@ body:has(#app[data-theme="pack-v2"]) {
   background: transparent;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
-  font-size: clamp(16px, 7.2cqw, 26px);
+  margin: 0;
+  font-size: clamp(18px, 8cqw, 28px);
   font-weight: 600;
-  line-height: 1.12;
+  line-height: 1.15;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
   white-space: normal;
 }
@@ -1235,9 +1236,10 @@ body:has(#app[data-theme="pack-v2"]) {
   justify-content: center;
   color: rgba(247, 242, 232, 0.72);
   font-family: "IBM Plex Sans Hebrew", sans-serif;
+  margin: 0;
   font-size: clamp(9px, 3.5cqw, 13px);
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.15;
   letter-spacing: 0;
   white-space: normal;
 }
@@ -1269,9 +1271,9 @@ body:has(#app[data-theme="pack-v2"]) {
   padding: 0;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
-  font-size: clamp(12px, 5.2cqw, 18px);
+  font-size: clamp(15px, 6.4cqw, 22px);
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 #app[data-card-frame="fullart-v1"] .new-stamp,

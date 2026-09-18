@@ -61,7 +61,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function syncBinderHeartTools/);
   assert.match(javascript, /if \(frame\?\.dataset\.cardFrame === "fullart-v1"\) return/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-image-meta strong[\s\S]{0,120}?display:\s*none/);
-  assert.match(themeCss, /card-identity-stack[\s\S]{0,280}?gap:\s*2cqw/);
+  assert.match(themeCss, /card-identity-stack[\s\S]{0,280}?justify-content:\s*space-evenly/);
   assert.doesNotMatch(html, /id="dialog-share"/);
   assert.match(html, /share-icon-button/);
   assert.doesNotMatch(html, /id="dialog-gift"/);
@@ -215,7 +215,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-5/);
+  assert.match(html, /card-surface-6/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -267,7 +267,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-5/);
+  assert.match(html, /card-surface-6/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

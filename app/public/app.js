@@ -994,12 +994,26 @@ const cardResizeObserver = typeof ResizeObserver === "undefined"
 function syncBinderHeartTools(root = elements.binderGrid) {
   root?.querySelectorAll(".binder-slot.owned").forEach((slot) => {
     const tools = slot.querySelector(".binder-card-tools");
+    const heart = slot.querySelector(".favorite-heart");
     const mark = slot.querySelector(".card-heart-slot");
-    if (!tools || !mark) return;
+    const copies = slot.querySelector(".card-copies-tag");
+    const star = [...slot.querySelectorAll(".card-image-meta strong")]
+      .find((node) => getComputedStyle(node).display !== "none");
+    const sample = copies || star || mark;
+    if (!tools || !heart || !mark || !sample) return;
     const slotBox = slot.getBoundingClientRect();
     const markBox = mark.getBoundingClientRect();
-    tools.style.top = `${markBox.top - slotBox.top}px`;
-    tools.style.left = `${markBox.left - slotBox.left}px`;
+    const sampleBox = sample.getBoundingClientRect();
+    const size = Math.round(Math.max(sampleBox.width, sampleBox.height));
+    heart.style.width = `${size}px`;
+    heart.style.height = `${size}px`;
+    heart.style.minWidth = `${size}px`;
+    heart.style.minHeight = `${size}px`;
+    heart.style.padding = "0";
+    tools.style.width = `${size}px`;
+    tools.style.height = `${size}px`;
+    tools.style.top = `${markBox.top + markBox.height / 2 - size / 2 - slotBox.top}px`;
+    tools.style.left = `${markBox.left + markBox.width / 2 - size / 2 - slotBox.left}px`;
     tools.style.right = "auto";
     tools.style.transform = "none";
   });
