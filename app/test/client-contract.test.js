@@ -224,7 +224,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-11/);
+  assert.match(html, /card-surface-12/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -276,7 +276,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-11/);
+  assert.match(html, /card-surface-12/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
@@ -299,6 +299,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function shareToInstagram/);
   assert.match(javascript, /function makeStoryImage/);
   assert.match(javascript, /function makeWhatsAppImage/);
+  assert.match(javascript, /תראה מה שלפתי בקלפי!/);
+  assert.match(javascript, /function paintShareCardFace/);
+  assert.match(javascript, /function paintFullartShareIdentity/);
+  assert.match(javascript, /SHARE_PULL_LINE/);
+  assert.match(css, /#card-dialog \.dialog-close/);
+  assert.match(css, /#card-dialog \.dialog-close:focus-visible/);
+  assert.doesNotMatch(css, /#card-dialog \.dialog-close:focus-visible[^}]*var\(--foil\)/);
   assert.match(javascript, /\/share\/\$\{encodeURIComponent\(cardId\)\}/);
   assert.match(html, /id="share-sheet"/);
   assert.match(html, /id="binder-flip-frame"/);
