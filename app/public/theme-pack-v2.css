@@ -263,8 +263,7 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .binder-card-tools .dupe-count,
-#app[data-card-frame="tall-v2"] .binder-card-tools .favorite-heart,
-#app[data-card-frame="tall-v2"] .card-heart-slot {
+#app[data-card-frame="tall-v2"] .binder-card-tools .favorite-heart {
   width: 8cqw;
   min-width: 8cqw;
   height: 8cqw;
@@ -389,7 +388,6 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong,
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-heart-slot,
 #app[data-card-frame="tall-v2"] .binder-slot:has(.kalpi-card:not([data-card-surface="walkout"])) .favorite-heart {
   width: 8cqw;
   min-width: 8cqw;
@@ -1167,10 +1165,8 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
-#app[data-card-frame="fullart-v1"] .card-heart-slot,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-heart-slot,
 #app .binder-slot:has([data-card-frame="fullart-v1"]) .favorite-heart {
   border-color: rgba(247, 242, 232, 0.28);
   background: rgba(5, 5, 5, 0.36);
