@@ -171,6 +171,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="shared-view"/);
   assert.match(html, /id="shared-trust"/);
   assert.match(html, /id="open-trust-legend"/);
+  assert.match(html, /home-title-row/);
   assert.match(html, /id="trust-dialog"/);
   assert.doesNotMatch(html, /id="dialog-trust"/);
   assert.match(javascript, /function showSharedCard/);

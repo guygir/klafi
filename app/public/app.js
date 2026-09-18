@@ -4105,3 +4105,12 @@ window.addEventListener("online", () => flushPendingReports().catch(() => {}));
 bootstrap();
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
+window.__kalpiDebug = {
+  openCardDialog,
+  setOwned(cardId, count) {
+    if (!model.serverState) return;
+    model.serverState.inventory[cardId] = count;
+    renderBinder();
+    if (elements.dialog.open || model.dialogCardId === cardId) openCardDialog(cardId);
+  },
+};

@@ -1795,9 +1795,11 @@ h1 {
   cursor: pointer;
 }
 
-.dialog-card-stage {
+.dialog-card-stage,
+.card-dialog #dialog-card {
   position: relative;
   display: grid;
+  width: 100%;
   min-width: 0;
   place-items: center;
 }
@@ -1814,6 +1816,7 @@ h1 {
   font-size: 13px;
   transform: translateX(-50%);
 }
+.dialog-card-stage .dupe-count[hidden] { display: none; }
 .dialog-meta-row {
   display: flex;
   direction: ltr;
@@ -1889,7 +1892,7 @@ h1 {
   .view { min-height: calc(100dvh - 150px); padding-top: 28px; }
   .home-grid { min-height: auto; grid-template-columns: 1fr; gap: 18px; }
   .home-copy { text-align: center; }
-  .home-kicker { justify-content: center; }
+  .home-title-row { justify-content: center; }
   .home-copy .lede, .collection-line { margin-inline: auto; }
   .pack-plinth { min-height: 360px; }
   .pack-wrapper { width: 208px; }
@@ -2673,16 +2676,19 @@ body {
   gap: 20px;
 }
 
-.home-kicker {
+.home-title-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
 }
+.home-title-row h1 { flex: 1; min-width: 0; }
 .trust-info {
+  flex: 0 0 auto;
   width: 28px;
   height: 28px;
   display: inline-grid;
   place-items: center;
+  margin-top: 6px;
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--rule) 38%, transparent);
   border-radius: 50%;

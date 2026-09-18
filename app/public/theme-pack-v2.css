@@ -339,8 +339,10 @@ body:has(#app[data-theme="pack-v2"]) {
   width: min(370px, 100%);
 }
 
-#app[data-card-frame="tall-v2"] .card-dialog #dialog-card {
+#app[data-card-frame="tall-v2"] .card-dialog #dialog-card,
+#app[data-card-frame="tall-v2"] .dialog-card-stage {
   display: grid;
+  width: 100%;
   min-width: 0;
   place-items: center;
 }
@@ -1093,14 +1095,7 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="fullart-v1"] .card-face.front > .card-pip {
-  display: block;
-  z-index: 6;
-  top: 10px;
-  right: 10px;
-  left: auto;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
+  display: none;
 }
 
 #app[data-card-frame="fullart-v1"] .card-image-zone {
@@ -1123,11 +1118,11 @@ body:has(#app[data-theme="pack-v2"]) {
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.08) 38%,
-    rgba(0, 0, 0, 0.28) 52%,
-    rgba(0, 0, 0, 0.62) 66%,
-    rgba(0, 0, 0, 0.92) 78%,
-    #000 88%
+    rgba(0, 0, 0, 0.04) 40%,
+    rgba(0, 0, 0, 0.22) 54%,
+    rgba(0, 0, 0, 0.55) 68%,
+    rgba(0, 0, 0, 0.88) 80%,
+    #000 90%
   );
 }
 
@@ -1138,14 +1133,14 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .card-identity-stack {
   position: absolute;
   z-index: 4;
-  inset: auto 0 0;
+  inset: 48% 0 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  gap: 1.6cqw;
-  min-height: 46%;
-  padding: 14% 7% 6.4%;
+  justify-content: flex-start;
+  gap: 1.4cqw;
+  min-height: 0;
+  padding: 3% 7% 6.2%;
   text-align: center;
 }
 
@@ -1173,6 +1168,7 @@ body:has(#app[data-theme="pack-v2"]) {
   font-size: clamp(16px, 7.4cqw, 30px);
   font-weight: 700;
   line-height: 1.08;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
   white-space: normal;
 }
 
@@ -1208,6 +1204,8 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="fullart-v1"] .card-quote-zone {
   min-height: 12%;
+  margin-top: auto;
+  padding-top: 2%;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
   font-size: clamp(10px, 4.2cqw, 18px);
@@ -1234,6 +1232,7 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .card-dialog #dialog-card,
 #app[data-card-frame="fullart-v1"] .dialog-card-stage {
   display: grid;
+  width: 100%;
   min-width: 0;
   place-items: center;
 }
