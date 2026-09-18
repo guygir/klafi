@@ -2219,7 +2219,11 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .card-meta-end {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   justify-self: end;
+  width: max-content;
+  margin: 0;
+  padding: 0;
   gap: 4px;
 }
 .card-image-meta .card-code-tag,
@@ -2231,6 +2235,8 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   justify-content: center;
   box-sizing: border-box;
   width: max-content;
+  min-width: max-content;
+  max-width: none;
   min-height: clamp(18px, 8cqw, 24px);
   padding: 3px 7px;
   border: 1px solid rgba(244, 239, 228, 0.32);

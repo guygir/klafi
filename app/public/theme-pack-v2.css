@@ -371,26 +371,44 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta {
   inset: 3.4cqw 3.4cqw auto;
   gap: 2cqw;
+  padding: 0;
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-meta-end {
+  justify-self: end;
+  justify-content: flex-end;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  gap: 2cqw;
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-code-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+  box-sizing: border-box;
   width: max-content;
-  min-width: 0;
-  max-width: 64%;
+  min-width: max-content;
+  max-width: none;
+  flex: 0 0 auto;
   height: 8cqw;
   min-height: 8cqw;
   padding: 0 1.8cqw;
-  overflow: hidden;
+  overflow: visible;
   border-width: max(1px, 0.5cqw);
   font-size: 6.1cqw;
   line-height: 1;
-  text-overflow: ellipsis;
+  text-overflow: unset;
   white-space: nowrap;
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-code-tag {
   justify-self: start;
+  margin: 0;
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+  justify-self: end;
+  margin: 0;
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong,

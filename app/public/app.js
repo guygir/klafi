@@ -2094,8 +2094,8 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-code-tag">${escapeHtml(presentation.code)}</span>
             <span class="card-meta-mid">${surface === "binder" ? `<i class="card-heart-slot" aria-hidden="true"></i>` : ""}</span>
             <span class="card-meta-end">
+              ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
-              <strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>
             </span>
           </div>
           ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
