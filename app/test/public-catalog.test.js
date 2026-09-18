@@ -59,3 +59,19 @@ test("Sets 3 and 4 ship complete art-backed catalogs with their collectible rari
     { Common: 4, Uncommon: 3, Rare: 2 },
   );
 });
+
+
+test("Sets 1 and 2 ship complete art-backed catalogs", async () => {
+  const [cards, specials] = await Promise.all([
+    readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
+    readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
+  ]);
+  const expanded = expandPublicCatalog(cards, specials);
+  const leaders = expanded.filter(({ releaseSetId }) => releaseSetId === "party-leaders");
+  const numberTwos = expanded.filter(({ releaseSetId }) => releaseSetId === "party-slot-2");
+  assert.equal(leaders.length, 14);
+  assert.equal(numberTwos.length, 13);
+  assert.ok([...leaders, ...numberTwos].every(({ artKey }) => artKey));
+  await Promise.all([...leaders, ...numberTwos].map(({ artKey }) =>
+    readFile(path.resolve(here, "../../docs/design/assets", artKey))));
+});

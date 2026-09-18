@@ -289,7 +289,7 @@ function isFirstSetCard(card) {
 }
 
 function usesFullartFrame(card) {
-  return ["decisions", "records"].includes(card?.releaseSetId);
+  return ["party-leaders", "party-slot-2", "decisions", "records"].includes(card?.releaseSetId);
 }
 
 function debugFullartEnabled() {
