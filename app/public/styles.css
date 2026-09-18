@@ -2228,8 +2228,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .card-image-meta .card-code-tag,
 .card-image-meta strong,
-.card-image-meta .card-copies-tag,
-.binder-card-tools .favorite-heart {
+.card-image-meta .card-copies-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2246,8 +2245,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   font: 600 clamp(7px, 3.4cqw, 11px)/1 "IBM Plex Sans Hebrew", sans-serif;
   backdrop-filter: blur(7px);
 }
-.card-image-meta strong,
-.binder-card-tools .favorite-heart {
+.card-image-meta strong {
   width: clamp(18px, 8cqw, 24px);
   min-width: clamp(18px, 8cqw, 24px);
   height: clamp(18px, 8cqw, 24px);
@@ -2256,16 +2254,6 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   border-color: rgba(196, 163, 90, 0.4);
   color: var(--paper);
   font-size: clamp(9px, 4.2cqw, 13px);
-}
-.card-heart-slot {
-  position: absolute;
-  width: 0;
-  min-width: 0;
-  height: 0;
-  min-height: 0;
-  overflow: hidden;
-  visibility: hidden;
-  pointer-events: none;
 }
 .card-identity-stack { display: contents; }
 .card-rarity-zone,
@@ -2372,47 +2360,6 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .binder-card-open { position: absolute; inset: 0; width: 100%; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .binder-shared-card { position: absolute; inset: 0; }
 .binder-shared-card .kalpi-card { width: 100%; height: 100%; box-shadow: none; pointer-events: none; }
-.binder-slot.owned:has([data-card-frame="tall-v2"]) {
-  --heart-gutter: calc(clamp(1px, 0.9cqw, 3px) + clamp(7px, 3.1cqw, 12px) + 3.4cqw);
-}
-.binder-card-tools {
-  position: absolute;
-  z-index: 10;
-  top: var(--heart-gutter, 3.4cqw);
-  left: 50%;
-  right: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.binder-card-tools .dupe-count {
-  position: static;
-  transform: none;
-  z-index: 10;
-  border: 1px solid rgba(44, 51, 48, 0.35);
-  box-shadow: 0 2px 7px rgba(26, 31, 28, 0.18);
-}
-.favorite-heart {
-  display: grid;
-  width: clamp(18px, 8cqw, 24px);
-  min-width: clamp(18px, 8cqw, 24px);
-  height: clamp(18px, 8cqw, 24px);
-  min-height: clamp(18px, 8cqw, 24px);
-  padding: 0;
-  place-items: center;
-  border: 1px solid rgba(244, 239, 228, 0.32);
-  border-radius: 999px;
-  background: rgba(26, 31, 28, 0.34);
-  color: rgba(244, 239, 228, 0.78);
-  font: 600 clamp(9px, 4.2cqw, 13px)/1 "IBM Plex Sans Hebrew", sans-serif;
-  pointer-events: auto;
-  cursor: pointer;
-}
-.favorite-heart.active { color: #e8b4ad; }
-.favorite-heart:focus-visible { outline: 2px solid var(--civic); outline-offset: 2px; }
 .new-card-thumb { padding: 0; overflow: hidden; background: var(--paper); }
 .dialog-source { display: block; width: fit-content; margin: 10px auto 0; color: var(--civic); font-size: 12px; text-underline-offset: 3px; }
 .card-trust-note {

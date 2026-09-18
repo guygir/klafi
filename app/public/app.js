@@ -988,43 +988,11 @@ const cardResizeObserver = typeof ResizeObserver === "undefined"
   ? null
   : new ResizeObserver((entries) => {
     for (const entry of entries) fitVisibleCardText(entry.target);
-    syncBinderHeartTools();
   });
-
-function syncBinderHeartTools(root = elements.binderGrid) {
-  root?.querySelectorAll(".binder-slot.owned").forEach((slot) => {
-    const tools = slot.querySelector(".binder-card-tools");
-    const heart = slot.querySelector(".favorite-heart");
-    const copies = slot.querySelector(".card-copies-tag");
-    const star = [...slot.querySelectorAll(".card-image-meta strong")]
-      .find((node) => getComputedStyle(node).display !== "none");
-    const code = slot.querySelector(".card-code-tag");
-    const sample = copies || star || code;
-    if (!tools || !heart || !code || !sample) return;
-    const slotBox = slot.getBoundingClientRect();
-    const sampleBox = sample.getBoundingClientRect();
-    const codeBox = code.getBoundingClientRect();
-    const size = Math.round(codeBox.height || sampleBox.height);
-    const midX = (slotBox.left + slotBox.right) / 2;
-    const midY = (codeBox.top + codeBox.bottom) / 2;
-    heart.style.width = `${size}px`;
-    heart.style.height = `${size}px`;
-    heart.style.minWidth = `${size}px`;
-    heart.style.minHeight = `${size}px`;
-    heart.style.padding = "0";
-    tools.style.width = `${size}px`;
-    tools.style.height = `${size}px`;
-    tools.style.top = `${midY - size / 2 - slotBox.top}px`;
-    tools.style.left = `${midX - size / 2 - slotBox.left}px`;
-    tools.style.right = "auto";
-    tools.style.transform = "none";
-  });
-}
 
 function queueCardTextFit(root = document) {
   requestAnimationFrame(() => {
     fitVisibleCardText(root);
-    syncBinderHeartTools(root === document ? elements.binderGrid : root);
     if (!cardResizeObserver) return;
     root.querySelectorAll(".kalpi-card").forEach((frame) => {
       if (observedCardFrames.has(frame)) return;
@@ -2092,7 +2060,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
           ${artMarkup(card)}
           <div class="card-image-meta">
             <span class="card-code-tag">${escapeHtml(presentation.code)}</span>
-            <span class="card-meta-mid">${surface === "binder" ? `<i class="card-heart-slot" aria-hidden="true"></i>` : ""}</span>
+            <span class="card-meta-mid"></span>
             <span class="card-meta-end">
               ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
@@ -2205,15 +2173,11 @@ function renderBinder() {
         ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">unlock</button>` : ""}
       </div>`;
     }
-    const favorite = favorites.has(card.id);
     return `
       <div class="binder-slot owned new-card-thumb" style="--pip:${card.pip}">
         <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}, ברשותכם ${count}">
           ${binderCardMarkup(card)}
         </button>
-        <div class="binder-card-tools">
-          <button class="favorite-heart${favorite ? " active" : ""}" type="button" data-favorite-card="${card.id}" aria-pressed="${favorite}" aria-label="${favorite ? "הסרה מהפייבוריטים" : "הוספה לפייבוריטים"}">♥</button>
-        </div>
       </div>`;
   }).join("");
   const visibleColumns = window.innerWidth <= 520 ? 3 : window.innerWidth <= 760 ? 5 : 6;
@@ -4373,11 +4337,6 @@ elements.eventTabs?.addEventListener("click", (event) => {
 });
 
 elements.binderGrid.addEventListener("click", (event) => {
-  const favorite = event.target.closest("[data-favorite-card]");
-  if (favorite) {
-    toggleFavorite(favorite.dataset.favoriteCard);
-    return;
-  }
   const unlock = event.target.closest("[data-debug-unlock]");
   if (unlock) {
     debugUnlockCard(unlock.dataset.debugUnlock);

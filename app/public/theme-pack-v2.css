@@ -254,30 +254,6 @@ body:has(#app[data-theme="pack-v2"]) {
   font-size: clamp(7px, 3cqw, 10px);
 }
 
-#app[data-card-frame="tall-v2"] .binder-card-tools {
-  top: var(--heart-gutter, 3.4cqw);
-  left: 50%;
-  right: auto;
-  gap: 2cqw;
-  transform: translateX(-50%);
-}
-
-#app[data-card-frame="tall-v2"] .binder-card-tools .dupe-count,
-#app[data-card-frame="tall-v2"] .binder-card-tools .favorite-heart {
-  width: 8cqw;
-  min-width: 8cqw;
-  height: 8cqw;
-  min-height: 8cqw;
-  border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 38%, transparent);
-  background: color-mix(in srgb, var(--pack-paper, #eee5d4) 38%, transparent);
-  color: var(--pack-umber, #3c3026);
-  font-size: 6.4cqw;
-}
-
-#app[data-card-frame="tall-v2"] .favorite-heart.active {
-  color: #9b382f;
-}
-
 #app[data-card-frame="tall-v2"] #pack-view.active {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -411,8 +387,7 @@ body:has(#app[data-theme="pack-v2"]) {
   margin: 0;
 }
 
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong,
-#app[data-card-frame="tall-v2"] .binder-slot:has(.kalpi-card:not([data-card-surface="walkout"])) .favorite-heart {
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong {
   width: 8cqw;
   min-width: 8cqw;
   max-width: none;
@@ -1190,8 +1165,7 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
-#app .binder-slot:has([data-card-frame="fullart-v1"]) .favorite-heart {
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag {
   border-color: rgba(247, 242, 232, 0.28);
   background: rgba(5, 5, 5, 0.36);
   color: #f7f2e8;

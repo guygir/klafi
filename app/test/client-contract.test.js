@@ -56,14 +56,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /class="concept-stage"/);
   assert.match(css, /\.card-image-meta strong/);
   assert.match(css, /\.card-name-zone[^}]*background: var\(--civic\)/);
-  assert.match(css, /\.binder-card-tools[^}]*left: 50%/);
-  assert.match(javascript, /card-heart-slot/);
+  assert.doesNotMatch(javascript, /favorite-heart/);
+  assert.doesNotMatch(javascript, /card-heart-slot/);
+  assert.doesNotMatch(javascript, /function syncBinderHeartTools/);
+  assert.doesNotMatch(css, /\.binder-card-tools/);
   assert.match(javascript, /card-meta-mid/);
   assert.match(javascript, /card-code-tag/);
   assert.match(javascript, /frame === "fullart-v1" \? "" : `<strong aria-label=/);
   assert.match(themeCss, /card-code-tag[\s\S]{0,280}?min-width:\s*max-content/);
   assert.doesNotMatch(themeCss, /max-width:\s*64%/);
-  assert.match(javascript, /function syncBinderHeartTools/);
   assert.match(themeCss, /card-face\.front \.card-name-zone[\s\S]{0,220}?font-size:\s*8cqw/);
   assert.match(javascript, /if \(frame\?\.dataset\.cardFrame === "fullart-v1"\) return/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-image-meta strong[\s\S]{0,120}?display:\s*none/);
@@ -71,9 +72,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(html, /id="dialog-share"/);
   assert.match(html, /share-icon-button/);
   assert.doesNotMatch(html, /id="dialog-gift"/);
-  assert.match(css, /\.binder-card-tools \.dupe-count[^}]*position: static/);
   assert.match(css, /\.binder-slot\s*\{[^}]*aspect-ratio:\s*63\s*\/\s*96/s);
-  assert.match(javascript, /data-favorite-card/);
+  assert.match(javascript, /function toggleFavorite/);
   assert.match(javascript, /setLabels\.FAVORITES = "פייבוריטים"/);
   assert.match(javascript, /setTimeout\(startWalkout/);
   assert.match(html, /pack-wrapper-transparent\.png/);
@@ -221,7 +221,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-9/);
+  assert.match(html, /card-surface-10/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -273,7 +273,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-9/);
+  assert.match(html, /card-surface-10/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
