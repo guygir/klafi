@@ -41,7 +41,7 @@ const DEFAULT_VISUAL_CONFIG = Object.freeze({
 });
 const VISUAL_OPTIONS = Object.freeze({
   theme: new Set(["classic-v1", "pack-v2"]),
-  cardFrame: new Set(["classic-v1", "tall-v2"]),
+  cardFrame: new Set(["classic-v1", "tall-v2", "fullart-v1"]),
   density: new Set(["compact-v1", "airy-v2"]),
   quoteReveal: new Set(["fade-v1", "ink-v2"]),
 });

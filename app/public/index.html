@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#1f4f4a" />
   <meta name="description" content="קְלָפִי — אוספים את הבחירות." />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=launch-safety-1"></script>
+  <script src="/boot-warmup.js?v=card-surface-1"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=launch-safety-1" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=launch-safety-1" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-1" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-1" />
 </head>
 <body>
   <div class="paper-noise" aria-hidden="true"></div>
@@ -63,7 +63,10 @@
       <section id="home-view" class="view active">
         <div class="home-grid">
           <div class="home-copy">
-            <p class="eyebrow" id="today-label">האיסוף האוטומטי</p>
+            <div class="home-kicker">
+              <p class="eyebrow" id="today-label">האיסוף האוטומטי</p>
+              <button id="open-trust-legend" class="trust-info" type="button" aria-haspopup="dialog" aria-label="מה מסמנת הכוכבית בקלפים?" title="מה מסמנת הכוכבית?">?</button>
+            </div>
             <h1 id="home-title">הקלפים נאספים גם כשאתם לא כאן.</h1>
             <p class="lede" id="home-copy">קלף אחד בכל שלוש שעות.</p>
             <div class="collection-line">
@@ -133,7 +136,7 @@
         <h1 id="shared-title">רק מסתכלים.</h1>
         <div id="shared-card" class="shared-card"></div>
         <p id="shared-notice" class="shared-notice">הקלף הזה לא נוסף לאוסף שלכם.</p>
-        <p id="shared-trust" class="card-trust-note"></p>
+        <p id="shared-trust" class="card-trust-note" hidden></p>
         <a id="shared-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
         <button id="shared-open-game" class="primary-action narrow" type="button">לאיסוף שלי</button>
       </section>
@@ -321,6 +324,7 @@
             <label>Card frame
               <select id="visual-card-frame">
                 <option value="tall-v2">Tall v2</option>
+                <option value="fullart-v1">Full art v1 (dummy)</option>
                 <option value="classic-v1">Classic v1</option>
               </select>
             </label>
@@ -421,15 +425,16 @@
 
   <dialog id="card-dialog" class="card-dialog">
     <button id="close-dialog" class="dialog-close" type="button" aria-label="סגירת הקלף">×</button>
-    <div id="dialog-card"></div>
-    <p id="dialog-ownership" class="dialog-ownership"></p>
-    <p id="dialog-trust" class="card-trust-note"></p>
-    <a id="dialog-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
-    <button id="dialog-report" class="report-link" type="button">דיווח על טעות בקלף</button>
+    <div class="dialog-card-stage">
+      <div id="dialog-card"></div>
+      <b id="dialog-copies" class="dupe-count" hidden></b>
+    </div>
+    <div class="dialog-meta-row">
+      <a id="dialog-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
+      <button id="dialog-report" class="report-link" type="button">דיווח על טעות בקלף</button>
+    </div>
     <div class="dialog-actions">
       <button id="dialog-share" class="primary-action" type="button">שיתוף הקלף</button>
-      <button id="dialog-whatsapp" class="secondary-action" type="button">WhatsApp</button>
-      <button id="dialog-instagram" class="secondary-action" type="button">Instagram</button>
       <button id="dialog-gift" class="secondary-action full" type="button" hidden>הצעה להחלפה</button>
     </div>
   </dialog>
@@ -480,6 +485,15 @@
     </form>
   </dialog>
 
+  <dialog id="trust-dialog" class="policy-dialog">
+    <button id="close-trust" class="dialog-close" type="button" aria-label="סגירת ההסבר">×</button>
+    <p class="eyebrow">איך לקרוא את הקלף</p>
+    <h2>מה מסמנת הכוכבית?</h2>
+    <p>כוכבית על ציטוט אומרת שהנוסח קוצר, או שהוא ניסוח מיוחס ולא תמלול מילולי מאומת.</p>
+    <p>ההקשר המלא, התאריך והמקור המצורף נפתחים מקישור המקור שעל הקלף.</p>
+    <p>כשסטטוס האותיות של הרשימה רלוונטי, הוא נלקח ממאגר ועדת הבחירות ולא מומצא במשחק.</p>
+  </dialog>
+
   <dialog id="advocacy-dialog" class="policy-dialog">
     <button id="close-advocacy" class="dialog-close" type="button" aria-label="סגירת הגילוי הנאות">×</button>
     <p class="eyebrow">גילוי נאות</p>
@@ -497,6 +511,6 @@
   <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="auto" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
     <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
   </video>
-  <script type="module" src="/app.js?v=launch-safety-1"></script>
+  <script type="module" src="/app.js?v=card-surface-1"></script>
 </body>
 </html>

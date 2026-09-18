@@ -1795,9 +1795,42 @@ h1 {
   cursor: pointer;
 }
 
+.dialog-card-stage {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  place-items: center;
+}
+.dialog-card-stage .dupe-count {
+  position: absolute;
+  z-index: 12;
+  top: 8px;
+  right: auto;
+  left: 50%;
+  min-width: 28px;
+  padding: 4px 8px;
+  border: 1px solid rgba(44, 51, 48, 0.35);
+  box-shadow: 0 2px 7px rgba(26, 31, 28, 0.18);
+  font-size: 13px;
+  transform: translateX(-50%);
+}
+.dialog-meta-row {
+  display: flex;
+  direction: ltr;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  margin-top: 10px;
+}
+.dialog-meta-row .dialog-source,
+.dialog-meta-row .report-link {
+  margin: 0;
+  min-height: 44px;
+}
 .dialog-actions {
   display: grid;
-  grid-template-columns: 0.7fr 1.3fr 0.8fr;
+  grid-template-columns: 1fr;
   gap: 9px;
   margin-top: 16px;
 }
@@ -1856,6 +1889,7 @@ h1 {
   .view { min-height: calc(100dvh - 150px); padding-top: 28px; }
   .home-grid { min-height: auto; grid-template-columns: 1fr; gap: 18px; }
   .home-copy { text-align: center; }
+  .home-kicker { justify-content: center; }
   .home-copy .lede, .collection-line { margin-inline: auto; }
   .pack-plinth { min-height: 360px; }
   .pack-wrapper { width: 208px; }
@@ -2128,8 +2162,12 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   font-size: clamp(7px, 4cqw, 13px);
   letter-spacing: 0;
 }
+.card-identity-stack { display: contents; }
+.card-rarity-zone,
+.card-slot-mark { display: none; }
 .card-quote-zone,
 .card-party-zone,
+.card-rarity-zone,
 .card-name-zone {
   position: absolute;
   z-index: 4;
@@ -2146,6 +2184,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 
 .progressive-card .card-quote-zone,
 .progressive-card .card-party-zone,
+.progressive-card .card-rarity-zone,
 .progressive-card .card-name-zone,
 .progressive-card .card-image-zone,
 .progressive-card .card-pip,
@@ -2158,6 +2197,9 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .progressive-card.stage-party .card-party-zone,
 .progressive-card.stage-identity .card-party-zone,
 .progressive-card.stage-portrait .card-party-zone,
+.progressive-card.stage-party .card-rarity-zone,
+.progressive-card.stage-identity .card-rarity-zone,
+.progressive-card.stage-portrait .card-rarity-zone,
 .progressive-card.stage-identity .card-name-zone,
 .progressive-card.stage-portrait .card-name-zone,
 .progressive-card.stage-portrait .card-image-zone,
@@ -2260,9 +2302,6 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .favorite-heart:focus-visible { outline: 2px solid var(--civic); outline-offset: 2px; }
 .new-card-thumb { padding: 0; overflow: hidden; background: var(--paper); }
 .dialog-source { display: block; width: fit-content; margin: 10px auto 0; color: var(--civic); font-size: 12px; text-underline-offset: 3px; }
-.dialog-ownership { margin: 12px auto 0; text-align: center; color: rgba(26, 31, 28, 0.72); font-size: 11px; }
-.dialog-ownership strong { color: var(--ink); font-size: 13px; }
-.dialog-ownership small { display: block; margin-top: 2px; color: rgba(26, 31, 28, 0.46); font-size: 8px; }
 .card-trust-note {
   max-width: 42ch;
   margin: 8px auto 0;
@@ -2271,6 +2310,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   line-height: 1.45;
   text-align: center;
 }
+.card-trust-note[hidden] { display: none; }
 .report-link {
   display: block;
   width: fit-content;
@@ -2360,6 +2400,12 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .dialog-close { width: 44px; height: 44px; }
 .walkout-receipt a,
 .dialog-source { display: inline-flex; align-items: center; justify-content: center; }
+.dialog-meta-row .dialog-source,
+.dialog-meta-row .report-link {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
 .trade-form select,
 .faction-desk select { min-height: 44px; }
 
@@ -2627,6 +2673,27 @@ body {
   gap: 20px;
 }
 
+.home-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.trust-info {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--rule) 38%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  font: 600 14px/1 "IBM Plex Sans Hebrew", sans-serif;
+  cursor: pointer;
+}
+.trust-info:hover,
+.trust-info:focus-visible { color: var(--civic); border-color: var(--civic); }
+.trust-info:focus-visible { outline: 2px solid var(--civic); outline-offset: 2px; }
 #home-view .home-copy h1 {
   margin-bottom: 7px;
   font-size: clamp(25px, 5vw, 40px);

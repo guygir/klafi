@@ -203,15 +203,15 @@ const elements = {
   navButtons: [...document.querySelectorAll("[data-nav]")],
   dialog: document.querySelector("#card-dialog"),
   dialogCard: document.querySelector("#dialog-card"),
-  dialogOwnership: document.querySelector("#dialog-ownership"),
-  dialogTrust: document.querySelector("#dialog-trust"),
+  dialogCopies: document.querySelector("#dialog-copies"),
   dialogSource: document.querySelector("#dialog-source"),
   dialogShare: document.querySelector("#dialog-share"),
-  dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
-  dialogInstagram: document.querySelector("#dialog-instagram"),
   dialogGift: document.querySelector("#dialog-gift"),
   dialogReport: document.querySelector("#dialog-report"),
   closeDialog: document.querySelector("#close-dialog"),
+  trustDialog: document.querySelector("#trust-dialog"),
+  openTrustLegend: document.querySelector("#open-trust-legend"),
+  closeTrust: document.querySelector("#close-trust"),
   reportDialog: document.querySelector("#report-dialog"),
   reportForm: document.querySelector("#report-form"),
   reportCardLabel: document.querySelector("#report-card-label"),
@@ -884,8 +884,10 @@ function showSharedCard(cardId, isTradeIntent = false) {
   elements.sharedNotice.textContent = isTradeIntent
     ? "זו תצוגה של הצעת החלפה. הבעלות לא השתנתה והקלף לא נוסף לאוסף שלכם."
     : "זו תצוגת שיתוף בלבד. הקלף לא נוסף לאוסף שלכם.";
-  elements.sharedTrust.textContent = cardTrustSummary(card);
-  elements.sharedTrust.hidden = !elements.sharedTrust.textContent;
+  if (elements.sharedTrust) {
+    elements.sharedTrust.textContent = "";
+    elements.sharedTrust.hidden = true;
+  }
   configureSourceLink(elements.sharedSource, card);
   elements.sharedSource.dataset.sourceCard = card.id;
   showView("shared");
@@ -2006,9 +2008,12 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
           <div class="card-image-meta"><span>${escapeHtml(presentation.code)}</span><strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong></div>
           ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
         </div>
-        <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
-        <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
-        <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
+        <div class="card-identity-stack">
+          <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
+          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}<span class="card-slot-mark"> · ${escapeHtml(presentation.code)}</span></p>
+          <p class="card-rarity-zone" dir="rtl" lang="he"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</p>
+          <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
+        </div>
       </section>
     </article>`;
 }
@@ -3482,18 +3487,12 @@ function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   const ownedCount = model.serverState.inventory[card.id] ?? 0;
   elements.dialogCard.innerHTML = displayCardMarkup(card);
-  elements.dialogOwnership.textContent = ownedCount < 1
-    ? "הקלף הזה עדיין לא באוסף."
-    : ownedCount === 1
-      ? "ברשותכם עותק אחד."
-      : `ברשותכם ${ownedCount} עותקים.`;
-  elements.dialogTrust.textContent = cardTrustSummary(card);
-  elements.dialogTrust.hidden = !elements.dialogTrust.textContent;
+  const showCopies = ownedCount > 1;
+  elements.dialogCopies.hidden = !showCopies;
+  elements.dialogCopies.textContent = showCopies ? `×${ownedCount}` : "";
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
   elements.dialogShare.hidden = ownedCount < 1;
-  elements.dialogWhatsapp.hidden = ownedCount < 1;
-  elements.dialogInstagram.hidden = ownedCount < 1;
   elements.dialogGift.hidden = ownedCount < 2;
 }
 
@@ -3698,73 +3697,6 @@ async function shareDialogCard() {
   }
 }
 
-async function shareToWhatsApp() {
-  const card = model.byId.get(model.dialogCardId);
-  const shareUrl = makeDeepLink("card", card.id);
-  const text = `${card.walkout.text}\n— ${cardTitle(card)}\nלצפייה בלבד: ${shareUrl}`;
-  elements.dialogWhatsapp.disabled = true;
-  try {
-    const blob = await makeShareImage(card);
-    if (!blob) throw new Error("Canvas export failed");
-    const file = new File([blob], `kalpi-${card.id}.png`, { type: "image/png" });
-    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-      await navigator.share({ title: `קְלָפִי · ${cardTitle(card)}`, text, files: [file] });
-    } else {
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = file.name;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
-      showToast("התמונה נשמרה ו־WhatsApp נפתח.");
-    }
-    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode() });
-    model.serverState = await request("/api/state");
-    renderBinder();
-  } catch (error) {
-    if (error.name !== "AbortError") showToast("לא הצלחנו להכין את השיתוף.");
-  } finally {
-    elements.dialogWhatsapp.disabled = false;
-  }
-}
-
-async function shareToInstagram() {
-  const card = model.byId.get(model.dialogCardId);
-  elements.dialogInstagram.disabled = true;
-  try {
-    const blob = await makeShareImage(card);
-    if (!blob) throw new Error("Canvas export failed");
-    const file = new File([blob], `kalpi-${card.id}-story.png`, { type: "image/png" });
-    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-      await navigator.share({
-        title: `קְלָפִי · ${cardTitle(card)}`,
-        text: `${card.walkout.text}\n${makeDeepLink("card", card.id)}`,
-        files: [file],
-      });
-      showToast("בחרו Instagram Story בחלון השיתוף.");
-    } else {
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = file.name;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
-      window.open("https://www.instagram.com/", "_blank", "noopener");
-      showToast("התמונה נשמרה. העלו אותה ל־Instagram Story.");
-    }
-    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: "instagram" });
-  } catch (error) {
-    if (error.name !== "AbortError") showToast("לא הצלחנו להכין תמונת Instagram.");
-  } finally {
-    elements.dialogInstagram.disabled = false;
-  }
-}
-
 function referralCode() {
   return `k-${model.token.slice(0, 8)}`;
 }
@@ -3893,9 +3825,9 @@ elements.claimLevel.addEventListener("click", async () => {
   }
 });
 elements.dialogShare.addEventListener("click", shareDialogCard);
-elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);
-elements.dialogInstagram.addEventListener("click", shareToInstagram);
 elements.dialogGift.addEventListener("click", offerDuplicate);
+elements.openTrustLegend.addEventListener("click", () => elements.trustDialog.showModal());
+elements.closeTrust.addEventListener("click", () => elements.trustDialog.close());
 elements.openAdvocacy.addEventListener("click", () => elements.advocacyDialog.showModal());
 elements.closeAdvocacy.addEventListener("click", () => elements.advocacyDialog.close());
 elements.tradeDemo.addEventListener("click", createTradePreview);
@@ -4121,6 +4053,9 @@ elements.dialog.addEventListener("click", (event) => {
 elements.advocacyDialog.addEventListener("click", (event) => {
   if (event.target === elements.advocacyDialog) elements.advocacyDialog.close();
 });
+elements.trustDialog.addEventListener("click", (event) => {
+  if (event.target === elements.trustDialog) elements.trustDialog.close();
+});
 elements.profileDialog.addEventListener("click", (event) => {
   if (event.target === elements.profileDialog) elements.profileDialog.close();
 });
@@ -4148,7 +4083,7 @@ function moveTabFocus(event) {
 document.addEventListener("keydown", (event) => {
   if (moveTabFocus(event)) return;
   const packIsOpen = document.querySelector("#pack-view").classList.contains("active");
-  if (event.key === "ArrowRight" && packIsOpen && !elements.packAction.disabled && !elements.dialog.open && !elements.advocacyDialog.open && !elements.profileDialog.open) {
+  if (event.key === "ArrowRight" && packIsOpen && !elements.packAction.disabled && !elements.dialog.open && !elements.advocacyDialog.open && !elements.profileDialog.open && !elements.trustDialog.open) {
     event.preventDefault();
     elements.packAction.click();
   }
