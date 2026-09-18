@@ -496,6 +496,23 @@ h1 {
   75%, 100% { transform: translateY(42px) rotate(2deg); opacity: 0; }
 }
 
+.binder-flip-frame {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px dashed color-mix(in srgb, var(--rule) 45%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: 600 11px/1 "IBM Plex Sans Hebrew", sans-serif;
+  cursor: pointer;
+}
+.binder-flip-frame[aria-pressed="true"] {
+  border-style: solid;
+  border-color: var(--civic);
+  color: var(--civic);
+}
+.binder-flip-frame:focus-visible { outline: 2px solid var(--civic); outline-offset: 2px; }
 .pack-header, .binder-head {
   display: flex;
   align-items: flex-start;
@@ -1803,20 +1820,6 @@ h1 {
   min-width: 0;
   place-items: center;
 }
-.dialog-card-stage .dupe-count {
-  position: absolute;
-  z-index: 12;
-  top: 8px;
-  right: auto;
-  left: 50%;
-  min-width: 28px;
-  padding: 4px 8px;
-  border: 1px solid rgba(44, 51, 48, 0.35);
-  box-shadow: 0 2px 7px rgba(26, 31, 28, 0.18);
-  font-size: 13px;
-  transform: translateX(-50%);
-}
-.dialog-card-stage .dupe-count[hidden] { display: none; }
 .dialog-meta-row {
   display: flex;
   direction: ltr;
@@ -1833,8 +1836,8 @@ h1 {
 }
 .dialog-actions {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 9px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
   margin-top: 16px;
 }
 
@@ -2147,23 +2150,37 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   z-index: 3;
   inset: 12px 12px auto;
   display: flex;
+  align-items: center;
   justify-content: space-between;
   direction: ltr;
   gap: 8px;
 }
-.card-image-meta span,
-.card-image-meta strong {
-  padding: 4px 6px;
-  border: 1px solid rgba(244, 239, 228, 0.66);
-  background: rgba(26, 31, 28, 0.78);
-  color: var(--paper);
-  font: 600 clamp(5px, 2.8cqw, 9px)/1.1 "IBM Plex Sans Hebrew", sans-serif;
+.card-meta-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
-.card-image-meta strong {
-  border-color: var(--pack-gold, #b38d3f);
-  color: var(--pack-seal, #175b56);
-  font-size: clamp(7px, 4cqw, 13px);
-  letter-spacing: 0;
+.card-image-meta span,
+.card-image-meta strong,
+.card-image-meta .card-copies-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(16px, 7.4cqw, 22px);
+  padding: 3px 6px;
+  border: 1px solid rgba(244, 239, 228, 0.38);
+  border-radius: 999px;
+  background: rgba(26, 31, 28, 0.38);
+  color: var(--paper);
+  font: 600 clamp(7px, 3.4cqw, 11px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  backdrop-filter: blur(6px);
+}
+.card-image-meta strong,
+.card-image-meta .card-copies-tag {
+  min-width: clamp(18px, 8cqw, 24px);
+  border-color: rgba(196, 163, 90, 0.45);
+  color: var(--paper);
+  font-size: clamp(8px, 4cqw, 13px);
 }
 .card-identity-stack { display: contents; }
 .card-rarity-zone,

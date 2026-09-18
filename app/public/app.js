@@ -6,6 +6,7 @@ const HOME_CACHE_KEY = "kalpi-home-cache";
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
+const DEBUG_CARD_FRAME_KEY = "kalpi-debug-card-frame";
 const STATIC_DATA_VERSION = "launch-safety-1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
@@ -203,10 +204,12 @@ const elements = {
   navButtons: [...document.querySelectorAll("[data-nav]")],
   dialog: document.querySelector("#card-dialog"),
   dialogCard: document.querySelector("#dialog-card"),
-  dialogCopies: document.querySelector("#dialog-copies"),
   dialogSource: document.querySelector("#dialog-source"),
   dialogShare: document.querySelector("#dialog-share"),
+  dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
+  dialogInstagram: document.querySelector("#dialog-instagram"),
   dialogGift: document.querySelector("#dialog-gift"),
+  binderFlipFrame: document.querySelector("#binder-flip-frame"),
   dialogReport: document.querySelector("#dialog-report"),
   closeDialog: document.querySelector("#close-dialog"),
   trustDialog: document.querySelector("#trust-dialog"),
@@ -273,6 +276,36 @@ function applyVisualConfig() {
     if (input) input.value = configured[key] || values[key];
   }
   queueCardTextFit(app);
+  syncBinderFlipButton();
+}
+
+function isFirstSetCard(card) {
+  return card?.releaseSetId === "party-leaders" || card?.idleEligible === true;
+}
+
+function debugFullartEnabled() {
+  return localStorage.getItem(DEBUG_CARD_FRAME_KEY) === "fullart-v1";
+}
+
+function cardDisplayFrame(card) {
+  if (isFirstSetCard(card) && debugFullartEnabled()) return "fullart-v1";
+  return document.querySelector("#app")?.dataset.cardFrame || "tall-v2";
+}
+
+function syncBinderFlipButton() {
+  const button = elements.binderFlipFrame;
+  if (!button) return;
+  const on = debugFullartEnabled();
+  button.setAttribute("aria-pressed", on ? "true" : "false");
+  button.textContent = on ? "חזרה למקור" : "אמנות מלאה";
+}
+
+function toggleBinderCardFrame() {
+  if (debugFullartEnabled()) localStorage.removeItem(DEBUG_CARD_FRAME_KEY);
+  else localStorage.setItem(DEBUG_CARD_FRAME_KEY, "fullart-v1");
+  applyVisualConfig();
+  renderBinder();
+  if (elements.dialog.open) renderDialogCard();
 }
 
 function studioSecret() {
@@ -1991,21 +2024,33 @@ function cardPresentation(card, instance = {}) {
   };
 }
 
+function ownedCountFor(card) {
+  return model.serverState?.inventory?.[card.id] ?? 0;
+}
+
 function displayCardMarkup(card, surface = "display") {
-  return cardMarkup(card, { finish: card.rarity }, { progressiveStage: "portrait", surface });
+  return cardMarkup(card, { finish: card.rarity, count: ownedCountFor(card) }, { progressiveStage: "portrait", surface });
 }
 
 function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full" } = {}) {
   const presentation = cardPresentation(card, instance);
   const stage = progressiveStage || "portrait";
   const progressive = `progressive-card stage-${stage}`;
+  const copies = Number(instance.count ?? 0);
+  const frame = cardDisplayFrame(card);
   return `
-    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}${presentation.trustLabel ? `. ${escapeHtml(presentation.trustLabel)}` : ""}">
+    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" data-card-frame="${escapeHtml(frame)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}${presentation.trustLabel ? `. ${escapeHtml(presentation.trustLabel)}` : ""}">
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
           ${artMarkup(card)}
-          <div class="card-image-meta"><span>${escapeHtml(presentation.code)}</span><strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong></div>
+          <div class="card-image-meta">
+            <span>${escapeHtml(presentation.code)}</span>
+            <span class="card-meta-end">
+              ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
+              <strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>
+            </span>
+          </div>
           ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
         </div>
         <div class="card-identity-stack">
@@ -2120,7 +2165,6 @@ function renderBinder() {
           ${binderCardMarkup(card)}
         </button>
         <div class="binder-card-tools">
-          ${count > 1 ? `<b class="dupe-count">×${count}</b>` : ""}
           <button class="favorite-heart${favorite ? " active" : ""}" type="button" data-favorite-card="${card.id}" aria-pressed="${favorite}" aria-label="${favorite ? "הסרה מהפייבוריטים" : "הוספה לפייבוריטים"}">♥</button>
         </div>
       </div>`;
@@ -3487,12 +3531,11 @@ function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   const ownedCount = model.serverState.inventory[card.id] ?? 0;
   elements.dialogCard.innerHTML = displayCardMarkup(card);
-  const showCopies = ownedCount > 1;
-  elements.dialogCopies.hidden = !showCopies;
-  elements.dialogCopies.textContent = showCopies ? `×${ownedCount}` : "";
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
   elements.dialogShare.hidden = ownedCount < 1;
+  elements.dialogWhatsapp.hidden = ownedCount < 1;
+  elements.dialogInstagram.hidden = ownedCount < 1;
   elements.dialogGift.hidden = ownedCount < 2;
 }
 
@@ -3659,42 +3702,166 @@ async function makeShareImage(card) {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
 
+function shareCaption(card) {
+  const url = makeDeepLink("card", card.id);
+  const quote = String(card.walkout?.text || "").trim();
+  const title = cardTitle(card);
+  return {
+    title: `קְלָפִי · ${title}`,
+    text: `${quote}\n— ${title}\n${url}`,
+    url,
+  };
+}
+
+function downloadBlob(blob, name) {
+  const href = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = href;
+  link.download = name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 1000);
+}
+
+async function makeStoryImage(card) {
+  const presentation = cardPresentation(card);
+  const shareUrl = makeDeepLink("card", card.id);
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1920;
+  const context = canvas.getContext("2d");
+  context.direction = "rtl";
+  context.fillStyle = "#050505";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (presentation.artKey) {
+    try {
+      const image = await loadImage(`/design-assets/${encodeURIComponent(presentation.artKey)}`);
+      const scale = Math.max(canvas.width / image.width, 1320 / image.height);
+      const width = image.width * scale;
+      const height = image.height * scale;
+      context.drawImage(image, (canvas.width - width) / 2, 0, width, height);
+    } catch {
+      context.fillStyle = presentation.pip;
+      context.font = "600 220px Fraunces";
+      context.textAlign = "center";
+      context.fillText(placeholderMark(card), 540, 640);
+    }
+  }
+
+  const fade = context.createLinearGradient(0, 980, 0, 1920);
+  fade.addColorStop(0, "rgba(0, 0, 0, 0)");
+  fade.addColorStop(0.28, "rgba(0, 0, 0, 0.35)");
+  fade.addColorStop(0.58, "rgba(0, 0, 0, 0.88)");
+  fade.addColorStop(1, "#000");
+  context.fillStyle = fade;
+  context.fillRect(0, 980, canvas.width, 940);
+
+  context.textAlign = "center";
+  context.fillStyle = "#f7f2e8";
+  context.font = "700 64px 'Noto Serif Hebrew', Fraunces, serif";
+  const nameEnd = wrapCanvasText(context, presentation.title, 540, 1280, 900, 72, 2);
+  context.fillStyle = "rgba(247, 242, 232, 0.72)";
+  context.font = "500 28px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif";
+  const party = [presentation.setName, presentation.subtitle, presentation.code].filter(Boolean).join(" · ");
+  wrapCanvasText(context, party, 540, nameEnd + 18, 900, 36, 2);
+  context.fillStyle = "#c4a35a";
+  context.font = "600 26px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif";
+  context.fillText(`${presentation.rarityMark}  ${presentation.rarityName}`, 540, nameEnd + 86);
+  context.fillStyle = "#f7f2e8";
+  context.font = "600 40px 'Noto Serif Hebrew', Fraunces, serif";
+  wrapCanvasText(context, presentation.rawQuote, 540, nameEnd + 150, 860, 50, 4);
+  context.fillStyle = "rgba(247, 242, 232, 0.7)";
+  context.font = "600 28px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif";
+  context.fillText("קְלָפִי", 540, 1810);
+  context.font = "500 22px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif";
+  context.fillText(shareUrl.replace(/^https?:\/\//, ""), 540, 1850);
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+}
+
+async function runShareAction(button, idleLabel, work) {
+  button.disabled = true;
+  button.textContent = "מכינים שיתוף…";
+  try {
+    await work();
+  } catch (error) {
+    if (error.name !== "AbortError") showToast("לא הצלחנו להכין את השיתוף.");
+  } finally {
+    button.disabled = false;
+    button.textContent = idleLabel;
+  }
+}
+
 async function shareDialogCard() {
   const card = model.byId.get(model.dialogCardId);
-  elements.dialogShare.disabled = true;
-  elements.dialogShare.textContent = "מכינים שיתוף…";
-  try {
+  await runShareAction(elements.dialogShare, "שיתוף הקלף", async () => {
     const blob = await makeShareImage(card);
     if (!blob) throw new Error("Canvas export failed");
     const file = new File([blob], `kalpi-${card.id}.png`, { type: "image/png" });
-    const shareUrl = makeDeepLink("card", card.id);
+    const { title, text, url } = shareCaption(card);
     if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({
-        title: `קיבלתי את ${cardTitle(card)} בקְלָפִי`,
-        text: `${card.walkout.text}\n${shareUrl}`,
-        files: [file],
-      });
-      await recordEvent("share_created", { cardId: card.id, referralCode: referralCode() });
-      showToast("חלון השיתוף נפתח.");
+      await navigator.share({ title, text, files: [file] });
     } else {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = file.name;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      const copied = await copyText(shareUrl);
-      await recordEvent("share_created", { cardId: card.id, referralCode: referralCode() });
+      downloadBlob(blob, file.name);
+      const copied = await copyText(url);
       showToast(copied ? "התמונה נשמרה והקישור הועתק." : "התמונה נשמרה.");
     }
-  } catch (error) {
-    if (error.name !== "AbortError") showToast("לא הצלחנו להכין תמונת שיתוף.");
-  } finally {
-    elements.dialogShare.disabled = false;
-    elements.dialogShare.textContent = "שיתוף הקלף";
-  }
+    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode() });
+  });
+}
+
+async function shareToWhatsApp() {
+  const card = model.byId.get(model.dialogCardId);
+  await runShareAction(elements.dialogWhatsapp, "וואטסאפ", async () => {
+    const blob = await makeShareImage(card);
+    if (!blob) throw new Error("Canvas export failed");
+    const file = new File([blob], `kalpi-${card.id}.png`, { type: "image/png" });
+    const { title, text } = shareCaption(card);
+    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+      await navigator.share({ title, text, files: [file] });
+      showToast("בחרו וואטסאפ — התמונה, הטקסט והקישור מוכנים.");
+    } else if (navigator.share) {
+      downloadBlob(blob, file.name);
+      await navigator.share({ title, text });
+      showToast("התמונה נשמרה. צרפו אותה להודעת הוואטסאפ.");
+    } else {
+      downloadBlob(blob, file.name);
+      await copyText(text);
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+      showToast("התמונה נשמרה ו־WhatsApp נפתח עם הטקסט והקישור.");
+    }
+    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: "whatsapp" });
+  });
+}
+
+async function shareToInstagram() {
+  const card = model.byId.get(model.dialogCardId);
+  await runShareAction(elements.dialogInstagram, "סטורי", async () => {
+    const blob = await makeStoryImage(card);
+    if (!blob) throw new Error("Canvas export failed");
+    const file = new File([blob], `kalpi-${card.id}-story.png`, { type: "image/png" });
+    const { text, url } = shareCaption(card);
+    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+      await navigator.share({
+        title: `קְלָפִי · ${cardTitle(card)}`,
+        text: `${text}`,
+        files: [file],
+      });
+      showToast("בחרו Instagram Story. הקישור כתוב על התמונה.");
+    } else {
+      downloadBlob(blob, file.name);
+      await copyText(url);
+      window.open("instagram://story-camera", "_blank", "noopener");
+      window.setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          window.open("https://www.instagram.com/", "_blank", "noopener");
+        }
+      }, 700);
+      showToast("הסטורי נשמר. העלו אותו לאינסטגרם — הקישור הועתק.");
+    }
+    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: "instagram" });
+  });
 }
 
 function referralCode() {
@@ -3825,6 +3992,9 @@ elements.claimLevel.addEventListener("click", async () => {
   }
 });
 elements.dialogShare.addEventListener("click", shareDialogCard);
+elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);
+elements.dialogInstagram.addEventListener("click", shareToInstagram);
+elements.binderFlipFrame?.addEventListener("click", toggleBinderCardFrame);
 elements.dialogGift.addEventListener("click", offerDuplicate);
 elements.openTrustLegend.addEventListener("click", () => elements.trustDialog.showModal());
 elements.closeTrust.addEventListener("click", () => elements.trustDialog.close());
