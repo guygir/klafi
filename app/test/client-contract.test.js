@@ -59,6 +59,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.binder-card-tools[^}]*right: 3\.4cqw/);
   assert.doesNotMatch(css, /\.binder-card-tools[^}]*left: 50%/);
   assert.match(javascript, /card-heart-slot/);
+  assert.match(javascript, /function syncBinderHeartTools/);
   assert.match(javascript, /if \(frame\?\.dataset\.cardFrame === "fullart-v1"\) return/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-image-meta strong[\s\S]{0,120}?display:\s*none/);
   assert.match(themeCss, /card-identity-stack[\s\S]{0,280}?gap:\s*2cqw/);

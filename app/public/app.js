@@ -989,11 +989,25 @@ const cardResizeObserver = typeof ResizeObserver === "undefined"
   ? null
   : new ResizeObserver((entries) => {
     for (const entry of entries) fitVisibleCardText(entry.target);
+    syncBinderHeartTools();
   });
+
+function syncBinderHeartTools(root = elements.binderGrid) {
+  root?.querySelectorAll(".binder-slot.owned").forEach((slot) => {
+    const tools = slot.querySelector(".binder-card-tools");
+    const mark = slot.querySelector(".card-heart-slot");
+    if (!tools || !mark) return;
+    const slotBox = slot.getBoundingClientRect();
+    const markBox = mark.getBoundingClientRect();
+    tools.style.top = `${markBox.top - slotBox.top}px`;
+    tools.style.right = `${slotBox.right - markBox.right}px`;
+  });
+}
 
 function queueCardTextFit(root = document) {
   requestAnimationFrame(() => {
     fitVisibleCardText(root);
+    syncBinderHeartTools(root === document ? elements.binderGrid : root);
     if (!cardResizeObserver) return;
     root.querySelectorAll(".kalpi-card").forEach((frame) => {
       if (observedCardFrames.has(frame)) return;
@@ -4440,10 +4454,12 @@ document.fonts?.ready.then(() => queueCardTextFit(elements.main));
 window.__kalpiDebug = {
   openCardDialog,
   setOwned(cardId, count) {
-    if (!model.serverState) return;
+    if (!model.serverState) return false;
+    model.serverState.inventory ??= {};
     model.serverState.inventory[cardId] = count;
     renderBinder();
     if (elements.dialog.open || model.dialogCardId === cardId) openCardDialog(cardId);
+    return true;
   },
   makeWhatsAppImage,
   makeStoryImage,
