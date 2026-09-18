@@ -3236,6 +3236,7 @@ async function saveReleaseSets() {
 }
 
 function renderStudio() {
+  if (studioSecret()) hydrateStudioReports().catch(() => {});
   if (!model.editorial || !model.catalog.length || !elements.cardReviewList) return;
   const profile = model.editorial.advocacy;
   const draftCount = model.catalog.filter((card) => card.walkout.contentStatus === "draft").length;
@@ -3277,7 +3278,6 @@ function renderStudio() {
   renderContentStudio();
   renderSpecialStudio();
   renderStudioReports();
-  if (studioSecret()) hydrateStudioReports().catch(() => {});
 }
 
 function reportCategoryLabel(category) {
