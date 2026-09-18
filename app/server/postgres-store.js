@@ -10,6 +10,7 @@ const { Pool } = pg;
 const MIGRATIONS = [
   ["001_runtime_state", "001_runtime_state.sql"],
   ["002_normalized_runtime", "002_normalized_runtime.sql"],
+  ["003_launch_reliability", "003_launch_reliability.sql"],
 ];
 
 function iso(value) {
@@ -618,6 +619,94 @@ export class PostgresStore {
       return result;
     };
     return this.transaction.getStore() ? run() : this.exclusive(run);
+  }
+
+  async idempotent(token, key, route, operation) {
+    if (!key) return { ...(await operation()), replayed: false };
+    return this.exclusive(async () => {
+      await this.executor().query(
+        "SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))",
+        [token, key],
+      );
+      const existing = await this.executor().query(
+        `SELECT route, response_status, response_body
+         FROM kalpi_idempotency
+         WHERE session_token = $1 AND idempotency_key = $2`,
+        [token, key],
+      );
+      if (existing.rows[0]) {
+        if (existing.rows[0].route !== route) {
+          return { status: 409, body: { error: "IDEMPOTENCY_KEY_REUSED" }, replayed: true };
+        }
+        return {
+          status: existing.rows[0].response_status,
+          body: existing.rows[0].response_body,
+          replayed: true,
+        };
+      }
+      const result = await operation();
+      await this.executor().query(
+        `INSERT INTO kalpi_idempotency (
+           session_token, idempotency_key, route, response_status, response_body
+         ) VALUES ($1,$2,$3,$4,$5::jsonb)`,
+        [token, key, route, result.status, JSON.stringify(result.body)],
+      );
+      return { ...result, replayed: false };
+    });
+  }
+
+  async submitReport(report) {
+    const result = await this.executor().query(
+      `INSERT INTO kalpi_reports (
+         report_id, session_token, card_id, category, details, page_path,
+         status, created_at, updated_at
+       ) VALUES ($1,$2,$3,$4,$5,$6,'open',$7,$7)
+       ON CONFLICT (report_id) DO NOTHING
+       RETURNING report_id`,
+      [
+        report.reportId,
+        report.sessionToken,
+        report.cardId,
+        report.category,
+        report.details,
+        report.pagePath,
+        report.createdAt,
+      ],
+    );
+    return { reportId: report.reportId, queued: true, replayed: result.rowCount === 0 };
+  }
+
+  async listReports() {
+    const result = await this.pool.query(
+      `SELECT report_id, card_id, category, details, page_path, status,
+              reviewer_note, created_at, updated_at
+       FROM kalpi_reports
+       ORDER BY CASE status WHEN 'open' THEN 0 WHEN 'reviewing' THEN 1 ELSE 2 END,
+                created_at ASC
+       LIMIT 500`,
+    );
+    return result.rows.map((row) => ({
+      reportId: row.report_id,
+      cardId: row.card_id,
+      category: row.category,
+      details: row.details,
+      pagePath: row.page_path,
+      status: row.status,
+      reviewerNote: row.reviewer_note,
+      createdAt: iso(row.created_at),
+      updatedAt: iso(row.updated_at),
+    }));
+  }
+
+  async updateReport(reportId, status, reviewerNote, updatedAt) {
+    const result = await this.pool.query(
+      `UPDATE kalpi_reports
+       SET status = $2, reviewer_note = $3, updated_at = $4
+       WHERE report_id = $1
+       RETURNING report_id`,
+      [reportId, status, reviewerNote, updatedAt],
+    );
+    return result.rowCount > 0;
   }
 
   async recordEvent(event) {

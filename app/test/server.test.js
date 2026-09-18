@@ -56,13 +56,14 @@ async function start(dataDir, clock, {
   };
 }
 
-async function api(base, route, { token, method = "GET", body, studio } = {}) {
+async function api(base, route, { token, method = "GET", body, studio, headers = {} } = {}) {
   const response = await fetch(`${base}${route}`, {
     method,
     headers: {
       ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(studio ? { "x-kalpi-studio": studio } : {}),
       ...(body ? { "content-type": "application/json" } : {}),
+      ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -77,11 +78,38 @@ test("runtime factory builds the same Node handler Vercel uses", async () => {
   assert.equal(typeof handler, "function");
 });
 
+test("legitimate players are not blocked by a shared application rate bucket", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-unthrottled-test-"));
+  const clock = { value: Date.parse("2026-09-17T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const sessions = await Promise.all(
+    Array.from({ length: 25 }, () => api(running.base, "/api/session", { method: "POST" })),
+  );
+  assert.ok(sessions.every(({ status, body }) => status === 201 && body.token));
+});
+
 test("public party register keeps Hebrew names without opening Studio", () => {
   const fromStudio = publicPartyRegister({
-    parties: [{ id: "RZ", displayNameHe: "הציונות הדתית וזהות", displayNameEn: "RZ", requestedLetters: ["ט"], pip: "#6B4A8B" }],
+    parties: [{
+      id: "RZ",
+      displayNameHe: "הציונות הדתית וזהות",
+      displayNameEn: "RZ",
+      requestedLetters: ["ט"],
+      finalLetters: null,
+      letterStatus: "protected",
+      filingStatus: "submitted-pending-cec-review",
+      asOfDate: "2026-09-09",
+      pip: "#6B4A8B",
+    }],
   });
   assert.equal(fromStudio[0].displayNameHe, "הציונות הדתית וזהות");
+  assert.equal(fromStudio[0].filingStatus, "submitted-pending-cec-review");
+  assert.equal(fromStudio[0].letterStatus, "protected");
   const fromCatalog = publicPartyRegister(null, [
     { set: "SYS", setNameHe: "יסודות" },
     { set: "RZ", setNameHe: "הציונות הדתית וזהות", setName: "Religious Zionism–Zehut", letters: "ט", pip: "#6B4A8B" },
@@ -146,9 +174,13 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   const pendingRanks = [...seen.body.progression.pendingRewards];
   const rewardInstances = [];
   for (const rank of pendingRanks) {
-    const reward = await api(running.base, "/api/rewards/level", { token, method: "POST" });
+    const headers = { "x-idempotency-key": `level-reward-${rank}` };
+    const reward = await api(running.base, "/api/rewards/level", { token, method: "POST", headers });
     assert.equal(reward.status, 201);
     assert.equal(reward.body.rank, rank);
+    const replay = await api(running.base, "/api/rewards/level", { token, method: "POST", headers });
+    assert.equal(replay.status, 201);
+    assert.deepEqual(replay.body, reward.body);
     rewardInstances.push(...reward.body.cards);
   }
   const duplicateReward = await api(running.base, "/api/rewards/level", { token, method: "POST" });
@@ -190,6 +222,48 @@ test("prepared idle pulls ignore client card choices", async (t) => {
   assert.equal(settled.body.cards.at(-1).instanceId, scheduled.instanceId);
   assert.equal(settled.body.cards.at(-1).cardId, scheduled.cardId);
   assert.notEqual(settled.body.cards.at(-1).instanceId, "client-chosen-instance");
+});
+
+test("correction reports persist once and remain reviewable", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-report-test-"));
+  const clock = { value: Date.parse("2026-09-17T12:00:00.000Z") };
+  const running = await start(dataDir, clock, { debugEnabled: false, studioSecret: "review-secret" });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const created = await api(running.base, "/api/session", { method: "POST" });
+  const token = created.body.token;
+  const catalog = await api(running.base, "/api/catalog");
+  const report = {
+    reportId: "report-retry-001",
+    cardId: catalog.body.cards[0].id,
+    category: "source",
+    details: "הקישור למקור אינו נפתח.",
+    pagePath: "/?view=binder",
+  };
+  const first = await api(running.base, "/api/reports", { token, method: "POST", body: report });
+  const replay = await api(running.base, "/api/reports", { token, method: "POST", body: report });
+  assert.equal(first.status, 202);
+  assert.equal(first.body.replayed, false);
+  assert.equal(replay.body.replayed, true);
+
+  const hidden = await api(running.base, "/api/studio/reports");
+  assert.equal(hidden.status, 404);
+  const queue = await api(running.base, "/api/studio/reports", { studio: "review-secret" });
+  assert.equal(queue.status, 200);
+  assert.equal(queue.body.reports.length, 1);
+  assert.equal(queue.body.reports[0].status, "open");
+
+  const resolved = await api(running.base, `/api/studio/reports/${report.reportId}`, {
+    studio: "review-secret",
+    method: "POST",
+    body: { status: "resolved", reviewerNote: "המקור תוקן ונבדק." },
+  });
+  assert.equal(resolved.status, 200);
+  const reviewed = await api(running.base, "/api/studio/reports", { studio: "review-secret" });
+  assert.equal(reviewed.body.reports[0].status, "resolved");
 });
 
 test("legacy sessions migrate into the capped idle queue without losing inventory", async (t) => {
@@ -356,6 +430,14 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   const pageHtml = await page.text();
   assert.match(pageHtml, /פתיחת קלף/);
   assert.match(pageHtml, /קלף אחד בכל שלוש שעות/);
+  const sharePage = await fetch(`${running.base}/share/LIK-M01-Q01`);
+  assert.equal(sharePage.status, 200);
+  assert.match(sharePage.headers.get("content-type"), /^text\/html/);
+  const shareHtml = await sharePage.text();
+  assert.match(shareHtml, /property="og:image"/);
+  assert.match(shareHtml, /og:title" content="קְלָפִי · /);
+  assert.match(shareHtml, /card=LIK-M01-Q01/);
+  assert.equal((await fetch(`${running.base}/share/not-a-card`)).status, 404);
   const clientScript = await fetch(`${running.base}/app.js?v=test`);
   assert.match(clientScript.headers.get("cache-control"), /no-cache/);
   const stylesheet = await fetch(`${running.base}/styles.css?v=test`);
@@ -988,6 +1070,8 @@ test("postgres store keeps a session after a second process boots", async (t) =>
     await pool.query(`
       DROP TABLE IF EXISTS
         kalpi_studio_config,
+        kalpi_idempotency,
+        kalpi_reports,
         kalpi_events,
         kalpi_trades,
         kalpi_packs,

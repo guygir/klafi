@@ -177,21 +177,29 @@ body:has(#app[data-theme="pack-v2"]) {
   gap: 5cqw;
 }
 
-#app[data-card-frame="tall-v2"] .card-image-meta span,
-#app[data-card-frame="tall-v2"] .card-image-meta strong {
-  padding: clamp(2px, 1.1cqw, 5px) clamp(3px, 1.6cqw, 7px);
-  border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 72%, var(--pack-umber, #3c3026));
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--pack-paper, #eee5d4) 88%, transparent);
+#app[data-card-frame="tall-v2"] .card-image-meta .card-code-tag,
+#app[data-card-frame="tall-v2"] .card-image-meta strong,
+#app[data-card-frame="tall-v2"] .card-image-meta .card-copies-tag {
+  box-sizing: border-box;
+  min-height: clamp(18px, 8cqw, 24px);
+  padding: clamp(2px, 1.1cqw, 5px) clamp(5px, 1.8cqw, 8px);
+  border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 38%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pack-paper, #eee5d4) 38%, transparent);
   color: var(--pack-umber, #3c3026);
-  font: 600 clamp(7px, 2.9cqw, 11px)/1.05 "IBM Plex Sans Hebrew", sans-serif;
+  font: 600 clamp(8px, 3.4cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
   letter-spacing: 0.02em;
-  box-shadow: 0 2px 7px rgba(60, 48, 38, 0.12);
+  box-shadow: none;
+  backdrop-filter: blur(7px);
 }
 
-#app[data-card-frame="tall-v2"] .card-image-meta strong {
+#app[data-card-frame="tall-v2"] .card-image-meta strong,
+#app[data-card-frame="tall-v2"] .card-image-meta .card-copies-tag {
+  width: clamp(18px, 8cqw, 26px);
+  min-width: clamp(18px, 8cqw, 26px);
+  padding: 0;
   color: var(--pack-seal, #175b56);
-  font-size: clamp(9px, 4.2cqw, 15px);
+  font-size: clamp(9px, 4.2cqw, 14px);
   letter-spacing: 0;
 }
 
@@ -235,37 +243,15 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .new-stamp {
-  top: auto;
-  bottom: clamp(6px, 2.8cqw, 10px);
+  top: 50%;
+  bottom: auto;
   right: clamp(8px, 3.5cqw, 14px);
+  transform: translateY(-50%);
   padding: clamp(2px, 1cqw, 4px) clamp(4px, 1.8cqw, 7px);
   border-color: var(--pack-gold, #b38d3f);
   background: color-mix(in srgb, var(--pack-paper, #eee5d4) 92%, transparent);
   color: var(--pack-seal, #175b56);
   font-size: clamp(7px, 3cqw, 10px);
-}
-
-#app[data-card-frame="tall-v2"] .binder-card-tools {
-  top: clamp(5px, 2.5cqw, 10px);
-  gap: clamp(3px, 1.5cqw, 6px);
-}
-
-#app[data-card-frame="tall-v2"] .binder-card-tools .dupe-count,
-#app[data-card-frame="tall-v2"] .favorite-heart {
-  min-width: clamp(22px, 13cqw, 34px);
-  height: clamp(22px, 13cqw, 34px);
-  border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 65%, var(--pack-umber, #3c3026));
-  background: color-mix(in srgb, var(--pack-paper, #eee5d4) 94%, transparent);
-  color: var(--pack-umber, #3c3026);
-  font-size: clamp(11px, 7cqw, 18px);
-}
-
-#app[data-card-frame="tall-v2"] .favorite-heart {
-  width: clamp(22px, 13cqw, 34px);
-}
-
-#app[data-card-frame="tall-v2"] .favorite-heart.active {
-  color: #9b382f;
 }
 
 #app[data-card-frame="tall-v2"] #pack-view.active {
@@ -298,7 +284,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] #pack-view .walkout-content {
   display: grid;
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   place-items: center;
 }
 
@@ -311,7 +297,12 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] #pack-view .walkout-receipt {
-  display: none;
+  width: min(350px, calc(100vw - 42px));
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.25;
 }
 
 #app[data-card-frame="tall-v2"] #pack-view > .action-dock {
@@ -330,7 +321,15 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .card-dialog .kalpi-card,
 #app[data-card-frame="tall-v2"] .shared-card .kalpi-card {
-  width: min(370px, calc(100vw - 54px));
+  width: min(370px, 100%);
+}
+
+#app[data-card-frame="tall-v2"] .card-dialog #dialog-card,
+#app[data-card-frame="tall-v2"] .dialog-card-stage {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  place-items: center;
 }
 
 #app[data-card-frame="tall-v2"] .trade-choice-preview button,
@@ -348,24 +347,57 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta {
   inset: 3.4cqw 3.4cqw auto;
   gap: 2cqw;
+  padding: 0;
 }
 
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta span,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong {
-  max-width: 64%;
-  padding: 1.1cqw 1.8cqw;
-  overflow: hidden;
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-meta-end {
+  justify-self: end;
+  justify-content: flex-end;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  gap: 2cqw;
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-code-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+  box-sizing: border-box;
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
+  flex: 0 0 auto;
+  height: 8cqw;
+  min-height: 8cqw;
+  padding: 0 1.8cqw;
+  overflow: visible;
   border-width: max(1px, 0.5cqw);
   font-size: 6.1cqw;
   line-height: 1;
-  text-overflow: ellipsis;
+  text-overflow: unset;
   white-space: nowrap;
 }
 
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-code-tag {
+  justify-self: start;
+  margin: 0;
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+  justify-self: end;
+  margin: 0;
+}
+
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong {
+  width: 8cqw;
+  min-width: 8cqw;
   max-width: none;
+  height: 8cqw;
+  min-height: 8cqw;
   flex: 0 0 auto;
-  font-size: 7.4cqw;
+  padding: 0;
+  border-width: max(1px, 0.5cqw);
+  font-size: 6.4cqw;
+  line-height: 1;
 }
 
 /* Signature beat: ink appears through the ballot line on the persistent card. */
@@ -1048,4 +1080,246 @@ body:has(#app[data-theme="pack-v2"]) {
 .quiz-questions button.selected {
   border-color: var(--pack-seal, #175b56);
   background: color-mix(in srgb, var(--pack-seal, #175b56) 10%, transparent);
+}
+
+/* Dummy comparison frame: full-bleed portrait, rising black panel, name / party+slot / rarity / quote. */
+#app[data-card-frame="fullart-v1"] .kalpi-card,
+#app .kalpi-card[data-card-frame="fullart-v1"] {
+  width: min(350px, calc(100vw - 42px));
+  overflow: hidden;
+  border: 1px solid #111;
+  border-radius: clamp(8px, 3.2cqw, 12px);
+  background: #050505;
+  box-shadow: 0 18px 42px rgba(5, 5, 5, 0.38);
+}
+
+#app .kalpi-card[data-card-frame="fullart-v1"]::before {
+  content: none;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.uncommon,
+#app .kalpi-card[data-card-frame="fullart-v1"].uncommon {
+  box-shadow:
+    0 18px 42px rgba(5, 5, 5, 0.38),
+    inset 0 0 0 1px color-mix(in srgb, var(--foil) 70%, #000);
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.rare,
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo,
+#app[data-card-frame="fullart-v1"] .kalpi-card.promotion,
+#app .kalpi-card[data-card-frame="fullart-v1"].rare,
+#app .kalpi-card[data-card-frame="fullart-v1"].holo,
+#app .kalpi-card[data-card-frame="fullart-v1"].promotion {
+  border-color: var(--foil);
+  box-shadow:
+    0 20px 46px rgba(5, 5, 5, 0.42),
+    inset 0 0 0 2px #050505,
+    inset 0 0 0 3px var(--foil);
+}
+
+#app[data-card-frame="fullart-v1"] .card-face.front,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-face.front {
+  padding: 0;
+}
+
+#app[data-card-frame="fullart-v1"] .card-face.front > .card-pip,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-face.front > .card-pip {
+  display: none;
+}
+
+#app[data-card-frame="fullart-v1"] .card-image-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-zone {
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: #111;
+}
+
+#app[data-card-frame="fullart-v1"] .card-image-zone .card-art,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-zone .card-art {
+  border-radius: inherit;
+  filter: saturate(0.92) contrast(1.04);
+}
+
+#app[data-card-frame="fullart-v1"] .card-image-zone::after,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-zone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 68%,
+    rgba(0, 0, 0, 0.18) 74%,
+    rgba(0, 0, 0, 0.72) 84%,
+    #000 92%
+  );
+}
+
+#app[data-card-frame="fullart-v1"] .card-image-meta,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta {
+  display: grid;
+}
+
+#app[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
+#app[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag {
+  border-color: rgba(247, 242, 232, 0.28);
+  background: rgba(5, 5, 5, 0.36);
+  color: #f7f2e8;
+}
+
+#app[data-card-frame="fullart-v1"] .card-image-meta strong,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta strong {
+  display: none;
+}
+
+#app[data-card-frame="fullart-v1"] .card-identity-stack,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-identity-stack {
+  position: absolute;
+  z-index: 4;
+  inset: 70% 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 0;
+  min-height: 0;
+  padding: 3.2% 6.5%;
+  text-align: center;
+}
+
+#app[data-card-frame="fullart-v1"] .card-quote-zone,
+#app[data-card-frame="fullart-v1"] .card-party-zone,
+#app[data-card-frame="fullart-v1"] .card-rarity-zone,
+#app[data-card-frame="fullart-v1"] .card-name-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-quote-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-party-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-name-zone {
+  position: static;
+  right: auto;
+  left: auto;
+  bottom: auto;
+  width: 100%;
+  height: auto;
+  justify-content: center;
+  overflow: visible;
+}
+
+#app[data-card-frame="fullart-v1"] .card-face.front .card-name-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-face.front .card-name-zone {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f7f2e8;
+  font-family: "Noto Serif Hebrew", serif;
+  margin: 0;
+  font-size: 8cqw;
+  font-weight: 600;
+  line-height: 1.15;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
+  white-space: normal;
+}
+
+#app[data-card-frame="fullart-v1"] .card-party-zone,
+#app[data-card-frame="fullart-v1"] .card-rarity-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-party-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone {
+  justify-content: center;
+  color: rgba(247, 242, 232, 0.72);
+  font-family: "IBM Plex Sans Hebrew", sans-serif;
+  margin: 0;
+  font-size: 3.5cqw;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0;
+  white-space: normal;
+}
+
+#app[data-card-frame="fullart-v1"] .card-slot-mark,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-slot-mark {
+  display: inline;
+}
+
+#app[data-card-frame="fullart-v1"] .card-rarity-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone {
+  display: flex;
+  align-items: center;
+  gap: 1.2cqw;
+  color: var(--foil);
+}
+
+#app[data-card-frame="fullart-v1"] .card-rarity-zone strong,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone strong {
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+
+#app[data-card-frame="fullart-v1"] .card-quote-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-quote-zone {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: #f7f2e8;
+  font-family: "Noto Serif Hebrew", serif;
+  font-size: 6.4cqw;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+#app[data-card-frame="fullart-v1"] .new-stamp,
+#app .kalpi-card[data-card-frame="fullart-v1"] .new-stamp {
+  top: 10px;
+  right: auto;
+  left: 10px;
+  bottom: auto;
+  transform: none;
+  border-color: var(--foil);
+  background: rgba(5, 5, 5, 0.72);
+  color: #f7f2e8;
+}
+
+#app[data-card-frame="fullart-v1"] .card-dialog .kalpi-card,
+#app[data-card-frame="fullart-v1"] .shared-card .kalpi-card,
+#app .card-dialog .kalpi-card[data-card-frame="fullart-v1"],
+#app .shared-card .kalpi-card[data-card-frame="fullart-v1"] {
+  width: min(370px, 100%);
+}
+
+#app[data-card-frame="fullart-v1"] .card-dialog #dialog-card,
+#app[data-card-frame="fullart-v1"] .dialog-card-stage {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  place-items: center;
+}
+
+#app[data-card-frame="fullart-v1"] .binder-shared-card .kalpi-card,
+#app[data-card-frame="fullart-v1"] .site-card-peek .kalpi-card,
+#app[data-card-frame="fullart-v1"] .trade-choice-preview .kalpi-card {
+  width: 100%;
+}
+
+#app[data-card-frame="fullart-v1"] .trade-choice-preview button,
+#app[data-card-frame="fullart-v1"] .trade-choice-preview .kalpi-card {
+  height: auto;
+  aspect-ratio: 63 / 96;
+}
+
+#app[data-card-frame="fullart-v1"] #pack-view .walkout .kalpi-card {
+  width: auto;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  aspect-ratio: 63 / 96;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo::after {
+  mix-blend-mode: soft-light;
+  opacity: 0.55;
 }

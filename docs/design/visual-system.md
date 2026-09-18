@@ -98,7 +98,7 @@ The framed collectible treatment is selected. The physical ratio is `63 / 96`, w
 
 Catalog metadata appears with the portrait stage: top-left is the Hebrew ballot letters plus one set-wide sequence number; top-right is the compact rarity mark. Stars use wax-seal green, not yellow. `01` is the ballot-symbol card, `02–03` are the two platform cards, and each list slot then reserves three stable numbers in Common / Uncommon / Rare order. Netanyahu therefore occupies `מחל-04–06`; slot 2 occupies `מחל-07–09`, even if one of those cards is not published yet. Use the rounded antique outer frame, gold/umber rarity finish and inset portrait well.
 
-The runtime flags `theme`, `cardFrame`, `density`, and `quoteReveal` are independently configurable in Studio. `classic-v1`, `classic-v1`, `compact-v1`, and `fade-v1` remain the tested rollback path.
+The runtime flags `theme`, `cardFrame`, `density`, and `quoteReveal` are independently configurable in Studio. `classic-v1`, `classic-v1`, `compact-v1`, and `fade-v1` remain the tested rollback path. `fullart-v1` is a comparison dummy only: full-bleed portrait, rising black panel, then name / party+slot / rarity / quote. Default remains `tall-v2`.
 
 Each portrait prompt may carry one editable **Added flavor** note tied to the quote. It is disclosed editorial symbolism, never evidence: examples include an unlit cigar, generic distant moving silhouettes, or a closed suitcase. Avoid logos, ethnic coding, literal allegations, invented recipients, visible money, or documentary reconstruction.
 

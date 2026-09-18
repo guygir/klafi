@@ -41,7 +41,7 @@ const DEFAULT_VISUAL_CONFIG = Object.freeze({
 });
 const VISUAL_OPTIONS = Object.freeze({
   theme: new Set(["classic-v1", "pack-v2"]),
-  cardFrame: new Set(["classic-v1", "tall-v2"]),
+  cardFrame: new Set(["classic-v1", "tall-v2", "fullart-v1"]),
   density: new Set(["compact-v1", "airy-v2"]),
   quoteReveal: new Set(["fade-v1", "ink-v2"]),
 });
@@ -73,6 +73,75 @@ const SECURITY_HEADERS = Object.freeze({
   "cross-origin-opener-policy": "same-origin",
 });
 
+function requestOrigin(request) {
+  const forwardedHost = request.headers["x-forwarded-host"];
+  const host = String(forwardedHost || request.headers.host || "klafi.vercel.app").split(",")[0].trim();
+  const protoHeader = request.headers["x-forwarded-proto"];
+  const local = host.includes("localhost") || host.startsWith("127.");
+  const proto = String(protoHeader || (local ? "http" : "https")).split(",")[0].trim();
+  return `${proto}://${host}`;
+}
+
+function escapeShareHtml(value = "") {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  })[character]);
+}
+
+function serveShareLanding(request, response, card, extras = {}) {
+  const origin = requestOrigin(request);
+  const play = new URL("/", origin);
+  play.searchParams.set("card", card.id);
+  if (extras.ref) play.searchParams.set("ref", extras.ref);
+  if (extras.gift) play.searchParams.set("gift", "1");
+  const titleHe = card.titleHe || card.hebrewTitle || card.title || "קְלָפִי";
+  const quote = String(card.walkout?.text || "").trim();
+  const imagePath = card.artKey
+    ? `/design-assets/${encodeURIComponent(card.artKey)}`
+    : "/design-assets/hero-art-kalpi.png";
+  const image = `${origin}${imagePath}`;
+  const title = `קְלָפִי · ${titleHe}`;
+  const description = quote || "אוספים את הבחירות.";
+  const shareUrl = `${origin}/share/${encodeURIComponent(card.id)}`;
+  const playHref = `${play.pathname}${play.search}`;
+  const html = `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeShareHtml(title)}</title>
+  <meta name="description" content="${escapeShareHtml(description)}" />
+  <meta property="og:title" content="${escapeShareHtml(title)}" />
+  <meta property="og:description" content="${escapeShareHtml(description)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${escapeShareHtml(shareUrl)}" />
+  <meta property="og:image" content="${escapeShareHtml(image)}" />
+  <meta property="og:image:alt" content="${escapeShareHtml(titleHe)}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${escapeShareHtml(title)}" />
+  <meta name="twitter:description" content="${escapeShareHtml(description)}" />
+  <meta name="twitter:image" content="${escapeShareHtml(image)}" />
+  <link rel="canonical" href="${escapeShareHtml(play.toString())}" />
+  <meta http-equiv="refresh" content="0;url=${escapeShareHtml(playHref)}" />
+</head>
+<body>
+  <p><a href="${escapeShareHtml(playHref)}">פתחו את הקלף בקְלָפִי</a></p>
+</body>
+</html>`;
+  const body = Buffer.from(html, "utf8");
+  response.writeHead(200, {
+    ...SECURITY_HEADERS,
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "public, max-age=300",
+    "content-length": body.length,
+  });
+  response.end(request.method === "HEAD" ? undefined : body);
+}
+
 function json(response, status, value) {
   response.writeHead(status, {
     ...SECURITY_HEADERS,
@@ -102,11 +171,25 @@ function secretsMatch(provided, expected) {
 
 export function publicPartyRegister(studioContent, cards = []) {
   if (studioContent?.parties?.length) {
-    return studioContent.parties.map(({ id, displayNameHe, displayNameEn, requestedLetters, pip }) => ({
+    return studioContent.parties.map(({
+      id,
+      displayNameHe,
+      displayNameEn,
+      requestedLetters,
+      finalLetters,
+      letterStatus,
+      filingStatus,
+      asOfDate,
+      pip,
+    }) => ({
       id,
       displayNameHe,
       displayNameEn,
       requestedLetters: requestedLetters || [],
+      finalLetters: finalLetters || null,
+      letterStatus: letterStatus || null,
+      filingStatus: filingStatus || null,
+      asOfDate: asOfDate || null,
       pip,
     }));
   }
@@ -168,27 +251,6 @@ function mergeReleaseSets(current = [], patch) {
 function isLoopbackRequest(request) {
   const address = request.socket?.remoteAddress || "";
   return address === "127.0.0.1" || address === "::1" || address === "::ffff:127.0.0.1";
-}
-
-function createRateLimiter() {
-  const buckets = new Map();
-  return function allow(key, limit, windowMs, current) {
-    const existing = buckets.get(key);
-    if (!existing || existing.resetAt <= current) {
-      buckets.set(key, { count: 1, resetAt: current + windowMs });
-      return { allowed: true, retryAfter: 0 };
-    }
-    existing.count += 1;
-    if (buckets.size > 10_000) {
-      for (const [bucketKey, bucket] of buckets) {
-        if (bucket.resetAt <= current) buckets.delete(bucketKey);
-      }
-    }
-    return {
-      allowed: existing.count <= limit,
-      retryAfter: Math.max(1, Math.ceil((existing.resetAt - current) / 1000)),
-    };
-  };
 }
 
 function normalizeRevealTiming(value = {}) {
@@ -317,6 +379,11 @@ async function readJson(request) {
     if (body.length > 16_384) throw new Error("REQUEST_TOO_LARGE");
   }
   return body ? JSON.parse(body) : {};
+}
+
+function idempotencyKey(request) {
+  const value = String(request.headers["x-idempotency-key"] || "");
+  return /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/.test(value) ? value : null;
 }
 
 async function writeJsonAtomic(filePath, value) {
@@ -798,7 +865,6 @@ export async function createKalpiApp({
     }
   }
   applyReleaseSets();
-  const rateLimit = createRateLimiter();
   const runtimeProgression = () => ({
     ...studioContent?.gameConfig?.progression,
     achievements: achievementCatalog.achievements || [],
@@ -1028,13 +1094,6 @@ export async function createKalpiApp({
       }
 
       if (request.method === "POST" && url.pathname === "/api/session") {
-        const clientAddress = request.socket?.remoteAddress || "unknown";
-        const limit = rateLimit(`session:${clientAddress}`, 20, 10 * 60 * 1000, now());
-        if (!limit.allowed) {
-          response.setHeader("retry-after", String(limit.retryAfter));
-          json(response, 429, { error: "RATE_LIMITED" });
-          return;
-        }
         const createdAt = new Date(now()).toISOString();
         const token = await store.createSession(createdAt);
         json(response, 201, { token });
@@ -1065,17 +1124,42 @@ export async function createKalpiApp({
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/studio/reports") {
+        if (!studioRequest) {
+          json(response, 404, { error: "NOT_FOUND" });
+          return;
+        }
+        json(response, 200, { reports: await store.listReports() });
+        return;
+      }
+
+      const studioReport = url.pathname.match(/^\/api\/studio\/reports\/([^/]+)$/);
+      if (request.method === "POST" && studioReport) {
+        if (!studioRequest) {
+          json(response, 404, { error: "NOT_FOUND" });
+          return;
+        }
+        const input = await readJson(request);
+        const status = String(input.status || "");
+        const reviewerNote = String(input.reviewerNote || "").trim().slice(0, 2000) || null;
+        if (!["open", "reviewing", "resolved", "rejected"].includes(status)) {
+          json(response, 400, { error: "INVALID_REPORT_STATUS" });
+          return;
+        }
+        const updated = await store.updateReport(
+          decodeURIComponent(studioReport[1]),
+          status,
+          reviewerNote,
+          new Date(now()).toISOString(),
+        );
+        json(response, updated ? 200 : 404, updated ? { updated: true } : { error: "REPORT_NOT_FOUND" });
+        return;
+      }
+
       if (request.method === "GET" && url.pathname === "/api/bootstrap") {
-        const clientAddress = request.socket?.remoteAddress || "unknown";
         let token = bearer(request);
         await store.hydrateSession(token);
         if (!store.getSession(token)) {
-          const limit = rateLimit(`session:${clientAddress}`, 20, 10 * 60 * 1000, now());
-          if (!limit.allowed) {
-            response.setHeader("retry-after", String(limit.retryAfter));
-            json(response, 429, { error: "RATE_LIMITED" });
-            return;
-          }
           token = await store.createSession(new Date(now()).toISOString());
         }
         json(response, 200, await buildBootstrap(token, studioRequest));
@@ -1083,16 +1167,9 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/home") {
-        const clientAddress = request.socket?.remoteAddress || "unknown";
         let token = bearer(request);
         await store.hydrateSession(token);
         if (!store.getSession(token)) {
-          const limit = rateLimit(`session:${clientAddress}`, 20, 10 * 60 * 1000, now());
-          if (!limit.allowed) {
-            response.setHeader("retry-after", String(limit.retryAfter));
-            json(response, 429, { error: "RATE_LIMITED" });
-            return;
-          }
           token = await store.createSession(new Date(now()).toISOString());
         }
         json(response, 200, { token, state: stateFor(store.getSession(token)) });
@@ -1125,12 +1202,6 @@ export async function createKalpiApp({
 
       if (request.method === "POST" && url.pathname === "/api/idle/settle") {
         const token = bearer(request);
-        const limit = rateLimit(`write:${token}`, 120, 60 * 1000, now());
-        if (!limit.allowed) {
-          response.setHeader("retry-after", String(limit.retryAfter));
-          json(response, 429, { error: "RATE_LIMITED" });
-          return;
-        }
         const idleReturn = await settleIdle(token);
         if (idleReturn.error) {
           json(response, idleReturn.status || 503, { error: idleReturn.error });
@@ -1148,17 +1219,45 @@ export async function createKalpiApp({
           json(response, 401, { error: "INVALID_SESSION" });
           return;
         }
-        if (request.method === "POST") {
-          const limit = rateLimit(`write:${token}`, 120, 60 * 1000, now());
-          if (!limit.allowed) {
-            response.setHeader("retry-after", String(limit.retryAfter));
-            json(response, 429, { error: "RATE_LIMITED" });
-            return;
-          }
-        }
 
         if (request.method === "GET" && url.pathname === "/api/state") {
           json(response, 200, stateFor(session));
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/reports") {
+          const input = await readJson(request);
+          const reportId = String(input.reportId || "");
+          const category = String(input.category || "");
+          const details = String(input.details || "").trim();
+          const cardId = String(input.cardId || "") || null;
+          const pagePath = String(input.pagePath || "").slice(0, 500) || null;
+          if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/.test(reportId)) {
+            json(response, 400, { error: "INVALID_REPORT_ID" });
+            return;
+          }
+          if (!["source", "quote", "identity", "display", "other"].includes(category)) {
+            json(response, 400, { error: "INVALID_REPORT_CATEGORY" });
+            return;
+          }
+          if (details.length < 5 || details.length > 2000) {
+            json(response, 400, { error: "INVALID_REPORT_DETAILS" });
+            return;
+          }
+          if (cardId && !cardsById.has(cardId)) {
+            json(response, 400, { error: "INVALID_CARD" });
+            return;
+          }
+          const queued = await store.submitReport({
+            reportId,
+            sessionToken: token,
+            cardId,
+            category,
+            details,
+            pagePath,
+            createdAt: new Date(now()).toISOString(),
+          });
+          json(response, 202, queued);
           return;
         }
 
@@ -1309,35 +1408,44 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/rewards/level") {
-          const currentMs = now();
-          const pool = activeIdleCards(cards, currentMs);
-          const result = await store.withSession(token, (current) => {
-            syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
-            const rank = current.pendingRankRewards?.shift();
-            if (!rank) return null;
-            const pull = generateIdlePull({
-              cards: pool,
-              inventory: current.inventory,
-              duplicateStreak: current.idleDuplicateStreak,
-              rng,
-            });
-            const pulledAt = new Date(currentMs).toISOString();
-            const instance = grantCard(current, pull, { acquiredBy: `rank-${rank}`, pulledAt });
-            current.claimedRankRewards ??= [];
-            current.claimedRankRewards.push(rank);
-            current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
-            return { rank, instance };
-          });
-          if (!result) {
-            json(response, 409, { error: "NO_LEVEL_REWARD" });
-            return;
-          }
-          json(response, 201, {
-            mode: "level-reward",
-            rank: result.rank,
-            cards: [result.instance],
-            state: stateFor(store.getSession(token)),
-          });
+          const result = await store.idempotent(
+            token,
+            idempotencyKey(request),
+            url.pathname,
+            async () => {
+              const currentMs = now();
+              const pool = activeIdleCards(cards, currentMs);
+              const reward = await store.withSession(token, (current) => {
+                syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
+                const rank = current.pendingRankRewards?.shift();
+                if (!rank) return null;
+                const pull = generateIdlePull({
+                  cards: pool,
+                  inventory: current.inventory,
+                  duplicateStreak: current.idleDuplicateStreak,
+                  rng,
+                });
+                const pulledAt = new Date(currentMs).toISOString();
+                const instance = grantCard(current, pull, { acquiredBy: `rank-${rank}`, pulledAt });
+                current.claimedRankRewards ??= [];
+                current.claimedRankRewards.push(rank);
+                current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
+                return { rank, instance };
+              });
+              if (!reward) return { status: 409, body: { error: "NO_LEVEL_REWARD" } };
+              return {
+                status: 201,
+                body: {
+                  mode: "level-reward",
+                  rank: reward.rank,
+                  cards: [reward.instance],
+                  state: stateFor(store.getSession(token)),
+                },
+              };
+            },
+          );
+          if (result.replayed) response.setHeader("idempotency-replayed", "true");
+          json(response, result.status, result.body);
           return;
         }
 
@@ -1370,18 +1478,25 @@ export async function createKalpiApp({
             json(response, 400, { error: "INVALID_CARD" });
             return;
           }
-          const trade = await store.createTrade({
-            sessionToken: token,
-            offeredCardId: input.offeredCardId,
-            wantedCardId: input.wantedCardId,
-            createdAt: new Date(now()).toISOString(),
-            expiresAt: new Date(now() + TRADE_TTL_MS).toISOString(),
-          });
-          if (!trade) {
-            json(response, 400, { error: "INVALID_TRADE" });
-            return;
-          }
-          json(response, 201, { trade: { ...trade, ownerToken: undefined }, simulated: false });
+          const result = await store.idempotent(
+            token,
+            idempotencyKey(request),
+            url.pathname,
+            async () => {
+              const trade = await store.createTrade({
+                sessionToken: token,
+                offeredCardId: input.offeredCardId,
+                wantedCardId: input.wantedCardId,
+                createdAt: new Date(now()).toISOString(),
+                expiresAt: new Date(now() + TRADE_TTL_MS).toISOString(),
+              });
+              return trade
+                ? { status: 201, body: { trade: { ...trade, ownerToken: undefined }, simulated: false } }
+                : { status: 400, body: { error: "INVALID_TRADE" } };
+            },
+          );
+          if (result.replayed) response.setHeader("idempotency-replayed", "true");
+          json(response, result.status, result.body);
           return;
         }
 
@@ -1845,76 +1960,99 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/packs/daily") {
-          const result = await store.withSession(token, (current) => {
-            const pulledAtMs = now();
-            const nextAtMs = current.nextDailyAt ? Date.parse(current.nextDailyAt) : 0;
-            if (nextAtMs > pulledAtMs) {
-              return {
-                status: 429,
-                body: { error: "PACK_NOT_READY", nextDailyAt: current.nextDailyAt },
-              };
-            }
+          const result = await store.idempotent(
+            token,
+            idempotencyKey(request),
+            url.pathname,
+            async () => {
+              const packResult = await store.withSession(token, (current) => {
+                const pulledAtMs = now();
+                const nextAtMs = current.nextDailyAt ? Date.parse(current.nextDailyAt) : 0;
+                if (nextAtMs > pulledAtMs) {
+                  return {
+                    status: 429,
+                    body: { error: "PACK_NOT_READY", nextDailyAt: current.nextDailyAt },
+                  };
+                }
 
-            const generated = generatePack({
-              cards,
-              inventory: current.inventory,
-              dryPacks: current.dryPacks,
-              packCount: current.packCount,
-              rng,
-            });
-            const pulledAt = new Date(pulledAtMs).toISOString();
-            const nextDailyAt = new Date(pulledAtMs + DAY_MS).toISOString();
-            const packId = randomUUID();
-            let newCards = 0;
-            const instances = generated.map((pull) => {
-              const isNew = !current.inventory[pull.cardId];
-              if (isNew) newCards += 1;
-              current.inventory[pull.cardId] = (current.inventory[pull.cardId] ?? 0) + 1;
-              const instance = {
-                instanceId: randomUUID(),
-                cardId: pull.cardId,
-                finish: pull.finish,
-                pulledAt,
-                isNew,
-              };
-              current.instances.push(instance);
-              return instance;
-            });
+                const generated = generatePack({
+                  cards,
+                  inventory: current.inventory,
+                  dryPacks: current.dryPacks,
+                  packCount: current.packCount,
+                  rng,
+                });
+                const pulledAt = new Date(pulledAtMs).toISOString();
+                const nextDailyAt = new Date(pulledAtMs + DAY_MS).toISOString();
+                const packId = randomUUID();
+                let newCards = 0;
+                const instances = generated.map((pull) => {
+                  const isNew = !current.inventory[pull.cardId];
+                  if (isNew) newCards += 1;
+                  current.inventory[pull.cardId] = (current.inventory[pull.cardId] ?? 0) + 1;
+                  const instance = {
+                    instanceId: randomUUID(),
+                    cardId: pull.cardId,
+                    finish: pull.finish,
+                    pulledAt,
+                    isNew,
+                  };
+                  current.instances.push(instance);
+                  return instance;
+                });
 
-            current.nextDailyAt = nextDailyAt;
-            current.packCount += 1;
-            current.dryPacks = newCards ? 0 : current.dryPacks + 1;
-            const pack = { packId, pulledAt, nextDailyAt, cards: instances };
-            current.packs.push(pack);
-            current.packs = current.packs.slice(-20);
-            current.instances = current.instances.slice(-500);
+                current.nextDailyAt = nextDailyAt;
+                current.packCount += 1;
+                current.dryPacks = newCards ? 0 : current.dryPacks + 1;
+                const pack = { packId, pulledAt, nextDailyAt, cards: instances };
+                current.packs.push(pack);
+                current.packs = current.packs.slice(-20);
+                current.instances = current.instances.slice(-500);
+                return { status: 201, body: pack };
+              });
 
-            return { status: 201, body: pack };
-          });
-
-          if (!result) {
-            json(response, 401, { error: "INVALID_SESSION" });
-            return;
-          }
-          if (result.status === 201) {
-            await Promise.all([
-              store.incrementFaction(store.getSession(token)?.factionId),
-              store.recordEvent({
-                eventId: randomUUID(),
-                type: "pack_opened",
-                sessionToken: token,
-                cardId: null,
-                packId: result.body.packId,
-                referralCode: null,
-                recordedAt: result.body.pulledAt,
-              }),
-            ]);
-          }
+              if (!packResult) return { status: 401, body: { error: "INVALID_SESSION" } };
+              if (packResult.status === 201) {
+                await Promise.all([
+                  store.incrementFaction(store.getSession(token)?.factionId),
+                  store.recordEvent({
+                    eventId: randomUUID(),
+                    type: "pack_opened",
+                    sessionToken: token,
+                    cardId: null,
+                    packId: packResult.body.packId,
+                    referralCode: null,
+                    recordedAt: packResult.body.pulledAt,
+                  }),
+                ]);
+                return {
+                  ...packResult,
+                  body: { ...packResult.body, state: stateFor(store.getSession(token)) },
+                };
+              }
+              return packResult;
+            },
+          );
+          if (result.replayed) response.setHeader("idempotency-replayed", "true");
           json(response, result.status, result.body);
           return;
         }
 
         json(response, 404, { error: "NOT_FOUND" });
+        return;
+      }
+
+      if ((request.method === "GET" || request.method === "HEAD") && url.pathname.startsWith("/share/")) {
+        const cardId = decodeURIComponent(url.pathname.slice("/share/".length).replace(/\.html$/, ""));
+        const card = cardsById.get(cardId);
+        if (!card) {
+          json(response, 404, { error: "NOT_FOUND" });
+          return;
+        }
+        serveShareLanding(request, response, card, {
+          ref: url.searchParams.get("ref"),
+          gift: url.searchParams.has("gift"),
+        });
         return;
       }
 

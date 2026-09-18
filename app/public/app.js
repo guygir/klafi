@@ -4,7 +4,10 @@ const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
-const STATIC_DATA_VERSION = "core-pipeline-1";
+const PENDING_REPORTS_KEY = "kalpi-pending-reports";
+const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
+const DEBUG_CARD_FRAME_KEY = "kalpi-debug-card-frame";
+const STATIC_DATA_VERSION = "launch-safety-1";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -44,6 +47,7 @@ const model = {
   renderedLevel: null,
   selectedAvatarId: null,
   extrasReady: false,
+  reports: [],
 };
 let showcaseTimers = [];
 let packTimers = [];
@@ -86,8 +90,6 @@ const elements = {
   todayChallengeVisual: document.querySelector("#today-challenge-visual"),
   todayChallengeHook: document.querySelector("#today-challenge-hook"),
   todayChallengeMeta: document.querySelector("#today-challenge-meta"),
-  todayEventHook: document.querySelector("#today-event-hook"),
-  todayEventMeta: document.querySelector("#today-event-meta"),
   todayLeaderHook: document.querySelector("#today-leader-hook"),
   todayLeaderMeta: document.querySelector("#today-leader-meta"),
   homePack: document.querySelector("#home-pack"),
@@ -96,17 +98,7 @@ const elements = {
   openPack: document.querySelector("#open-pack"),
   openPackFancy: document.querySelector("#open-pack-fancy"),
   openBibiPack: document.querySelector("#open-bibi-pack"),
-  openQuiz: document.querySelector("#open-quiz"),
   openPendingLevel: document.querySelector("#open-pending-level"),
-  quizDialog: document.querySelector("#quiz-dialog"),
-  closeQuiz: document.querySelector("#close-quiz"),
-  quizTitle: document.querySelector("#quiz-title"),
-  quizClock: document.querySelector("#quiz-clock"),
-  quizCard: document.querySelector("#quiz-card"),
-  quizQuestions: document.querySelector("#quiz-questions"),
-  quizFail: document.querySelector("#quiz-fail"),
-  quizSubmit: document.querySelector("#quiz-submit"),
-  quizStatus: document.querySelector("#quiz-status"),
   cooldownCopy: document.querySelector("#cooldown-copy"),
   packStep: document.querySelector("#pack-step"),
   packHeading: document.querySelector("#pack-heading"),
@@ -117,6 +109,7 @@ const elements = {
   sharedTitle: document.querySelector("#shared-title"),
   sharedCard: document.querySelector("#shared-card"),
   sharedNotice: document.querySelector("#shared-notice"),
+  sharedTrust: document.querySelector("#shared-trust"),
   sharedSource: document.querySelector("#shared-source"),
   sharedOpenGame: document.querySelector("#shared-open-game"),
   binderPercent: document.querySelector("#binder-percent"),
@@ -143,11 +136,6 @@ const elements = {
   levelDialogReward: document.querySelector("#level-dialog-reward"),
   closeLevel: document.querySelector("#close-level"),
   claimLevel: document.querySelector("#claim-level"),
-  activeEvent: document.querySelector("#active-event"),
-  eventTabs: document.querySelector("#event-tabs"),
-  eventPull: document.querySelector("#event-pull"),
-  eventCards: document.querySelector("#event-cards"),
-  eventUpcoming: document.querySelector("#event-upcoming"),
   tradePreview: document.querySelector("#trade-preview"),
   tradeOfferedPreview: document.querySelector("#trade-offered-preview"),
   tradeWantedPreview: document.querySelector("#trade-wanted-preview"),
@@ -171,7 +159,6 @@ const elements = {
   dailyChallengeLeaderArt: document.querySelector("#daily-challenge-leader-art"),
   dailyChallengeRecap: document.querySelector("#daily-challenge-recap"),
   dailyChallengeBoard: document.querySelector("#daily-challenge-board"),
-  specialsGrid: document.querySelector("#specials-grid"),
   studioSponsor: document.querySelector("#studio-sponsor"),
   studioViewpoint: document.querySelector("#studio-viewpoint"),
   studioReleaseStatus: document.querySelector("#studio-release-status"),
@@ -209,19 +196,38 @@ const elements = {
   editorialSample: document.querySelector("#editorial-sample"),
   reviewFilter: document.querySelector("#review-filter"),
   cardReviewList: document.querySelector("#card-review-list"),
+  studioReportList: document.querySelector("#studio-report-list"),
+  studioReportEmpty: document.querySelector("#studio-report-empty"),
   errorTitle: document.querySelector("#error-title"),
   errorCopy: document.querySelector("#error-copy"),
   retry: document.querySelector("#retry"),
   navButtons: [...document.querySelectorAll("[data-nav]")],
   dialog: document.querySelector("#card-dialog"),
   dialogCard: document.querySelector("#dialog-card"),
-  dialogOwnership: document.querySelector("#dialog-ownership"),
   dialogSource: document.querySelector("#dialog-source"),
-  dialogShare: document.querySelector("#dialog-share"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
   dialogInstagram: document.querySelector("#dialog-instagram"),
-  dialogGift: document.querySelector("#dialog-gift"),
+  binderFlipFrame: document.querySelector("#binder-flip-frame"),
+  shareSheet: document.querySelector("#share-sheet"),
+  shareSheetTitle: document.querySelector("#share-sheet-title"),
+  shareSheetImage: document.querySelector("#share-sheet-image"),
+  shareSheetCaption: document.querySelector("#share-sheet-caption"),
+  shareSheetSend: document.querySelector("#share-sheet-send"),
+  shareSheetSave: document.querySelector("#share-sheet-save"),
+  closeShareSheet: document.querySelector("#close-share-sheet"),
+  dialogReport: document.querySelector("#dialog-report"),
   closeDialog: document.querySelector("#close-dialog"),
+  trustDialog: document.querySelector("#trust-dialog"),
+  openTrustLegend: document.querySelector("#open-trust-legend"),
+  closeTrust: document.querySelector("#close-trust"),
+  reportDialog: document.querySelector("#report-dialog"),
+  reportForm: document.querySelector("#report-form"),
+  reportCardLabel: document.querySelector("#report-card-label"),
+  reportCategory: document.querySelector("#report-category"),
+  reportDetails: document.querySelector("#report-details"),
+  reportStatus: document.querySelector("#report-status"),
+  submitReport: document.querySelector("#submit-report"),
+  closeReport: document.querySelector("#close-report"),
   toast: document.querySelector("#toast"),
   bottomNav: document.querySelector(".bottom-nav"),
 };
@@ -275,6 +281,36 @@ function applyVisualConfig() {
     if (input) input.value = configured[key] || values[key];
   }
   queueCardTextFit(app);
+  syncBinderFlipButton();
+}
+
+function isFirstSetCard(card) {
+  return card?.releaseSetId === "party-leaders";
+}
+
+function debugFullartEnabled() {
+  return localStorage.getItem(DEBUG_CARD_FRAME_KEY) === "fullart-v1";
+}
+
+function cardDisplayFrame(card) {
+  if (isFirstSetCard(card) && debugFullartEnabled()) return "fullart-v1";
+  return document.querySelector("#app")?.dataset.cardFrame || "tall-v2";
+}
+
+function syncBinderFlipButton() {
+  const button = elements.binderFlipFrame;
+  if (!button) return;
+  const on = debugFullartEnabled();
+  button.setAttribute("aria-pressed", on ? "true" : "false");
+  button.textContent = on ? "חזרה למקור" : "אמנות מלאה";
+}
+
+function toggleBinderCardFrame() {
+  if (debugFullartEnabled()) localStorage.removeItem(DEBUG_CARD_FRAME_KEY);
+  else localStorage.setItem(DEBUG_CARD_FRAME_KEY, "fullart-v1");
+  applyVisualConfig();
+  renderBinder();
+  if (elements.dialog.open) renderDialogCard();
 }
 
 function studioSecret() {
@@ -286,6 +322,7 @@ function captureStudioSecret() {
   const key = url.searchParams.get("studioKey");
   if (!key) return;
   localStorage.setItem(STUDIO_KEY, key);
+  applyStudioAccess({ studioEnabled: true, debugEnabled: model.studioContent?.debugEnabled });
   url.searchParams.delete("studioKey");
   history.replaceState({}, "", url);
 }
@@ -309,6 +346,89 @@ async function request(path, options = {}) {
   return body;
 }
 
+function clientOperationId(prefix) {
+  return globalThis.crypto?.randomUUID?.() || `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function pendingMutationKey(scope) {
+  let pending = {};
+  try {
+    pending = JSON.parse(localStorage.getItem(PENDING_MUTATIONS_KEY) || "{}");
+  } catch {
+    pending = {};
+  }
+  if (!pending[scope]) {
+    pending[scope] = clientOperationId(scope);
+    localStorage.setItem(PENDING_MUTATIONS_KEY, JSON.stringify(pending));
+  }
+  return pending[scope];
+}
+
+function clearPendingMutation(scope) {
+  try {
+    const pending = JSON.parse(localStorage.getItem(PENDING_MUTATIONS_KEY) || "{}");
+    delete pending[scope];
+    localStorage.setItem(PENDING_MUTATIONS_KEY, JSON.stringify(pending));
+  } catch {
+    localStorage.removeItem(PENDING_MUTATIONS_KEY);
+  }
+}
+
+function pendingReports() {
+  try {
+    const reports = JSON.parse(localStorage.getItem(PENDING_REPORTS_KEY) || "[]");
+    return Array.isArray(reports) ? reports : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberPendingReport(report) {
+  const pending = pendingReports().filter(({ reportId }) => reportId !== report.reportId);
+  pending.push(report);
+  localStorage.setItem(PENDING_REPORTS_KEY, JSON.stringify(pending));
+}
+
+let reportFlush = null;
+let reportRetryTimer = null;
+function flushPendingReports() {
+  if (reportFlush) return reportFlush;
+  if (!model.token || !pendingReports().length) return Promise.resolve([]);
+  clearTimeout(reportRetryTimer);
+  reportFlush = (async () => {
+    const delivered = [];
+    for (const report of pendingReports()) {
+      try {
+        await request("/api/reports", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-idempotency-key": report.reportId,
+          },
+          body: JSON.stringify(report),
+        });
+        const remaining = pendingReports().filter(({ reportId }) => reportId !== report.reportId);
+        localStorage.setItem(PENDING_REPORTS_KEY, JSON.stringify(remaining));
+        delivered.push(report.reportId);
+      } catch (error) {
+        if (error.status >= 400 && error.status < 500 && ![408, 429].includes(error.status)) {
+          const remaining = pendingReports().filter(({ reportId }) => reportId !== report.reportId);
+          localStorage.setItem(PENDING_REPORTS_KEY, JSON.stringify(remaining));
+          continue;
+        }
+        throw error;
+      }
+    }
+    return delivered;
+  })().catch((error) => {
+    reportRetryTimer = setTimeout(() => flushPendingReports().catch(() => {}), 15_000 + Math.floor(Math.random() * 30_000));
+    throw error;
+  }).finally(() => {
+    reportFlush = null;
+  });
+  return reportFlush;
+}
+
 async function ensureSession() {
   if (model.token) {
     try {
@@ -323,6 +443,15 @@ async function ensureSession() {
   model.token = token;
   localStorage.setItem(SESSION_KEY, token);
   model.serverState = await request("/api/state");
+}
+
+function applyStudioAccess(studioContent = model.studioContent) {
+  document.querySelectorAll("[data-debug-only]").forEach((element) => {
+    element.hidden = !studioContent?.debugEnabled;
+  });
+  document.querySelectorAll("[data-studio-only]").forEach((element) => {
+    element.hidden = !studioContent?.studioEnabled;
+  });
 }
 
 function applyHomePayload(home) {
@@ -418,12 +547,7 @@ function applyFullBoot(boot) {
   model.activity = boot.activity;
   model.studioContent = boot.studioContent;
   model.gameConfig = boot.gameConfig;
-  document.querySelectorAll("[data-debug-only]").forEach((element) => {
-    element.hidden = !boot.studioContent?.debugEnabled;
-  });
-  document.querySelectorAll("[data-studio-only]").forEach((element) => {
-    element.hidden = !boot.studioContent?.studioEnabled;
-  });
+  applyStudioAccess(boot.studioContent);
   applyVisualConfig();
   model.leaderboards = boot.leaderboards;
   model.specials = boot.specials;
@@ -446,7 +570,7 @@ let idleRefillTimer = null;
 let idleSeenHydrate = null;
 let idleSeenRetryTimer = null;
 let catalogFailed = false;
-const PLAYER_VIEWS = ["home", "binder", "achievements", "events", "growth", "studio"];
+const PLAYER_VIEWS = ["home", "binder", "achievements", "growth", "studio"];
 
 function catalogReady() {
   return Boolean(model.catalog.length);
@@ -659,11 +783,11 @@ async function hydrateExtras() {
   if (model.extrasReady) return model;
   if (!extrasHydrate) {
     extrasHydrate = Promise.allSettled([
-      request("/api/events"),
+      studioSecret() ? request("/api/events") : Promise.resolve({ events: [] }),
       request("/api/trades"),
       request("/api/leaderboards"),
       request("/api/activity"),
-      request("/api/specials"),
+      studioSecret() ? request("/api/specials") : Promise.resolve({ sets: [], cards: [] }),
       request("/api/state"),
     ]).then(async (results) => {
       const [events, trades, leaderboards, activity, specials, state] = results.map((result) =>
@@ -674,6 +798,7 @@ async function hydrateExtras() {
       if (studioSecret()) {
         try {
           model.studioContent = await request("/api/studio/content");
+          applyStudioAccess(model.studioContent);
         } catch {
           /* Studio stays closed without the secret. */
         }
@@ -718,6 +843,7 @@ async function bootstrap() {
     homePromise.then(() => {
       prefetchIdleAssets();
       if (pendingIdleSeen().length) flushPendingIdleSeen().catch(() => {});
+      if (pendingReports().length) flushPendingReports().catch(() => {});
       const hasPreparedBuffer = model.idleQueue.length || (model.serverState?.preparedPulls || []).length;
       const missingDueCard = !nextCachedIdleCard()
         && Boolean(model.serverState?.nextIdleAt)
@@ -771,9 +897,17 @@ async function recordEvent(type, details = {}) {
   }
 }
 
+function inboundShareCardId() {
+  const params = new URLSearchParams(location.search);
+  const fromPath = location.pathname.match(/^\/share\/([^/]+)$/);
+  const gift = params.get("gift");
+  if (gift && gift !== "1") return gift;
+  return params.get("card") ?? (fromPath ? decodeURIComponent(fromPath[1]) : null);
+}
+
 function handleInboundLink() {
   const params = new URLSearchParams(location.search);
-  const cardId = params.get("gift") ?? params.get("card");
+  const cardId = inboundShareCardId();
   const referralCode = params.get("ref");
   if (referralCode && !sessionStorage.getItem(`kalpi-ref-${referralCode}`)) {
     sessionStorage.setItem(`kalpi-ref-${referralCode}`, "1");
@@ -796,7 +930,11 @@ function showSharedCard(cardId, isTradeIntent = false) {
   elements.sharedNotice.textContent = isTradeIntent
     ? "זו תצוגה של הצעת החלפה. הבעלות לא השתנתה והקלף לא נוסף לאוסף שלכם."
     : "זו תצוגת שיתוף בלבד. הקלף לא נוסף לאוסף שלכם.";
-  elements.sharedSource.href = card.walkout.sourceUrl;
+  if (elements.sharedTrust) {
+    elements.sharedTrust.textContent = "";
+    elements.sharedTrust.hidden = true;
+  }
+  configureSourceLink(elements.sharedSource, card);
   elements.sharedSource.dataset.sourceCard = card.id;
   showView("shared");
   queueCardTextFit(elements.sharedCard);
@@ -817,6 +955,7 @@ function describeError(error) {
 
 function fitCardText(element) {
   const frame = element.closest(".kalpi-card");
+  if (frame?.dataset.cardFrame === "fullart-v1") return;
   const frameWidth = frame?.clientWidth ?? 0;
   if (!frameWidth || !element.clientWidth || !element.clientHeight) return;
   const role = element.dataset.fitCardText;
@@ -871,7 +1010,12 @@ function showView(name) {
     view.classList.toggle("active", view.id === `${name}-view`);
   }
   for (const button of elements.navButtons) {
-    button.classList.toggle("active", button.dataset.nav === name);
+    const active = button.dataset.nav === name;
+    button.classList.toggle("active", active);
+    if (button.closest(".bottom-nav")) {
+      if (active) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    }
   }
   elements.bottomNav.hidden = !["home", "binder", "achievements", "events", "growth"].includes(name);
   requestAnimationFrame(() => {
@@ -1273,11 +1417,6 @@ function renderTodayDocket() {
   const recap = challengeRecap();
   elements.todayChallengeMeta.textContent = recap.meta;
 
-  const activeEvent = model.events.find((event) => event.active);
-  elements.todayEventHook.textContent = activeEvent ? `${activeEvent.nameHe} פתוח` : "האירוע הבא בדרך";
-  elements.todayEventMeta.textContent = "";
-  document.querySelector(".today-docket-row.live")?.classList.toggle("hot", Boolean(activeEvent));
-
   const leader = model.leaderboards?.collectors?.[0];
   const currentCollector = model.leaderboards?.collectors?.find(({ current }) => current);
   const collectorCrowd = (model.leaderboards?.collectors?.length || 0) >= 2;
@@ -1318,7 +1457,7 @@ function levelUnlockItems(fromLevel, toLevel) {
   for (let level = fromLevel + 1; level <= toLevel; level += 1) {
     const rank = ranks[level - 1];
     if (rank) items.push(`דרגה חדשה · ${rank}`);
-    items.push("חבילת בונוס");
+    items.push("קלף בונוס");
     avatars
       .filter((avatar) => Number(avatar.unlockLevel) === level)
       .forEach((avatar) => items.push(`אווטאר חדש · ${avatar.nameHe}`));
@@ -1334,7 +1473,7 @@ function fillLevelDialog(progression, fromLevel) {
     elements.levelUnlocks.hidden = !items.length;
     elements.levelUnlocks.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   }
-  elements.levelDialogReward.textContent = items.length ? "אפשר לקבל את חבילת הבונוס עכשיו." : (progression.reward || "");
+  elements.levelDialogReward.textContent = items.length ? "אפשר לקבל את קלף הבונוס עכשיו." : (progression.reward || "");
 }
 
 function renderPendingLevelCue() {
@@ -1569,7 +1708,7 @@ function renderPack() {
     elements.packStep.textContent = isDemo ? "חבילת הדגמה" : "קלף אחד";
     elements.packHeading.textContent = "פותחים.";
     elements.ripStage.innerHTML = sealedPackMarkup();
-    setPackAction("קריעת החבילה", false, "הקלפים כבר נשמרו.");
+    setPackAction("קריעת החבילה", false, count === 1 ? "הקלף כבר נשמר." : "הקלפים כבר נשמרו.");
   } else if (phase === "tearing") {
     elements.ripStage.innerHTML = sealedPackMarkup("tearing");
     setPackAction("פותחים…", true, "");
@@ -1716,7 +1855,10 @@ function renderWalkoutStage() {
   const card = model.byId.get(instance.cardId);
   const stage = WALKOUT_STAGES[model.walkoutStage];
   const walkout = card.walkout;
-  const sourceLink = `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}">למקור ↗</a>`;
+  const sourceName = walkout.sourceLabel ? `: ${walkout.sourceLabel}` : "";
+  const sourceLink = walkout.sourceUrl
+    ? `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}" aria-label="${escapeHtml(`פתיחת המקור${sourceName} בכרטיסייה חדשה`)}">למקור המצורף ↗</a>`
+    : "";
   const contentClass = card.releaseTier === "critique"
     ? "פרשנות/ביקורת"
     : walkout.kind === "quote" ? "ציטוט" : "עובדתי";
@@ -1739,7 +1881,7 @@ function renderWalkoutStage() {
         <div class="walkout-content">
           ${cardMarkup(card, instance, { progressiveStage: "blank", surface: "walkout" })}
           <div class="walkout-receipt">
-            <span>${escapeHtml([contentClass, releaseName, walkout.date].filter(Boolean).join(" · "))}</span>
+            <span>${escapeHtml([contentClass, ...cardTrustReceipt(card), releaseName, formatTrustDate(walkout.date)].filter(Boolean).join(" · "))}</span>
             ${sourceLink}
           </div>
         </div>
@@ -1801,7 +1943,79 @@ function displayedCardQuote(card) {
   const text = String(card.walkout.text || "").trim();
   if (!text) return "";
   if (card.type !== "Quote") return text;
-  return `״${text.replace(/^״|״$/g, "")}״`;
+  const bare = text.replace(/^״|״$/g, "");
+  const needsMarker = ["shortened", "attributed-paraphrase"].includes(card.walkout?.quoteStatus);
+  const marked = needsMarker && !bare.endsWith("*") ? `${bare}*` : bare;
+  return `״${marked}״`;
+}
+
+function formatTrustDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return value || "";
+  return new Date(`${value}T12:00:00`).toLocaleDateString("he-IL");
+}
+
+function quoteTrustLabel(card) {
+  return {
+    shortened: "* הציטוט קוצר; הנוסח וההקשר המלאים נמצאים במקור.",
+    "attributed-paraphrase": "* ניסוח מיוחס או פרפרזה, לא תמלול מילולי מאומת.",
+  }[card.walkout?.quoteStatus] || "";
+}
+
+function partyTrustLabel(card) {
+  if (!card.set || card.set === "SYS" || String(card.set).startsWith("special-")) return "";
+  const party = partyRegister().find(({ id }) => id === card.set);
+  if (!party?.filingStatus && !party?.letterStatus) return "";
+  const letters = (party.finalLetters || party.requestedLetters || []).join(" / ");
+  const letterStatus = {
+    protected: "אותיות מוגנות",
+    requested: "אותיות מבוקשות",
+    disputed: "אותיות במחלוקת",
+  }[party.letterStatus] || "אותיות הרשימה";
+  const filingStatus = party.finalLetters?.length
+    ? "אותיות שאושרו במאגר"
+    : party.filingStatus === "submitted-pending-cec-review"
+      ? "הרשימה הוגשה; במאגר היא עדיין ממתינה לבדיקת ועדת הבחירות"
+      : "סטטוס הרשימה טרם אומת במאגר";
+  const asOf = formatTrustDate(party.asOfDate);
+  return [filingStatus, letters ? `${letterStatus}: ${letters}` : "", asOf ? `נכון ל־${asOf}` : ""]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function partyStatusShort(party) {
+  if (party?.finalLetters?.length) return "אותיות מאושרות במאגר";
+  if (party?.filingStatus === "submitted-pending-cec-review") {
+    const asOf = formatTrustDate(party.asOfDate);
+    return `במאגר: הוגשה וממתינה לבדיקת ועדת הבחירות${asOf ? ` (${asOf})` : ""}`;
+  }
+  return "";
+}
+
+function cardTrustSummary(card) {
+  return [quoteTrustLabel(card), partyTrustLabel(card)].filter(Boolean).join(" ");
+}
+
+function cardTrustReceipt(card) {
+  const quoteStatus = {
+    shortened: "ציטוט מקוצר*",
+    "attributed-paraphrase": "ניסוח מיוחס*",
+  }[card.walkout?.quoteStatus];
+  const party = partyRegister().find(({ id }) => id === card.set);
+  const filingStatus = partyStatusShort(party);
+  return [quoteStatus, filingStatus].filter(Boolean);
+}
+
+function configureSourceLink(link, card) {
+  const sourceUrl = card.walkout?.sourceUrl;
+  link.hidden = !sourceUrl;
+  if (!sourceUrl) {
+    link.removeAttribute("href");
+    return;
+  }
+  link.href = sourceUrl;
+  link.textContent = "למקור המצורף ↗";
+  const sourceName = card.walkout?.sourceLabel ? `: ${card.walkout.sourceLabel}` : "";
+  link.setAttribute("aria-label", `פתיחת המקור${sourceName} בכרטיסייה חדשה`);
 }
 
 function cardPresentation(card, instance = {}) {
@@ -1818,31 +2032,48 @@ function cardPresentation(card, instance = {}) {
     finishClass: String(finishLabel ?? "Common").split(/\s|\//)[0].toLowerCase(),
     rarityMark: rarityMark(finishLabel),
     rarityName: rarityNameHe(finishLabel),
+    trustLabel: cardTrustSummary(card),
     pip: card.pip,
     artKey: card.artKey || null,
   };
 }
 
+function ownedCountFor(card) {
+  return model.serverState?.inventory?.[card.id] ?? 0;
+}
+
 function displayCardMarkup(card, surface = "display") {
-  return cardMarkup(card, { finish: card.rarity }, { progressiveStage: "portrait", surface });
+  return cardMarkup(card, { finish: card.rarity, count: ownedCountFor(card) }, { progressiveStage: "portrait", surface });
 }
 
 function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full" } = {}) {
   const presentation = cardPresentation(card, instance);
   const stage = progressiveStage || "portrait";
   const progressive = `progressive-card stage-${stage}`;
+  const copies = Number(instance.count ?? 0);
+  const frame = cardDisplayFrame(card);
   return `
-    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}">
+    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" data-card-frame="${escapeHtml(frame)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}${presentation.trustLabel ? `. ${escapeHtml(presentation.trustLabel)}` : ""}">
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
           ${artMarkup(card)}
-          <div class="card-image-meta"><span>${escapeHtml(presentation.code)}</span><strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong></div>
+          <div class="card-image-meta">
+            <span class="card-code-tag">${escapeHtml(presentation.code)}</span>
+            <span class="card-meta-mid"></span>
+            <span class="card-meta-end">
+              ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
+              ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
+            </span>
+          </div>
           ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
         </div>
-        <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
-        <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
-        <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
+        <div class="card-identity-stack">
+          <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
+          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}<span class="card-slot-mark"> · ${escapeHtml(presentation.code)}</span></p>
+          <p class="card-rarity-zone" dir="rtl" lang="he"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</p>
+          <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
+        </div>
       </section>
     </article>`;
 }
@@ -1888,7 +2119,7 @@ function renderBinder() {
   elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
   setEmptyNote(
     elements.binderEmpty,
-    waitingOwnership ? "טוענים את האוסף…" : "פתחו חבילה כדי להתחיל.",
+    waitingOwnership ? "טוענים את האוסף…" : "פתחו קלף כדי להתחיל.",
     { pending: waitingOwnership, hidden: !waitingOwnership && owned > 0 },
   );
 
@@ -1924,7 +2155,8 @@ function renderBinder() {
             : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
         return inSet && inventory[card.id];
       }).length;
-    return `<button type="button" role="tab" aria-selected="${model.binderFilter === set}" class="${model.binderFilter === set ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
+    const active = model.binderFilter === set;
+    return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
   }).join("");
 
   const visible = playerCards.filter((card) => model.binderFilter === "ALL"
@@ -1941,16 +2173,11 @@ function renderBinder() {
         ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">unlock</button>` : ""}
       </div>`;
     }
-    const favorite = favorites.has(card.id);
     return `
       <div class="binder-slot owned new-card-thumb" style="--pip:${card.pip}">
         <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}, ברשותכם ${count}">
           ${binderCardMarkup(card)}
         </button>
-        <div class="binder-card-tools">
-          ${count > 1 ? `<b class="dupe-count">×${count}</b>` : ""}
-          <button class="favorite-heart${favorite ? " active" : ""}" type="button" data-favorite-card="${card.id}" aria-pressed="${favorite}" aria-label="${favorite ? "הסרה מהפייבוריטים" : "הוספה לפייבוריטים"}">♥</button>
-        </div>
       </div>`;
   }).join("");
   const visibleColumns = window.innerWidth <= 520 ? 3 : window.innerWidth <= 760 ? 5 : 6;
@@ -1961,13 +2188,13 @@ function renderBinder() {
   const earned = (model.serverState?.achievements || []).filter(({ earned }) => earned);
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
   const starCount = model.serverState?.starCount ?? 0;
-  const starCounter = `<span class="collection-star-count" role="button" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b>★</b><strong>${starCount}</strong></span>`;
+  const starCounter = `<span class="collection-star-count" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b aria-hidden="true">★</b><strong>${starCount}</strong></span>`;
   const visibleBadges = earned.slice(0, 3);
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
   rail.innerHTML = starCounter + visibleBadges.map((badge) => {
     const copy = hebrewBadge(badge);
     return `
-    <span class="badge-medallion" role="button" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
+    <span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
   }).join("") + (earned.length > visibleBadges.length
     ? `<button class="badge-overflow" type="button" data-open-achievements aria-label="עוד ${earned.length - visibleBadges.length} הישגים">+${earned.length - visibleBadges.length}</button>`
     : "");
@@ -2261,7 +2488,7 @@ function renderGrowth() {
   const wantedCards = model.catalog.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
   elements.tradeOfferedCard.innerHTML = offeredCards.length
     ? offeredCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("")
-    : '<option value="">פתחו חבילה קודם</option>';
+    : '<option value="">אספו קלף קודם</option>';
   if (offeredCards.some(({ id }) => id === offeredValue)) elements.tradeOfferedCard.value = offeredValue;
   elements.tradeWantedCard.innerHTML = wantedCards
     .map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("");
@@ -2303,7 +2530,14 @@ function renderGrowth() {
   const parties = partyRegister();
   elements.factionSelect.innerHTML = [
     '<option value="">ללא סיעה</option>',
-    ...parties.map((party) => `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml(party.displayNameHe)} · ${escapeHtml((party.requestedLetters || []).join(" / "))}</option>`),
+    ...parties.map((party) => {
+      const status = partyStatusShort(party);
+      return `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml([
+        party.displayNameHe,
+        (party.finalLetters || party.requestedLetters || []).join(" / "),
+        status,
+      ].filter(Boolean).join(" · "))}</option>`;
+    }),
   ].join("");
   const factionEntries = model.leaderboards?.factions?.slice(0, 6) || [];
   const factionMaximum = Math.max(1, ...factionEntries.map(({ packs }) => packs));
@@ -2342,7 +2576,7 @@ function renderGrowth() {
     records: "עובדות מספריות ורקורדים עם יחידת המדידה וההסתייגות על הקלף.",
     "current-ministers": "תפקיד נוכחי לצד תוצאה שנמדדה בתקופת הכהונה, ללא טענת סיבתיות אוטומטית.",
   };
-  elements.specialsGrid.innerHTML = (model.specials.sets || []).map((set) => `
+  if (elements.specialsGrid) elements.specialsGrid.innerHTML = (model.specials.sets || []).map((set) => `
     <section class="special-set">
       <header><span>P</span><div><h3>${escapeHtml(set.nameHe)}</h3></div></header>
       <p>${escapeHtml(specialDescriptions[set.id] || "")}</p>
@@ -2367,6 +2601,7 @@ function renderGrowth() {
     const active = button.dataset.communityPage === model.communityPage;
     button.classList.toggle("active", active);
     button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
   });
   queueCardTextFit(elements.tradePreview);
   queueCardTextFit(elements.tradeOfferedPreview);
@@ -3061,6 +3296,7 @@ async function saveReleaseSets() {
 }
 
 function renderStudio() {
+  if (studioSecret()) hydrateStudioReports().catch(() => {});
   if (!model.editorial || !model.catalog.length || !elements.cardReviewList) return;
   const profile = model.editorial.advocacy;
   const draftCount = model.catalog.filter((card) => card.walkout.contentStatus === "draft").length;
@@ -3101,6 +3337,56 @@ function renderStudio() {
     </article>`).join("");
   renderContentStudio();
   renderSpecialStudio();
+  renderStudioReports();
+}
+
+function reportCategoryLabel(category) {
+  return {
+    source: "Source or date",
+    quote: "Quote or wording",
+    identity: "Name, role, or list",
+    display: "Display",
+    other: "Other",
+  }[category] || category;
+}
+
+function renderStudioReports() {
+  if (!elements.studioReportList) return;
+  const reports = model.reports || [];
+  if (elements.studioReportEmpty) {
+    elements.studioReportEmpty.hidden = reports.length > 0;
+    elements.studioReportEmpty.textContent = reports.length
+      ? ""
+      : "No player reports yet.";
+  }
+  elements.studioReportList.innerHTML = reports.map((report) => `
+    <article class="review-row" data-studio-report="${escapeHtml(report.reportId)}">
+      <div class="review-code">${escapeHtml(report.cardId || "—")}<br /><span class="status-chip">${escapeHtml(report.status)}</span></div>
+      <div class="review-title"><strong>${escapeHtml(reportCategoryLabel(report.category))}</strong><small>${escapeHtml(report.createdAt || "")}${report.pagePath ? ` · ${escapeHtml(report.pagePath)}` : ""}</small></div>
+      <div class="review-source">${escapeHtml(report.details)}${report.reviewerNote ? `<br /><em>${escapeHtml(report.reviewerNote)}</em>` : ""}</div>
+      <div class="review-actions">
+        <button type="button" data-report-status="reviewing">Review</button>
+        <button type="button" data-report-status="resolved">Resolve</button>
+        <button type="button" data-report-status="rejected">Reject</button>
+      </div>
+    </article>`).join("");
+}
+
+async function hydrateStudioReports() {
+  if (!studioSecret()) return;
+  const payload = await request("/api/studio/reports");
+  model.reports = payload.reports || [];
+  renderStudioReports();
+}
+
+async function updateStudioReport(reportId, status) {
+  await request(`/api/studio/reports/${encodeURIComponent(reportId)}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ status, reviewerNote: status === "resolved" ? "Verified against the source record." : null }),
+  });
+  await hydrateStudioReports();
+  showToast(status === "resolved" ? "Report marked resolved." : `Report marked ${status}.`);
 }
 
 async function createTradePreview() {
@@ -3193,7 +3479,7 @@ async function saveFaction() {
     });
     renderBinder();
     renderGrowth();
-    showToast(model.serverState.factionId ? "הסיעה נשמרה. החבילה הבאה תיספר." : "בחירת הסיעה בוטלה.");
+    showToast(model.serverState.factionId ? "הסיעה נשמרה. הקלף הבא ייספר." : "בחירת הסיעה בוטלה.");
   } catch {
     showToast("לא הצלחנו לשמור את הסיעה.");
   }
@@ -3256,17 +3542,57 @@ function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   const ownedCount = model.serverState.inventory[card.id] ?? 0;
   elements.dialogCard.innerHTML = displayCardMarkup(card);
-  elements.dialogOwnership.textContent = ownedCount < 1
-    ? "הקלף הזה עדיין לא באוסף."
-    : ownedCount === 1
-      ? "ברשותכם עותק אחד."
-      : `ברשותכם ${ownedCount} עותקים.`;
-  elements.dialogSource.href = card.walkout.sourceUrl;
+  configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
-  elements.dialogShare.hidden = ownedCount < 1;
   elements.dialogWhatsapp.hidden = ownedCount < 1;
   elements.dialogInstagram.hidden = ownedCount < 1;
-  elements.dialogGift.hidden = ownedCount < 2;
+}
+
+function openReportDialog() {
+  const card = model.byId.get(model.dialogCardId);
+  if (!card) return;
+  elements.dialog.close();
+  elements.reportForm.reset();
+  elements.reportStatus.textContent = "";
+  elements.reportCardLabel.textContent = `${cardTitle(card)} · ${card.id}`;
+  elements.reportDialog.showModal();
+  elements.reportCategory.focus();
+}
+
+async function submitCorrectionReport(event) {
+  event.preventDefault();
+  const card = model.byId.get(model.dialogCardId);
+  if (!card) return;
+  const url = new URL(location.href);
+  url.searchParams.delete("studioKey");
+  const report = {
+    reportId: clientOperationId("report"),
+    cardId: card.id,
+    category: elements.reportCategory.value,
+    details: elements.reportDetails.value.trim(),
+    pagePath: `${url.pathname}${url.search}`,
+  };
+  if (report.details.length < 5) {
+    elements.reportStatus.textContent = "כתבו לפחות כמה מילים כדי שנוכל לבדוק.";
+    elements.reportDetails.focus();
+    return;
+  }
+
+  elements.submitReport.disabled = true;
+  elements.reportStatus.textContent = "שומרים את הדיווח…";
+  rememberPendingReport(report);
+  try {
+    await flushPendingReports();
+    elements.reportStatus.textContent = "";
+    elements.reportDialog.close();
+    showToast("הדיווח התקבל ונכנס לבדיקה.");
+  } catch {
+    elements.reportStatus.textContent = "";
+    elements.reportDialog.close();
+    showToast("הדיווח נשמר במכשיר ויישלח אוטומטית.");
+  } finally {
+    elements.submitReport.disabled = false;
+  }
 }
 
 function showToast(message) {
@@ -3385,109 +3711,301 @@ async function makeShareImage(card) {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
 
-async function shareDialogCard() {
-  const card = model.byId.get(model.dialogCardId);
-  elements.dialogShare.disabled = true;
-  elements.dialogShare.textContent = "מכינים שיתוף…";
+function shareCaption(card) {
+  const url = makeDeepLink("card", card.id);
+  const quote = String(card.walkout?.text || "").trim();
+  const title = cardTitle(card);
+  return {
+    title: `קְלָפִי · ${title}`,
+    text: `${quote}\n— ${title}\n${url}`,
+    url,
+  };
+}
+
+function downloadBlob(blob, name) {
+  const href = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = href;
+  link.download = name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 1000);
+}
+
+async function readyShareFonts() {
   try {
-    const blob = await makeShareImage(card);
-    if (!blob) throw new Error("Canvas export failed");
-    const file = new File([blob], `kalpi-${card.id}.png`, { type: "image/png" });
-    const shareUrl = makeDeepLink("card", card.id);
-    if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({
-        title: `קיבלתי את ${cardTitle(card)} בקְלָפִי`,
-        text: `${card.walkout.text}\n${shareUrl}`,
-        files: [file],
-      });
-      await recordEvent("share_created", { cardId: card.id, referralCode: referralCode() });
-      showToast("חלון השיתוף נפתח.");
-    } else {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = file.name;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      const copied = await copyText(shareUrl);
-      await recordEvent("share_created", { cardId: card.id, referralCode: referralCode() });
-      showToast(copied ? "התמונה נשמרה והקישור הועתק." : "התמונה נשמרה.");
-    }
-  } catch (error) {
-    if (error.name !== "AbortError") showToast("לא הצלחנו להכין תמונת שיתוף.");
-  } finally {
-    elements.dialogShare.disabled = false;
-    elements.dialogShare.textContent = "שיתוף הקלף";
+    await document.fonts?.ready;
+  } catch {
+    // Canvas still exports with fallback faces.
   }
 }
 
-async function shareToWhatsApp() {
-  const card = model.byId.get(model.dialogCardId);
+async function canvasToPng(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Canvas export failed"))), "image/png");
+  });
+}
+
+async function paintSharePortrait(card, { width, height, fadeFrom, nameY, footerY }) {
+  await readyShareFonts();
+  const presentation = cardPresentation(card);
   const shareUrl = makeDeepLink("card", card.id);
-  const text = `${card.walkout.text}\n— ${cardTitle(card)}\nלצפייה בלבד: ${shareUrl}`;
-  elements.dialogWhatsapp.disabled = true;
-  try {
-    const blob = await makeShareImage(card);
-    if (!blob) throw new Error("Canvas export failed");
-    const file = new File([blob], `kalpi-${card.id}.png`, { type: "image/png" });
-    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-      await navigator.share({ title: `קְלָפִי · ${cardTitle(card)}`, text, files: [file] });
-    } else {
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = file.name;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
-      showToast("התמונה נשמרה ו־WhatsApp נפתח.");
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  context.direction = "rtl";
+  context.fillStyle = "#050505";
+  context.fillRect(0, 0, width, height);
+
+  if (presentation.artKey) {
+    try {
+      const image = await loadImage(`/design-assets/${encodeURIComponent(presentation.artKey)}`);
+      const coverHeight = Math.round(height * 0.78);
+      const scale = Math.max(width / image.width, coverHeight / image.height);
+      const drawWidth = image.width * scale;
+      const drawHeight = image.height * scale;
+      context.drawImage(image, (width - drawWidth) / 2, 0, drawWidth, drawHeight);
+    } catch {
+      context.fillStyle = presentation.pip;
+      context.font = "600 220px Fraunces";
+      context.textAlign = "center";
+      context.fillText(placeholderMark(card), width / 2, height * 0.38);
     }
-    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode() });
-    model.serverState = await request("/api/state");
-    renderBinder();
+  }
+
+  const fade = context.createLinearGradient(0, fadeFrom, 0, height);
+  fade.addColorStop(0, "rgba(0, 0, 0, 0)");
+  fade.addColorStop(0.22, "rgba(0, 0, 0, 0.28)");
+  fade.addColorStop(0.55, "rgba(0, 0, 0, 0.86)");
+  fade.addColorStop(1, "#000");
+  context.fillStyle = fade;
+  context.fillRect(0, fadeFrom, width, height - fadeFrom);
+
+  context.textAlign = "center";
+  context.fillStyle = "#f7f2e8";
+  context.font = `700 ${Math.round(width * 0.058)}px 'Noto Serif Hebrew', Fraunces, serif`;
+  const nameEnd = wrapCanvasText(context, presentation.title, width / 2, nameY, width * 0.84, Math.round(width * 0.066), 2);
+  context.fillStyle = "rgba(247, 242, 232, 0.72)";
+  context.font = `500 ${Math.round(width * 0.026)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  const party = [presentation.setName, presentation.subtitle, presentation.code].filter(Boolean).join(" · ");
+  wrapCanvasText(context, party, width / 2, nameEnd + 16, width * 0.84, Math.round(width * 0.034), 2);
+  context.fillStyle = "#c4a35a";
+  context.font = `600 ${Math.round(width * 0.024)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  context.fillText(`${presentation.rarityMark}  ${presentation.rarityName}`, width / 2, nameEnd + 78);
+  context.fillStyle = "#f7f2e8";
+  context.font = `600 ${Math.round(width * 0.036)}px 'Noto Serif Hebrew', Fraunces, serif`;
+  wrapCanvasText(context, presentation.rawQuote, width / 2, nameEnd + 136, width * 0.8, Math.round(width * 0.046), 4);
+  context.fillStyle = "rgba(247, 242, 232, 0.74)";
+  context.font = `600 ${Math.round(width * 0.026)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  context.fillText("קְלָפִי", width / 2, footerY);
+  context.save();
+  context.direction = "ltr";
+  context.textAlign = "start";
+  context.font = `500 ${Math.round(width * 0.02)}px 'IBM Plex Sans', sans-serif`;
+  const displayUrl = shareUrl.replace(/^https?:\/\//, "");
+  const glyphs = [...displayUrl];
+  const glyphWidths = glyphs.map((glyph) => context.measureText(glyph).width);
+  let cursor = width / 2 - glyphWidths.reduce((sum, next) => sum + next, 0) / 2;
+  for (const [index, glyph] of glyphs.entries()) {
+    context.fillText(glyph, cursor, footerY + 36);
+    cursor += glyphWidths[index];
+  }
+  context.restore();
+  return canvasToPng(canvas);
+}
+
+async function makeStoryImage(card) {
+  return paintSharePortrait(card, {
+    width: 1080,
+    height: 1920,
+    fadeFrom: 1080,
+    nameY: 1320,
+    footerY: 1810,
+  });
+}
+
+async function makeWhatsAppImage(card) {
+  return paintSharePortrait(card, {
+    width: 1080,
+    height: 1350,
+    fadeFrom: 720,
+    nameY: 920,
+    footerY: 1260,
+  });
+}
+
+function canShareFiles(file) {
+  try {
+    return Boolean(navigator.share && navigator.canShare?.({ files: [file] }));
+  } catch {
+    return false;
+  }
+}
+
+async function copyShareImage(blob) {
+  if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") return false;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const pendingShare = {
+  channel: null,
+  blob: null,
+  file: null,
+  title: "",
+  text: "",
+  url: "",
+};
+
+function revokeSharePreview() {
+  const current = elements.shareSheetImage?.dataset.objectUrl;
+  if (current) URL.revokeObjectURL(current);
+  if (elements.shareSheetImage) {
+    elements.shareSheetImage.removeAttribute("src");
+    delete elements.shareSheetImage.dataset.objectUrl;
+  }
+}
+
+function openShareSheet({ channel, blob, file, title, text, url }) {
+  pendingShare.channel = channel;
+  pendingShare.blob = blob;
+  pendingShare.file = file;
+  pendingShare.title = title;
+  pendingShare.text = text;
+  pendingShare.url = url;
+  revokeSharePreview();
+  const preview = URL.createObjectURL(blob);
+  elements.shareSheetImage.src = preview;
+  elements.shareSheetImage.dataset.objectUrl = preview;
+  const [quoteLine = "", nameLine = "", urlLine = ""] = String(text).split("\n");
+  elements.shareSheetCaption.replaceChildren();
+  elements.shareSheetCaption.append(document.createTextNode(quoteLine ? `${quoteLine}\n` : ""));
+  if (nameLine) elements.shareSheetCaption.append(document.createTextNode(`${nameLine}\n`));
+  const urlMark = document.createElement("span");
+  urlMark.dir = "ltr";
+  urlMark.textContent = urlLine || url;
+  elements.shareSheetCaption.append(urlMark);
+  elements.shareSheetTitle.textContent = channel === "instagram" ? "העלו לסטורי" : "שלחו בוואטסאפ";
+  elements.shareSheetSend.textContent = channel === "instagram" ? "פתיחת אינסטגרם" : "פתיחת וואטסאפ";
+  elements.shareSheet.showModal();
+}
+
+function closeShareSheet() {
+  elements.shareSheet?.close();
+  revokeSharePreview();
+}
+
+function openWhatsAppText(text) {
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+}
+
+function openInstagramStory() {
+  window.open("instagram://story-camera", "_blank", "noopener");
+  window.setTimeout(() => {
+    if (document.visibilityState === "visible") {
+      window.open("https://www.instagram.com/", "_blank", "noopener");
+    }
+  }, 700);
+}
+
+async function sendPendingShare() {
+  if (pendingShare.channel === "whatsapp") {
+    if (canShareFiles(pendingShare.file)) {
+      try {
+        await navigator.share({ title: pendingShare.title, text: pendingShare.text, files: [pendingShare.file] });
+        closeShareSheet();
+        return;
+      } catch (error) {
+        if (error.name === "AbortError") return;
+      }
+    }
+    await copyText(pendingShare.text);
+    openWhatsAppText(pendingShare.text);
+    showToast("וואטסאפ נפתח עם הטקסט והקישור. צרפו את התמונה מהשמירה.");
+    return;
+  }
+  if (pendingShare.channel === "instagram") {
+    if (canShareFiles(pendingShare.file)) {
+      try {
+        await navigator.share({ title: pendingShare.title, text: pendingShare.text, files: [pendingShare.file] });
+        closeShareSheet();
+        return;
+      } catch (error) {
+        if (error.name === "AbortError") return;
+      }
+    }
+    await copyText(pendingShare.url);
+    openInstagramStory();
+    showToast("העלו את התמונה לסטורי. הקישור כתוב עליה וגם הועתק.");
+  }
+}
+
+async function runShareAction(button, work) {
+  const markup = button.innerHTML;
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  try {
+    await work();
   } catch (error) {
     if (error.name !== "AbortError") showToast("לא הצלחנו להכין את השיתוף.");
   } finally {
-    elements.dialogWhatsapp.disabled = false;
+    button.disabled = false;
+    button.removeAttribute("aria-busy");
+    button.innerHTML = markup;
   }
 }
 
-async function shareToInstagram() {
+async function sharePreparedCard(button, { channel, makeImage, fileName, eventChannel }) {
   const card = model.byId.get(model.dialogCardId);
-  elements.dialogInstagram.disabled = true;
-  try {
-    const blob = await makeShareImage(card);
-    if (!blob) throw new Error("Canvas export failed");
-    const file = new File([blob], `kalpi-${card.id}-story.png`, { type: "image/png" });
-    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-      await navigator.share({
-        title: `קְלָפִי · ${cardTitle(card)}`,
-        text: `${card.walkout.text}\n${makeDeepLink("card", card.id)}`,
-        files: [file],
-      });
-      showToast("בחרו Instagram Story בחלון השיתוף.");
-    } else {
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = file.name;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
-      window.open("https://www.instagram.com/", "_blank", "noopener");
-      showToast("התמונה נשמרה. העלו אותה ל־Instagram Story.");
+  await runShareAction(button, async () => {
+    const blob = await makeImage(card);
+    const file = new File([blob], fileName(card), { type: "image/png" });
+    const { title, text, url } = shareCaption(card);
+    if (canShareFiles(file)) {
+      try {
+        await navigator.share({ title, text, files: [file] });
+        showToast(channel === "instagram"
+          ? "בחרו Instagram Story. הקישור כתוב על התמונה."
+          : "בחרו וואטסאפ — התמונה, הטקסט והקישור מוכנים.");
+        await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: eventChannel });
+        return;
+      } catch (error) {
+        if (error.name === "AbortError") return;
+      }
     }
-    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: "instagram" });
-  } catch (error) {
-    if (error.name !== "AbortError") showToast("לא הצלחנו להכין תמונת Instagram.");
-  } finally {
-    elements.dialogInstagram.disabled = false;
-  }
+    downloadBlob(blob, file.name);
+    await copyText(channel === "instagram" ? url : text);
+    await copyShareImage(blob);
+    openShareSheet({ channel, blob, file, title, text, url });
+    showToast(channel === "instagram"
+      ? "הסטורי מוכן. שמרו והעלו לאינסטגרם — הקישור על התמונה."
+      : "התמונה נשמרה. שלחו בוואטסאפ עם הטקסט והקישור.");
+    await recordEvent("share_created", { cardId: card.id, referralCode: referralCode(), channel: eventChannel });
+  });
+}
+
+async function shareToWhatsApp() {
+  await sharePreparedCard(elements.dialogWhatsapp, {
+    channel: "whatsapp",
+    makeImage: makeWhatsAppImage,
+    fileName: (card) => `kalpi-${card.id}.png`,
+    eventChannel: "whatsapp",
+  });
+}
+
+async function shareToInstagram() {
+  await sharePreparedCard(elements.dialogInstagram, {
+    channel: "instagram",
+    makeImage: makeStoryImage,
+    fileName: (card) => `kalpi-${card.id}-story.png`,
+    eventChannel: "instagram",
+  });
 }
 
 function referralCode() {
@@ -3495,9 +4013,9 @@ function referralCode() {
 }
 
 function makeDeepLink(kind, cardId) {
-  const url = new URL(location.origin);
-  url.searchParams.set(kind, cardId);
+  const url = new URL(`/share/${encodeURIComponent(cardId)}`, location.origin);
   url.searchParams.set("ref", referralCode());
+  if (kind === "gift") url.searchParams.set("gift", "1");
   return url.toString();
 }
 
@@ -3546,7 +4064,7 @@ elements.openPackFancy.addEventListener("click", () => openIdleReturn("fancy"));
 elements.sharedOpenGame.addEventListener("click", leaveSharedCard);
 elements.openBibiPack.addEventListener("click", openBibiDebugPack);
 elements.packAction.addEventListener("click", handlePackAction);
-elements.eventPull.addEventListener("click", pullEventCard);
+elements.eventPull?.addEventListener("click", pullEventCard);
 elements.retry.addEventListener("click", bootstrap);
 elements.openQuiz?.addEventListener("click", openQuizDialog);
 elements.closeQuiz?.addEventListener("click", () => {
@@ -3586,12 +4104,20 @@ elements.saveAchievements?.addEventListener("click", saveStudioAchievements);
 elements.saveEvents?.addEventListener("click", saveStudioEvents);
 elements.closeProfile.addEventListener("click", () => elements.profileDialog.close());
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
+elements.dialogReport.addEventListener("click", openReportDialog);
+elements.closeReport.addEventListener("click", () => elements.reportDialog.close());
+elements.reportForm.addEventListener("submit", submitCorrectionReport);
 elements.closeLevel.addEventListener("click", () => elements.levelDialog.close());
 elements.openPendingLevel?.addEventListener("click", openPendingLevelDialog);
 elements.claimLevel.addEventListener("click", async () => {
   elements.claimLevel.disabled = true;
+  const mutationScope = "level-reward";
   try {
-    const reward = await request("/api/rewards/level", { method: "POST" });
+    const reward = await request("/api/rewards/level", {
+      method: "POST",
+      headers: { "x-idempotency-key": pendingMutationKey(mutationScope) },
+    });
+    clearPendingMutation(mutationScope);
     model.serverState = reward.state;
     model.currentPack = {
       packId: `rank-${reward.rank}`,
@@ -3609,10 +4135,23 @@ elements.claimLevel.addEventListener("click", async () => {
     elements.claimLevel.disabled = false;
   }
 });
-elements.dialogShare.addEventListener("click", shareDialogCard);
 elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);
 elements.dialogInstagram.addEventListener("click", shareToInstagram);
-elements.dialogGift.addEventListener("click", offerDuplicate);
+elements.binderFlipFrame?.addEventListener("click", toggleBinderCardFrame);
+elements.closeShareSheet?.addEventListener("click", closeShareSheet);
+elements.shareSheetSend?.addEventListener("click", () => {
+  sendPendingShare().catch(() => showToast("לא הצלחנו לפתוח את השיתוף."));
+});
+elements.shareSheetSave?.addEventListener("click", () => {
+  if (!pendingShare.blob || !pendingShare.file) return;
+  downloadBlob(pendingShare.blob, pendingShare.file.name);
+  showToast("התמונה נשמרה.");
+});
+elements.shareSheet?.addEventListener("click", (event) => {
+  if (event.target === elements.shareSheet) closeShareSheet();
+});
+elements.openTrustLegend.addEventListener("click", () => elements.trustDialog.showModal());
+elements.closeTrust.addEventListener("click", () => elements.trustDialog.close());
 elements.openAdvocacy.addEventListener("click", () => elements.advocacyDialog.showModal());
 elements.closeAdvocacy.addEventListener("click", () => elements.advocacyDialog.close());
 elements.tradeDemo.addEventListener("click", createTradePreview);
@@ -3726,6 +4265,15 @@ elements.cardReviewList.addEventListener("click", (event) => {
   if (button) startSharedWalkout(button.dataset.reviewWalkout);
 });
 
+elements.studioReportList?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-report-status]");
+  const row = event.target.closest("[data-studio-report]");
+  if (!button || !row) return;
+  updateStudioReport(row.dataset.studioReport, button.dataset.reportStatus).catch(() => {
+    showToast("Could not update the report.");
+  });
+});
+
 elements.navButtons.forEach((button) => {
   button.addEventListener("click", () => {
     if (button.dataset.nav === "binder") loadStaticCatalog().catch(() => {});
@@ -3781,7 +4329,7 @@ elements.communityTabs.addEventListener("click", (event) => {
   renderGrowth();
 });
 
-elements.eventTabs.addEventListener("click", (event) => {
+elements.eventTabs?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-event-page]");
   if (!button) return;
   model.eventPage = button.dataset.eventPage;
@@ -3789,11 +4337,6 @@ elements.eventTabs.addEventListener("click", (event) => {
 });
 
 elements.binderGrid.addEventListener("click", (event) => {
-  const favorite = event.target.closest("[data-favorite-card]");
-  if (favorite) {
-    toggleFavorite(favorite.dataset.favoriteCard);
-    return;
-  }
   const unlock = event.target.closest("[data-debug-unlock]");
   if (unlock) {
     debugUnlockCard(unlock.dataset.debugUnlock);
@@ -3829,12 +4372,37 @@ elements.dialog.addEventListener("click", (event) => {
 elements.advocacyDialog.addEventListener("click", (event) => {
   if (event.target === elements.advocacyDialog) elements.advocacyDialog.close();
 });
+elements.trustDialog.addEventListener("click", (event) => {
+  if (event.target === elements.trustDialog) elements.trustDialog.close();
+});
 elements.profileDialog.addEventListener("click", (event) => {
   if (event.target === elements.profileDialog) elements.profileDialog.close();
 });
+
+function moveTabFocus(event) {
+  const current = event.target.closest('[role="tab"]');
+  const tablist = current?.closest('[role="tablist"]');
+  if (!current || !tablist || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return false;
+  const tabs = [...tablist.querySelectorAll('[role="tab"]:not(:disabled)')].filter((tab) => !tab.hidden);
+  const currentIndex = tabs.indexOf(current);
+  if (currentIndex < 0) return false;
+  const rtl = getComputedStyle(tablist).direction === "rtl";
+  const step = event.key === "ArrowLeft" ? (rtl ? 1 : -1) : (rtl ? -1 : 1);
+  const nextIndex = event.key === "Home"
+    ? 0
+    : event.key === "End"
+      ? tabs.length - 1
+      : (currentIndex + step + tabs.length) % tabs.length;
+  event.preventDefault();
+  tabs[nextIndex].focus();
+  tabs[nextIndex].click();
+  return true;
+}
+
 document.addEventListener("keydown", (event) => {
+  if (moveTabFocus(event)) return;
   const packIsOpen = document.querySelector("#pack-view").classList.contains("active");
-  if (event.key === "ArrowRight" && packIsOpen && !elements.packAction.disabled && !elements.dialog.open && !elements.advocacyDialog.open && !elements.profileDialog.open) {
+  if (event.key === "ArrowRight" && packIsOpen && !elements.packAction.disabled && !elements.dialog.open && !elements.advocacyDialog.open && !elements.profileDialog.open && !elements.trustDialog.open) {
     event.preventDefault();
     elements.packAction.click();
   }
@@ -3851,6 +4419,23 @@ document.addEventListener("click", (event) => {
   const sourceLink = event.target.closest("[data-source-card]");
   if (sourceLink) recordEvent("source_opened", { cardId: sourceLink.dataset.sourceCard });
 });
+window.addEventListener("online", () => flushPendingReports().catch(() => {}));
 
 bootstrap();
+flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
+window.__kalpiDebug = {
+  openCardDialog,
+  setOwned(cardId, count) {
+    if (!model.serverState) return false;
+    model.serverState.inventory ??= {};
+    model.serverState.inventory[cardId] = count;
+    renderBinder();
+    if (elements.dialog.open || model.dialogCardId === cardId) openCardDialog(cardId);
+    return true;
+  },
+  makeWhatsAppImage,
+  makeStoryImage,
+  shareToWhatsApp,
+  shareToInstagram,
+};

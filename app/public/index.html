@@ -5,13 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#1f4f4a" />
   <meta name="description" content="קְלָפִי — אוספים את הבחירות." />
+  <meta property="og:title" content="קְלָפִי · KLAFI" />
+  <meta property="og:description" content="אוספים את הבחירות." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
+  <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=core-pipeline-1"></script>
+  <script src="/boot-warmup.js?v=card-surface-10"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=hebrew-quality-15" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=9" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-10" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-10" />
 </head>
 <body>
   <div class="paper-noise" aria-hidden="true"></div>
@@ -56,7 +61,7 @@
     <main id="main" tabindex="-1">
       <section id="loading-view" class="view centered" aria-live="polite">
         <div class="ballot-loader" aria-hidden="true"><span></span></div>
-        <p class="eyebrow">החבילה נשמרת בשרת</p>
+        <p class="eyebrow">הקלף נשמר בשרת</p>
         <h1>מכינים את הקלפים.</h1>
       </section>
 
@@ -64,7 +69,10 @@
         <div class="home-grid">
           <div class="home-copy">
             <p class="eyebrow" id="today-label">האיסוף האוטומטי</p>
-            <h1 id="home-title">הקלפים נאספים גם כשאתם לא כאן.</h1>
+            <div class="home-title-row">
+              <h1 id="home-title">הקלפים נאספים גם כשאתם לא כאן.</h1>
+              <button id="open-trust-legend" class="trust-info" type="button" aria-haspopup="dialog" aria-label="מה מסמנת הכוכבית בקלפים?" title="מה מסמנת הכוכבית?">?</button>
+            </div>
             <p class="lede" id="home-copy">קלף אחד בכל שלוש שעות.</p>
             <div class="collection-line">
               <span id="collection-count">0 / 204 קלפים</span>
@@ -86,7 +94,6 @@
           <button id="open-pack" class="primary-action" type="button">פתיחת קלף</button>
           <button id="open-pack-fancy" class="secondary-action" type="button" hidden>פתיחת וידאו</button>
           <button id="open-bibi-pack" class="debug-pack-action" type="button" hidden>פתיחת חבילת ביבי</button>
-          <button id="open-quiz" class="secondary-action" type="button" hidden aria-hidden="true">חידון כבוי</button>
           <button id="open-pending-level" class="secondary-action" type="button" hidden>פרס רמה מחכה</button>
           <p id="cooldown-copy" class="action-note">הקלף הבא בעוד 03:00:00</p>
         </div>
@@ -103,13 +110,6 @@
               <small id="today-challenge-meta">הטבלה נפתחת</small>
               <em class="today-docket-go">למירוץ</em>
             </button>
-            <button type="button" class="today-docket-row live" data-today-nav="events">
-              <span class="today-docket-visual event-visual" aria-hidden="true"><img src="/design-assets/pack-wrapper-transparent.png" alt="" loading="lazy" /></span>
-              <span class="today-docket-label">עכשיו:<i class="live-pulse" aria-hidden="true"></i></span>
-              <strong id="today-event-hook">בודקים מה פתוח</strong>
-              <small id="today-event-meta">לזמן מוגבל</small>
-              <em class="today-docket-go">פותחים</em>
-            </button>
             <button type="button" class="today-docket-row" data-today-nav="growth" data-community-page="collectors">
               <span class="today-docket-visual" aria-hidden="true"><img src="/design-assets/hero-art-knesset.png" alt="" loading="lazy" /></span>
               <span class="today-docket-label">טבלת מובילים:</span>
@@ -124,15 +124,15 @@
       <section id="pack-view" class="view">
         <div class="pack-header">
           <div>
-            <p class="eyebrow" id="pack-step">החבילה סגורה</p>
-            <h1 id="pack-heading">קורעים ופותחים.</h1>
+            <p class="eyebrow" id="pack-step">קלף אחד</p>
+            <h1 id="pack-heading">פותחים.</h1>
           </div>
           <span id="pack-counter" class="pack-counter">0 / 1</span>
         </div>
         <div id="rip-stage" class="rip-stage" aria-live="polite"></div>
         <div class="action-dock">
           <button id="pack-action" class="primary-action" type="button">קריעת החבילה</button>
-          <p id="pack-hint" class="action-note">הקלפים כבר נשמרו.</p>
+          <p id="pack-hint" class="action-note">הקלף כבר נשמר.</p>
         </div>
       </section>
 
@@ -141,6 +141,7 @@
         <h1 id="shared-title">רק מסתכלים.</h1>
         <div id="shared-card" class="shared-card"></div>
         <p id="shared-notice" class="shared-notice">הקלף הזה לא נוסף לאוסף שלכם.</p>
+        <p id="shared-trust" class="card-trust-note" hidden></p>
         <a id="shared-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
         <button id="shared-open-game" class="primary-action narrow" type="button">לאיסוף שלי</button>
       </section>
@@ -151,6 +152,7 @@
             <strong id="binder-percent">0%</strong>
             <span id="binder-count">0 מתוך 14 בסדרה הפעילה</span>
           </div>
+          <button id="binder-flip-frame" class="binder-flip-frame" type="button" aria-pressed="false" title="כפתור זמני: השוואת הגרסה המקורית לאמנות מלאה">אמנות מלאה</button>
           <div id="earned-badge-list" class="earned-badge-list"></div>
         </div>
         <div class="binder-head">
@@ -162,7 +164,7 @@
         <div id="binder-filters" class="filter-strip" role="tablist" aria-label="סינון האוסף לפי סדרה"></div>
         <div id="binder-grid" class="binder-grid"></div>
         <div id="binder-pager" class="view-pager" aria-label="עמודי האוסף"></div>
-        <p id="binder-empty" class="empty-note" hidden>פתחו חבילה כדי להתחיל.</p>
+        <p id="binder-empty" class="empty-note" hidden>פתחו קלף כדי להתחיל.</p>
       </section>
 
       <section id="achievements-view" class="view">
@@ -171,25 +173,6 @@
         <p id="achievements-empty" class="empty-note" hidden>טוענים את התגים…</p>
         <div id="achievement-grid" class="achievement-grid"></div>
         <div id="achievement-pager" class="view-pager" aria-label="עמודי ההישגים"></div>
-      </section>
-
-      <section id="events-view" class="view">
-        <p class="eyebrow">לזמן מוגבל</p>
-        <h1>אירועים.</h1>
-        <p class="lede event-explainer">עכשיו · האוסף · בהמשך. קלף אירוע אחד ביום, מחוץ לאיסוף האוטומטי.</p>
-        <div id="event-tabs" class="contained-tabs" role="tablist" aria-label="עמודי האירועים">
-          <button type="button" role="tab" data-event-page="active" class="active">עכשיו</button>
-          <button type="button" role="tab" data-event-page="collection">האוסף</button>
-          <button type="button" role="tab" data-event-page="upcoming">בהמשך</button>
-        </div>
-        <div id="active-event" class="active-event"></div>
-        <button id="event-pull" class="primary-action narrow" type="button">פתיחת קלף האירוע</button>
-        <div id="event-cards" class="event-cards"></div>
-        <div id="event-upcoming" class="event-upcoming"></div>
-        <details class="specials-catalog">
-          <summary>כל סדרות המיוחדים</summary>
-          <div id="specials-grid" class="specials-grid"></div>
-        </details>
       </section>
 
       <section id="growth-view" class="view">
@@ -201,14 +184,14 @@
         </div>
         <p id="growth-empty" class="empty-note" hidden>טוענים את הקהילה…</p>
         <div id="community-tabs" class="contained-tabs" role="tablist" aria-label="אזורי הקהילה">
-          <button type="button" role="tab" data-community-page="trade" class="active">החלפות</button>
-          <button type="button" role="tab" data-community-page="open-trades">הצעות פתוחות</button>
-          <button type="button" role="tab" data-community-page="faction">סיעות</button>
-          <button type="button" role="tab" data-community-page="collectors">אספנים</button>
-          <button type="button" role="tab" data-community-page="challenge">האתגר היומי</button>
+          <button id="community-tab-trade" type="button" role="tab" aria-selected="true" aria-controls="community-panel-trade" tabindex="0" data-community-page="trade" class="active">החלפות</button>
+          <button id="community-tab-open-trades" type="button" role="tab" aria-selected="false" aria-controls="community-panel-open-trades" tabindex="-1" data-community-page="open-trades">הצעות פתוחות</button>
+          <button id="community-tab-faction" type="button" role="tab" aria-selected="false" aria-controls="community-panel-faction" tabindex="-1" data-community-page="faction">סיעות</button>
+          <button id="community-tab-collectors" type="button" role="tab" aria-selected="false" aria-controls="community-panel-collectors" tabindex="-1" data-community-page="collectors">אספנים</button>
+          <button id="community-tab-challenge" type="button" role="tab" aria-selected="false" aria-controls="community-panel-challenge" tabindex="-1" data-community-page="challenge">האתגר היומי</button>
         </div>
         <div class="growth-grid">
-          <article class="work-card trade-desk">
+          <article id="community-panel-trade" class="work-card trade-desk" role="tabpanel" aria-labelledby="community-tab-trade" tabindex="0">
             <p class="work-kicker">החלפות</p>
             <h2>מה נותנים ומה רוצים?</h2>
             <div id="trade-preview" class="trade-preview" hidden></div>
@@ -235,7 +218,7 @@
               <button id="trade-demo" class="secondary-action" type="button">העתקת קישור</button>
             </div>
           </article>
-          <article class="work-card open-trades-desk" hidden>
+          <article id="community-panel-open-trades" class="work-card open-trades-desk" role="tabpanel" aria-labelledby="community-tab-open-trades" tabindex="0" hidden>
             <p class="work-kicker">הצעות פתוחות</p>
             <h2>עסקאות שמחכות לכם.</h2>
             <div id="trade-board" class="trade-board"></div>
@@ -253,19 +236,19 @@
             <p class="work-kicker">פעילות מקומית</p>
             <div id="growth-metrics" class="metric-ledger"></div>
           </article>
-          <article class="work-card faction-desk">
+          <article id="community-panel-faction" class="work-card faction-desk" role="tabpanel" aria-labelledby="community-tab-faction" tabindex="0">
             <p class="work-kicker">מלחמת הסיעות</p>
-            <h2>למי החבילה שלכם נספרת?</h2>
+            <h2>לאיזו סיעה ייספר הקלף הבא?</h2>
             <label class="field-label" for="faction-select">בחירה אנונימית</label>
             <select id="faction-select"></select>
             <button id="save-faction" class="primary-action" type="button">בחירה</button>
             <div id="faction-board" class="leaderboard-list"></div>
           </article>
-          <article class="work-card leaderboard-desk">
+          <article id="community-panel-collectors" class="work-card leaderboard-desk" role="tabpanel" aria-labelledby="community-tab-collectors" tabindex="0">
             <p class="work-kicker">טבלת האספנים</p>
             <div id="collector-board" class="leaderboard-list"></div>
           </article>
-          <article class="work-card daily-challenge-desk">
+          <article id="community-panel-challenge" class="work-card daily-challenge-desk" role="tabpanel" aria-labelledby="community-tab-challenge" tabindex="0">
             <p class="work-kicker">האתגר היומי</p>
             <div id="daily-challenge-leader-art" class="daily-challenge-leader-art" aria-hidden="true"></div>
             <h2 id="daily-challenge-title">מי אסף הכי הרבה?</h2>
@@ -347,6 +330,7 @@
             <label>Card frame
               <select id="visual-card-frame">
                 <option value="tall-v2">Tall v2</option>
+                <option value="fullart-v1">Full art v1 (dummy)</option>
                 <option value="classic-v1">Classic v1</option>
               </select>
             </label>
@@ -401,6 +385,16 @@
           <div id="studio-special-grid" class="naama-variants studio-card-grid" data-stage="4"></div>
           <p class="work-note">Saving updates the same runtime card used by event reveals, Binder details and sharing.</p>
         </section>
+        <section class="reveal-lab correction-queue" aria-labelledby="correction-queue-title">
+          <div class="reveal-lab-head">
+            <div>
+              <p class="work-kicker">Player correction queue</p>
+              <h2 id="correction-queue-title">Reports that must not get lost.</h2>
+              <p id="studio-report-empty" class="empty-note">No player reports yet.</p>
+            </div>
+          </div>
+          <div id="studio-report-list" class="card-review-list"></div>
+        </section>
         <div class="review-head">
           <div>
             <p class="work-kicker">Card review desk</p>
@@ -426,11 +420,10 @@
     </main>
     <div class="top-nav-row">
       <nav class="bottom-nav" aria-label="ניווט ראשי">
-        <button type="button" data-nav="home" class="active"><span>◫</span>היום</button>
-        <button type="button" data-nav="binder"><span>▦</span>אוסף</button>
-        <button type="button" data-nav="achievements"><span>◇</span>הישגים</button>
-        <button type="button" data-nav="events"><span>★</span>אירועים</button>
-        <button type="button" data-nav="growth"><span>↗</span>קהילה</button>
+        <button type="button" data-nav="home" class="active" aria-current="page"><span aria-hidden="true">◫</span>היום</button>
+        <button type="button" data-nav="binder"><span aria-hidden="true">▦</span>אוסף</button>
+        <button type="button" data-nav="achievements"><span aria-hidden="true">◇</span>הישגים</button>
+        <button type="button" data-nav="growth"><span aria-hidden="true">↗</span>קהילה</button>
       </nav>
       <span id="advocacy-short" class="visually-hidden">מהדורת עמדה גלויה</span>
       <button id="open-advocacy" class="advocacy-info" type="button" aria-label="גילוי נאות: איך נבחר התוכן?" title="איך נבחר התוכן?">ⓘ</button>
@@ -438,38 +431,54 @@
 
   <dialog id="card-dialog" class="card-dialog">
     <button id="close-dialog" class="dialog-close" type="button" aria-label="סגירת הקלף">×</button>
-    <div id="dialog-card"></div>
-    <p id="dialog-ownership" class="dialog-ownership"></p>
-    <a id="dialog-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
-    <div class="dialog-actions">
-      <button id="dialog-share" class="primary-action" type="button">שיתוף הקלף</button>
-      <button id="dialog-whatsapp" class="secondary-action" type="button">WhatsApp</button>
-      <button id="dialog-instagram" class="secondary-action" type="button">Instagram</button>
-      <button id="dialog-gift" class="secondary-action full" type="button" hidden>הצעה להחלפה</button>
+    <div class="dialog-card-stage">
+      <div id="dialog-card"></div>
     </div>
+    <div class="dialog-meta-row">
+      <a id="dialog-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
+      <button id="dialog-report" class="report-link" type="button">דיווח על טעות בקלף</button>
+    </div>
+    <div class="dialog-actions">
+      <button id="dialog-whatsapp" class="share-icon-button" type="button" aria-label="שיתוף בוואטסאפ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.7 15L2 22l5.1-1.3A10 10 0 1 0 12 2zm0 1.8a8.2 8.2 0 0 1 7 12.5l-.3.4.5 1.8-1.9-.5-.4.2A8.2 8.2 0 1 1 12 3.8zm4.6 10.6c-.2-.1-1.3-.6-1.5-.7s-.3-.1-.5.1-.6.7-.7.8-.3.2-.5.1a6.7 6.7 0 0 1-2-1.2 7.4 7.4 0 0 1-1.4-1.7c-.1-.3 0-.4.1-.5l.4-.4.1-.3c0-.1 0-.3 0-.4s-.5-1.2-.7-1.6-.3-.4-.5-.4h-.4c-.1 0-.4.1-.6.3s-.8.8-.8 1.9.8 2.2.9 2.3 1.6 2.5 3.9 3.4a13 13 0 0 0 1.3.5 3.1 3.1 0 0 0 1.4.1c.4-.1 1.3-.5 1.5-1.1s.2-1 .1-1.1-.2-.2-.4-.3z"/></svg>
+        <span>וואטסאפ</span>
+      </button>
+      <button id="dialog-instagram" class="share-icon-button" type="button" aria-label="שיתוף לסטורי">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.1" cy="6.9" r="1.15" fill="currentColor"/></svg>
+        <span>סטורי</span>
+      </button>
+    </div>
+  </dialog>
+
+  <dialog id="report-dialog" class="policy-dialog report-dialog">
+    <button id="close-report" class="dialog-close" type="button" aria-label="סגירת הדיווח">×</button>
+    <p class="eyebrow">תיקון פתוח</p>
+    <h2>ראיתם טעות?</h2>
+    <p id="report-card-label" class="report-card-label"></p>
+    <form id="report-form">
+      <label for="report-category">מה צריך לבדוק?</label>
+      <select id="report-category" name="category" required>
+        <option value="source">המקור או התאריך</option>
+        <option value="quote">הציטוט או הניסוח</option>
+        <option value="identity">השם, התפקיד או הרשימה</option>
+        <option value="display">בעיה בתצוגה</option>
+        <option value="other">משהו אחר</option>
+      </select>
+      <label for="report-details">מה מצאתם?</label>
+      <textarea id="report-details" name="details" minlength="5" maxlength="2000" rows="5" required></textarea>
+      <p id="report-status" class="profile-error" role="status"></p>
+      <button id="submit-report" class="primary-action" type="submit">שליחת הדיווח</button>
+    </form>
   </dialog>
 
   <dialog id="level-dialog" class="policy-dialog">
     <button id="close-level" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">עליתם רמה</p>
     <h2 id="level-dialog-title">רמה חדשה</h2>
-    <img class="level-reward-pack" src="/design-assets/pack-wrapper-transparent.png" alt="חבילת בונוס" />
+    <img class="level-reward-pack" src="/design-assets/pack-wrapper-transparent.png" alt="קלף בונוס" />
     <ul id="level-unlocks" class="level-unlocks"></ul>
     <p id="level-dialog-reward"></p>
     <button id="claim-level" class="primary-action" type="button">קבלת הפרס</button>
-  </dialog>
-
-  <dialog id="quiz-dialog" class="policy-dialog quiz-dialog">
-    <button id="close-quiz" class="dialog-close" type="button" aria-label="סגירה">×</button>
-    <p class="eyebrow">חידון על קלף מהאוסף</p>
-    <h2 id="quiz-title">שתי שאלות מהקלף. חמש דקות.</h2>
-    <p class="quiz-rule">השאלות נלקחות מנתוני הקלף שכבר אספתם — רשימה, מקום, או נושא. זה לא סקר. חבילה נוספת אחת לכל יום אזרחי בישראל (שעון ירושלים), לא אירוע מיוחד.</p>
-    <p id="quiz-clock" class="quiz-clock" aria-live="polite">05:00</p>
-    <div id="quiz-card" class="quiz-card"></div>
-    <div id="quiz-questions" class="quiz-questions"></div>
-    <p id="quiz-fail" class="quiz-fail" hidden></p>
-    <button id="quiz-submit" class="primary-action" type="button">בדיקת התשובות</button>
-    <p id="quiz-status" class="work-note"></p>
   </dialog>
 
   <dialog id="profile-dialog" class="policy-dialog">
@@ -485,6 +494,15 @@
       <p id="profile-error" class="profile-error" role="alert"></p>
       <button class="primary-action" type="submit">שמירת הפרופיל</button>
     </form>
+  </dialog>
+
+  <dialog id="trust-dialog" class="policy-dialog">
+    <button id="close-trust" class="dialog-close" type="button" aria-label="סגירת ההסבר">×</button>
+    <p class="eyebrow">איך לקרוא את הקלף</p>
+    <h2>מה מסמנת הכוכבית?</h2>
+    <p>כוכבית על ציטוט אומרת שהנוסח קוצר, או שהוא ניסוח מיוחס ולא תמלול מילולי מאומת.</p>
+    <p>ההקשר המלא, התאריך והמקור המצורף נפתחים מקישור המקור שעל הקלף.</p>
+    <p>כשסטטוס האותיות של הרשימה רלוונטי, הוא נלקח ממאגר ועדת הבחירות ולא מומצא במשחק.</p>
   </dialog>
 
   <dialog id="advocacy-dialog" class="policy-dialog">
@@ -504,6 +522,17 @@
   <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="auto" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
     <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
   </video>
-  <script type="module" src="/app.js?v=core-pipeline-1"></script>
+  <dialog id="share-sheet" class="policy-dialog share-sheet" aria-labelledby="share-sheet-title">
+    <button id="close-share-sheet" class="dialog-close" type="button" aria-label="סגירת השיתוף">×</button>
+    <p class="eyebrow">שיתוף</p>
+    <h2 id="share-sheet-title">שלחו את הקלף</h2>
+    <img id="share-sheet-image" alt="תמונת השיתוף" />
+    <p id="share-sheet-caption" class="share-sheet-caption"></p>
+    <div class="dialog-actions share-sheet-actions">
+      <button id="share-sheet-send" class="primary-action" type="button">שליחה</button>
+      <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
+    </div>
+  </dialog>
+  <script type="module" src="/app.js?v=card-surface-10"></script>
 </body>
 </html>
