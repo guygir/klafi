@@ -260,6 +260,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
   assert.match(javascript, /function hydrateStudioReports/);
+  assert.match(javascript, /function applyStudioAccess/);
   assert.match(javascript, /\/api\/studio\/reports/);
   assert.match(themeCss, /\.card-dialog \.kalpi-card[^}]*width:\s*min\(370px,\s*100%\)/s);
   assert.match(themeCss, /\.new-stamp[^}]*top:\s*50%[^}]*translateY\(-50%\)/s);

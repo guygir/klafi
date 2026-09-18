@@ -284,6 +284,7 @@ function captureStudioSecret() {
   const key = url.searchParams.get("studioKey");
   if (!key) return;
   localStorage.setItem(STUDIO_KEY, key);
+  applyStudioAccess({ studioEnabled: true, debugEnabled: model.studioContent?.debugEnabled });
   url.searchParams.delete("studioKey");
   history.replaceState({}, "", url);
 }
@@ -406,6 +407,15 @@ async function ensureSession() {
   model.serverState = await request("/api/state");
 }
 
+function applyStudioAccess(studioContent = model.studioContent) {
+  document.querySelectorAll("[data-debug-only]").forEach((element) => {
+    element.hidden = !studioContent?.debugEnabled;
+  });
+  document.querySelectorAll("[data-studio-only]").forEach((element) => {
+    element.hidden = !studioContent?.studioEnabled;
+  });
+}
+
 function applyHomePayload(home) {
   if (home.token) {
     model.token = home.token;
@@ -499,12 +509,7 @@ function applyFullBoot(boot) {
   model.activity = boot.activity;
   model.studioContent = boot.studioContent;
   model.gameConfig = boot.gameConfig;
-  document.querySelectorAll("[data-debug-only]").forEach((element) => {
-    element.hidden = !boot.studioContent?.debugEnabled;
-  });
-  document.querySelectorAll("[data-studio-only]").forEach((element) => {
-    element.hidden = !boot.studioContent?.studioEnabled;
-  });
+  applyStudioAccess(boot.studioContent);
   applyVisualConfig();
   model.leaderboards = boot.leaderboards;
   model.specials = boot.specials;
@@ -755,6 +760,7 @@ async function hydrateExtras() {
       if (studioSecret()) {
         try {
           model.studioContent = await request("/api/studio/content");
+          applyStudioAccess(model.studioContent);
         } catch {
           /* Studio stays closed without the secret. */
         }
