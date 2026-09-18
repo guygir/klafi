@@ -9,6 +9,7 @@ const SPECIAL_LETTERS_BY_SET = {
 
 const SPECIAL_TYPE_BY_SET = {
   records: { type: "Record", typeHe: "רקורד" },
+  decisions: { type: "Government account", typeHe: "חשבון הממשלה" },
   "current-ministers": { type: "Ministerial record", typeHe: "שר בתפקיד" },
 };
 
@@ -28,7 +29,7 @@ export function runtimeSpecialCard(card, specials) {
     subtitleHe: card.displayText,
     type: specialType.type,
     typeHe: specialType.typeHe,
-    rarity: "Promotion",
+    rarity: card.rarity || "Promotion",
     pip: "#c4a35a",
     artKey: card.artKey,
     body: card.context,
@@ -51,11 +52,11 @@ export function runtimeSpecialCard(card, specials) {
     eventOnly: true,
     packEligible: false,
     idleEligible: false,
-    releaseSetId: card.setId === "records" || card.setId === "current-ministers" ? "records" : "special-events",
-    releaseOrder: card.setId === "records" || card.setId === "current-ministers" ? 4 : 10,
+    releaseSetId: card.setId === "decisions" ? "decisions" : card.setId === "records" || card.setId === "current-ministers" ? "records" : "special-events",
+    releaseOrder: card.setId === "decisions" ? 3 : card.setId === "records" || card.setId === "current-ministers" ? 4 : 10,
     releaseTier: "event",
     availableFrom: null,
-    binderGroup: card.setId === "records" || card.setId === "current-ministers" ? "records" : "specials",
+    binderGroup: card.setId === "decisions" ? "decisions" : card.setId === "records" || card.setId === "current-ministers" ? "records" : "specials",
     subjectSet: null,
   };
 }

@@ -151,13 +151,17 @@ test("runtime catalog omits blank slots and keeps all party card families dynami
 });
 
 test("Specials remain sourced showcase cards outside daily pack odds", () => {
-  assert.equal(specials.sets.length, 6);
+  assert.equal(specials.sets.length, 7);
   assert.ok(specials.sets.every(({ packEligible }) => packEligible === false));
   const setIds = new Set(specials.sets.map(({ id }) => id));
   for (const card of specials.cards) {
     assert.ok(setIds.has(card.setId));
-    assert.equal(card.mark, "P");
-    assert.equal(card.rarity, "Promotion");
+    if (["decisions", "records"].includes(card.setId)) {
+      assert.ok(["Common", "Uncommon", "Rare", "Promotion"].includes(card.rarity));
+    } else {
+      assert.equal(card.mark, "P");
+      assert.equal(card.rarity, "Promotion");
+    }
     assert.ok(card.sourceUrl.startsWith("http"));
     assert.ok(!runtimeCards.some(({ id }) => id === card.id));
   }
@@ -165,8 +169,9 @@ test("Specials remain sourced showcase cards outside daily pack odds", () => {
   assert.ok(specials.cards.some(({ id }) => id === "MOU-YINON-MAGAL-01"));
   assert.ok(specials.cards.some(({ setId }) => setId === "satire-imitations"));
   assert.ok(specials.cards.some(({ setId }) => setId === "legendary-aces"));
-  assert.equal(specials.cards.filter(({ setId }) => setId === "records").length, 5);
-  assert.equal(specials.cards.filter(({ setId }) => setId === "current-ministers").length, 3);
-  assert.ok(specials.cards.filter(({ setId }) => ["records", "current-ministers"].includes(setId))
-    .every(({ quoteStatus, contentStatus }) => quoteStatus === "fact-record" && contentStatus === "approved"));
+  assert.equal(specials.cards.filter(({ setId }) => setId === "decisions").length, 9);
+  assert.equal(specials.cards.filter(({ setId }) => setId === "records").length, 10);
+  assert.equal(specials.cards.filter(({ setId }) => setId === "current-ministers").length, 0);
+  assert.ok(specials.cards.filter(({ setId }) => ["decisions", "records"].includes(setId))
+    .every(({ contentStatus }) => contentStatus === "approved"));
 });

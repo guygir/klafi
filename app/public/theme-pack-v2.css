@@ -1082,7 +1082,7 @@ body:has(#app[data-theme="pack-v2"]) {
   background: color-mix(in srgb, var(--pack-seal, #175b56) 10%, transparent);
 }
 
-/* Dummy comparison frame: full-bleed portrait, rising black panel, name / party+slot / rarity / quote. */
+/* Full-art frame: full-bleed portrait, rising dark panel, name / set / rarity / record. */
 #app[data-card-frame="fullart-v1"] .kalpi-card,
 #app .kalpi-card[data-card-frame="fullart-v1"] {
   width: min(350px, calc(100vw - 42px));

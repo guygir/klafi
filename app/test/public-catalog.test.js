@@ -41,3 +41,21 @@ test("slim home state includes inventory for binder reads", () => {
   assert.deepEqual(state.favorites, ["LIK-M01-Q01"]);
   assert.equal(state.ownedUnique, 1);
 });
+
+
+test("Sets 3 and 4 ship complete art-backed catalogs with their collectible rarities", async () => {
+  const [cards, specials] = await Promise.all([
+    readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
+    readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
+  ]);
+  const expanded = expandPublicCatalog(cards, specials);
+  const decisions = expanded.filter(({ releaseSetId }) => releaseSetId === "decisions");
+  const records = expanded.filter(({ releaseSetId }) => releaseSetId === "records");
+  assert.equal(decisions.length, 9);
+  assert.equal(records.length, 10);
+  assert.ok([...decisions, ...records].every(({ artKey }) => artKey));
+  assert.deepEqual(
+    Object.fromEntries(["Common", "Uncommon", "Rare"].map((rarity) => [rarity, decisions.filter((card) => card.rarity === rarity).length])),
+    { Common: 4, Uncommon: 3, Rare: 2 },
+  );
+});
