@@ -265,14 +265,14 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="tall-v2"] .binder-card-tools .dupe-count,
 #app[data-card-frame="tall-v2"] .binder-card-tools .favorite-heart,
 #app[data-card-frame="tall-v2"] .card-heart-slot {
-  width: 8.4cqw;
-  min-width: 8.4cqw;
-  height: 8.4cqw;
-  min-height: 8.4cqw;
+  width: clamp(18px, 8cqw, 24px);
+  min-width: clamp(18px, 8cqw, 24px);
+  height: clamp(18px, 8cqw, 24px);
+  min-height: clamp(18px, 8cqw, 24px);
   border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 38%, transparent);
   background: color-mix(in srgb, var(--pack-paper, #eee5d4) 38%, transparent);
   color: var(--pack-umber, #3c3026);
-  font-size: 7.4cqw;
+  font-size: clamp(10px, 6.4cqw, 14px);
 }
 
 #app[data-card-frame="tall-v2"] .favorite-heart.active {
@@ -389,15 +389,15 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-heart-slot,
 #app[data-card-frame="tall-v2"] .binder-slot:has(.kalpi-card:not([data-card-surface="walkout"])) .favorite-heart {
-  width: 8.4cqw;
-  min-width: 8.4cqw;
+  width: clamp(18px, 8cqw, 24px);
+  min-width: clamp(18px, 8cqw, 24px);
   max-width: none;
-  height: 8.4cqw;
-  min-height: 8.4cqw;
+  height: clamp(18px, 8cqw, 24px);
+  min-height: clamp(18px, 8cqw, 24px);
   flex: 0 0 auto;
   padding: 0;
   border-width: max(1px, 0.5cqw);
-  font-size: 7.4cqw;
+  font-size: clamp(10px, 6.4cqw, 14px);
   line-height: 1;
 }
 

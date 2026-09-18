@@ -999,12 +999,14 @@ function syncBinderHeartTools(root = elements.binderGrid) {
     const copies = slot.querySelector(".card-copies-tag");
     const star = [...slot.querySelectorAll(".card-image-meta strong")]
       .find((node) => getComputedStyle(node).display !== "none");
-    const sample = copies || star || mark;
+    const code = slot.querySelector(".card-image-meta span");
+    const sample = copies || star || code || mark;
     if (!tools || !heart || !mark || !sample) return;
     const slotBox = slot.getBoundingClientRect();
     const markBox = mark.getBoundingClientRect();
     const sampleBox = sample.getBoundingClientRect();
-    const size = Math.round(Math.max(sampleBox.width, sampleBox.height));
+    const codeBox = code?.getBoundingClientRect();
+    const size = Math.round(Math.max(sampleBox.width, sampleBox.height, codeBox?.height || 0));
     heart.style.width = `${size}px`;
     heart.style.height = `${size}px`;
     heart.style.minWidth = `${size}px`;
