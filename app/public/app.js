@@ -861,6 +861,7 @@ async function bootstrap() {
       if (!hasMaterializedCard && (priority !== "buffered" || cachedBufferSize < (model.serverState?.idleCapacity || 8))) {
         scheduleIdleRefill({ priority });
       }
+      hydrateExtras().catch(() => {});
     }).catch(() => {});
     if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
     else homePromise.catch(() => null);
@@ -960,16 +961,19 @@ function describeError(error) {
 
 function fitCardText(element) {
   const frame = element.closest(".kalpi-card");
-  if (frame?.dataset.cardFrame === "fullart-v1") return;
+  const isFullart = frame?.dataset.cardFrame === "fullart-v1";
+  if (isFullart && element.dataset.fitCardText !== "quote") return;
   const frameWidth = frame?.clientWidth ?? 0;
   if (!frameWidth || !element.clientWidth || !element.clientHeight) return;
   const role = element.dataset.fitCardText;
   const compact = ["binder", "trade", "peek"].includes(frame.dataset.cardSurface);
-  const scale = {
-    quote: { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 },
-    party: { low: 0.035, high: 0.052, floor: compact ? 7 : 9, ceiling: 13 },
-    name: { low: 0.052, high: 0.078, floor: compact ? 9 : 13, ceiling: 27 },
-  }[role] || { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 };
+  const scale = (isFullart
+    ? { quote: { low: 0.042, high: 0.064, floor: compact ? 6.5 : 10, ceiling: compact ? 13 : 22 } }
+    : {
+      quote: { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 },
+      party: { low: 0.035, high: 0.052, floor: compact ? 7 : 9, ceiling: 13 },
+      name: { low: 0.052, high: 0.078, floor: compact ? 9 : 13, ceiling: 27 },
+    })[role] || { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 };
   let low = Math.max(scale.floor, frameWidth * scale.low);
   let high = Math.min(scale.ceiling, frameWidth * scale.high);
   if (high < low) high = low;
@@ -1335,6 +1339,25 @@ function partyRegister() {
   return [...parties.values()];
 }
 
+function localDailyChallenge(now = Date.now()) {
+  const partyIds = [...new Set(
+    (model.catalog.length
+      ? model.catalog.filter(({ set }) => set && set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set)
+      : (model.gameConfig?.parties || []).map(({ id }) => id)
+    ),
+  )].sort();
+  if (!partyIds.length) return null;
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
+  const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+  const targetPartyId = partyIds[dayNumber % partyIds.length];
+  return {
+    day,
+    targetPartyId,
+    targetPartyNameHe: partyDisplayName(targetPartyId, "") || targetPartyId,
+    leaders: [],
+  };
+}
+
 function partyDisplayName(partyId, fallback = "הסיעה היומית") {
   if (!partyId) return fallback;
   const fromRegister = partyRegister().find(({ id }) => id === partyId)?.displayNameHe;
@@ -1398,8 +1421,10 @@ function renderChallengeRecap() {
 
 function renderTodayDocket() {
   if (!elements.todayChallengeHook) return;
-  const challenge = model.leaderboards?.dailyChallenge;
-  const challengeParty = partyDisplayName(challenge?.targetPartyId);
+  const challenge = model.leaderboards?.dailyChallenge || localDailyChallenge();
+  const challengeParty = challenge
+    ? partyDisplayName(challenge.targetPartyId, challenge.targetPartyNameHe || "")
+    : "טוענים…";
   const challengeLeaders = challenge?.leaders?.slice(0, 3) || [];
   const challengeLeader = challengeLeaders[0];
   const challengeCurrent = challenge?.leaders?.find(({ current }) => current);
@@ -4281,8 +4306,10 @@ elements.studioReportList?.addEventListener("click", (event) => {
 
 elements.navButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.dataset.nav === "binder") loadStaticCatalog().catch(() => {});
-    else if (button.dataset.nav !== "home") hydrateExtras().catch(() => {});
+    if (button.dataset.nav === "binder") {
+      loadStaticCatalog().catch(() => {});
+      hydrateExtras().catch(() => {});
+    } else if (button.dataset.nav !== "home") hydrateExtras().catch(() => {});
     if (button.dataset.nav === "home") {
       renderHome();
       showView("home");

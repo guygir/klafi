@@ -1260,11 +1260,25 @@ body:has(#app[data-theme="pack-v2"]) {
   letter-spacing: inherit;
 }
 
+#app[data-card-frame="fullart-v1"] .card-name-zone,
+#app[data-card-frame="fullart-v1"] .card-party-zone,
+#app[data-card-frame="fullart-v1"] .card-rarity-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-name-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-party-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone {
+  flex: 0 0 auto;
+}
+
 #app[data-card-frame="fullart-v1"] .card-quote-zone,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-quote-zone {
+  flex: 0 1 auto;
+  max-height: 42%;
   min-height: 0;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
   font-size: 6.4cqw;
