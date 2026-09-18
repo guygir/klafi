@@ -3858,10 +3858,10 @@ function fitShareQuote(context, quote, maxWidth, maxHeight, high, low) {
 function paintFullartShareIdentity(context, card, presentation, { x, y, width, height }) {
   const fade = context.createLinearGradient(0, y, 0, y + height);
   fade.addColorStop(0, "rgba(0, 0, 0, 0)");
-  fade.addColorStop(0.58, "rgba(0, 0, 0, 0)");
-  fade.addColorStop(0.66, "rgba(0, 0, 0, 0.22)");
-  fade.addColorStop(0.78, "rgba(0, 0, 0, 0.78)");
-  fade.addColorStop(0.88, "#000");
+  fade.addColorStop(0.63, "rgba(0, 0, 0, 0)");
+  fade.addColorStop(0.71, "rgba(0, 0, 0, 0.22)");
+  fade.addColorStop(0.83, "rgba(0, 0, 0, 0.78)");
+  fade.addColorStop(0.91, "#000");
   fade.addColorStop(1, "#000");
   context.fillStyle = fade;
   context.fillRect(x, y, width, height);
@@ -3892,10 +3892,10 @@ function paintFullartShareIdentity(context, card, presentation, { x, y, width, h
     card.type === "Quote" ? presentation.subtitle : "",
     presentation.code,
   ].filter(Boolean).join(" · ");
-  const nameBand = { top: y + height * 0.64, height: height * 0.06 };
-  const partyY = y + height * 0.725;
-  const rarityY = y + height * 0.775;
-  const quoteBox = { top: y + height * 0.80, height: height * 0.20 };
+  const nameBand = { top: y + height * 0.69, height: height * 0.06 };
+  const partyY = y + height * 0.775;
+  const rarityY = y + height * 0.825;
+  const quoteBox = { top: y + height * 0.85, height: height * 0.15 };
   context.font = `600 ${nameSize}px 'Noto Serif Hebrew', Fraunces, serif`;
   const nameLines = measureWrappedLines(context, presentation.title, textWidth, 2);
   const quoteFit = fitShareQuote(
