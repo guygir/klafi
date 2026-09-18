@@ -3808,7 +3808,7 @@ async function paintSharePortrait(card, { width, height, fadeFrom, nameY, footer
   context.fillText("קְלָפִי", width / 2, footerY);
   context.save();
   context.direction = "ltr";
-  context.textAlign = "left";
+  context.textAlign = "start";
   context.font = `500 ${Math.round(width * 0.02)}px 'IBM Plex Sans', sans-serif`;
   const displayUrl = shareUrl.replace(/^https?:\/\//, "");
   const glyphs = [...displayUrl];
