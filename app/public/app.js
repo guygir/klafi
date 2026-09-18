@@ -3808,9 +3808,16 @@ async function paintSharePortrait(card, { width, height, fadeFrom, nameY, footer
   context.fillText("קְלָפִי", width / 2, footerY);
   context.save();
   context.direction = "ltr";
-  context.textAlign = "center";
+  context.textAlign = "left";
   context.font = `500 ${Math.round(width * 0.02)}px 'IBM Plex Sans', sans-serif`;
-  context.fillText(`\u2066${shareUrl.replace(/^https?:\/\//, "")}\u2069`, width / 2, footerY + 36);
+  const displayUrl = shareUrl.replace(/^https?:\/\//, "");
+  const glyphs = [...displayUrl];
+  const glyphWidths = glyphs.map((glyph) => context.measureText(glyph).width);
+  let cursor = width / 2 - glyphWidths.reduce((sum, next) => sum + next, 0) / 2;
+  for (const [index, glyph] of glyphs.entries()) {
+    context.fillText(glyph, cursor, footerY + 36);
+    cursor += glyphWidths[index];
+  }
   context.restore();
   return canvasToPng(canvas);
 }
