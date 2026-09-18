@@ -295,6 +295,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /card-identity-stack/);
   assert.match(javascript, /card-rarity-zone/);
   assert.match(css, /data-card-frame="fullart-v1"/);
+  assert.match(themeCss, /#app \.kalpi-card\[data-card-frame="fullart-v1"\]/);
   assert.match(css, /dialog-meta-row/);
   assert.match(javascript, /\/api\/trades\/\$\{encodeURIComponent\(tradeId\)\}\/cancel/);
   assert.match(javascript, /new ResizeObserver/);

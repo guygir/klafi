@@ -3806,8 +3806,12 @@ async function paintSharePortrait(card, { width, height, fadeFrom, nameY, footer
   context.fillStyle = "rgba(247, 242, 232, 0.74)";
   context.font = `600 ${Math.round(width * 0.026)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
   context.fillText("קְלָפִי", width / 2, footerY);
+  context.save();
+  context.direction = "ltr";
+  context.textAlign = "center";
   context.font = `500 ${Math.round(width * 0.02)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
   context.fillText(shareUrl.replace(/^https?:\/\//, ""), width / 2, footerY + 36);
+  context.restore();
   return canvasToPng(canvas);
 }
 
@@ -3878,7 +3882,14 @@ function openShareSheet({ channel, blob, file, title, text, url }) {
   const preview = URL.createObjectURL(blob);
   elements.shareSheetImage.src = preview;
   elements.shareSheetImage.dataset.objectUrl = preview;
-  elements.shareSheetCaption.textContent = text;
+  const [quoteLine = "", nameLine = "", urlLine = ""] = String(text).split("\n");
+  elements.shareSheetCaption.replaceChildren();
+  elements.shareSheetCaption.append(document.createTextNode(quoteLine ? `${quoteLine}\n` : ""));
+  if (nameLine) elements.shareSheetCaption.append(document.createTextNode(`${nameLine}\n`));
+  const urlMark = document.createElement("span");
+  urlMark.dir = "ltr";
+  urlMark.textContent = urlLine || url;
+  elements.shareSheetCaption.append(urlMark);
   elements.shareSheetTitle.textContent = channel === "instagram" ? "העלו לסטורי" : "שלחו בוואטסאפ";
   elements.shareSheetSend.textContent = channel === "instagram" ? "פתיחת אינסטגרם" : "פתיחת וואטסאפ";
   elements.shareSheet.showModal();
