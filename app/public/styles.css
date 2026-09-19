@@ -3134,22 +3134,34 @@ body {
   min-height: 0;
   max-height: none;
   display: grid;
-  place-items: start center;
+  place-items: stretch;
   padding-top: 0;
-  overflow: visible;
+  overflow: hidden;
+  container-type: inline-size;
+  aspect-ratio: 63 / 96;
 }
 
 .trade-choice-preview button {
   position: relative;
   width: 100%;
+  height: 100%;
+  min-height: 0;
   padding: 0;
   border: 0;
+  overflow: hidden;
   background: transparent;
   cursor: pointer;
 }
 
 .trade-choice-preview .kalpi-card {
-  width: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 330px;
+  max-width: none;
+  height: calc(330px * 96 / 63);
+  transform: scale(calc(100cqw / 330px));
+  transform-origin: top right;
 }
 
 .open-trades-desk .trade-board {
