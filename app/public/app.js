@@ -787,19 +787,32 @@ function paintExtras() {
 async function hydrateExtras() {
   if (model.extrasReady) return model;
   if (!extrasHydrate) {
-    extrasHydrate = Promise.allSettled([
-      studioSecret() ? request("/api/events") : Promise.resolve({ events: [] }),
-      request("/api/trades"),
-      request("/api/leaderboards"),
-      request("/api/activity"),
-      studioSecret() ? request("/api/specials") : Promise.resolve({ sets: [], cards: [] }),
-      request("/api/state"),
-    ]).then(async (results) => {
-      const [events, trades, leaderboards, activity, specials, state] = results.map((result) =>
-        result.status === "fulfilled" ? result.value : null
-      );
-      applyExtrasPayload({ events, trades, leaderboards, activity, specials, state });
-      model.extrasReady = results.every(({ status }) => status === "fulfilled");
+    extrasHydrate = (async () => {
+      if (!model.token) {
+        try {
+          await hydrateHome();
+        } catch {
+          /* Community and badges still paint from catalog/home cache. */
+        }
+      }
+      const jobs = [
+        ["state", () => request("/api/state")],
+        ["trades", () => request("/api/trades")],
+        ["leaderboards", () => request("/api/leaderboards")],
+        ["activity", () => request("/api/activity")],
+      ];
+      if (studioSecret()) {
+        jobs.push(["events", () => request("/api/events")]);
+        jobs.push(["specials", () => request("/api/specials")]);
+      }
+      await Promise.all(jobs.map(async ([key, run]) => {
+        try {
+          applyExtrasPayload({ [key]: await run() });
+          paintExtras();
+        } catch {
+          /* One slow or failed extra must not keep badges/community on Loading. */
+        }
+      }));
       if (studioSecret()) {
         try {
           model.studioContent = await request("/api/studio/content");
@@ -808,9 +821,10 @@ async function hydrateExtras() {
           /* Studio stays closed without the secret. */
         }
       }
+      model.extrasReady = true;
       paintExtras();
       return model;
-    }).finally(() => {
+    })().finally(() => {
       extrasHydrate = null;
     });
   }
@@ -832,6 +846,7 @@ async function hydrateCatalog() {
 async function bootstrap() {
   captureStudioSecret();
   applyCachedHome();
+  if (model.token) hydrateExtras().catch(() => {});
   const inboundView = requestedPlayerView();
   if (inboundView && inboundView !== "home") paintPlayerView(inboundView);
   else showView("home");
@@ -844,6 +859,8 @@ async function bootstrap() {
     renderHome();
     await catalogPromise;
     if (inboundView === "binder") renderBinder();
+    renderAchievements();
+    renderGrowth();
     const homePromise = hydrateHome();
     homePromise.then(() => {
       prefetchIdleAssets();
@@ -2377,47 +2394,64 @@ async function saveStudioEvents() {
   }
 }
 
+const BADGE_COPY = {
+  "first-rip": ["חשיפה ראשונה", "חשפו קלף שנאסף."],
+  "register-five": ["חמישה באוסף", "אספו חמישה קלפים שונים."],
+  "source-check": ["בדקתי מקור", "פתחו מקור של קלף."],
+  "share-pull": ["העברתי הלאה", "שתפו קלף."],
+  "commons-complete": ["כל המנהיגים", "אספו את מנהיגי כל המפלגות."],
+  "set-chase": ["סדרה מלאה", "השלימו סדרת מפלגה."],
+  "trade-match": ["החלפה ראשונה", "השלימו החלפה עם שחקן אחר."],
+  "collector-ten": ["עשרה שונים", "אספו עשרה קלפים שונים."],
+  "favorite-first": ["שומר בלב", "סמנו קלף אחד כפייבוריט."],
+  "event-first": ["מהדורה מוגבלת", "אספו קלף מאירוע."],
+  "source-three": ["קורא מקורות", "פתחו שלושה מקורות של קלפים."],
+  "trade-three": ["שולחן החלפות", "השלימו שלוש החלפות."],
+  "three-parties": ["רוחב המפה", "אספו מנהיגים משלוש מפלגות."],
+  "twenty-stars": ["עשרים כוכבים", "צברו עשרים כוכבי אוסף."],
+  "idle-eight": ["מחסן מלא", "אספו שמונה קלפים מהאיסוף האוטומטי."],
+  "first-double": ["עותק כפול", "השיגו עותק שני של אותו קלף."],
+  "five-leaders": ["חמש סיעות", "אספו מנהיגים מחמש מפלגות."],
+  "event-three": ["שלושה אירועים", "אספו שלושה קלפי אירוע."],
+  "share-three": ["שלושה שיתופים", "שתפו שלושה קלפים."],
+  "rank-three": ["מצביע מעורב", "הגיעו לרמה 3."],
+  "fifty-stars": ["חמישים כוכבים", "צברו חמישים כוכבי אוסף."],
+  "binder-half": ["חצי האלבום", "השלימו מחצית מהסדרה הפעילה."],
+};
+
 function hebrewBadge(badge) {
-  const copy = {
-    "first-rip": ["חשיפה ראשונה", "חשפו קלף שנאסף."],
-    "register-five": ["חמישה באוסף", "אספו חמישה קלפים שונים."],
-    "source-check": ["בדקתי מקור", "פתחו מקור של קלף."],
-    "share-pull": ["העברתי הלאה", "שתפו קלף."],
-    "commons-complete": ["כל המנהיגים", "אספו את מנהיגי כל המפלגות."],
-    "set-chase": ["סדרה מלאה", "השלימו סדרת מפלגה."],
-    "trade-match": ["החלפה ראשונה", "השלימו החלפה עם שחקן אחר."],
-    "collector-ten": ["עשרה שונים", "אספו עשרה קלפים שונים."],
-    "favorite-first": ["שומר בלב", "סמנו קלף אחד כפייבוריט."],
-    "event-first": ["מהדורה מוגבלת", "אספו קלף מאירוע."],
-    "source-three": ["קורא מקורות", "פתחו שלושה מקורות של קלפים."],
-    "trade-three": ["שולחן החלפות", "השלימו שלוש החלפות."],
-    "three-parties": ["רוחב המפה", "אספו מנהיגים משלוש מפלגות."],
-    "twenty-stars": ["עשרים כוכבים", "צברו עשרים כוכבי אוסף."],
-    "idle-eight": ["מחסן מלא", "אספו שמונה קלפים מהאיסוף האוטומטי."],
-    "first-double": ["עותק כפול", "השיגו עותק שני של אותו קלף."],
-    "five-leaders": ["חמש סיעות", "אספו מנהיגים מחמש מפלגות."],
-    "event-three": ["שלושה אירועים", "אספו שלושה קלפי אירוע."],
-    "share-three": ["שלושה שיתופים", "שתפו שלושה קלפים."],
-    "rank-three": ["מצביע מעורב", "הגיעו לרמה 3."],
-    "fifty-stars": ["חמישים כוכבים", "צברו חמישים כוכבי אוסף."],
-    "binder-half": ["חצי האלבום", "השלימו מחצית מהסדרה הפעילה."],
-  }[badge.id];
+  const copy = BADGE_COPY[badge.id];
   return { name: copy?.[0] || badge.name, description: copy?.[1] || badge.description };
 }
 
-function renderAchievements() {
-  if (!model.serverState?.achievements) {
-    if (elements.achievementGrid) elements.achievementGrid.innerHTML = "";
-    if (elements.achievementPager) elements.achievementPager.innerHTML = "";
-    setEmptyNote(elements.achievementsEmpty, pendingCopy("טוענים את התגים…", "לא הצלחנו לטעון את התגים."), {
-      pending: !catalogFailed,
-      failed: catalogFailed,
-    });
-    return;
+function localAchievementList() {
+  if (model.gameConfig?.achievements?.length) {
+    return model.gameConfig.achievements.map((badge) => ({
+      ...badge,
+      earned: Boolean(badge.earned),
+      progress: badge.progress ?? 0,
+      target: badge.target ?? 1,
+    }));
   }
+  return Object.keys(BADGE_COPY).map((id) => ({
+    id,
+    earned: false,
+    progress: 0,
+    target: 1,
+    name: BADGE_COPY[id][0],
+    description: BADGE_COPY[id][1],
+  }));
+}
+
+function achievementList() {
+  if (model.serverState?.achievements?.length) return model.serverState.achievements;
+  return localAchievementList();
+}
+
+function renderAchievements() {
   setEmptyNote(elements.achievementsEmpty, "", { hidden: true });
-  if (!model.serverState || !elements.achievementGrid) return;
-  const badges = model.serverState.achievements || [];
+  if (!elements.achievementGrid) return;
+  const badges = achievementList();
   const pageSize = 4;
   const pages = Math.max(1, Math.ceil(badges.length / pageSize));
   model.achievementPage = Math.min(model.achievementPage, pages - 1);
@@ -2448,19 +2482,17 @@ function creatorLink() {
 function renderGrowth() {
   const communityTabs = elements.communityTabs;
   const growthGrid = document.querySelector(".growth-grid");
-  if (!model.extrasReady) {
+  communityTabs?.removeAttribute("hidden");
+  growthGrid?.removeAttribute("hidden");
+  if (!model.catalog.length || !model.serverState || !elements.tradePreview) {
     setEmptyNote(elements.growthEmpty, pendingCopy("טוענים את הקהילה…", "לא הצלחנו לטעון את הקהילה."), {
       pending: !catalogFailed,
       failed: catalogFailed,
     });
-    communityTabs?.setAttribute("hidden", "");
-    growthGrid?.setAttribute("hidden", "");
     return;
   }
-  communityTabs?.removeAttribute("hidden");
-  growthGrid?.removeAttribute("hidden");
+  model.serverState.inventory ??= {};
   setEmptyNote(elements.growthEmpty, "", { hidden: true });
-  if (!model.catalog.length || !model.serverState || !elements.tradePreview) return;
   const duplicate = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 1);
   const owned = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 0);
   const card = duplicate ?? owned ?? model.catalog[0];
@@ -2591,7 +2623,7 @@ function renderGrowth() {
     ? collectorPreview.map((entry) => `<div class="${entry.current ? "current-player" : ""}"><span>${entry.rank}. ${escapeHtml(entry.label)}</span><strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong></div>`).join("")
     : '<p class="work-note">הטבלה מחכה לשחקן הראשון.</p>';
 
-  const challenge = model.leaderboards?.dailyChallenge;
+  const challenge = model.leaderboards?.dailyChallenge || localDailyChallenge();
   const challengeDate = challenge?.day ? new Date(`${challenge.day}T12:00:00`).toLocaleDateString("he-IL", { day: "numeric", month: "numeric" }) : "";
   const challengeLeaderCard = model.catalog.find((card) =>
     card.set === challenge?.targetPartyId && card.releaseSetId === "party-leaders");
