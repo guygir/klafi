@@ -236,7 +236,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-16/);
+  assert.match(html, /card-surface-17/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -254,6 +254,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /request\("\/api\/community"\)/);
   assert.match(javascript, /LIVE_RELEASE_SET_IDS/);
   assert.match(javascript, /function playerCatalog/);
+  assert.match(javascript, /function artUrl/);
+  assert.match(javascript, /function prefetchCardArt/);
+  assert.match(javascript, /<img src="\$\{url\}" alt="" decoding="async">/);
+  assert.match(css, /\.card-art img/);
   assert.match(javascript, /const playerCards = playerCatalog\(\)/);
   assert.doesNotMatch(javascript, /playerCatalog\(\)\.filter\(\(card\) =>\s*card\.idleEligible/);
   assert.match(javascript, /function localStarCount/);
@@ -297,7 +301,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-16/);
+  assert.match(html, /card-surface-17/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

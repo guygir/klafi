@@ -694,15 +694,28 @@ function cachedDueCount(current = Date.now()) {
     .filter(({ availableAt }) => Date.parse(availableAt) <= current).length;
 }
 
+function artUrl(card) {
+  return card?.artKey ? `/design-assets/${encodeURIComponent(card.artKey)}` : "";
+}
+
+function prefetchCardArt(cards = []) {
+  for (const card of cards) {
+    const url = artUrl(card);
+    if (!url) continue;
+    const image = new Image();
+    image.decoding = "async";
+    image.src = url;
+  }
+}
+
 function prefetchIdleAssets() {
   if (!model.catalog.length) return;
-  const pulls = [...model.idleQueue, ...(model.serverState?.preparedPulls || [])];
-  for (const { cardId } of pulls) {
-    const artKey = model.byId.get(cardId)?.artKey;
-    if (!artKey) continue;
-    const image = new Image();
-    image.src = `/design-assets/${encodeURIComponent(artKey)}`;
-  }
+  const pulls = [...model.idleQueue, ...(model.serverState?.preparedPulls || [])]
+    .map(({ cardId }) => model.byId.get(cardId));
+  prefetchCardArt([
+    ...pulls,
+    ...playerCatalog().slice(0, 4),
+  ]);
 }
 
 function pendingIdleSeen() {
@@ -2005,8 +2018,9 @@ function rarityNameHe(rarity) {
 
 function artMarkup(card, mini = false) {
   const className = mini ? "mini-art" : "card-art";
-  if (card.artKey) {
-    return `<div class="${className}" role="img" aria-label="איור של ${escapeHtml(cardTitle(card))}" style="background-image:url('/design-assets/${encodeURIComponent(card.artKey)}')"></div>`;
+  const url = artUrl(card);
+  if (url) {
+    return `<div class="${className}" role="img" aria-label="איור של ${escapeHtml(cardTitle(card))}"><img src="${url}" alt="" decoding="async"></div>`;
   }
   return `<div class="${className} placeholder" role="img" aria-label="איור זמני של ${escapeHtml(cardTitle(card))}" data-mark="${escapeHtml(placeholderMark(card))}"></div>`;
 }
@@ -2591,6 +2605,11 @@ function renderGrowth() {
   };
   renderTradeChoice(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
   renderTradeChoice(elements.tradeWantedPreview, elements.tradeWantedCard.value);
+  prefetchCardArt([
+    card,
+    model.byId.get(elements.tradeOfferedCard.value),
+    model.byId.get(elements.tradeWantedCard.value),
+  ]);
 
   const openOffers = model.trades.filter((trade) => trade.status === "open");
   elements.tradeBoard.innerHTML = openOffers.length ? openOffers.map((trade) => {
