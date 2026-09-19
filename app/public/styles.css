@@ -469,7 +469,11 @@ h1 {
 }
 
 .bottom-nav button.active { background: var(--civic); color: var(--paper); }
-.bottom-nav button span { font-size: 17px; }
+.bottom-nav button span {
+  font-size: 17px;
+  font-family: "IBM Plex Sans", "Segoe UI Symbol", "Apple Symbols", sans-serif;
+  font-variant-emoji: text;
+}
 
 .ballot-loader {
   width: 96px;
@@ -2598,7 +2602,10 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   background: transparent;
   color: var(--ink);
 }
-.top-nav-row .bottom-nav button span { font-size: 15px; }
+.top-nav-row .bottom-nav button span {
+  font-size: 15px;
+  font-variant-emoji: text;
+}
 .advocacy-info {
   grid-area: info;
   width: 44px;

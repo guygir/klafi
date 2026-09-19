@@ -91,6 +91,14 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function openIdleReturn/);
   assert.match(javascript, /model\.packPhase = "sealed";\s+renderPack\(\);\s+showView\("pack"\)/);
   assert.match(html, /data-nav="growth"/);
+  assert.match(html, /data-nav="growth"><span aria-hidden="true">▣<\/span>/);
+  assert.doesNotMatch(html, /data-nav="growth"><span aria-hidden="true">↗/);
+  assert.match(javascript, /function localAchievementList/);
+  assert.match(javascript, /function achievementList/);
+  assert.match(javascript, /if \(model\.token\) hydrateExtras/);
+  assert.match(javascript, /model\.extrasReady = true/);
+  assert.doesNotMatch(javascript, /results\.every\(\(\{ status \}\) => status === "fulfilled"\)/);
+  assert.match(css, /font-variant-emoji:\s*text/);
   assert.match(html, /data-nav="achievements"/);
   assert.doesNotMatch(html, /data-nav="events"/);
   assert.match(html, /data-nav="studio"/);
@@ -228,12 +236,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-14/);
+  assert.match(html, /card-surface-15/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
   assert.match(javascript, /function hydrateExtras/);
-  assert.match(javascript, /Promise\.allSettled\(\[/);
+  assert.match(javascript, /Promise\.all\(jobs\.map/);
   assert.doesNotMatch(javascript, /scheduleExtrasPrefetch/);
   assert.doesNotMatch(javascript, /extrasPrefetchTimer/);
   assert.match(javascript, /\/catalog\.json/);
@@ -242,7 +250,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /const warmedCatalog = window\.__kalpiWarmup\?\.catalog/);
   assert.match(javascript, /const warmedHome = window\.__kalpiWarmup\?\.home/);
   assert.match(javascript, /const due = !timeUntil\(model\.serverState\?\.nextIdleAt\)/);
-  assert.match(javascript, /studioSecret\(\) \? request\("\/api\/events"\)/);
+  assert.match(javascript, /jobs\.push\(\["events", \(\) => request\("\/api\/events"\)\]\)/);
   assert.match(javascript, /request\("\/api\/trades"\)/);
   assert.match(javascript, /request\("\/api\/leaderboards"\)/);
   assert.match(javascript, /hydrateExtras\(\)\.catch/);
@@ -280,7 +288,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-14/);
+  assert.match(html, /card-surface-15/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
