@@ -2196,16 +2196,14 @@ function renderBinder() {
   );
 
   const favorites = new Set(model.serverState?.favorites || []);
-  const playerCards = playerCatalog().filter((card) =>
-    card.idleEligible || card.eventOnly || inventory[card.id]);
-  const releaseIds = [...new Set(playerCards.map((card) => card.releaseSetId).filter(Boolean))];
+  const playerCards = playerCatalog();
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
-    .filter((id) => releaseIds.includes(id));
+    .filter((id) => isLiveReleaseSet(id));
   const setOrder = [
     "ALL",
     "FAVORITES",
-    ...releaseOrder.filter((id) => isLiveReleaseSet(id)).map((id) => `RELEASE:${id}`),
+    ...releaseOrder.map((id) => `RELEASE:${id}`),
     ...new Set(playerCards.filter((card) => !card.eventOnly).map((card) => card.set)),
   ];
   const setLabels = Object.fromEntries(playerCards.map((card) => [card.set, cardSetName(card)]));

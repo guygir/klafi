@@ -254,6 +254,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /request\("\/api\/community"\)/);
   assert.match(javascript, /LIVE_RELEASE_SET_IDS/);
   assert.match(javascript, /function playerCatalog/);
+  assert.match(javascript, /const playerCards = playerCatalog\(\)/);
+  assert.doesNotMatch(javascript, /playerCatalog\(\)\.filter\(\(card\) =>\s*card\.idleEligible/);
   assert.match(javascript, /function localStarCount/);
   assert.match(javascript, /visible-sets-1/);
   assert.doesNotMatch(javascript, /\["state", \(\) => request\("\/api\/state"\)\]/);
