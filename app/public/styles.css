@@ -1543,12 +1543,20 @@ img.mini-art {
 }
 
 .concept-party::before,
-.card-party-zone::before,
 .mini-party::before {
   content: "";
   flex: 0 0 8px;
   width: 8px;
   height: 8px;
+  border-radius: 50%;
+  background: var(--pip);
+}
+
+.card-party-zone::before {
+  content: "";
+  flex: 0 0 2.4cqw;
+  width: 2.4cqw;
+  height: 2.4cqw;
   border-radius: 50%;
   background: var(--pip);
 }

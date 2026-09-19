@@ -1088,9 +1088,9 @@ body:has(#app[data-theme="pack-v2"]) {
   width: min(350px, calc(100vw - 42px));
   overflow: hidden;
   border: 1px solid #111;
-  border-radius: clamp(8px, 3.2cqw, 12px);
+  border-radius: 3.6cqw;
   background: #050505;
-  box-shadow: 0 18px 42px rgba(5, 5, 5, 0.38);
+  box-shadow: 0 5.5cqw 12.7cqw rgba(5, 5, 5, 0.38);
 }
 
 #app .kalpi-card[data-card-frame="fullart-v1"]::before {
@@ -1100,8 +1100,8 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .kalpi-card.uncommon,
 #app .kalpi-card[data-card-frame="fullart-v1"].uncommon {
   box-shadow:
-    0 18px 42px rgba(5, 5, 5, 0.38),
-    inset 0 0 0 1px color-mix(in srgb, var(--foil) 70%, #000);
+    0 5.5cqw 12.7cqw rgba(5, 5, 5, 0.38),
+    inset 0 0 0 0.3cqw color-mix(in srgb, var(--foil) 70%, #000);
 }
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.rare,
@@ -1112,9 +1112,9 @@ body:has(#app[data-theme="pack-v2"]) {
 #app .kalpi-card[data-card-frame="fullart-v1"].promotion {
   border-color: var(--foil);
   box-shadow:
-    0 20px 46px rgba(5, 5, 5, 0.42),
-    inset 0 0 0 2px #050505,
-    inset 0 0 0 3px var(--foil);
+    0 6cqw 14cqw rgba(5, 5, 5, 0.42),
+    inset 0 0 0 0.6cqw #050505,
+    inset 0 0 0 0.9cqw var(--foil);
 }
 
 #app[data-card-frame="fullart-v1"] .card-face.front,
@@ -1160,15 +1160,30 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .card-image-meta,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta {
   display: grid;
+  inset: 3.4cqw 3.4cqw auto;
+  gap: 2cqw;
+  padding: 0;
 }
 
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag {
+  box-sizing: border-box;
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
+  height: 8cqw;
+  min-height: 8cqw;
+  padding: 0 1.8cqw;
+  overflow: visible;
+  border-width: max(1px, 0.5cqw);
   border-color: rgba(247, 242, 232, 0.28);
   background: rgba(5, 5, 5, 0.36);
   color: #f7f2e8;
+  font-size: 6.1cqw;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 #app[data-card-frame="fullart-v1"] .card-image-meta strong,
@@ -1238,11 +1253,6 @@ body:has(#app[data-theme="pack-v2"]) {
   line-height: 1.15;
   letter-spacing: 0;
   white-space: nowrap;
-}
-
-#app[data-card-frame="fullart-v1"] .card-slot-mark,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-slot-mark {
-  display: inline;
 }
 
 #app[data-card-frame="fullart-v1"] .card-rarity-zone,

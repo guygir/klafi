@@ -2156,7 +2156,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
         </div>
         <div class="card-identity-stack">
           <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
-          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}<span class="card-slot-mark"> · ${escapeHtml(presentation.code)}</span></p>
+          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
           <p class="card-rarity-zone" dir="rtl" lang="he"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</p>
           <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
         </div>
@@ -3952,7 +3952,6 @@ function paintFullartShareIdentity(context, card, presentation, { x, y, width, h
   const partyLine = [
     presentation.setName,
     card.type === "Quote" ? presentation.subtitle : "",
-    presentation.code,
   ].filter(Boolean).join(" · ");
   const nameBand = { top: y + height * 0.69, height: height * 0.06 };
   const partyY = y + height * 0.775;
@@ -4021,7 +4020,6 @@ function paintTallShareIdentity(context, card, presentation, { x, y, width, heig
   const partyLine = [
     presentation.setName,
     card.type === "Quote" ? presentation.subtitle : "",
-    presentation.code,
   ].filter(Boolean).join(" · ");
   const partyY = y + height * 0.83;
   context.fillStyle = "#1a1f1c";
