@@ -861,6 +861,7 @@ async function bootstrap() {
       if (!hasMaterializedCard && (priority !== "buffered" || cachedBufferSize < (model.serverState?.idleCapacity || 8))) {
         scheduleIdleRefill({ priority });
       }
+      hydrateExtras().catch(() => {});
     }).catch(() => {});
     if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
     else homePromise.catch(() => null);
@@ -960,25 +961,33 @@ function describeError(error) {
 
 function fitCardText(element) {
   const frame = element.closest(".kalpi-card");
-  if (frame?.dataset.cardFrame === "fullart-v1") return;
+  const isFullart = frame?.dataset.cardFrame === "fullart-v1";
+  if (isFullart && element.dataset.fitCardText !== "quote") return;
   const frameWidth = frame?.clientWidth ?? 0;
   if (!frameWidth || !element.clientWidth || !element.clientHeight) return;
   const role = element.dataset.fitCardText;
   const compact = ["binder", "trade", "peek"].includes(frame.dataset.cardSurface);
-  const scale = {
-    quote: { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 },
-    party: { low: 0.035, high: 0.052, floor: compact ? 7 : 9, ceiling: 13 },
-    name: { low: 0.052, high: 0.078, floor: compact ? 9 : 13, ceiling: 27 },
-  }[role] || { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 };
+  const scale = (isFullart
+    ? { quote: { low: 0.042, high: 0.064, floor: compact ? 6.5 : 10, ceiling: compact ? 13 : 22 } }
+    : {
+      quote: { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 },
+      party: { low: 0.035, high: 0.052, floor: compact ? 7 : 9, ceiling: 13 },
+      name: { low: 0.052, high: 0.078, floor: compact ? 9 : 13, ceiling: 27 },
+    })[role] || { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 };
   let low = Math.max(scale.floor, frameWidth * scale.low);
   let high = Math.min(scale.ceiling, frameWidth * scale.high);
   if (high < low) high = low;
+  const fitsAt = (size) => {
+    element.style.fontSize = `${size}px`;
+    return element.scrollHeight <= element.clientHeight + 1
+      && element.scrollWidth <= element.clientWidth + 1;
+  };
+  if (isFullart && role === "quote") {
+    if (fitsAt(high)) return;
+  }
   for (let index = 0; index < 9; index += 1) {
     const size = (low + high) / 2;
-    element.style.fontSize = `${size}px`;
-    const fits = element.scrollHeight <= element.clientHeight + 1
-      && element.scrollWidth <= element.clientWidth + 1;
-    if (fits) low = size;
+    if (fitsAt(size)) low = size;
     else high = size;
   }
   element.style.fontSize = `${low}px`;
@@ -1335,6 +1344,25 @@ function partyRegister() {
   return [...parties.values()];
 }
 
+function localDailyChallenge(now = Date.now()) {
+  const partyIds = [...new Set(
+    (model.catalog.length
+      ? model.catalog.filter(({ set }) => set && set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set)
+      : (model.gameConfig?.parties || []).map(({ id }) => id)
+    ),
+  )].sort();
+  if (!partyIds.length) return null;
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
+  const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+  const targetPartyId = partyIds[dayNumber % partyIds.length];
+  return {
+    day,
+    targetPartyId,
+    targetPartyNameHe: partyDisplayName(targetPartyId, "") || targetPartyId,
+    leaders: [],
+  };
+}
+
 function partyDisplayName(partyId, fallback = "הסיעה היומית") {
   if (!partyId) return fallback;
   const fromRegister = partyRegister().find(({ id }) => id === partyId)?.displayNameHe;
@@ -1398,8 +1426,10 @@ function renderChallengeRecap() {
 
 function renderTodayDocket() {
   if (!elements.todayChallengeHook) return;
-  const challenge = model.leaderboards?.dailyChallenge;
-  const challengeParty = partyDisplayName(challenge?.targetPartyId);
+  const challenge = model.leaderboards?.dailyChallenge || localDailyChallenge();
+  const challengeParty = challenge
+    ? partyDisplayName(challenge.targetPartyId, challenge.targetPartyNameHe || "")
+    : "טוענים…";
   const challengeLeaders = challenge?.leaders?.slice(0, 3) || [];
   const challengeLeader = challengeLeaders[0];
   const challengeCurrent = challenge?.leaders?.find(({ current }) => current);
@@ -3716,13 +3746,15 @@ async function makeShareImage(card) {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
 
+const SHARE_PULL_LINE = "תראה מה שלפתי בקלפי!";
+
 function shareCaption(card) {
   const url = makeDeepLink("card", card.id);
   const quote = String(card.walkout?.text || "").trim();
   const title = cardTitle(card);
   return {
     title: `קְלָפִי · ${title}`,
-    text: `${quote}\n— ${title}\n${url}`,
+    text: `${SHARE_PULL_LINE}\n${quote}\n— ${title}\n${url}`,
     url,
   };
 }
@@ -3752,93 +3784,336 @@ async function canvasToPng(canvas) {
   });
 }
 
-async function paintSharePortrait(card, { width, height, fadeFrom, nameY, footerY }) {
-  await readyShareFonts();
+function roundedRectPath(context, x, y, width, height, radius) {
+  const corner = Math.max(0, Math.min(radius, width / 2, height / 2));
+  context.beginPath();
+  context.moveTo(x + corner, y);
+  context.arcTo(x + width, y, x + width, y + height, corner);
+  context.arcTo(x + width, y + height, x, y + height, corner);
+  context.arcTo(x, y + height, x, y, corner);
+  context.arcTo(x, y, x + width, y, corner);
+  context.closePath();
+}
+
+function measureWrappedLines(context, text, maxWidth, maxLines = 4) {
+  const words = String(text || "").trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (context.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+      if (lines.length >= maxLines) return lines.slice(0, maxLines);
+    } else {
+      line = test;
+    }
+  }
+  if (line && lines.length < maxLines) lines.push(line);
+  return lines;
+}
+
+function drawWrappedLines(context, lines, x, y, lineHeight) {
+  for (const [index, line] of lines.entries()) {
+    context.fillText(line, x, y + index * lineHeight);
+  }
+}
+
+function drawLtrCentered(context, text, x, y) {
+  context.save();
+  context.direction = "ltr";
+  context.textAlign = "start";
+  const glyphs = [...String(text || "")];
+  const widths = glyphs.map((glyph) => context.measureText(glyph).width);
+  let cursor = x - widths.reduce((sum, next) => sum + next, 0) / 2;
+  for (const [index, glyph] of glyphs.entries()) {
+    context.fillText(glyph, cursor, y);
+    cursor += widths[index];
+  }
+  context.restore();
+}
+
+function coverImageInRect(context, image, x, y, width, height) {
+  const scale = Math.max(width / image.width, height / image.height);
+  const drawWidth = image.width * scale;
+  const drawHeight = image.height * scale;
+  context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+}
+
+function fitShareQuote(context, quote, maxWidth, maxHeight, high, low) {
+  let size = high;
+  let lines = [];
+  let lineHeight = size * 1.15;
+  while (size > low) {
+    context.font = `600 ${size}px 'Noto Serif Hebrew', Fraunces, serif`;
+    lines = measureWrappedLines(context, quote, maxWidth, 4);
+    lineHeight = size * 1.15;
+    if (lines.length * lineHeight <= maxHeight) break;
+    size -= 1;
+  }
+  return { size, lines, lineHeight };
+}
+
+function paintFullartShareIdentity(context, card, presentation, { x, y, width, height }) {
+  const fade = context.createLinearGradient(0, y, 0, y + height);
+  fade.addColorStop(0, "rgba(0, 0, 0, 0)");
+  fade.addColorStop(0.63, "rgba(0, 0, 0, 0)");
+  fade.addColorStop(0.71, "rgba(0, 0, 0, 0.22)");
+  fade.addColorStop(0.83, "rgba(0, 0, 0, 0.78)");
+  fade.addColorStop(0.91, "#000");
+  fade.addColorStop(1, "#000");
+  context.fillStyle = fade;
+  context.fillRect(x, y, width, height);
+
+  const pillHeight = width * 0.068;
+  const pillPad = width * 0.022;
+  const pillX = x + width * 0.034;
+  const pillY = y + width * 0.034;
+  context.font = `600 ${Math.round(width * 0.034)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  const codeWidth = context.measureText(presentation.code).width + pillPad * 2;
+  context.fillStyle = "rgba(5, 5, 5, 0.36)";
+  context.strokeStyle = "rgba(247, 242, 232, 0.28)";
+  context.lineWidth = Math.max(1, width * 0.003);
+  roundedRectPath(context, pillX, pillY, codeWidth, pillHeight, pillHeight / 2);
+  context.fill();
+  context.stroke();
+  context.fillStyle = "#f7f2e8";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(presentation.code, pillX + codeWidth / 2, pillY + pillHeight / 2);
+
+  const textWidth = width * 0.87;
+  const centerX = x + width / 2;
+  const nameSize = width * 0.08;
+  const metaSize = width * 0.035;
+  const partyLine = [
+    presentation.setName,
+    card.type === "Quote" ? presentation.subtitle : "",
+    presentation.code,
+  ].filter(Boolean).join(" · ");
+  const nameBand = { top: y + height * 0.69, height: height * 0.06 };
+  const partyY = y + height * 0.775;
+  const rarityY = y + height * 0.825;
+  const quoteBox = { top: y + height * 0.85, height: height * 0.15 };
+  context.font = `600 ${nameSize}px 'Noto Serif Hebrew', Fraunces, serif`;
+  const nameLines = measureWrappedLines(context, presentation.title, textWidth, 2);
+  const quoteFit = fitShareQuote(
+    context,
+    presentation.quote,
+    textWidth,
+    quoteBox.height * 0.82,
+    width * 0.064,
+    width * 0.042,
+  );
+
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = "#f7f2e8";
+  context.font = `600 ${nameSize}px 'Noto Serif Hebrew', Fraunces, serif`;
+  const nameBlock = nameLines.length * nameSize * 1.15;
+  const nameStart = nameBand.top + (nameBand.height - nameBlock) / 2 + nameSize * 0.42;
+  context.textBaseline = "alphabetic";
+  drawWrappedLines(context, nameLines, centerX, nameStart, nameSize * 1.15);
+
+  context.fillStyle = "rgba(247, 242, 232, 0.72)";
+  context.font = `500 ${metaSize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  context.textBaseline = "middle";
+  context.fillText(partyLine, centerX, partyY);
+  const partyWidth = context.measureText(partyLine).width;
+  const pip = Math.max(4, width * 0.011);
+  context.fillStyle = presentation.pip || "#1f4f4a";
+  context.beginPath();
+  context.arc(centerX + partyWidth / 2 + pip * 1.6, partyY, pip, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = "#c4a35a";
+  context.font = `500 ${metaSize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  context.fillText(`${presentation.rarityMark} ${presentation.rarityName}`, centerX, rarityY);
+
+  context.fillStyle = "#f7f2e8";
+  context.font = `600 ${quoteFit.size}px 'Noto Serif Hebrew', Fraunces, serif`;
+  context.textBaseline = "alphabetic";
+  const quoteBlock = quoteFit.lines.length * quoteFit.lineHeight;
+  const quoteStart = quoteBox.top + (quoteBox.height - quoteBlock) / 2 + quoteFit.size * 0.86;
+  drawWrappedLines(context, quoteFit.lines, centerX, quoteStart, quoteFit.lineHeight);
+  context.textBaseline = "alphabetic";
+}
+
+function paintTallShareIdentity(context, card, presentation, { x, y, width, height }) {
+  const inset = width * 0.036;
+  const nameSize = width * 0.07;
+  const partySize = width * 0.035;
+  const quoteSize = width * 0.048;
+  const centerX = x + width / 2;
+  const textWidth = width - inset * 2;
+  const nameTop = y + height * 0.722;
+  const nameHeight = height * 0.074;
+  context.fillStyle = "#1f4f4a";
+  context.fillRect(x + inset, nameTop, width - inset * 2, nameHeight);
+  context.fillStyle = "#f7f2e8";
+  context.textAlign = "center";
+  context.font = `600 ${nameSize}px 'Noto Serif Hebrew', Fraunces, serif`;
+  context.fillText(presentation.title, centerX, nameTop + nameHeight * 0.7);
+
+  const partyLine = [
+    presentation.setName,
+    card.type === "Quote" ? presentation.subtitle : "",
+    presentation.code,
+  ].filter(Boolean).join(" · ");
+  const partyY = y + height * 0.83;
+  context.fillStyle = "#1a1f1c";
+  context.font = `500 ${partySize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  context.fillText(partyLine, centerX, partyY);
+  const partyWidth = context.measureText(partyLine).width;
+  const pip = Math.max(4, width * 0.011);
+  context.fillStyle = presentation.pip || "#1f4f4a";
+  context.beginPath();
+  context.arc(centerX + partyWidth / 2 + pip * 1.6, partyY - partySize * 0.32, pip, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = "#1a1f1c";
+  context.font = `600 ${quoteSize}px 'Noto Serif Hebrew', Fraunces, serif`;
+  const quoteLines = measureWrappedLines(context, presentation.quote, textWidth, 3);
+  drawWrappedLines(context, quoteLines, centerX, y + height * 0.89, quoteSize * 1.15);
+
+  const pillHeight = width * 0.068;
+  const pillPad = width * 0.022;
+  context.font = `600 ${Math.round(width * 0.034)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  const codeWidth = context.measureText(presentation.code).width + pillPad * 2;
+  context.fillStyle = "rgba(238, 229, 212, 0.72)";
+  context.strokeStyle = "rgba(196, 163, 90, 0.38)";
+  context.lineWidth = Math.max(1, width * 0.003);
+  roundedRectPath(context, x + width * 0.034, y + width * 0.034, codeWidth, pillHeight, pillHeight / 2);
+  context.fill();
+  context.stroke();
+  context.fillStyle = "#3c3026";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(presentation.code, x + width * 0.034 + codeWidth / 2, y + width * 0.034 + pillHeight / 2);
+  context.textBaseline = "alphabetic";
+}
+
+async function paintShareCardFace(context, card, box) {
   const presentation = cardPresentation(card);
+  const frame = cardDisplayFrame(card);
+  const radius = Math.min(12, box.width * 0.032);
+  context.save();
+  roundedRectPath(context, box.x, box.y, box.width, box.height, radius);
+  context.clip();
+  context.fillStyle = frame === "fullart-v1" ? "#050505" : "#f4efe4";
+  context.fillRect(box.x, box.y, box.width, box.height);
+
+  if (presentation.artKey) {
+    try {
+      const image = await loadImage(`/design-assets/${encodeURIComponent(presentation.artKey)}`);
+      if (frame === "fullart-v1") {
+        coverImageInRect(context, image, box.x, box.y, box.width, box.height);
+      } else {
+        const well = {
+          x: box.x + box.width * 0.028,
+          y: box.y + box.width * 0.028,
+          width: box.width * 0.944,
+          height: box.height * 0.70,
+        };
+        context.save();
+        roundedRectPath(context, well.x, well.y, well.width, well.height, Math.min(8, box.width * 0.02));
+        context.clip();
+        coverImageInRect(context, image, well.x, well.y, well.width, well.height);
+        context.restore();
+      }
+    } catch {
+      context.fillStyle = presentation.pip || "#1f4f4a";
+      context.font = `600 ${Math.round(box.width * 0.28)}px Fraunces`;
+      context.textAlign = "center";
+      context.fillText(placeholderMark(card), box.x + box.width / 2, box.y + box.height * 0.38);
+    }
+  } else {
+    context.fillStyle = presentation.pip || "#1f4f4a";
+    context.font = `600 ${Math.round(box.width * 0.28)}px Fraunces`;
+    context.textAlign = "center";
+    context.fillText(placeholderMark(card), box.x + box.width / 2, box.y + box.height * 0.38);
+  }
+
+  if (frame === "fullart-v1") {
+    paintFullartShareIdentity(context, card, presentation, box);
+  } else {
+    paintTallShareIdentity(context, card, presentation, box);
+  }
+  context.restore();
+
+  if (["rare", "holo", "promotion"].includes(presentation.finishClass)) {
+    context.save();
+    context.strokeStyle = "#c4a35a";
+    context.lineWidth = Math.max(2, box.width * 0.008);
+    roundedRectPath(context, box.x, box.y, box.width, box.height, radius);
+    context.stroke();
+    context.restore();
+  } else if (presentation.finishClass === "uncommon") {
+    context.save();
+    context.strokeStyle = "rgba(196, 163, 90, 0.7)";
+    context.lineWidth = Math.max(1, box.width * 0.004);
+    roundedRectPath(context, box.x + 2, box.y + 2, box.width - 4, box.height - 4, radius);
+    context.stroke();
+    context.restore();
+  } else {
+    context.save();
+    context.strokeStyle = "#111";
+    context.lineWidth = Math.max(1, box.width * 0.004);
+    roundedRectPath(context, box.x, box.y, box.width, box.height, radius);
+    context.stroke();
+    context.restore();
+  }
+}
+
+async function paintSharePortrait(card, { width, height }) {
+  await readyShareFonts();
   const shareUrl = makeDeepLink("card", card.id);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const context = canvas.getContext("2d");
   context.direction = "rtl";
-  context.fillStyle = "#050505";
+  context.fillStyle = "#111111";
   context.fillRect(0, 0, width, height);
 
-  if (presentation.artKey) {
-    try {
-      const image = await loadImage(`/design-assets/${encodeURIComponent(presentation.artKey)}`);
-      const coverHeight = Math.round(height * 0.78);
-      const scale = Math.max(width / image.width, coverHeight / image.height);
-      const drawWidth = image.width * scale;
-      const drawHeight = image.height * scale;
-      context.drawImage(image, (width - drawWidth) / 2, 0, drawWidth, drawHeight);
-    } catch {
-      context.fillStyle = presentation.pip;
-      context.font = "600 220px Fraunces";
-      context.textAlign = "center";
-      context.fillText(placeholderMark(card), width / 2, height * 0.38);
-    }
-  }
+  const pad = Math.round(width * 0.046);
+  const captionSize = Math.round(width * 0.042);
+  const footerSize = Math.round(width * 0.026);
+  const captionTop = pad + captionSize;
+  const footerBlock = footerSize * 3.2;
+  const availTop = captionTop + Math.round(width * 0.038);
+  const availBottom = height - pad - footerBlock;
+  const availHeight = Math.max(120, availBottom - availTop);
+  const availWidth = width - pad * 2;
+  const cardWidth = Math.min(availWidth, availHeight * (63 / 96));
+  const cardHeight = cardWidth * (96 / 63);
+  const cardX = (width - cardWidth) / 2;
+  const cardY = availTop + (availHeight - cardHeight) / 2;
 
-  const fade = context.createLinearGradient(0, fadeFrom, 0, height);
-  fade.addColorStop(0, "rgba(0, 0, 0, 0)");
-  fade.addColorStop(0.22, "rgba(0, 0, 0, 0.28)");
-  fade.addColorStop(0.55, "rgba(0, 0, 0, 0.86)");
-  fade.addColorStop(1, "#000");
-  context.fillStyle = fade;
-  context.fillRect(0, fadeFrom, width, height - fadeFrom);
-
+  context.fillStyle = "#f7f2e8";
   context.textAlign = "center";
-  context.fillStyle = "#f7f2e8";
-  context.font = `700 ${Math.round(width * 0.058)}px 'Noto Serif Hebrew', Fraunces, serif`;
-  const nameEnd = wrapCanvasText(context, presentation.title, width / 2, nameY, width * 0.84, Math.round(width * 0.066), 2);
-  context.fillStyle = "rgba(247, 242, 232, 0.72)";
-  context.font = `500 ${Math.round(width * 0.026)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
-  const party = [presentation.setName, presentation.subtitle, presentation.code].filter(Boolean).join(" · ");
-  wrapCanvasText(context, party, width / 2, nameEnd + 16, width * 0.84, Math.round(width * 0.034), 2);
-  context.fillStyle = "#c4a35a";
-  context.font = `600 ${Math.round(width * 0.024)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
-  context.fillText(`${presentation.rarityMark}  ${presentation.rarityName}`, width / 2, nameEnd + 78);
-  context.fillStyle = "#f7f2e8";
-  context.font = `600 ${Math.round(width * 0.036)}px 'Noto Serif Hebrew', Fraunces, serif`;
-  wrapCanvasText(context, presentation.rawQuote, width / 2, nameEnd + 136, width * 0.8, Math.round(width * 0.046), 4);
+  context.font = `600 ${captionSize}px 'Noto Serif Hebrew', Fraunces, serif`;
+  context.fillText(SHARE_PULL_LINE, width / 2, captionTop);
+
+  await paintShareCardFace(context, card, { x: cardX, y: cardY, width: cardWidth, height: cardHeight });
+
+  const footerY = cardY + cardHeight + footerSize * 1.6;
   context.fillStyle = "rgba(247, 242, 232, 0.74)";
-  context.font = `600 ${Math.round(width * 0.026)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+  context.textAlign = "center";
+  context.font = `600 ${footerSize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
   context.fillText("קְלָפִי", width / 2, footerY);
-  context.save();
-  context.direction = "ltr";
-  context.textAlign = "start";
   context.font = `500 ${Math.round(width * 0.02)}px 'IBM Plex Sans', sans-serif`;
-  const displayUrl = shareUrl.replace(/^https?:\/\//, "");
-  const glyphs = [...displayUrl];
-  const glyphWidths = glyphs.map((glyph) => context.measureText(glyph).width);
-  let cursor = width / 2 - glyphWidths.reduce((sum, next) => sum + next, 0) / 2;
-  for (const [index, glyph] of glyphs.entries()) {
-    context.fillText(glyph, cursor, footerY + 36);
-    cursor += glyphWidths[index];
-  }
-  context.restore();
+  drawLtrCentered(context, shareUrl.replace(/^https?:\/\//, ""), width / 2, footerY + footerSize * 1.35);
   return canvasToPng(canvas);
 }
 
 async function makeStoryImage(card) {
-  return paintSharePortrait(card, {
-    width: 1080,
-    height: 1920,
-    fadeFrom: 1080,
-    nameY: 1320,
-    footerY: 1810,
-  });
+  return paintSharePortrait(card, { width: 1080, height: 1920 });
 }
 
 async function makeWhatsAppImage(card) {
-  return paintSharePortrait(card, {
-    width: 1080,
-    height: 1350,
-    fadeFrom: 720,
-    nameY: 920,
-    footerY: 1260,
-  });
+  return paintSharePortrait(card, { width: 1080, height: 1350 });
 }
 
 function canShareFiles(file) {
@@ -3888,13 +4163,15 @@ function openShareSheet({ channel, blob, file, title, text, url }) {
   const preview = URL.createObjectURL(blob);
   elements.shareSheetImage.src = preview;
   elements.shareSheetImage.dataset.objectUrl = preview;
-  const [quoteLine = "", nameLine = "", urlLine = ""] = String(text).split("\n");
+  const lines = String(text).split("\n").map((line) => line.trim()).filter(Boolean);
+  const urlLine = lines.find((line) => /^https?:\/\//.test(line)) || url;
   elements.shareSheetCaption.replaceChildren();
-  elements.shareSheetCaption.append(document.createTextNode(quoteLine ? `${quoteLine}\n` : ""));
-  if (nameLine) elements.shareSheetCaption.append(document.createTextNode(`${nameLine}\n`));
+  for (const line of lines.filter((line) => line !== urlLine)) {
+    elements.shareSheetCaption.append(document.createTextNode(`${line}\n`));
+  }
   const urlMark = document.createElement("span");
   urlMark.dir = "ltr";
-  urlMark.textContent = urlLine || url;
+  urlMark.textContent = urlLine;
   elements.shareSheetCaption.append(urlMark);
   elements.shareSheetTitle.textContent = channel === "instagram" ? "העלו לסטורי" : "שלחו בוואטסאפ";
   elements.shareSheetSend.textContent = channel === "instagram" ? "פתיחת אינסטגרם" : "פתיחת וואטסאפ";
@@ -4281,8 +4558,10 @@ elements.studioReportList?.addEventListener("click", (event) => {
 
 elements.navButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.dataset.nav === "binder") loadStaticCatalog().catch(() => {});
-    else if (button.dataset.nav !== "home") hydrateExtras().catch(() => {});
+    if (button.dataset.nav === "binder") {
+      loadStaticCatalog().catch(() => {});
+      hydrateExtras().catch(() => {});
+    } else if (button.dataset.nav !== "home") hydrateExtras().catch(() => {});
     if (button.dataset.nav === "home") {
       renderHome();
       showView("home");
@@ -4443,4 +4722,6 @@ window.__kalpiDebug = {
   makeStoryImage,
   shareToWhatsApp,
   shareToInstagram,
+  shareCaption,
+  paintSharePortrait,
 };
