@@ -49,6 +49,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function partyTrustLabel/);
   assert.match(javascript, /function configureSourceLink/);
   assert.match(javascript, /displayCardMarkup\(card, "event"\)/);
+  assert.match(javascript, /displayCardMarkup\(selected\)/);
+  assert.doesNotMatch(javascript, /displayCardMarkup\(selected, "trade"\)/);
+  assert.doesNotMatch(javascript, /\["binder", "trade", "peek"\]/);
+  assert.match(javascript, /quote: \{ low: 0\.042, high: 0\.064, floor: 10, ceiling: 22 \}/);
   assert.match(javascript, /const presentation = cardPresentation\(card\)/);
   assert.equal((javascript.match(/class="card-face front"/g) || []).length, 1, "all surfaces must share one card renderer");
   assert.doesNotMatch(javascript, /miniCardMarkup/);
@@ -245,7 +249,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-20/);
+  assert.match(html, /card-surface-21/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -310,7 +314,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-20/);
+  assert.match(html, /card-surface-21/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
