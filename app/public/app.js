@@ -7,7 +7,8 @@ const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
 const DEBUG_CARD_FRAME_KEY = "kalpi-debug-card-frame";
-const STATIC_DATA_VERSION = "launch-safety-1";
+const STATIC_DATA_VERSION = "visible-sets-1";
+const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -284,12 +285,20 @@ function applyVisualConfig() {
   syncBinderFlipButton();
 }
 
+function isLiveReleaseSet(id) {
+  return LIVE_RELEASE_SET_IDS.includes(id);
+}
+
 function isFirstSetCard(card) {
   return card?.releaseSetId === "party-leaders";
 }
 
 function usesFullartFrame(card) {
-  return ["party-leaders", "party-slot-2", "decisions", "records"].includes(card?.releaseSetId);
+  return isLiveReleaseSet(card?.releaseSetId);
+}
+
+function playerCatalog() {
+  return model.catalog.filter((card) => isLiveReleaseSet(card.releaseSetId));
 }
 
 function debugFullartEnabled() {
@@ -483,6 +492,7 @@ function applyHomePayload(home) {
         avatars: home.state.avatars,
         inventory: home.state.inventory || {},
         favorites: home.state.favorites || [],
+        starCount: home.state.starCount,
       },
     }));
   }
@@ -511,6 +521,9 @@ async function loadShell() {
     return response.json();
   }));
   model.gameConfig = { ...model.gameConfig, ...shell.gameConfig };
+  if (Array.isArray(model.gameConfig.releaseSets)) {
+    model.gameConfig.releaseSets = model.gameConfig.releaseSets.filter((set) => isLiveReleaseSet(set.id));
+  }
   model.editorial = shell.editorial || model.editorial;
   if (!model.serverState && shell.totals) {
     model.serverState = {
@@ -538,8 +551,9 @@ async function loadShell() {
 
 function applyCatalog(cards) {
   if (!cards?.length) return;
-  model.catalog = cards;
-  model.byId = new Map(cards.map((card) => [card.id, card]));
+  const visible = cards.filter((card) => isLiveReleaseSet(card.releaseSetId));
+  model.catalog = visible;
+  model.byId = new Map(visible.map((card) => [card.id, card]));
 }
 
 function applyFullBoot(boot) {
@@ -796,10 +810,7 @@ async function hydrateExtras() {
         }
       }
       const jobs = [
-        ["state", () => request("/api/state")],
-        ["trades", () => request("/api/trades")],
-        ["leaderboards", () => request("/api/leaderboards")],
-        ["activity", () => request("/api/activity")],
+        ["community", () => request("/api/community")],
       ];
       if (studioSecret()) {
         jobs.push(["events", () => request("/api/events")]);
@@ -807,7 +818,8 @@ async function hydrateExtras() {
       }
       await Promise.all(jobs.map(async ([key, run]) => {
         try {
-          applyExtrasPayload({ [key]: await run() });
+          const payload = await run();
+          applyExtrasPayload(key === "community" ? payload : { [key]: payload });
           paintExtras();
         } catch {
           /* One slow or failed extra must not keep badges/community on Loading. */
@@ -1063,8 +1075,21 @@ function showError(title, copy) {
 
 function completion() {
   const owned = model.serverState?.ownedUnique ?? 0;
-  const total = model.serverState?.totalCards ?? model.catalog.length ?? 28;
+  const total = model.serverState?.totalCards ?? playerCatalog().length ?? 28;
   return { owned, total, percent: total ? Math.round((owned / total) * 100) : 0 };
+}
+
+function localStarCount() {
+  const inventory = model.serverState?.inventory || {};
+  const cards = playerCatalog();
+  if (!cards.length) return model.serverState?.starCount ?? 0;
+  return cards.reduce((sum, card) => {
+    if (!inventory[card.id]) return sum;
+    if (card.rarity === "Promotion") return sum + 5;
+    if (card.rarity?.startsWith("Rare")) return sum + 3;
+    if (card.rarity?.startsWith("Uncommon")) return sum + 2;
+    return sum + 1;
+  }, 0);
 }
 
 function pageSizeForCards() {
@@ -1159,13 +1184,8 @@ async function saveProfile(event) {
     });
     model.serverState.displayName = profile.displayName;
     model.serverState.avatarId = profile.avatarId || model.serverState.avatarId;
-    model.serverState = await request("/api/state");
-    const [leaderboards, tradeData] = await Promise.all([
-      request("/api/leaderboards"),
-      request("/api/trades"),
-    ]);
-    model.leaderboards = leaderboards;
-    model.trades = tradeData.trades;
+    model.serverState = { ...model.serverState, ...(await request("/api/home")).state };
+    applyExtrasPayload(await request("/api/community"));
     renderProfile();
     renderHome();
     renderGrowth();
@@ -2176,19 +2196,16 @@ function renderBinder() {
   );
 
   const favorites = new Set(model.serverState?.favorites || []);
-  const playerCards = model.catalog.filter((card) =>
+  const playerCards = playerCatalog().filter((card) =>
     card.idleEligible || card.eventOnly || inventory[card.id]);
   const releaseIds = [...new Set(playerCards.map((card) => card.releaseSetId).filter(Boolean))];
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
     .filter((id) => releaseIds.includes(id));
-  const extraReleases = releaseIds.filter((id) => !releaseOrder.includes(id) && id !== "editorial-backlog");
   const setOrder = [
     "ALL",
     "FAVORITES",
-    ...releaseOrder.map((id) => `RELEASE:${id}`),
-    ...extraReleases.map((id) => `RELEASE:${id}`),
-    "SPECIALS",
+    ...releaseOrder.filter((id) => isLiveReleaseSet(id)).map((id) => `RELEASE:${id}`),
     ...new Set(playerCards.filter((card) => !card.eventOnly).map((card) => card.set)),
   ];
   const setLabels = Object.fromEntries(playerCards.map((card) => [card.set, cardSetName(card)]));
@@ -2239,7 +2256,7 @@ function renderBinder() {
 
   const earned = (model.serverState?.achievements || []).filter(({ earned }) => earned);
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
-  const starCount = model.serverState?.starCount ?? 0;
+  const starCount = localStarCount();
   const starCounter = `<span class="collection-star-count" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b aria-hidden="true">★</b><strong>${starCount}</strong></span>`;
   const visibleBadges = earned.slice(0, 3);
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
@@ -2493,9 +2510,10 @@ function renderGrowth() {
   }
   model.serverState.inventory ??= {};
   setEmptyNote(elements.growthEmpty, "", { hidden: true });
-  const duplicate = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 1);
-  const owned = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 0);
-  const card = duplicate ?? owned ?? model.catalog[0];
+  const liveCards = playerCatalog();
+  const duplicate = liveCards.find((card) => (model.serverState.inventory[card.id] ?? 0) > 1);
+  const owned = liveCards.find((card) => (model.serverState.inventory[card.id] ?? 0) > 0);
+  const card = duplicate ?? owned ?? liveCards[0];
   const count = model.serverState.inventory[card.id] ?? 0;
   const isLive = count > 1;
   elements.tradePreview.dataset.cardId = card.id;
@@ -2522,7 +2540,7 @@ function renderGrowth() {
     .map(([label, value]) => `<div class="metric-row"><span>${label}</span><strong>${value}</strong></div>`)
     .join("");
 
-  const ownedCards = model.catalog.filter((candidate) => (model.serverState.inventory[candidate.id] ?? 0) > 0);
+  const ownedCards = liveCards.filter((candidate) => (model.serverState.inventory[candidate.id] ?? 0) > 0);
   const releaseNames = Object.fromEntries((model.gameConfig?.releaseSets || []).map(({ id, nameHe }) => [id, nameHe]));
   const fallbackReleaseNames = {
     foundations: "יסודות",
@@ -2548,11 +2566,11 @@ function renderGrowth() {
   const offeredValue = elements.tradeOfferedCard.value;
   const wantedValue = elements.tradeWantedCard.value;
   elements.tradeOfferedSet.innerHTML = ownedCards.length ? groupedOptions(ownedCards) : '<option value="">אין קלפים</option>';
-  elements.tradeWantedSet.innerHTML = groupedOptions(model.catalog);
+  elements.tradeWantedSet.innerHTML = groupedOptions(liveCards);
   if ([...elements.tradeOfferedSet.options].some(({ value }) => value === previousOfferedSet)) elements.tradeOfferedSet.value = previousOfferedSet;
   if ([...elements.tradeWantedSet.options].some(({ value }) => value === previousWantedSet)) elements.tradeWantedSet.value = previousWantedSet;
   const offeredCards = ownedCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeOfferedSet.value));
-  const wantedCards = model.catalog.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
+  const wantedCards = liveCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
   elements.tradeOfferedCard.innerHTML = offeredCards.length
     ? offeredCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("")
     : '<option value="">אספו קלף קודם</option>';
@@ -3470,12 +3488,7 @@ async function createTradePreview() {
 }
 
 async function refreshSocialBoards() {
-  const [tradeData, leaderboards] = await Promise.all([
-    request("/api/trades"),
-    request("/api/leaderboards"),
-  ]);
-  model.trades = tradeData.trades;
-  model.leaderboards = leaderboards;
+  applyExtrasPayload(await request("/api/community"));
   renderBinder();
   renderGrowth();
 }

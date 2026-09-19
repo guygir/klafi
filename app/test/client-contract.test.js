@@ -236,7 +236,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-15/);
+  assert.match(html, /card-surface-16/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -251,8 +251,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /const warmedHome = window\.__kalpiWarmup\?\.home/);
   assert.match(javascript, /const due = !timeUntil\(model\.serverState\?\.nextIdleAt\)/);
   assert.match(javascript, /jobs\.push\(\["events", \(\) => request\("\/api\/events"\)\]\)/);
-  assert.match(javascript, /request\("\/api\/trades"\)/);
-  assert.match(javascript, /request\("\/api\/leaderboards"\)/);
+  assert.match(javascript, /request\("\/api\/community"\)/);
+  assert.match(javascript, /LIVE_RELEASE_SET_IDS/);
+  assert.match(javascript, /function playerCatalog/);
+  assert.match(javascript, /function localStarCount/);
+  assert.match(javascript, /visible-sets-1/);
+  assert.doesNotMatch(javascript, /\["state", \(\) => request\("\/api\/state"\)\]/);
+  assert.doesNotMatch(javascript, /\["trades", \(\) => request\("\/api\/trades"\)\]/);
+  assert.doesNotMatch(javascript, /\["leaderboards", \(\) => request\("\/api\/leaderboards"\)\]/);
+  assert.doesNotMatch(javascript, /\["activity", \(\) => request\("\/api\/activity"\)\]/);
   assert.match(javascript, /hydrateExtras\(\)\.catch/);
   assert.match(javascript, /טוענים את האלבום/);
   assert.match(javascript, /searchParams\.set\("view"/);
@@ -288,7 +295,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-15/);
+  assert.match(html, /card-surface-16/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

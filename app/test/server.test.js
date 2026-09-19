@@ -586,6 +586,11 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(activity.body.counts.share_created, undefined);
   const leaderboards = await api(running.base, "/api/leaderboards", { token });
   assert.equal(leaderboards.status, 200);
+  const community = await api(running.base, "/api/community", { token });
+  assert.equal(community.status, 200);
+  assert.equal(community.body.leaderboards.dailyChallenge.day, leaderboards.body.dailyChallenge.day);
+  assert.ok(Array.isArray(community.body.trades.trades));
+  assert.equal(community.body.activity.counts.pack_opened, 1);
   assert.equal(leaderboards.body.factions.find(({ partyId }) => partyId === "LIK").packs, 1);
   assert.equal(leaderboards.body.dailyChallenge.day, "2026-09-03");
   assert.equal(leaderboards.body.dailyChallenge.targetPartyNameHe, catalog.body.cards.find(({ set }) => set === leaderboards.body.dailyChallenge.targetPartyId)?.setNameHe);
