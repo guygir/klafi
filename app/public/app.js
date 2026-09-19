@@ -2020,7 +2020,7 @@ function artMarkup(card, mini = false) {
   const className = mini ? "mini-art" : "card-art";
   const url = artUrl(card);
   if (url) {
-    return `<div class="${className}" role="img" aria-label="איור של ${escapeHtml(cardTitle(card))}"><img src="${url}" alt="" decoding="async"></div>`;
+    return `<img class="${className}" src="${url}" alt="" decoding="async" aria-label="איור של ${escapeHtml(cardTitle(card))}">`;
   }
   return `<div class="${className} placeholder" role="img" aria-label="איור זמני של ${escapeHtml(cardTitle(card))}" data-mark="${escapeHtml(placeholderMark(card))}"></div>`;
 }

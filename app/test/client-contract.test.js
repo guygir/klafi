@@ -256,8 +256,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function playerCatalog/);
   assert.match(javascript, /function artUrl/);
   assert.match(javascript, /function prefetchCardArt/);
-  assert.match(javascript, /<img src="\$\{url\}" alt="" decoding="async">/);
-  assert.match(css, /\.card-art img/);
+  assert.match(javascript, /<img class="\$\{className\}" src="\$\{url\}"/);
+  assert.match(css, /img\.card-art/);
   assert.match(javascript, /const playerCards = playerCatalog\(\)/);
   assert.doesNotMatch(javascript, /playerCatalog\(\)\.filter\(\(card\) =>\s*card\.idleEligible/);
   assert.match(javascript, /function localStarCount/);
