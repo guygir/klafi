@@ -1,3 +1,5 @@
+import { collectionStarCount } from "./visible-sets.js";
+
 const IDLE_CAPACITY = 8;
 
 export function slimPublicState(session, shell, now = Date.now()) {
@@ -30,6 +32,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     avatars,
     ownedUnique: unique,
     ownedUniqueAll: Object.keys(inventory).length,
+    starCount: collectionStarCount(inventory, shell.cardIndex || []),
     totalCards: idleTotal,
     unseenCount: session.unseenPulls?.length ?? 0,
     preparedPulls: session.preparedPulls || [],

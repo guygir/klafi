@@ -7,7 +7,8 @@ const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
 const DEBUG_CARD_FRAME_KEY = "kalpi-debug-card-frame";
-const STATIC_DATA_VERSION = "launch-safety-1";
+const STATIC_DATA_VERSION = "visible-sets-1";
+const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -284,12 +285,20 @@ function applyVisualConfig() {
   syncBinderFlipButton();
 }
 
+function isLiveReleaseSet(id) {
+  return LIVE_RELEASE_SET_IDS.includes(id);
+}
+
 function isFirstSetCard(card) {
   return card?.releaseSetId === "party-leaders";
 }
 
 function usesFullartFrame(card) {
-  return ["party-leaders", "party-slot-2", "decisions", "records"].includes(card?.releaseSetId);
+  return isLiveReleaseSet(card?.releaseSetId);
+}
+
+function playerCatalog() {
+  return model.catalog.filter((card) => isLiveReleaseSet(card.releaseSetId));
 }
 
 function debugFullartEnabled() {
@@ -483,6 +492,7 @@ function applyHomePayload(home) {
         avatars: home.state.avatars,
         inventory: home.state.inventory || {},
         favorites: home.state.favorites || [],
+        starCount: home.state.starCount,
       },
     }));
   }
@@ -511,6 +521,9 @@ async function loadShell() {
     return response.json();
   }));
   model.gameConfig = { ...model.gameConfig, ...shell.gameConfig };
+  if (Array.isArray(model.gameConfig.releaseSets)) {
+    model.gameConfig.releaseSets = model.gameConfig.releaseSets.filter((set) => isLiveReleaseSet(set.id));
+  }
   model.editorial = shell.editorial || model.editorial;
   if (!model.serverState && shell.totals) {
     model.serverState = {
@@ -538,8 +551,9 @@ async function loadShell() {
 
 function applyCatalog(cards) {
   if (!cards?.length) return;
-  model.catalog = cards;
-  model.byId = new Map(cards.map((card) => [card.id, card]));
+  const visible = cards.filter((card) => isLiveReleaseSet(card.releaseSetId));
+  model.catalog = visible;
+  model.byId = new Map(visible.map((card) => [card.id, card]));
 }
 
 function applyFullBoot(boot) {
@@ -680,15 +694,28 @@ function cachedDueCount(current = Date.now()) {
     .filter(({ availableAt }) => Date.parse(availableAt) <= current).length;
 }
 
+function artUrl(card) {
+  return card?.artKey ? `/design-assets/${encodeURIComponent(card.artKey)}` : "";
+}
+
+function prefetchCardArt(cards = []) {
+  for (const card of cards) {
+    const url = artUrl(card);
+    if (!url) continue;
+    const image = new Image();
+    image.decoding = "async";
+    image.src = url;
+  }
+}
+
 function prefetchIdleAssets() {
   if (!model.catalog.length) return;
-  const pulls = [...model.idleQueue, ...(model.serverState?.preparedPulls || [])];
-  for (const { cardId } of pulls) {
-    const artKey = model.byId.get(cardId)?.artKey;
-    if (!artKey) continue;
-    const image = new Image();
-    image.src = `/design-assets/${encodeURIComponent(artKey)}`;
-  }
+  const pulls = [...model.idleQueue, ...(model.serverState?.preparedPulls || [])]
+    .map(({ cardId }) => model.byId.get(cardId));
+  prefetchCardArt([
+    ...pulls,
+    ...playerCatalog().slice(0, 4),
+  ]);
 }
 
 function pendingIdleSeen() {
@@ -787,19 +814,30 @@ function paintExtras() {
 async function hydrateExtras() {
   if (model.extrasReady) return model;
   if (!extrasHydrate) {
-    extrasHydrate = Promise.allSettled([
-      studioSecret() ? request("/api/events") : Promise.resolve({ events: [] }),
-      request("/api/trades"),
-      request("/api/leaderboards"),
-      request("/api/activity"),
-      studioSecret() ? request("/api/specials") : Promise.resolve({ sets: [], cards: [] }),
-      request("/api/state"),
-    ]).then(async (results) => {
-      const [events, trades, leaderboards, activity, specials, state] = results.map((result) =>
-        result.status === "fulfilled" ? result.value : null
-      );
-      applyExtrasPayload({ events, trades, leaderboards, activity, specials, state });
-      model.extrasReady = results.every(({ status }) => status === "fulfilled");
+    extrasHydrate = (async () => {
+      if (!model.token) {
+        try {
+          await hydrateHome();
+        } catch {
+          /* Community and badges still paint from catalog/home cache. */
+        }
+      }
+      const jobs = [
+        ["community", () => request("/api/community")],
+      ];
+      if (studioSecret()) {
+        jobs.push(["events", () => request("/api/events")]);
+        jobs.push(["specials", () => request("/api/specials")]);
+      }
+      await Promise.all(jobs.map(async ([key, run]) => {
+        try {
+          const payload = await run();
+          applyExtrasPayload(key === "community" ? payload : { [key]: payload });
+          paintExtras();
+        } catch {
+          /* One slow or failed extra must not keep badges/community on Loading. */
+        }
+      }));
       if (studioSecret()) {
         try {
           model.studioContent = await request("/api/studio/content");
@@ -808,9 +846,10 @@ async function hydrateExtras() {
           /* Studio stays closed without the secret. */
         }
       }
+      model.extrasReady = true;
       paintExtras();
       return model;
-    }).finally(() => {
+    })().finally(() => {
       extrasHydrate = null;
     });
   }
@@ -832,6 +871,7 @@ async function hydrateCatalog() {
 async function bootstrap() {
   captureStudioSecret();
   applyCachedHome();
+  if (model.token) hydrateExtras().catch(() => {});
   const inboundView = requestedPlayerView();
   if (inboundView && inboundView !== "home") paintPlayerView(inboundView);
   else showView("home");
@@ -844,6 +884,8 @@ async function bootstrap() {
     renderHome();
     await catalogPromise;
     if (inboundView === "binder") renderBinder();
+    renderAchievements();
+    renderGrowth();
     const homePromise = hydrateHome();
     homePromise.then(() => {
       prefetchIdleAssets();
@@ -966,9 +1008,9 @@ function fitCardText(element) {
   const frameWidth = frame?.clientWidth ?? 0;
   if (!frameWidth || !element.clientWidth || !element.clientHeight) return;
   const role = element.dataset.fitCardText;
-  const compact = ["binder", "trade", "peek"].includes(frame.dataset.cardSurface);
+  const compact = ["binder", "peek"].includes(frame.dataset.cardSurface);
   const scale = (isFullart
-    ? { quote: { low: 0.042, high: 0.064, floor: compact ? 6.5 : 10, ceiling: compact ? 13 : 22 } }
+    ? { quote: { low: 0.042, high: 0.064, floor: 10, ceiling: 22 } }
     : {
       quote: { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 },
       party: { low: 0.035, high: 0.052, floor: compact ? 7 : 9, ceiling: 13 },
@@ -1046,8 +1088,21 @@ function showError(title, copy) {
 
 function completion() {
   const owned = model.serverState?.ownedUnique ?? 0;
-  const total = model.serverState?.totalCards ?? model.catalog.length ?? 28;
+  const total = model.serverState?.totalCards ?? playerCatalog().length ?? 28;
   return { owned, total, percent: total ? Math.round((owned / total) * 100) : 0 };
+}
+
+function localStarCount() {
+  const inventory = model.serverState?.inventory || {};
+  const cards = playerCatalog();
+  if (!cards.length) return model.serverState?.starCount ?? 0;
+  return cards.reduce((sum, card) => {
+    if (!inventory[card.id]) return sum;
+    if (card.rarity === "Promotion") return sum + 5;
+    if (card.rarity?.startsWith("Rare")) return sum + 3;
+    if (card.rarity?.startsWith("Uncommon")) return sum + 2;
+    return sum + 1;
+  }, 0);
 }
 
 function pageSizeForCards() {
@@ -1142,13 +1197,8 @@ async function saveProfile(event) {
     });
     model.serverState.displayName = profile.displayName;
     model.serverState.avatarId = profile.avatarId || model.serverState.avatarId;
-    model.serverState = await request("/api/state");
-    const [leaderboards, tradeData] = await Promise.all([
-      request("/api/leaderboards"),
-      request("/api/trades"),
-    ]);
-    model.leaderboards = leaderboards;
-    model.trades = tradeData.trades;
+    model.serverState = { ...model.serverState, ...(await request("/api/home")).state };
+    applyExtrasPayload(await request("/api/community"));
     renderProfile();
     renderHome();
     renderGrowth();
@@ -1968,8 +2018,9 @@ function rarityNameHe(rarity) {
 
 function artMarkup(card, mini = false) {
   const className = mini ? "mini-art" : "card-art";
-  if (card.artKey) {
-    return `<div class="${className}" role="img" aria-label="איור של ${escapeHtml(cardTitle(card))}" style="background-image:url('/design-assets/${encodeURIComponent(card.artKey)}')"></div>`;
+  const url = artUrl(card);
+  if (url) {
+    return `<img class="${className}" src="${url}" alt="" decoding="async" aria-label="איור של ${escapeHtml(cardTitle(card))}">`;
   }
   return `<div class="${className} placeholder" role="img" aria-label="איור זמני של ${escapeHtml(cardTitle(card))}" data-mark="${escapeHtml(placeholderMark(card))}"></div>`;
 }
@@ -2105,7 +2156,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
         </div>
         <div class="card-identity-stack">
           <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
-          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}<span class="card-slot-mark"> · ${escapeHtml(presentation.code)}</span></p>
+          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
           <p class="card-rarity-zone" dir="rtl" lang="he"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</p>
           <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
         </div>
@@ -2159,19 +2210,14 @@ function renderBinder() {
   );
 
   const favorites = new Set(model.serverState?.favorites || []);
-  const playerCards = model.catalog.filter((card) =>
-    card.idleEligible || card.eventOnly || inventory[card.id]);
-  const releaseIds = [...new Set(playerCards.map((card) => card.releaseSetId).filter(Boolean))];
+  const playerCards = playerCatalog();
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
-    .filter((id) => releaseIds.includes(id));
-  const extraReleases = releaseIds.filter((id) => !releaseOrder.includes(id) && id !== "editorial-backlog");
+    .filter((id) => isLiveReleaseSet(id));
   const setOrder = [
     "ALL",
     "FAVORITES",
     ...releaseOrder.map((id) => `RELEASE:${id}`),
-    ...extraReleases.map((id) => `RELEASE:${id}`),
-    "SPECIALS",
     ...new Set(playerCards.filter((card) => !card.eventOnly).map((card) => card.set)),
   ];
   const setLabels = Object.fromEntries(playerCards.map((card) => [card.set, cardSetName(card)]));
@@ -2222,7 +2268,7 @@ function renderBinder() {
 
   const earned = (model.serverState?.achievements || []).filter(({ earned }) => earned);
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
-  const starCount = model.serverState?.starCount ?? 0;
+  const starCount = localStarCount();
   const starCounter = `<span class="collection-star-count" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b aria-hidden="true">★</b><strong>${starCount}</strong></span>`;
   const visibleBadges = earned.slice(0, 3);
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
@@ -2377,47 +2423,64 @@ async function saveStudioEvents() {
   }
 }
 
+const BADGE_COPY = {
+  "first-rip": ["חשיפה ראשונה", "חשפו קלף שנאסף."],
+  "register-five": ["חמישה באוסף", "אספו חמישה קלפים שונים."],
+  "source-check": ["בדקתי מקור", "פתחו מקור של קלף."],
+  "share-pull": ["העברתי הלאה", "שתפו קלף."],
+  "commons-complete": ["כל המנהיגים", "אספו את מנהיגי כל המפלגות."],
+  "set-chase": ["סדרה מלאה", "השלימו סדרת מפלגה."],
+  "trade-match": ["החלפה ראשונה", "השלימו החלפה עם שחקן אחר."],
+  "collector-ten": ["עשרה שונים", "אספו עשרה קלפים שונים."],
+  "favorite-first": ["שומר בלב", "סמנו קלף אחד כפייבוריט."],
+  "event-first": ["מהדורה מוגבלת", "אספו קלף מאירוע."],
+  "source-three": ["קורא מקורות", "פתחו שלושה מקורות של קלפים."],
+  "trade-three": ["שולחן החלפות", "השלימו שלוש החלפות."],
+  "three-parties": ["רוחב המפה", "אספו מנהיגים משלוש מפלגות."],
+  "twenty-stars": ["עשרים כוכבים", "צברו עשרים כוכבי אוסף."],
+  "idle-eight": ["מחסן מלא", "אספו שמונה קלפים מהאיסוף האוטומטי."],
+  "first-double": ["עותק כפול", "השיגו עותק שני של אותו קלף."],
+  "five-leaders": ["חמש סיעות", "אספו מנהיגים מחמש מפלגות."],
+  "event-three": ["שלושה אירועים", "אספו שלושה קלפי אירוע."],
+  "share-three": ["שלושה שיתופים", "שתפו שלושה קלפים."],
+  "rank-three": ["מצביע מעורב", "הגיעו לרמה 3."],
+  "fifty-stars": ["חמישים כוכבים", "צברו חמישים כוכבי אוסף."],
+  "binder-half": ["חצי האלבום", "השלימו מחצית מהסדרה הפעילה."],
+};
+
 function hebrewBadge(badge) {
-  const copy = {
-    "first-rip": ["חשיפה ראשונה", "חשפו קלף שנאסף."],
-    "register-five": ["חמישה באוסף", "אספו חמישה קלפים שונים."],
-    "source-check": ["בדקתי מקור", "פתחו מקור של קלף."],
-    "share-pull": ["העברתי הלאה", "שתפו קלף."],
-    "commons-complete": ["כל המנהיגים", "אספו את מנהיגי כל המפלגות."],
-    "set-chase": ["סדרה מלאה", "השלימו סדרת מפלגה."],
-    "trade-match": ["החלפה ראשונה", "השלימו החלפה עם שחקן אחר."],
-    "collector-ten": ["עשרה שונים", "אספו עשרה קלפים שונים."],
-    "favorite-first": ["שומר בלב", "סמנו קלף אחד כפייבוריט."],
-    "event-first": ["מהדורה מוגבלת", "אספו קלף מאירוע."],
-    "source-three": ["קורא מקורות", "פתחו שלושה מקורות של קלפים."],
-    "trade-three": ["שולחן החלפות", "השלימו שלוש החלפות."],
-    "three-parties": ["רוחב המפה", "אספו מנהיגים משלוש מפלגות."],
-    "twenty-stars": ["עשרים כוכבים", "צברו עשרים כוכבי אוסף."],
-    "idle-eight": ["מחסן מלא", "אספו שמונה קלפים מהאיסוף האוטומטי."],
-    "first-double": ["עותק כפול", "השיגו עותק שני של אותו קלף."],
-    "five-leaders": ["חמש סיעות", "אספו מנהיגים מחמש מפלגות."],
-    "event-three": ["שלושה אירועים", "אספו שלושה קלפי אירוע."],
-    "share-three": ["שלושה שיתופים", "שתפו שלושה קלפים."],
-    "rank-three": ["מצביע מעורב", "הגיעו לרמה 3."],
-    "fifty-stars": ["חמישים כוכבים", "צברו חמישים כוכבי אוסף."],
-    "binder-half": ["חצי האלבום", "השלימו מחצית מהסדרה הפעילה."],
-  }[badge.id];
+  const copy = BADGE_COPY[badge.id];
   return { name: copy?.[0] || badge.name, description: copy?.[1] || badge.description };
 }
 
-function renderAchievements() {
-  if (!model.serverState?.achievements) {
-    if (elements.achievementGrid) elements.achievementGrid.innerHTML = "";
-    if (elements.achievementPager) elements.achievementPager.innerHTML = "";
-    setEmptyNote(elements.achievementsEmpty, pendingCopy("טוענים את התגים…", "לא הצלחנו לטעון את התגים."), {
-      pending: !catalogFailed,
-      failed: catalogFailed,
-    });
-    return;
+function localAchievementList() {
+  if (model.gameConfig?.achievements?.length) {
+    return model.gameConfig.achievements.map((badge) => ({
+      ...badge,
+      earned: Boolean(badge.earned),
+      progress: badge.progress ?? 0,
+      target: badge.target ?? 1,
+    }));
   }
+  return Object.keys(BADGE_COPY).map((id) => ({
+    id,
+    earned: false,
+    progress: 0,
+    target: 1,
+    name: BADGE_COPY[id][0],
+    description: BADGE_COPY[id][1],
+  }));
+}
+
+function achievementList() {
+  if (model.serverState?.achievements?.length) return model.serverState.achievements;
+  return localAchievementList();
+}
+
+function renderAchievements() {
   setEmptyNote(elements.achievementsEmpty, "", { hidden: true });
-  if (!model.serverState || !elements.achievementGrid) return;
-  const badges = model.serverState.achievements || [];
+  if (!elements.achievementGrid) return;
+  const badges = achievementList();
   const pageSize = 4;
   const pages = Math.max(1, Math.ceil(badges.length / pageSize));
   model.achievementPage = Math.min(model.achievementPage, pages - 1);
@@ -2448,22 +2511,21 @@ function creatorLink() {
 function renderGrowth() {
   const communityTabs = elements.communityTabs;
   const growthGrid = document.querySelector(".growth-grid");
-  if (!model.extrasReady) {
+  communityTabs?.removeAttribute("hidden");
+  growthGrid?.removeAttribute("hidden");
+  if (!model.catalog.length || !model.serverState || !elements.tradePreview) {
     setEmptyNote(elements.growthEmpty, pendingCopy("טוענים את הקהילה…", "לא הצלחנו לטעון את הקהילה."), {
       pending: !catalogFailed,
       failed: catalogFailed,
     });
-    communityTabs?.setAttribute("hidden", "");
-    growthGrid?.setAttribute("hidden", "");
     return;
   }
-  communityTabs?.removeAttribute("hidden");
-  growthGrid?.removeAttribute("hidden");
+  model.serverState.inventory ??= {};
   setEmptyNote(elements.growthEmpty, "", { hidden: true });
-  if (!model.catalog.length || !model.serverState || !elements.tradePreview) return;
-  const duplicate = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 1);
-  const owned = model.catalog.find((card) => (model.serverState.inventory[card.id] ?? 0) > 0);
-  const card = duplicate ?? owned ?? model.catalog[0];
+  const liveCards = playerCatalog();
+  const duplicate = liveCards.find((card) => (model.serverState.inventory[card.id] ?? 0) > 1);
+  const owned = liveCards.find((card) => (model.serverState.inventory[card.id] ?? 0) > 0);
+  const card = duplicate ?? owned ?? liveCards[0];
   const count = model.serverState.inventory[card.id] ?? 0;
   const isLive = count > 1;
   elements.tradePreview.dataset.cardId = card.id;
@@ -2490,7 +2552,7 @@ function renderGrowth() {
     .map(([label, value]) => `<div class="metric-row"><span>${label}</span><strong>${value}</strong></div>`)
     .join("");
 
-  const ownedCards = model.catalog.filter((candidate) => (model.serverState.inventory[candidate.id] ?? 0) > 0);
+  const ownedCards = liveCards.filter((candidate) => (model.serverState.inventory[candidate.id] ?? 0) > 0);
   const releaseNames = Object.fromEntries((model.gameConfig?.releaseSets || []).map(({ id, nameHe }) => [id, nameHe]));
   const fallbackReleaseNames = {
     foundations: "יסודות",
@@ -2516,11 +2578,11 @@ function renderGrowth() {
   const offeredValue = elements.tradeOfferedCard.value;
   const wantedValue = elements.tradeWantedCard.value;
   elements.tradeOfferedSet.innerHTML = ownedCards.length ? groupedOptions(ownedCards) : '<option value="">אין קלפים</option>';
-  elements.tradeWantedSet.innerHTML = groupedOptions(model.catalog);
+  elements.tradeWantedSet.innerHTML = groupedOptions(liveCards);
   if ([...elements.tradeOfferedSet.options].some(({ value }) => value === previousOfferedSet)) elements.tradeOfferedSet.value = previousOfferedSet;
   if ([...elements.tradeWantedSet.options].some(({ value }) => value === previousWantedSet)) elements.tradeWantedSet.value = previousWantedSet;
   const offeredCards = ownedCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeOfferedSet.value));
-  const wantedCards = model.catalog.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
+  const wantedCards = liveCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
   elements.tradeOfferedCard.innerHTML = offeredCards.length
     ? offeredCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("")
     : '<option value="">אספו קלף קודם</option>';
@@ -2537,12 +2599,17 @@ function renderGrowth() {
     const selected = model.byId.get(cardId);
     container.innerHTML = selected
       ? `<button type="button" data-trade-choice-card="${selected.id}" aria-label="פתיחת ${escapeHtml(cardTitle(selected))}">
-          ${displayCardMarkup(selected, "trade")}
+          ${displayCardMarkup(selected)}
         </button>`
       : '<span class="work-note">אין קלף זמין</span>';
   };
   renderTradeChoice(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
   renderTradeChoice(elements.tradeWantedPreview, elements.tradeWantedCard.value);
+  prefetchCardArt([
+    card,
+    model.byId.get(elements.tradeOfferedCard.value),
+    model.byId.get(elements.tradeWantedCard.value),
+  ]);
 
   const openOffers = model.trades.filter((trade) => trade.status === "open");
   elements.tradeBoard.innerHTML = openOffers.length ? openOffers.map((trade) => {
@@ -2591,7 +2658,7 @@ function renderGrowth() {
     ? collectorPreview.map((entry) => `<div class="${entry.current ? "current-player" : ""}"><span>${entry.rank}. ${escapeHtml(entry.label)}</span><strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong></div>`).join("")
     : '<p class="work-note">הטבלה מחכה לשחקן הראשון.</p>';
 
-  const challenge = model.leaderboards?.dailyChallenge;
+  const challenge = model.leaderboards?.dailyChallenge || localDailyChallenge();
   const challengeDate = challenge?.day ? new Date(`${challenge.day}T12:00:00`).toLocaleDateString("he-IL", { day: "numeric", month: "numeric" }) : "";
   const challengeLeaderCard = model.catalog.find((card) =>
     card.set === challenge?.targetPartyId && card.releaseSetId === "party-leaders");
@@ -3438,12 +3505,7 @@ async function createTradePreview() {
 }
 
 async function refreshSocialBoards() {
-  const [tradeData, leaderboards] = await Promise.all([
-    request("/api/trades"),
-    request("/api/leaderboards"),
-  ]);
-  model.trades = tradeData.trades;
-  model.leaderboards = leaderboards;
+  applyExtrasPayload(await request("/api/community"));
   renderBinder();
   renderGrowth();
 }
@@ -3890,7 +3952,6 @@ function paintFullartShareIdentity(context, card, presentation, { x, y, width, h
   const partyLine = [
     presentation.setName,
     card.type === "Quote" ? presentation.subtitle : "",
-    presentation.code,
   ].filter(Boolean).join(" · ");
   const nameBand = { top: y + height * 0.69, height: height * 0.06 };
   const partyY = y + height * 0.775;
@@ -3959,7 +4020,6 @@ function paintTallShareIdentity(context, card, presentation, { x, y, width, heig
   const partyLine = [
     presentation.setName,
     card.type === "Quote" ? presentation.subtitle : "",
-    presentation.code,
   ].filter(Boolean).join(" · ");
   const partyY = y + height * 0.83;
   context.fillStyle = "#1a1f1c";

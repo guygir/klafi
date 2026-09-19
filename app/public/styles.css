@@ -469,7 +469,11 @@ h1 {
 }
 
 .bottom-nav button.active { background: var(--civic); color: var(--paper); }
-.bottom-nav button span { font-size: 17px; }
+.bottom-nav button span {
+  font-size: 17px;
+  font-family: "IBM Plex Sans", "Segoe UI Symbol", "Apple Symbols", sans-serif;
+  font-variant-emoji: text;
+}
 
 .ballot-loader {
   width: 96px;
@@ -838,6 +842,12 @@ h1 {
   border: 1px solid rgba(44, 51, 48, 0.18);
   border-radius: 8px;
   background: var(--paper-deep) center / cover no-repeat;
+}
+img.card-art,
+img.mini-art {
+  display: block;
+  object-fit: cover;
+  object-position: center 18%;
 }
 
 .card-art.placeholder {
@@ -1533,12 +1543,20 @@ h1 {
 }
 
 .concept-party::before,
-.card-party-zone::before,
 .mini-party::before {
   content: "";
   flex: 0 0 8px;
   width: 8px;
   height: 8px;
+  border-radius: 50%;
+  background: var(--pip);
+}
+
+.card-party-zone::before {
+  content: "";
+  flex: 0 0 2.4cqw;
+  width: 2.4cqw;
+  height: 2.4cqw;
   border-radius: 50%;
   background: var(--pip);
 }
@@ -2201,7 +2219,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .kalpi-card { direction: rtl; container-type: inline-size; }
 .card-face.front { position: absolute; display: block; padding: 10px; overflow: hidden; }
 .card-image-zone { position: absolute; z-index: 1; inset: 10px 10px 28% 10px; overflow: hidden; border-radius: 8px; }
-.card-image-zone .card-art { width: 100%; height: 100%; margin: 0; border: 0; border-radius: 8px; }
+.card-image-zone .card-art { width: 100%; height: 100%; margin: 0; border: 0; border-radius: 8px; object-fit: cover; object-position: center 18%; }
 .card-image-meta {
   position: absolute;
   z-index: 3;
@@ -2598,7 +2616,10 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   background: transparent;
   color: var(--ink);
 }
-.top-nav-row .bottom-nav button span { font-size: 15px; }
+.top-nav-row .bottom-nav button span {
+  font-size: 15px;
+  font-variant-emoji: text;
+}
 .advocacy-info {
   grid-area: info;
   width: 44px;
@@ -3113,22 +3134,34 @@ body {
   min-height: 0;
   max-height: none;
   display: grid;
-  place-items: start center;
+  place-items: stretch;
   padding-top: 0;
-  overflow: visible;
+  overflow: hidden;
+  container-type: inline-size;
+  aspect-ratio: 63 / 96;
 }
 
 .trade-choice-preview button {
   position: relative;
   width: 100%;
+  height: 100%;
+  min-height: 0;
   padding: 0;
   border: 0;
+  overflow: hidden;
   background: transparent;
   cursor: pointer;
 }
 
 .trade-choice-preview .kalpi-card {
-  width: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 330px;
+  max-width: none;
+  height: calc(330px * 96 / 63);
+  transform: scale(calc(100cqw / 330px));
+  transform-origin: top right;
 }
 
 .open-trades-desk .trade-board {

@@ -1200,6 +1200,18 @@ export async function createKalpiApp({
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/community") {
+        const token = bearer(request);
+        await store.hydrateSession(token);
+        await store.expireTrades(new Date(now()).toISOString());
+        json(response, 200, {
+          trades: { trades: await store.listTrades(token), simulated: false },
+          leaderboards: await store.leaderboardSummary(cards, now(), token),
+          activity: await store.activitySummary(),
+        });
+        return;
+      }
+
       if (request.method === "POST" && url.pathname === "/api/idle/settle") {
         const token = bearer(request);
         const idleReturn = await settleIdle(token);

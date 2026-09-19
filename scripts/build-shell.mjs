@@ -1,18 +1,25 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { expandPublicCatalog } from "../app/server/public-catalog.js";
+import { cardIndexFromCatalog, visiblePlayerCards, visibleReleaseSets } from "../app/server/visible-sets.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cards = JSON.parse(await readFile(path.join(root, "app/data/cards.json"), "utf8"));
+const specials = JSON.parse(await readFile(path.join(root, "app/data/specials-content.json"), "utf8"));
 const advocacy = JSON.parse(await readFile(path.join(root, "app/data/advocacy.json"), "utf8"));
 const avatars = JSON.parse(await readFile(path.join(root, "app/data/avatars.json"), "utf8"));
 const studio = JSON.parse(await readFile(path.join(root, "app/data/studio-content.json"), "utf8"));
 
+const visibleCards = visiblePlayerCards(expandPublicCatalog(cards, specials));
 const idleCards = cards.filter((card) => card.idleEligible && !card.eventOnly);
+const visiblePartyIds = new Set(visibleCards
+  .map(({ set }) => set)
+  .filter((set) => set && set !== "SYS" && !String(set).startsWith("special-")));
 const parties = [];
 const seen = new Set();
-for (const card of cards) {
-  if (!card.set || card.set === "SYS" || String(card.set).startsWith("special-") || seen.has(card.set)) continue;
+for (const card of visibleCards) {
+  if (!visiblePartyIds.has(card.set) || seen.has(card.set)) continue;
   seen.add(card.set);
   const party = studio.parties?.find(({ id }) => id === card.set);
   parties.push({
@@ -32,8 +39,9 @@ const shell = {
   schemaVersion: 1,
   generatedAt: new Date().toISOString(),
   idleCardIds: idleCards.map(({ id }) => id),
+  cardIndex: cardIndexFromCatalog(visibleCards),
   totals: {
-    collectible: cards.length,
+    collectible: visibleCards.length,
     idleEligible: idleCards.length,
   },
   editorial: { advocacy, debugEnabled: false },
@@ -47,7 +55,7 @@ const shell = {
       teaser: studio.gameConfig?.progression?.teaser || "האם תגיעו לדרגת ראש הממשלה?",
       reward: studio.gameConfig?.progression?.reward || "קלף בונוס מיידי",
     },
-    releaseSets: studio.gameConfig?.releaseSets || [],
+    releaseSets: visibleReleaseSets(studio.gameConfig?.releaseSets || []),
     parties,
     avatars: avatars.avatars || [],
   },

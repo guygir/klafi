@@ -332,11 +332,18 @@ body:has(#app[data-theme="pack-v2"]) {
   place-items: center;
 }
 
-#app[data-card-frame="tall-v2"] .trade-choice-preview button,
-#app[data-card-frame="tall-v2"] .trade-choice-preview .kalpi-card {
+#app[data-card-frame="tall-v2"] .trade-choice-preview button {
   width: 100%;
-  height: auto;
+  height: 100%;
+}
+
+#app[data-card-frame="tall-v2"] .trade-choice-preview .kalpi-card {
+  width: 330px;
+  max-width: none;
+  height: calc(330px * 96 / 63);
   aspect-ratio: 63 / 96;
+  transform: scale(calc(100cqw / 330px));
+  transform-origin: top right;
 }
 
 #app[data-card-frame="tall-v2"] .binder-shared-card .kalpi-card,
@@ -792,10 +799,9 @@ body:has(#app[data-theme="pack-v2"]) {
     font-size: 11px;
   }
 
-  #app[data-card-frame="tall-v2"] .trade-choice-preview button,
-  #app[data-card-frame="tall-v2"] .trade-choice-preview .kalpi-card {
+  #app[data-card-frame="tall-v2"] .trade-choice-preview button {
     width: 100%;
-    height: auto;
+    height: 100%;
   }
 
   .studio-meta-desk,
@@ -814,10 +820,9 @@ body:has(#app[data-theme="pack-v2"]) {
     overflow-y: auto;
   }
 
-  #app[data-card-frame="tall-v2"] .trade-choice-preview button,
-  #app[data-card-frame="tall-v2"] .trade-choice-preview .kalpi-card {
+  #app[data-card-frame="tall-v2"] .trade-choice-preview button {
     width: 100%;
-    height: auto;
+    height: 100%;
   }
 
   #app[data-card-frame="tall-v2"] #pack-view .walkout .kalpi-card {
@@ -1088,7 +1093,7 @@ body:has(#app[data-theme="pack-v2"]) {
   width: min(350px, calc(100vw - 42px));
   overflow: hidden;
   border: 1px solid #111;
-  border-radius: clamp(8px, 3.2cqw, 12px);
+  border-radius: 12px;
   background: #050505;
   box-shadow: 0 18px 42px rgba(5, 5, 5, 0.38);
 }
@@ -1160,15 +1165,30 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .card-image-meta,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta {
   display: grid;
+  inset: 3.4cqw 3.4cqw auto;
+  gap: 2cqw;
+  padding: 0;
 }
 
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag {
+  box-sizing: border-box;
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
+  height: 8cqw;
+  min-height: 8cqw;
+  padding: 0 1.8cqw;
+  overflow: visible;
+  border-width: max(1px, 0.5cqw);
   border-color: rgba(247, 242, 232, 0.28);
   background: rgba(5, 5, 5, 0.36);
   color: #f7f2e8;
+  font-size: 6.1cqw;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 #app[data-card-frame="fullart-v1"] .card-image-meta strong,
@@ -1240,11 +1260,6 @@ body:has(#app[data-theme="pack-v2"]) {
   white-space: nowrap;
 }
 
-#app[data-card-frame="fullart-v1"] .card-slot-mark,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-slot-mark {
-  display: inline;
-}
-
 #app[data-card-frame="fullart-v1"] .card-rarity-zone,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone {
   bottom: 15%;
@@ -1312,15 +1327,22 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="fullart-v1"] .binder-shared-card .kalpi-card,
-#app[data-card-frame="fullart-v1"] .site-card-peek .kalpi-card,
-#app[data-card-frame="fullart-v1"] .trade-choice-preview .kalpi-card {
+#app[data-card-frame="fullart-v1"] .site-card-peek .kalpi-card {
   width: 100%;
 }
 
-#app[data-card-frame="fullart-v1"] .trade-choice-preview button,
-#app[data-card-frame="fullart-v1"] .trade-choice-preview .kalpi-card {
-  height: auto;
+#app[data-card-frame="fullart-v1"] .trade-choice-preview button {
+  height: 100%;
+}
+
+#app[data-card-frame="fullart-v1"] .trade-choice-preview .kalpi-card,
+#app .trade-choice-preview .kalpi-card[data-card-frame="fullart-v1"] {
+  width: 330px;
+  max-width: none;
+  height: calc(330px * 96 / 63);
   aspect-ratio: 63 / 96;
+  transform: scale(calc(100cqw / 330px));
+  transform-origin: top right;
 }
 
 #app[data-card-frame="fullart-v1"] #pack-view .walkout .kalpi-card {
