@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { expandPublicCatalog } from "../server/public-catalog.js";
+import { catalogExtrasFromStudio, expandPublicCatalog } from "../server/public-catalog.js";
 import { slimPublicState } from "../server/slim-state.js";
 import { LIVE_RELEASE_SET_IDS, visiblePlayerCards } from "../server/visible-sets.js";
 import { emptyCommunity, slimDailyChallenge } from "../server/slim-community.js";
@@ -12,14 +12,24 @@ import { cardPullOdds, rarityOrderReport } from "../server/pack-config.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
+const projectRoot = path.resolve(here, "../..");
 
-test("static catalog.json matches the public card expansion", async () => {
-  const [cards, specials, catalog] = await Promise.all([
+async function loadCatalogSources() {
+  const [cards, specials, studio, set5] = await Promise.all([
     readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
+    readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "docs/intake/research/set5-wip-pool.json"), "utf8").then(JSON.parse),
+  ]);
+  return { cards, specials, studio, set5, extras: catalogExtrasFromStudio(studio, set5) };
+}
+
+test("static catalog.json matches the public card expansion", async () => {
+  const [{ cards, specials, extras }, catalog] = await Promise.all([
+    loadCatalogSources(),
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
   ]);
-  const expanded = expandPublicCatalog(cards, specials);
+  const expanded = expandPublicCatalog(cards, specials, extras);
   const visible = visiblePlayerCards(expanded);
   assert.equal(catalog.cards.length, visible.length);
   assert.deepEqual([...new Set(catalog.cards.map(({ releaseSetId }) => releaseSetId))].sort(), [...LIVE_RELEASE_SET_IDS].sort());
@@ -75,7 +85,7 @@ test("slim home counts stars from the visible card index", () => {
   assert.equal(state.starCount, 4);
 });
 
-test("player shell only publishes the first four release sets", async () => {
+test("player shell only publishes the live release sets", async () => {
   const shell = JSON.parse(await readFile(path.join(publicDir, "shell.json"), "utf8"));
   assert.deepEqual((shell.gameConfig.releaseSets || []).map(({ id }) => id), [...LIVE_RELEASE_SET_IDS]);
   assert.deepEqual((shell.gameConfig.pack?.sets || []).map(({ id }) => id), [...LIVE_RELEASE_SET_IDS]);
@@ -85,7 +95,7 @@ test("player shell only publishes the first four release sets", async () => {
   assert.equal(shell.totals.collectible, shell.cardIndex.length);
 });
 
-test("Vercel copies only live card art and leaves Set 5 WIP images out", async () => {
+test("Vercel copies live card art including Set 5", async () => {
   const [catalog, avatars, set5] = await Promise.all([
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/avatars.json"), "utf8").then(JSON.parse),
@@ -95,7 +105,7 @@ test("Vercel copies only live card art and leaves Set 5 WIP images out", async (
   assert.ok(names.includes("hero-art-gadi-eisenkot-slot1.png"));
   assert.ok(names.includes("pack-wrapper-transparent.png"));
   for (const candidate of set5.candidates) {
-    assert.ok(!names.includes(candidate.art.artKey), candidate.art.artKey);
+    assert.ok(names.includes(candidate.art.artKey), candidate.art.artKey);
   }
 });
 
@@ -121,7 +131,7 @@ test("within each live set a specific Common is about twice a specific Rare", as
     cards: catalog.cards,
     now: Date.parse("2026-09-20T12:00:00.000Z"),
   });
-  for (const setId of ["party-leaders", "party-slot-2", "decisions", "records"]) {
+  for (const setId of LIVE_RELEASE_SET_IDS) {
     const rows = odds.filter((row) => row.releaseSetId === setId);
     const byTier = { Common: [], Uncommon: [], Rare: [] };
     for (const row of rows) byTier[row.rarity].push(row.probability);
@@ -148,11 +158,14 @@ test("current live pack keeps any specific Rare harder than any specific Common"
     cards: catalog.cards,
     now,
   });
-  const report = rarityOrderReport(odds);
-  assert.ok(odds.some(({ rarity }) => rarity === "Common"));
-  assert.ok(odds.some(({ rarity }) => rarity === "Rare"));
-  assert.equal(report.holds, true);
-  assert.ok(report.easiestRare > report.hardestCommon);
+  const openIds = [...new Set(odds.map((row) => row.releaseSetId))];
+  assert.ok(openIds.includes("party-leaders"));
+  assert.ok(openIds.includes("set-5"));
+  for (const setId of openIds) {
+    const report = rarityOrderReport(odds.filter((row) => row.releaseSetId === setId));
+    assert.equal(report.holds, true, setId);
+    assert.ok(report.easiestRare > report.hardestCommon, setId);
+  }
 });
 
 test("slim community payload stays off the fat catalog", () => {
@@ -171,11 +184,8 @@ test("slim community payload stays off the fat catalog", () => {
 
 
 test("Sets 3 and 4 ship complete art-backed catalogs with their collectible rarities", async () => {
-  const [cards, specials] = await Promise.all([
-    readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
-    readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
-  ]);
-  const expanded = expandPublicCatalog(cards, specials);
+  const { cards, specials, extras } = await loadCatalogSources();
+  const expanded = expandPublicCatalog(cards, specials, extras);
   const decisions = expanded.filter(({ releaseSetId }) => releaseSetId === "decisions");
   const records = expanded.filter(({ releaseSetId }) => releaseSetId === "records");
   assert.equal(decisions.length, 9);
@@ -188,28 +198,36 @@ test("Sets 3 and 4 ship complete art-backed catalogs with their collectible rari
 });
 
 
-test("Set 5 WIP pool has assigned pull rarities and stays off the live catalog", async () => {
-  const [catalog, set5] = await Promise.all([
+test("Set 5 ships as live Quote cards with party pips and pull rarities", async () => {
+  const [{ extras, set5 }, catalog] = await Promise.all([
+    loadCatalogSources(),
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
-    readFile(path.resolve(here, "../../docs/intake/research/set5-wip-pool.json"), "utf8").then(JSON.parse),
   ]);
+  const live = catalog.cards.filter(({ releaseSetId }) => releaseSetId === "set-5");
+  assert.equal(live.length, 22);
+  assert.deepEqual(live.map(({ displayCode }) => displayCode),
+    Array.from({ length: 22 }, (_, index) => `רגע-${String(index + 1).padStart(2, "0")}`));
+  assert.ok(live.every(({ type, typeHe, walkout, pip }) =>
+    type === "Quote" && typeHe === "ציטוט" && walkout?.kind === "quote" && pip && pip !== "#c4a35a"));
+  assert.ok(live.every(({ eventOnly, packEligible }) => eventOnly !== true && packEligible !== false));
   const counts = { Common: 0, Uncommon: 0, Rare: 0 };
   for (const candidate of set5.candidates) {
-    assert.ok(["Common", "Uncommon", "Rare"].includes(candidate.rarity), candidate.n);
+    const card = live.find((item) => item.artKey === candidate.art.artKey);
+    assert.ok(card, candidate.art.artKey);
+    assert.equal(card.rarity, candidate.rarity);
     counts[candidate.rarity] += 1;
-    assert.ok(!catalog.cards.some((card) => card.artKey === candidate.art.artKey));
   }
   assert.deepEqual(counts, { Common: 12, Uncommon: 6, Rare: 4 });
-  assert.equal(set5.candidates.find(({ n }) => n === 22).rarity, "Rare");
-  assert.equal(set5.candidates.find(({ n }) => n === 6).rarity, "Rare");
+  assert.equal(live.find(({ id }) => id === "SET5-22").rarity, "Rare");
+  assert.equal(live.find(({ id }) => id === "SET5-20").set, "LIK");
+  assert.equal(extras.set5.candidates.length, 22);
+  await Promise.all(live.map(({ artKey }) =>
+    readFile(path.resolve(here, "../../docs/design/assets", artKey))));
 });
 
 test("Sets 1 and 2 ship complete art-backed catalogs", async () => {
-  const [cards, specials] = await Promise.all([
-    readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
-    readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
-  ]);
-  const expanded = expandPublicCatalog(cards, specials);
+  const { cards, specials, extras } = await loadCatalogSources();
+  const expanded = expandPublicCatalog(cards, specials, extras);
   const leaders = expanded.filter(({ releaseSetId }) => releaseSetId === "party-leaders");
   const numberTwos = expanded.filter(({ releaseSetId }) => releaseSetId === "party-slot-2");
   assert.equal(leaders.length, 14);

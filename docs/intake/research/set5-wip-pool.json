@@ -1,8 +1,8 @@
 {
   "id": "set5-wip-pool",
-  "status": "wip-accepted-pool",
+  "status": "live-release",
   "asOfDate": "2026-09-20",
-  "note": "Broad accepted candidate pool for the future Set 5, per Guy's instruction: include every candidate not disqualified; prune or promote later. This is not a final fixed-size release set. The pool is intentionally NOT wired into studio-content.json, specials-content.json, or any runtime build, so nothing here reaches the released catalog before Guy prunes it. One quote per person applies only when the final set is pruned. All 22 candidates now have Guy-approved art in the old Klafi style, recorded per candidate below (the polygonal experiments were rejected).",
+  "note": "Set 5 is wired into the live catalog, binder, pack table, and Vercel as release set `set-5` (רגעים). Cards expand as Quote full-art with party pips, display codes רגע-01–22, and the assigned pull rarities below. One quote per person was not enforced; the accepted pool shipped as-is.",
   "sourceDocument": "docs/intake/research/set5-wip-roster.md",
   "candidates": [
     {

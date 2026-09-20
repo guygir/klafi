@@ -1,6 +1,6 @@
-# WIP Set 5 - accepted pool
+# Set 5 - רגעים
 
-This is an intentionally broad accepted pool. Guy's instruction: include every candidate not disqualified; later he may drop some or promote others. Do not force the pool to a final set size now. No deploy. Keep one quote per person only when the final Set 5 is pruned.
+The accepted 22-card pool is live in the binder, pack table, and Vercel catalog as release set `set-5`. Cards use the same Quote full-art layout as sets 1–2, with party pips and display codes `רגע-01`–`רגע-22`.
 
 ## Accepted initial pool
 

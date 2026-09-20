@@ -15,7 +15,7 @@ import {
   setUnlockAt,
   validPackConfig,
 } from "./pack-config.js";
-import { expandPublicCatalog, runtimeSpecialCard } from "./public-catalog.js";
+import { catalogExtrasFromStudio, expandPublicCatalog, runtimeSpecialCard } from "./public-catalog.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -801,13 +801,16 @@ export async function createKalpiApp({
   const demoPack = await readJsonFile(demoPackPath, null);
   let studioContent = await readJsonFile(studioContentPath, null);
   const specials = await readJsonFile(specialsPath, { sets: [] });
+  const set5 = docsDir
+    ? await readJsonFile(path.join(docsDir, "intake/research/set5-wip-pool.json"), { candidates: [] })
+    : { candidates: [] };
   let presentationContent = presentationContentPath
     ? JSON.parse(await readFile(presentationContentPath, "utf8"))
     : { schemaVersion: 1, deckId: "poc-response", updatedAt: null, fields: {} };
   const events = eventsPath ? JSON.parse(await readFile(eventsPath, "utf8")) : { events: [] };
   let achievementCatalog = achievementsPath ? JSON.parse(await readFile(achievementsPath, "utf8")) : { achievements: [] };
   const avatarCatalog = avatarsPath ? JSON.parse(await readFile(avatarsPath, "utf8")) : { avatars: [] };
-  const allCards = expandPublicCatalog(cards, specials);
+  const allCards = expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studioContent, set5));
   const cardsById = new Map(allCards.map((card) => [card.id, card]));
   const partyIds = new Set(cards.filter(({ set }) => set !== "SYS").map(({ set }) => set));
   if (studioContent) {

@@ -1,8 +1,8 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { expandPublicCatalog } from "../app/server/public-catalog.js";
-import { cardPullOdds, normalizePackConfig, rarityOrderReport, resolvePackTable } from "../app/server/pack-config.js";
+import { catalogExtrasFromStudio, expandPublicCatalog } from "../app/server/public-catalog.js";
+import { cardPullOdds, normalizePackConfig, packCardAllowed, rarityBucket, rarityOrderReport, resolvePackTable } from "../app/server/pack-config.js";
 import { cardIndexFromCatalog, isLiveReleaseSet, visiblePlayerCards, visibleReleaseSets } from "../app/server/visible-sets.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -11,9 +11,17 @@ const specials = JSON.parse(await readFile(path.join(root, "app/data/specials-co
 const advocacy = JSON.parse(await readFile(path.join(root, "app/data/advocacy.json"), "utf8"));
 const avatars = JSON.parse(await readFile(path.join(root, "app/data/avatars.json"), "utf8"));
 const studio = JSON.parse(await readFile(path.join(root, "app/data/studio-content.json"), "utf8"));
+const set5 = JSON.parse(await readFile(path.join(root, "docs/intake/research/set5-wip-pool.json"), "utf8"));
 
-const visibleCards = visiblePlayerCards(expandPublicCatalog(cards, specials));
-const idleCards = cards.filter((card) => card.idleEligible && !card.eventOnly);
+const visibleCards = visiblePlayerCards(expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studio, set5)));
+const pack = normalizePackConfig(studio.gameConfig?.pack);
+const packById = new Map(pack.sets.map((set) => [set.id, set]));
+const releaseById = new Map((studio.gameConfig?.releaseSets || []).map((set) => [set.id, set]));
+const idleCards = visibleCards.filter((card) => {
+  const packSet = packById.get(card.releaseSetId);
+  const release = releaseById.get(card.releaseSetId);
+  return Boolean(packSet && packSet.weight > 0 && release?.runtimeState !== "held" && packCardAllowed(card, packSet) && rarityBucket(card));
+});
 const visiblePartyIds = new Set(visibleCards
   .map(({ set }) => set)
   .filter((set) => set && set !== "SYS" && !String(set).startsWith("special-")));

@@ -16,6 +16,7 @@ const releaseSets = [
   { id: "party-slot-2", runtimeState: "held", plannedPublishAt: "2026-09-24T06:00:00.000Z" },
   { id: "decisions", runtimeState: "held", plannedPublishAt: "2026-10-20T06:00:00.000Z" },
   { id: "records", runtimeState: "held", plannedPublishAt: "2026-10-23T06:00:00.000Z" },
+  { id: "set-5", runtimeState: "held", plannedPublishAt: "2026-09-20T06:00:00.000Z" },
 ];
 const cards = [
   { id: "L-C", releaseSetId: "party-leaders", rarity: "Common" },

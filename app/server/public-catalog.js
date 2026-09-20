@@ -61,6 +61,101 @@ export function runtimeSpecialCard(card, specials) {
   };
 }
 
-export function expandPublicCatalog(cards, specials = { sets: [], cards: [] }) {
-  return [...cards, ...(specials.cards || []).map((card) => runtimeSpecialCard(card, specials))];
+const SET5_LETTERS = "רגע";
+const SET5_NAME_HE = "רגעים";
+const SET5_NAME_EN = "Moments";
+const SET5_PARTY_FALLBACK = Object.freeze({
+  "מאי גולן": "LIK",
+  "May Golan": "LIK",
+});
+
+function normalizePersonName(value) {
+  return String(value || "").replace(/[׳'ʼ`״"]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function findSet5Party(candidate, parties = [], members = []) {
+  const nameHe = normalizePersonName(candidate.nameHe);
+  const nameEn = normalizePersonName(candidate.nameEn);
+  const member = members.find((item) =>
+    normalizePersonName(item.nameHe) === nameHe
+    || normalizePersonName(item.nameEn) === nameEn);
+  const partyId = member?.partyId
+    || SET5_PARTY_FALLBACK[candidate.nameHe]
+    || SET5_PARTY_FALLBACK[candidate.nameEn];
+  return parties.find((party) => party.id === partyId) || null;
+}
+
+export function runtimeSet5Card(candidate, extras = {}) {
+  const party = findSet5Party(candidate, extras.parties, extras.members);
+  const critical = new Set(extras.criticalBloc || []);
+  const treatment = party && critical.has(party.id) ? "critical" : "favorable";
+  const index = Number(candidate.n) || 0;
+  const sourceUrl = (candidate.sources || []).find(Boolean) || "";
+  const context = candidate.notes || candidate.art?.note || "";
+  return {
+    id: `SET5-${String(index).padStart(2, "0")}`,
+    set: party?.id || "set-5",
+    setName: party?.displayNameEn || SET5_NAME_EN,
+    setNameHe: party?.displayNameHe || SET5_NAME_HE,
+    letters: (party?.finalLetters || party?.requestedLetters || [SET5_LETTERS])[0],
+    displayCode: `${SET5_LETTERS}-${String(index).padStart(2, "0")}`,
+    pip: party?.pip || "#1B3A6B",
+    title: candidate.nameEn,
+    titleHe: candidate.nameHe,
+    hebrewTitle: candidate.nameHe,
+    type: "Quote",
+    typeHe: "ציטוט",
+    rarity: candidate.rarity || "Common",
+    subtitle: `${SET5_NAME_HE} · ${party?.displayNameHe || ""}`.replace(/ · $/, ""),
+    subtitleHe: SET5_NAME_HE,
+    body: context,
+    whyItMatters: candidate.notes || "Selected for Set 5 from the accepted quote pool.",
+    source: sourceUrl || "Source pending",
+    listSlot: null,
+    artKey: candidate.art?.artKey || null,
+    walkout: {
+      kind: "quote",
+      text: candidate.displayText,
+      speaker: candidate.nameHe,
+      date: "",
+      sourceId: `set5-${String(index).padStart(2, "0")}`,
+      sourceLabel: sourceUrl || "Source pending",
+      sourceUrl,
+      context,
+      quoteStatus: candidate.quoteStatus || "exact",
+      selectionRationale: candidate.notes || "Accepted Set 5 quote with approved art.",
+      flavorDisclosure: "editorial-symbolism-not-evidence",
+      releasePhase: treatment === "critical" ? "contrast" : "constructive",
+      editorialRole: treatment,
+      contentStatus: candidate.art?.status === "approved" ? "approved" : "research-needed",
+    },
+    eventOnly: false,
+    packEligible: true,
+    idleEligible: false,
+    releaseSetId: "set-5",
+    releaseOrder: 5,
+    releaseTier: "objective",
+    releaseState: "active",
+    availableFrom: null,
+    binderGroup: "set-5",
+    subjectSet: null,
+  };
+}
+
+export function catalogExtrasFromStudio(studio, set5) {
+  return {
+    set5: set5 || { candidates: [] },
+    parties: studio?.parties || [],
+    members: studio?.members || [],
+    criticalBloc: studio?.editorialPolicy?.criticalBloc || [],
+  };
+}
+
+export function expandPublicCatalog(cards, specials = { sets: [], cards: [] }, extras = {}) {
+  const set5Cards = (extras.set5?.candidates || []).map((candidate) => runtimeSet5Card(candidate, extras));
+  return [
+    ...cards,
+    ...(specials.cards || []).map((card) => runtimeSpecialCard(card, specials)),
+    ...set5Cards,
+  ];
 }

@@ -22,6 +22,7 @@
         "party-slot-2": 2,
         "decisions": 1,
         "records": 1,
+        "set-5": 1,
         "party-position-security": 1,
         "party-position-economy": 1,
         "party-position-religion-state": 1,
@@ -93,7 +94,7 @@
         },
         {
           "id": "set-5",
-          "weight": 0,
+          "weight": 10,
           "includeEventCards": false,
           "rarities": {
             "Common": 65,
@@ -142,9 +143,19 @@
         "launchGate": "blocked"
       },
       {
+        "id": "set-5",
+        "nameHe": "רגעים",
+        "order": 5,
+        "tier": "objective",
+        "runtimeState": "active",
+        "runtimeAvailableFrom": "2026-09-20T00:00:00+03:00",
+        "plannedPublishAt": "2026-09-20T06:00:00.000Z",
+        "launchGate": "blocked"
+      },
+      {
         "id": "party-position-security",
         "nameHe": "עמדת המפלגה · ביטחון ומדיניות חוץ",
-        "order": 5,
+        "order": 6,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-01T06:00:00.000Z",
@@ -153,7 +164,7 @@
       {
         "id": "party-position-economy",
         "nameHe": "עמדת המפלגה · כלכלה ויוקר המחיה",
-        "order": 6,
+        "order": 7,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-05T06:00:00.000Z",
@@ -162,7 +173,7 @@
       {
         "id": "party-position-religion-state",
         "nameHe": "עמדת המפלגה · דת ומדינה",
-        "order": 7,
+        "order": 8,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-13T06:00:00.000Z",
@@ -171,7 +182,7 @@
       {
         "id": "party-position-democracy",
         "nameHe": "עמדת המפלגה · משפט, ממשל ודמוקרטיה",
-        "order": 8,
+        "order": 9,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-09T06:00:00.000Z",
@@ -180,7 +191,7 @@
       {
         "id": "party-position-society-services",
         "nameHe": "עמדת המפלגה · חינוך, בריאות ורווחה",
-        "order": 9,
+        "order": 10,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-17T06:00:00.000Z",
@@ -189,7 +200,7 @@
       {
         "id": "special-events",
         "nameHe": "אירועים מיוחדים",
-        "order": 10,
+        "order": 11,
         "tier": "event",
         "runtimeState": "event-only",
         "plannedPublishAt": null,

@@ -1,16 +1,18 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { expandPublicCatalog } from "../app/server/public-catalog.js";
+import { catalogExtrasFromStudio, expandPublicCatalog } from "../app/server/public-catalog.js";
 import { visiblePlayerCards } from "../app/server/visible-sets.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cards = JSON.parse(await readFile(path.join(root, "app/data/cards.json"), "utf8"));
 const specials = JSON.parse(await readFile(path.join(root, "app/data/specials-content.json"), "utf8"));
+const studio = JSON.parse(await readFile(path.join(root, "app/data/studio-content.json"), "utf8"));
+const set5 = JSON.parse(await readFile(path.join(root, "docs/intake/research/set5-wip-pool.json"), "utf8"));
 const catalog = {
   schemaVersion: 1,
   generatedAt: new Date().toISOString(),
-  cards: visiblePlayerCards(expandPublicCatalog(cards, specials)),
+  cards: visiblePlayerCards(expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studio, set5))),
 };
 const out = path.join(root, "app/public/catalog.json");
 await writeFile(out, `${JSON.stringify(catalog)}\n`);
