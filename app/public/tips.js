@@ -131,16 +131,20 @@ function highlightSpec(node, pad = 8) {
   const box = inflate(boxOf(node), pad);
   const style = typeof getComputedStyle === "function" ? getComputedStyle(node) : null;
   const computed = Number.parseFloat(style?.borderTopLeftRadius || "0") || 0;
-  const compact = Math.max(box.width, box.height) <= 88 && Math.abs(box.width - box.height) < 28;
-  const pillish = node.matches?.("#open-pack, #pack-action, .primary-action")
+  const compact = Math.max(box.width, box.height) <= 72 && box.width / box.height < 1.35 && box.height / box.width < 1.35;
+  const pillish = node.matches?.("#open-pack, #pack-action, .primary-action, .share-icon-button")
     || computed >= Math.min(box.width, box.height) / 2 - 1;
-  const cardish = node.matches?.("#dialog-card, .binder-shared-card, .kalpi-card, #rip-stage");
-  if (compact || node.matches?.("button[data-nav], .share-icon-button, #dialog-whatsapp, #dialog-source")) {
-    const radius = Math.max(box.width, box.height) / 2 + 6;
+  const cardish = node.matches?.("#dialog-card, .binder-shared-card, .kalpi-card");
+  if (compact || node.matches?.("button[data-nav]")) {
+    const radius = Math.max(box.width, box.height) / 2 + 7;
     return { kind: "circle", box, cx: box.left + box.width / 2, cy: box.top + box.height / 2, radius };
   }
   if (pillish) {
     return { kind: "pill", box, radius: Math.min(box.width, box.height) / 2 };
+  }
+  if (node.matches?.("#rip-stage")) {
+    const radius = 18;
+    return { kind: "circle", box, cx: box.left + box.width / 2, cy: box.top + box.height / 2, radius, markOnly: true };
   }
   return { kind: "round", box, radius: Math.max(computed, cardish ? 14 : 12) };
 }
@@ -340,7 +344,10 @@ export function attachKlafiTips(env = globalThis) {
     }
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const fromSpec = highlightSpec(ringNode, 8);
+    const preferredRing = state.step === 3 && flags().dialogOpen
+      ? firstVisible("#dialog-card", doc)
+      : null;
+    const fromSpec = highlightSpec(preferredRing || ringNode, 8);
     const toNode = step.arrowTo ? firstVisible(step.arrowTo, doc) : null;
     const toSpec = toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null;
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
@@ -356,7 +363,7 @@ export function attachKlafiTips(env = globalThis) {
     marks.setAttribute("width", String(vw));
     marks.setAttribute("height", String(vh));
     marks.replaceChildren();
-    drawRing(marks, fromSpec);
+    if (!fromSpec.markOnly) drawRing(marks, fromSpec);
     if (toSpec) {
       drawRing(marks, toSpec);
       drawArrow(marks, fromSpec, toSpec);
