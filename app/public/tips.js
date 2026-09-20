@@ -277,7 +277,10 @@ export function attachKlafiTips(env = globalThis) {
     nextBtn.textContent = state.step === TIPS_STEPS.length ? "הבנתי" : "הבא";
     skipBtn.hidden = state.step !== 1;
     backBtn.hidden = state.step === 1;
-    if (mute) mute.checked = true;
+    if (mute && mute.dataset.seeded !== "1") {
+      mute.checked = true;
+      mute.dataset.seeded = "1";
+    }
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const ring = inflate(boxOf(ringNode), 8);
@@ -361,6 +364,11 @@ export function attachKlafiTips(env = globalThis) {
   if (dialog) {
     const observer = new MutationObserver(() => sync());
     observer.observe(dialog, { attributes: true, attributeFilter: ["open"] });
+  }
+  for (const id of ["home-view", "pack-view", "binder-view"]) {
+    const view = doc.querySelector(`#${id}`);
+    if (!view) continue;
+    new MutationObserver(() => sync()).observe(view, { attributes: true, attributeFilter: ["class"] });
   }
   const binderGrid = doc.querySelector("#binder-grid");
   if (binderGrid) {
