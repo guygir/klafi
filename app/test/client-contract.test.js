@@ -112,6 +112,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.klafi-tips-dim \{ pointer-events: auto; z-index: 1; \}/);
   assert.match(css, /\.klafi-tips-card \{ z-index: 2; \}/);
   assert.match(css, /\.klafi-tips-marks \{ pointer-events: none; z-index: 3; \}/);
+  assert.match(css, /\.klafi-tips-card \{[\s\S]*?background: #eee5d4/);
+  assert.doesNotMatch(css, /\.klafi-tips-card \{[\s\S]*?background: rgba\(238, 229, 212, 0\.6\)/);
+  assert.match(tipsJs, /kind === "circle"/);
+  assert.match(tipsJs, /klafi-tips-dot/);
   assert.match(html, /id="run-guided-demo"[^>]*>Run six-card guided demo/);
   assert.doesNotMatch(tipsJs, /run-guided-demo/);
   assert.match(html, /id="idle-storage"/);
@@ -268,7 +272,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-24/);
+  assert.match(html, /card-surface-25/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -333,7 +337,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-24/);
+  assert.match(html, /card-surface-25/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

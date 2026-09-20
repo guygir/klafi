@@ -123,6 +123,57 @@ function roundedHole(box, radius) {
   return `M${x + r} ${y}h${w - r * 2}a${r} ${r} 0 0 1 ${r} ${r}v${h - r * 2}a${r} ${r} 0 0 1 ${-r} ${r}h${-(w - r * 2)}a${r} ${r} 0 0 1 ${-r} ${-r}v${-(h - r * 2)}a${r} ${r} 0 0 1 ${r} ${-r}z`;
 }
 
+function circleHole(cx, cy, radius) {
+  return `M${cx - radius} ${cy}a${radius} ${radius} 0 1 0 ${radius * 2} 0a${radius} ${radius} 0 1 0 ${-radius * 2} 0`;
+}
+
+function highlightSpec(node, pad = 8) {
+  const box = inflate(boxOf(node), pad);
+  const style = typeof getComputedStyle === "function" ? getComputedStyle(node) : null;
+  const computed = Number.parseFloat(style?.borderTopLeftRadius || "0") || 0;
+  const compact = Math.max(box.width, box.height) <= 88 && Math.abs(box.width - box.height) < 28;
+  const pillish = node.matches?.("#open-pack, #pack-action, .primary-action")
+    || computed >= Math.min(box.width, box.height) / 2 - 1;
+  const cardish = node.matches?.("#dialog-card, .binder-shared-card, .kalpi-card, #rip-stage");
+  if (compact || node.matches?.("button[data-nav], .share-icon-button, #dialog-whatsapp, #dialog-source")) {
+    const radius = Math.max(box.width, box.height) / 2 + 6;
+    return { kind: "circle", box, cx: box.left + box.width / 2, cy: box.top + box.height / 2, radius };
+  }
+  if (pillish) {
+    return { kind: "pill", box, radius: Math.min(box.width, box.height) / 2 };
+  }
+  return { kind: "round", box, radius: Math.max(computed, cardish ? 14 : 12) };
+}
+
+function holePath(spec) {
+  if (spec.kind === "circle") return circleHole(spec.cx, spec.cy, spec.radius);
+  return roundedHole(spec.box, spec.radius);
+}
+
+function svgEl(name, attrs) {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+  return node;
+}
+
+function drawRing(svg, spec) {
+  if (spec.kind === "circle") {
+    svg.append(svgEl("circle", { class: "klafi-tips-ring klafi-tips-ring-gold", cx: spec.cx, cy: spec.cy, r: spec.radius }));
+    svg.append(svgEl("circle", { class: "klafi-tips-ring klafi-tips-ring-seal", cx: spec.cx, cy: spec.cy, r: Math.max(10, spec.radius - 4) }));
+    return;
+  }
+  const { box, radius } = spec;
+  svg.append(svgEl("rect", {
+    class: "klafi-tips-ring klafi-tips-ring-gold",
+    x: box.left, y: box.top, width: box.width, height: box.height, rx: radius, ry: radius,
+  }));
+  svg.append(svgEl("rect", {
+    class: "klafi-tips-ring klafi-tips-ring-seal",
+    x: box.left + 3.5, y: box.top + 3.5, width: Math.max(8, box.width - 7), height: Math.max(8, box.height - 7),
+    rx: Math.max(6, radius - 3), ry: Math.max(6, radius - 3),
+  }));
+}
+
 function placeCard(card, ring, to) {
   const pad = 16;
   const width = card.offsetWidth || 280;
@@ -148,35 +199,41 @@ function placeCard(card, ring, to) {
   card.style.top = `${Math.max(pad, Math.min(fit.top, vh - height - pad))}px`;
 }
 
-function drawArrow(svg, from, to) {
-  const start = { x: from.left + from.width / 2, y: from.top + from.height / 2 };
-  const end = { x: to.left + to.width / 2, y: to.top + to.height / 2 };
+function drawArrow(svg, fromSpec, toSpec) {
+  const start = fromSpec.kind === "circle"
+    ? { x: fromSpec.cx, y: fromSpec.cy }
+    : { x: fromSpec.box.left + fromSpec.box.width / 2, y: fromSpec.box.top + fromSpec.box.height / 2 };
+  const end = toSpec.kind === "circle"
+    ? { x: toSpec.cx, y: toSpec.cy }
+    : { x: toSpec.box.left + toSpec.box.width / 2, y: toSpec.box.top + toSpec.box.height / 2 };
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const len = Math.hypot(dx, dy) || 1;
-  const inset = Math.min(from.width, from.height) / 2 + 10;
-  const tipInset = Math.min(to.width, to.height) / 2 + 8;
-  const x1 = start.x + (dx / len) * inset;
-  const y1 = start.y + (dy / len) * inset;
-  const x2 = end.x - (dx / len) * tipInset;
-  const y2 = end.y - (dy / len) * tipInset;
-  const mx = (x1 + x2) / 2 + Math.max(-48, Math.min(48, -dy / len * 36));
-  const my = (y1 + y2) / 2 + Math.max(-48, Math.min(48, dx / len * 36));
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", `M${x1} ${y1} Q${mx} ${my} ${x2} ${y2}`);
-  path.setAttribute("class", "klafi-tips-arrow");
-  path.setAttribute("fill", "none");
-  svg.append(path);
+  const fromR = fromSpec.kind === "circle" ? fromSpec.radius : Math.min(fromSpec.box.width, fromSpec.box.height) / 2;
+  const toR = toSpec.kind === "circle" ? toSpec.radius : Math.min(toSpec.box.width, toSpec.box.height) / 2;
+  const x1 = start.x + (dx / len) * (fromR + 6);
+  const y1 = start.y + (dy / len) * (fromR + 6);
+  const x2 = end.x - (dx / len) * (toR + 10);
+  const y2 = end.y - (dy / len) * (toR + 10);
+  const mx = (x1 + x2) / 2 + Math.max(-56, Math.min(56, -dy / len * 42));
+  const my = (y1 + y2) / 2 + Math.max(-56, Math.min(56, dx / len * 42));
+  svg.append(svgEl("path", {
+    class: "klafi-tips-arrow",
+    fill: "none",
+    d: `M${x1} ${y1} Q${mx} ${my} ${x2} ${y2}`,
+  }));
   const angle = Math.atan2(y2 - my, x2 - mx);
-  const head = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-  const size = 9;
-  head.setAttribute("class", "klafi-tips-arrow-head");
-  head.setAttribute("points", [
-    `${x2},${y2}`,
-    `${x2 - Math.cos(angle - 0.45) * size},${y2 - Math.sin(angle - 0.45) * size}`,
-    `${x2 - Math.cos(angle + 0.45) * size},${y2 - Math.sin(angle + 0.45) * size}`,
-  ].join(" "));
-  svg.append(head);
+  const size = 11;
+  svg.append(svgEl("polygon", {
+    class: "klafi-tips-arrow-head",
+    points: [
+      `${x2},${y2}`,
+      `${x2 - Math.cos(angle - 0.42) * size},${y2 - Math.sin(angle - 0.42) * size}`,
+      `${x2 - Math.cos(angle + 0.42) * size},${y2 - Math.sin(angle + 0.42) * size}`,
+    ].join(" "),
+  }));
+  svg.append(svgEl("circle", { class: "klafi-tips-dot", cx: x1, cy: y1, r: 4.5 }));
+  svg.append(svgEl("circle", { class: "klafi-tips-dot", cx: x2, cy: y2, r: 3.5 }));
 }
 
 function readFlags(doc) {
@@ -283,32 +340,28 @@ export function attachKlafiTips(env = globalThis) {
     }
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const ring = inflate(boxOf(ringNode), 8);
+    const fromSpec = highlightSpec(ringNode, 8);
     const toNode = step.arrowTo ? firstVisible(step.arrowTo, doc) : null;
-    const to = toNode && toNode !== ringNode ? boxOf(toNode) : null;
+    const toSpec = toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null;
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     dim.setAttribute("width", String(vw));
     dim.setAttribute("height", String(vh));
     dim.replaceChildren();
-    const veil = doc.createElementNS("http://www.w3.org/2000/svg", "path");
-    veil.setAttribute("fill-rule", "evenodd");
-    veil.setAttribute("class", "klafi-tips-veil");
-    veil.setAttribute("d", `M0 0H${vw}V${vh}H0Z${roundedHole(ring, 16)}`);
-    dim.append(veil);
+    dim.append(svgEl("path", {
+      "fill-rule": "evenodd",
+      class: "klafi-tips-veil",
+      d: `M0 0H${vw}V${vh}H0Z${holePath(fromSpec)}`,
+    }));
     marks.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     marks.setAttribute("width", String(vw));
     marks.setAttribute("height", String(vh));
     marks.replaceChildren();
-    const halo = doc.createElementNS("http://www.w3.org/2000/svg", "rect");
-    halo.setAttribute("class", "klafi-tips-ring");
-    halo.setAttribute("x", String(ring.left));
-    halo.setAttribute("y", String(ring.top));
-    halo.setAttribute("width", String(ring.width));
-    halo.setAttribute("height", String(ring.height));
-    halo.setAttribute("rx", "16");
-    marks.append(halo);
-    if (to) drawArrow(marks, ring, inflate(to, 4));
-    placeCard(card, ring, to);
+    drawRing(marks, fromSpec);
+    if (toSpec) {
+      drawRing(marks, toSpec);
+      drawArrow(marks, fromSpec, toSpec);
+    }
+    placeCard(card, fromSpec.box, toSpec?.box || null);
     queueMicrotask(() => nextBtn?.focus({ preventScroll: true }));
   }
 

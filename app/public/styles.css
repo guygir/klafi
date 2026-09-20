@@ -3561,23 +3561,37 @@ body {
 .klafi-tips-marks { pointer-events: none; z-index: 3; }
 
 .klafi-tips-veil {
-  fill: rgba(28, 22, 16, 0.5);
+  fill: rgba(28, 22, 16, 0.52);
 }
 
 .klafi-tips-ring {
   fill: none;
+}
+
+.klafi-tips-ring-gold {
   stroke: var(--pack-gold);
-  stroke-width: 2.4;
-  filter: drop-shadow(0 0 1px var(--pack-seal));
+  stroke-width: 3.2;
+}
+
+.klafi-tips-ring-seal {
+  stroke: var(--pack-seal);
+  stroke-width: 1.6;
 }
 
 .klafi-tips-arrow {
   stroke: var(--pack-gold);
-  stroke-width: 2.2;
+  stroke-width: 3;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.klafi-tips-arrow-head { fill: var(--pack-seal); }
+.klafi-tips-arrow-head,
+.klafi-tips-dot { fill: var(--pack-gold); }
+
+.klafi-tips-dot {
+  stroke: var(--pack-seal);
+  stroke-width: 1.4;
+}
 
 .klafi-tips-card {
   position: fixed;
@@ -3585,9 +3599,8 @@ body {
   padding: 14px 16px 12px;
   border: 1px solid color-mix(in srgb, var(--pack-gold) 62%, var(--pack-seal));
   border-radius: 14px;
-  background: rgba(238, 229, 212, 0.6);
-  box-shadow: 0 16px 40px rgba(28, 22, 16, 0.22);
-  backdrop-filter: blur(12px);
+  background: #eee5d4;
+  box-shadow: 0 16px 40px rgba(28, 22, 16, 0.28);
   color: #3c3026;
   pointer-events: auto;
   text-align: start;

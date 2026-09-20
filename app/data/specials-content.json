@@ -295,7 +295,7 @@
       "context": "כתב אישום אינו עבירה ואינו הרשעה. הרשעה חלקית יכולה להתייחס רק לחלק מהעבירות באותו כתב אישום. קביעה שביצע עבירה ללא הרשעה אינה זיכוי, אך גם אינה הרשעה. פסקה 19 בפסק הדין כוללת אי־עקביות מספרית; הכרטיס נשען על הפירוט הקוהרנטי בפסקה 2.",
       "scene": "Fifteen plain court-file tabs arranged as thirteen dark verdict tabs and two separately marked non-conviction findings; no prison bars, handcuffs or invented court document.",
       "flavor": "The visual counts case outcomes without turning legal categories into spectacle.",
-      "artKey": "hero-art-itamar-ben-gvir-legal.png",
+      "artKey": "hero-art-itamar-ben-gvir-legal.jpg",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved",
       "reviewNote": "Verify the wording against paragraph 2 and preserve the no-current-conviction caveat before approval."
@@ -342,7 +342,7 @@
       "context": "זו תוצאת רשימת זהות, לא הצבעת העדפה אישית לפייגלין. 0 הוא מספר המושבים שקיבלה הרשימה לאחר שלא עברה את אחוז החסימה.",
       "scene": "A ballot-results board stopping below the threshold line at 2.74%, with the zero-seat result treated as election data rather than ridicule.",
       "flavor": "A large vote total can still end at zero seats.",
-      "artKey": "hero-art-moshe-feiglin-zehut.png",
+      "artKey": "hero-art-moshe-feiglin-zehut.jpg",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
     },
@@ -403,7 +403,7 @@
       "context": "קיש נכנס לתפקיד כחמישה חודשים לפני המבחן. התוצאה משקפת למידה לאורך שנים, לרבות תקופת הקורונה, ולכן הכרטיס מציג נתון שנמדד בתקופת כהונתו ואינו טוען שהוא גרם לו. אלה הציונים הנמוכים מאז 2007, לא הנמוכים אי־פעם.",
       "scene": "Two descending assessment lines, mathematics and science, each ending exactly 32 points lower; no distressed children or invented classroom failure.",
       "flavor": "The measured fall is visible; causation is not drawn.",
-      "artKey": "hero-art-yoav-kisch-timss.png",
+      "artKey": "hero-art-yoav-kisch-timss.jpg",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved",
       "officeSourceUrl": "https://main.knesset.gov.il/EN/News/PressReleases/Pages/press291222r.aspx"
@@ -424,7 +424,7 @@
       "context": "המספר הוא קורבנות, לא אירועים, ומתייחס לערבים אזרחי ישראל. הנתונים ככל הנראה מתייחסים לרצח פלילי ואינם כוללים פיגועי טרור. חפיפה בזמן הכהונה אינה מוכיחה שבן גביר גרם למקרי הרצח. כהונתו הופסקה בין 21.1.2025 ל־19.3.2025.",
       "scene": "A sober two-column public-safety ledger marked 236 and 224; no bodies, blood, weapons, crime-scene tape or ethnic caricature.",
       "flavor": "The count is treated as a public-safety record, never as spectacle.",
-      "artKey": "hero-art-itamar-ben-gvir-homicides.png",
+      "artKey": "hero-art-itamar-ben-gvir-homicides.jpg",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved",
       "officeSourceUrl": "https://www.gov.il/he/departments/ministry_of_public_security/govil-landing-page"
@@ -445,7 +445,7 @@
       "context": "זהו חישוב עיתונאי מצטבר, לא סיכום ממשלתי רשמי. העלות מתייחסת לנסיעות ולמשלחות המלוות, לא להוצאה אישית של רגב בלבד, ולעיתים אינה כוללת אבטחה. חופשות פרטיות אינן נכללות בספירת 15 נסיעות העבודה.",
       "scene": "Fifteen dated travel-stamp shapes crossing a 114-day calendar strip, with a clearly separate delegation-cost ledger and no airline branding.",
       "flavor": "Time abroad and delegation cost remain separate measurements.",
-      "artKey": "hero-art-miri-regev-travel.png",
+      "artKey": "hero-art-miri-regev-travel.jpg",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved",
       "officeSourceUrl": "https://www.gov.il/he/pages/miri-regev",
@@ -472,7 +472,7 @@
       "context": "הדוח מטיל על ח״כ זאב אלקין אחריות לשיקום יישובי הצפון. זהו ממצא יישום ממשלתי ואינו טענה שאלקין לבדו גרם לעיכוב.",
       "scene": "Elkin portrait before a northern town, stalled road plan and empty committee chairs; no operational map or text.",
       "flavor": "הדרך קצרת הטווח נעצרת לפני האופק הרב־שנתי.",
-      "artKey": "hero-art-zeev-elkin-north.png",
+      "artKey": "hero-art-zeev-elkin-north.jpg",
       "quoteStatus": "fact-record",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
@@ -492,7 +492,7 @@
       "context": "הצעדים סייעו לממן את עלויות המלחמה. יותר ממחצית הנטל הנוסף הוטל על חמישון ההכנסה העליון; הכרטיס אינו טוען שכל משק בית שילם סכום זהה.",
       "scene": "An institutional budget table feeding a worn household receipt divided into unequal bands; no text, figures or seals.",
       "flavor": "הנתון המצטבר נשאר צמוד להקשר המימון ולהתפלגות הנטל.",
-      "artKey": "hero-art-tax-burden-2025.png",
+      "artKey": "hero-art-tax-burden-2025.jpg",
       "quoteStatus": "fact-record",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
@@ -512,7 +512,7 @@
       "context": "זהו נתון גישה מערכתי בתקופת כהונתו של בוסו, לא טענה ששר יחיד מנע טיפול. שיעור המטופלים וזמן ההמתנה הם שני מדדים שונים.",
       "scene": "Buso portrait before a long empty care corridor ending at a small open counseling-room door.",
       "flavor": "היקף הטיפול וזמן ההמתנה נשמרים כשני מדדים נפרדים.",
-      "artKey": "hero-art-uriel-buso-mental-health.png",
+      "artKey": "hero-art-uriel-buso-mental-health.jpg",
       "quoteStatus": "fact-record",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
@@ -532,7 +532,7 @@
       "context": "בפודקאסט '120 ואחת' של ynet אמר לוין שאם לא תהיה הסכמה על מינוי שופטים, תשע משרות פנויות עלולות להשאיר את בית המשפט העליון עם שישה שופטים בלבד, והציג את הכיווץ המוסדי כאמצעי לחץ. ציטוט מקוצר מתוך המשפט המלא.",
       "scene": "Levin in a podcast close-up, nine empty judicial chairs receding behind him.",
       "flavor": "תשע כיסאות ריקים; מוטיב הספירה בלבד.",
-      "artKey": "hero-art-yariv-levin-reasonableness.png",
+      "artKey": "hero-art-yariv-levin-reasonableness.jpg",
       "quoteStatus": "shortened",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
@@ -552,7 +552,7 @@
       "context": "הביקורת מתארת כשל היערכות רב־שנתי ורב־ממשלתי. סמוטריץ׳ מופיע מפני שהחלטת הממשלה מינתה אותו ליו״ר הקבינט והדוח דן באי־מימוש המנגנון.",
       "scene": "Smotrich portrait subordinate to a dark unpowered civil command room with empty chairs and disconnected boards.",
       "flavor": "סמכות ללא כלים אינה מנגנון מבצעי.",
-      "artKey": "hero-art-bezalel-smotrich-civil-command.png",
+      "artKey": "hero-art-bezalel-smotrich-civil-command.jpg",
       "quoteStatus": "official-finding-shortened",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
@@ -572,7 +572,7 @@
       "context": "הממשלה קידמה מודל ועדה אחר. העובדה בכרטיס היא אי־הקמת ועדה עד תאריך החיתוך, לא קביעה לגבי יתרונות מודלי המינוי. נדרשת בדיקה מחדש בכל שינוי רשמי.",
       "scene": "Netanyahu before an empty inquiry table with unused microphones and a blank witness chair.",
       "flavor": "חשבון פתוח שחייב מהדורה חדשה אם הסטטוס משתנה.",
-      "artKey": "hero-art-benjamin-netanyahu-inquiry.png",
+      "artKey": "hero-art-benjamin-netanyahu-inquiry.jpg",
       "quoteStatus": "current-status-fact",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
@@ -592,7 +592,7 @@
       "context": "ההגדלות נועדו בעיקר למימון הוצאות המלחמה. הנתון מתייחס לתקציב 2024 בלבד ומחליף את נתון תקציב 2025 המיושן (התקציב הסופי עמד על 786.7 מיליארד ₪, לא 756).",
       "scene": "Smotrich beside a towering ledger stack dwarfing the Knesset podium, three stacked amendment volumes.",
       "flavor": "שלוש הגדלות בשנה אחת, מתועדות כפי שהן.",
-      "artKey": "hero-art-bezalel-smotrich-budget.png",
+      "artKey": "hero-art-bezalel-smotrich-budget.jpg",
       "quoteStatus": "fact-record",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
@@ -612,7 +612,7 @@
       "context": "נכון לתאריך החיתוך גפני עדיין חבר כנסת עד הבחירות. הוותק אינו רציף בשל ההפסקה בשנים 2003–2005. זהו סטטוס חי שמחייב בדיקה מחדש.",
       "scene": "Gafni at the finance chair while his party quietly pulls the chair away; a long committee corridor behind him.",
       "flavor": "ההדחה מהרשימה מוצגת לצד נתון הוותק הלא־רציף.",
-      "artKey": "hero-art-moshe-gafni-record.png",
+      "artKey": "hero-art-moshe-gafni-record.jpg",
       "supportingEvidence": [
         {
           "sourceUrl": "https://m.knesset.gov.il/en/activity/pages/peak.aspx",
@@ -639,7 +639,7 @@
       "context": "זהו רגע נפרד מכרטיס תיקון עילת הסבירות בסט 3; הקשר בין התקדים לבין אמת המידה המשפטית הוא שמצדיק נדירות.",
       "scene": "Deri between the Knesset chamber and courthouse steps, a gavel shadow crossing the minister chair.",
       "flavor": "התקדים והמאבק המאוחר באמת המידה המשפטית מהדהדים זה את זה.",
-      "artKey": "hero-art-aryeh-deri-ruling.png",
+      "artKey": "hero-art-aryeh-deri-ruling.jpg",
       "supportingEvidence": [
         {
           "sourceUrl": "https://apnews.com/article/F45065E97E9218E459C572D7A6ED1E45",
@@ -666,7 +666,7 @@
       "context": "רקורד היסטורי־קונסטרוקטיבי; הניסוח מתייחס לחברות רשמית בקואליציה של מפלגה ערבית עצמאית.",
       "scene": "Abbas stepping through a long-closed door into a coalition room, an empty chair pulled out for him.",
       "flavor": "חברות רשמית בקואליציה, לא תמיכה מבחוץ.",
-      "artKey": "hero-art-mansour-abbas-coalition.png",
+      "artKey": "hero-art-mansour-abbas-coalition.jpg",
       "quoteStatus": "fact-record",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
@@ -686,7 +686,7 @@
       "context": "הרקורד הוא היותו ראש הממשלה הדתי הראשון. מספר המנדטים הוא הקשר משני, לא בסיס הטענה.",
       "scene": "Bennett at the prime minister desk, kippah visible, with a deliberately small party delegation behind the large chair.",
       "flavor": "ראשון דתי בתפקיד, מסיעה של שבעה מנדטים.",
-      "artKey": "hero-art-naftali-bennett-record.png",
+      "artKey": "hero-art-naftali-bennett-record.jpg",
       "quoteStatus": "fact-record",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"

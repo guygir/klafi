@@ -105,13 +105,22 @@ test("Vercel copies live card art including Set 5", async () => {
   assert.ok(names.includes("hero-art-gadi-eisenkot-slot1.png"));
   assert.ok(names.includes("pack-wrapper-transparent.png"));
   let set5Bytes = 0;
+  let liveBytes = 0;
   for (const candidate of set5.candidates) {
     assert.ok(names.includes(candidate.art.artKey), candidate.art.artKey);
     assert.match(candidate.art.artKey, /\.jpg$/);
     const file = path.resolve(here, "../../docs/design/assets", candidate.art.artKey);
     set5Bytes += (await stat(file)).size;
   }
+  for (const name of names) {
+    const file = path.resolve(here, "../../docs/design/assets", name);
+    const size = (await stat(file)).size;
+    liveBytes += size;
+    if (name.endsWith(".mp4") || name === "hero-art-kalpi.png" || name === "pack-wrapper-transparent.png") continue;
+    assert.ok(size < 700 * 1024, `${name} is still too heavy for the Hobby copy (${size})`);
+  }
   assert.ok(set5Bytes < 8 * 1024 * 1024, `Set 5 live JPEGs should stay well under Hobby headroom (${set5Bytes})`);
+  assert.ok(liveBytes < 50 * 1024 * 1024, `live Vercel art should stay slim (${liveBytes})`);
 });
 
 test("within each live set a specific Common is about twice a specific Rare", async () => {
