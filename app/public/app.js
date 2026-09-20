@@ -164,6 +164,7 @@ const elements = {
   studioViewpoint: document.querySelector("#studio-viewpoint"),
   studioReleaseStatus: document.querySelector("#studio-release-status"),
   studioReleaseSets: document.querySelector("#studio-release-sets"),
+  studioPackNow: document.querySelector("#studio-pack-now"),
   saveReleaseSets: document.querySelector("#save-release-sets"),
   debugClock: document.querySelector("#debug-clock"),
   headerDebugReset: document.querySelector("#header-debug-reset"),
@@ -2820,18 +2821,54 @@ function populateLevelIncrements() {
   populateReleaseSets();
 }
 
+function packSetFor(id) {
+  return (model.gameConfig.pack?.sets || []).find((set) => set.id === id) || {
+    id,
+    weight: 0,
+    includeEventCards: false,
+    rarities: { Common: 70, Uncommon: 25, Rare: 5 },
+  };
+}
+
 function populateReleaseSets() {
   if (!elements.studioReleaseSets) return;
   const sets = model.gameConfig.releaseSets || [];
-  elements.studioReleaseSets.innerHTML = sets.map((set) => `
-    <label class="studio-release-row">
+  elements.studioReleaseSets.innerHTML = sets.map((set) => {
+    const pack = packSetFor(set.id);
+    return `
+    <div class="studio-release-row">
       <b>${escapeHtml(set.nameHe)}</b>
       <select data-release-state="${escapeHtml(set.id)}">
         <option value="held"${set.runtimeState === "held" ? " selected" : ""}>held</option>
         <option value="active"${set.runtimeState === "active" ? " selected" : ""}>active</option>
       </select>
       <input data-release-from="${escapeHtml(set.id)}" type="datetime-local" value="${escapeHtml(toDatetimeLocal(set.runtimeAvailableFrom || set.plannedPublishAt))}" />
-    </label>`).join("");
+      <label>Set %
+        <input data-pack-weight="${escapeHtml(set.id)}" type="number" min="0" max="1000" value="${pack.weight}" />
+      </label>
+      <label>C
+        <input data-pack-common="${escapeHtml(set.id)}" type="number" min="0" max="1000" value="${pack.rarities.Common}" />
+      </label>
+      <label>U
+        <input data-pack-uncommon="${escapeHtml(set.id)}" type="number" min="0" max="1000" value="${pack.rarities.Uncommon}" />
+      </label>
+      <label>R
+        <input data-pack-rare="${escapeHtml(set.id)}" type="number" min="0" max="1000" value="${pack.rarities.Rare}" />
+      </label>
+      <label class="studio-event-cards">Event cards
+        <input data-pack-events="${escapeHtml(set.id)}" type="checkbox"${pack.includeEventCards ? " checked" : ""} />
+      </label>
+    </div>`;
+  }).join("");
+  const current = model.gameConfig.pack?.current;
+  if (elements.studioPackNow) {
+    elements.studioPackNow.textContent = current?.sets?.length
+      ? `Now pulling: ${current.sets.map((set) => {
+        const name = sets.find((release) => release.id === set.id)?.nameHe || set.id;
+        return `${name} ${set.percent}% (C ${set.effectiveRarities.Common} / U ${set.effectiveRarities.Uncommon} / R ${set.effectiveRarities.Rare})`;
+      }).join(" · ")}`
+      : "Now pulling: no set is open. Activate a dated set with weight above 0.";
+  }
 }
 
 function toDatetimeLocal(value) {
@@ -2852,6 +2889,31 @@ function readStudioReleaseSets() {
       runtimeAvailableFrom: from ? new Date(from).toISOString() : null,
     };
   });
+}
+
+function readNumberField(selector, fallback) {
+  const value = Math.round(Number(elements.studioReleaseSets?.querySelector(selector)?.value));
+  return Number.isFinite(value) ? Math.min(1000, Math.max(0, value)) : fallback;
+}
+
+function readStudioPack() {
+  const pityAfter = model.gameConfig.pack?.pityAfter || 4;
+  return {
+    pityAfter,
+    sets: (model.gameConfig.releaseSets || []).map((set) => {
+      const current = packSetFor(set.id);
+      return {
+        id: set.id,
+        weight: readNumberField(`[data-pack-weight="${CSS.escape(set.id)}"]`, current.weight),
+        includeEventCards: Boolean(elements.studioReleaseSets?.querySelector(`[data-pack-events="${CSS.escape(set.id)}"]`)?.checked),
+        rarities: {
+          Common: readNumberField(`[data-pack-common="${CSS.escape(set.id)}"]`, current.rarities.Common),
+          Uncommon: readNumberField(`[data-pack-uncommon="${CSS.escape(set.id)}"]`, current.rarities.Uncommon),
+          Rare: readNumberField(`[data-pack-rare="${CSS.escape(set.id)}"]`, current.rarities.Rare),
+        },
+      };
+    }),
+  };
 }
 
 function readStudioProgression() {
@@ -2881,6 +2943,7 @@ async function saveVisualConfig() {
         visual,
         progression: readStudioProgression(),
         releaseSets: readStudioReleaseSets(),
+        pack: readStudioPack(),
       }),
     });
     applyVisualConfig();
@@ -2907,6 +2970,7 @@ async function saveRevealDelays() {
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
         releaseSets: readStudioReleaseSets(),
+        pack: readStudioPack(),
       }),
     });
     populateRevealTimingInputs();
@@ -3311,6 +3375,7 @@ async function saveLevelIncrements() {
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
         releaseSets: readStudioReleaseSets(),
+        pack: readStudioPack(),
       }),
     });
     populateLevelIncrements();
@@ -3396,12 +3461,13 @@ async function saveReleaseSets() {
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
         releaseSets: readStudioReleaseSets(),
+        pack: readStudioPack(),
       }),
     });
     populateReleaseSets();
     renderHome();
     renderBinder();
-    showToast("Release calendar published.");
+    showToast("Release calendar and pack odds published.");
   } catch (error) {
     showToast(error.status === 404 ? "Studio configuration is disabled without the ops key." : "Could not publish the set calendar.");
   }

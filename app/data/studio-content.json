@@ -48,6 +48,35 @@
       "teaser": "האם תגיעו לדרגת ראש הממשלה?",
       "reward": "קלף בונוס מיידי"
     },
+    "pack": {
+      "pityAfter": 4,
+      "sets": [
+        {
+          "id": "party-leaders",
+          "weight": 70,
+          "includeEventCards": false,
+          "rarities": { "Common": 70, "Uncommon": 25, "Rare": 5 }
+        },
+        {
+          "id": "party-slot-2",
+          "weight": 20,
+          "includeEventCards": false,
+          "rarities": { "Common": 70, "Uncommon": 25, "Rare": 5 }
+        },
+        {
+          "id": "decisions",
+          "weight": 5,
+          "includeEventCards": false,
+          "rarities": { "Common": 60, "Uncommon": 30, "Rare": 10 }
+        },
+        {
+          "id": "records",
+          "weight": 5,
+          "includeEventCards": false,
+          "rarities": { "Common": 60, "Uncommon": 30, "Rare": 10 }
+        }
+      ]
+    },
     "releaseSets": [
       {
         "id": "party-leaders",

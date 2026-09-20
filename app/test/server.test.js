@@ -868,6 +868,8 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   assert.equal(boot.status, 200);
   assert.equal(boot.body.studioContent, null);
   assert.equal(boot.body.gameConfig.parties.find(({ id }) => id === "RZ").displayNameHe, "הציונות הדתית וזהות");
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-leaders").weight, 70);
+  assert.deepEqual(boot.body.gameConfig.pack.current.sets.map(({ id }) => id), []);
   assert.ok(boot.body.catalog.cards.length);
   assert.ok(boot.body.idleReturn.state);
   const publicConfig = await api(running.base, "/api/game-config");
@@ -980,10 +982,21 @@ test("production Studio opens with STUDIO_SECRET for unlock and set calendar", a
     body: {
       revealTiming: { quote: 80, party: 0, name: 600, portrait: 400 },
       releaseSets: [{ id: "party-slot-2", runtimeState: "active", runtimeAvailableFrom: "2026-09-15T00:00:00.000Z" }],
+      pack: {
+        sets: [
+          { id: "party-leaders", weight: 70, rarities: { Common: 70, Uncommon: 25, Rare: 5 } },
+          { id: "party-slot-2", weight: 30, rarities: { Common: 80, Uncommon: 15, Rare: 5 } },
+        ],
+      },
     },
   });
   assert.equal(saved.status, 200);
   assert.equal(saved.body.releaseSets.find(({ id }) => id === "party-slot-2").runtimeState, "active");
+  assert.deepEqual(saved.body.pack.current.sets.map(({ id, percent }) => [id, percent]), [
+    ["party-leaders", 70],
+    ["party-slot-2", 30],
+  ]);
+  assert.equal(saved.body.pack.sets.find(({ id }) => id === "party-slot-2").rarities.Common, 80);
   const cardId = boot.body.catalog.cards.find(({ idleEligible }) => idleEligible).id;
   const unlocked = await api(running.base, "/api/debug/unlock-card", {
     token,

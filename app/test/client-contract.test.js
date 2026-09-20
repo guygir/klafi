@@ -148,7 +148,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /x-kalpi-studio/);
   assert.match(html, /data-studio-only/);
   assert.match(html, /id="studio-release-sets"/);
+  assert.match(html, /id="studio-pack-now"/);
   assert.match(javascript, /function populateReleaseSets/);
+  assert.match(javascript, /function readStudioPack/);
+  assert.match(javascript, /data-pack-weight/);
   assert.match(html, /חשבון הוא אופציונלי/);
   assert.match(javascript, /\/api\/studio\/config/);
   assert.match(javascript, /updateStudioCardPreview/);
@@ -249,7 +252,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-21/);
+  assert.match(html, /card-surface-22/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -314,7 +317,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-21/);
+  assert.match(html, /card-surface-22/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

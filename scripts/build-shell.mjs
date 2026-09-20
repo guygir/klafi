@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expandPublicCatalog } from "../app/server/public-catalog.js";
+import { normalizePackConfig, resolvePackTable } from "../app/server/pack-config.js";
 import { cardIndexFromCatalog, visiblePlayerCards, visibleReleaseSets } from "../app/server/visible-sets.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -56,6 +57,19 @@ const shell = {
       reward: studio.gameConfig?.progression?.reward || "קלף בונוס מיידי",
     },
     releaseSets: visibleReleaseSets(studio.gameConfig?.releaseSets || []),
+    pack: (() => {
+      const pack = normalizePackConfig(studio.gameConfig?.pack);
+      const releaseSets = visibleReleaseSets(studio.gameConfig?.releaseSets || []);
+      return {
+        ...pack,
+        current: resolvePackTable({
+          pack,
+          releaseSets,
+          cards: visibleCards,
+          now: Date.now(),
+        }),
+      };
+    })(),
     parties,
     avatars: avatars.avatars || [],
   },

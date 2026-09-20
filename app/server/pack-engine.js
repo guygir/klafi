@@ -1,4 +1,5 @@
 import { randomInt } from "node:crypto";
+import { isPackSetOpen, normalizePackConfig, packCardAllowed, rarityBucket } from "./pack-config.js";
 
 const PACK_SLOTS = ["Common", "Common", "Common", "Uncommon", "Uncommon", "Rare"];
 
@@ -11,6 +12,18 @@ export function rarityTier(card) {
 function choose(pool, rng) {
   if (!pool.length) return null;
   return pool[rng(pool.length)];
+}
+
+function chooseWeighted(items, weightOf, rng) {
+  const weights = items.map((item) => Math.max(0, Number(weightOf(item)) || 0));
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  if (!items.length || total <= 0) return items[0] || null;
+  let ticket = rng(total);
+  for (let index = 0; index < items.length; index += 1) {
+    ticket -= weights[index];
+    if (ticket < 0) return items[index];
+  }
+  return items.at(-1);
 }
 
 function incompleteSets(cards, inventory) {
@@ -90,19 +103,48 @@ export function generateIdlePull({
   inventory,
   duplicateStreak = 0,
   pityAfter = 4,
+  pack,
+  releaseSets,
+  now = Date.now(),
   rng = randomInt,
 }) {
   if (!cards.length) throw new Error("No idle-eligible cards available");
+  const config = pack ? normalizePackConfig(pack) : null;
+  const threshold = config?.pityAfter ?? pityAfter;
   let pool = cards;
-  if (duplicateStreak >= pityAfter) {
+  if (duplicateStreak >= threshold) {
     const unowned = cards.filter((card) => !inventory[card.id]);
     if (unowned.length) pool = unowned;
   }
-  const card = choose(pool, rng);
+  const card = config
+    ? chooseFromPackTable(pool, config, releaseSets, now, rng)
+    : choose(pool, rng);
+  if (!card) throw new Error("No idle-eligible cards available");
   return {
     cardId: card.id,
     finish: rarityTier(card),
   };
+}
+
+function chooseFromPackTable(cards, pack, releaseSets, now, rng) {
+  const releases = new Map((releaseSets || []).map((set) => [set.id, set]));
+  const openSets = pack.sets.filter((set) =>
+    isPackSetOpen(set, releases.get(set.id), now)
+    && cards.some((card) => card.releaseSetId === set.id && packCardAllowed(card, set)));
+  const setPick = chooseWeighted(openSets, (set) => set.weight, rng);
+  const inSet = setPick
+    ? cards.filter((card) => card.releaseSetId === setPick.id && packCardAllowed(card, setPick))
+    : cards;
+  const byTier = {
+    Common: inSet.filter((card) => rarityBucket(card) === "Common"),
+    Uncommon: inSet.filter((card) => rarityBucket(card) === "Uncommon"),
+    Rare: inSet.filter((card) => rarityBucket(card) === "Rare"),
+  };
+  const rarities = ["Common", "Uncommon", "Rare"].filter((tier) => byTier[tier].length);
+  const rarityPick = setPick
+    ? chooseWeighted(rarities, (tier) => setPick.rarities[tier], rng)
+    : rarities[0];
+  return choose((rarityPick && byTier[rarityPick]) || inSet, rng);
 }
 
 export const packSlots = Object.freeze([...PACK_SLOTS]);

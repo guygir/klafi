@@ -76,6 +76,8 @@ test("slim home counts stars from the visible card index", () => {
 test("player shell only publishes the first four release sets", async () => {
   const shell = JSON.parse(await readFile(path.join(publicDir, "shell.json"), "utf8"));
   assert.deepEqual((shell.gameConfig.releaseSets || []).map(({ id }) => id), [...LIVE_RELEASE_SET_IDS]);
+  assert.deepEqual((shell.gameConfig.pack?.sets || []).map(({ id }) => id), [...LIVE_RELEASE_SET_IDS]);
+  assert.ok(shell.gameConfig.pack?.current);
   assert.ok(shell.cardIndex?.length);
   assert.ok(shell.cardIndex.every(({ releaseSetId }) => LIVE_RELEASE_SET_IDS.includes(releaseSetId)));
   assert.equal(shell.totals.collectible, shell.cardIndex.length);

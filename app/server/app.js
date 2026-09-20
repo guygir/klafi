@@ -4,6 +4,15 @@ import path from "node:path";
 import { JsonStore } from "./store.js";
 import { PostgresStore } from "./postgres-store.js";
 import { generateIdlePull, generatePack, rarityTier } from "./pack-engine.js";
+import {
+  mergePackConfig,
+  normalizePackConfig,
+  packCardAllowed,
+  rarityBucket,
+  resolvePackTable,
+  setUnlockAt,
+  validPackConfig,
+} from "./pack-config.js";
 import { expandPublicCatalog, runtimeSpecialCard } from "./public-catalog.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -804,6 +813,7 @@ export async function createKalpiApp({
       ...studioContent.gameConfig,
       revealTiming: normalizeRevealTiming(studioContent.gameConfig?.revealTiming),
       visual: normalizeVisualConfig(studioContent.gameConfig?.visual),
+      pack: normalizePackConfig(studioContent.gameConfig?.pack),
     };
   }
 
@@ -865,20 +875,21 @@ export async function createKalpiApp({
         ...studioOverlay.gameConfig.progression,
       },
       releaseSets: studioOverlay.gameConfig.releaseSets || studioContent.gameConfig.releaseSets,
+      pack: mergePackConfig(studioContent.gameConfig.pack, studioOverlay.gameConfig.pack),
     };
   }
   function applyReleaseSets() {
     const sets = studioContent?.gameConfig?.releaseSets || [];
+    const pack = normalizePackConfig(studioContent?.gameConfig?.pack);
     const byId = new Map(sets.map((set) => [set.id, set]));
+    const packById = new Map(pack.sets.map((set) => [set.id, set]));
     for (const card of allCards) {
-      if (card.eventOnly) continue;
       const release = byId.get(card.releaseSetId);
-      if (!release) continue;
-      const isIdleSet = card.releaseSetId === "party-leaders" || card.releaseSetId === "party-slot-2";
-      const activeForIdle = isIdleSet && release.runtimeState === "active";
-      card.releaseState = release.runtimeState;
-      card.availableFrom = activeForIdle ? (release.runtimeAvailableFrom || release.plannedPublishAt || null) : null;
-      card.idleEligible = activeForIdle;
+      const packSet = packById.get(card.releaseSetId);
+      if (release) card.releaseState = release.runtimeState;
+      if (packSet) card.availableFrom = setUnlockAt(release);
+      const configured = Boolean(packSet && packSet.weight > 0 && release?.runtimeState !== "held");
+      card.idleEligible = Boolean(configured && packCardAllowed(card, packSet) && rarityBucket(card));
     }
   }
   applyReleaseSets();
@@ -891,14 +902,37 @@ export async function createKalpiApp({
   const stateFor = (session) => publicState(session, now(), allCards, runtimeProgression());
 
   function publicGameConfig() {
+    const pack = normalizePackConfig(studioContent?.gameConfig?.pack);
+    const releaseSets = studioContent?.gameConfig?.releaseSets || [];
     return {
       revealTiming: normalizeRevealTiming(studioContent?.gameConfig?.revealTiming),
       visual: normalizeVisualConfig(studioContent?.gameConfig?.visual),
       progression: progressionConfig(studioContent?.gameConfig?.progression),
-      releaseSets: studioContent?.gameConfig?.releaseSets || [],
+      releaseSets,
+      pack: {
+        ...pack,
+        current: resolvePackTable({
+          pack,
+          releaseSets,
+          cards: allCards,
+          now: now(),
+        }),
+      },
       parties: publicPartyRegister(studioContent, cards),
       achievements: achievementCatalog.achievements || [],
       avatars: avatarCatalog.avatars || [],
+    };
+  }
+
+  function idlePullOptions(pool, inventory, duplicateStreak) {
+    return {
+      cards: pool,
+      inventory,
+      duplicateStreak,
+      pack: studioContent?.gameConfig?.pack,
+      releaseSets: studioContent?.gameConfig?.releaseSets,
+      now: now(),
+      rng,
     };
   }
 
@@ -951,12 +985,7 @@ export async function createKalpiApp({
         }
         const preparedCapacity = Math.max(0, IDLE_BACKLOG_CAP - current.unseenPulls.length);
         while (current.preparedPulls.length < preparedCapacity) {
-          const pull = generateIdlePull({
-            cards: pool,
-            inventory: simulatedInventory,
-            duplicateStreak: simulatedDuplicateStreak,
-            rng,
-          });
+          const pull = generateIdlePull(idlePullOptions(pool, simulatedInventory, simulatedDuplicateStreak));
           const isNew = !simulatedInventory[pull.cardId];
           current.preparedPulls.push({
             instanceId: randomUUID(),
@@ -1049,6 +1078,7 @@ export async function createKalpiApp({
         visual: studioContent.gameConfig.visual,
         progression: studioContent.gameConfig.progression,
         releaseSets: studioContent.gameConfig.releaseSets,
+        pack: normalizePackConfig(studioContent.gameConfig.pack),
       },
     });
     if (studioContentPath && !databaseUrl) {
@@ -1399,12 +1429,7 @@ export async function createKalpiApp({
             if (!correct) {
               return { status: 200, body: { correct: false, wonToday: false, cardId: quiz.cardId } };
             }
-            const pull = generateIdlePull({
-              cards: pool,
-              inventory: current.inventory,
-              duplicateStreak: current.idleDuplicateStreak,
-              rng,
-            });
+            const pull = generateIdlePull(idlePullOptions(pool, current.inventory, current.idleDuplicateStreak));
             const pulledAt = new Date(currentMs).toISOString();
             const instance = grantCard(current, pull, { acquiredBy: "quiz", pulledAt });
             current.quizWonDay = day;
@@ -1448,12 +1473,7 @@ export async function createKalpiApp({
                 syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
                 const rank = current.pendingRankRewards?.shift();
                 if (!rank) return null;
-                const pull = generateIdlePull({
-                  cards: pool,
-                  inventory: current.inventory,
-                  duplicateStreak: current.idleDuplicateStreak,
-                  rng,
-                });
+                const pull = generateIdlePull(idlePullOptions(pool, current.inventory, current.idleDuplicateStreak));
                 const pulledAt = new Date(currentMs).toISOString();
                 const instance = grantCard(current, pull, { acquiredBy: `rank-${rank}`, pulledAt });
                 current.claimedRankRewards ??= [];
@@ -1805,7 +1825,7 @@ export async function createKalpiApp({
             return;
           }
           const input = await readJson(request);
-          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual) || !validProgressionPatch(input.progression) || !validReleaseSets(input.releaseSets)) {
+          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual) || !validProgressionPatch(input.progression) || !validReleaseSets(input.releaseSets) || !validPackConfig(input.pack)) {
             json(response, 400, { error: "INVALID_GAME_CONFIG" });
             return;
           }
@@ -1823,6 +1843,7 @@ export async function createKalpiApp({
                 ?? studioContent.gameConfig.progression?.thresholdExponent,
             },
             releaseSets: mergeReleaseSets(studioContent.gameConfig.releaseSets, input.releaseSets),
+            pack: mergePackConfig(studioContent.gameConfig.pack, input.pack),
           };
           studioContent.generatedAt = new Date(now()).toISOString();
           applyReleaseSets();
