@@ -5,7 +5,7 @@ This is an intentionally broad accepted pool. Guy's instruction: include every c
 ## Accepted initial pool
 
 1. Benjamin Netanyahu - `שלטון הימין בסכנה. המצביעים הערבים נעים בכמויות אדירות לקלפי.`
-   - Exact quote; approved art included as `assets/netanyahu-arab-voters-approved.png`.
+   - Exact quote; approved art: `docs/design/assets/hero-art-benjamin-netanyahu-arab-voters.png`.
 2. Benjamin Netanyahu - `מי שרוצה לסכל הקמה של מדינה פלסטינית צריך לתמוך בחיזוק החמאס ובהעברת כסף לחמאס.*`
    - Attributed report, not a recording. Preserve attribution and shortened marker.
 3. Miri Regev - `דברים מדהימים! כל כך הרבה תושבים במלונות במימון המדינה.`
@@ -52,3 +52,30 @@ This is an intentionally broad accepted pool. Guy's instruction: include every c
 - Yoav Kisch missing-teachers video candidate: Guy explicitly passed. Do not add it.
 - Mansour Abbas dentist fact: identified, but Guy never selected it as a Set 5 card. Do not add it.
 - Polygonal Miri Regev / Ahmad Tibi / May Golan art experiments are not the approved Set 5 visual direction. Guy reverted to the old Klafi style.
+
+## Approved art (all 22 candidates, 2026-09-20)
+
+All art is 1086x1448 PNG in the approved old Klafi style, under `docs/design/assets/`. SHA-256 per file is recorded in `set5-wip-pool.json`.
+
+1. Netanyahu (Arab voters) - `hero-art-benjamin-netanyahu-arab-voters.png`
+2. Netanyahu (Hamas funding) - `hero-art-benjamin-netanyahu-hamas-funding.png`
+3. Regev (hotels) - `hero-art-miri-regev-hotels.png`
+4. Katz (Herod/port) - `hero-art-israel-katz-herod-port.png`
+5. Strock (miracle) - `hero-art-orit-strock-miracle.png`
+6. Rothman (Huwara) - `hero-art-simcha-rothman-huwara.png`
+7. Gotliv (hostages) - `hero-art-tally-gotliv-hostages.png`
+8. Eliyahu (Gaza) - `hero-art-amichai-eliyahu-gaza.png`
+9. Pindrus (greatest danger) - `hero-art-yitzhak-pindrus-greatest-danger.png`
+10. Winter (war room) - `hero-art-ofer-winter-war-room.png`
+11. Smotrich (starvation) - `hero-art-bezalel-smotrich-starvation.png`
+12. Lazimi (rule of law) - `hero-art-naama-lazimi-rule-of-law.png`
+13. Ben Shitrit (buried truth) - `hero-art-rafi-ben-shitrit-buried-truth.png`
+14. Jabareen (partnership) - `hero-art-yousef-jabareen-partnership.png`
+15. Tibi (human cloak) - `hero-art-ahmad-tibi-human-cloak.png`
+16. Tamano-Shata (justice) - `hero-art-pnina-tamano-shata-justice.png`
+17. Rayten (strong society) - `hero-art-efrat-rayten-strong-society.png`
+18. Y. Golan (political security) - `hero-art-yair-golan-political-security.png`
+19. Regev (enjoy abroad) - `hero-art-miri-regev-enjoy-abroad.png`
+20. M. Golan (hen) - `hero-art-may-golan-hen.png`
+21. Rothman (hotel) - `hero-art-simcha-rothman-hotel.png`
+22. Tibi (falafel) - `hero-art-ahmad-tibi-falafel.png`
