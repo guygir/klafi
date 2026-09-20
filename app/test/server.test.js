@@ -772,6 +772,7 @@ test("Studio reads publicly and saves one card atomically only in debug mode", a
   assert.equal(saved.body.identityReference.status, "test-reviewed");
   assert.equal(saved.body.runtimeCard.walkout.text, changedQuote);
   assert.equal(saved.body.runtimeCard.artKey, changedArt);
+  assert.equal(saved.body.runtimeCard.displayCode, targetMember.slot === 1 ? "ראש-01" : "משנה-01");
 
   const liveCatalog = await api(running.base, "/api/catalog");
   const liveCard = liveCatalog.body.cards.find(({ id }) => id === target.id);

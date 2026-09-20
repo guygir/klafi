@@ -1,0 +1,398 @@
+{
+  "id": "set5-wip-pool",
+  "status": "wip-accepted-pool",
+  "asOfDate": "2026-09-20",
+  "note": "Broad accepted candidate pool for the future Set 5, per Guy's instruction: include every candidate not disqualified; prune or promote later. This is not a final fixed-size release set. The pool is intentionally NOT wired into studio-content.json, specials-content.json, or any runtime build, so nothing here reaches the released catalog before Guy prunes it. One quote per person applies only when the final set is pruned. All 22 candidates now have Guy-approved art in the old Klafi style, recorded per candidate below (the polygonal experiments were rejected).",
+  "sourceDocument": "docs/intake/research/set5-wip-roster.md",
+  "candidates": [
+    {
+      "n": 1,
+      "nameHe": "בנימין נתניהו",
+      "nameEn": "Benjamin Netanyahu",
+      "displayText": "שלטון הימין בסכנה. המצביעים הערבים נעים בכמויות אדירות לקלפי.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.youtube.com/watch?v=Q2cUoglR1yk"
+      ],
+      "existingStudioRef": "LIK-M01-Q02",
+      "art": {
+        "artKey": "hero-art-benjamin-netanyahu-arab-voters.png",
+        "status": "approved",
+        "sha256": "21274547a9e9a3a0a9aee272cc7f07f8afa66ccd471f192956f76011094d9312",
+        "note": "1086x1448 PNG. Old/gaunt Netanyahu, murky old-Klafi palette, ballot box left, varied Arab voters receding into polling-place background, no baked-in text."
+      }
+    },
+    {
+      "n": 2,
+      "nameHe": "בנימין נתניהו",
+      "nameEn": "Benjamin Netanyahu",
+      "displayText": "מי שרוצה לסכל הקמה של מדינה פלסטינית צריך לתמוך בחיזוק החמאס ובהעברת כסף לחמאס.*",
+      "quoteStatus": "attributed-paraphrase",
+      "sources": [
+        "https://lahav.substack.com/p/i-reported-on-netanyahu-green-lighting"
+      ],
+      "existingStudioRef": "LIK-M01-Q03",
+      "notes": "Attributed report, not a recording. Preserve attribution and shortened marker. Already lives in Studio as LIK-M01-Q03; dedupe at prune time.",
+      "art": {
+        "artKey": "hero-art-benjamin-netanyahu-hamas-funding.png",
+        "status": "approved",
+        "sha256": "011a8c7a2c4f5a9ed7da70888a4b7f4bd42e7f4bbba02a4e92c81d5ebe26ef4f",
+        "note": "1086x1448 PNG. Netanyahu in a dark suit at a desk, open suitcase stacked with cash bundles, military checkpoint with cargo trucks and smoke-hazed skyline behind, dull soot/umber palette, no baked-in text."
+      }
+    },
+    {
+      "n": 3,
+      "nameHe": "מירי רגב",
+      "nameEn": "Miri Regev",
+      "displayText": "דברים מדהימים! כל כך הרבה תושבים במלונות במימון המדינה.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.mako.co.il/news-politics/2024_q2/Article-1ff19495b64ef81027.htm"
+      ],
+      "existingStudioRef": "LIK-M05-Q01",
+      "art": {
+        "artKey": "hero-art-miri-regev-hotels.png",
+        "status": "approved",
+        "sha256": "c3360f8b2689076b7fe59589790a022833c0e89cb78d851cbe26761f85333321",
+        "note": "1086x1448 PNG. Regev near-frontal with a sarcastic pursed smirk and open mocking hands, dim grand-hotel corridor of identical doors, luggage cart and huge open blank-paged ledger, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 4,
+      "nameHe": "ישראל כץ",
+      "nameEn": "Israel Katz",
+      "displayText": "הורדוס לא הצליח להפוך את ישראל למרכז הסחר הבין־לאומי של האימפריה הרומית כפי שתכנן. אני הצלחתי.*",
+      "quoteStatus": "shortened",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Guy called this a Banger. Use the existing Studio Herod/port concept. Shortened marker.",
+      "art": {
+        "artKey": "hero-art-israel-katz-herod-port.png",
+        "status": "approved",
+        "sha256": "1e9c4d882ed62601953b33112af17ae3695ce190bff0d70bf7b705afe9df00ad",
+        "note": "1086x1448 PNG. Katz half-smiling with raised chin, gaze off-frame, faded modern container port with cranes dwarfing a small weathered Herodian stone arch, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 5,
+      "nameHe": "אורית סטרוק",
+      "nameEn": "Orit Strock",
+      "displayText": "אנחנו חיים בתקופה של נס... פיפ פיפ... ואז כשיש אור ירוק, טיק טיק טיק כזה.*",
+      "quoteStatus": "shortened",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Guy accepted the altered familiar opening after verification discussion. Metadata must retain that it is edited/shortened from her settlement-construction remarks.",
+      "art": {
+        "artKey": "hero-art-orit-strock-miracle.png",
+        "status": "approved",
+        "sha256": "fb1a1633056257e6d141ed8f11dcca3f803c060e89359c1ad7f464aa17ab5474",
+        "note": "1086x1448 PNG. Strock glancing sideways, single candle flame in a glass memorial cup beside a bomb-shelter entrance in rubble, dim damaged skyline with rocket trails, dull soot/umber palette, no baked-in text."
+      }
+    },
+    {
+      "n": 6,
+      "nameHe": "שמחה רוטמן",
+      "nameEn": "Simcha Rothman",
+      "displayText": "הדם של האחים הלל ויגל יניב ז״ל, שנרצחו בחווארה, אדום יותר מדם הנרצחים ב־7 באוקטובר.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.mako.co.il/news-military/6361323ddea5a810/Article-c66a26f977c8b81027.htm",
+        "https://www.mako.co.il/news-law/2026_q3/Article-65b83474f2eaf91027.htm"
+      ],
+      "existingStudioRef": "RZ-M04-Q03",
+      "notes": "Reported from a closed Constitution Committee prep meeting, reported 2023-11-01. He retracted in the room and denied it later; in July 2026 his libel suit was dismissed and the court found N12 proved truth. Preserve all of this in metadata.",
+      "art": {
+        "artKey": "hero-art-simcha-rothman-huwara.png",
+        "status": "approved",
+        "sha256": "22561b7735ffec8ca9d815d6387f58189fd03ae008a50b13f875cc4e6506e70e",
+        "note": "1086x1448 PNG. Rothman clean-shaven, bowed downcast pose at a committee table, two lit candles against many unlit, dull umber palette, no baked-in text."
+      }
+    },
+    {
+      "n": 7,
+      "nameHe": "טלי גוטליב",
+      "nameEn": "Tally Gotliv",
+      "displayText": "כל חטוף הוא שטוף מוח מחמאס. כל חטוף מדבר את מה שחמאס משמיע להם.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.ynet.co.il/news/article/rjqi80d11ex"
+      ],
+      "existingStudioRef": "OTZ-M02-Q02",
+      "art": {
+        "artKey": "hero-art-tally-gotliv-hostages.png",
+        "status": "approved",
+        "sha256": "b73dd830db661308e9e050e718f9e08195a2a03b095f0b193031cfea4bfad052",
+        "note": "1086x1448 PNG. Gotliv pointing accusingly at a podium microphone, silhouetted figures behind a glass partition and concrete wall, dull umber palette, no baked-in text."
+      }
+    },
+    {
+      "n": 8,
+      "nameHe": "עמיחי אליהו",
+      "nameEn": "Amichai Eliyahu",
+      "displayText": "הממשלה דוהרת לזה שעזה נמחקת, תודה להשם שאנחנו מוחקים את הרוע הזה. כל עזה תהיה יהודית.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://kol-barama.co.il/item/%D7%94%D7%A9%D7%A8-%D7%90%D7%9C%D7%99%D7%94%D7%95-"
+      ],
+      "existingStudioRef": "OTZ-M04-Q03",
+      "notes": "Keep this one only. אין דבר כזה בלתי מעורבים בעזה was explicitly dropped.",
+      "art": {
+        "artKey": "hero-art-amichai-eliyahu-gaza.png",
+        "status": "approved",
+        "sha256": "919eb6ab7181d458ff4017ed853b3331477996dc6339c076e67f1920eb57ba02",
+        "note": "1086x1448 PNG. Eliyahu gazing off-frame, ruined city blocks along a coastline behind him, dull umber palette, no baked-in text."
+      }
+    },
+    {
+      "n": 9,
+      "nameHe": "יצחק פינדרוס",
+      "nameEn": "Yitzhak Pindrus",
+      "displayText": "הדבר הכי מסוכן למדינת ישראל - יותר מדאעש, יותר מחיזבאללה, יותר מחמאס - זה הפריצות בעריות.*",
+      "quoteStatus": "shortened",
+      "sources": [
+        "https://www.mako.co.il/tv-people/articles/Article-0fc26d494fed881026.htm"
+      ],
+      "existingStudioRef": "UTJ-M03-Q02",
+      "notes": "Target is LGBT people/movement. The bare tail was rejected as unclear. Shortened marker.",
+      "art": {
+        "artKey": "hero-art-yitzhak-pindrus-greatest-danger.png",
+        "status": "approved",
+        "sha256": "1df22a1f043678be95923101ae840719feced7c3b1bc10e707133286d67e7dc0",
+        "note": "1086x1448 PNG. Pindrus at a podium microphone, framed photos of armed militants on the wall behind and a spotlighted silhouette couple, dull umber palette, no baked-in text."
+      }
+    },
+    {
+      "n": 10,
+      "nameHe": "עופר וינטר",
+      "nameEn": "Ofer Winter",
+      "displayText": "אתה רמטכ״ל מבולבל, אתה כפוף לראש הממשלה ולדרג המדיני.*",
+      "quoteStatus": "shortened",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Addressed to/recounted about Herzi Halevi. Winter's outburst is verified; the IDF disputed the underlying exchange he described. Preserve dispute metadata.",
+      "art": {
+        "artKey": "hero-art-ofer-winter-war-room.png",
+        "status": "approved",
+        "sha256": "c447e15c272fe3e9a43195ee03b2ebc1fabef2934288cb0f03311e8d64cc711a",
+        "note": "1086x1448 PNG. Winter in profile at a war-room table, cracked blank org chart on the wall and a silhouetted figure facing it, dull umber palette, no baked-in text."
+      }
+    },
+    {
+      "n": 11,
+      "nameHe": "בצלאל סמוטריץ׳",
+      "nameEn": "Bezalel Smotrich",
+      "displayText": "אף אחד לא ייתן לנו להמית שני מיליון אזרחים ברעב, למרות שאולי זה צודק ומוסרי.*",
+      "quoteStatus": "shortened",
+      "sources": [
+        "https://www.timesofisrael.com/smotrich-it-may-be-justified-to-starve-2-million-g"
+      ],
+      "existingStudioRef": "RZ-M01-Q03",
+      "notes": "Already lives in Studio as RZ-M01-Q03; dedupe at prune time.",
+      "art": {
+        "artKey": "hero-art-bezalel-smotrich-starvation.png",
+        "status": "approved",
+        "sha256": "69f9841bf152e1124c19117bce81146580091db55bbc8a681a18ae486acf9424",
+        "note": "1086x1448 PNG. Smotrich severe with lowered head and sidelong gaze, hand flat on a bare table with rows of empty bowls, padlocked wire-mesh aid warehouse behind, no people harmed, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 12,
+      "nameHe": "נעמה לזימי",
+      "nameEn": "Naama Lazimi",
+      "displayText": "הוא הכריז מלחמה על ישראל הדמוקרטית ועל מערכות השלטון והחוק. כל מסגור אחר חוטא לאמת.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Moved into Set 5 rather than replacing her live Set 2 card.",
+      "art": {
+        "artKey": "hero-art-naama-lazimi-rule-of-law.png",
+        "status": "approved",
+        "sha256": "ed03a4f4a7d104390c118c4ed56525a8f8f07673930f6037ab85fe64e81194a4",
+        "note": "1086x1448 PNG. Lazimi before courthouse columns and a justice statue, ballot box and law books, looming dark silhouette overhead, dignified (no decay), dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 13,
+      "nameHe": "רפי בן שטרית",
+      "nameEn": "Rafi Ben Shitrit",
+      "displayText": "הדרג המדיני מבקש לקבור את האמת.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Moved into Set 5 rather than replacing his live Set 2 card.",
+      "art": {
+        "artKey": "hero-art-rafi-ben-shitrit-buried-truth.png",
+        "status": "approved",
+        "sha256": "7a32ea13772d7bcb23a451a92035c5a6b5a6306005ad4707fc00b35e5f6297ce",
+        "note": "1086x1448 PNG. Ben Shitrit at a desk lamp with open case files, figures shoveling dirt over buried archive boxes behind him, dignified, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 14,
+      "nameHe": "יוסף ג׳בארין",
+      "nameEn": "Yousef Jabareen",
+      "displayText": "העתיד של כולנו לא נמצא בפחד, במלחמות ובהסתה, אלא בשותפות יהודית־ערבית אמיצה.*",
+      "quoteStatus": "shortened",
+      "sources": [
+        "https://zoha.org.il/146643/"
+      ],
+      "existingStudioRef": "JNT-M01-Q03",
+      "notes": "Moved into Set 5 rather than replacing his live Set 1 card.",
+      "art": {
+        "artKey": "hero-art-yousef-jabareen-partnership.png",
+        "status": "approved",
+        "sha256": "b804ad83da04407e73244d8cd66fbbaf8ed202da9967b0a0de3efbd9b55d0f98",
+        "note": "1086x1448 PNG. Jabareen with an open gesturing hand, a stone bridge between two hillsides with Jewish and Arab figures crossing and meeting, dignified, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 15,
+      "nameHe": "אחמד טיבי",
+      "nameEn": "Ahmed Tibi",
+      "displayText": "להשיל את השוני ולגלום גלימה אחת ויחידה: גלימתו האנושית... ולהיות בן אנוש. בן אנוש בלבד.*",
+      "quoteStatus": "shortened",
+      "sources": [
+        "https://www.haaretz.co.il/news/education/2010-01-28/ty-article/0000017f-eb9f-d0f"
+      ],
+      "existingStudioRef": "JNT-M02-Q02",
+      "art": {
+        "artKey": "hero-art-ahmad-tibi-human-cloak.png",
+        "status": "approved",
+        "sha256": "c43d67a3887932c6e831237541eced6d6b25563caf5a75d0d6ccecd9a0814199",
+        "note": "1086x1448 PNG. Tibi holding a single cloak sheltering a varied line of people beneath it, Jerusalem skyline behind, dignified, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 16,
+      "nameHe": "פנינה תמנו שטה",
+      "nameEn": "Pnina Tamano-Shata",
+      "displayText": "לא צדקה אלא צדק; לא רחמים אלא הכרה.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.ice.co.il/opinions/news/article/1053114"
+      ],
+      "existingStudioRef": "BW-M02-Q03",
+      "art": {
+        "artKey": "hero-art-pnina-tamano-shata-justice.png",
+        "status": "approved",
+        "sha256": "b6e7919712bd99da6464ba4a867c821c79f31202f57f8ee1a29a60a0a2d0f0a0",
+        "note": "1086x1448 PNG. Tamano-Shata looking up at bronze scales balancing an open hand against a document, courthouse steps with citizens including a wheelchair user, dignified, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 17,
+      "nameHe": "אפרת רייטן",
+      "nameEn": "Efrat Rayten",
+      "displayText": "חברה חזקה מגינה על החלש מפני ניצול כוח ושררה.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.ynet.co.il/economy/article/r1puvezc1x"
+      ],
+      "existingStudioRef": "DEM-M04-Q03",
+      "art": {
+        "artKey": "hero-art-efrat-rayten-strong-society.png",
+        "status": "approved",
+        "sha256": "1560ddac198eba31239c93779a18e5de9cb24990957eb6b7726e548166eb6014",
+        "note": "1086x1448 PNG. Rayten with clasped hands, a giant carved hand and stamp towering over small figures beneath a colonnade, dignified, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 18,
+      "nameHe": "יאיר גולן",
+      "nameEn": "Yair Golan",
+      "displayText": "רק הסדרים מדיניים מביאים ביטחון בראייה ארוכת טווח.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://news.walla.co.il/item/3701292"
+      ],
+      "existingStudioRef": "DEM-M01-Q03",
+      "art": {
+        "artKey": "hero-art-yair-golan-political-security.png",
+        "status": "approved",
+        "sha256": "5a2caf7953a3fc5367322200c72176991f173a4c551afcf26219ba350a052692",
+        "note": "1086x1448 PNG. Yair Golan walking away from a concrete border checkpoint toward an open landscape where negotiators sit at a table by a bridge at sunset, dignified, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 19,
+      "nameHe": "מירי רגב",
+      "nameEn": "Miri Regev",
+      "displayText": "קודם כל, אין מה להילחץ, אתם נמצאים בחו״ל, תיהנו.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Accepted addition from video review.",
+      "art": {
+        "artKey": "hero-art-miri-regev-enjoy-abroad.png",
+        "status": "approved",
+        "sha256": "994d5d37cd0e7d60261deb9caaa98a1dfcf5900b052f0ccc9ff6cd9bd1ea92c2",
+        "note": "1086x1448 PNG. Regev glancing back over her shoulder with a careless half-wave, deserted departures hall with dark blank board, grounded planes and abandoned suitcases, dull palette, no baked-in text."
+      }
+    },
+    {
+      "n": 20,
+      "nameHe": "מאי גולן",
+      "nameEn": "May Golan",
+      "displayText": "קוקוריקו, זה מה שאת, תרנגולת קרקרנית.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Addressed to Merav Ben Ari. Drop the edited די לקרקר tail. May Golan has no Studio member record yet.",
+      "art": {
+        "artKey": "hero-art-may-golan-hen.png",
+        "status": "approved",
+        "sha256": "c98ec88654d9911420567703dd84e48f73fed8883962a84affdc0ce2effe70b7",
+        "note": "1086x1448 PNG. May Golan glancing back from a Knesset podium, a clucking hen standing on the podium behind her with feathers in the air, dull umber palette, no baked-in text."
+      }
+    },
+    {
+      "n": 21,
+      "nameHe": "שמחה רוטמן",
+      "nameEn": "Simcha Rothman",
+      "displayText": "בעל מלון דתי יוכל לסרב לארח הומואים? אם זה פוגע ברגשותיו הדתיים - כן.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "First sentence is interviewer framing; second is Rothman's answer. Metadata must not present the full combined line as one verbatim Rothman quote. Accepted addition from video review.",
+      "art": {
+        "artKey": "hero-art-simcha-rothman-hotel.png",
+        "status": "approved",
+        "sha256": "dc8a5ab90a3edff08994de07efdd4c47e4b7f9a8264618b7937bf454a995a716",
+        "note": "1086x1448 PNG. Rothman clean-shaven with an upward sideways dismissive gaze at a religious hotel reception, key rack, lamp, bell and almost-closed door, dull umber palette, no baked-in text."
+      }
+    },
+    {
+      "n": 22,
+      "nameHe": "אחמד טיבי",
+      "nameEn": "Ahmad Tibi",
+      "displayText": "מי גנב לנו את הפלאפל והזעתר והחומוס?",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Accepted addition from video review.",
+      "art": {
+        "artKey": "hero-art-ahmad-tibi-falafel.png",
+        "status": "approved",
+        "sha256": "9a3b70000a783d3fae61b22e2eb71e9d405f3183b2719ebca9edb674b64b4f81",
+        "note": "1086x1448 PNG. Tibi holding up a falafel ball beside a market spread of falafel, hummus, za'atar and pita, gesturing at an empty shuttered food stall, wry expression, dull palette, no baked-in text."
+      }
+    }
+  ],
+  "exclusions": [
+    "Amichai Eliyahu: אין דבר כזה בלתי מעורבים בעזה - explicitly dropped.",
+    "TikTok video 2: May Golan תומכת טרור; Bennett בן גביר לא יהיה שר; Ben Gvir איזו ממשלה; applause line; cut-off Tibi תומך טרור.",
+    "Smotrich sexual-fantasies clip: verified as Smotrich, then Guy passed.",
+    "Yoav Kisch missing-teachers video candidate: Guy explicitly passed. Do not add.",
+    "Mansour Abbas dentist fact: identified, but Guy never selected it as a Set 5 card. Do not add.",
+    "Polygonal Miri Regev / Ahmad Tibi / May Golan art experiments are not the approved Set 5 visual direction. Guy reverted to the old Klafi style."
+  ]
+}

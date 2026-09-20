@@ -124,6 +124,10 @@ test("Sets 1 and 2 ship complete art-backed catalogs", async () => {
   const numberTwos = expanded.filter(({ releaseSetId }) => releaseSetId === "party-slot-2");
   assert.equal(leaders.length, 14);
   assert.equal(numberTwos.length, 13);
+  assert.deepEqual(leaders.map(({ displayCode }) => displayCode),
+    Array.from({ length: 14 }, (_, index) => `ראש-${String(index + 1).padStart(2, "0")}`));
+  assert.deepEqual(numberTwos.map(({ displayCode }) => displayCode),
+    Array.from({ length: 13 }, (_, index) => `משנה-${String(index + 1).padStart(2, "0")}`));
   assert.ok([...leaders, ...numberTwos].every(({ artKey }) => artKey));
   await Promise.all([...leaders, ...numberTwos].map(({ artKey }) =>
     readFile(path.resolve(here, "../../docs/design/assets", artKey))));

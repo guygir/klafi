@@ -2977,6 +2977,16 @@ function studioField(label, path, value, { type = "text", options = [] } = {}) {
   return `<label>${label}<input data-studio-field="${path}" type="${type}" value="${escapeHtml(value || "")}" /></label>`;
 }
 
+function studioReleasedDisplayCode(member, card) {
+  const approved = member.quoteSlots.filter((candidate) =>
+    candidate.publicationState === "approved" && candidate.quote?.displayText?.trim());
+  const entryCard = approved.find((candidate) => candidate.rarity.startsWith("Common")) || approved[0];
+  if (card.id !== entryCard?.id || ![1, 2].includes(member.slot)) return null;
+  const index = model.studioContent.members.filter((candidate) => candidate.slot === member.slot).findIndex(({ id }) => id === member.id);
+  if (index < 0) return null;
+  return `${member.slot === 1 ? "ראש" : "משנה"}-${String(index + 1).padStart(2, "0")}`;
+}
+
 function studioCardForRuntime(party, member, card) {
   const letters = (party.finalLetters || party.requestedLetters || ["?"])[0];
   return {
@@ -2985,7 +2995,7 @@ function studioCardForRuntime(party, member, card) {
     setName: party.displayNameEn,
     setNameHe: party.displayNameHe,
     letters,
-    displayCode: `${letters}-${card.id.slice(-2)}`,
+    displayCode: studioReleasedDisplayCode(member, card) || `${letters}-${card.id.slice(-2)}`,
     pip: party.pip,
     title: member.nameEn,
     titleHe: member.nameHe,

@@ -214,6 +214,15 @@ const partyCards = studio.parties.flatMap((party) => {
   return cards;
 });
 
+const releasedQuoteCodes = new Map();
+for (const [prefix, slot] of [["ראש", 1], ["משנה", 2]]) {
+  studio.members.filter((member) => member.slot === slot).forEach((member, index) => {
+    const approved = member.quoteSlots.filter((card) => card.publicationState === "approved" && card.quote.displayText.trim());
+    const entryCard = approved.find((card) => card.rarity.startsWith("Common")) || approved[0];
+    if (entryCard) releasedQuoteCodes.set(entryCard.id, `${prefix}-${String(index + 1).padStart(2, "0")}`);
+  });
+}
+
 const quoteCards = studio.members.flatMap((member) => {
   const party = studio.parties.find(({ id }) => id === member.partyId);
   const approved = member.quoteSlots.filter((card) => card.publicationState === "approved" && card.quote.displayText.trim());
@@ -224,6 +233,7 @@ const quoteCards = studio.members.flatMap((member) => {
       const isLeader = member.slot === 1 && card.id === entryCard?.id;
       const isSlotTwo = member.slot === 2 && card.id === entryCard?.id;
       const releaseSetId = isLeader ? "party-leaders" : isSlotTwo ? "party-slot-2" : "editorial-backlog";
+      const releasedCode = releasedQuoteCodes.get(card.id);
       return baseCard(party, {
       ...releaseMetadata({
         releaseSetId,
@@ -233,7 +243,8 @@ const quoteCards = studio.members.flatMap((member) => {
         binderGroup: isLeader ? "leaders" : isSlotTwo ? "slot-2" : "people",
       }),
       id: card.id,
-      displayCode: `${(party.finalLetters || party.requestedLetters)[0]}-${String(quoteDisplayNumber(member, card)).padStart(2, "0")}`,
+      displayCode: releasedCode
+        || `${(party.finalLetters || party.requestedLetters)[0]}-${String(quoteDisplayNumber(member, card)).padStart(2, "0")}`,
       title: member.nameEn,
       titleHe: member.nameHe,
       hebrewTitle: member.nameHe,
