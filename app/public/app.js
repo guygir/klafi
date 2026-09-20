@@ -2862,11 +2862,17 @@ function populateReleaseSets() {
   }).join("");
   const current = model.gameConfig.pack?.current;
   if (elements.studioPackNow) {
+    const order = current?.rarityOrder;
+    const orderNote = order?.holds
+      ? ` Specific C ~${order.hardestCommon} pulls; specific R ~${order.easiestRare} pulls.`
+      : order
+        ? " Specific rarity order is off: a Common can be harder than an Uncommon or Rare. Re-sort cards or lower the easier bucket."
+        : "";
     elements.studioPackNow.textContent = current?.sets?.length
       ? `Now pulling: ${current.sets.map((set) => {
         const name = sets.find((release) => release.id === set.id)?.nameHe || set.id;
         return `${name} ${set.percent}% (C ${set.effectiveRarities.Common} / U ${set.effectiveRarities.Uncommon} / R ${set.effectiveRarities.Rare})`;
-      }).join(" · ")}`
+      }).join(" · ")}.${orderNote}`
       : "Now pulling: no set is open. Activate a dated set with weight above 0.";
   }
 }

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  cardPullOdds,
   effectiveRarities,
+  rarityOrderReport,
   resolvePackTable,
   validPackConfig,
 } from "../server/pack-config.js";
@@ -25,7 +27,7 @@ test("current time only opens dated active sets", () => {
   const table = resolvePackTable({ pack: {}, releaseSets, cards, now });
   assert.deepEqual(table.sets.map(({ id }) => id), ["party-leaders"]);
   assert.equal(table.sets[0].percent, 100);
-  assert.deepEqual(table.sets[0].effectiveRarities, { Common: 93.3, Uncommon: 0, Rare: 6.7 });
+  assert.deepEqual(table.sets[0].effectiveRarities, { Common: 99, Uncommon: 0, Rare: 1 });
 });
 
 test("held future sets stay out even when they have weight", () => {
@@ -104,4 +106,14 @@ test("pack config validation rejects bad weights", () => {
   assert.equal(validPackConfig({ sets: [{ id: "party-leaders", weight: 70 }] }), true);
   assert.equal(validPackConfig({ sets: [{ id: "party-leaders", weight: -1 }] }), false);
   assert.equal(validPackConfig({ pityAfter: 0 }), false);
+});
+
+test("any specific Rare is harder to pull than any specific Common in the current table", () => {
+  const odds = cardPullOdds({ pack: {}, releaseSets, cards, now });
+  const report = rarityOrderReport(odds);
+  assert.equal(report.holds, true);
+  assert.ok(report.minCommon > report.maxRare);
+  const deri = odds.find(({ id }) => id === "L-R");
+  const common = odds.find(({ id }) => id === "L-C");
+  assert.ok(deri.expectedPulls > common.expectedPulls);
 });

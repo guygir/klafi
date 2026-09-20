@@ -7,6 +7,8 @@ import { expandPublicCatalog } from "../server/public-catalog.js";
 import { slimPublicState } from "../server/slim-state.js";
 import { LIVE_RELEASE_SET_IDS, visiblePlayerCards } from "../server/visible-sets.js";
 import { emptyCommunity, slimDailyChallenge } from "../server/slim-community.js";
+import { liveDeployAssetNames } from "../../scripts/live-deploy-assets.mjs";
+import { cardPullOdds, rarityOrderReport } from "../server/pack-config.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
@@ -81,6 +83,39 @@ test("player shell only publishes the first four release sets", async () => {
   assert.ok(shell.cardIndex?.length);
   assert.ok(shell.cardIndex.every(({ releaseSetId }) => LIVE_RELEASE_SET_IDS.includes(releaseSetId)));
   assert.equal(shell.totals.collectible, shell.cardIndex.length);
+});
+
+test("Vercel copies only live card art and leaves Set 5 WIP images out", async () => {
+  const [catalog, avatars, set5] = await Promise.all([
+    readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
+    readFile(path.resolve(here, "../data/avatars.json"), "utf8").then(JSON.parse),
+    readFile(path.resolve(here, "../../docs/intake/research/set5-wip-pool.json"), "utf8").then(JSON.parse),
+  ]);
+  const names = liveDeployAssetNames({ catalog, avatars });
+  assert.ok(names.includes("hero-art-gadi-eisenkot-slot1.png"));
+  assert.ok(names.includes("pack-wrapper-transparent.png"));
+  for (const candidate of set5.candidates) {
+    assert.ok(!names.includes(candidate.art.artKey), candidate.art.artKey);
+  }
+});
+
+test("current live pack keeps any specific Rare harder than any specific Common", async () => {
+  const [catalog, studio] = await Promise.all([
+    readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
+    readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
+  ]);
+  const now = Date.parse("2026-09-20T12:00:00.000Z");
+  const odds = cardPullOdds({
+    pack: studio.gameConfig.pack,
+    releaseSets: studio.gameConfig.releaseSets,
+    cards: catalog.cards,
+    now,
+  });
+  const report = rarityOrderReport(odds);
+  assert.ok(odds.some(({ rarity }) => rarity === "Common"));
+  assert.ok(odds.some(({ rarity }) => rarity === "Rare"));
+  assert.equal(report.holds, true);
+  assert.ok(report.easiestRare > report.hardestCommon);
 });
 
 test("slim community payload stays off the fat catalog", () => {

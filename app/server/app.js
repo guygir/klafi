@@ -5,10 +5,12 @@ import { JsonStore } from "./store.js";
 import { PostgresStore } from "./postgres-store.js";
 import { generateIdlePull, generatePack, rarityTier } from "./pack-engine.js";
 import {
+  cardPullOdds,
   mergePackConfig,
   normalizePackConfig,
   packCardAllowed,
   rarityBucket,
+  rarityOrderReport,
   resolvePackTable,
   setUnlockAt,
   validPackConfig,
@@ -904,6 +906,12 @@ export async function createKalpiApp({
   function publicGameConfig() {
     const pack = normalizePackConfig(studioContent?.gameConfig?.pack);
     const releaseSets = studioContent?.gameConfig?.releaseSets || [];
+    const current = resolvePackTable({
+      pack,
+      releaseSets,
+      cards: allCards,
+      now: now(),
+    });
     return {
       revealTiming: normalizeRevealTiming(studioContent?.gameConfig?.revealTiming),
       visual: normalizeVisualConfig(studioContent?.gameConfig?.visual),
@@ -911,12 +919,15 @@ export async function createKalpiApp({
       releaseSets,
       pack: {
         ...pack,
-        current: resolvePackTable({
-          pack,
-          releaseSets,
-          cards: allCards,
-          now: now(),
-        }),
+        current: {
+          ...current,
+          rarityOrder: rarityOrderReport(cardPullOdds({
+            pack,
+            releaseSets,
+            cards: allCards,
+            now: now(),
+          })),
+        },
       },
       parties: publicPartyRegister(studioContent, cards),
       achievements: achievementCatalog.achievements || [],

@@ -55,25 +55,25 @@
           "id": "party-leaders",
           "weight": 70,
           "includeEventCards": false,
-          "rarities": { "Common": 70, "Uncommon": 25, "Rare": 5 }
+          "rarities": { "Common": 96, "Uncommon": 3, "Rare": 1 }
         },
         {
           "id": "party-slot-2",
           "weight": 20,
           "includeEventCards": false,
-          "rarities": { "Common": 70, "Uncommon": 25, "Rare": 5 }
+          "rarities": { "Common": 96, "Uncommon": 3, "Rare": 1 }
         },
         {
           "id": "decisions",
-          "weight": 5,
+          "weight": 8,
           "includeEventCards": false,
-          "rarities": { "Common": 60, "Uncommon": 30, "Rare": 10 }
+          "rarities": { "Common": 80, "Uncommon": 15, "Rare": 5 }
         },
         {
           "id": "records",
-          "weight": 5,
+          "weight": 2,
           "includeEventCards": false,
-          "rarities": { "Common": 60, "Uncommon": 30, "Rare": 10 }
+          "rarities": { "Common": 80, "Uncommon": 15, "Rare": 5 }
         }
       ]
     },

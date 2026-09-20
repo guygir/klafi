@@ -1,14 +1,14 @@
 export const DEFAULT_RARITIES = Object.freeze({
-  Common: 70,
-  Uncommon: 25,
-  Rare: 5,
+  Common: 96,
+  Uncommon: 3,
+  Rare: 1,
 });
 
 export const DEFAULT_PACK_SETS = Object.freeze([
   { id: "party-leaders", weight: 70, includeEventCards: false, rarities: { ...DEFAULT_RARITIES } },
   { id: "party-slot-2", weight: 20, includeEventCards: false, rarities: { ...DEFAULT_RARITIES } },
-  { id: "decisions", weight: 5, includeEventCards: false, rarities: { Common: 60, Uncommon: 30, Rare: 10 } },
-  { id: "records", weight: 5, includeEventCards: false, rarities: { Common: 60, Uncommon: 30, Rare: 10 } },
+  { id: "decisions", weight: 8, includeEventCards: false, rarities: { Common: 80, Uncommon: 15, Rare: 5 } },
+  { id: "records", weight: 2, includeEventCards: false, rarities: { Common: 80, Uncommon: 15, Rare: 5 } },
 ]);
 
 const RARITY_TIERS = Object.freeze(["Common", "Uncommon", "Rare"]);
@@ -154,5 +154,58 @@ export function resolvePackTable({
         cardCount: pool.length,
       };
     }),
+  };
+}
+
+export function cardPullOdds({
+  pack,
+  releaseSets = [],
+  cards = [],
+  now = Date.now(),
+} = {}) {
+  const table = resolvePackTable({ pack, releaseSets, cards, now });
+  const config = normalizePackConfig(pack);
+  const packById = new Map(config.sets.map((set) => [set.id, set]));
+  const openById = new Map(table.sets.map((set) => [set.id, set]));
+  return cards.flatMap((card) => {
+    const open = openById.get(card.releaseSetId);
+    const packSet = packById.get(card.releaseSetId);
+    const tier = rarityBucket(card);
+    if (!open || !packSet || !tier || !packCardAllowed(card, packSet)) return [];
+    const siblings = cards.filter((candidate) =>
+      candidate.releaseSetId === card.releaseSetId
+      && rarityBucket(candidate) === tier
+      && packCardAllowed(candidate, packSet)).length;
+    const probability = (open.percent / 100) * ((open.effectiveRarities[tier] || 0) / 100) / Math.max(1, siblings);
+    return [{
+      id: card.id,
+      releaseSetId: card.releaseSetId,
+      rarity: tier,
+      probability,
+      expectedPulls: probability ? Math.round(10 / probability) / 10 : Infinity,
+    }];
+  }).sort((left, right) => right.probability - left.probability);
+}
+
+export function rarityOrderReport(odds = []) {
+  const byTier = { Common: [], Uncommon: [], Rare: [] };
+  for (const row of odds) {
+    if (byTier[row.rarity]) byTier[row.rarity].push(row);
+  }
+  const minCommon = byTier.Common.length ? Math.min(...byTier.Common.map((row) => row.probability)) : null;
+  const maxUncommon = byTier.Uncommon.length ? Math.max(...byTier.Uncommon.map((row) => row.probability)) : null;
+  const maxRare = byTier.Rare.length ? Math.max(...byTier.Rare.map((row) => row.probability)) : null;
+  const commonBeatsUncommon = minCommon === null || maxUncommon === null || minCommon > maxUncommon;
+  const uncommonBeatsRare = (maxUncommon === null || maxRare === null)
+    ? (minCommon === null || maxRare === null || minCommon > maxRare)
+    : maxUncommon > maxRare;
+  return {
+    holds: commonBeatsUncommon && uncommonBeatsRare,
+    minCommon,
+    maxUncommon,
+    maxRare,
+    hardestCommon: minCommon ? Math.round(10 / minCommon) / 10 : null,
+    easiestUncommon: maxUncommon ? Math.round(10 / maxUncommon) / 10 : null,
+    easiestRare: maxRare ? Math.round(10 / maxRare) / 10 : null,
   };
 }
