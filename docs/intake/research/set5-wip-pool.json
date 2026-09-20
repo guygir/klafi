@@ -20,7 +20,8 @@
         "status": "approved",
         "sha256": "21274547a9e9a3a0a9aee272cc7f07f8afa66ccd471f192956f76011094d9312",
         "note": "1086x1448 PNG. Old/gaunt Netanyahu, murky old-Klafi palette, ballot box left, varied Arab voters receding into polling-place background, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 2,
@@ -38,7 +39,8 @@
         "status": "approved",
         "sha256": "011a8c7a2c4f5a9ed7da70888a4b7f4bd42e7f4bbba02a4e92c81d5ebe26ef4f",
         "note": "1086x1448 PNG. Netanyahu in a dark suit at a desk, open suitcase stacked with cash bundles, military checkpoint with cargo trucks and smoke-hazed skyline behind, dull soot/umber palette, no baked-in text."
-      }
+      },
+      "rarity": "Uncommon"
     },
     {
       "n": 3,
@@ -55,7 +57,8 @@
         "status": "approved",
         "sha256": "c3360f8b2689076b7fe59589790a022833c0e89cb78d851cbe26761f85333321",
         "note": "1086x1448 PNG. Regev near-frontal with a sarcastic pursed smirk and open mocking hands, dim grand-hotel corridor of identical doors, luggage cart and huge open blank-paged ledger, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 4,
@@ -72,7 +75,8 @@
         "status": "approved",
         "sha256": "1e9c4d882ed62601953b33112af17ae3695ce190bff0d70bf7b705afe9df00ad",
         "note": "1086x1448 PNG. Katz half-smiling with raised chin, gaze off-frame, faded modern container port with cranes dwarfing a small weathered Herodian stone arch, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 5,
@@ -89,7 +93,8 @@
         "status": "approved",
         "sha256": "fb1a1633056257e6d141ed8f11dcca3f803c060e89359c1ad7f464aa17ab5474",
         "note": "1086x1448 PNG. Strock glancing sideways, single candle flame in a glass memorial cup beside a bomb-shelter entrance in rubble, dim damaged skyline with rocket trails, dull soot/umber palette, no baked-in text."
-      }
+      },
+      "rarity": "Uncommon"
     },
     {
       "n": 6,
@@ -108,7 +113,8 @@
         "status": "approved",
         "sha256": "22561b7735ffec8ca9d815d6387f58189fd03ae008a50b13f875cc4e6506e70e",
         "note": "1086x1448 PNG. Rothman clean-shaven, bowed downcast pose at a committee table, two lit candles against many unlit, dull umber palette, no baked-in text."
-      }
+      },
+      "rarity": "Rare"
     },
     {
       "n": 7,
@@ -125,7 +131,8 @@
         "status": "approved",
         "sha256": "b73dd830db661308e9e050e718f9e08195a2a03b095f0b193031cfea4bfad052",
         "note": "1086x1448 PNG. Gotliv pointing accusingly at a podium microphone, silhouetted figures behind a glass partition and concrete wall, dull umber palette, no baked-in text."
-      }
+      },
+      "rarity": "Uncommon"
     },
     {
       "n": 8,
@@ -143,7 +150,8 @@
         "status": "approved",
         "sha256": "919eb6ab7181d458ff4017ed853b3331477996dc6339c076e67f1920eb57ba02",
         "note": "1086x1448 PNG. Eliyahu gazing off-frame, ruined city blocks along a coastline behind him, dull umber palette, no baked-in text."
-      }
+      },
+      "rarity": "Uncommon"
     },
     {
       "n": 9,
@@ -161,7 +169,8 @@
         "status": "approved",
         "sha256": "1df22a1f043678be95923101ae840719feced7c3b1bc10e707133286d67e7dc0",
         "note": "1086x1448 PNG. Pindrus at a podium microphone, framed photos of armed militants on the wall behind and a spotlighted silhouette couple, dull umber palette, no baked-in text."
-      }
+      },
+      "rarity": "Uncommon"
     },
     {
       "n": 10,
@@ -178,7 +187,8 @@
         "status": "approved",
         "sha256": "c447e15c272fe3e9a43195ee03b2ebc1fabef2934288cb0f03311e8d64cc711a",
         "note": "1086x1448 PNG. Winter in profile at a war-room table, cracked blank org chart on the wall and a silhouetted figure facing it, dull umber palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 11,
@@ -196,7 +206,8 @@
         "status": "approved",
         "sha256": "69f9841bf152e1124c19117bce81146580091db55bbc8a681a18ae486acf9424",
         "note": "1086x1448 PNG. Smotrich severe with lowered head and sidelong gaze, hand flat on a bare table with rows of empty bowls, padlocked wire-mesh aid warehouse behind, no people harmed, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Rare"
     },
     {
       "n": 12,
@@ -213,7 +224,8 @@
         "status": "approved",
         "sha256": "ed03a4f4a7d104390c118c4ed56525a8f8f07673930f6037ab85fe64e81194a4",
         "note": "1086x1448 PNG. Lazimi before courthouse columns and a justice statue, ballot box and law books, looming dark silhouette overhead, dignified (no decay), dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 13,
@@ -230,7 +242,8 @@
         "status": "approved",
         "sha256": "7a32ea13772d7bcb23a451a92035c5a6b5a6306005ad4707fc00b35e5f6297ce",
         "note": "1086x1448 PNG. Ben Shitrit at a desk lamp with open case files, figures shoveling dirt over buried archive boxes behind him, dignified, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 14,
@@ -248,7 +261,8 @@
         "status": "approved",
         "sha256": "b804ad83da04407e73244d8cd66fbbaf8ed202da9967b0a0de3efbd9b55d0f98",
         "note": "1086x1448 PNG. Jabareen with an open gesturing hand, a stone bridge between two hillsides with Jewish and Arab figures crossing and meeting, dignified, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 15,
@@ -265,7 +279,8 @@
         "status": "approved",
         "sha256": "c43d67a3887932c6e831237541eced6d6b25563caf5a75d0d6ccecd9a0814199",
         "note": "1086x1448 PNG. Tibi holding a single cloak sheltering a varied line of people beneath it, Jerusalem skyline behind, dignified, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 16,
@@ -282,7 +297,8 @@
         "status": "approved",
         "sha256": "b6e7919712bd99da6464ba4a867c821c79f31202f57f8ee1a29a60a0a2d0f0a0",
         "note": "1086x1448 PNG. Tamano-Shata looking up at bronze scales balancing an open hand against a document, courthouse steps with citizens including a wheelchair user, dignified, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 17,
@@ -299,7 +315,8 @@
         "status": "approved",
         "sha256": "1560ddac198eba31239c93779a18e5de9cb24990957eb6b7726e548166eb6014",
         "note": "1086x1448 PNG. Rayten with clasped hands, a giant carved hand and stamp towering over small figures beneath a colonnade, dignified, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 18,
@@ -316,7 +333,8 @@
         "status": "approved",
         "sha256": "5a2caf7953a3fc5367322200c72176991f173a4c551afcf26219ba350a052692",
         "note": "1086x1448 PNG. Yair Golan walking away from a concrete border checkpoint toward an open landscape where negotiators sit at a table by a bridge at sunset, dignified, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 19,
@@ -333,7 +351,8 @@
         "status": "approved",
         "sha256": "994d5d37cd0e7d60261deb9caaa98a1dfcf5900b052f0ccc9ff6cd9bd1ea92c2",
         "note": "1086x1448 PNG. Regev glancing back over her shoulder with a careless half-wave, deserted departures hall with dark blank board, grounded planes and abandoned suitcases, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Common"
     },
     {
       "n": 20,
@@ -350,7 +369,8 @@
         "status": "approved",
         "sha256": "c98ec88654d9911420567703dd84e48f73fed8883962a84affdc0ce2effe70b7",
         "note": "1086x1448 PNG. May Golan glancing back from a Knesset podium, a clucking hen standing on the podium behind her with feathers in the air, dull umber palette, no baked-in text."
-      }
+      },
+      "rarity": "Rare"
     },
     {
       "n": 21,
@@ -367,7 +387,8 @@
         "status": "approved",
         "sha256": "dc8a5ab90a3edff08994de07efdd4c47e4b7f9a8264618b7937bf454a995a716",
         "note": "1086x1448 PNG. Rothman clean-shaven with an upward sideways dismissive gaze at a religious hotel reception, key rack, lamp, bell and almost-closed door, dull umber palette, no baked-in text."
-      }
+      },
+      "rarity": "Uncommon"
     },
     {
       "n": 22,
@@ -384,7 +405,8 @@
         "status": "approved",
         "sha256": "9a3b70000a783d3fae61b22e2eb71e9d405f3183b2719ebca9edb674b64b4f81",
         "note": "1086x1448 PNG. Tibi holding up a falafel ball beside a market spread of falafel, hummus, za'atar and pita, gesturing at an empty shuttered food stall, wry expression, dull palette, no baked-in text."
-      }
+      },
+      "rarity": "Rare"
     }
   ],
   "exclusions": [

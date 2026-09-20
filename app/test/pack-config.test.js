@@ -4,6 +4,7 @@ import {
   cardPullOdds,
   effectiveRarities,
   rarityOrderReport,
+  rarityWeightsForCounts,
   resolvePackTable,
   validPackConfig,
 } from "../server/pack-config.js";
@@ -27,7 +28,8 @@ test("current time only opens dated active sets", () => {
   const table = resolvePackTable({ pack: {}, releaseSets, cards, now });
   assert.deepEqual(table.sets.map(({ id }) => id), ["party-leaders"]);
   assert.equal(table.sets[0].percent, 100);
-  assert.deepEqual(table.sets[0].effectiveRarities, { Common: 99, Uncommon: 0, Rare: 1 });
+  assert.equal(table.sets[0].effectiveRarities.Uncommon, 0);
+  assert.ok(table.sets[0].effectiveRarities.Common > table.sets[0].effectiveRarities.Rare);
 });
 
 test("held future sets stay out even when they have weight", () => {
@@ -99,6 +101,15 @@ test("event cards stay out until the set opts them in", () => {
     now,
   });
   assert.equal(table.sets.find(({ id }) => id === "decisions")?.cardCount, 1);
+});
+
+test("specific-card weights keep R : UC : C near 1 : 1.5 : 2", () => {
+  const rarities = rarityWeightsForCounts({ Common: 8, Uncommon: 4, Rare: 2 });
+  const pR = rarities.Rare / 2;
+  const pU = rarities.Uncommon / 4;
+  const pC = rarities.Common / 8;
+  assert.ok(Math.abs(pU / pR - 1.5) < 0.15);
+  assert.ok(Math.abs(pC / pR - 2) < 0.15);
 });
 
 test("pack config validation rejects bad weights", () => {

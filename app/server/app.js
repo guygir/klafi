@@ -359,7 +359,7 @@ function runtimeCardFromStudio(party, member, card, releaseSets = [], releasedDi
     hebrewTitle: member.nameHe,
     type: "Quote",
     typeHe: "ציטוט",
-    rarity: card.rarity,
+    rarity: card.pullRarity || card.rarity,
     subtitle: `מקום ${member.slot} · ${party.displayNameHe}`,
     subtitleHe: `מקום ${member.slot}`,
     body: quote.context || "",
@@ -1945,8 +1945,7 @@ export async function createKalpiApp({
             return;
           }
           const bibiCards = ["LIK-M01-Q01", "LIK-M01-Q02", "LIK-M01-Q03"].map((cardId) => cardsById.get(cardId));
-          if (bibiCards.some((card) => !card)
-            || bibiCards.map(rarityTier).join(",") !== "Common,Uncommon,Rare") {
+          if (bibiCards.some((card) => !card)) {
             json(response, 500, { error: "BIBI_DEBUG_CARD_MISSING" });
             return;
           }

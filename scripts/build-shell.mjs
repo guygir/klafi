@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expandPublicCatalog } from "../app/server/public-catalog.js";
 import { cardPullOdds, normalizePackConfig, rarityOrderReport, resolvePackTable } from "../app/server/pack-config.js";
-import { cardIndexFromCatalog, visiblePlayerCards, visibleReleaseSets } from "../app/server/visible-sets.js";
+import { cardIndexFromCatalog, isLiveReleaseSet, visiblePlayerCards, visibleReleaseSets } from "../app/server/visible-sets.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cards = JSON.parse(await readFile(path.join(root, "app/data/cards.json"), "utf8"));
@@ -58,7 +58,10 @@ const shell = {
     },
     releaseSets: visibleReleaseSets(studio.gameConfig?.releaseSets || []),
     pack: (() => {
-      const pack = normalizePackConfig(studio.gameConfig?.pack);
+      const pack = {
+        ...normalizePackConfig(studio.gameConfig?.pack),
+        sets: normalizePackConfig(studio.gameConfig?.pack).sets.filter((set) => isLiveReleaseSet(set.id)),
+      };
       const releaseSets = visibleReleaseSets(studio.gameConfig?.releaseSets || []);
       const current = resolvePackTable({
         pack,

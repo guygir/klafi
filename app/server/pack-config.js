@@ -1,14 +1,30 @@
-export const DEFAULT_RARITIES = Object.freeze({
-  Common: 96,
-  Uncommon: 3,
+export const SPECIFIC_CARD_ODDS = Object.freeze({
   Rare: 1,
+  Uncommon: 1.5,
+  Common: 2,
 });
 
+export function rarityWeightsForCounts(counts = {}, ratio = SPECIFIC_CARD_ODDS) {
+  const nC = Math.max(0, Number(counts.Common) || 0);
+  const nU = Math.max(0, Number(counts.Uncommon) || 0);
+  const nR = Math.max(0, Number(counts.Rare) || 0);
+  const denom = ratio.Common * nC + ratio.Uncommon * nU + ratio.Rare * nR;
+  if (denom <= 0) return { Common: 70, Uncommon: 25, Rare: 5 };
+  return {
+    Common: Math.round((100 * ratio.Common * nC) / denom),
+    Uncommon: Math.round((100 * ratio.Uncommon * nU) / denom),
+    Rare: Math.round((100 * ratio.Rare * nR) / denom),
+  };
+}
+
+export const DEFAULT_RARITIES = Object.freeze(rarityWeightsForCounts({ Common: 8, Uncommon: 4, Rare: 2 }));
+
 export const DEFAULT_PACK_SETS = Object.freeze([
-  { id: "party-leaders", weight: 70, includeEventCards: false, rarities: { ...DEFAULT_RARITIES } },
-  { id: "party-slot-2", weight: 20, includeEventCards: false, rarities: { ...DEFAULT_RARITIES } },
-  { id: "decisions", weight: 8, includeEventCards: false, rarities: { Common: 80, Uncommon: 15, Rare: 5 } },
-  { id: "records", weight: 2, includeEventCards: false, rarities: { Common: 80, Uncommon: 15, Rare: 5 } },
+  { id: "party-leaders", weight: 70, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 8, Uncommon: 4, Rare: 2 }) },
+  { id: "party-slot-2", weight: 20, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 7, Uncommon: 4, Rare: 2 }) },
+  { id: "decisions", weight: 8, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 4, Uncommon: 3, Rare: 2 }) },
+  { id: "records", weight: 2, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 2, Uncommon: 2, Rare: 1 }) },
+  { id: "set-5", weight: 0, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 12, Uncommon: 6, Rare: 4 }) },
 ]);
 
 const RARITY_TIERS = Object.freeze(["Common", "Uncommon", "Rare"]);

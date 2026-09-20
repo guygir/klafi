@@ -99,6 +99,43 @@ test("Vercel copies only live card art and leaves Set 5 WIP images out", async (
   }
 });
 
+test("within each live set a specific Common is about twice a specific Rare", async () => {
+  const [catalog, studio] = await Promise.all([
+    readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
+    readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
+  ]);
+  const open = studio.gameConfig.releaseSets.map((set) => ({
+    ...set,
+    runtimeState: "active",
+    runtimeAvailableFrom: "2026-01-01T00:00:00.000Z",
+  }));
+  const pack = {
+    ...studio.gameConfig.pack,
+    sets: studio.gameConfig.pack.sets.map((set) => (
+      ["decisions", "records"].includes(set.id) ? { ...set, includeEventCards: true } : set
+    )),
+  };
+  const odds = cardPullOdds({
+    pack,
+    releaseSets: open,
+    cards: catalog.cards,
+    now: Date.parse("2026-09-20T12:00:00.000Z"),
+  });
+  for (const setId of ["party-leaders", "party-slot-2", "decisions", "records"]) {
+    const rows = odds.filter((row) => row.releaseSetId === setId);
+    const byTier = { Common: [], Uncommon: [], Rare: [] };
+    for (const row of rows) byTier[row.rarity].push(row.probability);
+    if (!byTier.Common.length || !byTier.Rare.length) continue;
+    const pC = byTier.Common[0];
+    const pR = byTier.Rare[0];
+    assert.ok(Math.abs(pC / pR - 2) < 0.2, `${setId} C/R ${pC / pR}`);
+    if (byTier.Uncommon.length) {
+      const pU = byTier.Uncommon[0];
+      assert.ok(Math.abs(pU / pR - 1.5) < 0.2, `${setId} U/R ${pU / pR}`);
+    }
+  }
+});
+
 test("current live pack keeps any specific Rare harder than any specific Common", async () => {
   const [catalog, studio] = await Promise.all([
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
@@ -150,6 +187,22 @@ test("Sets 3 and 4 ship complete art-backed catalogs with their collectible rari
   );
 });
 
+
+test("Set 5 WIP pool has assigned pull rarities and stays off the live catalog", async () => {
+  const [catalog, set5] = await Promise.all([
+    readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
+    readFile(path.resolve(here, "../../docs/intake/research/set5-wip-pool.json"), "utf8").then(JSON.parse),
+  ]);
+  const counts = { Common: 0, Uncommon: 0, Rare: 0 };
+  for (const candidate of set5.candidates) {
+    assert.ok(["Common", "Uncommon", "Rare"].includes(candidate.rarity), candidate.n);
+    counts[candidate.rarity] += 1;
+    assert.ok(!catalog.cards.some((card) => card.artKey === candidate.art.artKey));
+  }
+  assert.deepEqual(counts, { Common: 12, Uncommon: 6, Rare: 4 });
+  assert.equal(set5.candidates.find(({ n }) => n === 22).rarity, "Rare");
+  assert.equal(set5.candidates.find(({ n }) => n === 6).rarity, "Rare");
+});
 
 test("Sets 1 and 2 ship complete art-backed catalogs", async () => {
   const [cards, specials] = await Promise.all([

@@ -497,7 +497,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(bibiDemo.body.cards[0].cardId, "LIK-M01-Q01");
   assert.deepEqual(
     bibiDemo.body.cards.map(({ cardId }) => catalog.body.cards.find(({ id }) => id === cardId).rarity),
-    ["Common", "Uncommon", "Rare", "Common", "Common", "Uncommon"],
+    ["Uncommon", "Uncommon", "Rare", "Common", "Common", "Uncommon"],
   );
   const stateAfterBibiDemo = await api(running.base, "/api/state", { token });
   assert.deepEqual(
