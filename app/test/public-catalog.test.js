@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -104,9 +104,14 @@ test("Vercel copies live card art including Set 5", async () => {
   const names = liveDeployAssetNames({ catalog, avatars });
   assert.ok(names.includes("hero-art-gadi-eisenkot-slot1.png"));
   assert.ok(names.includes("pack-wrapper-transparent.png"));
+  let set5Bytes = 0;
   for (const candidate of set5.candidates) {
     assert.ok(names.includes(candidate.art.artKey), candidate.art.artKey);
+    assert.match(candidate.art.artKey, /\.jpg$/);
+    const file = path.resolve(here, "../../docs/design/assets", candidate.art.artKey);
+    set5Bytes += (await stat(file)).size;
   }
+  assert.ok(set5Bytes < 8 * 1024 * 1024, `Set 5 live JPEGs should stay well under Hobby headroom (${set5Bytes})`);
 });
 
 test("within each live set a specific Common is about twice a specific Rare", async () => {

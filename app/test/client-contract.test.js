@@ -8,16 +8,17 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
 
 test("client selectors match the HTML and preserve Alpha UX constraints", async () => {
-  const [html, javascript, warmup, baseCss, themeCss] = await Promise.all([
+  const [html, javascript, tipsJs, warmup, baseCss, themeCss] = await Promise.all([
     readFile(path.join(publicDir, "index.html"), "utf8"),
     readFile(path.join(publicDir, "app.js"), "utf8"),
+    readFile(path.join(publicDir, "tips.js"), "utf8"),
     readFile(path.join(publicDir, "boot-warmup.js"), "utf8"),
     readFile(path.join(publicDir, "styles.css"), "utf8"),
     readFile(path.join(publicDir, "theme-pack-v2.css"), "utf8"),
   ]);
   const css = `${baseCss}\n${themeCss}`;
 
-  const selectorIds = [...javascript.matchAll(/querySelector\("#([^"]+)"\)/g)].map((match) => match[1]);
+  const selectorIds = [...`${javascript}\n${tipsJs}`.matchAll(/querySelector\("#([^"]+)"\)/g)].map((match) => match[1]);
   for (const id of selectorIds) {
     assert.match(html, new RegExp(`id=["']${id}["']`), `Missing #${id} in index.html`);
   }
@@ -98,6 +99,21 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /setTimeout\(startWalkout/);
   assert.match(html, /pack-wrapper-transparent\.png/);
   assert.match(html, /id="open-pack"[^>]*>פתיחת קלף/);
+  assert.match(html, /id="replay-tips"[^>]*>איך משחקים/);
+  assert.match(html, /id="klafi-tips"/);
+  assert.match(html, /id="klafi-tips-dim"/);
+  assert.match(html, /id="klafi-tips-marks"/);
+  assert.match(html, /אל תציגו שוב/);
+  assert.match(javascript, /attachKlafiTips/);
+  assert.match(tipsJs, /function attachKlafiTips/);
+  assert.match(tipsJs, /klafi_tips/);
+  assert.match(tipsJs, /klafi:tips/);
+  assert.match(tipsJs, /fill-rule/);
+  assert.match(css, /\.klafi-tips-dim \{ pointer-events: auto; z-index: 1; \}/);
+  assert.match(css, /\.klafi-tips-card \{ z-index: 2; \}/);
+  assert.match(css, /\.klafi-tips-marks \{ pointer-events: none; z-index: 3; \}/);
+  assert.match(html, /id="run-guided-demo"[^>]*>Run six-card guided demo/);
+  assert.doesNotMatch(tipsJs, /run-guided-demo/);
   assert.match(html, /id="idle-storage"/);
   assert.match(javascript, /\/api\/idle\/settle/);
   assert.match(javascript, /\/api\/idle\/seen/);
@@ -252,7 +268,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-23/);
+  assert.match(html, /card-surface-24/);
   assert.match(html, /preload="auto"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -317,7 +333,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-23/);
+  assert.match(html, /card-surface-24/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

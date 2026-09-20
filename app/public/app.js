@@ -1,4 +1,5 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
+import { attachKlafiTips } from "./tips.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
@@ -52,6 +53,7 @@ const model = {
 };
 let showcaseTimers = [];
 let packTimers = [];
+const klafiTips = attachKlafiTips();
 
 const elements = {
   views: [...document.querySelectorAll(".view")],
@@ -1075,6 +1077,7 @@ function showView(name) {
     }
   }
   elements.bottomNav.hidden = !["home", "binder", "achievements", "events", "growth"].includes(name);
+  klafiTips.sync();
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
     fitVisibleCardText(elements.main);
@@ -4847,7 +4850,7 @@ document.addEventListener("click", (event) => {
 });
 window.addEventListener("online", () => flushPendingReports().catch(() => {}));
 
-bootstrap();
+bootstrap().then(() => klafiTips.maybeStart());
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
 window.__kalpiDebug = {

@@ -55,7 +55,7 @@ The accepted 22-card pool is live in the binder, pack table, and Vercel catalog 
 
 ## Approved art (all 22 candidates, 2026-09-20)
 
-All art is 1086x1448 PNG in the approved old Klafi style, under `docs/design/assets/`. SHA-256 per file is recorded in `set5-wip-pool.json`.
+Approved masters stay 1086x1448 PNG under `docs/design/assets/`. Live catalog `artKey`s are 864x1152 JPEG derivatives (same frame size as sets 1–4) so the Vercel Hobby copy stays under the 100 MB ceiling. SHA-256 per live file is recorded in `set5-wip-pool.json`.
 
 1. Netanyahu (Arab voters) - `hero-art-benjamin-netanyahu-arab-voters.png`
 2. Netanyahu (Hamas funding) - `hero-art-benjamin-netanyahu-hamas-funding.png`

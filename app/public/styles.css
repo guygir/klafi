@@ -3518,3 +3518,145 @@ body {
     font-size: 14px;
   }
 }
+
+.tips-replay {
+  display: inline-block;
+  margin: 8px auto 0;
+  padding: 4px 2px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 70%, transparent);
+  background: transparent;
+  color: var(--pack-seal, #175b56);
+  font: 600 13px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  cursor: pointer;
+}
+
+.tips-replay:focus-visible {
+  outline: 2px solid var(--pack-gold, #b38d3f);
+  outline-offset: 3px;
+}
+
+.klafi-tips {
+  --pack-seal: #175b56;
+  --pack-gold: #b38d3f;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.klafi-tips[hidden] { display: none !important; }
+
+.klafi-tips-dim,
+.klafi-tips-marks {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.klafi-tips-dim { pointer-events: auto; z-index: 1; }
+.klafi-tips-card { z-index: 2; }
+.klafi-tips-marks { pointer-events: none; z-index: 3; }
+
+.klafi-tips-veil {
+  fill: rgba(28, 22, 16, 0.5);
+}
+
+.klafi-tips-ring {
+  fill: none;
+  stroke: var(--pack-gold);
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 1px var(--pack-seal));
+}
+
+.klafi-tips-arrow {
+  stroke: var(--pack-gold);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.klafi-tips-arrow-head { fill: var(--pack-seal); }
+
+.klafi-tips-card {
+  position: fixed;
+  width: min(300px, calc(100vw - 32px));
+  padding: 14px 16px 12px;
+  border: 1px solid color-mix(in srgb, var(--pack-gold) 62%, var(--pack-seal));
+  border-radius: 14px;
+  background: rgba(238, 229, 212, 0.6);
+  box-shadow: 0 16px 40px rgba(28, 22, 16, 0.22);
+  backdrop-filter: blur(12px);
+  color: #3c3026;
+  pointer-events: auto;
+  text-align: start;
+}
+
+.klafi-tips-kicker {
+  margin: 0 0 4px;
+  color: var(--pack-seal);
+  font: 600 11px/1 "IBM Plex Sans Hebrew", sans-serif;
+}
+
+.klafi-tips-card h2 {
+  margin: 0 0 6px;
+  font: 600 22px/1.15 "Noto Serif Hebrew", "Fraunces", serif;
+  color: var(--pack-seal);
+}
+
+.klafi-tips-card p {
+  margin: 0 0 12px;
+  font: 400 15px/1.4 "IBM Plex Sans Hebrew", sans-serif;
+}
+
+.klafi-tips-mute {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font: 500 13px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+}
+
+.klafi-tips-mute input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--pack-seal);
+}
+
+.klafi-tips-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.klafi-tips-actions button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font: 600 14px/1 "IBM Plex Sans Hebrew", sans-serif;
+  cursor: pointer;
+}
+
+.klafi-tips-actions button:focus-visible {
+  outline: 2px solid var(--pack-gold);
+  outline-offset: 2px;
+}
+
+#klafi-tips-next {
+  border: 1px solid var(--pack-seal);
+  background: var(--pack-seal);
+  color: #eee5d4;
+}
+
+#klafi-tips-back,
+#klafi-tips-skip {
+  border: 1px solid color-mix(in srgb, var(--pack-gold) 55%, var(--pack-seal));
+  background: transparent;
+  color: var(--pack-seal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .klafi-tips-card { transition: none; }
+}
