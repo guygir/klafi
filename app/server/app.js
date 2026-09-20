@@ -313,7 +313,17 @@ function quoteDisplayNumber(member, card) {
   return 4 + ((member.slot - 1) * 3) + rarityOffset;
 }
 
-function runtimeCardFromStudio(party, member, card, releaseSets = []) {
+function releasedQuoteDisplayCode(studioContent, member, card) {
+  const approved = member.quoteSlots.filter((candidate) =>
+    candidate.publicationState === "approved" && candidate.quote?.displayText?.trim());
+  const entryCard = approved.find((candidate) => candidate.rarity.startsWith("Common")) || approved[0];
+  if (card.id !== entryCard?.id || ![1, 2].includes(member.slot)) return null;
+  const index = studioContent.members.filter((candidate) => candidate.slot === member.slot).findIndex(({ id }) => id === member.id);
+  if (index < 0) return null;
+  return `${member.slot === 1 ? "ראש" : "משנה"}-${String(index + 1).padStart(2, "0")}`;
+}
+
+function runtimeCardFromStudio(party, member, card, releaseSets = [], releasedDisplayCode = null) {
   const letters = (party.finalLetters || party.requestedLetters || ["?"])[0];
   const quote = card.quote || {};
   const approved = member.quoteSlots.filter((candidate) =>
@@ -329,7 +339,8 @@ function runtimeCardFromStudio(party, member, card, releaseSets = []) {
     setName: party.displayNameEn,
     setNameHe: party.displayNameHe,
     letters,
-    displayCode: `${letters}-${String(quoteDisplayNumber(member, card)).padStart(2, "0")}`,
+    displayCode: releasedDisplayCode
+      || `${letters}-${String(quoteDisplayNumber(member, card)).padStart(2, "0")}`,
     pip: party.pip,
     id: card.id,
     title: member.nameEn,
@@ -809,7 +820,13 @@ export async function createKalpiApp({
       }
       return null;
     }
-    const published = runtimeCardFromStudio(party, member, card, studioContent.gameConfig?.releaseSets);
+    const published = runtimeCardFromStudio(
+      party,
+      member,
+      card,
+      studioContent.gameConfig?.releaseSets,
+      releasedQuoteDisplayCode(studioContent, member, card),
+    );
     if (existing) Object.assign(existing, published);
     else {
       cards.push(published);

@@ -1,6 +1,6 @@
 # Expanded PoC content audit
 
-Generated: 2026-09-15T13:32:06.822Z
+Generated: 2026-09-20T14:44:30.460Z
 
 ## Gate summary
 - Parties: 14 / 14
@@ -10,11 +10,11 @@ Generated: 2026-09-15T13:32:06.822Z
 - Explicit blank C/UC/R slots: 4
 - Missing quote sources: 0
 - Weak / ungraded evidence: 0
-- Missing generated art: 132
+- Missing generated art: 119
 - Identity references needing exact file/license review: 41
 - Lists pending final CEC letters: 14
 - Launch leader cards: 14 / 14
-- Launch leaders missing approved art files: 1
+- Launch leaders missing approved art files: 0
 - Launch leaders missing sources: 0
 - Launch leaders outside approved content state: 0
 - Release sets missing a planned publication time: 0
@@ -39,7 +39,8 @@ Generated: 2026-09-15T13:32:06.822Z
 - `ministers-week-2026` · blocked · 2026-10-12T09:00:00+03:00 → 2026-10-18T23:59:59+03:00 · 3 cards
 
 ## Launch-leader blockers
-- `SHS-M01-Q03` · אריה דרעי · missing approved file for art key
+- None.
+
 - None.
 
 - None.
@@ -78,7 +79,6 @@ Generated: 2026-09-15T13:32:06.822Z
 ## Missing art
 - `YSR-M01-Q02` · גדי איזנקוט · prompt ready once identity reference is confirmed
 - `YSR-M01-Q03` · גדי איזנקוט · prompt ready once identity reference is confirmed
-- `YSR-M02-Q01` · יורם כהן · prompt ready once identity reference is confirmed
 - `YSR-M02-Q02` · יורם כהן · prompt ready once identity reference is confirmed
 - `YSR-M02-Q03` · יורם כהן · prompt ready once identity reference is confirmed
 - `YSR-M03-Q01` · אורית פקאש הכהן · prompt ready once identity reference is confirmed
@@ -109,7 +109,6 @@ Generated: 2026-09-15T13:32:06.822Z
 - `LIK-M12-Q03` · מיקי זוהר · prompt ready once identity reference is confirmed
 - `BYD-M01-Q02` · נפתלי בנט · prompt ready once identity reference is confirmed
 - `BYD-M01-Q03` · נפתלי בנט · prompt ready once identity reference is confirmed
-- `BYD-M02-Q01` · יאיר לפיד · prompt ready once identity reference is confirmed
 - `BYD-M02-Q02` · יאיר לפיד · prompt ready once identity reference is confirmed
 - `BYD-M02-Q03` · יאיר לפיד · prompt ready once identity reference is confirmed
 - `BYD-M04-Q01` · מירב בן ארי · prompt ready once identity reference is confirmed
@@ -123,7 +122,6 @@ Generated: 2026-09-15T13:32:06.822Z
 - `BYD-M10-Q03` · יונתן שלו · prompt ready once identity reference is confirmed
 - `YB-M01-Q02` · אביגדור ליברמן · prompt ready once identity reference is confirmed
 - `YB-M01-Q03` · אביגדור ליברמן · prompt ready once identity reference is confirmed
-- `YB-M02-Q01` · רפי בן שטרית · prompt ready once identity reference is confirmed
 - `YB-M02-Q02` · רפי בן שטרית · prompt ready once identity reference is confirmed
 - `YB-M02-Q03` · רפי בן שטרית · prompt ready once identity reference is confirmed
 - `YB-M03-Q01` · טליה לנקרי · prompt ready once identity reference is confirmed
@@ -144,7 +142,6 @@ Generated: 2026-09-15T13:32:06.822Z
 - `DEM-M05-Q03` · יאיר פינק · prompt ready once identity reference is confirmed
 - `RZ-M01-Q02` · בצלאל סמוטריץ · prompt ready once identity reference is confirmed
 - `RZ-M01-Q03` · בצלאל סמוטריץ · prompt ready once identity reference is confirmed
-- `RZ-M02-Q01` · משה פייגלין · prompt ready once identity reference is confirmed
 - `RZ-M02-Q02` · משה פייגלין · prompt ready once identity reference is confirmed
 - `RZ-M02-Q03` · משה פייגלין · prompt ready once identity reference is confirmed
 - `RZ-M03-Q01` · אורית סטרוק · prompt ready once identity reference is confirmed
@@ -158,17 +155,13 @@ Generated: 2026-09-15T13:32:06.822Z
 - `RZ-M07-Q03` · צבי סוכות · prompt ready once identity reference is confirmed
 - `OTZ-M01-Q02` · איתמר בן גביר · prompt ready once identity reference is confirmed
 - `OTZ-M01-Q03` · איתמר בן גביר · prompt ready once identity reference is confirmed
-- `OTZ-M02-Q01` · טלי גוטליב · prompt ready once identity reference is confirmed
 - `OTZ-M02-Q02` · טלי גוטליב · prompt ready once identity reference is confirmed
 - `OTZ-M02-Q03` · טלי גוטליב · prompt ready once identity reference is confirmed
 - `OTZ-M04-Q01` · עמיחי אליהו · prompt ready once identity reference is confirmed
 - `OTZ-M04-Q02` · עמיחי אליהו · prompt ready once identity reference is confirmed
 - `OTZ-M04-Q03` · עמיחי אליהו · prompt ready once identity reference is confirmed
-- `SHS-M01-Q03` · אריה דרעי · prompt ready once identity reference is confirmed
-- `SHS-M02-Q03` · ינון אזולאי · prompt ready once identity reference is confirmed
 - `UTJ-M01-Q02` · יעקב אשר · prompt ready once identity reference is confirmed
 - `UTJ-M01-Q03` · יעקב אשר · prompt ready once identity reference is confirmed
-- `UTJ-M02-Q01` · יצחק גולדקנופף · prompt ready once identity reference is confirmed
 - `UTJ-M02-Q02` · יצחק גולדקנופף · prompt ready once identity reference is confirmed
 - `UTJ-M02-Q03` · יצחק גולדקנופף · prompt ready once identity reference is confirmed
 - `UTJ-M03-Q01` · יצחק פינדרוס · prompt ready once identity reference is confirmed
@@ -176,7 +169,6 @@ Generated: 2026-09-15T13:32:06.822Z
 - `UTJ-M03-Q03` · יצחק פינדרוס · prompt ready once identity reference is confirmed
 - `JNT-M01-Q02` · יוסף ג׳בארין · prompt ready once identity reference is confirmed
 - `JNT-M01-Q03` · יוסף ג׳בארין · prompt ready once identity reference is confirmed
-- `JNT-M02-Q01` · אחמד טיבי · prompt ready once identity reference is confirmed
 - `JNT-M02-Q02` · אחמד טיבי · prompt ready once identity reference is confirmed
 - `JNT-M02-Q03` · אחמד טיבי · prompt ready once identity reference is confirmed
 - `JNT-M03-Q01` · סאמי אבו שחאדה · prompt ready once identity reference is confirmed
@@ -184,7 +176,6 @@ Generated: 2026-09-15T13:32:06.822Z
 - `JNT-M03-Q03` · סאמי אבו שחאדה · prompt ready once identity reference is confirmed
 - `RAM-M01-Q02` · מנסור עבאס · prompt ready once identity reference is confirmed
 - `RAM-M01-Q03` · מנסור עבאס · prompt ready once identity reference is confirmed
-- `RAM-M02-Q01` · יואב סגלוביץ · prompt ready once identity reference is confirmed
 - `RAM-M02-Q02` · יואב סגלוביץ · prompt ready once identity reference is confirmed
 - `RAM-M02-Q03` · יואב סגלוביץ · prompt ready once identity reference is confirmed
 - `RAM-M03-Q01` · ואליד טאהא · prompt ready once identity reference is confirmed
@@ -192,7 +183,6 @@ Generated: 2026-09-15T13:32:06.822Z
 - `RAM-M03-Q03` · ואליד טאהא · prompt ready once identity reference is confirmed
 - `AMH-M01-Q02` · עופר וינטר · prompt ready once identity reference is confirmed
 - `AMH-M01-Q03` · עופר וינטר · prompt ready once identity reference is confirmed
-- `AMH-M02-Q01` · יוסף חדאד · prompt ready once identity reference is confirmed
 - `AMH-M02-Q02` · יוסף חדאד · prompt ready once identity reference is confirmed
 - `AMH-M02-Q03` · יוסף חדאד · prompt ready once identity reference is confirmed
 - `AMH-M03-Q01` · נטעלי שם טוב · prompt ready once identity reference is confirmed
@@ -200,12 +190,10 @@ Generated: 2026-09-15T13:32:06.822Z
 - `AMH-M03-Q03` · נטעלי שם טוב · prompt ready once identity reference is confirmed
 - `RSE-M01-Q02` · יועז הנדל · prompt ready once identity reference is confirmed
 - `RSE-M01-Q03` · יועז הנדל · prompt ready once identity reference is confirmed
-- `RSE-M02-Q01` · ירון זליכה · prompt ready once identity reference is confirmed
 - `RSE-M02-Q02` · ירון זליכה · prompt ready once identity reference is confirmed
 - `RSE-M02-Q03` · ירון זליכה · prompt ready once identity reference is confirmed
 - `BW-M01-Q02` · בני גנץ · prompt ready once identity reference is confirmed
 - `BW-M01-Q03` · בני גנץ · prompt ready once identity reference is confirmed
-- `BW-M02-Q01` · פנינה תמנו שטה · prompt ready once identity reference is confirmed
 - `BW-M02-Q02` · פנינה תמנו שטה · prompt ready once identity reference is confirmed
 - `BW-M02-Q03` · פנינה תמנו שטה · prompt ready once identity reference is confirmed
 

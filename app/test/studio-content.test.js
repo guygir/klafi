@@ -141,7 +141,8 @@ test("runtime catalog omits blank slots and keeps all party card families dynami
   assert.equal(runtimeCards.find(({ id }) => id === "SYS-C-01").displayCode, "יסוד-01");
   assert.equal(runtimeCards.find(({ set, type }) => set === "YSR" && type === "Symbol").displayCode, "דרך-01");
   assert.equal(runtimeCards.find(({ id }) => id === "LIK-P-01").displayCode, "מחל-02");
-  assert.equal(runtimeCards.find(({ id }) => id === "LIK-M01-Q01").displayCode, "מחל-04");
+  assert.equal(runtimeCards.find(({ id }) => id === "LIK-M01-Q01").displayCode, "ראש-02");
+  assert.equal(runtimeCards.find(({ id }) => id === "YSR-M02-Q01").displayCode, "משנה-01");
   assert.equal(runtimeCards.find(({ id }) => id === "LIK-M01-Q03").displayCode, "מחל-06");
   for (const party of studio.parties) {
     const codes = runtimeCards.filter(({ set }) => set === party.id).map(({ displayCode }) => displayCode);

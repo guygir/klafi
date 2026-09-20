@@ -1,0 +1,272 @@
+{
+  "id": "set5-wip-pool",
+  "status": "wip-accepted-pool",
+  "asOfDate": "2026-09-20",
+  "note": "Broad accepted candidate pool for the future Set 5, per Guy's instruction: include every candidate not disqualified; prune or promote later. This is not a final fixed-size release set. The pool is intentionally NOT wired into studio-content.json, specials-content.json, or any runtime build, so nothing here reaches the released catalog before Guy prunes it. One quote per person applies only when the final set is pruned. Only candidate 1 has approved art; every other candidate must stay unwired to art until Guy approves art in the old Klafi style (the polygonal experiments were rejected).",
+  "sourceDocument": "docs/intake/research/set5-wip-roster.md",
+  "candidates": [
+    {
+      "n": 1,
+      "nameHe": "בנימין נתניהו",
+      "nameEn": "Benjamin Netanyahu",
+      "displayText": "שלטון הימין בסכנה. המצביעים הערבים נעים בכמויות אדירות לקלפי.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.youtube.com/watch?v=Q2cUoglR1yk"
+      ],
+      "existingStudioRef": "LIK-M01-Q02",
+      "art": {
+        "artKey": "hero-art-benjamin-netanyahu-arab-voters.png",
+        "status": "approved",
+        "sha256": "21274547a9e9a3a0a9aee272cc7f07f8afa66ccd471f192956f76011094d9312",
+        "note": "1086x1448 PNG. Old/gaunt Netanyahu, murky old-Klafi palette, ballot box left, varied Arab voters receding into polling-place background, no baked-in text."
+      }
+    },
+    {
+      "n": 2,
+      "nameHe": "בנימין נתניהו",
+      "nameEn": "Benjamin Netanyahu",
+      "displayText": "מי שרוצה לסכל הקמה של מדינה פלסטינית צריך לתמוך בחיזוק החמאס ובהעברת כסף לחמאס.*",
+      "quoteStatus": "attributed-paraphrase",
+      "sources": [
+        "https://lahav.substack.com/p/i-reported-on-netanyahu-green-lighting"
+      ],
+      "existingStudioRef": "LIK-M01-Q03",
+      "notes": "Attributed report, not a recording. Preserve attribution and shortened marker. Already lives in Studio as LIK-M01-Q03; dedupe at prune time."
+    },
+    {
+      "n": 3,
+      "nameHe": "מירי רגב",
+      "nameEn": "Miri Regev",
+      "displayText": "דברים מדהימים! כל כך הרבה תושבים במלונות במימון המדינה.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.mako.co.il/news-politics/2024_q2/Article-1ff19495b64ef81027.htm"
+      ],
+      "existingStudioRef": "LIK-M05-Q01"
+    },
+    {
+      "n": 4,
+      "nameHe": "ישראל כץ",
+      "nameEn": "Israel Katz",
+      "displayText": "הורדוס לא הצליח להפוך את ישראל למרכז הסחר הבין־לאומי של האימפריה הרומית כפי שתכנן. אני הצלחתי.*",
+      "quoteStatus": "shortened",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Guy called this a Banger. Use the existing Studio Herod/port concept. Shortened marker."
+    },
+    {
+      "n": 5,
+      "nameHe": "אורית סטרוק",
+      "nameEn": "Orit Strock",
+      "displayText": "אנחנו חיים בתקופה של נס... פיפ פיפ... ואז כשיש אור ירוק, טיק טיק טיק כזה.*",
+      "quoteStatus": "shortened",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Guy accepted the altered familiar opening after verification discussion. Metadata must retain that it is edited/shortened from her settlement-construction remarks."
+    },
+    {
+      "n": 6,
+      "nameHe": "שמחה רוטמן",
+      "nameEn": "Simcha Rothman",
+      "displayText": "הדם של האחים הלל ויגל יניב ז״ל, שנרצחו בחווארה, אדום יותר מדם הנרצחים ב־7 באוקטובר.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.mako.co.il/news-military/6361323ddea5a810/Article-c66a26f977c8b81027.htm",
+        "https://www.mako.co.il/news-law/2026_q3/Article-65b83474f2eaf91027.htm"
+      ],
+      "existingStudioRef": "RZ-M04-Q03",
+      "notes": "Reported from a closed Constitution Committee prep meeting, reported 2023-11-01. He retracted in the room and denied it later; in July 2026 his libel suit was dismissed and the court found N12 proved truth. Preserve all of this in metadata."
+    },
+    {
+      "n": 7,
+      "nameHe": "טלי גוטליב",
+      "nameEn": "Tally Gotliv",
+      "displayText": "כל חטוף הוא שטוף מוח מחמאס. כל חטוף מדבר את מה שחמאס משמיע להם.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.ynet.co.il/news/article/rjqi80d11ex"
+      ],
+      "existingStudioRef": "OTZ-M02-Q02"
+    },
+    {
+      "n": 8,
+      "nameHe": "עמיחי אליהו",
+      "nameEn": "Amichai Eliyahu",
+      "displayText": "הממשלה דוהרת לזה שעזה נמחקת, תודה להשם שאנחנו מוחקים את הרוע הזה. כל עזה תהיה יהודית.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://kol-barama.co.il/item/%D7%94%D7%A9%D7%A8-%D7%90%D7%9C%D7%99%D7%94%D7%95-"
+      ],
+      "existingStudioRef": "OTZ-M04-Q03",
+      "notes": "Keep this one only. אין דבר כזה בלתי מעורבים בעזה was explicitly dropped."
+    },
+    {
+      "n": 9,
+      "nameHe": "יצחק פינדרוס",
+      "nameEn": "Yitzhak Pindrus",
+      "displayText": "הדבר הכי מסוכן למדינת ישראל - יותר מדאעש, יותר מחיזבאללה, יותר מחמאס - זה הפריצות בעריות.*",
+      "quoteStatus": "shortened",
+      "sources": [
+        "https://www.mako.co.il/tv-people/articles/Article-0fc26d494fed881026.htm"
+      ],
+      "existingStudioRef": "UTJ-M03-Q02",
+      "notes": "Target is LGBT people/movement. The bare tail was rejected as unclear. Shortened marker."
+    },
+    {
+      "n": 10,
+      "nameHe": "עופר וינטר",
+      "nameEn": "Ofer Winter",
+      "displayText": "אתה רמטכ״ל מבולבל, אתה כפוף לראש הממשלה ולדרג המדיני.*",
+      "quoteStatus": "shortened",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Addressed to/recounted about Herzi Halevi. Winter's outburst is verified; the IDF disputed the underlying exchange he described. Preserve dispute metadata."
+    },
+    {
+      "n": 11,
+      "nameHe": "בצלאל סמוטריץ׳",
+      "nameEn": "Bezalel Smotrich",
+      "displayText": "אף אחד לא ייתן לנו להמית שני מיליון אזרחים ברעב, למרות שאולי זה צודק ומוסרי.*",
+      "quoteStatus": "shortened",
+      "sources": [
+        "https://www.timesofisrael.com/smotrich-it-may-be-justified-to-starve-2-million-g"
+      ],
+      "existingStudioRef": "RZ-M01-Q03",
+      "notes": "Already lives in Studio as RZ-M01-Q03; dedupe at prune time."
+    },
+    {
+      "n": 12,
+      "nameHe": "נעמה לזימי",
+      "nameEn": "Naama Lazimi",
+      "displayText": "הוא הכריז מלחמה על ישראל הדמוקרטית ועל מערכות השלטון והחוק. כל מסגור אחר חוטא לאמת.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Moved into Set 5 rather than replacing her live Set 2 card."
+    },
+    {
+      "n": 13,
+      "nameHe": "רפי בן שטרית",
+      "nameEn": "Rafi Ben Shitrit",
+      "displayText": "הדרג המדיני מבקש לקבור את האמת.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Moved into Set 5 rather than replacing his live Set 2 card."
+    },
+    {
+      "n": 14,
+      "nameHe": "יוסף ג׳בארין",
+      "nameEn": "Yousef Jabareen",
+      "displayText": "העתיד של כולנו לא נמצא בפחד, במלחמות ובהסתה, אלא בשותפות יהודית־ערבית אמיצה.*",
+      "quoteStatus": "shortened",
+      "sources": [
+        "https://zoha.org.il/146643/"
+      ],
+      "existingStudioRef": "JNT-M01-Q03",
+      "notes": "Moved into Set 5 rather than replacing his live Set 1 card."
+    },
+    {
+      "n": 15,
+      "nameHe": "אחמד טיבי",
+      "nameEn": "Ahmed Tibi",
+      "displayText": "להשיל את השוני ולגלום גלימה אחת ויחידה: גלימתו האנושית... ולהיות בן אנוש. בן אנוש בלבד.*",
+      "quoteStatus": "shortened",
+      "sources": [
+        "https://www.haaretz.co.il/news/education/2010-01-28/ty-article/0000017f-eb9f-d0f"
+      ],
+      "existingStudioRef": "JNT-M02-Q02"
+    },
+    {
+      "n": 16,
+      "nameHe": "פנינה תמנו שטה",
+      "nameEn": "Pnina Tamano-Shata",
+      "displayText": "לא צדקה אלא צדק; לא רחמים אלא הכרה.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.ice.co.il/opinions/news/article/1053114"
+      ],
+      "existingStudioRef": "BW-M02-Q03"
+    },
+    {
+      "n": 17,
+      "nameHe": "אפרת רייטן",
+      "nameEn": "Efrat Rayten",
+      "displayText": "חברה חזקה מגינה על החלש מפני ניצול כוח ושררה.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://www.ynet.co.il/economy/article/r1puvezc1x"
+      ],
+      "existingStudioRef": "DEM-M04-Q03"
+    },
+    {
+      "n": 18,
+      "nameHe": "יאיר גולן",
+      "nameEn": "Yair Golan",
+      "displayText": "רק הסדרים מדיניים מביאים ביטחון בראייה ארוכת טווח.",
+      "quoteStatus": "exact",
+      "sources": [
+        "https://news.walla.co.il/item/3701292"
+      ],
+      "existingStudioRef": "DEM-M01-Q03"
+    },
+    {
+      "n": 19,
+      "nameHe": "מירי רגב",
+      "nameEn": "Miri Regev",
+      "displayText": "קודם כל, אין מה להילחץ, אתם נמצאים בחו״ל, תיהנו.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Accepted addition from video review."
+    },
+    {
+      "n": 20,
+      "nameHe": "מאי גולן",
+      "nameEn": "May Golan",
+      "displayText": "קוקוריקו, זה מה שאת, תרנגולת קרקרנית.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Addressed to Merav Ben Ari. Drop the edited די לקרקר tail. May Golan has no Studio member record yet."
+    },
+    {
+      "n": 21,
+      "nameHe": "שמחה רוטמן",
+      "nameEn": "Simcha Rothman",
+      "displayText": "בעל מלון דתי יוכל לסרב לארח הומואים? אם זה פוגע ברגשותיו הדתיים - כן.",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "First sentence is interviewer framing; second is Rothman's answer. Metadata must not present the full combined line as one verbatim Rothman quote. Accepted addition from video review."
+    },
+    {
+      "n": 22,
+      "nameHe": "אחמד טיבי",
+      "nameEn": "Ahmad Tibi",
+      "displayText": "מי גנב לנו את הפלאפל והזעתר והחומוס?",
+      "quoteStatus": "exact",
+      "sources": [],
+      "sourcePending": true,
+      "existingStudioRef": null,
+      "notes": "Accepted addition from video review."
+    }
+  ],
+  "exclusions": [
+    "Amichai Eliyahu: אין דבר כזה בלתי מעורבים בעזה - explicitly dropped.",
+    "TikTok video 2: May Golan תומכת טרור; Bennett בן גביר לא יהיה שר; Ben Gvir איזו ממשלה; applause line; cut-off Tibi תומך טרור.",
+    "Smotrich sexual-fantasies clip: verified as Smotrich, then Guy passed.",
+    "Yoav Kisch missing-teachers video candidate: Guy explicitly passed. Do not add.",
+    "Mansour Abbas dentist fact: identified, but Guy never selected it as a Set 5 card. Do not add.",
+    "Polygonal Miri Regev / Ahmad Tibi / May Golan art experiments are not the approved Set 5 visual direction. Guy reverted to the old Klafi style."
+  ]
+}
