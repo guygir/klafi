@@ -8,6 +8,8 @@ import {
   PAGE_GUIDES,
   unionBoxes,
   intersectBox,
+  toFrame,
+  specToFrame,
   activeGuidePage,
   advanceStepFromView,
   firstVisible,
@@ -84,7 +86,19 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGE_GUIDES.achievements[0].place, "above");
   assert.equal(PAGE_GUIDES.achievements[0].ringUnion, true);
   assert.equal(PAGE_GUIDES.growth[0].ringUnion, true);
-  assert.equal(PAGE_GUIDES.growth[0].clip, "#community-tabs");
+  assert.equal(PAGE_GUIDES.growth[0].ring, "#community-tabs");
+  const shifted = toFrame(
+    { left: 20, top: 30, width: 10, height: 8, right: 30, bottom: 38 },
+    { left: 8, top: 8 },
+  );
+  assert.equal(shifted.left, 12);
+  assert.equal(shifted.top, 22);
+  assert.equal(shifted.right, 22);
+  assert.equal(shifted.bottom, 30);
+  const local = specToFrame({ kind: "circle", box: { left: 20, top: 30, width: 10, height: 8, right: 30, bottom: 38 }, cx: 25, cy: 34, radius: 12 }, { left: 8, top: 8 });
+  assert.equal(local.cx, 17);
+  assert.equal(local.cy, 26);
+  assert.equal(local.box.left, 12);
   const left = { getBoundingClientRect: () => ({ left: 10, top: 80, width: 40, height: 20, right: 50, bottom: 100 }) };
   const right = { getBoundingClientRect: () => ({ left: 60, top: 90, width: 30, height: 25, right: 90, bottom: 115 }) };
   const offscreen = { getBoundingClientRect: () => ({ left: -80, top: 80, width: 40, height: 20, right: -40, bottom: 100 }) };

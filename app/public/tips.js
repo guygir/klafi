@@ -80,8 +80,7 @@ export const PAGE_GUIDES = Object.freeze({
   ]),
   growth: Object.freeze([
     {
-      ring: "#community-tabs [role='tab'], #community-tabs button",
-      clip: "#community-tabs",
+      ring: "#community-tabs",
       ringUnion: true,
       pad: 3,
       radius: 8,
@@ -228,6 +227,37 @@ function boxOf(node) {
   return { left: box.left, top: box.top, width: box.width, height: box.height, right: box.right, bottom: box.bottom };
 }
 
+export function overlayFrame(node) {
+  const box = node ? boxOf(node) : viewportBox();
+  return {
+    left: box.left,
+    top: box.top,
+    width: box.width || viewportBox().width,
+    height: box.height || viewportBox().height,
+  };
+}
+
+export function toFrame(box, frame) {
+  if (!box) return box;
+  const origin = frame || viewportBox();
+  return {
+    left: box.left - origin.left,
+    top: box.top - origin.top,
+    width: box.width,
+    height: box.height,
+    right: box.right - origin.left,
+    bottom: box.bottom - origin.top,
+  };
+}
+
+export function specToFrame(spec, frame) {
+  if (!spec) return spec;
+  const next = { ...spec, box: toFrame(spec.box, frame) };
+  if ("cx" in spec) next.cx = spec.cx - (frame?.left || 0);
+  if ("cy" in spec) next.cy = spec.cy - (frame?.top || 0);
+  return next;
+}
+
 export function intersectBox(a, b) {
   const left = Math.max(a.left, b.left);
   const top = Math.max(a.top, b.top);
@@ -342,11 +372,10 @@ function drawRing(svg, spec) {
   }));
 }
 
-function placeCard(card, ring, to, prefer = "") {
+function placeCard(card, ring, to, prefer = "", view = viewportBox()) {
   const pad = 16;
   const width = card.offsetWidth || 280;
   const height = card.offsetHeight || 190;
-  const view = viewportBox();
   const vw = view.width;
   const vh = view.height;
   const forbidden = [inflate(ring, 14)];
@@ -470,7 +499,7 @@ export function attachKlafiTips(env = globalThis) {
 
   function host() {
     const dialog = doc.querySelector("#card-dialog");
-    return dialog?.open ? dialog : overlay.parentElement === dialog ? doc.querySelector("#app") || doc.body : overlay.parentElement;
+    return dialog?.open ? dialog : doc.body;
   }
 
   function park() {
@@ -532,6 +561,28 @@ export function attachKlafiTips(env = globalThis) {
       park();
       return;
     }
+    const dest = host();
+    if (dest && overlay.parentElement !== dest) dest.append(overlay);
+    state.parked = false;
+    overlay.hidden = false;
+    overlay.setAttribute("aria-hidden", "false");
+    title.textContent = step.title;
+    body.textContent = step.body;
+    stepLabel.textContent = `${state.step} / ${steps.length}`;
+    nextBtn.textContent = state.step === steps.length ? "הבנתי" : "הבא";
+    skipBtn.hidden = state.step !== 1;
+    backBtn.hidden = state.step === 1;
+    if (mute && mute.dataset.seeded !== state.mode) seedMute(state.mode);
+    const view = viewportBox();
+    dim.setAttribute("viewBox", `0 0 ${view.width} ${view.height}`);
+    dim.setAttribute("width", String(view.width));
+    dim.setAttribute("height", String(view.height));
+    marks.setAttribute("viewBox", `0 0 ${view.width} ${view.height}`);
+    marks.setAttribute("width", String(view.width));
+    marks.setAttribute("height", String(view.height));
+    const frame = overlayFrame(dim);
+    const vw = frame.width;
+    const vh = frame.height;
     const unionNodes = step.ringUnion
       ? [...doc.querySelectorAll(step.ring)].filter((node) => {
         const box = node.getBoundingClientRect?.() || { width: 0, height: 0 };
@@ -552,29 +603,14 @@ export function attachKlafiTips(env = globalThis) {
       return;
     }
     state.paintTries = 0;
-    const dest = host();
-    if (dest && overlay.parentElement !== dest) dest.append(overlay);
-    state.parked = false;
-    overlay.hidden = false;
-    overlay.setAttribute("aria-hidden", "false");
-    title.textContent = step.title;
-    body.textContent = step.body;
-    stepLabel.textContent = `${state.step} / ${steps.length}`;
-    nextBtn.textContent = state.step === steps.length ? "הבנתי" : "הבא";
-    skipBtn.hidden = state.step !== 1;
-    backBtn.hidden = state.step === 1;
-    if (mute && mute.dataset.seeded !== state.mode) seedMute(state.mode);
-    const view = viewportBox();
-    const vw = view.width;
-    const vh = view.height;
     const preferredRing = state.mode === "pull" && state.step === 3 && flags().dialogOpen
       ? firstVisible("#dialog-card", doc)
       : null;
-    const fromSpec = united
+    const fromSpec = specToFrame(united
       ? specFromBox(united, step.pad ?? 4, step.radius ?? 10)
-      : highlightSpec(preferredRing || ringNode, 8);
+      : highlightSpec(preferredRing || ringNode, 8), frame);
     const toNode = step.arrowTo ? firstPaintTarget(step.arrowTo) : null;
-    const toSpec = toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null;
+    const toSpec = specToFrame(toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null, frame);
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     dim.setAttribute("width", String(vw));
     dim.setAttribute("height", String(vh));
@@ -593,7 +629,7 @@ export function attachKlafiTips(env = globalThis) {
       drawRing(marks, toSpec);
       drawArrow(marks, fromSpec, toSpec);
     }
-    placeCard(card, fromSpec.box, toSpec?.box || null, step.place || "");
+    placeCard(card, fromSpec.box, toSpec?.box || null, step.place || "", { width: vw, height: vh, left: 0, top: 0 });
     queueMicrotask(() => nextBtn?.focus({ preventScroll: true }));
     } catch {
       park();
