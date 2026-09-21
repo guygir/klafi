@@ -2548,10 +2548,10 @@ function tradeRowMarkup(trade) {
     month: "2-digit",
   });
   const action = trade.ownedByCurrent
-    ? `<button type="button" data-cancel-trade="${trade.tradeId}">ביטול</button>`
+    ? `<button type="button" class="trade-offer-action" data-cancel-trade="${trade.tradeId}">ביטול</button>`
     : trade.canAccept
-      ? `<button type="button" data-accept-trade="${trade.tradeId}">קבלה</button>`
-      : `<span class="trade-unavailable">צריך את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
+      ? `<button type="button" class="trade-offer-action" data-accept-trade="${trade.tradeId}">קבלה</button>`
+      : `<span class="trade-unavailable">כדי לקבל צריך את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
   return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}">
     <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(trade.offeredCardId)}" ${offeredCard ? "" : "hidden"} aria-label="פתיחת ${escapeHtml(offeredCard ? cardTitle(offeredCard) : trade.offeredCardId)}">
       ${tradeThumbMarkup(offeredCard)}
@@ -2560,8 +2560,10 @@ function tradeRowMarkup(trade) {
     <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(trade.wantedCardId)}" ${wantedCard ? "" : "hidden"} aria-label="פתיחת ${escapeHtml(wantedCard ? cardTitle(wantedCard) : trade.wantedCardId)}">
       ${tradeThumbMarkup(wantedCard)}
     </button>
-    <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
-    ${action}
+    <div class="trade-offer-bar">
+      <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
+      ${action}
+    </div>
   </article>`;
 }
 

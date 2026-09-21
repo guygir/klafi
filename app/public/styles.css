@@ -2475,10 +2475,38 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-offer span,
 .trade-offer small { color: var(--ink-soft); font: 500 11px/1.25 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 .trade-offer strong { font-size: 14px; line-height: 1.25; }
-.trade-offer > p { grid-column: 1 / -1; color: var(--civic); font: 500 11px/1.3 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; text-transform: none; }
-.growth-grid .trade-offer > p { font-size: 11px; }
-.trade-offer > button:not(.trade-thumb),
-.trade-offer > .trade-unavailable { grid-column: 1 / -1; width: auto; min-height: 44px; padding: 8px 10px; font-size: 11px; }
+.trade-offer-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.trade-offer-bar p {
+  min-width: 0;
+  margin: 0;
+  color: var(--civic);
+  font: 500 11px/1.3 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
+.trade-offer-action {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 45%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pack-umber, #3c3026);
+  font: 600 12px/1 "IBM Plex Sans Hebrew", sans-serif;
+  cursor: pointer;
+}
+.trade-offer-bar .trade-unavailable {
+  flex: 0 1 auto;
+  max-width: 55%;
+  color: rgba(60, 48, 38, 0.62);
+  font: 500 11px/1.3 "IBM Plex Sans Hebrew", sans-serif;
+  text-align: end;
+}
 .leaderboard-list > div { padding: 11px 0; font-size: 13px; line-height: 1.3; }
 .leaderboard-list strong { font-size: 12px; }
 .leaderboard-list .current-player { font-weight: 600; color: var(--civic); }
@@ -3330,10 +3358,10 @@ body {
 }
 
 .challenge-hist-plot {
-  display: grid;
-  grid-template-columns: repeat(var(--bins, 5), minmax(0, 1fr));
+  display: flex;
+  justify-content: center;
   align-items: end;
-  gap: 6px;
+  gap: 16px;
   min-height: 92px;
   padding-top: 22px;
 }
@@ -3342,12 +3370,15 @@ body {
   position: relative;
   display: grid;
   align-items: end;
+  width: 22px;
+  flex: 0 0 22px;
   min-height: 92px;
 }
 
 .challenge-hist-col b {
   display: block;
-  width: 100%;
+  width: 14px;
+  margin-inline: auto;
   min-height: 4px;
   border-radius: 3px 3px 0 0;
   background: #9aa39b;
@@ -3389,12 +3420,17 @@ body {
 }
 
 .challenge-hist-axis {
-  display: grid;
-  grid-template-columns: repeat(var(--bins, 5), minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
   color: rgba(26, 31, 28, 0.5);
   font-size: 10px;
   text-align: center;
+}
+
+.challenge-hist-axis span {
+  width: 22px;
+  flex: 0 0 22px;
 }
 
 @keyframes fermi-bar-rise {
