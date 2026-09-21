@@ -183,7 +183,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function populateReleaseSets/);
   assert.match(javascript, /function readStudioPack/);
   assert.match(javascript, /data-pack-weight/);
-  assert.match(html, /חשבון הוא אופציונלי/);
+  assert.match(html, /האוסף שייך לקוד הזה, לא למייל/);
   assert.match(javascript, /\/api\/studio\/config/);
   assert.match(javascript, /updateStudioCardPreview/);
   assert.match(javascript, /\["quote\.displayText", "art\.artKey"\]/);
