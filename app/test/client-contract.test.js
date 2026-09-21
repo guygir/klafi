@@ -84,7 +84,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /isFullart && role === "quote"/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-image-meta strong[\s\S]{0,120}?display:\s*none/);
   assert.match(css, /\.card-party-zone::before[\s\S]{0,160}?2\.4cqw/);
-  assert.match(css, /\.trade-choice-preview \.kalpi-card[\s\S]{0,280}?scale\(calc\(100cqw \/ 330px\)\)/);
+  assert.doesNotMatch(css, /\.trade-choice-preview/);
+  assert.doesNotMatch(themeCss, /\.trade-choice-preview/);
+  assert.doesNotMatch(html, /trade-choice-preview/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\][\s\S]{0,180}?border-radius:\s*12px/);
   assert.doesNotMatch(themeCss, /\[data-card-frame="fullart-v1"\] \.kalpi-card[\s\S]{0,220}?border-radius:\s*3\.6cqw/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\][\s\S]{0,80}?\.card-code-tag[\s\S]{0,600}?height:\s*8cqw/);

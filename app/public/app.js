@@ -2601,14 +2601,6 @@ function renderGrowth() {
   const isLive = count > 1;
   elements.tradePreview.dataset.cardId = card.id;
   elements.tradePreview.dataset.liveDuplicate = String(isLive);
-  elements.tradePreview.innerHTML = `
-    <button class="binder-slot owned new-card-thumb trade-card-button" type="button" data-trade-card="${card.id}" style="--pip:${card.pip}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}">
-      ${binderCardMarkup(card, count)}
-    </button>
-    <div>
-      <h3>${escapeHtml(cardTitle(card))}</h3>
-      <p class="${isLive ? "dupe-ready" : ""}">${isLive ? `${count} עותקים · אפשר להחליף` : "צריך עותק נוסף כדי להחליף"}</p>
-    </div>`;
   elements.tradeDemo.textContent = isLive ? "יצירת הצעה" : "העתקת קישור לדוגמה";
   elements.creatorLinkPreview.textContent = creatorLink();
 
@@ -2776,9 +2768,6 @@ function renderGrowth() {
     button.setAttribute("aria-selected", String(active));
     button.tabIndex = active ? 0 : -1;
   });
-  queueCardTextFit(elements.tradePreview);
-  queueCardTextFit(elements.tradeOfferedPreview);
-  queueCardTextFit(elements.tradeWantedPreview);
 }
 
 function renderEvents() {

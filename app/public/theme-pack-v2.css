@@ -332,20 +332,6 @@ body:has(#app[data-theme="pack-v2"]) {
   place-items: center;
 }
 
-#app[data-card-frame="tall-v2"] .trade-choice-preview button {
-  width: 100%;
-  height: 100%;
-}
-
-#app[data-card-frame="tall-v2"] .trade-choice-preview .kalpi-card {
-  width: 330px;
-  max-width: none;
-  height: calc(330px * 96 / 63);
-  aspect-ratio: 63 / 96;
-  transform: scale(calc(100cqw / 330px));
-  transform-origin: top right;
-}
-
 #app[data-card-frame="tall-v2"] .binder-shared-card .kalpi-card,
 #app[data-card-frame="tall-v2"] .site-card-peek .kalpi-card {
   width: 100%;
@@ -798,11 +784,6 @@ body:has(#app[data-theme="pack-v2"]) {
     font-size: 11px;
   }
 
-  #app[data-card-frame="tall-v2"] .trade-choice-preview button {
-    width: 100%;
-    height: 100%;
-  }
-
   .studio-meta-desk,
   .avatar-picker {
     grid-template-columns: 1fr 1fr;
@@ -817,11 +798,6 @@ body:has(#app[data-theme="pack-v2"]) {
   #app[data-density="airy-v2"] .trade-desk .trade-form {
     min-height: 0;
     overflow-y: auto;
-  }
-
-  #app[data-card-frame="tall-v2"] .trade-choice-preview button {
-    width: 100%;
-    height: 100%;
   }
 
   #app[data-card-frame="tall-v2"] #pack-view .walkout .kalpi-card {
@@ -1340,20 +1316,6 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .binder-shared-card .kalpi-card,
 #app[data-card-frame="fullart-v1"] .site-card-peek .kalpi-card {
   width: 100%;
-}
-
-#app[data-card-frame="fullart-v1"] .trade-choice-preview button {
-  height: 100%;
-}
-
-#app[data-card-frame="fullart-v1"] .trade-choice-preview .kalpi-card,
-#app .trade-choice-preview .kalpi-card[data-card-frame="fullart-v1"] {
-  width: 330px;
-  max-width: none;
-  height: calc(330px * 96 / 63);
-  aspect-ratio: 63 / 96;
-  transform: scale(calc(100cqw / 330px));
-  transform-origin: top right;
 }
 
 #app[data-card-frame="fullart-v1"] #pack-view .walkout .kalpi-card {
