@@ -28,8 +28,8 @@ Civic collectible TCG for Israeli Elections 2026. Product/design artifacts live 
 | Quiz (10 items) | [content/quiz.md](content/quiz.md) |
 | Source list | [content/sources.md](content/sources.md) |
 | Visual system | [design/visual-system.md](design/visual-system.md) |
-| Step 14 design review (holos / streaks / CEC pulse) | [design/step-14-holos-streaks-cec.html](design/step-14-holos-streaks-cec.html) |
-| Step 15 design review (PWA / leagues / Specials / seeding) | [design/step-15-platform-liveops.html](design/step-15-platform-liveops.html) |
+| Step 14 design review (holos / streaks / CEC pulse) | [open the HTML](https://klafi-git-cursor-hebrew-trust-a11y-025e-guygirs-projects.vercel.app/design/step-14-holos-streaks-cec.html) · [source](design/step-14-holos-streaks-cec.html) |
+| Step 15 design review (PWA / leagues / Specials / seeding) | [open the HTML](https://klafi-git-cursor-hebrew-trust-a11y-025e-guygirs-projects.vercel.app/design/step-15-platform-liveops.html) · [source](design/step-15-platform-liveops.html) |
 | Mobile wireframes | [design/wireframes.html](design/wireframes.html) |
 | Hero cards | [design/hero-cards.html](design/hero-cards.html) |
 | Pitch C (~10 min) | [presentation/pitch/index.html](presentation/pitch/index.html) |

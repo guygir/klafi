@@ -108,8 +108,8 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 13. Disclosed survey + published scoring table → matched-list party pack. **No need.**
 
 **Design first — do not implement yet**
-14. Numbered holos / streaks / CEC pulse (no live polls in our voice). **Brainstorm design — review** [step-14-holos-streaks-cec.html](docs/design/step-14-holos-streaks-cec.html).
-15. Platform/live-ops: PWA + push, groups/leagues/seasonal ladders, event-controlled Specials, creator seeding. **Brainstorm design — review** [step-15-platform-liveops.html](docs/design/step-15-platform-liveops.html). Events player surface stays deferred.
+14. Numbered holos / streaks / CEC pulse (no live polls in our voice). **Brainstorm design — review** [open the HTML](https://klafi-git-cursor-hebrew-trust-a11y-025e-guygirs-projects.vercel.app/design/step-14-holos-streaks-cec.html) · [source](docs/design/step-14-holos-streaks-cec.html).
+15. Platform/live-ops: PWA + push, groups/leagues/seasonal ladders, event-controlled Specials, creator seeding. **Brainstorm design — review** [open the HTML](https://klafi-git-cursor-hebrew-trust-a11y-025e-guygirs-projects.vercel.app/design/step-15-platform-liveops.html) · [source](docs/design/step-15-platform-liveops.html). Events player surface stays deferred.
 
 **Last**
 16. Pack-open animation branded KLAFI (Weavy/video) **and** step 2 live-deploy monitoring. CSS peel is parked. Extra Weavy promo loops stay with the step 14 design.
