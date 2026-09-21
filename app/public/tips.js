@@ -81,7 +81,10 @@ export const PAGE_GUIDES = Object.freeze({
   growth: Object.freeze([
     {
       ring: "#community-tabs [role='tab'], #community-tabs button",
+      clip: "#community-tabs",
       ringUnion: true,
+      pad: 3,
+      radius: 8,
       title: "קהילה",
       body: "החלפות, סיעות, טבלת אספנים והאתגר היומי. כל לשונית היא לוח.",
     },
@@ -212,31 +215,38 @@ export function leftoverPackHint(text) {
 }
 
 function viewportBox() {
-  const view = globalThis.visualViewport;
   return {
-    width: Math.round(view?.width || globalThis.innerWidth || 0),
-    height: Math.round(view?.height || globalThis.innerHeight || 0),
-    left: view?.offsetLeft || 0,
-    top: view?.offsetTop || 0,
+    width: globalThis.innerWidth || 0,
+    height: globalThis.innerHeight || 0,
+    left: 0,
+    top: 0,
   };
 }
 
 function boxOf(node) {
   const box = node.getBoundingClientRect();
-  const view = viewportBox();
-  return {
-    left: box.left - view.left,
-    top: box.top - view.top,
-    width: box.width,
-    height: box.height,
-    right: box.right - view.left,
-    bottom: box.bottom - view.top,
-  };
+  return { left: box.left, top: box.top, width: box.width, height: box.height, right: box.right, bottom: box.bottom };
 }
 
-export function unionBoxes(nodes) {
-  const boxes = (nodes || []).map((node) => boxOf(node)).filter((box) => box.width > 0 && box.height > 0);
-  if (!boxes.length) return null;
+export function intersectBox(a, b) {
+  const left = Math.max(a.left, b.left);
+  const top = Math.max(a.top, b.top);
+  const right = Math.min(a.right, b.right);
+  const bottom = Math.min(a.bottom, b.bottom);
+  if (right <= left || bottom <= top) return null;
+  return { left, top, right, bottom, width: right - left, height: bottom - top };
+}
+
+export function unionBoxes(nodes, clipNode) {
+  const clip = clipNode ? boxOf(clipNode) : null;
+  const boxes = [];
+  for (const node of nodes || []) {
+    const raw = boxOf(node);
+    if (raw.width <= 0 || raw.height <= 0) continue;
+    const boxed = clip ? intersectBox(raw, clip) : raw;
+    if (boxed) boxes.push(boxed);
+  }
+  if (!boxes.length) return clip;
   const left = Math.min(...boxes.map((box) => box.left));
   const top = Math.min(...boxes.map((box) => box.top));
   const right = Math.max(...boxes.map((box) => box.right));
@@ -528,7 +538,8 @@ export function attachKlafiTips(env = globalThis) {
         return box.width > 0 && box.height > 0;
       })
       : [];
-    const united = step.ringUnion ? unionBoxes(unionNodes) : null;
+    const clipNode = step.clip ? firstVisible(step.clip, doc) : null;
+    const united = step.ringUnion ? unionBoxes(unionNodes, clipNode) : null;
     const ringNode = united
       ? unionNodes[0]
       : firstPaintTarget(step.ring) || firstPaintTarget(step.emptyRing) || firstVisible(step.ring, doc) || firstVisible(step.emptyRing, doc);
@@ -560,7 +571,7 @@ export function attachKlafiTips(env = globalThis) {
       ? firstVisible("#dialog-card", doc)
       : null;
     const fromSpec = united
-      ? specFromBox(united, 6, 12)
+      ? specFromBox(united, step.pad ?? 4, step.radius ?? 10)
       : highlightSpec(preferredRing || ringNode, 8);
     const toNode = step.arrowTo ? firstPaintTarget(step.arrowTo) : null;
     const toSpec = toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null;

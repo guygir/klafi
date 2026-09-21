@@ -7,6 +7,7 @@ import {
   TIPS_STEPS,
   PAGE_GUIDES,
   unionBoxes,
+  intersectBox,
   activeGuidePage,
   advanceStepFromView,
   firstVisible,
@@ -83,13 +84,23 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGE_GUIDES.achievements[0].place, "above");
   assert.equal(PAGE_GUIDES.achievements[0].ringUnion, true);
   assert.equal(PAGE_GUIDES.growth[0].ringUnion, true);
+  assert.equal(PAGE_GUIDES.growth[0].clip, "#community-tabs");
   const left = { getBoundingClientRect: () => ({ left: 10, top: 80, width: 40, height: 20, right: 50, bottom: 100 }) };
   const right = { getBoundingClientRect: () => ({ left: 60, top: 90, width: 30, height: 25, right: 90, bottom: 115 }) };
+  const offscreen = { getBoundingClientRect: () => ({ left: -80, top: 80, width: 40, height: 20, right: -40, bottom: 100 }) };
+  const clip = { getBoundingClientRect: () => ({ left: 8, top: 78, width: 70, height: 30, right: 78, bottom: 108 }) };
   const united = unionBoxes([left, right]);
   assert.equal(united.left, 10);
   assert.equal(united.top, 80);
   assert.equal(united.right, 90);
   assert.equal(united.bottom, 115);
+  const clipped = unionBoxes([left, right, offscreen], clip);
+  assert.equal(clipped.left, 10);
+  assert.equal(clipped.right, 78);
+  assert.equal(intersectBox(
+    { left: 10, top: 80, right: 50, bottom: 100 },
+    { left: 8, top: 78, right: 78, bottom: 108 },
+  ).width, 40);
   assert.equal(PAGES_STORAGE, "klafi:page-tips");
   assert.equal(activeGuidePage({ homeActive: true }), "home");
   assert.equal(activeGuidePage({ binderActive: true, dialogOpen: true }), "dialog");
