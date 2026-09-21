@@ -66,7 +66,7 @@ export const PAGE_GUIDES = Object.freeze({
       emptyRing: "#binder-grid, #binder-empty",
       arrowTo: "#binder-grid .binder-shared-card, #binder-grid button",
       title: "הסדרות",
-      body: "סינון לפי סדרה. לחצו על קלף — מקור ושיתוף.",
+      body: "סינון לפי סדרה, או בחירת מפלגה. לחצו על קלף — מקור ושיתוף.",
     },
   ]),
   achievements: Object.freeze([

@@ -93,22 +93,22 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 2. [x] Public URL https://klafi.vercel.app (Vercel Hobby + Supabase transaction-pooled runtime). `/api/health` is `backend=postgres`. Quiz and debug stay off.
 3. Production advocacy identity configured for live.
 4. CEC / rights / likeness / source approval (release blockers).
-5. Account recovery and moderation. Gameplay stays unthrottled; anonymous-session abuse protection belongs at the edge.
-6. Remaining KALPI pack art → KLAFI. **Deferred by product decision; now Step 16.**
+5. [x] Account recovery and moderation. Guest recovery code in the profile (copy / restore against the existing session). Card and public-name reports share the Studio queue. Gameplay stays unthrottled; anonymous-session abuse protection belongs at the edge.
+6. [x] Remaining KALPI pack art → KLAFI. Live pack still is `pack-wrapper-klafi.png` (KLAFI / קְלָפִי). Pack-open animation is postponed to last (Weavy/video, not a CSS peel). The old KALPI wrapper and Seedance rip stay as reference only.
 
 **Active product sequence**
-7. Unified card pipeline, taller cards, no fake social counts. **In progress.** One canonical presentation contract now drives Today, Binder, detail, sharing, Events and trades; every HTML surface uses the same tall-card renderer.
+7. [x] Unified card pipeline, taller cards, no fake social counts. One `--card-width` token sizes walkout, dialog and share. Quote-fit keeps a readable floor on binder/peek/trade. Trades use the same renderer and dialog.
 8. Learning loop: two-question owned-card quiz, five-minute clock, one reward per Jerusalem day, comprehension feedback and learning-linked achievements. **Deferred by product decision; player option removed while the server implementation remains parked.**
 9. Hebrew, trust and accessibility pass: player copy, advocacy disclosure, source receipts, dated CEC/status labels, keyboard/reduced-motion behavior and screen-reader labels. **In progress.**
 10. Recurring phone + desktop QA and launch hardening after every slice: real-device WhatsApp/Instagram handoff, recovery, moderation, replay-safe writes without gameplay throttles, a durable correction/report queue, monitoring, verified backup/restore and safe rollback. **In progress.**
-11. Community loop: anonymous faction tally, honest country leaderboard, real transactional trading/gifting, sharing/referrals and creator acquisition links.
+11. [x] Community loop: anonymous faction tally, honest country leaderboard, real transactional trading/gifting, sharing/referrals and creator acquisition links. One open offer per player, slim board, server accept, race from real pulls, level bonus card, party pip on the avatar.
 
 **Later — already accounted for**
 12. Verified real-life party / kalpi work → pack bundle.
 13. Disclosed survey + published scoring table → matched-list party pack.
 14. Numbered holos / streaks / CEC pulse (no live polls in our voice).
 15. Platform/live-ops expansion: PWA + push notifications, groups/leagues/seasonal ladders, event-controlled Specials and coordinated creator seeding. **The Events player surface is deferred; its server and Studio implementation remain parked.**
-16. Final art pass: remaining KALPI → KLAFI assets, numbered-foil/rip polish and Weavy/Figma Weave promo exports.
+16. Pack-open animation branded KLAFI (Weavy/video). CSS peel is parked. Last among remaining player motion. Numbered-holo treatments and extra Weavy promo loops stay parked with step 14.
 
 ### Later (designed, not Alpha)
 

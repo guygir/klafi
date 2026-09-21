@@ -103,7 +103,8 @@ test("Vercel copies live card art including Set 5", async () => {
   ]);
   const names = liveDeployAssetNames({ catalog, avatars });
   assert.ok(names.includes("hero-art-gadi-eisenkot-slot1.png"));
-  assert.ok(names.includes("pack-wrapper-transparent.png"));
+  assert.ok(names.includes("pack-wrapper-klafi.png"));
+  assert.ok(!names.includes("pack-rip-seedance-v01.mp4"));
   let set5Bytes = 0;
   let liveBytes = 0;
   for (const candidate of set5.candidates) {
@@ -116,7 +117,7 @@ test("Vercel copies live card art including Set 5", async () => {
     const file = path.resolve(here, "../../docs/design/assets", name);
     const size = (await stat(file)).size;
     liveBytes += size;
-    if (name.endsWith(".mp4") || name === "hero-art-kalpi.png" || name === "pack-wrapper-transparent.png") continue;
+    if (name.endsWith(".mp4") || name === "hero-art-kalpi.png" || name === "pack-wrapper-klafi.png") continue;
     assert.ok(size < 700 * 1024, `${name} is still too heavy for the Hobby copy (${size})`);
   }
   assert.ok(set5Bytes < 8 * 1024 * 1024, `Set 5 live JPEGs should stay well under Hobby headroom (${set5Bytes})`);

@@ -45,6 +45,7 @@
       <div class="level-identity">
         <button type="button" id="level-avatar-button" class="level-avatar-button" aria-haspopup="dialog" aria-label="הפרופיל והאווטאר">
           <img id="level-avatar" class="level-avatar" alt="" />
+          <i id="avatar-seal" class="avatar-seal" hidden aria-hidden="true"></i>
         </button>
         <span id="level-rank">אזרח סקרן</span>
         <strong id="level-number" hidden>רמה 1/5</strong>
@@ -86,7 +87,7 @@
           <div class="pack-plinth">
             <div class="pack-shadow" aria-hidden="true"></div>
             <div class="pack-wrapper" id="home-pack" aria-hidden="true">
-              <img src="/design-assets/pack-wrapper-transparent.png" alt="" />
+              <img src="/design-assets/pack-wrapper-klafi.png" alt="" />
             </div>
           </div>
         </div>
@@ -162,7 +163,7 @@
             <h1>האלבום.</h1>
           </div>
         </div>
-        <div id="binder-filters" class="filter-strip" role="tablist" aria-label="סינון האוסף לפי סדרה"></div>
+        <div id="binder-filters" class="filter-strip" aria-label="סינון האוסף לפי סדרה או מפלגה"></div>
         <div id="binder-grid" class="binder-grid"></div>
         <div id="binder-pager" class="view-pager" aria-label="עמודי האוסף"></div>
         <p id="binder-empty" class="empty-note" hidden>פתחו קלף כדי להתחיל.</p>
@@ -194,35 +195,51 @@
         <div class="growth-grid">
           <article id="community-panel-trade" class="work-card trade-desk" role="tabpanel" aria-labelledby="community-tab-trade" tabindex="0">
             <p class="work-kicker">החלפות</p>
-            <h2>מה נותנים ומה רוצים?</h2>
+            <h2>הצעה אחת פתוחה.</h2>
             <div id="trade-preview" class="trade-preview" hidden></div>
-            <div class="trade-form">
-              <fieldset>
-                <legend>אני נותן</legend>
-                <div id="trade-offered-preview" class="trade-choice-preview"></div>
-                <div class="trade-choice-fields">
-                  <label>סדרה / מפלגה <select id="trade-offered-set"></select></label>
-                  <label>קלף <select id="trade-offered-card"></select></label>
-                </div>
-              </fieldset>
-              <fieldset>
-                <legend>אני רוצה</legend>
-                <div id="trade-wanted-preview" class="trade-choice-preview"></div>
-                <div class="trade-choice-fields">
-                  <label>סדרה / מפלגה <select id="trade-wanted-set"></select></label>
-                  <label>קלף <select id="trade-wanted-card"></select></label>
-                </div>
-              </fieldset>
-            </div>
-            <div class="trade-actions">
-              <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
-              <button id="trade-demo" class="secondary-action" type="button">העתקת קישור</button>
+            <div id="trade-active" class="trade-active" hidden></div>
+            <div id="trade-compose" class="trade-compose">
+              <div class="trade-actions">
+                <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
+                <button id="trade-demo" class="secondary-action" type="button">העתקת קישור</button>
+              </div>
+              <div class="trade-form">
+                <fieldset>
+                  <legend>אני נותן</legend>
+                  <button type="button" id="trade-offered-preview" class="trade-thumb" hidden></button>
+                  <div class="trade-choice-fields">
+                    <label>סדרה / מפלגה <select id="trade-offered-set"></select></label>
+                    <label>קלף <select id="trade-offered-card"></select></label>
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend>אני רוצה</legend>
+                  <button type="button" id="trade-wanted-preview" class="trade-thumb" hidden></button>
+                  <div class="trade-choice-fields">
+                    <label>סדרה / מפלגה <select id="trade-wanted-set"></select></label>
+                    <label>קלף <select id="trade-wanted-card"></select></label>
+                  </div>
+                </fieldset>
+              </div>
             </div>
           </article>
           <article id="community-panel-open-trades" class="work-card open-trades-desk" role="tabpanel" aria-labelledby="community-tab-open-trades" tabindex="0" hidden>
             <p class="work-kicker">הצעות פתוחות</p>
             <h2>עסקאות שמחכות לכם.</h2>
+            <div id="trade-board-toolbar" class="trade-board-toolbar" hidden>
+              <label>מקבלים
+                <select id="trade-board-offered" aria-label="סינון לפי הקלף שאתם מקבלים">
+                  <option value="">הכול</option>
+                </select>
+              </label>
+              <label>נותנים
+                <select id="trade-board-wanted" aria-label="סינון לפי הקלף שאתם נותנים">
+                  <option value="">הכול</option>
+                </select>
+              </label>
+            </div>
             <div id="trade-board" class="trade-board"></div>
+            <div id="trade-board-pager" class="view-pager trade-board-pager" aria-label="עמודי ההצעות"></div>
           </article>
           <article class="work-card debug-community" hidden>
             <p class="work-kicker">קישור שיתוף</p>
@@ -465,6 +482,7 @@
         <option value="quote">הציטוט או הניסוח</option>
         <option value="identity">השם, התפקיד או הרשימה</option>
         <option value="display">בעיה בתצוגה</option>
+        <option value="name">שם פוגעני בטבלה</option>
         <option value="other">משהו אחר</option>
       </select>
       <label for="report-details">מה מצאתם?</label>
@@ -478,7 +496,7 @@
     <button id="close-level" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">עליתם רמה</p>
     <h2 id="level-dialog-title">רמה חדשה</h2>
-    <img class="level-reward-pack" src="/design-assets/pack-wrapper-transparent.png" alt="קלף בונוס" />
+    <img class="level-reward-pack" src="/design-assets/pack-wrapper-klafi.png" alt="קלף בונוס" />
     <ul id="level-unlocks" class="level-unlocks"></ul>
     <p id="level-dialog-reward"></p>
     <button id="claim-level" class="primary-action" type="button">קבלת הפרס</button>
@@ -493,10 +511,25 @@
       <input id="profile-name-input" name="displayName" minlength="2" maxlength="24" autocomplete="nickname" required />
       <p class="profile-name-label">הפנים שלכם</p>
       <div id="avatar-picker" class="avatar-picker"></div>
-      <p class="profile-name-label">האוסף שמור במכשיר הזה. חשבון הוא אופציונלי — לא חובה כדי לשחק.</p>
       <p id="profile-error" class="profile-error" role="alert"></p>
       <button class="primary-action" type="submit">שמירת הפרופיל</button>
     </form>
+    <section class="profile-recovery" aria-labelledby="profile-recovery-title">
+      <h3 id="profile-recovery-title">קוד שחזור</h3>
+      <p>האוסף שייך לקוד הזה, לא למייל. מי שיש לו את הקוד יכול לפתוח את אותו אוסף במכשיר אחר.</p>
+      <label class="profile-name-label" for="profile-recovery-code">הקוד של המכשיר הזה</label>
+      <div class="copy-field profile-recovery-row">
+        <input id="profile-recovery-code" dir="ltr" readonly spellcheck="false" autocomplete="off" />
+        <button id="copy-recovery-code" type="button">העתקה</button>
+      </div>
+      <label class="profile-name-label" for="profile-restore-input">שחזור ממכשיר אחר</label>
+      <p class="profile-recovery-note">שחזור מחליף את האוסף ששמור כאן.</p>
+      <div class="copy-field profile-recovery-row">
+        <input id="profile-restore-input" dir="ltr" spellcheck="false" autocomplete="off" placeholder="הדביקו כאן קוד" />
+        <button id="restore-recovery-code" type="button">שחזור</button>
+      </div>
+      <p id="profile-restore-status" class="profile-error" role="status"></p>
+    </section>
   </dialog>
 
   <dialog id="trust-dialog" class="policy-dialog">
@@ -539,10 +572,6 @@
   </div>
   </div>
 
-  <div id="home-pack-rip-backdrop" class="home-pack-rip-backdrop" aria-hidden="true" hidden></div>
-  <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="auto" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
-    <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
-  </video>
   <dialog id="share-sheet" class="policy-dialog share-sheet" aria-labelledby="share-sheet-title">
     <button id="close-share-sheet" class="dialog-close" type="button" aria-label="סגירת השיתוף">×</button>
     <p class="eyebrow">שיתוף</p>
