@@ -3,6 +3,7 @@ export const LIVE_RELEASE_SET_IDS = Object.freeze([
   "party-slot-2",
   "decisions",
   "records",
+  "set-5",
 ]);
 
 export function isLiveReleaseSet(id) {

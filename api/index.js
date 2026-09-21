@@ -17,6 +17,7 @@ export const config = {
     "app/data/editorial-sequences.json",
     "app/data/editorial-samples.json",
     "app/data/presentation-content.json",
+    "docs/intake/research/set5-wip-pool.json",
     "app/server/**",
   ],
 };

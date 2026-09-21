@@ -1,6 +1,6 @@
-# WIP Set 5 - accepted pool
+# Set 5 - רגעים
 
-This is an intentionally broad accepted pool. Guy's instruction: include every candidate not disqualified; later he may drop some or promote others. Do not force the pool to a final set size now. No deploy. Keep one quote per person only when the final Set 5 is pruned.
+The accepted 22-card pool is live in the binder, pack table, and Vercel catalog as release set `set-5`. Cards use the same Quote full-art layout as sets 1–2, with party pips and display codes `רגע-01`–`רגע-22`.
 
 ## Accepted initial pool
 
@@ -55,7 +55,7 @@ This is an intentionally broad accepted pool. Guy's instruction: include every c
 
 ## Approved art (all 22 candidates, 2026-09-20)
 
-All art is 1086x1448 PNG in the approved old Klafi style, under `docs/design/assets/`. SHA-256 per file is recorded in `set5-wip-pool.json`.
+Approved masters stay 1086x1448 PNG under `docs/design/assets/`. Live catalog `artKey`s are 864x1152 JPEG derivatives (same frame size as sets 1–4) so the Vercel Hobby copy stays under the 100 MB ceiling. SHA-256 per live file is recorded in `set5-wip-pool.json`.
 
 1. Netanyahu (Arab voters) - `hero-art-benjamin-netanyahu-arab-voters.png`
 2. Netanyahu (Hamas funding) - `hero-art-benjamin-netanyahu-hamas-funding.png`
@@ -79,3 +79,33 @@ All art is 1086x1448 PNG in the approved old Klafi style, under `docs/design/ass
 20. M. Golan (hen) - `hero-art-may-golan-hen.png`
 21. Rothman (hotel) - `hero-art-simcha-rothman-hotel.png`
 22. Tibi (falafel) - `hero-art-ahmad-tibi-falafel.png`
+
+## Assigned pull rarities (2026-09-20)
+
+Crisp / unique-image cards sit rarer. Within the set, specific R : UC : C is about 1 : 1.5 : 2.
+
+| # | Rarity | Person | Quote |
+|---|---|---|---|
+| 1 | C | בנימין נתניהו | שלטון הימין בסכנה. המצביעים הערבים נעים בכמויות אדירות לקלפי. |
+| 2 | U | בנימין נתניהו | מי שרוצה לסכל הקמה של מדינה פלסטינית צריך לתמוך בחיזוק החמאס ובהעברת כסף לחמאס.* |
+| 3 | C | מירי רגב | דברים מדהימים! כל כך הרבה תושבים במלונות במימון המדינה. |
+| 4 | C | ישראל כץ | הורדוס לא הצליח להפוך את ישראל למרכז הסחר הבין־לאומי של האימפריה הרומית כפי שתכנן. אני הצלחתי.* |
+| 5 | U | אורית סטרוק | אנחנו חיים בתקופה של נס... פיפ פיפ... ואז כשיש אור ירוק, טיק טיק טיק כזה.* |
+| 6 | R | שמחה רוטמן | הדם של האחים הלל ויגל יניב ז״ל, שנרצחו בחווארה, אדום יותר מדם הנרצחים ב־7 באוקטובר. |
+| 7 | U | טלי גוטליב | כל חטוף הוא שטוף מוח מחמאס. כל חטוף מדבר את מה שחמאס משמיע להם. |
+| 8 | U | עמיחי אליהו | הממשלה דוהרת לזה שעזה נמחקת, תודה להשם שאנחנו מוחקים את הרוע הזה. כל עזה תהיה יהודית. |
+| 9 | U | יצחק פינדרוס | הדבר הכי מסוכן למדינת ישראל - יותר מדאעש, יותר מחיזבאללה, יותר מחמאס - זה הפריצות בעריות.* |
+| 10 | C | עופר וינטר | אתה רמטכ״ל מבולבל, אתה כפוף לראש הממשלה ולדרג המדיני.* |
+| 11 | R | בצלאל סמוטריץ׳ | אף אחד לא ייתן לנו להמית שני מיליון אזרחים ברעב, למרות שאולי זה צודק ומוסרי.* |
+| 12 | C | נעמה לזימי | הוא הכריז מלחמה על ישראל הדמוקרטית ועל מערכות השלטון והחוק. כל מסגור אחר חוטא לאמת. |
+| 13 | C | רפי בן שטרית | הדרג המדיני מבקש לקבור את האמת. |
+| 14 | C | יוסף ג׳בארין | העתיד של כולנו לא נמצא בפחד, במלחמות ובהסתה, אלא בשותפות יהודית־ערבית אמיצה.* |
+| 15 | C | אחמד טיבי | להשיל את השוני ולגלום גלימה אחת ויחידה: גלימתו האנושית... ולהיות בן אנוש. בן אנוש בלבד.* |
+| 16 | C | פנינה תמנו שטה | לא צדקה אלא צדק; לא רחמים אלא הכרה. |
+| 17 | C | אפרת רייטן | חברה חזקה מגינה על החלש מפני ניצול כוח ושררה. |
+| 18 | C | יאיר גולן | רק הסדרים מדיניים מביאים ביטחון בראייה ארוכת טווח. |
+| 19 | C | מירי רגב | קודם כל, אין מה להילחץ, אתם נמצאים בחו״ל, תיהנו. |
+| 20 | R | מאי גולן | קוקוריקו, זה מה שאת, תרנגולת קרקרנית. |
+| 21 | U | שמחה רוטמן | בעל מלון דתי יוכל לסרב לארח הומואים? אם זה פוגע ברגשותיו הדתיים - כן. |
+| 22 | R | אחמד טיבי | מי גנב לנו את הפלאפל והזעתר והחומוס? |
+

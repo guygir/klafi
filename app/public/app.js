@@ -1,4 +1,5 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
+import { attachKlafiTips } from "./tips.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
@@ -7,8 +8,8 @@ const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
 const DEBUG_CARD_FRAME_KEY = "kalpi-debug-card-frame";
-const STATIC_DATA_VERSION = "visible-sets-1";
-const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records"];
+const STATIC_DATA_VERSION = "visible-sets-2";
+const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
@@ -52,6 +53,7 @@ const model = {
 };
 let showcaseTimers = [];
 let packTimers = [];
+const klafiTips = attachKlafiTips();
 
 const elements = {
   views: [...document.querySelectorAll(".view")],
@@ -164,6 +166,7 @@ const elements = {
   studioViewpoint: document.querySelector("#studio-viewpoint"),
   studioReleaseStatus: document.querySelector("#studio-release-status"),
   studioReleaseSets: document.querySelector("#studio-release-sets"),
+  studioPackNow: document.querySelector("#studio-pack-now"),
   saveReleaseSets: document.querySelector("#save-release-sets"),
   debugClock: document.querySelector("#debug-clock"),
   headerDebugReset: document.querySelector("#header-debug-reset"),
@@ -1074,6 +1077,7 @@ function showView(name) {
     }
   }
   elements.bottomNav.hidden = !["home", "binder", "achievements", "events", "growth"].includes(name);
+  klafiTips.sync();
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
     fitVisibleCardText(elements.main);
@@ -2209,31 +2213,27 @@ function renderBinder() {
     { pending: waitingOwnership, hidden: !waitingOwnership && owned > 0 },
   );
 
-  const favorites = new Set(model.serverState?.favorites || []);
   const playerCards = playerCatalog();
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
     .filter((id) => isLiveReleaseSet(id));
   const setOrder = [
     "ALL",
-    "FAVORITES",
     ...releaseOrder.map((id) => `RELEASE:${id}`),
     ...new Set(playerCards.filter((card) => !card.eventOnly).map((card) => card.set)),
   ];
   const setLabels = Object.fromEntries(playerCards.map((card) => [card.set, cardSetName(card)]));
   for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
   setLabels.ALL = `הכול ${playerCards.length}`;
-  setLabels.FAVORITES = "פייבוריטים";
   setLabels.SPECIALS = "מיוחדים";
+  if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
   elements.binderFilters.innerHTML = setOrder.map((set) => {
     const count = set === "ALL"
       ? owned
       : playerCards.filter((card) => {
-        const inSet = set === "FAVORITES"
-          ? favorites.has(card.id)
-          : set === "SPECIALS"
-            ? card.eventOnly
-            : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
+        const inSet = set === "SPECIALS"
+          ? card.eventOnly
+          : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
         return inSet && inventory[card.id];
       }).length;
     const active = model.binderFilter === set;
@@ -2241,7 +2241,6 @@ function renderBinder() {
   }).join("");
 
   const visible = playerCards.filter((card) => model.binderFilter === "ALL"
-    || (model.binderFilter === "FAVORITES" ? favorites.has(card.id) : false)
     || (model.binderFilter === "SPECIALS" ? card.eventOnly
       : model.binderFilter.startsWith("RELEASE:")
         ? card.releaseSetId === model.binderFilter.slice(8)
@@ -2292,7 +2291,6 @@ function badgeArtwork(id) {
     "set-chase": '<path d="M24 13l3.2 6.3 7 .9-5.1 4.8 1.3 6.9-6.4-3.3-6.4 3.3 1.3-6.9-5.1-4.8 7-.9z"/>',
     "trade-match": '<rect x="13" y="17" width="11" height="15" rx="1"/><rect x="24" y="20" width="11" height="15" rx="1"/><path d="M17 14h11l-2-2M31 38H20l2 2"/>',
     "collector-ten": '<path d="M17 17h14v18H17zM20 14h14v18M14 20h14v18"/>',
-    "favorite-first": '<path d="M24 35S13 29 13 21c0-6 8-8 11-2 3-6 11-4 11 2 0 8-11 14-11 14z"/>',
     "event-first": '<path d="M16 18h16v17H16zM20 14v8M28 14v8M16 24h16"/><path d="M21 29h6"/>',
     "source-three": '<circle cx="20" cy="23" r="6"/><path d="M24 28l7 7M29 17h5M31.5 14.5v5"/>',
     "trade-three": '<path d="M14 20h17l-3-3M34 31H17l3 3"/><circle cx="17" cy="27" r="3"/><circle cx="31" cy="24" r="3"/>',
@@ -2323,7 +2321,6 @@ const ACHIEVEMENT_RULES = [
   ["leaders", "מנהיגים"],
   ["bestSet", "סדרה מלאה"],
   ["trades", "החלפות"],
-  ["favorites", "פייבוריטים"],
   ["events", "אירועים"],
   ["leaderParties", "סיעות מנהיגים"],
   ["stars", "כוכבים"],
@@ -2432,7 +2429,6 @@ const BADGE_COPY = {
   "set-chase": ["סדרה מלאה", "השלימו סדרת מפלגה."],
   "trade-match": ["החלפה ראשונה", "השלימו החלפה עם שחקן אחר."],
   "collector-ten": ["עשרה שונים", "אספו עשרה קלפים שונים."],
-  "favorite-first": ["שומר בלב", "סמנו קלף אחד כפייבוריט."],
   "event-first": ["מהדורה מוגבלת", "אספו קלף מאירוע."],
   "source-three": ["קורא מקורות", "פתחו שלושה מקורות של קלפים."],
   "trade-three": ["שולחן החלפות", "השלימו שלוש החלפות."],
@@ -2472,9 +2468,13 @@ function localAchievementList() {
   }));
 }
 
+function isHeartedAchievement(badge) {
+  return badge?.id === "favorite-first" || badge?.rule === "favorites";
+}
+
 function achievementList() {
-  if (model.serverState?.achievements?.length) return model.serverState.achievements;
-  return localAchievementList();
+  const badges = model.serverState?.achievements?.length ? model.serverState.achievements : localAchievementList();
+  return badges.filter((badge) => !isHeartedAchievement(badge));
 }
 
 function renderAchievements() {
@@ -2820,18 +2820,60 @@ function populateLevelIncrements() {
   populateReleaseSets();
 }
 
+function packSetFor(id) {
+  return (model.gameConfig.pack?.sets || []).find((set) => set.id === id) || {
+    id,
+    weight: 0,
+    includeEventCards: false,
+    rarities: { Common: 70, Uncommon: 25, Rare: 5 },
+  };
+}
+
 function populateReleaseSets() {
   if (!elements.studioReleaseSets) return;
   const sets = model.gameConfig.releaseSets || [];
-  elements.studioReleaseSets.innerHTML = sets.map((set) => `
-    <label class="studio-release-row">
+  elements.studioReleaseSets.innerHTML = sets.map((set) => {
+    const pack = packSetFor(set.id);
+    return `
+    <div class="studio-release-row">
       <b>${escapeHtml(set.nameHe)}</b>
       <select data-release-state="${escapeHtml(set.id)}">
         <option value="held"${set.runtimeState === "held" ? " selected" : ""}>held</option>
         <option value="active"${set.runtimeState === "active" ? " selected" : ""}>active</option>
       </select>
       <input data-release-from="${escapeHtml(set.id)}" type="datetime-local" value="${escapeHtml(toDatetimeLocal(set.runtimeAvailableFrom || set.plannedPublishAt))}" />
-    </label>`).join("");
+      <label>Set %
+        <input data-pack-weight="${escapeHtml(set.id)}" type="number" min="0" max="1000" value="${pack.weight}" />
+      </label>
+      <label>C
+        <input data-pack-common="${escapeHtml(set.id)}" type="number" min="0" max="1000" value="${pack.rarities.Common}" />
+      </label>
+      <label>U
+        <input data-pack-uncommon="${escapeHtml(set.id)}" type="number" min="0" max="1000" value="${pack.rarities.Uncommon}" />
+      </label>
+      <label>R
+        <input data-pack-rare="${escapeHtml(set.id)}" type="number" min="0" max="1000" value="${pack.rarities.Rare}" />
+      </label>
+      <label class="studio-event-cards">Event cards
+        <input data-pack-events="${escapeHtml(set.id)}" type="checkbox"${pack.includeEventCards ? " checked" : ""} />
+      </label>
+    </div>`;
+  }).join("");
+  const current = model.gameConfig.pack?.current;
+  if (elements.studioPackNow) {
+    const order = current?.rarityOrder;
+    const orderNote = order?.holds
+      ? ` Specific C ~${order.hardestCommon} pulls; specific R ~${order.easiestRare} pulls.`
+      : order
+        ? " Specific rarity order is off: a Common can be harder than an Uncommon or Rare. Re-sort cards or lower the easier bucket."
+        : "";
+    elements.studioPackNow.textContent = current?.sets?.length
+      ? `Now pulling: ${current.sets.map((set) => {
+        const name = sets.find((release) => release.id === set.id)?.nameHe || set.id;
+        return `${name} ${set.percent}% (C ${set.effectiveRarities.Common} / U ${set.effectiveRarities.Uncommon} / R ${set.effectiveRarities.Rare})`;
+      }).join(" · ")}.${orderNote}`
+      : "Now pulling: no set is open. Activate a dated set with weight above 0.";
+  }
 }
 
 function toDatetimeLocal(value) {
@@ -2852,6 +2894,31 @@ function readStudioReleaseSets() {
       runtimeAvailableFrom: from ? new Date(from).toISOString() : null,
     };
   });
+}
+
+function readNumberField(selector, fallback) {
+  const value = Math.round(Number(elements.studioReleaseSets?.querySelector(selector)?.value));
+  return Number.isFinite(value) ? Math.min(1000, Math.max(0, value)) : fallback;
+}
+
+function readStudioPack() {
+  const pityAfter = model.gameConfig.pack?.pityAfter || 4;
+  return {
+    pityAfter,
+    sets: (model.gameConfig.releaseSets || []).map((set) => {
+      const current = packSetFor(set.id);
+      return {
+        id: set.id,
+        weight: readNumberField(`[data-pack-weight="${CSS.escape(set.id)}"]`, current.weight),
+        includeEventCards: Boolean(elements.studioReleaseSets?.querySelector(`[data-pack-events="${CSS.escape(set.id)}"]`)?.checked),
+        rarities: {
+          Common: readNumberField(`[data-pack-common="${CSS.escape(set.id)}"]`, current.rarities.Common),
+          Uncommon: readNumberField(`[data-pack-uncommon="${CSS.escape(set.id)}"]`, current.rarities.Uncommon),
+          Rare: readNumberField(`[data-pack-rare="${CSS.escape(set.id)}"]`, current.rarities.Rare),
+        },
+      };
+    }),
+  };
 }
 
 function readStudioProgression() {
@@ -2881,6 +2948,7 @@ async function saveVisualConfig() {
         visual,
         progression: readStudioProgression(),
         releaseSets: readStudioReleaseSets(),
+        pack: readStudioPack(),
       }),
     });
     applyVisualConfig();
@@ -2907,6 +2975,7 @@ async function saveRevealDelays() {
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
         releaseSets: readStudioReleaseSets(),
+        pack: readStudioPack(),
       }),
     });
     populateRevealTimingInputs();
@@ -3311,6 +3380,7 @@ async function saveLevelIncrements() {
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
         releaseSets: readStudioReleaseSets(),
+        pack: readStudioPack(),
       }),
     });
     populateLevelIncrements();
@@ -3396,12 +3466,13 @@ async function saveReleaseSets() {
         visual: readStudioVisualConfig(),
         progression: readStudioProgression(),
         releaseSets: readStudioReleaseSets(),
+        pack: readStudioPack(),
       }),
     });
     populateReleaseSets();
     renderHome();
     renderBinder();
-    showToast("Release calendar published.");
+    showToast("Release calendar and pack odds published.");
   } catch (error) {
     showToast(error.status === 404 ? "Studio configuration is disabled without the ops key." : "Could not publish the set calendar.");
   }
@@ -3619,21 +3690,6 @@ async function debugUnlockCard(cardId) {
     showToast("Card unlocked for local testing.");
   } catch (error) {
     showToast(error.status === 404 ? "Local unlock is disabled." : "Could not unlock this card.");
-  }
-}
-
-async function toggleFavorite(cardId) {
-  const favorite = !(model.serverState.favorites || []).includes(cardId);
-  try {
-    model.serverState = await request("/api/favorites", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ cardId, favorite }),
-    });
-    renderBinder();
-    showToast(favorite ? "נוסף לפייבוריטים." : "הוסר מהפייבוריטים.");
-  } catch {
-    showToast("לא הצלחנו לעדכן את הפייבוריטים.");
   }
 }
 
@@ -4775,7 +4831,7 @@ document.addEventListener("click", (event) => {
 });
 window.addEventListener("online", () => flushPendingReports().catch(() => {}));
 
-bootstrap();
+bootstrap().then(() => klafiTips.maybeStart());
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
 window.__kalpiDebug = {

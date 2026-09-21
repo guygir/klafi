@@ -22,6 +22,7 @@
         "party-slot-2": 2,
         "decisions": 1,
         "records": 1,
+        "set-5": 1,
         "party-position-security": 1,
         "party-position-economy": 1,
         "party-position-religion-state": 1,
@@ -47,6 +48,61 @@
       ],
       "teaser": "האם תגיעו לדרגת ראש הממשלה?",
       "reward": "קלף בונוס מיידי"
+    },
+    "pack": {
+      "pityAfter": 4,
+      "sets": [
+        {
+          "id": "party-leaders",
+          "weight": 70,
+          "includeEventCards": false,
+          "rarities": {
+            "Common": 67,
+            "Uncommon": 25,
+            "Rare": 8
+          }
+        },
+        {
+          "id": "party-slot-2",
+          "weight": 20,
+          "includeEventCards": false,
+          "rarities": {
+            "Common": 64,
+            "Uncommon": 27,
+            "Rare": 9
+          }
+        },
+        {
+          "id": "decisions",
+          "weight": 8,
+          "includeEventCards": false,
+          "rarities": {
+            "Common": 55,
+            "Uncommon": 31,
+            "Rare": 14
+          }
+        },
+        {
+          "id": "records",
+          "weight": 2,
+          "includeEventCards": false,
+          "rarities": {
+            "Common": 50,
+            "Uncommon": 38,
+            "Rare": 13
+          }
+        },
+        {
+          "id": "set-5",
+          "weight": 10,
+          "includeEventCards": false,
+          "rarities": {
+            "Common": 65,
+            "Uncommon": 24,
+            "Rare": 11
+          }
+        }
+      ]
     },
     "releaseSets": [
       {
@@ -87,9 +143,19 @@
         "launchGate": "blocked"
       },
       {
+        "id": "set-5",
+        "nameHe": "רגעים",
+        "order": 5,
+        "tier": "objective",
+        "runtimeState": "active",
+        "runtimeAvailableFrom": "2026-09-20T00:00:00+03:00",
+        "plannedPublishAt": "2026-09-20T06:00:00.000Z",
+        "launchGate": "blocked"
+      },
+      {
         "id": "party-position-security",
         "nameHe": "עמדת המפלגה · ביטחון ומדיניות חוץ",
-        "order": 5,
+        "order": 6,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-01T06:00:00.000Z",
@@ -98,7 +164,7 @@
       {
         "id": "party-position-economy",
         "nameHe": "עמדת המפלגה · כלכלה ויוקר המחיה",
-        "order": 6,
+        "order": 7,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-05T06:00:00.000Z",
@@ -107,7 +173,7 @@
       {
         "id": "party-position-religion-state",
         "nameHe": "עמדת המפלגה · דת ומדינה",
-        "order": 7,
+        "order": 8,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-13T06:00:00.000Z",
@@ -116,7 +182,7 @@
       {
         "id": "party-position-democracy",
         "nameHe": "עמדת המפלגה · משפט, ממשל ודמוקרטיה",
-        "order": 8,
+        "order": 9,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-09T06:00:00.000Z",
@@ -125,7 +191,7 @@
       {
         "id": "party-position-society-services",
         "nameHe": "עמדת המפלגה · חינוך, בריאות ורווחה",
-        "order": 9,
+        "order": 10,
         "tier": "objective",
         "runtimeState": "held",
         "plannedPublishAt": "2026-10-17T06:00:00.000Z",
@@ -134,7 +200,7 @@
       {
         "id": "special-events",
         "nameHe": "אירועים מיוחדים",
-        "order": 10,
+        "order": 11,
         "tier": "event",
         "runtimeState": "event-only",
         "plannedPublishAt": null,
@@ -906,7 +972,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "YSR-M01-Q02",
@@ -1057,7 +1124,7 @@
             "flavorDisclosureDetail": ""
           },
           "art": {
-            "artKey": "hero-art-yoram-cohen-slot2.png",
+            "artKey": "hero-art-yoram-cohen-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -1067,7 +1134,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "YSR-M02-Q02",
@@ -1830,7 +1898,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Uncommon"
         },
         {
           "id": "LIK-M01-Q02",
@@ -3544,7 +3613,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "BYD-M01-Q02",
@@ -3696,7 +3766,7 @@
             "flavorDisclosureDetail": ""
           },
           "art": {
-            "artKey": "hero-art-yair-lapid-slot2.png",
+            "artKey": "hero-art-yair-lapid-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -3706,7 +3776,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "BYD-M02-Q02",
@@ -4351,7 +4422,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Uncommon"
         },
         {
           "id": "YB-M01-Q02",
@@ -4503,7 +4575,7 @@
             "flavorDisclosureDetail": ""
           },
           "art": {
-            "artKey": "hero-art-rafi-ben-shitrit-slot2.png",
+            "artKey": "hero-art-rafi-ben-shitrit-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -4513,7 +4585,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Uncommon"
         },
         {
           "id": "YB-M02-Q02",
@@ -4836,7 +4909,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "DEM-M01-Q02",
@@ -4997,7 +5071,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "DEM-M02-Q02",
@@ -5732,7 +5807,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Uncommon"
         },
         {
           "id": "RZ-M01-Q02",
@@ -5955,7 +6031,7 @@
             "flavorDisclosureDetail": "DOCUMENTED VISUAL + ATTRIBUTED PARAPHRASE*: the feet scene is documented by ynet; the short wording is not presented as verbatim."
           },
           "art": {
-            "artKey": "hero-art-moshe-feiglin-slot2.png",
+            "artKey": "hero-art-moshe-feiglin-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -5965,7 +6041,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Rare"
         },
         {
           "id": "RZ-M02-Q02",
@@ -6903,7 +6980,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Rare"
         },
         {
           "id": "OTZ-M01-Q02",
@@ -7248,7 +7326,7 @@
             "flavorDisclosureDetail": "DOCUMENTED VISUAL CONTEXT: use the Knesset video; do not invent which relative she faced at a given instant."
           },
           "art": {
-            "artKey": "hero-art-tally-gotliv-slot2.png",
+            "artKey": "hero-art-tally-gotliv-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -7258,7 +7336,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Rare"
         },
         {
           "id": "OTZ-M02-Q02",
@@ -7812,7 +7891,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Rare"
         }
       ]
     },
@@ -8027,7 +8107,7 @@
             "flavorDisclosureDetail": "Added editorial symbolism for mass call-up orders; the envelopes do not reconstruct documents present at the hearing."
           },
           "art": {
-            "artKey": "hero-art-yinon-azoulay-slot2.png",
+            "artKey": "hero-art-yinon-azoulay-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -8037,7 +8117,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Uncommon"
         }
       ]
     },
@@ -8178,7 +8259,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "UTJ-M01-Q02",
@@ -8437,7 +8519,7 @@
             "flavorDisclosureDetail": "The ballot-box shadow is editorial symbolism; it was not present at the event and is not documentary evidence."
           },
           "art": {
-            "artKey": "hero-art-yitzhak-goldknopf-slot2.png",
+            "artKey": "hero-art-yitzhak-goldknopf-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -8447,7 +8529,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Uncommon"
         },
         {
           "id": "UTJ-M02-Q02",
@@ -8881,7 +8964,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "JNT-M01-Q02",
@@ -9035,7 +9119,7 @@
             "flavorDisclosureDetail": "Editorial flavor line; not part of the quotation."
           },
           "art": {
-            "artKey": "hero-art-ahmad-tibi-slot2.png",
+            "artKey": "hero-art-ahmad-tibi-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -9045,7 +9129,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "JNT-M02-Q02",
@@ -9368,7 +9453,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "RAM-M01-Q02",
@@ -9522,7 +9608,7 @@
             "flavorDisclosureDetail": "Editorial flavor line; not part of the quotation."
           },
           "art": {
-            "artKey": "hero-art-yoav-segalovitz-slot2.png",
+            "artKey": "hero-art-yoav-segalovitz-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -9532,7 +9618,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "RAM-M02-Q02",
@@ -9859,7 +9946,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Uncommon"
         },
         {
           "id": "AMH-M01-Q02",
@@ -10015,7 +10103,7 @@
             "flavorDisclosureDetail": "Critical advocacy framing: the card spotlights Haddad's causal-sounding hyperbole while context labels it as his assessment."
           },
           "art": {
-            "artKey": "hero-art-yoseph-haddad-slot2.png",
+            "artKey": "hero-art-yoseph-haddad-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -10025,7 +10113,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Uncommon"
         },
         {
           "id": "AMH-M02-Q02",
@@ -10356,7 +10445,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "RSE-M01-Q02",
@@ -10507,7 +10597,7 @@
             "flavorDisclosureDetail": "Editorial flavor line; not part of the quotation."
           },
           "art": {
-            "artKey": "hero-art-yaron-zelekha-slot2.png",
+            "artKey": "hero-art-yaron-zelekha-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -10517,7 +10607,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "RSE-M02-Q02",
@@ -10678,7 +10769,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "BW-M01-Q02",
@@ -10829,7 +10921,7 @@
             "flavorDisclosureDetail": ""
           },
           "art": {
-            "artKey": "hero-art-pnina-tamano-shata-slot2.png",
+            "artKey": "hero-art-pnina-tamano-shata-slot2.jpg",
             "modelVersion": "Instinct image generation · approved muted-paper set-2 artwork",
             "seed": "",
             "identityReferenceStrength": "",
@@ -10839,7 +10931,8 @@
           "review": {
             "contentStatus": "approved",
             "revision": 0
-          }
+          },
+          "pullRarity": "Common"
         },
         {
           "id": "BW-M02-Q02",

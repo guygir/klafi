@@ -1,8 +1,9 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { expandPublicCatalog } from "../app/server/public-catalog.js";
-import { cardIndexFromCatalog, visiblePlayerCards, visibleReleaseSets } from "../app/server/visible-sets.js";
+import { catalogExtrasFromStudio, expandPublicCatalog } from "../app/server/public-catalog.js";
+import { cardPullOdds, normalizePackConfig, packCardAllowed, rarityBucket, rarityOrderReport, resolvePackTable } from "../app/server/pack-config.js";
+import { cardIndexFromCatalog, isLiveReleaseSet, visiblePlayerCards, visibleReleaseSets } from "../app/server/visible-sets.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cards = JSON.parse(await readFile(path.join(root, "app/data/cards.json"), "utf8"));
@@ -10,9 +11,17 @@ const specials = JSON.parse(await readFile(path.join(root, "app/data/specials-co
 const advocacy = JSON.parse(await readFile(path.join(root, "app/data/advocacy.json"), "utf8"));
 const avatars = JSON.parse(await readFile(path.join(root, "app/data/avatars.json"), "utf8"));
 const studio = JSON.parse(await readFile(path.join(root, "app/data/studio-content.json"), "utf8"));
+const set5 = JSON.parse(await readFile(path.join(root, "docs/intake/research/set5-wip-pool.json"), "utf8"));
 
-const visibleCards = visiblePlayerCards(expandPublicCatalog(cards, specials));
-const idleCards = cards.filter((card) => card.idleEligible && !card.eventOnly);
+const visibleCards = visiblePlayerCards(expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studio, set5)));
+const pack = normalizePackConfig(studio.gameConfig?.pack);
+const packById = new Map(pack.sets.map((set) => [set.id, set]));
+const releaseById = new Map((studio.gameConfig?.releaseSets || []).map((set) => [set.id, set]));
+const idleCards = visibleCards.filter((card) => {
+  const packSet = packById.get(card.releaseSetId);
+  const release = releaseById.get(card.releaseSetId);
+  return Boolean(packSet && packSet.weight > 0 && release?.runtimeState !== "held" && packCardAllowed(card, packSet) && rarityBucket(card));
+});
 const visiblePartyIds = new Set(visibleCards
   .map(({ set }) => set)
   .filter((set) => set && set !== "SYS" && !String(set).startsWith("special-")));
@@ -56,6 +65,31 @@ const shell = {
       reward: studio.gameConfig?.progression?.reward || "קלף בונוס מיידי",
     },
     releaseSets: visibleReleaseSets(studio.gameConfig?.releaseSets || []),
+    pack: (() => {
+      const pack = {
+        ...normalizePackConfig(studio.gameConfig?.pack),
+        sets: normalizePackConfig(studio.gameConfig?.pack).sets.filter((set) => isLiveReleaseSet(set.id)),
+      };
+      const releaseSets = visibleReleaseSets(studio.gameConfig?.releaseSets || []);
+      const current = resolvePackTable({
+        pack,
+        releaseSets,
+        cards: visibleCards,
+        now: Date.now(),
+      });
+      return {
+        ...pack,
+        current: {
+          ...current,
+          rarityOrder: rarityOrderReport(cardPullOdds({
+            pack,
+            releaseSets,
+            cards: visibleCards,
+            now: Date.now(),
+          })),
+        },
+      };
+    })(),
     parties,
     avatars: avatars.avatars || [],
   },

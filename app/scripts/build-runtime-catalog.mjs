@@ -250,7 +250,7 @@ const quoteCards = studio.members.flatMap((member) => {
       hebrewTitle: member.nameHe,
       type: "Quote",
       typeHe: "ציטוט",
-      rarity: card.rarity,
+      rarity: card.pullRarity || card.rarity,
       subtitle: `מקום ${member.slot} · ${party.displayNameHe}`,
       subtitleHe: `מקום ${member.slot}`,
       body: card.quote.context,
