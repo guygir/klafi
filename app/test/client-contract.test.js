@@ -106,6 +106,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /pack-wrapper-klafi\.png/);
   assert.match(css, /\.pack-rip-half/);
   assert.match(css, /\.home-pack-rip\.is-tearing/);
+  assert.match(css, /\.home-pack-rip\s*\{[^}]*direction:\s*ltr/);
+  assert.match(css, /grid-template-areas:\s*"start slit end"/);
   assert.match(html, /id="open-pack"[^>]*>פתיחת קלף/);
   assert.match(html, /id="replay-tips"[^>]*>איך משחקים/);
   assert.match(html, /id="klafi-tips"/);
