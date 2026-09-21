@@ -94,7 +94,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 3. Production advocacy identity configured for live.
 4. CEC / rights / likeness / source approval (release blockers).
 5. [x] Account recovery and moderation. Guest recovery code in the profile (copy / restore against the existing session). Card and public-name reports share the Studio queue. Gameplay stays unthrottled; anonymous-session abuse protection belongs at the edge.
-6. Remaining KALPI pack art → KLAFI. **Deferred by product decision; now Step 16.**
+6. [x] Remaining KALPI pack art → KLAFI. Live pack still and rip use `pack-wrapper-klafi.png` (KLAFI / קְלָפִי). The old KALPI wrapper and Seedance rip stay as reference only.
 
 **Active product sequence**
 7. [x] Unified card pipeline, taller cards, no fake social counts. One `--card-width` token sizes walkout, dialog and share. Quote-fit keeps a readable floor on binder/peek/trade. Trades use the same renderer and dialog.
@@ -108,7 +108,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 13. Disclosed survey + published scoring table → matched-list party pack.
 14. Numbered holos / streaks / CEC pulse (no live polls in our voice).
 15. Platform/live-ops expansion: PWA + push notifications, groups/leagues/seasonal ladders, event-controlled Specials and coordinated creator seeding. **The Events player surface is deferred; its server and Studio implementation remain parked.**
-16. Final art pass: remaining KALPI → KLAFI assets, numbered-foil/rip polish and Weavy/Figma Weave promo exports.
+16. [x] Pack still + CSS rip branded KLAFI. Numbered-holo treatments and extra Weavy promo loops stay parked with step 14.
 
 ### Later (designed, not Alpha)
 

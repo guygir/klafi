@@ -471,6 +471,9 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   const likudSymbolArt = await fetch(`${running.base}/design-assets/hero-art-memchetlammed.png`);
   assert.equal(likudSymbolArt.status, 200);
   assert.equal(catalog.body.cards.find(({ id }) => id === "LIK-S-01").artKey, "hero-art-memchetlammed.png");
+  const klafiPack = await fetch(`${running.base}/design-assets/pack-wrapper-klafi.png`);
+  assert.equal(klafiPack.status, 200);
+  assert.equal(klafiPack.headers.get("content-type"), "image/png");
   const packVideoRange = await fetch(`${running.base}/design-assets/pack-rip-seedance-v01.mp4`, {
     headers: { range: "bytes=0-31" },
   });

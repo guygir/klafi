@@ -1745,30 +1745,29 @@ setInterval(updateCountdown, 1000);
 function sealedPackMarkup(extraClass = "") {
   return `
     <div class="pack-wrapper rip-pack ${extraClass}" aria-label="חבילת קְלָפִי סגורה">
-      <img src="/design-assets/pack-wrapper-transparent.png" alt="" />
+      <img src="/design-assets/pack-wrapper-klafi.png" alt="" />
     </div>`;
 }
 
 function playHomePackRip({ holdAtEnd = false } = {}) {
-  const video = elements.homePackRip;
-  if (!video || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const rip = elements.homePackRip;
+  if (!rip || matchMedia("(prefers-reduced-motion: reduce)").matches) {
     return { finished: Promise.resolve(), release() {} };
   }
   elements.homePack.hidden = true;
   elements.homePackRipBackdrop.hidden = false;
-  video.hidden = false;
-  video.currentTime = 0;
-  elements.openPackFancy.textContent = "פותחים…";
+  rip.hidden = false;
+  rip.classList.remove("is-tearing");
+  requestAnimationFrame(() => rip.classList.add("is-tearing"));
+  if (elements.openPackFancy) elements.openPackFancy.textContent = "פותחים…";
 
   let timer;
   let finished = false;
   let resolveFinished;
   const cleanup = () => {
     clearTimeout(timer);
-    video.removeEventListener("ended", finish);
-    video.removeEventListener("error", finish);
-    video.pause();
-    video.hidden = true;
+    rip.classList.remove("is-tearing");
+    rip.hidden = true;
     elements.homePackRipBackdrop.hidden = true;
     elements.homePack.hidden = false;
   };
@@ -1776,16 +1775,12 @@ function playHomePackRip({ holdAtEnd = false } = {}) {
     if (finished) return;
     finished = true;
     clearTimeout(timer);
-    video.pause();
     if (!holdAtEnd) cleanup();
     resolveFinished();
   };
   const finishedPromise = new Promise((resolve) => {
     resolveFinished = resolve;
-    video.addEventListener("ended", finish);
-    video.addEventListener("error", finish);
-    timer = setTimeout(finish, 10000);
-    video.play().catch(finish);
+    timer = setTimeout(finish, 1600);
   });
   return {
     finished: finishedPromise,
@@ -1794,8 +1789,6 @@ function playHomePackRip({ holdAtEnd = false } = {}) {
         finished = true;
         resolveFinished();
       }
-      video.removeEventListener("ended", finish);
-      video.removeEventListener("error", finish);
       cleanup();
     },
   };
@@ -4171,7 +4164,7 @@ async function makeShareImage(card) {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
 
-const SHARE_PULL_LINE = "תראה מה שלפתי בקלפי!";
+const SHARE_PULL_LINE = "תראה מה שלפתי בקְלָפִי!";
 
 function shareCaption(card) {
   const url = makeDeepLink("card", card.id);

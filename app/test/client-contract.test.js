@@ -101,7 +101,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /setLabels\.FAVORITES/);
   assert.doesNotMatch(javascript, /פייבוריטים/);
   assert.match(javascript, /setTimeout\(startWalkout/);
-  assert.match(html, /pack-wrapper-transparent\.png/);
+  assert.match(html, /pack-wrapper-klafi\.png/);
+  assert.doesNotMatch(html, /pack-rip-seedance/);
+  assert.match(javascript, /pack-wrapper-klafi\.png/);
+  assert.match(css, /\.pack-rip-half/);
+  assert.match(css, /\.home-pack-rip\.is-tearing/);
   assert.match(html, /id="open-pack"[^>]*>פתיחת קלף/);
   assert.match(html, /id="replay-tips"[^>]*>איך משחקים/);
   assert.match(html, /id="klafi-tips"/);
@@ -345,7 +349,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
   assert.match(html, /card-surface-25/);
-  assert.match(html, /preload="auto"/);
+  assert.match(html, /id="home-pack-rip"/);
+  assert.match(html, /class="pack-rip-half start"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
   assert.match(javascript, /function hydrateExtras/);
@@ -436,7 +441,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function shareToInstagram/);
   assert.match(javascript, /function makeStoryImage/);
   assert.match(javascript, /function makeWhatsAppImage/);
-  assert.match(javascript, /תראה מה שלפתי בקלפי!/);
+  assert.match(javascript, /תראה מה שלפתי בקְלָפִי!/);
   assert.match(javascript, /function paintShareCardFace/);
   assert.match(javascript, /function paintFullartShareIdentity/);
   assert.match(javascript, /SHARE_PULL_LINE/);

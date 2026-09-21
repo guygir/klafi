@@ -289,21 +289,49 @@ h1 {
 .pack-wrapper img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 12px 18px rgba(26, 31, 28, 0.2)); }
 
 .home-pack-rip {
-  display: block;
+  display: grid;
+  grid-template-columns: 1fr 0 1fr;
   position: fixed;
   z-index: 61;
   top: 50%;
   left: 50%;
   width: min(360px, 78vw);
   max-height: 88dvh;
-  aspect-ratio: 714 / 1290;
+  aspect-ratio: 769 / 1390;
+  overflow: hidden;
   border: 0;
   border-radius: 9px;
-  background: var(--paper);
-  object-fit: cover;
-  clip-path: inset(0 1.2% round 9px);
-  transform: translate(-50%, -50%) scale(1.025);
+  background: transparent;
+  transform: translate(-50%, -50%);
   filter: drop-shadow(0 22px 44px rgba(26, 31, 28, 0.36));
+}
+
+.pack-rip-half {
+  background: url("/design-assets/pack-wrapper-klafi.png") center / 200% 100% no-repeat;
+  transition: transform 1.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pack-rip-half.start { background-position: left center; }
+.pack-rip-half.end { background-position: right center; }
+
+.pack-rip-slit {
+  width: 0;
+  background: linear-gradient(90deg, transparent, #175b56, transparent);
+  opacity: 0;
+  transition: width 1.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms ease;
+}
+
+.home-pack-rip.is-tearing {
+  grid-template-columns: 1fr 5px 1fr;
+}
+
+.home-pack-rip.is-tearing .pack-rip-half.start { transform: translateX(-7%); }
+.home-pack-rip.is-tearing .pack-rip-half.end { transform: translateX(7%); }
+.home-pack-rip.is-tearing .pack-rip-slit { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pack-rip-half,
+  .pack-rip-slit { transition: none; }
 }
 
 .home-pack-rip[hidden] { display: none; }

@@ -138,7 +138,7 @@ export function buildPackRipPrompt() {
   return `KLAFI WEAVE · NEW PACK RIP VIDEO · ONE CARD
 
 TASK
-Image-to-video from the approved pack-wrapper-klafi.png first frame.
+Image-to-video from the live pack-wrapper-klafi.png first frame.
 
 MOTION
 Locked camera. The top gold serrated seam pulls apart from the center, paper fibers stretch and tear, and the wrapper opens with believable physical resistance. A restrained teal light appears from inside. The two paper lips peel back and exactly one card back rises from the wrapper.

@@ -87,7 +87,7 @@
           <div class="pack-plinth">
             <div class="pack-shadow" aria-hidden="true"></div>
             <div class="pack-wrapper" id="home-pack" aria-hidden="true">
-              <img src="/design-assets/pack-wrapper-transparent.png" alt="" />
+              <img src="/design-assets/pack-wrapper-klafi.png" alt="" />
             </div>
           </div>
         </div>
@@ -496,7 +496,7 @@
     <button id="close-level" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">עליתם רמה</p>
     <h2 id="level-dialog-title">רמה חדשה</h2>
-    <img class="level-reward-pack" src="/design-assets/pack-wrapper-transparent.png" alt="קלף בונוס" />
+    <img class="level-reward-pack" src="/design-assets/pack-wrapper-klafi.png" alt="קלף בונוס" />
     <ul id="level-unlocks" class="level-unlocks"></ul>
     <p id="level-dialog-reward"></p>
     <button id="claim-level" class="primary-action" type="button">קבלת הפרס</button>
@@ -573,9 +573,11 @@
   </div>
 
   <div id="home-pack-rip-backdrop" class="home-pack-rip-backdrop" aria-hidden="true" hidden></div>
-  <video id="home-pack-rip" class="home-pack-rip" aria-hidden="true" playsinline muted preload="auto" poster="/design-assets/pack-wrapper-transparent.png" disablepictureinpicture hidden>
-    <source src="/design-assets/pack-rip-seedance-v01.mp4?v=safari-range-1" type="video/mp4" />
-  </video>
+  <div id="home-pack-rip" class="home-pack-rip" aria-hidden="true" hidden>
+    <span class="pack-rip-half start"></span>
+    <span class="pack-rip-slit"></span>
+    <span class="pack-rip-half end"></span>
+  </div>
   <dialog id="share-sheet" class="policy-dialog share-sheet" aria-labelledby="share-sheet-title">
     <button id="close-share-sheet" class="dialog-close" type="button" aria-label="סגירת השיתוף">×</button>
     <p class="eyebrow">שיתוף</p>
