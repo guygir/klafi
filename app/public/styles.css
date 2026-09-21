@@ -2475,7 +2475,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-offer span,
 .trade-offer small { color: var(--ink-soft); font: 500 11px/1.25 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 .trade-offer strong { font-size: 14px; line-height: 1.25; }
-.trade-offer-bar {
+.trade-offer > .trade-offer-bar {
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: nowrap;
