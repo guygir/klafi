@@ -2436,6 +2436,10 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
     width: 104px;
     height: calc(104px * 96 / 63);
   }
+  .open-trades-desk .trade-thumb-frame {
+    width: 72px;
+    height: calc(72px * 96 / 63);
+  }
 }
 .trade-form fieldset { min-width: 0; margin: 0; padding: 10px; border: 1px solid rgba(44, 51, 48, 0.22); border-radius: 8px; }
 .trade-form legend { padding: 0 4px; font-size: 13px; font-weight: 600; }
@@ -3254,6 +3258,16 @@ body {
   font: 600 11px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
 }
 
+.open-trades-desk .trade-thumb-frame {
+  width: 88px;
+  height: calc(88px * 96 / 63);
+}
+
+.open-trades-desk .trade-offer {
+  padding: 10px;
+  gap: 8px;
+}
+
 .open-trades-desk .trade-board {
   flex: 1 1 auto;
   max-height: none;
@@ -3411,7 +3425,7 @@ body {
 .challenge-hist-plot {
   display: flex;
   direction: ltr;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: end;
   gap: 10px;
   min-height: 92px;
@@ -3474,7 +3488,7 @@ body {
 .challenge-hist-axis {
   display: flex;
   direction: ltr;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 10px;
   color: rgba(26, 31, 28, 0.5);
   font-size: 10px;

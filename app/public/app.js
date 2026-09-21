@@ -2573,7 +2573,7 @@ function fillTradeBoardFilter(select, trades, key, selected) {
 
 function tradeBoardPagerMarkup(page, pages, remaining) {
   if (pages <= 1) return "";
-  const nextCount = remaining > 0 ? remaining : TRADE_BOARD_PAGE_SIZE;
+  const nextCount = remaining > 0 ? Math.min(TRADE_BOARD_PAGE_SIZE, remaining) : TRADE_BOARD_PAGE_SIZE;
   return `<button type="button" data-page-target="trades" data-page="${Math.max(0, page - 1)}" ${page === 0 ? "disabled" : ""}>הקודמות</button>
     <span>${page + 1}/${pages}</span>
     <button type="button" data-page-target="trades" data-page="${Math.min(pages - 1, page + 1)}" ${page === pages - 1 ? "disabled" : ""}>עוד ${nextCount}</button>`;
