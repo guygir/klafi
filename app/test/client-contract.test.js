@@ -237,6 +237,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /class="trade-offer-bar"/);
   assert.match(javascript, /אין לכם את/);
   assert.match(css, /\.trade-offer-action/);
+  assert.match(css, /\.trade-offer-action\.accept/);
+  assert.match(javascript, /trade-offer-action accept/);
   assert.match(css, /\.challenge-hist-col b[\s\S]{0,80}?width:\s*32px/);
   assert.match(css, /\.challenge-hist-plot[\s\S]{0,160}?direction:\s*ltr/);
   assert.match(css, /\.challenge-hist-axis[\s\S]{0,160}?direction:\s*ltr/);

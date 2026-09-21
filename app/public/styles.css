@@ -2495,7 +2495,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: nowrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
@@ -2512,14 +2512,24 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .trade-offer-action {
   flex: 0 0 auto;
-  width: max-content;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  background: none;
+  width: auto;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--civic);
+  border-radius: 8px;
+  background: var(--paper);
   color: var(--civic);
-  font: 600 11px/1.3 "IBM Plex Sans Hebrew", sans-serif;
+  font: 700 13px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
   cursor: pointer;
+}
+.trade-offer-action.accept {
+  background: var(--civic);
+  color: var(--paper);
+}
+.trade-offer-action:hover {
+  background: var(--civic-bright);
+  border-color: var(--civic-bright);
+  color: var(--paper);
 }
 .trade-offer-bar .trade-unavailable {
   flex: 1 1 auto;

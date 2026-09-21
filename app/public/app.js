@@ -2630,7 +2630,7 @@ function tradeRowMarkup(trade) {
   const action = trade.ownedByCurrent
     ? `<button type="button" class="trade-offer-action" data-cancel-trade="${trade.tradeId}">ביטול</button>`
     : trade.canAccept
-      ? `<button type="button" class="trade-offer-action" data-accept-trade="${trade.tradeId}">קבלה</button>`
+      ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}">קבלה</button>`
       : `<span class="trade-unavailable">אין לכם את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
   const offeredRole = trade.ownedByCurrent ? "give" : "receive";
   const wantedRole = trade.ownedByCurrent ? "receive" : "give";
