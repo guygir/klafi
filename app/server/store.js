@@ -273,6 +273,11 @@ export class JsonStore {
     return this.exclusive(async () => {
       const session = this.getSession(sessionToken);
       if (!session || !session.inventory[offeredCardId] || offeredCardId === wantedCardId) return null;
+      const existing = this.state.trades.find((trade) =>
+        trade.ownerToken === sessionToken
+        && trade.status === "open"
+        && Date.parse(trade.expiresAt || 0) > Date.parse(createdAt));
+      if (existing) return { blocked: true, existing };
       const reservedCopies = this.state.trades.filter((trade) =>
         trade.ownerToken === sessionToken
         && trade.offeredCardId === offeredCardId
