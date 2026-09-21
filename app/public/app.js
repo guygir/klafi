@@ -1780,7 +1780,7 @@ function playHomePackRip({ holdAtEnd = false } = {}) {
   };
   const finishedPromise = new Promise((resolve) => {
     resolveFinished = resolve;
-    timer = setTimeout(finish, 1600);
+    timer = setTimeout(finish, 2100);
   });
   return {
     finished: finishedPromise,

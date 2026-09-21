@@ -108,7 +108,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 13. Disclosed survey + published scoring table → matched-list party pack.
 14. Numbered holos / streaks / CEC pulse (no live polls in our voice).
 15. Platform/live-ops expansion: PWA + push notifications, groups/leagues/seasonal ladders, event-controlled Specials and coordinated creator seeding. **The Events player surface is deferred; its server and Studio implementation remain parked.**
-16. [x] Pack still + CSS rip branded KLAFI. Numbered-holo treatments and extra Weavy promo loops stay parked with step 14.
+16. [x] Pack still + CSS rip branded KLAFI. The still stays `pack-wrapper-klafi.png`; the rip tears the top gold seam and peels the two paper lips. Numbered-holo treatments and extra Weavy promo loops stay parked with step 14.
 
 ### Later (designed, not Alpha)
 

@@ -104,10 +104,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /pack-wrapper-klafi\.png/);
   assert.doesNotMatch(html, /pack-rip-seedance/);
   assert.match(javascript, /pack-wrapper-klafi\.png/);
-  assert.match(css, /\.pack-rip-half/);
+  assert.match(css, /\.pack-rip-lip/);
+  assert.match(css, /\.pack-rip-body/);
   assert.match(css, /\.home-pack-rip\.is-tearing/);
-  assert.match(css, /\.home-pack-rip\s*\{[^}]*direction:\s*ltr/);
-  assert.match(css, /grid-template-areas:\s*"start slit end"/);
+  assert.doesNotMatch(css, /\.pack-rip-half/);
   assert.match(html, /id="open-pack"[^>]*>פתיחת קלף/);
   assert.match(html, /id="replay-tips"[^>]*>איך משחקים/);
   assert.match(html, /id="klafi-tips"/);
@@ -352,7 +352,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /cardCode/);
   assert.match(html, /card-surface-25/);
   assert.match(html, /id="home-pack-rip"/);
-  assert.match(html, /class="pack-rip-half start"/);
+  assert.match(html, /class="pack-rip-lip start"/);
+  assert.match(html, /class="pack-rip-body"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
   assert.match(javascript, /function hydrateExtras/);

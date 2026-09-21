@@ -289,10 +289,8 @@ h1 {
 .pack-wrapper img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 12px 18px rgba(26, 31, 28, 0.2)); }
 
 .home-pack-rip {
-  display: grid;
+  display: block;
   direction: ltr;
-  grid-template-columns: 1fr 0 1fr;
-  grid-template-areas: "start slit end";
   position: fixed;
   z-index: 61;
   top: 50%;
@@ -300,44 +298,158 @@ h1 {
   width: min(360px, 78vw);
   max-height: 88dvh;
   aspect-ratio: 769 / 1390;
-  overflow: hidden;
+  overflow: visible;
   border: 0;
-  border-radius: 9px;
   background: transparent;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(0 22px 44px rgba(26, 31, 28, 0.36));
+  perspective: 900px;
 }
 
-.pack-rip-half {
-  background: url("/design-assets/pack-wrapper-klafi.png") center / 200% 100% no-repeat;
-  transition: transform 1.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.pack-rip-half.start { grid-area: start; background-position: left center; }
-.pack-rip-half.end { grid-area: end; background-position: right center; }
-
-.pack-rip-slit {
-  grid-area: slit;
-  align-self: stretch;
-  width: auto;
-  min-width: 0;
-  background: linear-gradient(180deg, transparent 6%, #175b56 28%, #d8c37a 50%, #175b56 72%, transparent 94%);
-  box-shadow: 0 0 16px rgba(23, 91, 86, 0.55);
+.pack-rip-glow {
+  position: absolute;
+  z-index: 1;
+  top: 4%;
+  left: 50%;
+  width: 12%;
+  height: 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(196, 163, 90, 0.7) 0%, rgba(23, 91, 86, 0.55) 42%, transparent 72%);
+  transform: translateX(-50%);
   opacity: 0;
-  transition: opacity 220ms ease;
+  pointer-events: none;
 }
 
-.home-pack-rip.is-tearing {
-  grid-template-columns: 1fr 7px 1fr;
+.pack-rip-card {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 28%;
+  width: 48%;
+  aspect-ratio: 63 / 88;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 8px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 16px 28px rgba(26, 31, 28, 0.28);
+  transform: translate(-50%, 28%) scale(0.84);
+  opacity: 0;
+  pointer-events: none;
 }
 
-.home-pack-rip.is-tearing .pack-rip-half.start { transform: translateX(-8%); }
-.home-pack-rip.is-tearing .pack-rip-half.end { transform: translateX(8%); }
-.home-pack-rip.is-tearing .pack-rip-slit { opacity: 1; }
+.pack-rip-card-seal {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 42%, #2a7a72 0 38%, transparent 39%),
+    #1f4f4a;
+  box-shadow: inset 0 0 0 2px rgba(244, 239, 228, 0.28);
+}
+
+.pack-rip-card-word {
+  font-family: "Noto Serif Hebrew", "Times New Roman", serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--civic);
+}
+
+.pack-rip-body,
+.pack-rip-lip {
+  position: absolute;
+  background: url("/design-assets/pack-wrapper-klafi.png") 0 0 / 100% 100% no-repeat;
+  filter: drop-shadow(0 18px 28px rgba(26, 31, 28, 0.28));
+}
+
+.pack-rip-body {
+  z-index: 3;
+  inset: 0;
+  clip-path: polygon(0 0, 18% 0, 32% 0, 42% 0, 50% 0, 58% 0, 68% 0, 82% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.pack-rip-lip {
+  z-index: 4;
+  top: 0;
+  width: 50%;
+  height: 32%;
+  background-size: 200% 312.5%;
+}
+
+.pack-rip-lip.start {
+  left: 0;
+  background-position: left top;
+  transform-origin: 6% 78%;
+  clip-path: polygon(0 0, 100% 0, 100% 86%, 78% 100%, 46% 90%, 0 100%);
+}
+
+.pack-rip-lip.end {
+  right: 0;
+  background-position: right top;
+  transform-origin: 94% 78%;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 54% 90%, 22% 100%, 0 86%);
+}
+
+.home-pack-rip.is-tearing .pack-rip-glow {
+  animation: pack-rip-glow 2.1s cubic-bezier(0.22, 0.8, 0.24, 1) both;
+}
+
+.home-pack-rip.is-tearing .pack-rip-card {
+  animation: pack-rip-card 2.1s cubic-bezier(0.18, 0.86, 0.24, 1) both;
+}
+
+.home-pack-rip.is-tearing .pack-rip-body {
+  animation: pack-rip-body 2.1s cubic-bezier(0.22, 0.8, 0.24, 1) both;
+}
+
+.home-pack-rip.is-tearing .pack-rip-lip.start {
+  animation: pack-rip-lip-start 2.1s cubic-bezier(0.2, 0.82, 0.2, 1) both;
+}
+
+.home-pack-rip.is-tearing .pack-rip-lip.end {
+  animation: pack-rip-lip-end 2.1s cubic-bezier(0.2, 0.82, 0.2, 1) both;
+}
+
+@keyframes pack-rip-glow {
+  0%, 12% { opacity: 0; width: 12%; height: 8%; }
+  40% { opacity: 1; width: 44%; height: 34%; }
+  100% { opacity: 0.92; width: 52%; height: 42%; }
+}
+
+@keyframes pack-rip-card {
+  0%, 28% { opacity: 0; transform: translate(-50%, 28%) scale(0.84); }
+  100% { opacity: 1; transform: translate(-50%, -36%) scale(1); }
+}
+
+@keyframes pack-rip-body {
+  0% {
+    clip-path: polygon(0 0, 18% 0, 32% 0, 42% 0, 50% 0, 58% 0, 68% 0, 82% 0, 100% 0, 100% 100%, 0 100%);
+  }
+  100% {
+    clip-path: polygon(0 22%, 18% 19%, 32% 25%, 42% 18%, 50% 36%, 58% 18%, 68% 26%, 82% 19%, 100% 22%, 100% 100%, 0 100%);
+  }
+}
+
+@keyframes pack-rip-lip-start {
+  0% { transform: none; }
+  18% { transform: rotate(-6deg) translate(-2%, -2%); }
+  100% { transform: rotate(-26deg) translate(-14%, -10%) rotateY(18deg); }
+}
+
+@keyframes pack-rip-lip-end {
+  0% { transform: none; }
+  18% { transform: rotate(6deg) translate(2%, -2%); }
+  100% { transform: rotate(26deg) translate(14%, -10%) rotateY(-18deg); }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .pack-rip-half,
-  .pack-rip-slit { transition: none; }
+  .home-pack-rip.is-tearing .pack-rip-glow,
+  .home-pack-rip.is-tearing .pack-rip-card,
+  .home-pack-rip.is-tearing .pack-rip-body,
+  .home-pack-rip.is-tearing .pack-rip-lip { animation: none; }
 }
 
 .home-pack-rip[hidden] { display: none; }
