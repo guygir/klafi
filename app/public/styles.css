@@ -2556,10 +2556,6 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   gap: 12px;
   min-width: 0;
 }
-.trade-offer-bar .report-link.inline {
-  flex: 0 0 auto;
-  color: var(--civic);
-}
 .trade-offer-bar p,
 .trade-offer-bar .trade-unavailable {
   min-width: 0;
