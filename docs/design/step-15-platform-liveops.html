@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>15 · PWA / ליגות / אירועים / זריעת יוצרים — סקיצה לביקורת</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a1f1c;
+      --paper: #f4efe4;
+      --paper-deep: #e7dfd0;
+      --rule: #2c3330;
+      --civic: #1f4f4a;
+      --foil: #c4a35a;
+      --danger-mute: #8a4a3a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        repeating-linear-gradient(180deg, transparent, transparent 31px, rgba(44, 51, 48, 0.04) 32px),
+        var(--paper);
+      color: var(--ink);
+      font: 16px/1.5 "IBM Plex Sans Hebrew", sans-serif;
+    }
+    header.mast, main { max-width: 1040px; margin: 0 auto; padding: 28px 22px; }
+    main { padding-top: 8px; padding-bottom: 80px; }
+    .status {
+      display: inline-block;
+      margin: 0 0 12px;
+      padding: 4px 10px;
+      border: 1px solid var(--foil);
+      color: var(--civic);
+      font-size: 12px;
+    }
+    h1, h2, h3 { font-family: "Noto Serif Hebrew", serif; font-weight: 700; margin: 0 0 8px; }
+    h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.05; }
+    .lede { max-width: 40em; color: rgba(26, 31, 28, 0.78); }
+    nav { margin: 18px 0 0; font-size: 14px; }
+    nav a { color: var(--civic); }
+    .decide {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 26px 0 8px;
+    }
+    .decide article {
+      background: var(--paper-deep);
+      border: 1px solid rgba(44, 51, 48, 0.22);
+      padding: 14px;
+    }
+    .decide b { display: block; font-size: 12px; color: var(--civic); margin-bottom: 6px; }
+    .decide p { margin: 0; font-size: 14px; }
+    .stack { display: grid; gap: 26px; margin-top: 18px; }
+    .row {
+      display: grid;
+      grid-template-columns: minmax(240px, 0.85fr) minmax(0, 1.15fr);
+      gap: 26px;
+      padding-top: 22px;
+      border-top: 1px solid rgba(44, 51, 48, 0.2);
+    }
+    .stub, .envelope, .ops {
+      background: #111;
+      color: #f7f2e8;
+      min-height: 280px;
+      padding: 18px 18px 20px;
+      box-shadow: 0 18px 40px rgba(26, 31, 28, 0.18);
+    }
+    .stub {
+      background:
+        linear-gradient(#111 0 42px, transparent 42px),
+        repeating-linear-gradient(90deg, #111 0 12px, #1b1b1b 12px 24px);
+      border-bottom: 10px solid var(--foil);
+    }
+    .stub small { opacity: 0.65; font-size: 11px; }
+    .stub h3 { margin-top: 36px; font-size: 28px; }
+    .home-icon {
+      width: 64px;
+      height: 64px;
+      margin: 18px 0 8px;
+      background: var(--civic);
+      color: #f7f2e8;
+      display: grid;
+      place-items: center;
+      font-family: "Noto Serif Hebrew", serif;
+      font-size: 22px;
+    }
+    .envelope { position: relative; }
+    .envelope::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 46%;
+      background: linear-gradient(to top left, transparent 49.5%, var(--foil) 50%, transparent 50.5%),
+                  linear-gradient(to top right, transparent 49.5%, var(--foil) 50%, transparent 50.5%),
+                  #171717;
+    }
+    .league-list { margin: 20px 0 0; font-size: 14px; }
+    .league-list div { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(247,242,232,.12); }
+    .ops { font-size: 13px; }
+    .ops code { color: var(--foil); }
+    .copy p { margin: 0 0 10px; }
+    .copy ul { margin: 8px 0 0; padding-inline-start: 1.2em; }
+    .copy li { margin: 0 0 6px; }
+    .no {
+      background: #f3e6e0;
+      border-inline-start: 4px solid var(--danger-mute);
+      padding: 12px 14px;
+      margin: 10px 0 0;
+      font-size: 14px;
+    }
+    .deferred {
+      outline: 2px dashed rgba(138, 74, 58, 0.55);
+      outline-offset: 4px;
+    }
+    .questions { display: grid; gap: 8px; margin-top: 10px; }
+    .questions label {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      background: var(--paper-deep);
+      padding: 10px 12px;
+    }
+    @media (max-width: 820px) {
+      .decide, .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="mast">
+    <p class="status">סקיצה בלבד · לא לממש · שלב 15</p>
+    <h1>המכשיר, החדר, והחלון.</h1>
+    <p class="lede">ארבעה משטחי תפעול מעל הליבה שכבר חיה. מסך האירועים לשחקן נשאר סגור. משיכות נשארות סמכות השרת. שום דבר כאן לא מוסיף שעון חול או כניסה במייל.</p>
+    <nav>
+      <a href="step-14-holos-streaks-cec.html">14 · הולו / רצף / פעימה</a> ·
+      <a href="../growth/bootstrap-playbook.md">מחברת הזריעה</a> ·
+      <a href="../../README.md">רצף המוצר</a>
+    </nav>
+  </header>
+  <main>
+    <section class="decide" aria-label="החלטות לאישור">
+      <article>
+        <b>PWA</b>
+        <p>הוספה למסך הבית + התראת «הקלף מוכן». בלי דחיפות משחק.</p>
+      </article>
+      <article>
+        <b>חדרים</b>
+        <p>ליגת חברים / קמפוס / יחידה. אותם כללים, חדר קטן יותר.</p>
+      </article>
+      <article>
+        <b>מיוחדים</b>
+        <p>Studio מדליק חלון. השחקן לא מקבל לשונית אירועים.</p>
+      </article>
+      <article>
+        <b>יוצרים</b>
+        <p>עשרה קישורים, שלושה פורמטים, חלון משותף של 60–90 דקות.</p>
+      </article>
+    </section>
+
+    <div class="stack">
+      <article class="row">
+        <div class="stub" aria-hidden="true">
+          <small>פתיק התקנה</small>
+          <div class="home-icon">קְ</div>
+          <h3>קְלָפִי</h3>
+          <p>הוספה למסך הבית. בלי חנות, בלי מייל.</p>
+          <p style="margin-top:28px;font-size:13px;color:var(--foil)">התראה · הקלף מוכן לאיסוף</p>
+        </div>
+        <div class="copy">
+          <h2>PWA והתראה אחת.</h2>
+          <p>המשחק כבר רץ בדפדפן. ההתקנה היא קיצור דרך ל־klafi.vercel.app, עם צבע סרגל `#1f4f4a` ואייקון מהעטיפה הקיימת. אין מצב אופליין שממציא משיכה.</p>
+          <ul>
+            <li>התראה מותרת אחת: הקלף האוטומטי מוכן. נשלחת כשהשרת אומר `nextIdleAt` עבר.</li>
+            <li>אין התראות שיווקיות, אין «חזרו לפני שהרצף נשבר», אין דיוור.</li>
+            <li>סירוב להתראות לא פוגע במשחק. ההתקנה לא פותחת יכולת חדשה.</li>
+            <li>שני מכשירים + אותו קוד שחזור = אותו שחקן. ההתראה לא יוצרת משיכה שנייה.</li>
+          </ul>
+          <p><strong>העתק מוצע:</strong> «הקלף מוכן לאיסוף.» / «אפשר בלי התראות. האוסף עדיין נשמר.»</p>
+          <div class="no">בלי כניסה במייל, בלי חנות, בלי האטת משחק, בלי תור אופליין שמעניק קלף.</div>
+        </div>
+      </article>
+
+      <article class="row">
+        <div class="envelope" aria-hidden="true">
+          <small>מעטפת ליגה</small>
+          <h3 style="margin-top:20px">חדר מכינה · תשרי</h3>
+          <div class="league-list">
+            <div><span>1. נועה</span><strong>★48</strong></div>
+            <div><span>2. אתם</span><strong>★41</strong></div>
+            <div><span>3. יובל</span><strong>★37</strong></div>
+          </div>
+        </div>
+        <div class="copy">
+          <h2>חדרים, לא מדינה שנייה.</h2>
+          <p>טבלת האספנים הארצית כבר חיה. ליגה היא אותה טבלה בחדר סגור: קוד הזמנה, עד 32 שחקנים, עונה מתוארכת (חודש עברי או חלון בחירות). הניקוד נשאר כוכבי אוסף אמיתיים + קלפים שונים. אין ניקוד נפרד.</p>
+          <ul>
+            <li>יצירת חדר מהפרופיל. הקוד הוא מחרוזת קצרה, לא UUID.</li>
+            <li>אותם כללי דיווח על שם. אין צ׳אט.</li>
+            <li>סולם עונתי = אותה טבלה עם חותמת חודש. בסוף העונה החותמת נשארת קוסמטית.</li>
+            <li>סיעה נשארת ארצית ואנונימית. החדר לא חושף סיעה.</li>
+          </ul>
+          <p><strong>העתק מוצע:</strong> «אותה טבלה, חדר קטן יותר. הכוכבים כבר נספרו בשרת.»</p>
+          <div class="no">בלי תשלום על מקום, בלי ספירות קהל מומצאות, בלי ליגה שמשנה משיכות.</div>
+        </div>
+      </article>
+
+      <article class="row">
+        <div class="ops deferred" aria-hidden="true">
+          <small>Studio · לא מסך שחקן</small>
+          <h3 style="margin-top:18px">חלון מיוחדים</h3>
+          <p><code>prestige-legacy</code> · פתוח 21.09 → 28.09</p>
+          <p><code>mouthpieces</code> · חסום</p>
+          <p style="margin-top:22px;opacity:.7">השחקן רואה את הקלף באוסף אחרי שהשרת העניק אותו. אין לשונית «אירועים».</p>
+        </div>
+        <div class="copy">
+          <h2>מיוחדים בשליטת חלון — בלי מסך אירועים.</h2>
+          <p>החלטה קיימת: משטח האירועים לשחקן נשאר דחוי. המיוחדים כבר קיימים באוסף כשנפתחו. השלב הזה מעצב רק את מתג התפעול: תאריך פתיחה/סגירה, קלף אחד ליום ירושלים, אחרי שהחלון נסגר הקלף נשאר אצל מי שמשך.</p>
+          <ul>
+            <li>Studio כותב `opensAt` / `closesAt`. השרת דוחה משיכה מחוץ לחלון.</li>
+            <li>אם נרצה רמז לשחקן בלי לשונית חדשה: שורה ב«היום בקְלָפִי» רק כשחלון פתוח.</li>
+            <li>בלי זה — המיוחדים שקטים לגמרי עד שמישהו כבר מחזיק אותם.</li>
+          </ul>
+          <p><strong>העתק מוצע לשורת היום (אופציונלי):</strong> «חלון מיוחד פתוח עד 28.09. קלף אחד היום.»</p>
+          <div class="no">לא בונים לשונית אירועים, לא חידון, לא חבילת מתנדבים. לא משנים את מחולל החבילה הרגילה.</div>
+        </div>
+      </article>
+
+      <article class="row">
+        <div class="stub" aria-hidden="true">
+          <small>ערכת יוצר</small>
+          <h3 style="margin-top:28px">?ref=creator-maya</h3>
+          <p>9:16 הליכה · 4:5 סטורי · עדיין לוואטסאפ</p>
+          <p style="margin-top:24px;font-size:13px">חלון משותף 60–90 דקות. אותו תוכן לכל אחד.</p>
+        </div>
+        <div class="copy">
+          <h2>זריעת יוצרים — קישורים, לא לוח בקרה.</h2>
+          <p>המחברת כבר קיימת: עשרה יוצרים, שלושה פורמטים, חלון אחד. הקוד מזהה מקור הגעה, לא פרופיל פוליטי. כולם רואים את אותו רצף עריכתי.</p>
+          <ul>
+            <li>הקישור כבר עובד: `/?ref=creator-name` וגם עם `&card=`.</li>
+            <li>מה שחסר לעיצוב: דף ערכה סטטי ליוצר (לא בתוך המשחק) עם שלושת הייצואים אחרי שלב 16.</li>
+            <li>אין דשבורד יוצרים באלפא. ספירות נשארות סכומי אירועים אמיתיים בלבד.</li>
+            <li>אם השיתוף נתקע — מתקנים את התמונה וההליכה, לא ממציאים תנועה.</li>
+          </ul>
+          <p><strong>סף אבחון, לא טענת משיכה:</strong> 10/10 פותחים חבילה · ≥30% יוצרים שיתוף · ≥20% מההפניות מתחילים אורח.</p>
+          <div class="no">בלי ספירת עוקבים על המסך, בלי דירוג יוצרים לשחקן, בלי פרס משיכה ליוצר.</div>
+        </div>
+      </article>
+    </div>
+
+    <section>
+      <h2>שאלות לביקורת</h2>
+      <div class="questions">
+        <label><input type="checkbox" /> PWA עכשיו, או רק אחרי אנימציית הפתיחה בשלב 16?</label>
+        <label><input type="checkbox" /> ליגות: קוד הזמנה בלבד, או גם סריקת QR מנייר?</label>
+        <label><input type="checkbox" /> מיוחדים: שורה שקטה ב«היום» כשחלון פתוח, או שקט מוחלט עד שהקלף באוסף?</label>
+        <label><input type="checkbox" /> ערכת היוצר: דף סטטי נפרד, או נשאר מחוץ למוצר עד שיש וידאו אמיתי?</label>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
