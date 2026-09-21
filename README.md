@@ -97,11 +97,11 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 6. Remaining KALPI pack art → KLAFI. **Deferred by product decision; now Step 16.**
 
 **Active product sequence**
-7. Unified card pipeline, taller cards, no fake social counts. **In progress.** One canonical presentation contract now drives Today, Binder, detail, sharing, Events and trades; every HTML surface uses the same tall-card renderer.
+7. Unified card pipeline, taller cards, no fake social counts. **In progress.** One canonical presentation contract now drives Today, Binder, detail, sharing and the card dialog. Trades use chips and open that same dialog; they no longer mount a second inline card.
 8. Learning loop: two-question owned-card quiz, five-minute clock, one reward per Jerusalem day, comprehension feedback and learning-linked achievements. **Deferred by product decision; player option removed while the server implementation remains parked.**
 9. Hebrew, trust and accessibility pass: player copy, advocacy disclosure, source receipts, dated CEC/status labels, keyboard/reduced-motion behavior and screen-reader labels. **In progress.**
 10. Recurring phone + desktop QA and launch hardening after every slice: real-device WhatsApp/Instagram handoff, recovery, moderation, replay-safe writes without gameplay throttles, a durable correction/report queue, monitoring, verified backup/restore and safe rollback. **In progress.**
-11. Community loop: anonymous faction tally, honest country leaderboard, real transactional trading/gifting, sharing/referrals and creator acquisition links.
+11. [x] Community loop: anonymous faction tally, honest country leaderboard, real transactional trading/gifting, sharing/referrals and creator acquisition links. One open offer per player, slim board, server accept, race from real pulls, level bonus card, party pip on the avatar.
 
 **Later — already accounted for**
 12. Verified real-life party / kalpi work → pack bundle.

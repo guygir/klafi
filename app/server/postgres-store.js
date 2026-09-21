@@ -794,6 +794,13 @@ export class PostgresStore {
     return this.exclusive(async () => {
       const session = await this.loadSession(sessionToken, { forUpdate: true });
       if (!session || !session.inventory[offeredCardId] || offeredCardId === wantedCardId) return null;
+      const open = await this.executor().query(
+        `SELECT * FROM kalpi_trades
+         WHERE owner_token = $1 AND status = 'open' AND expires_at > $2
+         LIMIT 1`,
+        [sessionToken, createdAt],
+      );
+      if (open.rows[0]) return { blocked: true, existing: this.tradeFromRow(open.rows[0]) };
       const reserved = await this.executor().query(
         `SELECT COUNT(*)::int AS count FROM kalpi_trades
          WHERE owner_token = $1 AND offered_card_id = $2 AND status = 'open' AND expires_at > $3`,
