@@ -1220,7 +1220,7 @@ function renderAvatarPicker() {
     </button>`).join("");
 }
 
-const SESSION_TOKEN_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/;
+const SESSION_TOKEN_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function fillRecoveryCode() {
   if (elements.recoveryCode) elements.recoveryCode.value = model.token || "";
@@ -2346,15 +2346,6 @@ function renderBinder() {
   )].sort((left, right) => left[1].localeCompare(right[1], "he"));
   if (model.binderParty && !partyOptions.some(([id]) => id === model.binderParty)) model.binderParty = "";
   elements.binderFilters.innerHTML = [
-    `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
-    ...setOrder.map((set) => {
-      const count = set === "ALL"
-        ? owned
-        : playerCards.filter((card) => card.releaseSetId === set.slice(8) && inventory[card.id]).length;
-      const active = model.binderFilter === set;
-      return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
-    }),
-    `</div>`,
     `<label class="filter-party${model.binderParty ? " active" : ""}">
       <span>מפלגה</span>
       <select data-binder-party aria-label="בחירת מפלגה או הכול">
@@ -2365,6 +2356,15 @@ function renderBinder() {
         }).join("")}
       </select>
     </label>`,
+    `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
+    ...setOrder.map((set) => {
+      const count = set === "ALL"
+        ? owned
+        : playerCards.filter((card) => card.releaseSetId === set.slice(8) && inventory[card.id]).length;
+      const active = model.binderFilter === set;
+      return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
+    }),
+    `</div>`,
   ].join("");
 
   const visible = playerCards.filter((card) => {

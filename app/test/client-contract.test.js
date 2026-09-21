@@ -288,6 +288,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function restoreSessionFromCode/);
   assert.match(javascript, /function copyRecoveryCode/);
   assert.match(javascript, /SESSION_TOKEN_PATTERN/);
+  assert.match(javascript, /\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}/);
   assert.match(javascript, /data-report-trade/);
   assert.match(javascript, /data-report-name/);
   assert.match(javascript, /function openTradeReport/);
