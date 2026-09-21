@@ -2551,7 +2551,7 @@ function tradeRowMarkup(trade) {
     ? `<button type="button" class="trade-offer-action" data-cancel-trade="${trade.tradeId}">ביטול</button>`
     : trade.canAccept
       ? `<button type="button" class="trade-offer-action" data-accept-trade="${trade.tradeId}">קבלה</button>`
-      : `<span class="trade-unavailable">כדי לקבל צריך את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
+      : `<span class="trade-unavailable">אין לכם את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
   return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}">
     <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(trade.offeredCardId)}" ${offeredCard ? "" : "hidden"} aria-label="פתיחת ${escapeHtml(offeredCard ? cardTitle(offeredCard) : trade.offeredCardId)}">
       ${tradeThumbMarkup(offeredCard)}
