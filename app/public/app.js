@@ -1502,7 +1502,7 @@ function renderChallengeRecap() {
       <small>איך כולם משכו היום</small>
       <div class="challenge-hist-plot" dir="ltr" aria-hidden="true">
         ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
-          <b style="height:${Math.max(8, Math.round((bin.count / recap.field) * 100))}%; animation-delay:${index * 40}ms"></b>
+          <b style="height:${bin.count ? Math.max(4, Math.round((bin.count / recap.field) * 100)) : 0}%; animation-delay:${index * 40}ms"></b>
         </div>`).join("")}
       </div>
       <div class="challenge-hist-axis" dir="ltr">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
@@ -2545,6 +2545,20 @@ function tradeThumbMarkup(card) {
   return `<span class="trade-thumb-frame">${binderCardMarkup(card)}</span>`;
 }
 
+function tradeHasCards(trade) {
+  return model.byId.has(trade.offeredCardId) && model.byId.has(trade.wantedCardId);
+}
+
+function tradeSideMarkup(cardId, card, role) {
+  const label = role === "give" ? "נותנים" : "מקבלים";
+  return `<div class="trade-side">
+    <small>${label}</small>
+    <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(cardId)}" ${card ? "" : "hidden"} aria-label="${label}: ${escapeHtml(card ? cardTitle(card) : cardId)}">
+      ${tradeThumbMarkup(card)}
+    </button>
+  </div>`;
+}
+
 function tradeBoardFilterOptions(trades, key) {
   const seen = new Map();
   for (const trade of trades) {
@@ -2582,7 +2596,7 @@ function tradeBoardPagerMarkup(page, pages, remaining) {
 function renderTradeBoard() {
   if (!elements.tradeBoard) return;
   const openOffers = model.trades
-    .filter((trade) => trade.status === "open" && !trade.ownedByCurrent)
+    .filter((trade) => trade.status === "open" && !trade.ownedByCurrent && tradeHasCards(trade))
     .sort((left, right) => Number(right.canAccept) - Number(left.canAccept));
   model.tradeBoardOffered = fillTradeBoardFilter(elements.tradeBoardOffered, openOffers, "offeredCardId", model.tradeBoardOffered);
   model.tradeBoardWanted = fillTradeBoardFilter(elements.tradeBoardWanted, openOffers, "wantedCardId", model.tradeBoardWanted);
@@ -2618,14 +2632,12 @@ function tradeRowMarkup(trade) {
     : trade.canAccept
       ? `<button type="button" class="trade-offer-action" data-accept-trade="${trade.tradeId}">קבלה</button>`
       : `<span class="trade-unavailable">אין לכם את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
+  const offeredRole = trade.ownedByCurrent ? "give" : "receive";
+  const wantedRole = trade.ownedByCurrent ? "receive" : "give";
   return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}">
-    <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(trade.offeredCardId)}" ${offeredCard ? "" : "hidden"} aria-label="פתיחת ${escapeHtml(offeredCard ? cardTitle(offeredCard) : trade.offeredCardId)}">
-      ${tradeThumbMarkup(offeredCard)}
-    </button>
+    ${tradeSideMarkup(trade.offeredCardId, offeredCard, offeredRole)}
     <b aria-hidden="true">⇄</b>
-    <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(trade.wantedCardId)}" ${wantedCard ? "" : "hidden"} aria-label="פתיחת ${escapeHtml(wantedCard ? cardTitle(wantedCard) : trade.wantedCardId)}">
-      ${tradeThumbMarkup(wantedCard)}
-    </button>
+    ${tradeSideMarkup(trade.wantedCardId, wantedCard, wantedRole)}
     <div class="trade-offer-bar">
       <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
       ${action}

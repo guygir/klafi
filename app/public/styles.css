@@ -2436,10 +2436,6 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
     width: 104px;
     height: calc(104px * 96 / 63);
   }
-  .open-trades-desk .trade-thumb-frame {
-    width: 72px;
-    height: calc(72px * 96 / 63);
-  }
 }
 .trade-form fieldset { min-width: 0; margin: 0; padding: 10px; border: 1px solid rgba(44, 51, 48, 0.22); border-radius: 8px; }
 .trade-form legend { padding: 0 4px; font-size: 13px; font-weight: 600; }
@@ -2472,7 +2468,23 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .faction-desk select { width: 100%; min-height: 44px; padding: 9px 10px; font: 500 14px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 .trade-board { gap: 10px; margin-top: 16px; }
 .trade-offer { display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 10px; padding: 13px; border: 1px solid rgba(44, 51, 48, 0.32); border-radius: 8px; background: #eee5d4; }
+.trade-offer > .trade-side {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+.trade-side small {
+  color: var(--civic);
+  font: 700 11px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
 .trade-offer .trade-thumb { margin-top: 0; }
+.trade-offer .trade-thumb-frame {
+  width: min(100%, 168px);
+  height: auto;
+  aspect-ratio: 63 / 96;
+}
 .trade-offer > div { gap: 4px; text-align: right; }
 .trade-offer > div:nth-of-type(2) { text-align: right; }
 .trade-offer > b { color: var(--civic); font-size: 18px; text-align: center; }
@@ -3258,18 +3270,8 @@ body {
   font: 600 11px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
 }
 
-.open-trades-desk .trade-thumb-frame {
-  width: 88px;
-  height: calc(88px * 96 / 63);
-}
-
-.open-trades-desk .trade-offer {
-  padding: 10px;
-  gap: 8px;
-}
-
 .open-trades-desk .trade-board {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   max-height: none;
   min-height: 0;
   overflow-y: auto;
@@ -3426,10 +3428,11 @@ body {
   display: flex;
   direction: ltr;
   justify-content: center;
-  align-items: end;
+  align-items: stretch;
   gap: 10px;
-  min-height: 92px;
-  padding-top: 22px;
+  height: 188px;
+  padding-top: 26px;
+  box-sizing: border-box;
 }
 
 .challenge-hist-col {
@@ -3438,14 +3441,14 @@ body {
   align-items: end;
   width: 40px;
   flex: 0 0 40px;
-  min-height: 92px;
+  min-height: 0;
 }
 
 .challenge-hist-col b {
   display: block;
   width: 32px;
   margin-inline: auto;
-  min-height: 4px;
+  min-height: 0;
   border-radius: 3px 3px 0 0;
   background: #9aa39b;
   transform: scaleY(0);

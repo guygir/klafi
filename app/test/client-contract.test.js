@@ -240,12 +240,18 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.challenge-hist-col b[\s\S]{0,80}?width:\s*32px/);
   assert.match(css, /\.challenge-hist-plot[\s\S]{0,160}?direction:\s*ltr/);
   assert.match(css, /\.challenge-hist-axis[\s\S]{0,160}?direction:\s*ltr/);
+  assert.match(css, /\.challenge-hist-plot[\s\S]{0,160}?height:\s*188px/);
   assert.match(javascript, /TRADE_BOARD_PAGE_SIZE = 3/);
   assert.match(javascript, /function renderTradeBoard/);
+  assert.match(javascript, /function tradeHasCards/);
+  assert.match(javascript, /function tradeSideMarkup/);
+  assert.match(javascript, /נותנים/);
+  assert.match(javascript, /מקבלים/);
   assert.match(javascript, /עוד \$\{nextCount\}/);
   assert.match(html, /id="trade-board-offered"/);
   assert.match(html, /id="trade-board-wanted"/);
   assert.match(html, /id="trade-board-pager"/);
+  assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,80}?width:\s*min\(100%,\s*168px\)/);
   assert.match(javascript, /function partyDisplayName/);
   assert.match(javascript, /function partyRegister/);
   assert.match(javascript, /model\.gameConfig\?\.parties/);
