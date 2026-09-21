@@ -52,6 +52,7 @@ const model = {
   selectedAvatarId: null,
   extrasReady: false,
   reports: [],
+  reportSubject: null,
   watchedTrade: null,
   tradeBoardPage: 0,
   tradeBoardOffered: "",
@@ -80,6 +81,11 @@ const elements = {
   profileForm: document.querySelector("#profile-form"),
   profileNameInput: document.querySelector("#profile-name-input"),
   profileError: document.querySelector("#profile-error"),
+  recoveryCode: document.querySelector("#profile-recovery-code"),
+  copyRecovery: document.querySelector("#copy-recovery-code"),
+  restoreInput: document.querySelector("#profile-restore-input"),
+  restoreButton: document.querySelector("#restore-recovery-code"),
+  restoreStatus: document.querySelector("#profile-restore-status"),
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
   homeCopy: document.querySelector("#home-copy"),
@@ -1214,14 +1220,85 @@ function renderAvatarPicker() {
     </button>`).join("");
 }
 
+const SESSION_TOKEN_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/;
+
+function fillRecoveryCode() {
+  if (elements.recoveryCode) elements.recoveryCode.value = model.token || "";
+  if (elements.restoreInput) elements.restoreInput.value = "";
+  if (elements.restoreStatus) elements.restoreStatus.textContent = "";
+}
+
 function openProfileDialog() {
   elements.profileNameInput.value = model.serverState?.displayName || "";
   model.selectedAvatarId = model.serverState?.avatarId || "kid-boy";
   elements.profileError.textContent = "";
+  fillRecoveryCode();
   renderAvatarPicker();
   elements.profileDialog.showModal();
   elements.profileNameInput.focus();
   elements.profileNameInput.select();
+}
+
+async function copyRecoveryCode() {
+  const token = model.token || "";
+  if (!token) return;
+  const copied = await copyText(token);
+  showToast(copied ? "קוד השחזור הועתק." : "העתיקו את הקוד מהשדה.");
+}
+
+async function restoreSessionFromCode() {
+  const token = (elements.restoreInput?.value || "").trim();
+  if (elements.restoreStatus) elements.restoreStatus.textContent = "";
+  if (!SESSION_TOKEN_PATTERN.test(token)) {
+    if (elements.restoreStatus) elements.restoreStatus.textContent = "הקוד לא נראה שלם. הדביקו אותו במלואו.";
+    elements.restoreInput?.focus();
+    return;
+  }
+  if (token === model.token) {
+    if (elements.restoreStatus) elements.restoreStatus.textContent = "זה כבר הקוד של המכשיר הזה.";
+    return;
+  }
+  if (elements.restoreButton) elements.restoreButton.disabled = true;
+  try {
+    const state = await request("/api/state", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    model.token = token;
+    localStorage.setItem(SESSION_KEY, token);
+    try {
+      localStorage.removeItem(PENDING_MUTATIONS_KEY);
+      localStorage.removeItem(PENDING_IDLE_SEEN_KEY);
+      localStorage.removeItem(HOME_CACHE_KEY);
+    } catch {
+      /* Recovery still switches the live session. */
+    }
+    model.serverState = state;
+    model.idleQueue = [];
+    model.extrasReady = false;
+    extrasHydrate = null;
+    homeHydrate = null;
+    applyHomePayload({ token, state });
+    fillRecoveryCode();
+    await Promise.all([
+      hydrateHome().catch(() => {}),
+      hydrateExtras().catch(() => {}),
+    ]);
+    renderProfile();
+    renderHome();
+    renderBinder();
+    renderGrowth();
+    renderAchievements();
+    elements.profileDialog.close();
+    showToast("האוסף שוחזר במכשיר הזה.");
+  } catch (error) {
+    if (elements.restoreStatus) {
+      elements.restoreStatus.textContent = error.status === 401
+        ? "הקוד לא נמצא. בדקו שהעתקתם אותו במלואו."
+        : "לא הצלחנו לשחזר את האוסף עכשיו.";
+    }
+  } finally {
+    if (elements.restoreButton) elements.restoreButton.disabled = false;
+  }
 }
 
 async function saveProfile(event) {
@@ -2660,6 +2737,7 @@ function tradeRowMarkup(trade) {
     ${tradeSideMarkup(trade.wantedCardId, wantedCard, wantedRole)}
     <div class="trade-offer-bar">
       <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
+      ${trade.ownedByCurrent ? "" : `<button type="button" class="report-link inline" data-report-trade="${escapeHtml(trade.tradeId)}">דיווח</button>`}
       ${action}
     </div>
   </article>`;
@@ -2851,7 +2929,7 @@ function renderGrowth() {
   const currentCollector = collectorEntries.find(({ current }) => current);
   if (currentCollector && !collectorPreview.includes(currentCollector)) collectorPreview.push(currentCollector);
   elements.collectorBoard.innerHTML = collectorPreview.length
-    ? collectorPreview.map((entry) => `<div class="${entry.current ? "current-player" : ""}"><span>${entry.rank}. ${escapeHtml(entry.label)}</span><strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong></div>`).join("")
+    ? collectorPreview.map((entry) => `<div class="${entry.current ? "current-player" : ""}"><span>${entry.rank}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong></div>`).join("")
     : '<p class="work-note">הטבלה מחכה לשחקן הראשון.</p>';
 
   const challenge = model.leaderboards?.dailyChallenge || (model.extrasReady ? null : localDailyChallenge());
@@ -2863,7 +2941,7 @@ function renderGrowth() {
   elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
   renderChallengeRecap();
   elements.dailyChallengeBoard.innerHTML = challenge?.leaders?.length
-    ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="${entry.current ? "current-player" : ""}"><span>${index + 1}. ${escapeHtml(entry.label)}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
+    ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="${entry.current ? "current-player" : ""}"><span>${index + 1}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
     : '<p class="work-note">עוד אין משיכות מהסיעה היומית.</p>';
 
   const specialDescriptions = {
@@ -3722,6 +3800,8 @@ function reportCategoryLabel(category) {
     quote: "Quote or wording",
     identity: "Name, role, or list",
     display: "Display",
+    name: "Public name",
+    trade: "Trade offer",
     other: "Other",
   }[category] || category;
 }
@@ -3908,29 +3988,65 @@ function renderDialogCard() {
   elements.dialogInstagram.hidden = ownedCount < 1;
 }
 
-function openReportDialog() {
+function currentReportSubject() {
+  if (model.reportSubject) return model.reportSubject;
   const card = model.byId.get(model.dialogCardId);
-  if (!card) return;
-  elements.dialog.close();
+  return card ? { kind: "card", cardId: card.id, label: `${cardTitle(card)} · ${card.id}` } : null;
+}
+
+function openReportDialog(subject = null) {
+  const card = subject?.cardId ? model.byId.get(subject.cardId) : model.byId.get(model.dialogCardId);
+  model.reportSubject = subject || (card ? { kind: "card", cardId: card.id, label: `${cardTitle(card)} · ${card.id}` } : null);
+  if (!model.reportSubject) return;
+  if (elements.dialog?.open) elements.dialog.close();
   elements.reportForm.reset();
   elements.reportStatus.textContent = "";
-  elements.reportCardLabel.textContent = `${cardTitle(card)} · ${card.id}`;
+  elements.reportCardLabel.textContent = model.reportSubject.label;
+  if (model.reportSubject.category) elements.reportCategory.value = model.reportSubject.category;
   elements.reportDialog.showModal();
-  elements.reportCategory.focus();
+  (model.reportSubject.category ? elements.reportDetails : elements.reportCategory).focus();
+}
+
+function openTradeReport(tradeId) {
+  const trade = model.trades.find((item) => item.tradeId === tradeId);
+  if (!trade || trade.ownedByCurrent) return;
+  const offered = model.byId.get(trade.offeredCardId);
+  openReportDialog({
+    kind: "trade",
+    cardId: trade.offeredCardId || "",
+    category: "trade",
+    label: `החלפה של ${trade.ownerLabel || "שחקן"}`,
+    detailsPrefix: `החלפה ${trade.tradeId} · ${trade.ownerLabel || "שחקן"} · ${offered ? cardTitle(offered) : trade.offeredCardId}`,
+    pagePath: "/?view=growth",
+  });
+}
+
+function openNameReport(label) {
+  const name = String(label || "").trim();
+  if (!name) return;
+  openReportDialog({
+    kind: "name",
+    category: "name",
+    label: `שם ציבורי · ${name}`,
+    detailsPrefix: `שם מדווח: ${name}`,
+    pagePath: "/?view=growth",
+  });
 }
 
 async function submitCorrectionReport(event) {
   event.preventDefault();
-  const card = model.byId.get(model.dialogCardId);
-  if (!card) return;
+  const subject = currentReportSubject();
+  if (!subject) return;
   const url = new URL(location.href);
   url.searchParams.delete("studioKey");
+  const typed = elements.reportDetails.value.trim();
+  const details = [subject.detailsPrefix, typed].filter(Boolean).join("\n");
   const report = {
     reportId: clientOperationId("report"),
-    cardId: card.id,
+    cardId: subject.cardId || "",
     category: elements.reportCategory.value,
-    details: elements.reportDetails.value.trim(),
-    pagePath: `${url.pathname}${url.search}`,
+    details,
+    pagePath: subject.pagePath || `${url.pathname}${url.search}`,
   };
   if (report.details.length < 5) {
     elements.reportStatus.textContent = "כתבו לפחות כמה מילים כדי שנוכל לבדוק.";
@@ -4699,6 +4815,14 @@ elements.addAchievement?.addEventListener("click", () => {
   }));
 });
 elements.profileForm.addEventListener("submit", saveProfile);
+elements.copyRecovery?.addEventListener("click", copyRecoveryCode);
+elements.restoreButton?.addEventListener("click", restoreSessionFromCode);
+elements.restoreInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    restoreSessionFromCode();
+  }
+});
 elements.avatarPicker?.addEventListener("click", (event) => {
   const choice = event.target.closest("[data-avatar-id]");
   if (!choice || choice.disabled) return;
@@ -4794,6 +4918,11 @@ function handleTradeBoardClick(event) {
     acceptTradeOffer(accept.dataset.acceptTrade);
     return;
   }
+  const reportTrade = event.target.closest("[data-report-trade]");
+  if (reportTrade) {
+    openTradeReport(reportTrade.dataset.reportTrade);
+    return;
+  }
   const chip = event.target.closest("[data-trade-choice-card]");
   if (chip) {
     openCardDialog(chip.dataset.tradeChoiceCard);
@@ -4803,6 +4932,13 @@ function handleTradeBoardClick(event) {
   if (button) simulateTradeAcceptance(button.dataset.simulateTrade);
 }
 elements.tradeBoard.addEventListener("click", handleTradeBoardClick);
+function handlePublicNameReport(event) {
+  const button = event.target.closest("[data-report-name]");
+  if (!button) return;
+  openNameReport(button.dataset.reportName);
+}
+elements.collectorBoard?.addEventListener("click", handlePublicNameReport);
+elements.dailyChallengeBoard?.addEventListener("click", handlePublicNameReport);
 elements.tradeActive?.addEventListener("click", handleTradeBoardClick);
 elements.tradeBoardOffered?.addEventListener("change", () => {
   model.tradeBoardOffered = elements.tradeBoardOffered.value;

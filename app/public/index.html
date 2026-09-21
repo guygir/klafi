@@ -482,6 +482,8 @@
         <option value="quote">הציטוט או הניסוח</option>
         <option value="identity">השם, התפקיד או הרשימה</option>
         <option value="display">בעיה בתצוגה</option>
+        <option value="name">שם פוגעני בטבלה או בהחלפה</option>
+        <option value="trade">הצעת החלפה פוגענית</option>
         <option value="other">משהו אחר</option>
       </select>
       <label for="report-details">מה מצאתם?</label>
@@ -510,10 +512,25 @@
       <input id="profile-name-input" name="displayName" minlength="2" maxlength="24" autocomplete="nickname" required />
       <p class="profile-name-label">הפנים שלכם</p>
       <div id="avatar-picker" class="avatar-picker"></div>
-      <p class="profile-name-label">האוסף שמור במכשיר הזה. חשבון הוא אופציונלי — לא חובה כדי לשחק.</p>
       <p id="profile-error" class="profile-error" role="alert"></p>
       <button class="primary-action" type="submit">שמירת הפרופיל</button>
     </form>
+    <section class="profile-recovery" aria-labelledby="profile-recovery-title">
+      <h3 id="profile-recovery-title">קוד שחזור</h3>
+      <p>האוסף שייך לקוד הזה, לא למייל. מי שיש לו את הקוד יכול לפתוח את אותו אוסף במכשיר אחר.</p>
+      <label class="profile-name-label" for="profile-recovery-code">הקוד של המכשיר הזה</label>
+      <div class="copy-field profile-recovery-row">
+        <input id="profile-recovery-code" dir="ltr" readonly spellcheck="false" autocomplete="off" />
+        <button id="copy-recovery-code" type="button">העתקה</button>
+      </div>
+      <label class="profile-name-label" for="profile-restore-input">שחזור ממכשיר אחר</label>
+      <p class="profile-recovery-note">שחזור מחליף את האוסף ששמור כאן.</p>
+      <div class="copy-field profile-recovery-row">
+        <input id="profile-restore-input" dir="ltr" spellcheck="false" autocomplete="off" placeholder="הדביקו כאן קוד" />
+        <button id="restore-recovery-code" type="button">שחזור</button>
+      </div>
+      <p id="profile-restore-status" class="profile-error" role="status"></p>
+    </section>
   </dialog>
 
   <dialog id="trust-dialog" class="policy-dialog">
