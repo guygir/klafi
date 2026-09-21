@@ -97,13 +97,15 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-theme="pack-v2"] .secondary-action,
 #app[data-theme="pack-v2"] .contained-tabs button,
-#app[data-theme="pack-v2"] .filter-strip button {
+#app[data-theme="pack-v2"] .filter-strip button,
+#app[data-theme="pack-v2"] .filter-party {
   border-color: color-mix(in srgb, var(--pack-umber) 26%, transparent);
   background: color-mix(in srgb, var(--pack-paper) 76%, transparent);
 }
 
 #app[data-theme="pack-v2"] .contained-tabs button.active,
-#app[data-theme="pack-v2"] .filter-strip button.active {
+#app[data-theme="pack-v2"] .filter-strip button.active,
+#app[data-theme="pack-v2"] .filter-party.active {
   border-color: var(--pack-seal);
   background: var(--pack-seal);
   color: var(--pack-paper);
@@ -330,20 +332,6 @@ body:has(#app[data-theme="pack-v2"]) {
   width: 100%;
   min-width: 0;
   place-items: center;
-}
-
-#app[data-card-frame="tall-v2"] .trade-choice-preview button {
-  width: 100%;
-  height: 100%;
-}
-
-#app[data-card-frame="tall-v2"] .trade-choice-preview .kalpi-card {
-  width: 330px;
-  max-width: none;
-  height: calc(330px * 96 / 63);
-  aspect-ratio: 63 / 96;
-  transform: scale(calc(100cqw / 330px));
-  transform-origin: top right;
 }
 
 #app[data-card-frame="tall-v2"] .binder-shared-card .kalpi-card,
@@ -643,7 +631,8 @@ body:has(#app[data-theme="pack-v2"]) {
   margin: 8px 0 14px;
 }
 
-#app[data-density="airy-v2"] .filter-strip button {
+#app[data-density="airy-v2"] .filter-strip button,
+#app[data-density="airy-v2"] .filter-party {
   min-height: 38px;
   padding: 7px 12px;
   font-size: 12px;
@@ -688,8 +677,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-density="airy-v2"] .trade-form fieldset {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  grid-template-areas: "preview fields";
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   overflow: visible;
   padding: 12px !important;
@@ -799,11 +787,6 @@ body:has(#app[data-theme="pack-v2"]) {
     font-size: 11px;
   }
 
-  #app[data-card-frame="tall-v2"] .trade-choice-preview button {
-    width: 100%;
-    height: 100%;
-  }
-
   .studio-meta-desk,
   .avatar-picker {
     grid-template-columns: 1fr 1fr;
@@ -818,11 +801,6 @@ body:has(#app[data-theme="pack-v2"]) {
   #app[data-density="airy-v2"] .trade-desk .trade-form {
     min-height: 0;
     overflow-y: auto;
-  }
-
-  #app[data-card-frame="tall-v2"] .trade-choice-preview button {
-    width: 100%;
-    height: 100%;
   }
 
   #app[data-card-frame="tall-v2"] #pack-view .walkout .kalpi-card {
@@ -913,13 +891,14 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 .level-avatar-button {
+  position: relative;
   flex: 0 0 auto;
   width: 42px;
   height: 42px;
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent);
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
   background: var(--pack-paper-deep, #d8cbb5);
   cursor: pointer;
 }
@@ -929,6 +908,17 @@ body:has(#app[data-theme="pack-v2"]) {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatar-seal {
+  position: absolute;
+  inset-inline-start: -1px;
+  bottom: 1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  box-shadow: 0 0 0 1px var(--pack-paper, #eee5d4);
 }
 
 #app[data-density="airy-v2"] .level-identity {
@@ -1285,8 +1275,8 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .card-quote-zone,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-quote-zone {
   bottom: 0;
-  height: 15%;
-  max-height: 15%;
+  height: 17%;
+  max-height: 17%;
   min-height: 0;
   padding: 1% 0 2%;
   overflow: hidden;
@@ -1294,7 +1284,7 @@ body:has(#app[data-theme="pack-v2"]) {
   place-items: center;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
-  font-size: 6.4cqw;
+  font-size: clamp(8px, 5.6cqw, 22px);
   font-weight: 600;
   line-height: 1.15;
 }
@@ -1315,7 +1305,7 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .shared-card .kalpi-card,
 #app .card-dialog .kalpi-card[data-card-frame="fullart-v1"],
 #app .shared-card .kalpi-card[data-card-frame="fullart-v1"] {
-  width: min(370px, 100%);
+  width: min(var(--card-width), 100%);
 }
 
 #app[data-card-frame="fullart-v1"] .card-dialog #dialog-card,
@@ -1331,25 +1321,11 @@ body:has(#app[data-theme="pack-v2"]) {
   width: 100%;
 }
 
-#app[data-card-frame="fullart-v1"] .trade-choice-preview button {
-  height: 100%;
-}
-
-#app[data-card-frame="fullart-v1"] .trade-choice-preview .kalpi-card,
-#app .trade-choice-preview .kalpi-card[data-card-frame="fullart-v1"] {
-  width: 330px;
-  max-width: none;
-  height: calc(330px * 96 / 63);
-  aspect-ratio: 63 / 96;
-  transform: scale(calc(100cqw / 330px));
-  transform-origin: top right;
-}
-
 #app[data-card-frame="fullart-v1"] #pack-view .walkout .kalpi-card {
-  width: auto;
+  width: min(var(--card-width), 100%);
   max-width: 100%;
-  height: 100%;
-  max-height: 100%;
+  height: auto;
+  max-height: calc(100% - 52px);
   aspect-ratio: 63 / 96;
 }
 
