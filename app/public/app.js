@@ -108,8 +108,6 @@ const elements = {
   todayLeaderHook: document.querySelector("#today-leader-hook"),
   todayLeaderMeta: document.querySelector("#today-leader-meta"),
   homePack: document.querySelector("#home-pack"),
-  homePackRip: document.querySelector("#home-pack-rip"),
-  homePackRipBackdrop: document.querySelector("#home-pack-rip-backdrop"),
   openPack: document.querySelector("#open-pack"),
   openPackFancy: document.querySelector("#open-pack-fancy"),
   openBibiPack: document.querySelector("#open-bibi-pack"),
@@ -1749,49 +1747,8 @@ function sealedPackMarkup(extraClass = "") {
     </div>`;
 }
 
-function playHomePackRip({ holdAtEnd = false } = {}) {
-  const rip = elements.homePackRip;
-  if (!rip || matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return { finished: Promise.resolve(), release() {} };
-  }
-  elements.homePack.hidden = true;
-  elements.homePackRipBackdrop.hidden = false;
-  rip.hidden = false;
-  rip.classList.remove("is-tearing");
-  requestAnimationFrame(() => rip.classList.add("is-tearing"));
-  if (elements.openPackFancy) elements.openPackFancy.textContent = "פותחים…";
-
-  let timer;
-  let finished = false;
-  let resolveFinished;
-  const cleanup = () => {
-    clearTimeout(timer);
-    rip.classList.remove("is-tearing");
-    rip.hidden = true;
-    elements.homePackRipBackdrop.hidden = true;
-    elements.homePack.hidden = false;
-  };
-  const finish = () => {
-    if (finished) return;
-    finished = true;
-    clearTimeout(timer);
-    if (!holdAtEnd) cleanup();
-    resolveFinished();
-  };
-  const finishedPromise = new Promise((resolve) => {
-    resolveFinished = resolve;
-    timer = setTimeout(finish, 2100);
-  });
-  return {
-    finished: finishedPromise,
-    release() {
-      if (!finished) {
-        finished = true;
-        resolveFinished();
-      }
-      cleanup();
-    },
-  };
+function playHomePackRip() {
+  return { finished: Promise.resolve(), release() {} };
 }
 
 async function openIdleReturn(opening = "regular") {
