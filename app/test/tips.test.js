@@ -3,13 +3,21 @@ import test from "node:test";
 import {
   TIPS_COOKIE,
   TIPS_STORAGE,
+  PAGES_STORAGE,
   TIPS_STEPS,
+  PAGE_GUIDES,
+  activeGuidePage,
   advanceStepFromView,
   firstVisible,
   leftoverPackHint,
+  markPageSeen,
+  mutePageGuides,
+  pageGuideReady,
   parseTipsCookie,
+  readSeenPages,
   readTipsPref,
   shouldAutoOpen,
+  shouldAutoOpenPage,
   stepViewReady,
   writeTipsPref,
 } from "../public/tips.js";
@@ -60,4 +68,42 @@ test("firstVisible falls back when boxes are 0x0 and leftover pack hint is recog
   assert.equal(firstVisible("#open-pack", happy), zero);
   assert.equal(leftoverPackHint("הקלף כבר נשמר."), true);
   assert.equal(leftoverPackHint("הקלף הבא בעוד 03:00:00"), false);
+});
+
+test("each nav page has a first-visit guide; seen pages and mute stop auto-open", () => {
+  assert.deepEqual(Object.keys(PAGE_GUIDES), ["home", "pack", "binder", "achievements", "growth", "dialog"]);
+  assert.equal(PAGE_GUIDES.home.length, 3);
+  assert.equal(PAGE_GUIDES.binder.length, 2);
+  assert.equal(PAGE_GUIDES.achievements.length, 1);
+  assert.equal(PAGE_GUIDES.growth.length, 1);
+  assert.match(PAGE_GUIDES.home[0].body, /היום/);
+  assert.match(PAGE_GUIDES.binder[1].body, /סדרה/);
+  assert.match(PAGE_GUIDES.growth[0].body, /החלפות/);
+  assert.equal(PAGES_STORAGE, "klafi:page-tips");
+  assert.equal(activeGuidePage({ homeActive: true }), "home");
+  assert.equal(activeGuidePage({ binderActive: true, dialogOpen: true }), "dialog");
+  assert.equal(activeGuidePage({ achievementsActive: true }), "achievements");
+  assert.equal(activeGuidePage({ growthActive: true }), "growth");
+  assert.equal(pageGuideReady("binder", { binderActive: true }), true);
+  assert.equal(pageGuideReady("binder", { homeActive: true }), false);
+  assert.equal(shouldAutoOpenPage({}, "home"), true);
+  assert.equal(shouldAutoOpenPage({ home: true }, "home"), false);
+  assert.equal(shouldAutoOpenPage({ home: true }, "binder"), true);
+  assert.equal(shouldAutoOpenPage({ "*": true }, "binder"), false);
+  assert.equal(shouldAutoOpenPage({}, "studio"), false);
+
+  const store = {};
+  const env = {
+    localStorage: {
+      getItem: (key) => store[key] ?? null,
+      setItem: (key, value) => { store[key] = value; },
+    },
+  };
+  assert.deepEqual(readSeenPages(env), {});
+  markPageSeen("home", env);
+  assert.equal(JSON.parse(store[PAGES_STORAGE]).home, true);
+  assert.equal(shouldAutoOpenPage(readSeenPages(env), "home"), false);
+  assert.equal(shouldAutoOpenPage(readSeenPages(env), "binder"), true);
+  mutePageGuides(env);
+  assert.equal(shouldAutoOpenPage(readSeenPages(env), "binder"), false);
 });

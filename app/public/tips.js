@@ -1,5 +1,6 @@
 export const TIPS_COOKIE = "klafi_tips";
 export const TIPS_STORAGE = "klafi:tips";
+export const PAGES_STORAGE = "klafi:page-tips";
 export const TIPS_MAX_AGE = 31536000;
 
 export const TIPS_STEPS = Object.freeze([
@@ -26,6 +27,73 @@ export const TIPS_STEPS = Object.freeze([
     body: "הקלף באוסף. פתחו אותו — מקור ושיתוף למטה.",
   },
 ]);
+
+export const PAGE_GUIDES = Object.freeze({
+  home: Object.freeze([
+    {
+      ring: "#home-title",
+      title: "היום",
+      body: "מסך היום. האיסוף רץ גם בלי לגעת — פתיחה, שעון והמרוץ כאן.",
+    },
+    {
+      ring: "#open-pack",
+      arrowTo: "#cooldown-copy",
+      title: "פתיחה",
+      body: "כשיש קלף מוכן — פתיחת קלף. אחרת השעון כאן.",
+    },
+    {
+      ring: ".today-docket",
+      title: "המרוץ",
+      body: "האתגר היומי וטבלת האספנים. מי אסף היום.",
+    },
+  ]),
+  pack: Object.freeze([
+    {
+      ring: "#pack-action",
+      arrowTo: "#rip-stage",
+      title: "קריעה",
+      body: "קרעו. הקלף כבר שמור בשרת.",
+    },
+  ]),
+  binder: Object.freeze([
+    {
+      ring: "#earned-badge-rail, .binder-head",
+      title: "האלבום",
+      body: "כל הקלפים שנאספו. למעלה האחוז והתגים.",
+    },
+    {
+      ring: "#binder-filters",
+      emptyRing: "#binder-grid, #binder-empty",
+      arrowTo: "#binder-grid .binder-shared-card, #binder-grid button, #binder-empty",
+      title: "הסדרות",
+      body: "סינון לפי סדרה. לחצו על קלף — מקור ושיתוף.",
+    },
+  ]),
+  achievements: Object.freeze([
+    {
+      ring: "#achievement-grid .achievement-badge, #achievement-grid, #achievements-empty",
+      title: "הישגים",
+      body: "תגים שנפתחים באיסוף ובמשחק. כאן מה כבר הושג.",
+    },
+  ]),
+  growth: Object.freeze([
+    {
+      ring: "#community-tabs",
+      title: "קהילה",
+      body: "החלפות, סיעות, טבלת אספנים והאתגר היומי. כל לשונית היא לוח.",
+    },
+  ]),
+  dialog: Object.freeze([
+    {
+      ring: "#dialog-card",
+      arrowTo: "#dialog-whatsapp, #dialog-source",
+      title: "הקלף",
+      body: "הציטוט והאמנות. למטה המקור, וואטסאפ ושיתוף לסטורי.",
+    },
+  ]),
+});
+
+const PULL_PAGES = Object.freeze(["home", "pack", "binder", "dialog"]);
 
 export function parseTipsCookie(header) {
   const match = String(header || "").match(/(?:^|;\s*)klafi_tips=(on|off)(?:;|$)/);
@@ -57,6 +125,57 @@ export function writeTipsPref(value, env = globalThis) {
 
 export function shouldAutoOpen(pref, flags) {
   return pref === "on" && Boolean(flags?.homeActive) && !flags?.started;
+}
+
+export function readSeenPages(env = globalThis) {
+  try {
+    const raw = env.localStorage?.getItem(PAGES_STORAGE);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+}
+
+export function writeSeenPages(seen, env = globalThis) {
+  const next = seen && typeof seen === "object" ? seen : {};
+  try {
+    env.localStorage?.setItem(PAGES_STORAGE, JSON.stringify(next));
+  } catch {}
+  return next;
+}
+
+export function markPageSeen(page, env = globalThis) {
+  if (!page) return readSeenPages(env);
+  const seen = readSeenPages(env);
+  seen[page] = true;
+  return writeSeenPages(seen, env);
+}
+
+export function mutePageGuides(env = globalThis) {
+  const seen = readSeenPages(env);
+  seen["*"] = true;
+  return writeSeenPages(seen, env);
+}
+
+export function shouldAutoOpenPage(seen, page) {
+  return Boolean(page && PAGE_GUIDES[page] && !seen?.["*"] && !seen?.[page]);
+}
+
+export function activeGuidePage(flags) {
+  if (flags?.dialogOpen) return "dialog";
+  if (flags?.homeActive) return "home";
+  if (flags?.packActive) return "pack";
+  if (flags?.binderActive) return "binder";
+  if (flags?.achievementsActive) return "achievements";
+  if (flags?.growthActive) return "growth";
+  return null;
+}
+
+export function pageGuideReady(page, flags) {
+  return Boolean(page) && activeGuidePage(flags) === page;
 }
 
 export function firstVisible(selector, root) {
@@ -132,9 +251,9 @@ function highlightSpec(node, pad = 8) {
   const style = typeof getComputedStyle === "function" ? getComputedStyle(node) : null;
   const computed = Number.parseFloat(style?.borderTopLeftRadius || "0") || 0;
   const compact = Math.max(box.width, box.height) <= 72 && box.width / box.height < 1.35 && box.height / box.width < 1.35;
-  const pillish = node.matches?.("#open-pack, #pack-action, .primary-action, .share-icon-button")
+  const pillish = node.matches?.("#open-pack, #pack-action, .primary-action, .share-icon-button, .contained-tabs button, .filter-strip button")
     || computed >= Math.min(box.width, box.height) / 2 - 1;
-  const cardish = node.matches?.("#dialog-card, .binder-shared-card, .kalpi-card");
+  const cardish = node.matches?.("#dialog-card, .binder-shared-card, .kalpi-card, .today-docket, #earned-badge-rail, #community-tabs, .work-card");
   if (compact || node.matches?.("button[data-nav]")) {
     const radius = Math.max(box.width, box.height) / 2 + 7;
     return { kind: "circle", box, cx: box.left + box.width / 2, cy: box.top + box.height / 2, radius };
@@ -245,6 +364,8 @@ function readFlags(doc) {
     homeActive: Boolean(doc.querySelector("#home-view")?.classList.contains("active")),
     packActive: Boolean(doc.querySelector("#pack-view")?.classList.contains("active")),
     binderActive: Boolean(doc.querySelector("#binder-view")?.classList.contains("active")),
+    achievementsActive: Boolean(doc.querySelector("#achievements-view")?.classList.contains("active")),
+    growthActive: Boolean(doc.querySelector("#growth-view")?.classList.contains("active")),
     dialogOpen: Boolean(doc.querySelector("#card-dialog")?.open),
   };
 }
@@ -265,10 +386,10 @@ export function attachKlafiTips(env = globalThis) {
   const replay = doc.querySelector("#replay-tips");
   const packHint = doc.querySelector("#pack-hint");
   if (!overlay || !dim || !marks || !card) {
-    return { sync() {}, maybeStart() {}, replay() {}, getState() { return { started: false, step: 1, parked: false }; } };
+    return { sync() {}, maybeStart() {}, replay() {}, getState() { return { mode: null, started: false, step: 1, parked: false, page: null }; } };
   }
 
-  const state = { started: false, step: 1, parked: false };
+  const state = { mode: null, started: false, step: 1, parked: false, page: null };
   let drawTimer = 0;
 
   function flags() {
@@ -308,21 +429,54 @@ export function attachKlafiTips(env = globalThis) {
     overlay.setAttribute("aria-hidden", "true");
   }
 
+  function currentSteps() {
+    if (state.mode === "pull") return TIPS_STEPS;
+    return PAGE_GUIDES[state.page] || [];
+  }
+
+  function firstPaintTarget(selector) {
+    const node = firstVisible(selector, doc);
+    const box = node?.getBoundingClientRect?.() || { width: 0, height: 0 };
+    return box.width > 0 && box.height > 0 ? node : null;
+  }
+
+  function seedMute(kind) {
+    if (!mute) return;
+    mute.checked = kind === "pull";
+    mute.dataset.seeded = kind;
+  }
+
+  function markPullPages() {
+    for (const page of PULL_PAGES) markPageSeen(page, env);
+  }
+
   function finish({ forceOff = false } = {}) {
+    if (state.mode === "page" && state.page) {
+      markPageSeen(state.page, env);
+      if (forceOff || mute?.checked) mutePageGuides(env);
+    } else if (state.mode === "pull") {
+      markPullPages();
+      if (forceOff || !mute || mute.checked) persistOff();
+      else persistOn();
+    }
+    state.mode = null;
     state.started = false;
     state.parked = false;
+    state.page = null;
     hideOverlay();
-    if (forceOff || !mute || mute.checked) persistOff();
-    else persistOn();
   }
 
   function paint() {
-    const step = TIPS_STEPS[state.step - 1];
-    if (!step || !stepViewReady(state.step, flags())) {
+    const steps = currentSteps();
+    const step = steps[state.step - 1];
+    const ready = state.mode === "pull"
+      ? stepViewReady(state.step, flags())
+      : pageGuideReady(state.page, flags());
+    if (!step || !ready) {
       park();
       return;
     }
-    const ringNode = firstVisible(step.ring, doc) || (step.emptyRing ? firstVisible(step.emptyRing, doc) : null);
+    const ringNode = firstPaintTarget(step.ring) || firstPaintTarget(step.emptyRing) || firstVisible(step.ring, doc) || firstVisible(step.emptyRing, doc);
     if (!ringNode) {
       park();
       return;
@@ -334,21 +488,18 @@ export function attachKlafiTips(env = globalThis) {
     overlay.setAttribute("aria-hidden", "false");
     title.textContent = step.title;
     body.textContent = step.body;
-    stepLabel.textContent = `${state.step} / ${TIPS_STEPS.length}`;
-    nextBtn.textContent = state.step === TIPS_STEPS.length ? "הבנתי" : "הבא";
+    stepLabel.textContent = `${state.step} / ${steps.length}`;
+    nextBtn.textContent = state.step === steps.length ? "הבנתי" : "הבא";
     skipBtn.hidden = state.step !== 1;
     backBtn.hidden = state.step === 1;
-    if (mute && mute.dataset.seeded !== "1") {
-      mute.checked = true;
-      mute.dataset.seeded = "1";
-    }
+    if (mute && mute.dataset.seeded !== state.mode) seedMute(state.mode);
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const preferredRing = state.step === 3 && flags().dialogOpen
+    const preferredRing = state.mode === "pull" && state.step === 3 && flags().dialogOpen
       ? firstVisible("#dialog-card", doc)
       : null;
     const fromSpec = highlightSpec(preferredRing || ringNode, 8);
-    const toNode = step.arrowTo ? firstVisible(step.arrowTo, doc) : null;
+    const toNode = step.arrowTo ? firstPaintTarget(step.arrowTo) : null;
     const toSpec = toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null;
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     dim.setAttribute("width", String(vw));
@@ -377,31 +528,67 @@ export function attachKlafiTips(env = globalThis) {
     drawTimer = requestAnimationFrame(paint);
   }
 
+  function startPage(page) {
+    state.mode = "page";
+    state.started = true;
+    state.page = page;
+    state.step = 1;
+    state.parked = false;
+    seedMute("page");
+    schedulePaint();
+  }
+
+  function maybeStartPage() {
+    if (state.mode === "pull") return;
+    const page = activeGuidePage(flags());
+    if (!shouldAutoOpenPage(readSeenPages(env), page)) return;
+    startPage(page);
+  }
+
   function sync() {
     syncPackHint();
-    if (!state.started) return;
-    state.step = advanceStepFromView(state.step, flags());
-    if (stepViewReady(state.step, flags())) schedulePaint();
-    else park();
+    if (state.mode === "pull") {
+      if (!state.started) return;
+      state.step = advanceStepFromView(state.step, flags());
+      if (stepViewReady(state.step, flags())) schedulePaint();
+      else park();
+      return;
+    }
+    if (state.mode === "page") {
+      const page = activeGuidePage(flags());
+      if (page === state.page) {
+        if (pageGuideReady(state.page, flags())) schedulePaint();
+        else park();
+        return;
+      }
+      park();
+      state.mode = null;
+      state.started = false;
+      state.page = null;
+      maybeStartPage();
+      return;
+    }
+    maybeStartPage();
   }
 
   function maybeStart() {
-    if (!shouldAutoOpen(readTipsPref(env), { ...flags(), started: state.started })) return;
-    state.started = true;
-    state.step = 1;
-    sync();
+    if (state.mode === "pull") return;
+    maybeStartPage();
   }
 
   function replayTour() {
     persistOn();
+    state.mode = "pull";
     state.started = true;
     state.step = 1;
+    state.page = null;
     state.parked = false;
+    seedMute("pull");
     sync();
   }
 
   function goNext() {
-    if (state.step >= TIPS_STEPS.length) {
+    if (state.step >= currentSteps().length) {
       finish();
       return;
     }
@@ -416,7 +603,7 @@ export function attachKlafiTips(env = globalThis) {
 
   nextBtn?.addEventListener("click", goNext);
   backBtn?.addEventListener("click", goBack);
-  skipBtn?.addEventListener("click", () => finish({ forceOff: true }));
+  skipBtn?.addEventListener("click", () => finish({ forceOff: state.mode === "pull" }));
   replay?.addEventListener("click", replayTour);
   window.addEventListener("resize", () => { if (state.started && !state.parked) schedulePaint(); });
   doc.addEventListener("scroll", () => { if (state.started && !state.parked) schedulePaint(); }, true);
@@ -425,15 +612,33 @@ export function attachKlafiTips(env = globalThis) {
     const observer = new MutationObserver(() => sync());
     observer.observe(dialog, { attributes: true, attributeFilter: ["open"] });
   }
-  for (const id of ["home-view", "pack-view", "binder-view"]) {
+  for (const id of ["home-view", "pack-view", "binder-view", "achievements-view", "growth-view"]) {
     const view = doc.querySelector(`#${id}`);
     if (!view) continue;
     new MutationObserver(() => sync()).observe(view, { attributes: true, attributeFilter: ["class"] });
   }
   const binderGrid = doc.querySelector("#binder-grid");
   if (binderGrid) {
-    const observer = new MutationObserver(() => { if (state.started && state.step === 3) sync(); });
+    const observer = new MutationObserver(() => {
+      if (state.mode === "pull" && state.step === 3) sync();
+      if (state.mode === "page" && state.page === "binder") sync();
+    });
     observer.observe(binderGrid, { childList: true, subtree: true });
+  }
+  const binderFilters = doc.querySelector("#binder-filters");
+  if (binderFilters) {
+    new MutationObserver(() => { if (state.mode === "page" && state.page === "binder") sync(); })
+      .observe(binderFilters, { childList: true, subtree: true });
+  }
+  const achievementGrid = doc.querySelector("#achievement-grid");
+  if (achievementGrid) {
+    new MutationObserver(() => { if (state.mode === "page" && state.page === "achievements") sync(); })
+      .observe(achievementGrid, { childList: true, subtree: true });
+  }
+  const communityTabs = doc.querySelector("#community-tabs");
+  if (communityTabs) {
+    new MutationObserver(() => { if (state.mode === "page" && state.page === "growth") sync(); })
+      .observe(communityTabs, { attributes: true, subtree: true, attributeFilter: ["class", "aria-selected"] });
   }
 
   return {

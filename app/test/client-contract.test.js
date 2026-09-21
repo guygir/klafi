@@ -108,6 +108,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /function attachKlafiTips/);
   assert.match(tipsJs, /klafi_tips/);
   assert.match(tipsJs, /klafi:tips/);
+  assert.match(tipsJs, /klafi:page-tips/);
+  assert.match(tipsJs, /PAGE_GUIDES/);
   assert.match(tipsJs, /fill-rule/);
   assert.match(css, /\.klafi-tips-dim \{ pointer-events: auto; z-index: 1; \}/);
   assert.match(css, /\.klafi-tips-card \{ z-index: 2; \}/);
