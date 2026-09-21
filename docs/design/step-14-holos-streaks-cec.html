@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>14 · הולו / רצף / פעימת ועדת הבחירות — סקיצה לביקורת</title>
+  <title>14 · נעול: ממוספרים ורצף</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@600;700&display=swap" rel="stylesheet" />
@@ -14,9 +14,7 @@
       --paper-deep: #e7dfd0;
       --rule: #2c3330;
       --civic: #1f4f4a;
-      --civic-bright: #2a7a72;
       --foil: #c4a35a;
-      --holo-blue: #7e8b9a;
       --danger-mute: #8a4a3a;
       --pip: #1b3a6b;
     }
@@ -27,13 +25,10 @@
         linear-gradient(90deg, transparent 49.85%, rgba(44, 51, 48, 0.05) 50%, transparent 50.15%),
         var(--paper);
       color: var(--ink);
-      font: 16px/1.5 "IBM Plex Sans Hebrew", sans-serif;
+      font: 17px/1.55 "IBM Plex Sans Hebrew", sans-serif;
     }
-    header.mast {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 28px 22px 10px;
-    }
+    header.mast, main { max-width: 920px; margin: 0 auto; padding: 28px 22px; }
+    main { padding-top: 8px; padding-bottom: 88px; }
     .status {
       display: inline-block;
       margin: 0 0 12px;
@@ -41,269 +36,184 @@
       border: 1px solid var(--foil);
       color: var(--civic);
       font-size: 12px;
-      letter-spacing: 0.04em;
     }
-    h1, h2, h3 { font-family: "Noto Serif Hebrew", serif; font-weight: 700; margin: 0 0 8px; }
-    h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.05; }
+    h1, h2, h3 { font-family: "Noto Serif Hebrew", serif; font-weight: 700; margin: 0 0 10px; }
+    h1 { font-size: clamp(30px, 6vw, 48px); line-height: 1.08; }
+    h2 { font-size: 26px; margin-top: 36px; padding-top: 22px; border-top: 1px solid rgba(44, 51, 48, 0.18); }
     .lede { max-width: 38em; color: rgba(26, 31, 28, 0.78); }
-    nav { margin: 18px 0 0; font-size: 14px; }
+    nav { margin: 16px 0 0; font-size: 14px; }
     nav a { color: var(--civic); }
-    main { max-width: 1040px; margin: 0 auto; padding: 10px 22px 80px; }
-    .decide {
+    .already, .lock, .park {
+      padding: 14px 16px;
+      margin: 16px 0;
+    }
+    .already { background: var(--paper-deep); }
+    .lock { background: #e7efe8; border-inline-start: 4px solid var(--civic); }
+    .park { background: #f3e6e0; border-inline-start: 4px solid var(--danger-mute); }
+    .words { display: grid; gap: 10px; margin: 18px 0; }
+    .words article {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin: 28px 0;
+      grid-template-columns: 7.5rem 1fr;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(44, 51, 48, 0.12);
     }
-    .decide article {
-      background: var(--paper-deep);
-      border: 1px solid rgba(44, 51, 48, 0.22);
-      padding: 14px 14px 16px;
-    }
-    .decide b { display: block; font-size: 13px; color: var(--civic); margin-bottom: 6px; }
-    .decide p { margin: 0; font-size: 14px; }
-    .slips { display: grid; gap: 28px; }
-    .slip {
+    .words b { font-family: "Noto Serif Hebrew", serif; }
+    .words p { margin: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 12px 0 4px; }
+    th, td { border-bottom: 1px solid rgba(44, 51, 48, 0.14); text-align: start; padding: 8px 6px; vertical-align: top; }
+    th { font-size: 12px; color: var(--civic); }
+    ul { margin: 8px 0 0; padding-inline-start: 1.2em; }
+    li { margin: 0 0 6px; }
+    .row {
       display: grid;
-      grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.2fr);
-      gap: 28px;
-      padding: 22px 0 8px;
-      border-top: 1px solid rgba(44, 51, 48, 0.2);
+      grid-template-columns: 220px 1fr;
+      gap: 22px;
+      align-items: start;
+      margin: 18px 0;
     }
-    .phone {
-      width: 270px;
-      min-height: 470px;
+    .stamp-demo, .avatar-demo {
       background: #111;
       color: #f7f2e8;
-      padding: 16px 16px 20px;
-      box-shadow: 0 18px 40px rgba(26, 31, 28, 0.2);
+      min-height: 220px;
+      padding: 16px;
     }
-    .phone .bar { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.7; }
-    .stamp {
-      margin: 18px auto 10px;
-      width: 148px;
-      height: 148px;
-      border: 3px dashed var(--foil);
+    .circle {
+      width: 132px;
+      height: 132px;
+      margin: 18px auto 8px;
+      border: 2px dashed var(--foil);
       border-radius: 50%;
       display: grid;
       place-items: center;
       text-align: center;
-      transform: rotate(-8deg);
-      background:
-        radial-gradient(circle at 30% 30%, rgba(196, 163, 90, 0.28), transparent 55%),
-        #161616;
+      transform: rotate(-7deg);
     }
-    .stamp strong { font-family: "Noto Serif Hebrew", serif; font-size: 42px; line-height: 0.9; }
-    .stamp small { display: block; letter-spacing: 0.12em; font-size: 10px; color: var(--foil); }
-    .card-mini {
-      margin: 14px auto 0;
-      width: 148px;
-      height: 226px;
-      background: var(--paper);
-      color: var(--ink);
-      border: 2px solid #111;
+    .circle strong { font-family: "Noto Serif Hebrew", serif; font-size: 40px; line-height: 0.9; }
+    .circle small { display: block; color: var(--foil); font-size: 11px; }
+    .face {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #c8b79a;
       position: relative;
-      overflow: hidden;
+      margin-bottom: 10px;
     }
-    .card-mini::before {
-      content: "";
+    .face i {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      inset-inline-start: 0;
+      bottom: 2px;
       width: 8px;
-      height: 28px;
+      height: 8px;
       background: var(--pip);
     }
-    .card-mini::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(120deg, transparent 20%, rgba(196, 163, 90, 0.22), rgba(126, 139, 154, 0.18), transparent 80%);
-    }
-    .card-mini span {
-      position: absolute;
-      right: 22px;
-      bottom: 12px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .pulse {
-      margin-top: 18px;
-      border: 1px solid rgba(247, 242, 232, 0.24);
-      padding: 10px 12px;
-      font-size: 13px;
-    }
-    .pulse em { color: var(--foil); font-style: normal; }
-    .copy p { margin: 0 0 10px; }
-    .copy ul { margin: 8px 0 0; padding-inline-start: 1.2em; }
-    .copy li { margin: 0 0 6px; }
-    .no {
-      background: #f3e6e0;
-      border-inline-start: 4px solid var(--danger-mute);
-      padding: 12px 14px;
-      margin: 10px 0 0;
-      font-size: 14px;
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0 0; }
-    th, td { border-bottom: 1px solid rgba(44, 51, 48, 0.16); text-align: start; padding: 8px 6px; vertical-align: top; }
-    th { font-size: 12px; color: var(--civic); font-weight: 600; }
-    .weavy { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
-    .weavy figure {
-      margin: 0;
-      min-height: 120px;
-      background: #111;
-      color: #f7f2e8;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    }
-    .weavy figcaption { font-size: 13px; }
-    .questions { display: grid; gap: 8px; margin-top: 10px; }
-    .questions label {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 10px;
-      align-items: start;
-      background: var(--paper-deep);
-      padding: 10px 12px;
-    }
-    @media (max-width: 820px) {
-      .decide, .slip, .weavy { grid-template-columns: 1fr; }
-      .phone { width: min(270px, 100%); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      * { animation: none !important; transition: none !important; }
+    .avatar-demo strong { display: block; font-size: 18px; }
+    .avatar-demo em { color: var(--foil); font-style: normal; font-size: 13px; }
+    @media (max-width: 700px) {
+      .words article, .row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <header class="mast">
-    <p class="status">סקיצה בלבד · לא לממש · שלב 14</p>
-    <h1>הולו ממוספר, רצף, ופעימת ועדת הבחירות.</h1>
-    <p class="lede">שלושה משטחים שיושבים מעל המשחק שכבר חי: אותו קלף, אותה קבלה, אותו פס צבע של 8 פיקסלים. אף אחד מהם לא משנה משיכות, סיכויים או מלאי. המספר, הרצף והתאריך מגיעים מהשרת.</p>
+    <p class="status">שלב 14 · נעול לעיצוב · עדיין לא לממש</p>
+    <h1>שני דברים בלבד: חותמת מקום, ורצף על האווטאר.</h1>
+    <p class="lede">בלי פעימה. בלי תאריך יומי. בלי פרס קלף. האווטאר שכבר חי מקבל את הרצף מתחת לשם הרמה, ליד פס המפלגה.</p>
     <nav>
-      <a href="visual-system.md">מערכת חזותית</a> ·
-      <a href="step-15-platform-liveops.html">15 · פלטפורמה</a> ·
+      <a href="step-15-platform-liveops.html">15 מחכה אחרי זה</a> ·
       <a href="../../README.md">רצף המוצר</a>
     </nav>
   </header>
   <main>
-    <section class="decide" aria-label="החלטות לאישור">
-      <article>
-        <b>לאשר / לשנות</b>
-        <p>מספר ההולו = מקום ברשימה. ראש רשימה הוא תמיד 1/1, בכל מפלגה.</p>
-      </article>
-      <article>
-        <b>לאשר / לשנות</b>
-        <p>חותמת תאריך יומית היא כיתוב לצילום מסך, לא מערכת הדפסה שנייה.</p>
-      </article>
-      <article>
-        <b>לאשר / לשנות</b>
-        <p>פעימת ועדת הבחירות מדווחת הגשות ואותיות בלבד. בלי סקרים, בלי מי מוביל.</p>
-      </article>
-    </section>
+    <h2>מה כבר חי — לא שלב 14</h2>
+    <div class="already">
+      <p><strong>פס המפלגה על האווטאר</strong> כבר בשלב 11. אחרי שבוחרים סיעה, ריבוע 8 פיקסלים נצמד לפינה. לא רחיצה, לא תג גדול.</p>
+      <p><strong>שמות הרמות והפריטים שנפתחים</strong> כבר חיים עם ההתקדמות (אותו שלב 11 / רמות). עכשיו: אזרח סקרן → … → ראש הממשלה. בחלון עליית רמה נפתחים שם דרגה, אווטאר חדש, וקלף בונוס. זה לא שלב 14, וזה לא משתנה כאן חוץ מזה שהרצף מצטרף לאותה ערימה.</p>
+    </div>
 
-    <div class="slips">
-      <article class="slip">
-        <div class="phone" aria-hidden="true">
-          <div class="bar"><span>קְלָפִי</span><span>הולו</span></div>
-          <div class="stamp"><div><small>מקום ברשימה</small><strong>1/1</strong></div></div>
-          <div class="card-mini"><span>נתניהו · מחל</span></div>
-        </div>
-        <div class="copy">
-          <h2>הולו ממוספר — מקום, לא סקר.</h2>
-          <p>Life TCG מדפיס לפי אוכלוסיית חיה. אנחנו הופכים את הרעיון: מספר ההעתקים = המקום הרשמי ברשימה. ליכוד 1, דמוקרטים 1 ורע״ם 1 כולם 1/1. מלמדים סדר רשימה, לא כוח פוליטי.</p>
-          <table>
-            <thead><tr><th>מקום</th><th>עותקים</th><th>מה השחקן רואה</th></tr></thead>
-            <tbody>
-              <tr><td>1</td><td>1/1</td><td>חותמת פליז אחת, סיבוב קל</td></tr>
-              <tr><td>2</td><td>1/2 · 2/2</td><td>אותה חותמת, מספר אחר</td></tr>
-              <tr><td>n</td><td>1/n … n/n</td><td>אותו כלל בכל רשימה</td></tr>
-            </tbody>
-          </table>
-          <ul>
-            <li>השרת מטביע את המספר. הלקוח לא יכול לטעון 1/1.</li>
-            <li>סמל / מצע / ציטוט / קלפי מערכת לא מקבלים מספר מקום.</li>
-            <li>תאריך יומי (`21.09.2026`) נפרד: כיתוב לשיתוף, לא הדפסה שנייה.</li>
-            <li>צבע מפלגה נשאר פס 8 פיקסלים. ההולו הוא שטיפת פליז/כסף על המסגרת בלבד.</li>
-          </ul>
-          <p><strong>העתק מוצע:</strong> «מקום 1 ברשימה · 1 מתוך 1 · הטביע השרת.»</p>
-          <div class="no">לא קושרים מהדורה למושבים, לסקרים או ל«חשיבות». לא ממציאים כמה שחקנים מחזיקים בעותק.</div>
-        </div>
+    <h2>ארבע מילים שהתערבבו</h2>
+    <div class="words">
+      <article>
+        <b>ממוספר</b>
+        <p>חותמת עגולה <em>1/1</em> או <em>2/3</em> על קלף חבר רשימה. המספר אומר כמה עותקים ממוספרים קיימים למקום הזה ברשימה. זה מה שנכנס ל־14.</p>
       </article>
-
-      <article class="slip">
-        <div class="phone" aria-hidden="true">
-          <div class="bar"><span>היום</span><span>רצף 3</span></div>
-          <p style="margin:36px 0 8px;font-size:13px;opacity:.7">חותמת נייר על פס הרמה</p>
-          <h3 style="font-size:28px;line-height:1.1">שלושה ימים ברצף.</h3>
-          <p style="opacity:.8;font-size:14px">אין פרס משיכה. חותמת קוסמטית, או נדיר-לא-נפוץ מובטח במשיכה הבאה שהשרת כבר תכנן.</p>
-          <div class="pulse">רצף <em>3</em> · היעד הבא <em>7</em><br>לא שעון חול, לא חנות.</div>
-        </div>
-        <div class="copy">
-          <h2>רצף כניסה / אוריינות — 3 ו־7.</h2>
-          <p>הרצף שומר על השבוע בחיים בלי לייצר מטבע. חידון נשאר סגור. לכן הרצף נספר על כניסה ועל פתיחת מקור של קלף שכבר באוסף — לא על תשובה נכונה.</p>
-          <ul>
-            <li>3 ימים: חותמת קוסמטית ליד פס הרמה. «רצף 3».</li>
-            <li>7 ימים: או אותה חותמת גדולה יותר, או קלף לא-נפוץ מובטח בתוך המשיכה שהשרת כבר בנה.</li>
-            <li>ניתוק של יום מאפס את הספירה. אין קניית יום.</li>
-            <li>שני מכשירים עם אותו קוד שחזור הם שחקן אחד. הרצף לא מכפיל.</li>
-          </ul>
-          <p><strong>העתק מוצע:</strong> «שלושה ימים ברצף. החותמת הזו לא פותחת קלף נוסף.»</p>
-          <div class="no">בלי שעון חול, בלי פרס כפול, בלי חידון. הרצף לא משנה את ה־RNG ולא את תור האיסוף האוטומטי.</div>
-        </div>
+      <article>
+        <b>הולו</b>
+        <p>הברק על מסגרת נדירה. כבר יש טיפול CSS. החותמת הממוספרת יושבת מעליו. לא מערכת נפרדת.</p>
       </article>
-
-      <article class="slip">
-        <div class="phone" aria-hidden="true">
-          <div class="bar"><span>היום בקְלָפִי</span><span>21.09</span></div>
-          <p style="margin:28px 0 6px;font-size:12px;letter-spacing:.08em;color:var(--foil)">פעימה</p>
-          <h3 style="font-size:26px;line-height:1.15">אותיות עודכנו במאגר.</h3>
-          <div class="pulse">
-            <em>מחל</em> · אותיות מאושרות במאגר<br>
-            <em>עם</em> · הוגשה, ממתינה לבדיקה<br>
-            נכון ל־21.09.2026
-          </div>
-          <p style="margin-top:16px;font-size:12px;opacity:.65">לא «מי מוביל». לא מושבים.</p>
-        </div>
-        <div class="copy">
-          <h2>פעימת ועדת הבחירות — לוח שנה, לא מרוץ.</h2>
-          <p>שבב אחד ב«היום בקְלָפִי», מעל המירוץ היומי שכבר קיים. הוא מדבר בקול שלנו רק על עובדות המאגר: הגשת רשימה, אותיות מבוקשות / מוגנות / במחלוקת, תאריך.</p>
-          <ul>
-            <li>אותו `partyStatusShort` שכבר יושב על הקלף ועל שולחן הסיעות.</li>
-            <li>אם אין עדכון חדש — השבב מוסתר. אין פעימה מזויפת.</li>
-            <li>שותף שרוצה סקרים: רצועה צד־שלישית מסומנת, אף פעם לא בקול קְלָפִי, אף פעם לא על נדירות.</li>
-          </ul>
-          <p><strong>העתק מוצע:</strong> «נכון ל־21.09.2026 · אותיות מאושרות במאגר. לא סקר.»</p>
-          <div class="no">בלי ווידג׳ט סקר, בלי «X מובילה», בלי תחזית מושבים, בלי ספירות קהל מומצאות.</div>
-        </div>
+      <article>
+        <b>תאריך יומי</b>
+        <p>רעיון ישן: לכתוב על הקלף «21.09.2026» לצילום מסך. לא חלוקה, לא נדירות. <strong>יורד מ־14.</strong></p>
+      </article>
+      <article>
+        <b>פעימה</b>
+        <p>שורה ב«היום» כשוועדת הבחירות מעדכנת אותיות או הגשה במאגר. לא סקר, לא «מי מוביל». <strong>יורד מ־14</strong> — אפשר לחזור אליו אחרי 15 אם תרצו לוח שנה אמיתי.</p>
       </article>
     </div>
 
-    <section class="slip" style="border-top:1px solid rgba(44,51,48,.2);margin-top:18px">
-      <div>
-        <h2>לולאות Weavy לשלב 14</h2>
-        <p class="lede">הפתיחה האמיתית של החבילה נשארת לשלב 16. כאן רק לולאות קצרות לקידום ולהולו — עדיין לא בקוד החי.</p>
+    <h2>נעול · ממוספרים לפי מקום ברשימה</h2>
+    <div class="lock">חותמת עיגול עם קו מקווקו, 1/x. טיפ ראשון מעל החותמת. באוסף נפתחת קטגוריה «ממוספרים» בלי משבצות ריקות.</div>
+    <div class="row">
+      <div class="stamp-demo" aria-hidden="true">
+        <div class="circle"><div><small>מקום ברשימה</small><strong>1/1</strong></div></div>
+        <p style="text-align:center;font-size:13px;opacity:.7">ראש רשימה · אותו כלל בכל מפלגה</p>
       </div>
       <div>
-        <div class="weavy">
-          <figure><figcaption>ברק פליז על מסגרת 1/1, בלי קריעת חבילה.</figcaption></figure>
-          <figure><figcaption>חותמת רצף נלחצת על נייר, 1.2 שניות.</figcaption></figure>
-          <figure><figcaption>שבב פעימה מתעדכן כמו תאריך במאגר, לא כמו טיקר חדשות.</figcaption></figure>
-        </div>
+        <p>הכלל: מספר העותקים הממוספרים = המקום הרשמי ברשימה. ליכוד 1, דמוקרטים 1 ורע״ם 1 כולם מקבלים עותק ממוספר אחד: 1/1. מלמדים סדר, לא סקר.</p>
+        <table>
+          <thead><tr><th>מקום ברשימה</th><th>כמה חותמות יוצאות בעולם</th><th>מה כתוב בעיגול</th></tr></thead>
+          <tbody>
+            <tr><td>1 · ראש רשימה</td><td>עותק אחד</td><td>1/1</td></tr>
+            <tr><td>2</td><td>שני עותקים</td><td>1/2 ואחר כך 2/2</td></tr>
+            <tr><td>3</td><td>שלושה</td><td>1/3 · 2/3 · 3/3</td></tr>
+            <tr><td>n</td><td>n עותקים</td><td>1/n … n/n</td></tr>
+          </tbody>
+        </table>
       </div>
-    </section>
+    </div>
 
-    <section>
-      <h2>שאלות לביקורת</h2>
-      <div class="questions">
-        <label><input type="checkbox" /> האם 1/1 על ראש כל רשימה מובן, או שצריך משפט הסבר קבוע מתחת לחותמת?</label>
-        <label><input type="checkbox" /> רצף 7: חותמת גדולה בלבד, או לא-נפוץ מובטח בתוך המשיכה הקיימת?</label>
-        <label><input type="checkbox" /> פעימה: שבב ב«היום» בלבד, או גם שורה שקטה באוסף כשמפלגה מסוננת?</label>
-        <label><input type="checkbox" /> תאריך יומי על הולו: כל הולו שנפתח באותו יום, או רק קלף אחד ליום לכל השחקנים?</label>
+    <h3>איך מחלקים בלי עומס</h3>
+    <ul>
+      <li>רק קלף <strong>חבר רשימה</strong> (פוליטיקאי עם מקום). לא סמל, לא מצע, לא ציטוט־מערכת, לא סט 5.</li>
+      <li>השרת מחזיק מונה לכל זוג מפלגה+מקום. במשיכה: אם עוד לא יצאו n חותמות — העותק הזה מקבל את המספר הבא. אחר כך הקלף רגיל, בלי עיגול.</li>
+      <li>החותמת שייכת לעותק (מזהה משיכה), לא לסוג הקלף. בהחלפה היא עוברת עם העותק.</li>
+      <li>שני מכשירים עם אותו קוד שחזור = שחקן אחד. אין שתי חותמות מאותה משיכה.</li>
+      <li>הלקוח לא יכול לכתוב 1/1 לעצמו.</li>
+    </ul>
+    <p>בסדרה החיה «מנהיגי המפלגות» כולם מקום 1 — כלומר 1/1 אחד לכל מפלגה בכל המשחק. זה נדיר בכוונה. מקום 2 (סדרת הסגן) יוציא שתי חותמות, וכן הלאה.</p>
+    <p><strong>קטגוריה באוסף:</strong> «ממוספרים» נפתחת אחרי החותמת הראשונה. רק קלפים שיש לכם עליהם עיגול. בלי משבצות חסרות — אין טעם להראות 2/3 ריק כשיש המון מספרים אפשריים.</p>
+    <p><strong>טיפ:</strong> בחותמת הראשונה, כרטיס קצר מעל העיגול: «זה המקום ברשימה. ראש רשימה הוא 1 מתוך 1.» אותו עוגיות/טיפים שכבר קיימים. דילוג תמיד.</p>
+    <p><strong>העתק:</strong> «מקום 1 · 1 מתוך 1 · הטביע השרת.»</p>
+    <div class="park">לא לסקרים, לא למושבים, לא ל«כמה שחקנים מחזיקים». אחרי שה־n נגמר — אין חותמת חדשה, אין הדפסה שנייה עם תאריך.</div>
+
+    <h2>נעול · רצף על האווטאר, בלי קלף</h2>
+    <div class="lock">3 ו־7 ימים. קוסמטיקה בלבד. יושב בערימת האווטאר: פס מפלגה + שם רמה + רצף. אותה ערימה בטבלאות, ואחר כך בליגות.</div>
+    <div class="row">
+      <div class="avatar-demo" aria-hidden="true">
+        <div class="face"><i></i></div>
+        <strong>אזרח סקרן</strong>
+        <em>רצף 3</em>
       </div>
-    </section>
+      <div>
+        <p>סופרים יום ירושלים עם כניסה למשחק. יום בלי כניסה מאפס. אין קניית יום, אין שעון חול, אין קלף מובטח ב־7.</p>
+        <ul>
+          <li>מתחת לשם הרמה, או בשורה אחת: «אזרח סקרן · רצף 3».</li>
+          <li>ב־7 העיגול או המספר גדלים. עדיין בלי פרס משיכה.</li>
+          <li>אותו אווטאר + פס + שם + רצף יופיע בטבלת האספנים שכבר חיה, ובליגות של שלב 15.</li>
+          <li>שני מכשירים, אותו קוד — רצף אחד.</li>
+        </ul>
+        <p><strong>העתק:</strong> «שלושה ימים ברצף. זה לא פותח קלף.»</p>
+      </div>
+    </div>
+
+    <h2>מה לא נכנס</h2>
+    <div class="park">
+      <p>תאריך יומי על הולו — מחוץ ל־14.</p>
+      <p>פעימת ועדת הבחירות — מחוץ ל־14. אם נחזור: שורת מאגר ב«היום», לא סקר.</p>
+      <p>פרס קלף לרצף — לא.</p>
+      <p>משבצות ריקות בקטגוריית ממוספרים — לא.</p>
+      <p>אנימציית פתיחת חבילה — שלב 16.</p>
+    </div>
   </main>
 </body>
 </html>
