@@ -16,6 +16,14 @@ import {
   validPackConfig,
 } from "./pack-config.js";
 import { catalogExtrasFromStudio, expandPublicCatalog, runtimeSpecialCard } from "./public-catalog.js";
+import {
+  applyLoginStreak,
+  jerusalemDay,
+  normalizeNumberedSets,
+  numberedCopies,
+  stampEligible,
+  stampKey,
+} from "./numbered.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -308,7 +316,32 @@ function validProgressionPatch(value) {
     const exponent = Number(value.thresholdExponent);
     if (!Number.isFinite(exponent) || exponent < 0.5 || exponent > 3) return false;
   }
+  if (value.rankNames !== undefined) {
+    if (!Array.isArray(value.rankNames) || value.rankNames.length < 2 || value.rankNames.length > 24) return false;
+    if (!value.rankNames.every((name) => typeof name === "string" && name.trim().length >= 2 && name.trim().length <= 32)) {
+      return false;
+    }
+  }
+  if (value.grantLevelReward !== undefined && typeof value.grantLevelReward !== "boolean") return false;
+  if (value.numberedSets !== undefined) {
+    if (!Array.isArray(value.numberedSets) || value.numberedSets.length > 40) return false;
+    if (!value.numberedSets.every((id) => typeof id === "string" && /^[a-z0-9-]{2,40}$/.test(id))) return false;
+  }
+  if (value.reward !== undefined && (typeof value.reward !== "string" || value.reward.length > 80)) return false;
   return true;
+}
+
+function validAvatarUnlocks(value, catalog = []) {
+  if (value === undefined) return true;
+  if (!Array.isArray(value) || !value.length) return false;
+  const known = new Set(catalog.map((avatar) => avatar.id));
+  return value.every((item) => (
+    item
+    && known.has(item.id)
+    && Number.isInteger(item.unlockLevel)
+    && item.unlockLevel >= 1
+    && item.unlockLevel <= 24
+  ));
 }
 
 function normalizeDisplayName(value) {
@@ -543,6 +576,9 @@ function progressionConfig(config = {}, activeReleaseIds = null) {
     releaseLevelIncrements: increments,
     thresholdExponent: exponent,
     reward: config.reward || "קלף בונוס מיידי",
+    rankNames: ranks,
+    grantLevelReward: config.grantLevelReward !== false,
+    numberedSets: normalizeNumberedSets(config.numberedSets),
   };
 }
 
@@ -586,9 +622,11 @@ function syncProgression(session, cards, config, current) {
   if (progression.level > previous) {
     session.pendingRankRewards ??= [];
     session.claimedRankRewards ??= [];
-    for (let rank = previous + 1; rank <= progression.level; rank += 1) {
-      if (!session.claimedRankRewards.includes(rank) && !session.pendingRankRewards.includes(rank)) {
-        session.pendingRankRewards.push(rank);
+    if (config.grantLevelReward !== false) {
+      for (let rank = previous + 1; rank <= progression.level; rank += 1) {
+        if (!session.claimedRankRewards.includes(rank) && !session.pendingRankRewards.includes(rank)) {
+          session.pendingRankRewards.push(rank);
+        }
       }
     }
     session.highestRank = progression.level;
@@ -625,6 +663,9 @@ function publicState(session, now, cards, config = {}) {
     achievements: achievementState(session, cards, config.achievements),
     avatars: publicAvatars(session, config.avatars, progressionState(session, cards, config, now).level),
     avatarId: session.avatarId || "kid-boy",
+    loginStreak: session.loginStreak || 0,
+    loginDay: session.loginDay || null,
+    numberedCopies: numberedCopies(session.instances),
     progression: progressionState(session, cards, config, now),
     quizAvailable: Boolean(config.quizEnabled)
       && Boolean(Object.keys(session.inventory || {}).length)
@@ -650,11 +691,9 @@ function publicIdleState(session, now, cards, config = {}) {
     preparedPulls: session.preparedPulls ?? [],
     progression,
     avatars: publicAvatars(session, config.avatars, progression.level),
+    loginStreak: session.loginStreak || 0,
+    numberedCopies: numberedCopies(session.instances),
   };
-}
-
-function jerusalemDay(ms) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(ms));
 }
 
 function unitRandom(rng) {
@@ -809,7 +848,7 @@ export async function createKalpiApp({
     : { schemaVersion: 1, deckId: "poc-response", updatedAt: null, fields: {} };
   const events = eventsPath ? JSON.parse(await readFile(eventsPath, "utf8")) : { events: [] };
   let achievementCatalog = achievementsPath ? JSON.parse(await readFile(achievementsPath, "utf8")) : { achievements: [] };
-  const avatarCatalog = avatarsPath ? JSON.parse(await readFile(avatarsPath, "utf8")) : { avatars: [] };
+  let avatarCatalog = avatarsPath ? JSON.parse(await readFile(avatarsPath, "utf8")) : { avatars: [] };
   const allCards = expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studioContent, set5));
   const cardsById = new Map(allCards.map((card) => [card.id, card]));
   const partyIds = new Set(cards.filter(({ set }) => set !== "SYS").map(({ set }) => set));
@@ -881,6 +920,15 @@ export async function createKalpiApp({
       },
       releaseSets: studioOverlay.gameConfig.releaseSets || studioContent.gameConfig.releaseSets,
       pack: mergePackConfig(studioContent.gameConfig.pack, studioOverlay.gameConfig.pack),
+    };
+  }
+  if (studioOverlay?.avatars?.length) {
+    const unlocks = new Map(studioOverlay.avatars.map((avatar) => [avatar.id, avatar.unlockLevel]));
+    avatarCatalog = {
+      ...avatarCatalog,
+      avatars: (avatarCatalog.avatars || []).map((avatar) => (
+        unlocks.has(avatar.id) ? { ...avatar, unlockLevel: unlocks.get(avatar.id) } : avatar
+      )),
     };
   }
   function applyReleaseSets() {
@@ -976,7 +1024,7 @@ export async function createKalpiApp({
     const currentMs = now();
     const pool = activeIdleCards(cards, currentMs);
     if (!pool.length) return { error: "NO_ACTIVE_RELEASE" };
-    const result = await store.withSession(token, (current) => {
+    const result = await store.withSession(token, async (current) => {
       current.unseenPulls ??= [];
       current.preparedPulls = (current.preparedPulls || [])
         .filter((pull) => pull?.instanceId && pull?.cardId && Number.isFinite(Date.parse(pull.availableAt)))
@@ -1023,7 +1071,7 @@ export async function createKalpiApp({
         && Date.parse(current.preparedPulls[0]?.availableAt) <= currentMs
       ) {
         const prepared = current.preparedPulls.shift();
-        const instance = grantCard(current, prepared, {
+        const instance = await grantCard(current, prepared, {
           acquiredBy: "idle",
           pulledAt: prepared.availableAt,
           instanceId: prepared.instanceId,
@@ -1043,6 +1091,7 @@ export async function createKalpiApp({
         scheduleAt = currentMs + IDLE_INTERVAL_MS;
       }
       fillPreparedQueue();
+      applyLoginStreak(current, currentMs);
       current.nextIdleAt = current.preparedPulls[0]?.availableAt ?? new Date(scheduleAt).toISOString();
       current.idleAnchorAt ??= new Date(anchorAt).toISOString();
       current.packs = current.packs.slice(-100);
@@ -1066,17 +1115,26 @@ export async function createKalpiApp({
       state: publicIdleState(session, currentMs, allCards, runtimeProgression()),
     };
   }
-  function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID() }) {
+  async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID() }) {
     const isNew = !session.inventory[pull.cardId];
     session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
+    const card = cardsById.get(pull.cardId);
+    const sets = normalizeNumberedSets(
+      studioContent?.gameConfig?.progression?.numberedSets,
+      (studioContent?.gameConfig?.releaseSets || []).map(({ id }) => id),
+    );
+    const stamp = stampEligible(card, sets)
+      ? await store.claimNumberedStamp(stampKey(card), Number(card.listSlot))
+      : null;
     const instance = {
       instanceId,
       cardId: pull.cardId,
-      finish: pull.finish,
+      finish: stamp ? "Holo" : pull.finish,
       pulledAt,
       isNew,
       acquiredBy,
       seenAt: null,
+      ...(stamp ? { numberedIndex: stamp.index, numberedOf: stamp.of } : {}),
     };
     session.instances.push(instance);
     session.unseenPulls ??= [];
@@ -1094,7 +1152,11 @@ export async function createKalpiApp({
         releaseSets: studioContent.gameConfig.releaseSets,
         pack: normalizePackConfig(studioContent.gameConfig.pack),
       },
+      avatars: avatarCatalog.avatars || [],
     });
+    if (avatarsPath && !databaseUrl) {
+      await writeJsonAtomic(avatarsPath, avatarCatalog);
+    }
     if (studioContentPath && !databaseUrl) {
       const canonicalStudio = path.resolve(path.dirname(cardsPath), "studio-content.json");
       if (path.resolve(studioContentPath) !== canonicalStudio) {
@@ -1294,7 +1356,10 @@ export async function createKalpiApp({
         }
 
         if (request.method === "GET" && url.pathname === "/api/state") {
-          json(response, 200, stateFor(session));
+          await store.withSession(token, (current) => {
+            applyLoginStreak(current, now());
+          });
+          json(response, 200, stateFor(store.getSession(token)));
           return;
         }
 
@@ -1425,7 +1490,7 @@ export async function createKalpiApp({
           const currentMs = now();
           const day = jerusalemDay(currentMs);
           const pool = activeIdleCards(cards, currentMs);
-          const result = await store.withSession(token, (current) => {
+          const result = await store.withSession(token, async (current) => {
             const quiz = current.currentQuiz;
             if (!quiz || quiz.quizId !== input.quizId) {
               return { status: 409, body: { error: "QUIZ_NOT_OPEN" } };
@@ -1445,7 +1510,7 @@ export async function createKalpiApp({
             }
             const pull = generateIdlePull(idlePullOptions(pool, current.inventory, current.idleDuplicateStreak));
             const pulledAt = new Date(currentMs).toISOString();
-            const instance = grantCard(current, pull, { acquiredBy: "quiz", pulledAt });
+            const instance = await grantCard(current, pull, { acquiredBy: "quiz", pulledAt });
             current.quizWonDay = day;
             current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
             current.packs.push({
@@ -1483,13 +1548,13 @@ export async function createKalpiApp({
             async () => {
               const currentMs = now();
               const pool = activeIdleCards(cards, currentMs);
-              const reward = await store.withSession(token, (current) => {
+              const reward = await store.withSession(token, async (current) => {
                 syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
                 const rank = current.pendingRankRewards?.shift();
                 if (!rank) return null;
                 const pull = generateIdlePull(idlePullOptions(pool, current.inventory, current.idleDuplicateStreak));
                 const pulledAt = new Date(currentMs).toISOString();
-                const instance = grantCard(current, pull, { acquiredBy: `rank-${rank}`, pulledAt });
+                const instance = await grantCard(current, pull, { acquiredBy: `rank-${rank}`, pulledAt });
                 current.claimedRankRewards ??= [];
                 current.claimedRankRewards.push(rank);
                 current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
@@ -1666,17 +1731,11 @@ export async function createKalpiApp({
             json(response, 400, { error: "INVALID_CARD" });
             return;
           }
-          await store.withSession(token, (current) => {
+          await store.withSession(token, async (current) => {
             if (current.inventory[card.id]) return;
-            const pulledAt = new Date(now()).toISOString();
-            current.inventory[card.id] = 1;
-            current.instances.push({
-              instanceId: randomUUID(),
-              cardId: card.id,
-              finish: card.rarity,
-              pulledAt,
-              isNew: true,
+            await grantCard(current, { cardId: card.id, finish: card.rarity }, {
               acquiredBy: "debug-unlock",
+              pulledAt: new Date(now()).toISOString(),
             });
           });
           json(response, 200, stateFor(store.getSession(token)));
@@ -1855,10 +1914,11 @@ export async function createKalpiApp({
             return;
           }
           const input = await readJson(request);
-          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual) || !validProgressionPatch(input.progression) || !validReleaseSets(input.releaseSets) || !validPackConfig(input.pack)) {
+          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual) || !validProgressionPatch(input.progression) || !validReleaseSets(input.releaseSets) || !validPackConfig(input.pack) || !validAvatarUnlocks(input.avatars, avatarCatalog.avatars)) {
             json(response, 400, { error: "INVALID_GAME_CONFIG" });
             return;
           }
+          const releaseIds = (studioContent.gameConfig.releaseSets || []).map(({ id }) => id);
           studioContent.gameConfig = {
             ...studioContent.gameConfig,
             revealTiming: normalizeRevealTiming(input.revealTiming ?? studioContent.gameConfig?.revealTiming),
@@ -1871,10 +1931,28 @@ export async function createKalpiApp({
               },
               thresholdExponent: input.progression?.thresholdExponent
                 ?? studioContent.gameConfig.progression?.thresholdExponent,
+              rankNames: input.progression?.rankNames
+                ? input.progression.rankNames.map((name) => name.trim())
+                : studioContent.gameConfig.progression?.rankNames,
+              grantLevelReward: input.progression?.grantLevelReward
+                ?? studioContent.gameConfig.progression?.grantLevelReward,
+              numberedSets: input.progression?.numberedSets
+                ? normalizeNumberedSets(input.progression.numberedSets, releaseIds)
+                : studioContent.gameConfig.progression?.numberedSets,
+              reward: input.progression?.reward ?? studioContent.gameConfig.progression?.reward,
             },
             releaseSets: mergeReleaseSets(studioContent.gameConfig.releaseSets, input.releaseSets),
             pack: mergePackConfig(studioContent.gameConfig.pack, input.pack),
           };
+          if (input.avatars) {
+            const unlocks = new Map(input.avatars.map((avatar) => [avatar.id, avatar.unlockLevel]));
+            avatarCatalog = {
+              ...avatarCatalog,
+              avatars: (avatarCatalog.avatars || []).map((avatar) => (
+                unlocks.has(avatar.id) ? { ...avatar, unlockLevel: unlocks.get(avatar.id) } : avatar
+              )),
+            };
+          }
           studioContent.generatedAt = new Date(now()).toISOString();
           applyReleaseSets();
           await persistStudioConfig();

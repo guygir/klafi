@@ -181,7 +181,8 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .card-image-meta .card-code-tag,
 #app[data-card-frame="tall-v2"] .card-image-meta strong,
-#app[data-card-frame="tall-v2"] .card-image-meta .card-copies-tag {
+#app[data-card-frame="tall-v2"] .card-image-meta .card-copies-tag,
+#app[data-card-frame="tall-v2"] .card-image-meta .card-numbered-tag {
   box-sizing: border-box;
   min-height: clamp(18px, 8cqw, 24px);
   padding: clamp(2px, 1.1cqw, 5px) clamp(5px, 1.8cqw, 8px);
@@ -355,7 +356,8 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-code-tag,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
   box-sizing: border-box;
   width: max-content;
   min-width: max-content;
@@ -1162,8 +1164,10 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
+#app[data-card-frame="fullart-v1"] .card-image-meta .card-numbered-tag,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag {
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-numbered-tag {
   box-sizing: border-box;
   width: max-content;
   min-width: max-content;

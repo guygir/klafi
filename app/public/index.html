@@ -55,6 +55,7 @@
           <i id="avatar-seal" class="avatar-seal" hidden aria-hidden="true"></i>
         </button>
         <span id="level-rank">אזרח סקרן</span>
+        <em id="level-streak" hidden></em>
         <strong id="level-number" hidden>רמה 1/5</strong>
       </div>
       <div class="level-progress-block">
@@ -381,6 +382,20 @@
             </label>
           </div>
           <div id="level-increments" class="level-increments"></div>
+          <section class="studio-progression-desk" aria-label="שמות רמות, נעילות וחותמות">
+            <label>שמות הרמות
+              <textarea id="rank-names" rows="6" dir="rtl"></textarea>
+            </label>
+            <label class="studio-reward-toggle">
+              <input id="grant-level-reward" type="checkbox" checked />
+              קלף בונוס בכל עליית רמה
+            </label>
+            <div id="avatar-unlocks" class="studio-unlock-grid"></div>
+            <fieldset class="studio-numbered-sets">
+              <legend>סדרות ממוספרות</legend>
+              <div id="numbered-sets"></div>
+            </fieldset>
+          </section>
           <section class="studio-meta-desk">
             <article>
               <p class="work-kicker">Achievements · app/data/achievements.json</p>
@@ -560,6 +575,10 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <aside id="numbered-tip" class="numbered-tip" hidden>
+    <p>זה המקום ברשימה. ראש רשימה הוא 1 מתוך 1.</p>
+    <button type="button" id="numbered-tip-dismiss">הבנתי</button>
+  </aside>
   <div id="klafi-tips" class="klafi-tips" hidden aria-hidden="true">
     <svg id="klafi-tips-dim" class="klafi-tips-dim" aria-hidden="true"></svg>
     <aside id="klafi-tips-card" class="klafi-tips-card" role="dialog" aria-modal="false" aria-labelledby="klafi-tips-title" aria-describedby="klafi-tips-body">

@@ -249,6 +249,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-compose"/);
   assert.match(html, /id="trade-create"[\s\S]*id="trade-offered-set"/);
   assert.match(html, /id="avatar-seal"/);
+  assert.match(html, /id="level-streak"/);
+  assert.match(html, /id="rank-names"/);
+  assert.match(html, /id="numbered-sets"/);
+  assert.match(html, /id="numbered-tip"/);
+  assert.match(javascript, /card-numbered-tag/);
+  assert.match(javascript, /numberedCopies/);
+  assert.match(javascript, /maybeShowNumberedTip/);
+  assert.match(css, /\.card-numbered-tag/);
+  assert.match(css, /\.numbered-tip/);
   assert.match(javascript, /ACTIVE_TRADE_EXISTS/);
   assert.match(javascript, /function applyTradeResult/);
   assert.match(javascript, /function refreshDailyChallenge/);

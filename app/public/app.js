@@ -1,5 +1,5 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
-import { attachKlafiTips } from "./tips.js";
+import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
@@ -230,6 +230,13 @@ const elements = {
   visualQuoteReveal: document.querySelector("#visual-quote-reveal"),
   levelIncrements: document.querySelector("#level-increments"),
   levelExponent: document.querySelector("#level-exponent"),
+  levelStreak: document.querySelector("#level-streak"),
+  rankNames: document.querySelector("#rank-names"),
+  grantLevelReward: document.querySelector("#grant-level-reward"),
+  avatarUnlocks: document.querySelector("#avatar-unlocks"),
+  numberedSets: document.querySelector("#numbered-sets"),
+  numberedTip: document.querySelector("#numbered-tip"),
+  numberedTipDismiss: document.querySelector("#numbered-tip-dismiss"),
   copyPackPrompts: document.querySelector("#copy-pack-prompts"),
   editorialSample: document.querySelector("#editorial-sample"),
   reviewFilter: document.querySelector("#review-filter"),
@@ -531,6 +538,8 @@ function applyHomePayload(home) {
         inventory: home.state.inventory || {},
         favorites: home.state.favorites || [],
         starCount: home.state.starCount,
+        loginStreak: home.state.loginStreak || 0,
+        numberedCopies: home.state.numberedCopies || [],
       },
     }));
   }
@@ -1714,9 +1723,19 @@ function renderProgression({ announce = false } = {}) {
   if (!progression) return;
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
-  elements.levelRank.textContent = progression.rank;
+  const streak = Number(model.serverState?.loginStreak) || 0;
+  const streakText = streak >= 3 ? `רצף ${streak}` : "";
+  elements.levelRank.textContent = streakText ? `${progression.rank} · ${streakText}` : progression.rank;
+  if (elements.levelStreak) {
+    elements.levelStreak.hidden = !streakText;
+    elements.levelStreak.textContent = streakText;
+  }
+  elements.levelAvatarButton?.classList.toggle("has-streak", streak >= 3);
+  elements.levelAvatarButton?.classList.toggle("has-week-streak", streak >= 7);
   if (elements.levelAvatarButton) {
-    elements.levelAvatarButton.setAttribute("aria-label", `${progression.rank} · הפרופיל והאווטאר`);
+    elements.levelAvatarButton.setAttribute("aria-label", streakText
+      ? `${progression.rank} · ${streakText} · הפרופיל והאווטאר`
+      : `${progression.rank} · הפרופיל והאווטאר`);
   }
   if (elements.levelTeaser) elements.levelTeaser.textContent = progression.teaser;
   elements.levelProgress.style.width = `${progression.percent}%`;
@@ -1982,6 +2001,22 @@ function finishWalkoutCard() {
   model.packPhase = "complete-card";
   const isLast = model.currentCardIndex === model.currentPack.cards.length - 1;
   setPackAction(isLast ? "לאוסף" : "הקלף הבא", false, "");
+  maybeShowNumberedTip();
+}
+
+function maybeShowNumberedTip() {
+  const tip = elements.numberedTip;
+  if (!tip) return;
+  const instance = model.currentPack?.cards?.[model.currentCardIndex] || stampForCard(model.byId.get(model.dialogCardId));
+  if (!instance?.numberedIndex) {
+    tip.hidden = true;
+    return;
+  }
+  if (readTipsPref() === "off" || readSeenPages().numbered) {
+    tip.hidden = true;
+    return;
+  }
+  tip.hidden = false;
 }
 
 function startWalkout() {
@@ -2102,6 +2137,7 @@ function rarityMark(rarity) {
 function rarityNameHe(rarity) {
   const normalized = String(rarity).toLowerCase();
   if (normalized.includes("promo")) return "קידום";
+  if (normalized.includes("holo")) return "הולו";
   if (normalized.includes("rare")) return "נדיר";
   if (normalized.includes("uncommon")) return "לא נפוץ";
   return "נפוץ";
@@ -2230,8 +2266,22 @@ function ownedCountFor(card) {
   return model.serverState?.inventory?.[card.id] ?? 0;
 }
 
+function stampForCard(card) {
+  const copies = model.serverState?.numberedCopies || [];
+  const instances = model.serverState?.instances || [];
+  return copies.find((item) => item.cardId === card?.id)
+    || instances.find((item) => item.cardId === card?.id && item.numberedIndex)
+    || null;
+}
+
 function displayCardMarkup(card, surface = "display") {
-  return cardMarkup(card, { finish: card.rarity, count: ownedCountFor(card) }, { progressiveStage: "portrait", surface });
+  const stamp = stampForCard(card);
+  return cardMarkup(card, {
+    finish: stamp?.finish || card.rarity,
+    count: ownedCountFor(card),
+    numberedIndex: stamp?.numberedIndex,
+    numberedOf: stamp?.numberedOf,
+  }, { progressiveStage: "portrait", surface });
 }
 
 function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full" } = {}) {
@@ -2241,7 +2291,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
   const copies = Number(instance.count ?? 0);
   const frame = cardDisplayFrame(card);
   return `
-    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" data-card-frame="${escapeHtml(frame)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}${presentation.trustLabel ? `. ${escapeHtml(presentation.trustLabel)}` : ""}">
+    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" data-card-frame="${escapeHtml(frame)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}${instance.numberedIndex ? `. מקום ${instance.numberedOf} · ${instance.numberedIndex} מתוך ${instance.numberedOf}` : ""}${presentation.trustLabel ? `. ${escapeHtml(presentation.trustLabel)}` : ""}">
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
@@ -2251,6 +2301,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-meta-mid"></span>
             <span class="card-meta-end">
               ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
+              ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="מקום ${instance.numberedOf} · ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
             </span>
           </div>
@@ -2315,11 +2366,16 @@ function renderBinder() {
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
     .filter((id) => isLiveReleaseSet(id));
+  const numberedIds = new Set((model.serverState?.numberedCopies || model.serverState?.instances || [])
+    .filter((item) => item.numberedIndex)
+    .map((item) => item.cardId));
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
+  if (numberedIds.size) setOrder.push("NUMBERED");
   const setLabels = {};
   for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
   setLabels.ALL = `הכול ${playerCards.length}`;
   setLabels.SPECIALS = "מיוחדים";
+  setLabels.NUMBERED = "ממוספרים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
   if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && !model.binderFilter.startsWith("RELEASE:")) {
     model.binderParty = model.binderFilter;
@@ -2344,6 +2400,8 @@ function renderBinder() {
     ...setOrder.map((set) => {
       const count = set === "ALL"
         ? owned
+        : set === "NUMBERED"
+          ? numberedIds.size
         : playerCards.filter((card) => card.releaseSetId === set.slice(8) && inventory[card.id]).length;
       const active = model.binderFilter === set;
       return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
@@ -2354,13 +2412,15 @@ function renderBinder() {
   const visible = playerCards.filter((card) => {
     const releaseOk = model.binderFilter === "ALL"
       || (model.binderFilter === "SPECIALS" ? card.eventOnly
+        : model.binderFilter === "NUMBERED" ? numberedIds.has(card.id)
         : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
     const partyOk = !model.binderParty || card.set === model.binderParty;
     return releaseOk && partyOk;
   });
   elements.binderGrid.innerHTML = visible.map((card) => {
     const count = inventory[card.id] ?? 0;
-    if (!count) {
+    if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
+      if (model.binderFilter === "NUMBERED") return "";
       return `<div class="binder-slot" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · חסר באוסף`)}">
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
         ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
@@ -2916,7 +2976,21 @@ function renderGrowth() {
   const currentCollector = collectorEntries.find(({ current }) => current);
   if (currentCollector && !collectorPreview.includes(currentCollector)) collectorPreview.push(currentCollector);
   elements.collectorBoard.innerHTML = collectorPreview.length
-    ? collectorPreview.map((entry) => `<div class="${entry.current ? "current-player" : ""}"><span>${entry.rank}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong></div>`).join("")
+    ? collectorPreview.map((entry) => {
+        const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
+        const pip = partyRegister().find(({ id }) => id === entry.factionId)?.pip
+          || model.catalog.find((card) => card.set === entry.factionId)?.pip
+          || "";
+        const ranks = model.gameConfig?.progression?.rankNames || model.gameConfig?.progression?.ranks || [];
+        const rankName = ranks[(entry.rankLevel || 1) - 1] || "";
+        const streak = Number(entry.loginStreak) >= 3 ? `רצף ${entry.loginStreak}` : "";
+        const stack = [rankName, streak].filter(Boolean).join(" · ");
+        return `<div class="collector-row${entry.current ? " current-player" : ""}">
+          <span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${pip ? `<i class="avatar-seal" style="background:${pip}" aria-hidden="true"></i>` : ""}</span>
+          <span>${entry.rank}. ${escapeHtml(entry.label)}${stack ? ` · ${escapeHtml(stack)}` : ""}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
+          <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
+        </div>`;
+      }).join("")
     : '<p class="work-note">הטבלה מחכה לשחקן הראשון.</p>';
 
   const challenge = model.leaderboards?.dailyChallenge || (model.extrasReady ? null : localDailyChallenge());
@@ -3075,6 +3149,27 @@ function populateLevelIncrements() {
       <input type="number" min="0" max="20" data-level-increment="${escapeHtml(set.id)}" value="${increments[set.id] ?? 0}" />
     </label>`).join("")}
     <p class="work-note">Max level = sum of increments for sets that are currently idle-eligible. First set ${increments["party-leaders"] ?? 5}; each later set adds its own increment.</p>`;
+  if (elements.rankNames) {
+    elements.rankNames.value = (model.gameConfig.progression?.rankNames || model.gameConfig.progression?.ranks || []).join("\n");
+  }
+  if (elements.grantLevelReward) {
+    elements.grantLevelReward.checked = model.gameConfig.progression?.grantLevelReward !== false;
+  }
+  if (elements.avatarUnlocks) {
+    const avatars = model.gameConfig.avatars || model.serverState?.avatars || [];
+    elements.avatarUnlocks.innerHTML = avatars.map((avatar) => `
+      <label>${escapeHtml(avatar.nameHe)}
+        <input type="number" min="1" max="24" data-avatar-unlock="${escapeHtml(avatar.id)}" value="${avatar.unlockLevel || 1}" />
+      </label>`).join("");
+  }
+  if (elements.numberedSets) {
+    const selected = new Set(model.gameConfig.progression?.numberedSets || ["party-leaders"]);
+    elements.numberedSets.innerHTML = sets.map((set) => `
+      <label>
+        <input type="checkbox" data-numbered-set="${escapeHtml(set.id)}"${selected.has(set.id) ? " checked" : ""} />
+        ${escapeHtml(set.nameHe)}
+      </label>`).join("");
+  }
   populateReleaseSets();
 }
 
@@ -3185,10 +3280,31 @@ function readStudioProgression() {
     increments[input.dataset.levelIncrement] = Math.min(20, Math.max(0, Math.round(Number(input.value) || 0)));
   });
   const exponent = Number(elements.levelExponent?.value);
+  const rankNames = String(elements.rankNames?.value || "")
+    .split(/\n+/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const boxes = [...(elements.numberedSets?.querySelectorAll("[data-numbered-set]") || [])];
+  const numberedSets = boxes.length
+    ? boxes.filter((input) => input.checked).map((input) => input.dataset.numberedSet)
+    : model.gameConfig.progression?.numberedSets;
   return {
     releaseLevelIncrements: increments,
     thresholdExponent: Number.isFinite(exponent) ? exponent : model.gameConfig.progression?.thresholdExponent,
+    rankNames: rankNames.length >= 2 ? rankNames : model.gameConfig.progression?.rankNames,
+    grantLevelReward: elements.grantLevelReward ? elements.grantLevelReward.checked : model.gameConfig.progression?.grantLevelReward !== false,
+    numberedSets,
   };
+}
+
+function readStudioAvatars() {
+  return (model.gameConfig.avatars || []).map((avatar) => {
+    const value = Number(elements.avatarUnlocks?.querySelector(`[data-avatar-unlock="${CSS.escape(avatar.id)}"]`)?.value);
+    return {
+      id: avatar.id,
+      unlockLevel: Number.isInteger(value) ? Math.min(24, Math.max(1, value)) : avatar.unlockLevel || 1,
+    };
+  });
 }
 
 function readStudioVisualConfig() {
@@ -3639,6 +3755,7 @@ async function saveLevelIncrements() {
         progression: readStudioProgression(),
         releaseSets: readStudioReleaseSets(),
         pack: readStudioPack(),
+        avatars: readStudioAvatars(),
       }),
     });
     populateLevelIncrements();
@@ -3962,6 +4079,7 @@ function openCardDialog(cardId) {
   renderDialogCard();
   elements.dialog.showModal();
   queueCardTextFit(elements.dialog);
+  maybeShowNumberedTip();
 }
 
 function renderDialogCard() {
@@ -4989,6 +5107,14 @@ Object.values(revealDelayInputs()).forEach((input) => input.addEventListener("ch
 Object.values(visualConfigInputs()).forEach((input) => input.addEventListener("change", saveVisualConfig));
 elements.levelIncrements?.addEventListener("change", saveLevelIncrements);
 elements.levelExponent?.addEventListener("change", saveLevelIncrements);
+elements.rankNames?.addEventListener("change", saveLevelIncrements);
+elements.grantLevelReward?.addEventListener("change", saveLevelIncrements);
+elements.avatarUnlocks?.addEventListener("change", saveLevelIncrements);
+elements.numberedSets?.addEventListener("change", saveLevelIncrements);
+elements.numberedTipDismiss?.addEventListener("click", () => {
+  markPageSeen("numbered");
+  if (elements.numberedTip) elements.numberedTip.hidden = true;
+});
 elements.saveReleaseSets?.addEventListener("click", saveReleaseSets);
 elements.studioPartyTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-studio-party]");

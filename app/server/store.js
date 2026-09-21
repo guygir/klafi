@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { moveOwnedCard } from "./numbered.js";
 
 export const EMPTY_STATE = {
   version: 6,
@@ -11,6 +12,7 @@ export const EMPTY_STATE = {
   factions: {},
   reports: [],
   idempotency: {},
+  numberedIssued: {},
 };
 
 export function normalizeState(value = {}) {
@@ -23,6 +25,7 @@ export function normalizeState(value = {}) {
   state.factions ??= {};
   state.reports ??= [];
   state.idempotency ??= {};
+  state.numberedIssued ??= {};
   for (const [token, session] of Object.entries(state.sessions)) {
     session.eventCounts ??= {};
     session.factionId ??= null;
@@ -42,6 +45,8 @@ export function normalizeState(value = {}) {
     session.avatarId ??= "kid-boy";
     session.quizWonDay ??= null;
     session.currentQuiz ??= null;
+    session.loginDay ??= null;
+    session.loginStreak ??= 0;
   }
   return state;
 }
@@ -120,6 +125,8 @@ export class JsonStore {
         highestRank: 1,
         claimedRankRewards: [],
         pendingRankRewards: [],
+        loginDay: null,
+        loginStreak: 0,
       };
       await this.persist();
       return token;
@@ -338,22 +345,18 @@ export class JsonStore {
         || !owner?.inventory[trade.offeredCardId] || !accepter?.inventory[trade.wantedCardId]) {
         return null;
       }
-      const transfer = (from, to, cardId, finish, acquiredBy) => {
-        from.inventory[cardId] -= 1;
-        if (!from.inventory[cardId]) delete from.inventory[cardId];
-        const isNew = !to.inventory[cardId];
-        to.inventory[cardId] = (to.inventory[cardId] ?? 0) + 1;
-        to.instances.push({
-          instanceId: randomUUID(),
-          cardId,
-          finish,
-          pulledAt: acceptedAt,
-          isNew,
-          acquiredBy,
-        });
-      };
-      transfer(owner, accepter, trade.offeredCardId, offeredFinish, "trade-accepted");
-      transfer(accepter, owner, trade.wantedCardId, wantedFinish, "trade-accepted");
+      moveOwnedCard(owner, accepter, trade.offeredCardId, {
+        acquiredBy: "trade-accepted",
+        pulledAt: acceptedAt,
+        finish: offeredFinish,
+        instanceId: randomUUID(),
+      });
+      moveOwnedCard(accepter, owner, trade.wantedCardId, {
+        acquiredBy: "trade-accepted",
+        pulledAt: acceptedAt,
+        finish: wantedFinish,
+        instanceId: randomUUID(),
+      });
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
       trade.status = "accepted";
@@ -417,6 +420,10 @@ export class JsonStore {
         stars: Object.keys(session.inventory).reduce((sum, cardId) => sum + cardStars(cardsById.get(cardId)), 0),
         packs: session.idlePullCount ?? session.packCount,
         current: token === currentToken,
+        avatarId: session.avatarId || "kid-boy",
+        factionId: session.factionId || null,
+        loginStreak: session.loginStreak || 0,
+        rankLevel: session.highestRank || 1,
       }))
       .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
@@ -451,6 +458,15 @@ export class JsonStore {
       fixture: false,
       label: "Real activity in this local PoC",
     };
+  }
+
+  async claimNumberedStamp(key, max) {
+    this.state.numberedIssued ??= {};
+    const current = this.state.numberedIssued[key] || 0;
+    if (current >= max) return null;
+    const next = current + 1;
+    this.state.numberedIssued[key] = next;
+    return { index: next, of: max };
   }
 
   exclusive(operation) {

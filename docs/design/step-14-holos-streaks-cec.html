@@ -206,13 +206,13 @@
     <table>
       <thead><tr><th>מה</th><th>איפה</th><th>ב־Studio?</th></tr></thead>
       <tbody>
-        <tr><td>שמות הרמות</td><td><code>app/data/studio-content.json</code> → <code>gameConfig.progression.rankNames</code></td><td>לא. עורכים JSON.</td></tr>
+        <tr><td>שמות הרמות</td><td><code>app/data/studio-content.json</code> → <code>gameConfig.progression.rankNames</code></td><td>כן. תיבת «שמות הרמות».</td></tr>
         <tr><td>כמה רמות כל סדרה מוסיפה</td><td>אותו קובץ → <code>releaseLevelIncrements</code> (מנהיגים 5, סגן 2, …)</td><td>כן. שדות המספר תחת «סף עקומה» / תוספת לכל סדרה. שומרים עם קונפיג הסטודיו.</td></tr>
         <tr><td>כמה קלפים צריך בפועל</td><td>נוסחה: ייחודיים ≥ תקרה(גודל הקטלוג הפתוח × (מקום/רמות)^<code>thresholdExponent</code>). ברירת מחדל 1.2</td><td>כן. «סף עקומה».</td></tr>
         <tr><td>תקרת רמה עכשיו</td><td>סכום התוספות של סדרות שפתוחות לאיסוף, ולא מעבר לאורך רשימת השמות</td><td>עקיף: מדליקים סדרה + התוספת שלה</td></tr>
-        <tr><td>אווטארים שנפתחים</td><td><code>app/data/avatars.json</code> → <code>unlockLevel</code></td><td>לא. עורכים JSON.</td></tr>
-        <tr><td>קלף בונוס בעלייה</td><td>קבוע בקוד. כל עליית רמה מציעה קלף בונוס</td><td>לא</td></tr>
-        <tr><td>אילו סדרות מקבלות חותמת (14)</td><td>רשימת <code>numberedSets</code> — עדיין לא קיימת. תוצע ב־JSON / Studio כשנממש</td><td>כן, כשנממש</td></tr>
+        <tr><td>אווטארים שנפתחים</td><td><code>app/data/avatars.json</code> → <code>unlockLevel</code></td><td>כן. שדה רמה לכל אווטאר.</td></tr>
+        <tr><td>קלף בונוס בעלייה</td><td><code>grantLevelReward</code></td><td>כן. סימון «קלף בונוס בכל עליית רמה».</td></tr>
+        <tr><td>אילו סדרות מקבלות חותמת (14)</td><td><code>numberedSets</code></td><td>כן. סימון סדרות ממוספרות.</td></tr>
       </tbody>
     </table>
     <p class="ranks"><strong>שמות עכשיו:</strong> אזרח סקרן · קורא כותרות · מצביע מעורב · פעיל שכונתי · חבר סניף · רכז שטח · מנהל מטה · יועץ פרלמנטרי · חבר כנסת · יו״ר ועדה · סגן שר · שר · שר בכיר · ראש הממשלה.</p>

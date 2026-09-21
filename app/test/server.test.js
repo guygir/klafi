@@ -1182,3 +1182,90 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   assert.equal(restoredSecond.status, 200);
   assert.equal(restoredSecond.body.inventory[secondCardId], 1);
 });
+
+test("numbered stamps are one holo per party slot and streaks count Jerusalem days", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-"));
+  const clock = { value: Date.parse("2026-09-21T10:00:00+03:00") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const first = await api(running.base, "/api/session", { method: "POST" });
+  const second = await api(running.base, "/api/session", { method: "POST" });
+  const cardId = "LIK-M01-Q01";
+  const otherId = "YSR-M01-Q01";
+  const stamped = await api(running.base, "/api/debug/unlock-card", {
+    token: first.body.token,
+    method: "POST",
+    body: { cardId },
+  });
+  assert.equal(stamped.status, 200);
+  const copy = stamped.body.instances.find((item) => item.cardId === cardId);
+  assert.equal(copy.finish, "Holo");
+  assert.equal(copy.numberedIndex, 1);
+  assert.equal(copy.numberedOf, 1);
+  assert.equal(stamped.body.numberedCopies.length, 1);
+
+  const late = await api(running.base, "/api/debug/unlock-card", {
+    token: second.body.token,
+    method: "POST",
+    body: { cardId },
+  });
+  const lateCopy = late.body.instances.find((item) => item.cardId === cardId);
+  assert.notEqual(lateCopy.finish, "Holo");
+  assert.equal(lateCopy.numberedIndex, undefined);
+  assert.equal(late.body.numberedCopies.length, 0);
+
+  const other = await api(running.base, "/api/debug/unlock-card", {
+    token: first.body.token,
+    method: "POST",
+    body: { cardId: otherId },
+  });
+  assert.equal(other.body.instances.find((item) => item.cardId === otherId).numberedIndex, 1);
+
+  const dayOne = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(dayOne.body.loginStreak, 1);
+  clock.value = Date.parse("2026-09-22T10:00:00+03:00");
+  const dayTwo = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(dayTwo.body.loginStreak, 2);
+  clock.value = Date.parse("2026-09-23T10:00:00+03:00");
+  const dayThree = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(dayThree.body.loginStreak, 3);
+  clock.value = Date.parse("2026-09-25T10:00:00+03:00");
+  const reset = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(reset.body.loginStreak, 1);
+});
+
+test("studio publishes rank names, unlocks, bonus flag, and numbered sets", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-studio-progression-"));
+  const studioContentPath = path.join(dataDir, "studio-content.json");
+  await copyFile(path.join(appRoot, "data/studio-content.json"), studioContentPath);
+  const running = await start(dataDir, { value: Date.parse("2026-09-21T12:00:00.000Z") }, {
+    studioContentPath,
+  });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const created = await api(running.base, "/api/session", { method: "POST" });
+  const saved = await api(running.base, "/api/studio/config", {
+    token: created.body.token,
+    method: "POST",
+    body: {
+      progression: {
+        rankNames: ["אזרח סקרן", "קורא כותרות", "ראש הממשלה"],
+        grantLevelReward: false,
+        numberedSets: ["party-leaders"],
+        thresholdExponent: 1.2,
+      },
+      avatars: [{ id: "grown-man", unlockLevel: 2 }],
+    },
+  });
+  assert.equal(saved.status, 200);
+  assert.deepEqual(saved.body.progression.rankNames.slice(0, 3), ["אזרח סקרן", "קורא כותרות", "ראש הממשלה"]);
+  assert.equal(saved.body.progression.grantLevelReward, false);
+  assert.deepEqual(saved.body.progression.numberedSets, ["party-leaders"]);
+  assert.equal(saved.body.avatars.find(({ id }) => id === "grown-man").unlockLevel, 2);
+});

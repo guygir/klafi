@@ -1,0 +1,85 @@
+export function jerusalemDay(ms) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(ms));
+}
+
+export function previousJerusalemDay(ms) {
+  const today = jerusalemDay(ms);
+  const noon = Date.parse(`${today}T12:00:00+03:00`);
+  return jerusalemDay(Number.isFinite(noon) ? noon - 24 * 60 * 60 * 1000 : ms - 24 * 60 * 60 * 1000);
+}
+
+export function applyLoginStreak(session, nowMs) {
+  const today = jerusalemDay(nowMs);
+  if (session.loginDay === today) return false;
+  session.loginStreak = session.loginDay === previousJerusalemDay(nowMs)
+    ? Math.max(1, Number(session.loginStreak) || 0) + 1
+    : 1;
+  session.loginDay = today;
+  return true;
+}
+
+export function streakLabel(streak) {
+  const count = Math.max(0, Math.round(Number(streak) || 0));
+  return count >= 3 ? `רצף ${count}` : "";
+}
+
+export function normalizeNumberedSets(value, releaseIds = []) {
+  if (!Array.isArray(value)) return ["party-leaders"];
+  const allowed = new Set(releaseIds);
+  return [...new Set(value.map(String))].filter((id) => !allowed.size || allowed.has(id));
+}
+
+export function stampEligible(card, numberedSets = []) {
+  const slot = Number(card?.listSlot);
+  return Boolean(
+    card
+    && Number.isInteger(slot)
+    && slot > 0
+    && Array.isArray(numberedSets)
+    && numberedSets.includes(card.releaseSetId)
+    && !card.eventOnly,
+  );
+}
+
+export function stampKey(card) {
+  return `${card.set}:${Number(card.listSlot)}`;
+}
+
+export function numberedCopies(instances = []) {
+  return (instances || []).filter((item) => Number(item?.numberedIndex) > 0);
+}
+
+export function takeInstanceForCard(session, cardId) {
+  const instances = session.instances || [];
+  const pick = [...instances].reverse().find((item) => item.cardId === cardId && item.numberedIndex)
+    || [...instances].reverse().find((item) => item.cardId === cardId);
+  if (!pick) return null;
+  session.instances = instances.filter((item) => item.instanceId !== pick.instanceId);
+  return pick;
+}
+
+export function moveOwnedCard(from, to, cardId, { acquiredBy, pulledAt, finish, instanceId }) {
+  from.inventory[cardId] -= 1;
+  if (!from.inventory[cardId]) delete from.inventory[cardId];
+  const isNew = !to.inventory[cardId];
+  to.inventory[cardId] = (to.inventory[cardId] ?? 0) + 1;
+  const instance = takeInstanceForCard(from, cardId);
+  to.instances.push(instance
+    ? {
+      ...instance,
+      isNew,
+      acquiredBy,
+      pulledAt,
+      seenAt: null,
+    }
+    : {
+      instanceId,
+      cardId,
+      finish,
+      pulledAt,
+      isNew,
+      acquiredBy,
+      seenAt: null,
+    });
+  return instance;
+}

@@ -40,6 +40,8 @@ export function slimPublicState(session, shell, now = Date.now()) {
     nextIdleAt: session.nextIdleAt,
     packAvailable: Boolean((session.unseenPulls || []).length),
     highestRank: session.highestRank || 1,
+    loginStreak: session.loginStreak || 0,
+    numberedCopies: (session.instances || []).filter((item) => Number(item?.numberedIndex) > 0),
     progression: {
       level,
       totalLevels,

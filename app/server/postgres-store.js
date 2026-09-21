@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { normalizeState } from "./store.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
+import { moveOwnedCard } from "./numbered.js";
 
 const { Pool } = pg;
 
@@ -11,6 +12,7 @@ const MIGRATIONS = [
   ["001_runtime_state", "001_runtime_state.sql"],
   ["002_normalized_runtime", "002_normalized_runtime.sql"],
   ["003_launch_reliability", "003_launch_reliability.sql"],
+  ["004_numbered_streaks", "004_numbered_streaks.sql"],
 ];
 
 function iso(value) {
@@ -52,6 +54,8 @@ function emptySession(token, createdAt) {
     pendingRankRewards: [],
     quizWonDay: null,
     currentQuiz: null,
+    loginDay: null,
+    loginStreak: 0,
   };
 }
 
@@ -65,6 +69,8 @@ function extrasFromSession(session) {
     claimedRankRewards: session.claimedRankRewards || [],
     pendingRankRewards: session.pendingRankRewards || [],
     currentQuiz: session.currentQuiz || null,
+    loginDay: session.loginDay || null,
+    loginStreak: session.loginStreak || 0,
   };
 }
 
@@ -312,9 +318,14 @@ export class PostgresStore {
     for (const instance of session.instances || []) {
       await client.query(
         `INSERT INTO kalpi_instances (
-           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-         ON CONFLICT (instance_id) DO NOTHING`,
+           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at,
+           numbered_index, numbered_of
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         ON CONFLICT (instance_id) DO UPDATE SET
+           session_token = EXCLUDED.session_token,
+           finish = EXCLUDED.finish,
+           numbered_index = EXCLUDED.numbered_index,
+           numbered_of = EXCLUDED.numbered_of`,
         [
           instance.instanceId,
           token,
@@ -324,6 +335,8 @@ export class PostgresStore {
           Boolean(instance.isNew),
           instance.acquiredBy || null,
           instance.seenAt || null,
+          instance.numberedIndex || null,
+          instance.numberedOf || null,
         ],
       );
     }
@@ -389,7 +402,9 @@ export class PostgresStore {
              'pulledAt', instance.pulled_at,
              'isNew', instance.is_new,
              'acquiredBy', instance.acquired_by,
-             'seenAt', instance.seen_at
+             'seenAt', instance.seen_at,
+             'numberedIndex', instance.numbered_index,
+             'numberedOf', instance.numbered_of
            ) ORDER BY instance.pulled_at ASC)
            FROM kalpi_instances AS instance
            WHERE instance.session_token = session.token
@@ -447,6 +462,8 @@ export class PostgresStore {
       pendingRankRewards: extras.pendingRankRewards || [],
       quizWonDay: row.quiz_won_day,
       currentQuiz: extras.currentQuiz || null,
+      loginDay: extras.loginDay || null,
+      loginStreak: extras.loginStreak || 0,
     };
   }
 
@@ -510,20 +527,27 @@ export class PostgresStore {
            (item->>'pulledAt')::timestamptz AS pulled_at,
            COALESCE((item->>'isNew')::boolean, false) AS is_new,
            NULLIF(item->>'acquiredBy', '') AS acquired_by,
-           NULLIF(item->>'seenAt', '')::timestamptz AS seen_at
+           NULLIF(item->>'seenAt', '')::timestamptz AS seen_at,
+           NULLIF(item->>'numberedIndex', '')::integer AS numbered_index,
+           NULLIF(item->>'numberedOf', '')::integer AS numbered_of
          FROM jsonb_array_elements($18::jsonb) AS item
        ),
        instance_upsert AS (
          INSERT INTO kalpi_instances (
-           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at
+           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at,
+           numbered_index, numbered_of
          )
-         SELECT instance_id, $1, card_id, finish, pulled_at, is_new, acquired_by, seen_at
+         SELECT instance_id, $1, card_id, finish, pulled_at, is_new, acquired_by, seen_at,
+           numbered_index, numbered_of
          FROM instance_input
          ON CONFLICT (instance_id) DO UPDATE SET
+           session_token = EXCLUDED.session_token,
            finish = EXCLUDED.finish,
            is_new = EXCLUDED.is_new,
            acquired_by = EXCLUDED.acquired_by,
-           seen_at = EXCLUDED.seen_at
+           seen_at = EXCLUDED.seen_at,
+           numbered_index = EXCLUDED.numbered_index,
+           numbered_of = EXCLUDED.numbered_of
          RETURNING instance_id
        ),
        instance_delete AS (
@@ -882,22 +906,18 @@ export class PostgresStore {
       if (!owner?.inventory[trade.offeredCardId] || !accepter?.inventory[trade.wantedCardId]) return null;
       const previousOwner = structuredClone(owner);
       const previousAccepter = structuredClone(accepter);
-      const transfer = (from, to, cardId, finish, acquiredBy) => {
-        from.inventory[cardId] -= 1;
-        if (!from.inventory[cardId]) delete from.inventory[cardId];
-        const isNew = !to.inventory[cardId];
-        to.inventory[cardId] = (to.inventory[cardId] ?? 0) + 1;
-        to.instances.push({
-          instanceId: randomUUID(),
-          cardId,
-          finish,
-          pulledAt: acceptedAt,
-          isNew,
-          acquiredBy,
-        });
-      };
-      transfer(owner, accepter, trade.offeredCardId, offeredFinish, "trade-accepted");
-      transfer(accepter, owner, trade.wantedCardId, wantedFinish, "trade-accepted");
+      moveOwnedCard(owner, accepter, trade.offeredCardId, {
+        acquiredBy: "trade-accepted",
+        pulledAt: acceptedAt,
+        finish: offeredFinish,
+        instanceId: randomUUID(),
+      });
+      moveOwnedCard(accepter, owner, trade.wantedCardId, {
+        acquiredBy: "trade-accepted",
+        pulledAt: acceptedAt,
+        finish: wantedFinish,
+        instanceId: randomUUID(),
+      });
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
       trade.status = "accepted";
@@ -997,6 +1017,8 @@ export class PostgresStore {
     const cardsById = new Map(cards.map((card) => [card.id, card]));
     const sessions = await this.pool.query(
       `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
+              s.avatar_id, s.faction_id, s.highest_rank,
+              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
               COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
        FROM kalpi_sessions s
        LEFT JOIN kalpi_inventory i ON i.session_token = s.token
@@ -1011,6 +1033,10 @@ export class PostgresStore {
           stars: Object.keys(inventory).reduce((sum, cardId) => sum + cardStars(cardsById.get(cardId)), 0),
           packs: row.idle_pull_count ?? row.pack_count,
           current: row.token === currentToken,
+          avatarId: row.avatar_id || "kid-boy",
+          factionId: row.faction_id || null,
+          loginStreak: row.login_streak || 0,
+          rankLevel: row.highest_rank || 1,
         };
       })
       .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
@@ -1065,6 +1091,20 @@ export class PostgresStore {
       fixture: false,
       label: "Real activity in this local PoC",
     };
+  }
+
+  async claimNumberedStamp(key, max) {
+    const result = await this.executor().query(
+      `INSERT INTO kalpi_numbered_issued (stamp_key, issued)
+       VALUES ($1, 1)
+       ON CONFLICT (stamp_key) DO UPDATE
+       SET issued = kalpi_numbered_issued.issued + 1
+       WHERE kalpi_numbered_issued.issued < $2
+       RETURNING issued`,
+      [key, max],
+    );
+    const issued = result.rows[0]?.issued;
+    return issued ? { index: issued, of: max } : null;
   }
 
   async getStudioConfig() {
