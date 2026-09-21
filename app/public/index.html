@@ -199,27 +199,27 @@
             <div id="trade-preview" class="trade-preview" hidden></div>
             <div id="trade-active" class="trade-active" hidden></div>
             <div id="trade-compose" class="trade-compose">
+              <div class="trade-actions">
+                <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
+                <button id="trade-demo" class="secondary-action" type="button">העתקת קישור</button>
+              </div>
               <div class="trade-form">
                 <fieldset>
                   <legend>אני נותן</legend>
+                  <button type="button" id="trade-offered-preview" class="trade-chip" hidden></button>
                   <div class="trade-choice-fields">
                     <label>סדרה / מפלגה <select id="trade-offered-set"></select></label>
                     <label>קלף <select id="trade-offered-card"></select></label>
                   </div>
-                  <button type="button" id="trade-offered-preview" class="trade-chip" hidden></button>
                 </fieldset>
                 <fieldset>
                   <legend>אני רוצה</legend>
+                  <button type="button" id="trade-wanted-preview" class="trade-chip" hidden></button>
                   <div class="trade-choice-fields">
                     <label>סדרה / מפלגה <select id="trade-wanted-set"></select></label>
                     <label>קלף <select id="trade-wanted-card"></select></label>
                   </div>
-                  <button type="button" id="trade-wanted-preview" class="trade-chip" hidden></button>
                 </fieldset>
-              </div>
-              <div class="trade-actions">
-                <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
-                <button id="trade-demo" class="secondary-action" type="button">העתקת קישור</button>
               </div>
             </div>
           </article>

@@ -218,6 +218,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-wanted-set"/);
   assert.match(html, /id="trade-active"/);
   assert.match(html, /id="trade-compose"/);
+  assert.match(html, /id="trade-create"[\s\S]*id="trade-offered-set"/);
   assert.match(html, /id="avatar-seal"/);
   assert.match(javascript, /ACTIVE_TRADE_EXISTS/);
   assert.match(javascript, /function applyTradeResult/);
