@@ -36,6 +36,7 @@ const model = {
   walkoutStage: 0,
   previewMode: false,
   binderFilter: "ALL",
+  binderParty: "",
   binderPage: 0,
   achievementPage: 0,
   communityPage: "trade",
@@ -2253,34 +2254,49 @@ function renderBinder() {
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
     .filter((id) => isLiveReleaseSet(id));
-  const setOrder = [
-    "ALL",
-    ...releaseOrder.map((id) => `RELEASE:${id}`),
-    ...new Set(playerCards.filter((card) => !card.eventOnly).map((card) => card.set)),
-  ];
-  const setLabels = Object.fromEntries(playerCards.map((card) => [card.set, cardSetName(card)]));
+  const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
+  const setLabels = {};
   for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
   setLabels.ALL = `הכול ${playerCards.length}`;
   setLabels.SPECIALS = "מיוחדים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
-  elements.binderFilters.innerHTML = setOrder.map((set) => {
-    const count = set === "ALL"
-      ? owned
-      : playerCards.filter((card) => {
-        const inSet = set === "SPECIALS"
-          ? card.eventOnly
-          : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
-        return inSet && inventory[card.id];
-      }).length;
-    const active = model.binderFilter === set;
-    return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
-  }).join("");
+  if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && !model.binderFilter.startsWith("RELEASE:")) {
+    model.binderParty = model.binderFilter;
+    model.binderFilter = "ALL";
+  }
+  const partyOptions = [...new Map(
+    playerCards.filter((card) => !card.eventOnly).map((card) => [card.set, cardSetName(card)]),
+  )].sort((left, right) => left[1].localeCompare(right[1], "he"));
+  if (model.binderParty && !partyOptions.some(([id]) => id === model.binderParty)) model.binderParty = "";
+  elements.binderFilters.innerHTML = [
+    `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
+    ...setOrder.map((set) => {
+      const count = set === "ALL"
+        ? owned
+        : playerCards.filter((card) => card.releaseSetId === set.slice(8) && inventory[card.id]).length;
+      const active = model.binderFilter === set;
+      return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
+    }),
+    `</div>`,
+    `<label class="filter-party${model.binderParty ? " active" : ""}">
+      <span>מפלגה</span>
+      <select data-binder-party aria-label="בחירת מפלגה או הכול">
+        <option value="">הכול</option>
+        ${partyOptions.map(([id, name]) => {
+          const count = playerCards.filter((card) => card.set === id && inventory[card.id]).length;
+          return `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)} · ${count}</option>`;
+        }).join("")}
+      </select>
+    </label>`,
+  ].join("");
 
-  const visible = playerCards.filter((card) => model.binderFilter === "ALL"
-    || (model.binderFilter === "SPECIALS" ? card.eventOnly
-      : model.binderFilter.startsWith("RELEASE:")
-        ? card.releaseSetId === model.binderFilter.slice(8)
-        : card.set === model.binderFilter));
+  const visible = playerCards.filter((card) => {
+    const releaseOk = model.binderFilter === "ALL"
+      || (model.binderFilter === "SPECIALS" ? card.eventOnly
+        : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
+    const partyOk = !model.binderParty || card.set === model.binderParty;
+    return releaseOk && partyOk;
+  });
   elements.binderGrid.innerHTML = visible.map((card) => {
     const count = inventory[card.id] ?? 0;
     if (!count) {
@@ -4919,6 +4935,13 @@ elements.binderFilters.addEventListener("click", (event) => {
   const button = event.target.closest("[data-filter]");
   if (!button) return;
   model.binderFilter = button.dataset.filter;
+  model.binderPage = 0;
+  renderBinder();
+});
+elements.binderFilters.addEventListener("change", (event) => {
+  const select = event.target.closest("[data-binder-party]");
+  if (!select) return;
+  model.binderParty = select.value;
   model.binderPage = 0;
   renderBinder();
 });

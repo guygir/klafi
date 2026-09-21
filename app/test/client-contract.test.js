@@ -307,6 +307,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.top-nav-row\s*\{[^}]*position: fixed/s);
   assert.doesNotMatch(javascript, /window\.scrollTo/);
   assert.match(html, /id="binder-pager"/);
+  assert.match(html, /סינון האוסף לפי סדרה או מפלגה/);
+  assert.match(javascript, /binderParty: ""/);
+  assert.match(javascript, /data-binder-party/);
+  assert.match(javascript, /בחירת מפלגה או הכול/);
+  assert.match(javascript, /const setOrder = \["ALL", \.\.\.releaseOrder\.map/);
+  assert.match(javascript, /const partyOk = !model\.binderParty \|\| card\.set === model\.binderParty/);
+  assert.match(javascript, /model\.binderParty = select\.value/);
+  assert.match(css, /\.filter-party/);
+  assert.match(css, /\.filter-sets/);
   assert.match(html, /id="community-tabs"/);
   assert.match(html, /role="tabpanel"/);
   assert.match(html, /aria-controls="community-panel-trade"/);
