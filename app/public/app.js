@@ -89,6 +89,7 @@ const elements = {
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
   homeCopy: document.querySelector("#home-copy"),
+  skipToMain: document.querySelector("#skip-to-main"),
   advocacyShort: document.querySelector("#advocacy-short"),
   openAdvocacy: document.querySelector("#open-advocacy"),
   advocacyDialog: document.querySelector("#advocacy-dialog"),
@@ -225,6 +226,7 @@ const elements = {
   navButtons: [...document.querySelectorAll("[data-nav]")],
   dialog: document.querySelector("#card-dialog"),
   dialogCard: document.querySelector("#dialog-card"),
+  dialogTrust: document.querySelector("#dialog-trust"),
   dialogSource: document.querySelector("#dialog-source"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
   dialogInstagram: document.querySelector("#dialog-instagram"),
@@ -1000,8 +1002,9 @@ function showSharedCard(cardId, isTradeIntent = false) {
     ? "זו תצוגה של הצעת החלפה. הבעלות לא השתנתה והקלף לא נוסף לאוסף שלכם."
     : "זו תצוגת שיתוף בלבד. הקלף לא נוסף לאוסף שלכם.";
   if (elements.sharedTrust) {
-    elements.sharedTrust.textContent = "";
-    elements.sharedTrust.hidden = true;
+    const line = cardTrustLine(card);
+    elements.sharedTrust.textContent = line;
+    elements.sharedTrust.hidden = !line;
   }
   configureSourceLink(elements.sharedSource, card);
   elements.sharedSource.dataset.sourceCard = card.id;
@@ -2012,10 +2015,6 @@ function renderWalkoutStage() {
   const sourceLink = walkout.sourceUrl
     ? `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}" aria-label="${escapeHtml(`פתיחת המקור${sourceName} בכרטיסייה חדשה`)}">למקור המצורף ↗</a>`
     : "";
-  const contentClass = card.releaseTier === "critique"
-    ? "פרשנות/ביקורת"
-    : walkout.kind === "quote" ? "ציטוט" : "עובדתי";
-  const releaseName = model.gameConfig?.releaseSets?.find(({ id }) => id === card.releaseSetId)?.nameHe;
   elements.packStep.textContent = `קלף ${model.currentCardIndex + 1}`;
   elements.packCounter.textContent = `${model.currentCardIndex + 1} / ${model.currentPack.cards.length}`;
   elements.packHeading.textContent = {
@@ -2034,7 +2033,7 @@ function renderWalkoutStage() {
         <div class="walkout-content">
           ${cardMarkup(card, instance, { progressiveStage: "blank", surface: "walkout" })}
           <div class="walkout-receipt">
-            <span>${escapeHtml([contentClass, ...cardTrustReceipt(card), releaseName, formatTrustDate(walkout.date)].filter(Boolean).join(" · "))}</span>
+            <span>${escapeHtml(cardTrustLine(card))}</span>
             ${sourceLink}
           </div>
         </div>
@@ -2157,6 +2156,17 @@ function cardTrustReceipt(card) {
   const party = partyRegister().find(({ id }) => id === card.set);
   const filingStatus = partyStatusShort(party);
   return [quoteStatus, filingStatus].filter(Boolean);
+}
+
+function cardTrustLine(card) {
+  const walkout = card.walkout || {};
+  const contentClass = card.releaseTier === "critique"
+    ? "פרשנות/ביקורת"
+    : walkout.kind === "quote" ? "ציטוט" : "עובדתי";
+  const releaseName = model.gameConfig?.releaseSets?.find(({ id }) => id === card.releaseSetId)?.nameHe;
+  return [contentClass, ...cardTrustReceipt(card), releaseName, formatTrustDate(walkout.date)]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function configureSourceLink(link, card) {
@@ -3930,6 +3940,11 @@ function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   const ownedCount = model.serverState.inventory[card.id] ?? 0;
   elements.dialogCard.innerHTML = displayCardMarkup(card);
+  if (elements.dialogTrust) {
+    const line = cardTrustLine(card);
+    elements.dialogTrust.textContent = line;
+    elements.dialogTrust.hidden = !line;
+  }
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
   elements.dialogWhatsapp.hidden = ownedCount < 1;
@@ -4813,6 +4828,10 @@ elements.shareSheetSave?.addEventListener("click", () => {
 });
 elements.shareSheet?.addEventListener("click", (event) => {
   if (event.target === elements.shareSheet) closeShareSheet();
+});
+elements.skipToMain?.addEventListener("click", (event) => {
+  event.preventDefault();
+  document.querySelector("#main")?.focus();
 });
 elements.openTrustLegend.addEventListener("click", () => elements.trustDialog.showModal());
 elements.closeTrust.addEventListener("click", () => elements.trustDialog.close());

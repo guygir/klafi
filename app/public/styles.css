@@ -55,13 +55,39 @@ button:focus-visible {
   padding: 0 28px 104px;
 }
 
+.skip-link {
+  position: absolute;
+  z-index: 80;
+  inset-inline-start: 16px;
+  top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
 .masthead {
   min-height: 74px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  border-bottom: 1px solid rgba(44, 51, 48, 0.32);
+}
+
+.masthead-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  border-bottom: 1px solid rgba(44, 51, 48, 0.32);
+  min-height: 54px;
 }
 
 .wordmark {
@@ -140,13 +166,13 @@ button:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  min-height: 38px;
-  padding: 7px 0;
-  border-bottom: 1px solid rgba(44, 51, 48, 0.2);
+  min-height: 34px;
+  padding: 6px 0 4px;
+  border-bottom: 1px solid rgba(44, 51, 48, 0.16);
   color: var(--danger-mute);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.045em;
+  letter-spacing: 0.02em;
 }
 
 .advocacy-bar button {
@@ -2796,6 +2822,8 @@ body {
   padding-top: env(safe-area-inset-top);
 }
 
+.masthead-row { min-height: 48px; }
+
 .masthead-meta {
   gap: 5px;
 }
@@ -2887,12 +2915,6 @@ body {
   color: var(--paper);
 }
 
-.top-nav-row .advocacy-info {
-  position: absolute;
-  right: max(4px, env(safe-area-inset-right));
-  top: 7px;
-  pointer-events: auto;
-}
 
 #home-view .home-grid {
   flex: 1 1 auto;

@@ -99,7 +99,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 **Active product sequence**
 7. [x] Unified card pipeline, taller cards, no fake social counts. One `--card-width` token sizes walkout, dialog and share. Quote-fit keeps a readable floor on binder/peek/trade. Trades use the same renderer and dialog.
 8. Learning loop: two-question owned-card quiz, five-minute clock, one reward per Jerusalem day, comprehension feedback and learning-linked achievements. **Deferred by product decision; player option removed while the server implementation remains parked.**
-9. Hebrew, trust and accessibility pass: player copy, advocacy disclosure, source receipts, dated CEC/status labels, keyboard/reduced-motion behavior and screen-reader labels. **In progress.**
+9. Hebrew, trust and accessibility pass: player copy, advocacy disclosure, source receipts, dated CEC/status labels, keyboard/reduced-motion behavior and screen-reader labels. **In progress.** Visible advocacy strip, skip-to-content, and dated CEC/source receipts on walkout, share, and the card dialog.
 10. Recurring phone + desktop QA and launch hardening after every slice: real-device WhatsApp/Instagram handoff, recovery, moderation, replay-safe writes without gameplay throttles, a durable correction/report queue, monitoring, verified backup/restore and safe rollback. **In progress.**
 11. [x] Community loop: anonymous faction tally, honest country leaderboard, real transactional trading/gifting, sharing/referrals and creator acquisition links. One open offer per player, slim board, server accept, race from real pulls, level bonus card, party pip on the avatar.
 

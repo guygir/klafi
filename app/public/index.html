@@ -19,10 +19,16 @@
   <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-25" />
 </head>
 <body>
+  <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
   <div class="paper-noise" aria-hidden="true"></div>
   <div id="app" class="app-shell home-active" data-theme="pack-v2" data-card-frame="tall-v2" data-density="airy-v2" data-quote-reveal="ink-v2">
     <div id="site-card-peeks" class="site-card-peeks" aria-hidden="true"></div>
     <header class="masthead">
+      <div class="advocacy-bar">
+        <span id="advocacy-short">מהדורת עמדה גלויה · קְלָפִי תומכת בשינוי</span>
+        <button id="open-advocacy" type="button" aria-haspopup="dialog">גילוי נאות</button>
+      </div>
+      <div class="masthead-row">
       <button class="wordmark" type="button" data-nav="home" aria-label="לעמוד הבית">
         <b>קְלָפִי</b>
       </button>
@@ -38,6 +44,7 @@
         <button class="header-debug-reset" type="button" data-nav="studio" data-studio-only hidden>Studio</button>
         <a class="header-debug-reset presentation-link" href="/project-docs/presentation/poc-response/index.html" target="_blank" rel="noopener" data-debug-only>Presentation</a>
         <a class="header-debug-reset presentation-studio-link" href="/project-docs/presentation/poc-response/index.html?studio=1" target="_blank" rel="noopener" data-debug-only>Presentation Studio</a>
+      </div>
       </div>
     </header>
     <section class="level-strip" aria-label="התקדמות">
@@ -445,8 +452,6 @@
         <button type="button" data-nav="achievements"><span aria-hidden="true">◇</span>הישגים</button>
         <button type="button" data-nav="growth"><span aria-hidden="true">▣</span>קהילה</button>
       </nav>
-      <span id="advocacy-short" class="visually-hidden">מהדורת עמדה גלויה</span>
-      <button id="open-advocacy" class="advocacy-info" type="button" aria-label="גילוי נאות: איך נבחר התוכן?" title="איך נבחר התוכן?">ⓘ</button>
     </div>
 
   <dialog id="card-dialog" class="card-dialog">
@@ -454,6 +459,7 @@
     <div class="dialog-card-stage">
       <div id="dialog-card"></div>
     </div>
+    <p id="dialog-trust" class="card-trust-note" hidden></p>
     <div class="dialog-meta-row">
       <a id="dialog-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
       <button id="dialog-report" class="report-link" type="button">דיווח על טעות בקלף</button>

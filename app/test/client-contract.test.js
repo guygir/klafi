@@ -31,6 +31,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /--pip/);
   assert.match(html, /aria-live/);
+  assert.match(html, /id="skip-to-main"/);
+  assert.match(html, /דילוג לתוכן/);
+  assert.match(html, /class="advocacy-bar"/);
+  assert.match(html, /id="dialog-trust"/);
+  assert.match(javascript, /function cardTrustLine/);
+  assert.doesNotMatch(html, /id="advocacy-short"[^>]*visually-hidden/);
   assert.match(javascript, /"blank", "quote", "party", "identity", "portrait"/);
   assert.match(javascript, /const delays = \[configured\.quote, configured\.party, configured\.name, configured\.portrait\]/);
   assert.doesNotMatch(javascript, /Flip for full context/);
@@ -195,7 +201,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /\/api\/debug\/reset-pack/);
   assert.match(javascript, /\/api\/packs\/demo/);
   assert.match(javascript, /Daily state was not changed/);
-  assert.match(html, /איך נבחר התוכן/);
+  assert.match(html, /גילוי נאות/);
   assert.match(javascript, /referral_opened/);
   assert.match(javascript, /gift_preview_created/);
   assert.match(html, /id="dialog-whatsapp"/);
@@ -306,7 +312,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="open-trust-legend"/);
   assert.match(html, /home-title-row/);
   assert.match(html, /id="trust-dialog"/);
-  assert.doesNotMatch(html, /id="dialog-trust"/);
+  assert.match(html, /id="dialog-trust"/);
   assert.match(javascript, /function showSharedCard/);
   assert.match(javascript, /תצוגת שיתוף בלבד/);
   assert.match(javascript, /הקלף לא נוסף לאוסף שלכם/);
