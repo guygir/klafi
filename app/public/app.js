@@ -139,7 +139,10 @@ const elements = {
   levelDialogReward: document.querySelector("#level-dialog-reward"),
   closeLevel: document.querySelector("#close-level"),
   claimLevel: document.querySelector("#claim-level"),
+  avatarSeal: document.querySelector("#avatar-seal"),
   tradePreview: document.querySelector("#trade-preview"),
+  tradeActive: document.querySelector("#trade-active"),
+  tradeCompose: document.querySelector("#trade-compose"),
   tradeOfferedPreview: document.querySelector("#trade-offered-preview"),
   tradeWantedPreview: document.querySelector("#trade-wanted-preview"),
   tradeDemo: document.querySelector("#trade-demo"),
@@ -772,6 +775,7 @@ async function hydrateIdleQueue() {
       applyHomePayload({ ...settled, state: settled.state });
       prefetchIdleAssets();
       renderHome();
+      refreshDailyChallenge();
       flushPendingIdleSeen().catch(() => {});
       return settled;
     })().finally(() => {
@@ -1163,6 +1167,25 @@ function renderProfile() {
     elements.levelAvatar.src = avatarUrl(avatar);
     elements.levelAvatar.alt = avatar.nameHe || "";
   }
+  renderAvatarSeal();
+}
+
+function factionPipColor() {
+  const factionId = model.serverState?.factionId;
+  if (!factionId) return "";
+  return partyRegister().find(({ id }) => id === factionId)?.pip
+    || model.catalog.find((card) => card.set === factionId)?.pip
+    || "";
+}
+
+function renderAvatarSeal() {
+  const seal = elements.avatarSeal;
+  const button = elements.levelAvatarButton;
+  if (!seal) return;
+  const pip = factionPipColor();
+  seal.hidden = !pip;
+  seal.style.background = pip || "transparent";
+  button?.classList.toggle("has-faction-seal", Boolean(pip));
 }
 
 function renderAvatarPicker() {
@@ -1480,7 +1503,7 @@ function renderChallengeRecap() {
 
 function renderTodayDocket() {
   if (!elements.todayChallengeHook) return;
-  const challenge = model.leaderboards?.dailyChallenge || localDailyChallenge();
+  const challenge = model.leaderboards?.dailyChallenge || (model.extrasReady ? null : localDailyChallenge());
   const challengeParty = challenge
     ? partyDisplayName(challenge.targetPartyId, challenge.targetPartyNameHe || "")
     : "טוענים…";
@@ -2508,6 +2531,54 @@ function creatorLink() {
   return url.toString();
 }
 
+function tradeRowMarkup(trade) {
+  const offeredCard = model.byId.get(trade.offeredCardId);
+  const wantedCard = model.byId.get(trade.wantedCardId);
+  const until = new Date(trade.expiresAt).toLocaleString("he-IL", {
+    timeZone: "Asia/Jerusalem",
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+  });
+  const action = trade.ownedByCurrent
+    ? `<button type="button" data-cancel-trade="${trade.tradeId}">ביטול</button>`
+    : trade.canAccept
+      ? `<button type="button" data-accept-trade="${trade.tradeId}">קבלה</button>`
+      : `<span class="trade-unavailable">צריך את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
+  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}">
+    <button type="button" class="trade-chip" data-trade-choice-card="${escapeHtml(trade.offeredCardId)}" ${offeredCard ? "" : "hidden"}>
+      <i class="trade-chip-pip" style="background:${escapeHtml(offeredCard?.pip || "var(--civic)")}"></i>
+      <span>${escapeHtml(offeredCard ? cardTitle(offeredCard) : trade.offeredCardId)}</span>
+    </button>
+    <b aria-hidden="true">⇄</b>
+    <button type="button" class="trade-chip" data-trade-choice-card="${escapeHtml(trade.wantedCardId)}" ${wantedCard ? "" : "hidden"}>
+      <i class="trade-chip-pip" style="background:${escapeHtml(wantedCard?.pip || "var(--civic)")}"></i>
+      <span>${escapeHtml(wantedCard ? cardTitle(wantedCard) : trade.wantedCardId)}</span>
+    </button>
+    <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
+    ${action}
+  </article>`;
+}
+
+function applyTradeResult(result) {
+  if (result?.state) model.serverState = { ...model.serverState, ...result.state };
+  if (result?.trades) model.trades = result.trades.trades || result.trades;
+  renderBinder();
+  renderGrowth();
+}
+
+async function refreshDailyChallenge() {
+  try {
+    const boards = await request("/api/leaderboards");
+    model.leaderboards = boards;
+    renderTodayDocket();
+    if (model.communityPage === "challenge" || model.communityPage === "collectors") renderGrowth();
+  } catch {
+    /* Race board stays on the last server snapshot. */
+  }
+}
+
 function renderGrowth() {
   const communityTabs = elements.communityTabs;
   const growthGrid = document.querySelector(".growth-grid");
@@ -2530,14 +2601,6 @@ function renderGrowth() {
   const isLive = count > 1;
   elements.tradePreview.dataset.cardId = card.id;
   elements.tradePreview.dataset.liveDuplicate = String(isLive);
-  elements.tradePreview.innerHTML = `
-    <button class="binder-slot owned new-card-thumb trade-card-button" type="button" data-trade-card="${card.id}" style="--pip:${card.pip}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}">
-      ${binderCardMarkup(card, count)}
-    </button>
-    <div>
-      <h3>${escapeHtml(cardTitle(card))}</h3>
-      <p class="${isLive ? "dupe-ready" : ""}">${isLive ? `${count} עותקים · אפשר להחליף` : "צריך עותק נוסף כדי להחליף"}</p>
-    </div>`;
   elements.tradeDemo.textContent = isLive ? "יצירת הצעה" : "העתקת קישור לדוגמה";
   elements.creatorLinkPreview.textContent = creatorLink();
 
@@ -2594,39 +2657,39 @@ function renderGrowth() {
     const chosen = select.selectedOptions[0];
     select.title = chosen?.text || "";
   }
-  elements.tradeCreate.disabled = !ownedCards.length;
-  const renderTradeChoice = (container, cardId) => {
+  const mine = model.trades.find((trade) => trade.ownedByCurrent && trade.status === "open");
+  elements.tradeCreate.disabled = Boolean(mine) || !ownedCards.length;
+  const paintChip = (chip, cardId) => {
     const selected = model.byId.get(cardId);
-    container.innerHTML = selected
-      ? `<button type="button" data-trade-choice-card="${selected.id}" aria-label="פתיחת ${escapeHtml(cardTitle(selected))}">
-          ${displayCardMarkup(selected)}
-        </button>`
-      : '<span class="work-note">אין קלף זמין</span>';
+    if (!chip) return;
+    chip.hidden = !selected;
+    if (!selected) {
+      chip.replaceChildren();
+      return;
+    }
+    chip.dataset.tradeChoiceCard = selected.id;
+    chip.setAttribute("aria-label", `פתיחת ${cardTitle(selected)}`);
+    chip.innerHTML = `<i class="trade-chip-pip" style="background:${escapeHtml(selected.pip || "var(--civic)")}"></i><span>${escapeHtml(cardTitle(selected))}</span><small>${escapeHtml(cardCode(selected))}</small>`;
   };
-  renderTradeChoice(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
-  renderTradeChoice(elements.tradeWantedPreview, elements.tradeWantedCard.value);
+  paintChip(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
+  paintChip(elements.tradeWantedPreview, elements.tradeWantedCard.value);
   prefetchCardArt([
     card,
     model.byId.get(elements.tradeOfferedCard.value),
     model.byId.get(elements.tradeWantedCard.value),
   ]);
+  if (elements.tradeActive && elements.tradeCompose) {
+    elements.tradeActive.hidden = !mine;
+    elements.tradeCompose.hidden = Boolean(mine);
+    elements.tradeActive.innerHTML = mine ? `${tradeRowMarkup(mine)}<p class="work-note">אפשר הצעה אחת. בטלו כדי לפרסם אחרת.</p>` : "";
+  }
 
-  const openOffers = model.trades.filter((trade) => trade.status === "open");
-  elements.tradeBoard.innerHTML = openOffers.length ? openOffers.map((trade) => {
-    const offeredCard = model.byId.get(trade.offeredCardId);
-    const wantedCard = model.byId.get(trade.wantedCardId);
-    return `<article class="trade-offer ${trade.status}">
-      <div><span>נותנים</span><strong>${escapeHtml(offeredCard ? cardTitle(offeredCard) : trade.offeredCardId)}</strong><small>${escapeHtml(offeredCard ? cardCode(offeredCard) : trade.offeredCardId)}</small></div>
-      <b aria-hidden="true">⇄</b>
-      <div><span>רוצים</span><strong>${escapeHtml(wantedCard ? cardTitle(wantedCard) : trade.wantedCardId)}</strong><small>${escapeHtml(wantedCard ? cardCode(wantedCard) : trade.wantedCardId)}</small></div>
-      <p>${escapeHtml(trade.ownerLabel)} מציע/ה · עד ${escapeHtml(new Date(trade.expiresAt).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }))}</p>
-      ${trade.ownedByCurrent
-        ? `<button type="button" data-cancel-trade="${trade.tradeId}">ביטול ההצעה</button>`
-        : trade.canAccept
-          ? `<button type="button" data-accept-trade="${trade.tradeId}">קבלת ההצעה</button>`
-          : `<span class="trade-unavailable">צריך את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף המבוקש")} כדי לקבל</span>`}
-    </article>`;
-  }).join("") : '<p class="work-note">אין כרגע הצעות פתוחות.</p>';
+  const openOffers = model.trades
+    .filter((trade) => trade.status === "open" && !trade.ownedByCurrent)
+    .sort((left, right) => Number(right.canAccept) - Number(left.canAccept));
+  elements.tradeBoard.innerHTML = openOffers.length
+    ? openOffers.map((trade) => tradeRowMarkup(trade)).join("")
+    : '<p class="work-note">אין כרגע הצעות פתוחות.</p>';
 
   const selectedFaction = model.serverState.factionId;
   const parties = partyRegister();
@@ -2658,7 +2721,7 @@ function renderGrowth() {
     ? collectorPreview.map((entry) => `<div class="${entry.current ? "current-player" : ""}"><span>${entry.rank}. ${escapeHtml(entry.label)}</span><strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong></div>`).join("")
     : '<p class="work-note">הטבלה מחכה לשחקן הראשון.</p>';
 
-  const challenge = model.leaderboards?.dailyChallenge || localDailyChallenge();
+  const challenge = model.leaderboards?.dailyChallenge || (model.extrasReady ? null : localDailyChallenge());
   const challengeDate = challenge?.day ? new Date(`${challenge.day}T12:00:00`).toLocaleDateString("he-IL", { day: "numeric", month: "numeric" }) : "";
   const challengeLeaderCard = model.catalog.find((card) =>
     card.set === challenge?.targetPartyId && card.releaseSetId === "party-leaders");
@@ -2705,9 +2768,6 @@ function renderGrowth() {
     button.setAttribute("aria-selected", String(active));
     button.tabIndex = active ? 0 : -1;
   });
-  queueCardTextFit(elements.tradePreview);
-  queueCardTextFit(elements.tradeOfferedPreview);
-  queueCardTextFit(elements.tradeWantedPreview);
 }
 
 function renderEvents() {
@@ -3600,15 +3660,20 @@ async function createTradeOffer() {
   }
   elements.tradeCreate.disabled = true;
   try {
-    await request("/api/trades", {
+    const result = await request("/api/trades", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ offeredCardId, wantedCardId }),
     });
-    await refreshSocialBoards();
+    applyTradeResult(result);
     showToast("הצעת ההחלפה פורסמה.");
-  } catch {
-    showToast("לא הצלחנו לפרסם את ההצעה.");
+  } catch (error) {
+    if (error.status === 409 && error.body?.error === "ACTIVE_TRADE_EXISTS") {
+      applyTradeResult(error.body);
+      showToast("כבר יש לכם הצעה פתוחה.");
+    } else {
+      showToast("לא הצלחנו לפרסם את ההצעה.");
+    }
   } finally {
     elements.tradeCreate.disabled = false;
   }
@@ -3628,22 +3693,18 @@ async function simulateTradeAcceptance(tradeId) {
 async function acceptTradeOffer(tradeId) {
   try {
     const result = await request(`/api/trades/${encodeURIComponent(tradeId)}/accept`, { method: "POST" });
-    model.serverState = result.state;
-    await refreshSocialBoards();
+    applyTradeResult(result);
     showToast("ההחלפה הושלמה והקלפים עברו לאוספים.");
   } catch {
-    await refreshSocialBoards();
     showToast("ההצעה כבר לא זמינה או שחסר לכם הקלף המבוקש.");
   }
 }
 
 async function cancelTradeOffer(tradeId) {
   try {
-    await request(`/api/trades/${encodeURIComponent(tradeId)}/cancel`, { method: "POST" });
-    await refreshSocialBoards();
+    applyTradeResult(await request(`/api/trades/${encodeURIComponent(tradeId)}/cancel`, { method: "POST" }));
     showToast("הצעת ההחלפה בוטלה.");
   } catch {
-    await refreshSocialBoards();
     showToast("לא ניתן לבטל את ההצעה.");
   }
 }
@@ -3655,6 +3716,7 @@ async function saveFaction() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ factionId: elements.factionSelect.value || null }),
     });
+    renderProfile();
     renderBinder();
     renderGrowth();
     showToast(model.serverState.factionId ? "הסיעה נשמרה. הקלף הבא ייספר." : "בחירת הסיעה בוטלה.");
@@ -4537,6 +4599,7 @@ elements.claimLevel.addEventListener("click", async () => {
     elements.levelDialog.close();
     showView("pack");
     startWalkout();
+    refreshDailyChallenge();
   } catch (error) {
     showToast(error.status === 409 ? "אין כרגע פרס שמחכה." : "לא הצלחנו לקבל את הפרס.");
   } finally {
@@ -4585,7 +4648,7 @@ elements.tradeWantedSet.addEventListener("change", renderGrowth);
 elements.tradeOfferedCard.addEventListener("change", renderGrowth);
 elements.tradeWantedCard.addEventListener("change", renderGrowth);
 elements.tradeCreate.addEventListener("click", createTradeOffer);
-elements.tradeBoard.addEventListener("click", (event) => {
+function handleTradeBoardClick(event) {
   const cancel = event.target.closest("[data-cancel-trade]");
   if (cancel) {
     cancelTradeOffer(cancel.dataset.cancelTrade);
@@ -4596,9 +4659,16 @@ elements.tradeBoard.addEventListener("click", (event) => {
     acceptTradeOffer(accept.dataset.acceptTrade);
     return;
   }
+  const chip = event.target.closest("[data-trade-choice-card]");
+  if (chip) {
+    openCardDialog(chip.dataset.tradeChoiceCard);
+    return;
+  }
   const button = event.target.closest("[data-simulate-trade]");
   if (button) simulateTradeAcceptance(button.dataset.simulateTrade);
-});
+}
+elements.tradeBoard.addEventListener("click", handleTradeBoardClick);
+elements.tradeActive?.addEventListener("click", handleTradeBoardClick);
 elements.saveFaction.addEventListener("click", saveFaction);
 elements.creatorCode.addEventListener("input", () => {
   elements.creatorLinkPreview.textContent = creatorLink();

@@ -50,7 +50,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function partyTrustLabel/);
   assert.match(javascript, /function configureSourceLink/);
   assert.match(javascript, /displayCardMarkup\(card, "event"\)/);
-  assert.match(javascript, /displayCardMarkup\(selected\)/);
+  assert.match(javascript, /openCardDialog\(chip\.dataset\.tradeChoiceCard\)/);
+  assert.match(javascript, /displayCardMarkup\(card\)/);
   assert.doesNotMatch(javascript, /displayCardMarkup\(selected, "trade"\)/);
   assert.doesNotMatch(javascript, /\["binder", "trade", "peek"\]/);
   assert.match(javascript, /quote: \{ low: 0\.042, high: 0\.064, floor: 10, ceiling: 22 \}/);
@@ -83,7 +84,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /isFullart && role === "quote"/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-image-meta strong[\s\S]{0,120}?display:\s*none/);
   assert.match(css, /\.card-party-zone::before[\s\S]{0,160}?2\.4cqw/);
-  assert.match(css, /\.trade-choice-preview \.kalpi-card[\s\S]{0,280}?scale\(calc\(100cqw \/ 330px\)\)/);
+  assert.doesNotMatch(css, /\.trade-choice-preview/);
+  assert.doesNotMatch(themeCss, /\.trade-choice-preview/);
+  assert.doesNotMatch(html, /trade-choice-preview/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\][\s\S]{0,180}?border-radius:\s*12px/);
   assert.doesNotMatch(themeCss, /\[data-card-frame="fullart-v1"\] \.kalpi-card[\s\S]{0,220}?border-radius:\s*3\.6cqw/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\][\s\S]{0,80}?\.card-code-tag[\s\S]{0,600}?height:\s*8cqw/);
@@ -215,6 +218,16 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /\/api\/events\/.*\/pull/);
   assert.match(html, /id="trade-offered-set"/);
   assert.match(html, /id="trade-wanted-set"/);
+  assert.match(html, /id="trade-active"/);
+  assert.match(html, /id="trade-compose"/);
+  assert.match(html, /id="trade-create"[\s\S]*id="trade-offered-set"/);
+  assert.match(html, /id="avatar-seal"/);
+  assert.match(javascript, /ACTIVE_TRADE_EXISTS/);
+  assert.match(javascript, /function applyTradeResult/);
+  assert.match(javascript, /function refreshDailyChallenge/);
+  assert.match(javascript, /function renderAvatarSeal/);
+  assert.match(css, /\.avatar-seal/);
+  assert.match(css, /\.trade-chip-pip/);
   assert.match(javascript, /function partyDisplayName/);
   assert.match(javascript, /function partyRegister/);
   assert.match(javascript, /model\.gameConfig\?\.parties/);
