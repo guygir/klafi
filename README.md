@@ -97,7 +97,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 11. [x] Community loop: anonymous faction tally, honest country leaderboard, real transactional trading/gifting, sharing/referrals and creator acquisition links. One open offer per player, slim board, server accept, race from real pulls, level bonus card, party pip on the avatar.
 
 **Active**
-9. Hebrew, trust and accessibility pass: player copy, advocacy disclosure, source receipts, dated CEC/status labels, keyboard/reduced-motion behavior and screen-reader labels. **In progress.** Visible advocacy strip, skip-to-content, and dated CEC/source receipts on walkout, share, and the card dialog.
+9. [x] Hebrew, trust and accessibility pass: player copy, advocacy disclosure, source receipts, dated CEC/status labels, keyboard/reduced-motion behavior and screen-reader labels. Visible advocacy strip, skip-to-content, named player dialogs, plural אתם voice, dated CEC/source receipts on walkout, share image, faction desk, binder missing slots, and the card dialog. Reduced-motion walkout jumps to the readable card; pack arrows work in both directions.
 10. Recurring phone + desktop QA after every slice: real-device WhatsApp/Instagram handoff, recovery, moderation, replay-safe writes. **Ongoing.**
 
 **Dropped by product decision**
@@ -108,8 +108,8 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 13. Disclosed survey + published scoring table → matched-list party pack. **No need.**
 
 **Design first — do not implement yet**
-14. Numbered holos / streaks / CEC pulse (no live polls in our voice). **Brainstorm design.**
-15. Platform/live-ops: PWA + push, groups/leagues/seasonal ladders, event-controlled Specials, creator seeding. **Brainstorm design.** Events player surface stays deferred.
+14. Numbered holos / streaks / CEC pulse (no live polls in our voice). **Brainstorm design — review** [step-14-holos-streaks-cec.html](docs/design/step-14-holos-streaks-cec.html).
+15. Platform/live-ops: PWA + push, groups/leagues/seasonal ladders, event-controlled Specials, creator seeding. **Brainstorm design — review** [step-15-platform-liveops.html](docs/design/step-15-platform-liveops.html). Events player surface stays deferred.
 
 **Last**
 16. Pack-open animation branded KLAFI (Weavy/video) **and** step 2 live-deploy monitoring. CSS peel is parked. Extra Weavy promo loops stay with the step 14 design.

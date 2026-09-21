@@ -11,12 +11,12 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-25"></script>
+  <script src="/boot-warmup.js?v=card-surface-26"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-25" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-25" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-26" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-26" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -61,7 +61,7 @@
         <div class="level-track">
           <span id="level-progress"></span>
           <b id="level-progress-count">0/3</b>
-          <small id="level-next">גלה עוד 3 קלפים חדשים כדי להתקדם לרמה הבאה</small>
+          <small id="level-next">גלו עוד 3 קלפים חדשים כדי להתקדם לרמה הבאה</small>
         </div>
       </div>
     </section>
@@ -171,7 +171,7 @@
           </div>
         </div>
         <div id="binder-filters" class="filter-strip" aria-label="סינון האוסף לפי סדרה או מפלגה"></div>
-        <div id="binder-grid" class="binder-grid"></div>
+        <div id="binder-grid" class="binder-grid" role="list"></div>
         <div id="binder-pager" class="view-pager" aria-label="עמודי האוסף"></div>
         <p id="binder-empty" class="empty-note" hidden>פתחו קלף כדי להתחיל.</p>
       </section>
@@ -266,6 +266,7 @@
             <h2>לאיזו סיעה ייספר הקלף הבא?</h2>
             <label class="field-label" for="faction-select">בחירה אנונימית</label>
             <select id="faction-select"></select>
+            <p id="faction-cec-note" class="work-note">סטטוס האותיות נלקח ממאגר ועדת הבחירות, לא מהמשחק.</p>
             <button id="save-faction" class="primary-action" type="button">בחירה</button>
             <div id="faction-board" class="leaderboard-list"></div>
           </article>
@@ -454,8 +455,9 @@
       </nav>
     </div>
 
-  <dialog id="card-dialog" class="card-dialog">
+  <dialog id="card-dialog" class="card-dialog" aria-labelledby="card-dialog-title" aria-describedby="dialog-trust">
     <button id="close-dialog" class="dialog-close" type="button" aria-label="סגירת הקלף">×</button>
+    <h2 id="card-dialog-title" class="visually-hidden">קלף</h2>
     <div class="dialog-card-stage">
       <div id="dialog-card"></div>
     </div>
@@ -476,10 +478,10 @@
     </div>
   </dialog>
 
-  <dialog id="report-dialog" class="policy-dialog report-dialog">
+  <dialog id="report-dialog" class="policy-dialog report-dialog" aria-labelledby="report-dialog-title" aria-describedby="report-card-label">
     <button id="close-report" class="dialog-close" type="button" aria-label="סגירת הדיווח">×</button>
     <p class="eyebrow">תיקון פתוח</p>
-    <h2>ראיתם טעות?</h2>
+    <h2 id="report-dialog-title">ראיתם טעות?</h2>
     <p id="report-card-label" class="report-card-label"></p>
     <form id="report-form">
       <label for="report-category">מה צריך לבדוק?</label>
@@ -498,7 +500,7 @@
     </form>
   </dialog>
 
-  <dialog id="level-dialog" class="policy-dialog">
+  <dialog id="level-dialog" class="policy-dialog" aria-labelledby="level-dialog-title">
     <button id="close-level" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">עליתם רמה</p>
     <h2 id="level-dialog-title">רמה חדשה</h2>
@@ -508,10 +510,10 @@
     <button id="claim-level" class="primary-action" type="button">קבלת הפרס</button>
   </dialog>
 
-  <dialog id="profile-dialog" class="policy-dialog">
+  <dialog id="profile-dialog" class="policy-dialog" aria-labelledby="profile-dialog-title">
     <button id="close-profile" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">הפרופיל שלי</p>
-    <h2>איך לקרוא לכם?</h2>
+    <h2 id="profile-dialog-title">איך לקרוא לכם?</h2>
     <form id="profile-form">
       <label class="profile-name-label" for="profile-name-input">השם שיופיע בטבלאות</label>
       <input id="profile-name-input" name="displayName" minlength="2" maxlength="24" autocomplete="nickname" required />
@@ -538,16 +540,16 @@
     </section>
   </dialog>
 
-  <dialog id="trust-dialog" class="policy-dialog">
+  <dialog id="trust-dialog" class="policy-dialog" aria-labelledby="trust-dialog-title">
     <button id="close-trust" class="dialog-close" type="button" aria-label="סגירת ההסבר">×</button>
     <p class="eyebrow">איך לקרוא את הקלף</p>
-    <h2>מה מסמנת הכוכבית?</h2>
+    <h2 id="trust-dialog-title">מה מסמנת הכוכבית?</h2>
     <p>כוכבית על ציטוט אומרת שהנוסח קוצר, או שהוא ניסוח מיוחס ולא תמלול מילולי מאומת.</p>
     <p>ההקשר המלא, התאריך והמקור המצורף נפתחים מקישור המקור שעל הקלף.</p>
     <p>כשסטטוס האותיות של הרשימה רלוונטי, הוא נלקח ממאגר ועדת הבחירות ולא מומצא במשחק.</p>
   </dialog>
 
-  <dialog id="advocacy-dialog" class="policy-dialog">
+  <dialog id="advocacy-dialog" class="policy-dialog" aria-labelledby="advocacy-sponsor" aria-describedby="advocacy-full">
     <button id="close-advocacy" class="dialog-close" type="button" aria-label="סגירת הגילוי הנאות">×</button>
     <p class="eyebrow">גילוי נאות</p>
     <h2 id="advocacy-sponsor">קְלָפִי</h2>
@@ -589,6 +591,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-25"></script>
+  <script type="module" src="/app.js?v=card-surface-26"></script>
 </body>
 </html>

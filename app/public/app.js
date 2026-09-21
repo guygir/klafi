@@ -13,6 +13,22 @@ const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "rec
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
+
+function prefersReducedMotion() {
+  return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+}
+
+function playerDialogOpen() {
+  return [
+    elements.dialog,
+    elements.advocacyDialog,
+    elements.profileDialog,
+    elements.trustDialog,
+    elements.reportDialog,
+    elements.levelDialog,
+    elements.shareSheet,
+  ].some((dialog) => dialog?.open);
+}
 const model = {
   token: localStorage.getItem(SESSION_KEY),
   editorial: null,
@@ -1706,7 +1722,7 @@ function renderProgression({ announce = false } = {}) {
   elements.levelProgress.style.width = `${progression.percent}%`;
   elements.levelProgressCount.textContent = `${progression.unique - progression.start}/${progression.target - progression.start}`;
   if (progression.remaining) {
-    elements.levelNext.textContent = `גלה עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
+    elements.levelNext.textContent = `גלו עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
   } else {
     elements.levelNext.textContent = progression.nextReleaseRank
       ? `הרמה מוכנה · ${progression.nextReleaseRank} תיפתח בסדרה הבאה`
@@ -1960,10 +1976,22 @@ async function handlePackAction() {
   }
 }
 
+function finishWalkoutCard() {
+  model.walkoutStage = WALKOUT_STAGES.length - 1;
+  renderWalkoutStage();
+  model.packPhase = "complete-card";
+  const isLast = model.currentCardIndex === model.currentPack.cards.length - 1;
+  setPackAction(isLast ? "לאוסף" : "הקלף הבא", false, "");
+}
+
 function startWalkout() {
   packTimers.forEach(clearTimeout);
   packTimers = [];
   model.packPhase = "walkout";
+  if (prefersReducedMotion()) {
+    finishWalkoutCard();
+    return;
+  }
   model.walkoutStage = 0;
   renderWalkoutStage();
   const configured = readRevealDelays();
@@ -1975,11 +2003,7 @@ function startWalkout() {
       if (model.packPhase !== "walkout") return;
       model.walkoutStage = index + 1;
       renderWalkoutStage();
-      if (model.walkoutStage === WALKOUT_STAGES.length - 1) {
-        model.packPhase = "complete-card";
-        const isLast = model.currentCardIndex === model.currentPack.cards.length - 1;
-        setPackAction(isLast ? "לאוסף" : "הקלף הבא", false, "");
-      }
+      if (model.walkoutStage === WALKOUT_STAGES.length - 1) finishWalkoutCard();
     }, elapsed));
   });
 }
@@ -2337,13 +2361,13 @@ function renderBinder() {
   elements.binderGrid.innerHTML = visible.map((card) => {
     const count = inventory[card.id] ?? 0;
     if (!count) {
-      return `<div class="binder-slot" aria-label="${escapeHtml(cardCode(card))} חסר">
+      return `<div class="binder-slot" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · חסר באוסף`)}">
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
-        ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">unlock</button>` : ""}
+        ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
       </div>`;
     }
     return `
-      <div class="binder-slot owned new-card-thumb" style="--pip:${card.pip}">
+      <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
         <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}, ברשותכם ${count}">
           ${binderCardMarkup(card)}
         </button>
@@ -2877,11 +2901,15 @@ function renderGrowth() {
   const factionEntries = model.leaderboards?.factions?.slice(0, 6) || [];
   const factionMaximum = Math.max(1, ...factionEntries.map(({ packs }) => packs));
   elements.factionBoard.innerHTML = factionEntries.length
-    ? factionEntries.map((entry, index) => `<div class="faction-chart-row">
-        <span>${index + 1}. ${escapeHtml(partyDisplayName(entry.partyId, entry.partyId))}</span>
+    ? factionEntries.map((entry, index) => {
+        const party = parties.find(({ id }) => id === entry.partyId);
+        const status = partyStatusShort(party);
+        return `<div class="faction-chart-row">
+        <span>${index + 1}. ${escapeHtml(partyDisplayName(entry.partyId, entry.partyId))}${status ? ` · ${escapeHtml(status)}` : ""}</span>
         <i aria-hidden="true"><b style="width:${Math.max(4, Math.round((entry.packs / factionMaximum) * 100))}%; animation-delay:${index * 40}ms"></b></i>
         <strong>${entry.packs}</strong>
-      </div>`).join("")
+      </div>`;
+      }).join("")
     : '<p class="work-note">עדיין אין קלפים שנספרו.</p>';
   const collectorEntries = model.leaderboards?.collectors || [];
   const collectorPreview = collectorEntries.slice(0, 3);
@@ -3939,6 +3967,8 @@ function openCardDialog(cardId) {
 function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   const ownedCount = model.serverState.inventory[card.id] ?? 0;
+  const dialogTitle = document.querySelector("#card-dialog-title");
+  if (dialogTitle) dialogTitle.textContent = cardTitle(card);
   elements.dialogCard.innerHTML = displayCardMarkup(card);
   if (elements.dialogTrust) {
     const line = cardTrustLine(card);
@@ -4136,15 +4166,16 @@ async function makeShareImage(card) {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
 
-const SHARE_PULL_LINE = "תראה מה שלפתי בקְלָפִי!";
+const SHARE_PULL_LINE = "תראו מה שלפתי בקְלָפִי!";
 
 function shareCaption(card) {
   const url = makeDeepLink("card", card.id);
   const quote = String(card.walkout?.text || "").trim();
   const title = cardTitle(card);
+  const trust = cardTrustLine(card);
   return {
     title: `קְלָפִי · ${title}`,
-    text: `${SHARE_PULL_LINE}\n${quote}\n— ${title}\n${url}`,
+    text: [SHARE_PULL_LINE, quote, `— ${title}`, trust, url].filter(Boolean).join("\n"),
     url,
   };
 }
@@ -4469,7 +4500,8 @@ async function paintSharePortrait(card, { width, height }) {
   const captionSize = Math.round(width * 0.042);
   const footerSize = Math.round(width * 0.026);
   const captionTop = pad + captionSize;
-  const footerBlock = footerSize * 3.2;
+  const trustLine = cardTrustLine(card);
+  const footerBlock = footerSize * (trustLine ? 5.1 : 3.2);
   const availTop = captionTop + Math.round(width * 0.038);
   const availBottom = height - pad - footerBlock;
   const availHeight = Math.max(120, availBottom - availTop);
@@ -4491,9 +4523,41 @@ async function paintSharePortrait(card, { width, height }) {
   context.textAlign = "center";
   context.font = `600 ${footerSize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
   context.fillText("קְלָפִי", width / 2, footerY);
+  let urlY = footerY + footerSize * 1.35;
+  if (trustLine) {
+    context.font = `500 ${Math.round(width * 0.018)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+    const trustHeight = paintCenteredLines(
+      context,
+      trustLine,
+      width / 2,
+      footerY + footerSize * 1.2,
+      width - pad * 2,
+      Math.round(width * 0.028),
+    );
+    urlY = footerY + footerSize * 1.2 + trustHeight * Math.round(width * 0.028) + footerSize * 0.35;
+  }
   context.font = `500 ${Math.round(width * 0.02)}px 'IBM Plex Sans', sans-serif`;
-  drawLtrCentered(context, shareUrl.replace(/^https?:\/\//, ""), width / 2, footerY + footerSize * 1.35);
+  drawLtrCentered(context, shareUrl.replace(/^https?:\/\//, ""), width / 2, urlY);
   return canvasToPng(canvas);
+}
+
+function paintCenteredLines(context, text, x, y, maxWidth, lineHeight) {
+  const parts = String(text).split(" · ");
+  const lines = [];
+  let current = "";
+  for (const part of parts) {
+    const next = current ? `${current} · ${part}` : part;
+    if (current && context.measureText(next).width > maxWidth) {
+      lines.push(current);
+      current = part;
+    } else {
+      current = next;
+    }
+  }
+  if (current) lines.push(current);
+  const painted = lines.slice(0, 2);
+  painted.forEach((line, index) => context.fillText(line, x, y + index * lineHeight));
+  return painted.length;
 }
 
 async function makeStoryImage(card) {
@@ -5125,7 +5189,8 @@ function moveTabFocus(event) {
 document.addEventListener("keydown", (event) => {
   if (moveTabFocus(event)) return;
   const packIsOpen = document.querySelector("#pack-view").classList.contains("active");
-  if (event.key === "ArrowRight" && packIsOpen && !elements.packAction.disabled && !elements.dialog.open && !elements.advocacyDialog.open && !elements.profileDialog.open && !elements.trustDialog.open) {
+  const advancePack = event.key === "ArrowRight" || event.key === "ArrowLeft";
+  if (advancePack && packIsOpen && !elements.packAction.disabled && !playerDialogOpen()) {
     event.preventDefault();
     elements.packAction.click();
   }
