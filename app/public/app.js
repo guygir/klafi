@@ -2737,7 +2737,6 @@ function tradeRowMarkup(trade) {
     ${tradeSideMarkup(trade.wantedCardId, wantedCard, wantedRole)}
     <div class="trade-offer-bar">
       <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
-      ${trade.ownedByCurrent ? "" : `<button type="button" class="report-link inline" data-report-trade="${escapeHtml(trade.tradeId)}">דיווח</button>`}
       ${action}
     </div>
   </article>`;
@@ -3801,7 +3800,6 @@ function reportCategoryLabel(category) {
     identity: "Name, role, or list",
     display: "Display",
     name: "Public name",
-    trade: "Trade offer",
     other: "Other",
   }[category] || category;
 }
@@ -4005,20 +4003,6 @@ function openReportDialog(subject = null) {
   if (model.reportSubject.category) elements.reportCategory.value = model.reportSubject.category;
   elements.reportDialog.showModal();
   (model.reportSubject.category ? elements.reportDetails : elements.reportCategory).focus();
-}
-
-function openTradeReport(tradeId) {
-  const trade = model.trades.find((item) => item.tradeId === tradeId);
-  if (!trade || trade.ownedByCurrent) return;
-  const offered = model.byId.get(trade.offeredCardId);
-  openReportDialog({
-    kind: "trade",
-    cardId: trade.offeredCardId || "",
-    category: "trade",
-    label: `החלפה של ${trade.ownerLabel || "שחקן"}`,
-    detailsPrefix: `החלפה ${trade.tradeId} · ${trade.ownerLabel || "שחקן"} · ${offered ? cardTitle(offered) : trade.offeredCardId}`,
-    pagePath: "/?view=growth",
-  });
 }
 
 function openNameReport(label) {
@@ -4916,11 +4900,6 @@ function handleTradeBoardClick(event) {
   const accept = event.target.closest("[data-accept-trade]");
   if (accept) {
     acceptTradeOffer(accept.dataset.acceptTrade);
-    return;
-  }
-  const reportTrade = event.target.closest("[data-report-trade]");
-  if (reportTrade) {
-    openTradeReport(reportTrade.dataset.reportTrade);
     return;
   }
   const chip = event.target.closest("[data-trade-choice-card]");

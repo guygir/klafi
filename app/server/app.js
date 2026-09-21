@@ -1309,7 +1309,7 @@ export async function createKalpiApp({
             json(response, 400, { error: "INVALID_REPORT_ID" });
             return;
           }
-          if (!["source", "quote", "identity", "display", "name", "trade", "other"].includes(category)) {
+          if (!["source", "quote", "identity", "display", "name", "other"].includes(category)) {
             json(response, 400, { error: "INVALID_REPORT_CATEGORY" });
             return;
           }

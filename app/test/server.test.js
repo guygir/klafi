@@ -273,18 +273,9 @@ test("correction reports persist once and remain reviewable", async (t) => {
   };
   const named = await api(running.base, "/api/reports", { token, method: "POST", body: nameReport });
   assert.equal(named.status, 202);
-  const tradeReport = {
-    reportId: "report-trade-001",
-    category: "trade",
-    details: "החלפה פוגענית לבדיקה",
-    pagePath: "/?view=growth",
-  };
-  const traded = await api(running.base, "/api/reports", { token, method: "POST", body: tradeReport });
-  assert.equal(traded.status, 202);
   const queueAfter = await api(running.base, "/api/studio/reports", { studio: "review-secret" });
-  assert.equal(queueAfter.body.reports.length, 3);
+  assert.equal(queueAfter.body.reports.length, 2);
   assert.ok(queueAfter.body.reports.some(({ category }) => category === "name"));
-  assert.ok(queueAfter.body.reports.some(({ category }) => category === "trade"));
 });
 
 test("legacy sessions migrate into the capped idle queue without losing inventory", async (t) => {

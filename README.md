@@ -93,7 +93,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 2. [x] Public URL https://klafi.vercel.app (Vercel Hobby + Supabase transaction-pooled runtime). `/api/health` is `backend=postgres`. Quiz and debug stay off.
 3. Production advocacy identity configured for live.
 4. CEC / rights / likeness / source approval (release blockers).
-5. [x] Account recovery and moderation. Guest recovery code in the profile (copy / restore against the existing session). Card, name and trade reports share the Studio queue. Gameplay stays unthrottled; anonymous-session abuse protection belongs at the edge.
+5. [x] Account recovery and moderation. Guest recovery code in the profile (copy / restore against the existing session). Card and public-name reports share the Studio queue. Gameplay stays unthrottled; anonymous-session abuse protection belongs at the edge.
 6. Remaining KALPI pack art → KLAFI. **Deferred by product decision; now Step 16.**
 
 **Active product sequence**
