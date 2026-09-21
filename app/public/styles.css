@@ -2432,7 +2432,10 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-compose { display: grid; gap: 10px; }
 .trade-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 520px) {
-  .trade-form { grid-template-columns: 1fr; }
+  .trade-thumb-frame {
+    width: 104px;
+    height: calc(104px * 96 / 63);
+  }
 }
 .trade-form fieldset { min-width: 0; margin: 0; padding: 10px; border: 1px solid rgba(44, 51, 48, 0.22); border-radius: 8px; }
 .trade-form legend { padding: 0 4px; font-size: 13px; font-weight: 600; }
@@ -2452,19 +2455,13 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .trade-thumb-frame {
   position: relative;
-  width: min(128px, 100%);
-  aspect-ratio: 63 / 96;
+  width: 128px;
+  height: calc(128px * 96 / 63);
   overflow: hidden;
   border-radius: 8px;
 }
 .trade-thumb .binder-shared-card { border-radius: inherit; }
-.trade-thumb > span:last-child {
-  max-width: 100%;
-  overflow: hidden;
-  font: 600 12px/1.2 "IBM Plex Sans Hebrew", sans-serif;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.trade-thumb .trade-thumb-frame { pointer-events: none; }
 .trade-active { display: grid; gap: 8px; }
 .trade-offer.mine { border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent); }
 .trade-form select,
@@ -2480,7 +2477,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-offer strong { font-size: 14px; line-height: 1.25; }
 .trade-offer > p { grid-column: 1 / -1; color: var(--civic); font: 500 11px/1.3 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; text-transform: none; }
 .growth-grid .trade-offer > p { font-size: 11px; }
-.trade-offer > button,
+.trade-offer > button:not(.trade-thumb),
 .trade-offer > .trade-unavailable { grid-column: 1 / -1; width: auto; min-height: 44px; padding: 8px 10px; font-size: 11px; }
 .leaderboard-list > div { padding: 11px 0; font-size: 13px; line-height: 1.3; }
 .leaderboard-list strong { font-size: 12px; }
@@ -3146,10 +3143,6 @@ body {
 }
 
 @media (max-width: 520px) {
-  .trade-form {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
   .trade-desk .trade-actions {
     padding-top: 0;
   }
@@ -3467,7 +3460,7 @@ body {
   }
   .trade-form {
     flex: 0 0 auto;
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
   .trade-form fieldset {
     min-height: 148px;

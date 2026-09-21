@@ -2534,7 +2534,7 @@ function creatorLink() {
 
 function tradeThumbMarkup(card) {
   if (!card) return "";
-  return `<span class="trade-thumb-frame">${binderCardMarkup(card)}</span><span>${escapeHtml(cardTitle(card))}</span>`;
+  return `<span class="trade-thumb-frame">${binderCardMarkup(card)}</span>`;
 }
 
 function tradeRowMarkup(trade) {
