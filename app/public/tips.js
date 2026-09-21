@@ -71,14 +71,17 @@ export const PAGE_GUIDES = Object.freeze({
   ]),
   achievements: Object.freeze([
     {
-      ring: "#achievement-grid .achievement-badge, #achievement-grid, #achievements-empty",
+      ring: "#achievement-grid .achievement-badge, #achievements-empty",
+      ringUnion: true,
+      place: "above",
       title: "הישגים",
       body: "תגים שנפתחים באיסוף ובמשחק. כאן מה כבר הושג.",
     },
   ]),
   growth: Object.freeze([
     {
-      ring: "#community-tabs",
+      ring: "#community-tabs [role='tab'], #community-tabs button",
+      ringUnion: true,
       title: "קהילה",
       body: "החלפות, סיעות, טבלת אספנים והאתגר היומי. כל לשונית היא לוח.",
     },
@@ -208,9 +211,41 @@ export function leftoverPackHint(text) {
   return /הקלף כבר נשמר/.test(String(text || ""));
 }
 
+function viewportBox() {
+  const view = globalThis.visualViewport;
+  return {
+    width: Math.round(view?.width || globalThis.innerWidth || 0),
+    height: Math.round(view?.height || globalThis.innerHeight || 0),
+    left: view?.offsetLeft || 0,
+    top: view?.offsetTop || 0,
+  };
+}
+
 function boxOf(node) {
   const box = node.getBoundingClientRect();
-  return { left: box.left, top: box.top, width: box.width, height: box.height, right: box.right, bottom: box.bottom };
+  const view = viewportBox();
+  return {
+    left: box.left - view.left,
+    top: box.top - view.top,
+    width: box.width,
+    height: box.height,
+    right: box.right - view.left,
+    bottom: box.bottom - view.top,
+  };
+}
+
+export function unionBoxes(nodes) {
+  const boxes = (nodes || []).map((node) => boxOf(node)).filter((box) => box.width > 0 && box.height > 0);
+  if (!boxes.length) return null;
+  const left = Math.min(...boxes.map((box) => box.left));
+  const top = Math.min(...boxes.map((box) => box.top));
+  const right = Math.max(...boxes.map((box) => box.right));
+  const bottom = Math.max(...boxes.map((box) => box.bottom));
+  return { left, top, width: right - left, height: bottom - top, right, bottom };
+}
+
+function specFromBox(box, pad = 8, radius = 14) {
+  return { kind: "round", box: inflate(box, pad), radius };
 }
 
 function inflate(box, pad) {
@@ -297,30 +332,39 @@ function drawRing(svg, spec) {
   }));
 }
 
-function placeCard(card, ring, to) {
+function placeCard(card, ring, to, prefer = "") {
   const pad = 16;
   const width = card.offsetWidth || 280;
   const height = card.offsetHeight || 190;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  const view = viewportBox();
+  const vw = view.width;
+  const vh = view.height;
   const forbidden = [inflate(ring, 14)];
   if (to) {
     forbidden.push(inflate(to, 12));
     forbidden.push(arrowBand(ring, to, 26));
   }
+  const clamp = (left, top) => ({
+    left: Math.max(pad, Math.min(left, vw - width - pad)),
+    top: Math.max(pad, Math.min(top, vh - height - pad)),
+  });
+  const above = clamp(ring.left + (ring.width - width) / 2, ring.top - height - 12);
   const spots = [
+    ...(prefer === "above" ? [above] : []),
     { left: vw - width - pad, top: pad },
-    { left: vw - width - pad, top: vh - height - pad },
     { left: pad, top: pad },
-    { left: pad, top: vh - height - pad },
     { left: Math.max(pad, (vw - width) / 2), top: pad },
+    { left: vw - width - pad, top: vh - height - pad },
+    { left: pad, top: vh - height - pad },
     { left: Math.max(pad, (vw - width) / 2), top: vh - height - pad },
   ];
-  const fit = spots.find(({ left, top }) => !forbidden.some((box) => overlaps(left, top, width, height, box)))
+  const sitsAbove = ({ left, top }) => top + height <= ring.top + 2;
+  const fit = (prefer === "above" ? spots.find((spot) => sitsAbove(spot) && !overlaps(spot.left, spot.top, width, height, forbidden[0])) : null)
+    || spots.find(({ left, top }) => !forbidden.some((box) => overlaps(left, top, width, height, box)))
     || spots.find(({ left, top }) => !overlaps(left, top, width, height, forbidden[0]))
-    || spots[0];
-  card.style.left = `${Math.max(pad, Math.min(fit.left, vw - width - pad))}px`;
-  card.style.top = `${Math.max(pad, Math.min(fit.top, vh - height - pad))}px`;
+    || (prefer === "above" ? above : spots[0]);
+  card.style.left = `${fit.left}px`;
+  card.style.top = `${fit.top}px`;
 }
 
 function drawArrow(svg, fromSpec, toSpec) {
@@ -478,8 +522,17 @@ export function attachKlafiTips(env = globalThis) {
       park();
       return;
     }
-    const ringNode = firstPaintTarget(step.ring) || firstPaintTarget(step.emptyRing) || firstVisible(step.ring, doc) || firstVisible(step.emptyRing, doc);
-    if (!ringNode) {
+    const unionNodes = step.ringUnion
+      ? [...doc.querySelectorAll(step.ring)].filter((node) => {
+        const box = node.getBoundingClientRect?.() || { width: 0, height: 0 };
+        return box.width > 0 && box.height > 0;
+      })
+      : [];
+    const united = step.ringUnion ? unionBoxes(unionNodes) : null;
+    const ringNode = united
+      ? unionNodes[0]
+      : firstPaintTarget(step.ring) || firstPaintTarget(step.emptyRing) || firstVisible(step.ring, doc) || firstVisible(step.emptyRing, doc);
+    if (!ringNode && !united) {
       park();
       if (state.mode === "page" && state.paintTries < 10) {
         state.paintTries += 1;
@@ -500,12 +553,15 @@ export function attachKlafiTips(env = globalThis) {
     skipBtn.hidden = state.step !== 1;
     backBtn.hidden = state.step === 1;
     if (mute && mute.dataset.seeded !== state.mode) seedMute(state.mode);
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const view = viewportBox();
+    const vw = view.width;
+    const vh = view.height;
     const preferredRing = state.mode === "pull" && state.step === 3 && flags().dialogOpen
       ? firstVisible("#dialog-card", doc)
       : null;
-    const fromSpec = highlightSpec(preferredRing || ringNode, 8);
+    const fromSpec = united
+      ? specFromBox(united, 6, 12)
+      : highlightSpec(preferredRing || ringNode, 8);
     const toNode = step.arrowTo ? firstPaintTarget(step.arrowTo) : null;
     const toSpec = toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null;
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
@@ -526,7 +582,7 @@ export function attachKlafiTips(env = globalThis) {
       drawRing(marks, toSpec);
       drawArrow(marks, fromSpec, toSpec);
     }
-    placeCard(card, fromSpec.box, toSpec?.box || null);
+    placeCard(card, fromSpec.box, toSpec?.box || null, step.place || "");
     queueMicrotask(() => nextBtn?.focus({ preventScroll: true }));
     } catch {
       park();

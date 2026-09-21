@@ -10,7 +10,6 @@
     { "id": "set-chase", "nameHe": "סדרה מלאה", "descriptionHe": "השלימו סדרת מפלגה.", "rule": "bestSet", "target": 0 },
     { "id": "trade-match", "nameHe": "החלפה ראשונה", "descriptionHe": "השלימו החלפה עם שחקן אחר.", "rule": "trades", "target": 1 },
     { "id": "collector-ten", "nameHe": "עשרה שונים", "descriptionHe": "אספו עשרה קלפים שונים.", "rule": "unique", "target": 10 },
-    { "id": "favorite-first", "nameHe": "שומר בלב", "descriptionHe": "סמנו קלף אחד כפייבוריט.", "rule": "favorites", "target": 1 },
     { "id": "event-first", "nameHe": "מהדורה מוגבלת", "descriptionHe": "אספו קלף מאירוע.", "rule": "events", "target": 1 },
     { "id": "source-three", "nameHe": "קורא מקורות", "descriptionHe": "פתחו שלושה מקורות של קלפים.", "rule": "sources", "target": 3 },
     { "id": "trade-three", "nameHe": "שולחן החלפות", "descriptionHe": "השלימו שלוש החלפות.", "rule": "trades", "target": 3 },

@@ -94,8 +94,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /share-icon-button/);
   assert.doesNotMatch(html, /id="dialog-gift"/);
   assert.match(css, /\.binder-slot\s*\{[^}]*aspect-ratio:\s*63\s*\/\s*96/s);
-  assert.match(javascript, /function toggleFavorite/);
-  assert.match(javascript, /setLabels\.FAVORITES = "פייבוריטים"/);
+  assert.doesNotMatch(javascript, /function toggleFavorite/);
+  assert.doesNotMatch(javascript, /setLabels\.FAVORITES/);
+  assert.doesNotMatch(javascript, /פייבוריטים/);
   assert.match(javascript, /setTimeout\(startWalkout/);
   assert.match(html, /pack-wrapper-transparent\.png/);
   assert.match(html, /id="open-pack"[^>]*>פתיחת קלף/);
@@ -112,8 +113,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /PAGE_GUIDES/);
   assert.match(tipsJs, /fill-rule/);
   assert.match(css, /\.klafi-tips-dim \{ pointer-events: auto; z-index: 1; \}/);
-  assert.match(css, /\.klafi-tips-card \{ z-index: 2; \}/);
-  assert.match(css, /\.klafi-tips-marks \{ pointer-events: none; z-index: 3; \}/);
+  assert.match(css, /\.klafi-tips-marks \{ pointer-events: none; z-index: 2; \}/);
+  assert.match(css, /\.klafi-tips-card \{ z-index: 4; \}/);
   assert.match(css, /\.klafi-tips-card \{[\s\S]*?background: #eee5d4/);
   assert.doesNotMatch(css, /\.klafi-tips-card \{[\s\S]*?background: rgba\(238, 229, 212, 0\.6\)/);
   assert.match(tipsJs, /kind === "circle"/);

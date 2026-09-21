@@ -2213,31 +2213,27 @@ function renderBinder() {
     { pending: waitingOwnership, hidden: !waitingOwnership && owned > 0 },
   );
 
-  const favorites = new Set(model.serverState?.favorites || []);
   const playerCards = playerCatalog();
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
     .filter((id) => isLiveReleaseSet(id));
   const setOrder = [
     "ALL",
-    "FAVORITES",
     ...releaseOrder.map((id) => `RELEASE:${id}`),
     ...new Set(playerCards.filter((card) => !card.eventOnly).map((card) => card.set)),
   ];
   const setLabels = Object.fromEntries(playerCards.map((card) => [card.set, cardSetName(card)]));
   for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
   setLabels.ALL = `הכול ${playerCards.length}`;
-  setLabels.FAVORITES = "פייבוריטים";
   setLabels.SPECIALS = "מיוחדים";
+  if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
   elements.binderFilters.innerHTML = setOrder.map((set) => {
     const count = set === "ALL"
       ? owned
       : playerCards.filter((card) => {
-        const inSet = set === "FAVORITES"
-          ? favorites.has(card.id)
-          : set === "SPECIALS"
-            ? card.eventOnly
-            : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
+        const inSet = set === "SPECIALS"
+          ? card.eventOnly
+          : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
         return inSet && inventory[card.id];
       }).length;
     const active = model.binderFilter === set;
@@ -2245,7 +2241,6 @@ function renderBinder() {
   }).join("");
 
   const visible = playerCards.filter((card) => model.binderFilter === "ALL"
-    || (model.binderFilter === "FAVORITES" ? favorites.has(card.id) : false)
     || (model.binderFilter === "SPECIALS" ? card.eventOnly
       : model.binderFilter.startsWith("RELEASE:")
         ? card.releaseSetId === model.binderFilter.slice(8)
@@ -2296,7 +2291,6 @@ function badgeArtwork(id) {
     "set-chase": '<path d="M24 13l3.2 6.3 7 .9-5.1 4.8 1.3 6.9-6.4-3.3-6.4 3.3 1.3-6.9-5.1-4.8 7-.9z"/>',
     "trade-match": '<rect x="13" y="17" width="11" height="15" rx="1"/><rect x="24" y="20" width="11" height="15" rx="1"/><path d="M17 14h11l-2-2M31 38H20l2 2"/>',
     "collector-ten": '<path d="M17 17h14v18H17zM20 14h14v18M14 20h14v18"/>',
-    "favorite-first": '<path d="M24 35S13 29 13 21c0-6 8-8 11-2 3-6 11-4 11 2 0 8-11 14-11 14z"/>',
     "event-first": '<path d="M16 18h16v17H16zM20 14v8M28 14v8M16 24h16"/><path d="M21 29h6"/>',
     "source-three": '<circle cx="20" cy="23" r="6"/><path d="M24 28l7 7M29 17h5M31.5 14.5v5"/>',
     "trade-three": '<path d="M14 20h17l-3-3M34 31H17l3 3"/><circle cx="17" cy="27" r="3"/><circle cx="31" cy="24" r="3"/>',
@@ -2327,7 +2321,6 @@ const ACHIEVEMENT_RULES = [
   ["leaders", "מנהיגים"],
   ["bestSet", "סדרה מלאה"],
   ["trades", "החלפות"],
-  ["favorites", "פייבוריטים"],
   ["events", "אירועים"],
   ["leaderParties", "סיעות מנהיגים"],
   ["stars", "כוכבים"],
@@ -2436,7 +2429,6 @@ const BADGE_COPY = {
   "set-chase": ["סדרה מלאה", "השלימו סדרת מפלגה."],
   "trade-match": ["החלפה ראשונה", "השלימו החלפה עם שחקן אחר."],
   "collector-ten": ["עשרה שונים", "אספו עשרה קלפים שונים."],
-  "favorite-first": ["שומר בלב", "סמנו קלף אחד כפייבוריט."],
   "event-first": ["מהדורה מוגבלת", "אספו קלף מאירוע."],
   "source-three": ["קורא מקורות", "פתחו שלושה מקורות של קלפים."],
   "trade-three": ["שולחן החלפות", "השלימו שלוש החלפות."],
@@ -2476,9 +2468,13 @@ function localAchievementList() {
   }));
 }
 
+function isHeartedAchievement(badge) {
+  return badge?.id === "favorite-first" || badge?.rule === "favorites";
+}
+
 function achievementList() {
-  if (model.serverState?.achievements?.length) return model.serverState.achievements;
-  return localAchievementList();
+  const badges = model.serverState?.achievements?.length ? model.serverState.achievements : localAchievementList();
+  return badges.filter((badge) => !isHeartedAchievement(badge));
 }
 
 function renderAchievements() {
@@ -3694,21 +3690,6 @@ async function debugUnlockCard(cardId) {
     showToast("Card unlocked for local testing.");
   } catch (error) {
     showToast(error.status === 404 ? "Local unlock is disabled." : "Could not unlock this card.");
-  }
-}
-
-async function toggleFavorite(cardId) {
-  const favorite = !(model.serverState.favorites || []).includes(cardId);
-  try {
-    model.serverState = await request("/api/favorites", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ cardId, favorite }),
-    });
-    renderBinder();
-    showToast(favorite ? "נוסף לפייבוריטים." : "הוסר מהפייבוריטים.");
-  } catch {
-    showToast("לא הצלחנו לעדכן את הפייבוריטים.");
   }
 }
 

@@ -3557,8 +3557,8 @@ body {
 }
 
 .klafi-tips-dim { pointer-events: auto; z-index: 1; }
-.klafi-tips-card { z-index: 2; }
-.klafi-tips-marks { pointer-events: none; z-index: 3; }
+.klafi-tips-marks { pointer-events: none; z-index: 2; }
+.klafi-tips-card { z-index: 4; }
 
 .klafi-tips-veil {
   fill: rgba(28, 22, 16, 0.52);
