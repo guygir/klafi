@@ -111,6 +111,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /klafi:tips/);
   assert.match(tipsJs, /klafi:page-tips/);
   assert.match(tipsJs, /PAGE_GUIDES/);
+  assert.match(tipsJs, /getAnimations/);
+  assert.match(tipsJs, /viewHasEnterOffset/);
+  assert.match(tipsJs, /doc\.body/);
   assert.match(tipsJs, /fill-rule/);
   assert.match(css, /:not\(\.klafi-tips\) \{ position: relative; z-index: 1; \}/);
   assert.match(css, /#klafi-tips\.klafi-tips/);

@@ -475,6 +475,7 @@ export function attachKlafiTips(env = globalThis) {
 
   const state = { mode: null, started: false, step: 1, parked: false, page: null, paintTries: 0 };
   let drawTimer = 0;
+  let settleTimer = 0;
 
   function flags() {
     return env.getFlags ? env.getFlags() : readFlags(doc);
@@ -631,13 +632,43 @@ export function attachKlafiTips(env = globalThis) {
     }
     placeCard(card, fromSpec.box, toSpec?.box || null, step.place || "", { width: vw, height: vh, left: 0, top: 0 });
     queueMicrotask(() => nextBtn?.focus({ preventScroll: true }));
+    if (viewHasEnterOffset()) {
+      env.setTimeout?.(() => { if (state.started) schedulePaint(); }, 40);
+    }
     } catch {
       park();
     }
   }
 
+  function viewIsAnimating() {
+    const view = doc.querySelector(".view.active");
+    try {
+      return Boolean(view?.getAnimations?.().some((anim) => anim.playState === "running"));
+    } catch {
+      return false;
+    }
+  }
+
+  function viewHasEnterOffset() {
+    const view = doc.querySelector(".view.active");
+    if (!view || typeof getComputedStyle !== "function") return false;
+    const transform = getComputedStyle(view).transform;
+    if (!transform || transform === "none") return false;
+    const matrix = transform.match(/matrix\(([^)]+)\)/);
+    if (!matrix) return true;
+    const ty = Number(matrix[1].split(",")[5]) || 0;
+    return Math.abs(ty) > 0.5;
+  }
+
   function schedulePaint() {
     cancelAnimationFrame(drawTimer);
+    env.clearTimeout?.(settleTimer);
+    if (viewIsAnimating()) {
+      settleTimer = env.setTimeout?.(() => {
+        if (state.started) schedulePaint();
+      }, 40) || 0;
+      return;
+    }
     drawTimer = requestAnimationFrame(paint);
   }
 
@@ -650,6 +681,9 @@ export function attachKlafiTips(env = globalThis) {
     state.paintTries = 0;
     seedMute("page");
     schedulePaint();
+    env.setTimeout?.(() => {
+      if (state.mode === "page" && state.page === page && state.started) schedulePaint();
+    }, 280);
   }
 
   function maybeStartPage() {
@@ -730,6 +764,9 @@ export function attachKlafiTips(env = globalThis) {
     const view = doc.querySelector(`#${id}`);
     if (!view) continue;
     new MutationObserver(() => sync()).observe(view, { attributes: true, attributeFilter: ["class"] });
+    view.addEventListener("animationend", () => {
+      if (state.started && !state.parked) schedulePaint();
+    });
   }
   const binderGrid = doc.querySelector("#binder-grid");
   if (binderGrid) {
