@@ -11,6 +11,7 @@ const DEBUG_CARD_FRAME_KEY = "kalpi-debug-card-frame";
 const STATIC_DATA_VERSION = "visible-sets-2";
 const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5"];
 const DAY_MS = 24 * 60 * 60 * 1000;
+const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 const model = {
   token: localStorage.getItem(SESSION_KEY),
@@ -51,6 +52,9 @@ const model = {
   extrasReady: false,
   reports: [],
   watchedTrade: null,
+  tradeBoardPage: 0,
+  tradeBoardOffered: "",
+  tradeBoardWanted: "",
 };
 let showcaseTimers = [];
 let packTimers = [];
@@ -153,6 +157,10 @@ const elements = {
   tradeWantedCard: document.querySelector("#trade-wanted-card"),
   tradeCreate: document.querySelector("#trade-create"),
   tradeBoard: document.querySelector("#trade-board"),
+  tradeBoardToolbar: document.querySelector("#trade-board-toolbar"),
+  tradeBoardOffered: document.querySelector("#trade-board-offered"),
+  tradeBoardWanted: document.querySelector("#trade-board-wanted"),
+  tradeBoardPager: document.querySelector("#trade-board-pager"),
   creatorCode: document.querySelector("#creator-code"),
   copyCreatorLink: document.querySelector("#copy-creator-link"),
   creatorLinkPreview: document.querySelector("#creator-link-preview"),
@@ -1492,12 +1500,12 @@ function renderChallengeRecap() {
     </div>
     ${recap.hasCrowd ? `<div class="challenge-hist">
       <small>איך כולם משכו היום</small>
-      <div class="challenge-hist-plot" aria-hidden="true">
+      <div class="challenge-hist-plot" dir="ltr" aria-hidden="true">
         ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
           <b style="height:${Math.max(8, Math.round((bin.count / recap.field) * 100))}%; animation-delay:${index * 40}ms"></b>
         </div>`).join("")}
       </div>
-      <div class="challenge-hist-axis">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
+      <div class="challenge-hist-axis" dir="ltr">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
     </div>` : ""}
   `;
 }
@@ -2537,6 +2545,64 @@ function tradeThumbMarkup(card) {
   return `<span class="trade-thumb-frame">${binderCardMarkup(card)}</span>`;
 }
 
+function tradeBoardFilterOptions(trades, key) {
+  const seen = new Map();
+  for (const trade of trades) {
+    const id = trade[key];
+    if (!id || seen.has(id)) continue;
+    const card = model.byId.get(id);
+    seen.set(id, card ? cardTitle(card) : id);
+  }
+  return [...seen.entries()].sort((left, right) => left[1].localeCompare(right[1], "he"));
+}
+
+function fillTradeBoardFilter(select, trades, key, selected) {
+  if (!select) return selected;
+  const options = tradeBoardFilterOptions(trades, key);
+  select.innerHTML = [
+    '<option value="">הכול</option>',
+    ...options.map(([id, title]) => `<option value="${escapeHtml(id)}">${escapeHtml(title)}</option>`),
+  ].join("");
+  if (options.some(([id]) => id === selected)) {
+    select.value = selected;
+    return selected;
+  }
+  select.value = "";
+  return "";
+}
+
+function tradeBoardPagerMarkup(page, pages, remaining) {
+  if (pages <= 1) return "";
+  const nextCount = remaining > 0 ? remaining : TRADE_BOARD_PAGE_SIZE;
+  return `<button type="button" data-page-target="trades" data-page="${Math.max(0, page - 1)}" ${page === 0 ? "disabled" : ""}>הקודמות</button>
+    <span>${page + 1}/${pages}</span>
+    <button type="button" data-page-target="trades" data-page="${Math.min(pages - 1, page + 1)}" ${page === pages - 1 ? "disabled" : ""}>עוד ${nextCount}</button>`;
+}
+
+function renderTradeBoard() {
+  if (!elements.tradeBoard) return;
+  const openOffers = model.trades
+    .filter((trade) => trade.status === "open" && !trade.ownedByCurrent)
+    .sort((left, right) => Number(right.canAccept) - Number(left.canAccept));
+  model.tradeBoardOffered = fillTradeBoardFilter(elements.tradeBoardOffered, openOffers, "offeredCardId", model.tradeBoardOffered);
+  model.tradeBoardWanted = fillTradeBoardFilter(elements.tradeBoardWanted, openOffers, "wantedCardId", model.tradeBoardWanted);
+  if (elements.tradeBoardToolbar) elements.tradeBoardToolbar.hidden = openOffers.length === 0;
+  const filtered = openOffers.filter((trade) => (
+    (!model.tradeBoardOffered || trade.offeredCardId === model.tradeBoardOffered)
+    && (!model.tradeBoardWanted || trade.wantedCardId === model.tradeBoardWanted)
+  ));
+  const pages = Math.max(1, Math.ceil(filtered.length / TRADE_BOARD_PAGE_SIZE));
+  model.tradeBoardPage = Math.min(model.tradeBoardPage, pages - 1);
+  const start = model.tradeBoardPage * TRADE_BOARD_PAGE_SIZE;
+  const page = filtered.slice(start, start + TRADE_BOARD_PAGE_SIZE);
+  const remaining = Math.max(0, filtered.length - start - page.length);
+  elements.tradeBoard.innerHTML = page.length
+    ? page.map((trade) => tradeRowMarkup(trade)).join("")
+    : `<p class="work-note">${openOffers.length ? "אין הצעות עם הסינון הזה." : "אין כרגע הצעות פתוחות."}</p>`;
+  if (elements.tradeBoardPager) elements.tradeBoardPager.innerHTML = tradeBoardPagerMarkup(model.tradeBoardPage, pages, remaining);
+  queueCardTextFit(elements.tradeBoard);
+}
+
 function tradeRowMarkup(trade) {
   const offeredCard = model.byId.get(trade.offeredCardId);
   const wantedCard = model.byId.get(trade.wantedCardId);
@@ -2724,14 +2790,7 @@ function renderGrowth() {
     if (mine) queueCardTextFit(elements.tradeActive);
   }
   watchOpenTrade();
-  if (elements.tradeBoard) queueCardTextFit(elements.tradeBoard);
-
-  const openOffers = model.trades
-    .filter((trade) => trade.status === "open" && !trade.ownedByCurrent)
-    .sort((left, right) => Number(right.canAccept) - Number(left.canAccept));
-  elements.tradeBoard.innerHTML = openOffers.length
-    ? openOffers.map((trade) => tradeRowMarkup(trade)).join("")
-    : '<p class="work-note">אין כרגע הצעות פתוחות.</p>';
+  renderTradeBoard();
 
   const selectedFaction = model.serverState.factionId;
   const parties = partyRegister();
@@ -4713,6 +4772,22 @@ function handleTradeBoardClick(event) {
 }
 elements.tradeBoard.addEventListener("click", handleTradeBoardClick);
 elements.tradeActive?.addEventListener("click", handleTradeBoardClick);
+elements.tradeBoardOffered?.addEventListener("change", () => {
+  model.tradeBoardOffered = elements.tradeBoardOffered.value;
+  model.tradeBoardPage = 0;
+  renderTradeBoard();
+});
+elements.tradeBoardWanted?.addEventListener("change", () => {
+  model.tradeBoardWanted = elements.tradeBoardWanted.value;
+  model.tradeBoardPage = 0;
+  renderTradeBoard();
+});
+elements.tradeBoardPager?.addEventListener("click", (event) => {
+  const button = event.target.closest('[data-page-target="trades"]');
+  if (!button) return;
+  model.tradeBoardPage = Number(button.dataset.page);
+  renderTradeBoard();
+});
 elements.saveFaction.addEventListener("click", saveFaction);
 elements.creatorCode.addEventListener("input", () => {
   elements.creatorLinkPreview.textContent = creatorLink();

@@ -226,7 +226,20 @@
           <article id="community-panel-open-trades" class="work-card open-trades-desk" role="tabpanel" aria-labelledby="community-tab-open-trades" tabindex="0" hidden>
             <p class="work-kicker">הצעות פתוחות</p>
             <h2>עסקאות שמחכות לכם.</h2>
+            <div id="trade-board-toolbar" class="trade-board-toolbar" hidden>
+              <label>הם נותנים
+                <select id="trade-board-offered" aria-label="סינון לפי הקלף שהם נותנים">
+                  <option value="">הכול</option>
+                </select>
+              </label>
+              <label>הם רוצים
+                <select id="trade-board-wanted" aria-label="סינון לפי הקלף שהם רוצים">
+                  <option value="">הכול</option>
+                </select>
+              </label>
+            </div>
             <div id="trade-board" class="trade-board"></div>
+            <div id="trade-board-pager" class="view-pager trade-board-pager" aria-label="עמודי ההצעות"></div>
           </article>
           <article class="work-card debug-community" hidden>
             <p class="work-kicker">קישור שיתוף</p>
