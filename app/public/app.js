@@ -11,7 +11,24 @@ const DEBUG_CARD_FRAME_KEY = "kalpi-debug-card-frame";
 const STATIC_DATA_VERSION = "visible-sets-2";
 const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5"];
 const DAY_MS = 24 * 60 * 60 * 1000;
+const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
+
+function prefersReducedMotion() {
+  return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+}
+
+function playerDialogOpen() {
+  return [
+    elements.dialog,
+    elements.advocacyDialog,
+    elements.profileDialog,
+    elements.trustDialog,
+    elements.reportDialog,
+    elements.levelDialog,
+    elements.shareSheet,
+  ].some((dialog) => dialog?.open);
+}
 const model = {
   token: localStorage.getItem(SESSION_KEY),
   editorial: null,
@@ -35,6 +52,7 @@ const model = {
   walkoutStage: 0,
   previewMode: false,
   binderFilter: "ALL",
+  binderParty: "",
   binderPage: 0,
   achievementPage: 0,
   communityPage: "trade",
@@ -50,6 +68,11 @@ const model = {
   selectedAvatarId: null,
   extrasReady: false,
   reports: [],
+  reportSubject: null,
+  watchedTrade: null,
+  tradeBoardPage: 0,
+  tradeBoardOffered: "",
+  tradeBoardWanted: "",
 };
 let showcaseTimers = [];
 let packTimers = [];
@@ -74,9 +97,15 @@ const elements = {
   profileForm: document.querySelector("#profile-form"),
   profileNameInput: document.querySelector("#profile-name-input"),
   profileError: document.querySelector("#profile-error"),
+  recoveryCode: document.querySelector("#profile-recovery-code"),
+  copyRecovery: document.querySelector("#copy-recovery-code"),
+  restoreInput: document.querySelector("#profile-restore-input"),
+  restoreButton: document.querySelector("#restore-recovery-code"),
+  restoreStatus: document.querySelector("#profile-restore-status"),
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
   homeCopy: document.querySelector("#home-copy"),
+  skipToMain: document.querySelector("#skip-to-main"),
   advocacyShort: document.querySelector("#advocacy-short"),
   openAdvocacy: document.querySelector("#open-advocacy"),
   advocacyDialog: document.querySelector("#advocacy-dialog"),
@@ -96,8 +125,6 @@ const elements = {
   todayLeaderHook: document.querySelector("#today-leader-hook"),
   todayLeaderMeta: document.querySelector("#today-leader-meta"),
   homePack: document.querySelector("#home-pack"),
-  homePackRip: document.querySelector("#home-pack-rip"),
-  homePackRipBackdrop: document.querySelector("#home-pack-rip-backdrop"),
   openPack: document.querySelector("#open-pack"),
   openPackFancy: document.querySelector("#open-pack-fancy"),
   openBibiPack: document.querySelector("#open-bibi-pack"),
@@ -139,7 +166,10 @@ const elements = {
   levelDialogReward: document.querySelector("#level-dialog-reward"),
   closeLevel: document.querySelector("#close-level"),
   claimLevel: document.querySelector("#claim-level"),
+  avatarSeal: document.querySelector("#avatar-seal"),
   tradePreview: document.querySelector("#trade-preview"),
+  tradeActive: document.querySelector("#trade-active"),
+  tradeCompose: document.querySelector("#trade-compose"),
   tradeOfferedPreview: document.querySelector("#trade-offered-preview"),
   tradeWantedPreview: document.querySelector("#trade-wanted-preview"),
   tradeDemo: document.querySelector("#trade-demo"),
@@ -149,6 +179,10 @@ const elements = {
   tradeWantedCard: document.querySelector("#trade-wanted-card"),
   tradeCreate: document.querySelector("#trade-create"),
   tradeBoard: document.querySelector("#trade-board"),
+  tradeBoardToolbar: document.querySelector("#trade-board-toolbar"),
+  tradeBoardOffered: document.querySelector("#trade-board-offered"),
+  tradeBoardWanted: document.querySelector("#trade-board-wanted"),
+  tradeBoardPager: document.querySelector("#trade-board-pager"),
   creatorCode: document.querySelector("#creator-code"),
   copyCreatorLink: document.querySelector("#copy-creator-link"),
   creatorLinkPreview: document.querySelector("#creator-link-preview"),
@@ -208,6 +242,7 @@ const elements = {
   navButtons: [...document.querySelectorAll("[data-nav]")],
   dialog: document.querySelector("#card-dialog"),
   dialogCard: document.querySelector("#dialog-card"),
+  dialogTrust: document.querySelector("#dialog-trust"),
   dialogSource: document.querySelector("#dialog-source"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
   dialogInstagram: document.querySelector("#dialog-instagram"),
@@ -772,6 +807,7 @@ async function hydrateIdleQueue() {
       applyHomePayload({ ...settled, state: settled.state });
       prefetchIdleAssets();
       renderHome();
+      refreshDailyChallenge();
       flushPendingIdleSeen().catch(() => {});
       return settled;
     })().finally(() => {
@@ -982,8 +1018,9 @@ function showSharedCard(cardId, isTradeIntent = false) {
     ? "זו תצוגה של הצעת החלפה. הבעלות לא השתנתה והקלף לא נוסף לאוסף שלכם."
     : "זו תצוגת שיתוף בלבד. הקלף לא נוסף לאוסף שלכם.";
   if (elements.sharedTrust) {
-    elements.sharedTrust.textContent = "";
-    elements.sharedTrust.hidden = true;
+    const line = cardTrustLine(card);
+    elements.sharedTrust.textContent = line;
+    elements.sharedTrust.hidden = !line;
   }
   configureSourceLink(elements.sharedSource, card);
   elements.sharedSource.dataset.sourceCard = card.id;
@@ -1007,18 +1044,22 @@ function describeError(error) {
 function fitCardText(element) {
   const frame = element.closest(".kalpi-card");
   const isFullart = frame?.dataset.cardFrame === "fullart-v1";
-  if (isFullart && element.dataset.fitCardText !== "quote") return;
+  const compact = ["binder", "peek", "trade"].includes(frame?.dataset.cardSurface);
+  if (isFullart && element.dataset.fitCardText !== "quote" && !compact) return;
   const frameWidth = frame?.clientWidth ?? 0;
   if (!frameWidth || !element.clientWidth || !element.clientHeight) return;
   const role = element.dataset.fitCardText;
-  const compact = ["binder", "peek"].includes(frame.dataset.cardSurface);
   const scale = (isFullart
-    ? { quote: { low: 0.042, high: 0.064, floor: 10, ceiling: 22 } }
+    ? {
+      quote: { low: 0.038, high: 0.064, floor: compact ? 8 : 12, ceiling: compact ? 14 : 22 },
+      party: { low: 0.03, high: 0.042, floor: compact ? 8 : 10, ceiling: 12 },
+      name: { low: 0.048, high: 0.08, floor: compact ? 9 : 13, ceiling: 24 },
+    }
     : {
-      quote: { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 },
-      party: { low: 0.035, high: 0.052, floor: compact ? 7 : 9, ceiling: 13 },
+      quote: { low: 0.04, high: 0.085, floor: compact ? 8 : 13, ceiling: 30 },
+      party: { low: 0.035, high: 0.052, floor: compact ? 8 : 10, ceiling: 13 },
       name: { low: 0.052, high: 0.078, floor: compact ? 9 : 13, ceiling: 27 },
-    })[role] || { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 };
+    })[role] || { low: 0.04, high: 0.085, floor: compact ? 8 : 13, ceiling: 30 };
   let low = Math.max(scale.floor, frameWidth * scale.low);
   let high = Math.min(scale.ceiling, frameWidth * scale.high);
   if (high < low) high = low;
@@ -1163,6 +1204,25 @@ function renderProfile() {
     elements.levelAvatar.src = avatarUrl(avatar);
     elements.levelAvatar.alt = avatar.nameHe || "";
   }
+  renderAvatarSeal();
+}
+
+function factionPipColor() {
+  const factionId = model.serverState?.factionId;
+  if (!factionId) return "";
+  return partyRegister().find(({ id }) => id === factionId)?.pip
+    || model.catalog.find((card) => card.set === factionId)?.pip
+    || "";
+}
+
+function renderAvatarSeal() {
+  const seal = elements.avatarSeal;
+  const button = elements.levelAvatarButton;
+  if (!seal) return;
+  const pip = factionPipColor();
+  seal.hidden = !pip;
+  seal.style.background = pip || "transparent";
+  button?.classList.toggle("has-faction-seal", Boolean(pip));
 }
 
 function renderAvatarPicker() {
@@ -1177,14 +1237,85 @@ function renderAvatarPicker() {
     </button>`).join("");
 }
 
+const SESSION_TOKEN_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function fillRecoveryCode() {
+  if (elements.recoveryCode) elements.recoveryCode.value = model.token || "";
+  if (elements.restoreInput) elements.restoreInput.value = "";
+  if (elements.restoreStatus) elements.restoreStatus.textContent = "";
+}
+
 function openProfileDialog() {
   elements.profileNameInput.value = model.serverState?.displayName || "";
   model.selectedAvatarId = model.serverState?.avatarId || "kid-boy";
   elements.profileError.textContent = "";
+  fillRecoveryCode();
   renderAvatarPicker();
   elements.profileDialog.showModal();
   elements.profileNameInput.focus();
   elements.profileNameInput.select();
+}
+
+async function copyRecoveryCode() {
+  const token = model.token || "";
+  if (!token) return;
+  const copied = await copyText(token);
+  showToast(copied ? "קוד השחזור הועתק." : "העתיקו את הקוד מהשדה.");
+}
+
+async function restoreSessionFromCode() {
+  const token = (elements.restoreInput?.value || "").trim();
+  if (elements.restoreStatus) elements.restoreStatus.textContent = "";
+  if (!SESSION_TOKEN_PATTERN.test(token)) {
+    if (elements.restoreStatus) elements.restoreStatus.textContent = "הקוד לא נראה שלם. הדביקו אותו במלואו.";
+    elements.restoreInput?.focus();
+    return;
+  }
+  if (token === model.token) {
+    if (elements.restoreStatus) elements.restoreStatus.textContent = "זה כבר הקוד של המכשיר הזה.";
+    return;
+  }
+  if (elements.restoreButton) elements.restoreButton.disabled = true;
+  try {
+    const state = await request("/api/state", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    model.token = token;
+    localStorage.setItem(SESSION_KEY, token);
+    try {
+      localStorage.removeItem(PENDING_MUTATIONS_KEY);
+      localStorage.removeItem(PENDING_IDLE_SEEN_KEY);
+      localStorage.removeItem(HOME_CACHE_KEY);
+    } catch {
+      /* Recovery still switches the live session. */
+    }
+    model.serverState = state;
+    model.idleQueue = [];
+    model.extrasReady = false;
+    extrasHydrate = null;
+    homeHydrate = null;
+    applyHomePayload({ token, state });
+    fillRecoveryCode();
+    await Promise.all([
+      hydrateHome().catch(() => {}),
+      hydrateExtras().catch(() => {}),
+    ]);
+    renderProfile();
+    renderHome();
+    renderBinder();
+    renderGrowth();
+    renderAchievements();
+    elements.profileDialog.close();
+    showToast("האוסף שוחזר במכשיר הזה.");
+  } catch (error) {
+    if (elements.restoreStatus) {
+      elements.restoreStatus.textContent = error.status === 401
+        ? "הקוד לא נמצא. בדקו שהעתקתם אותו במלואו."
+        : "לא הצלחנו לשחזר את האוסף עכשיו.";
+    }
+  } finally {
+    if (elements.restoreButton) elements.restoreButton.disabled = false;
+  }
 }
 
 async function saveProfile(event) {
@@ -1468,19 +1599,19 @@ function renderChallengeRecap() {
     </div>
     ${recap.hasCrowd ? `<div class="challenge-hist">
       <small>איך כולם משכו היום</small>
-      <div class="challenge-hist-plot" aria-hidden="true">
+      <div class="challenge-hist-plot" dir="ltr" aria-hidden="true">
         ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
-          <b style="height:${Math.max(8, Math.round((bin.count / recap.field) * 100))}%; animation-delay:${index * 45}ms"></b>
+          <b style="height:${bin.count ? Math.max(4, Math.round((bin.count / recap.field) * 100)) : 0}%; animation-delay:${index * 40}ms"></b>
         </div>`).join("")}
       </div>
-      <div class="challenge-hist-axis">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
+      <div class="challenge-hist-axis" dir="ltr">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
     </div>` : ""}
   `;
 }
 
 function renderTodayDocket() {
   if (!elements.todayChallengeHook) return;
-  const challenge = model.leaderboards?.dailyChallenge || localDailyChallenge();
+  const challenge = model.leaderboards?.dailyChallenge || (model.extrasReady ? null : localDailyChallenge());
   const challengeParty = challenge
     ? partyDisplayName(challenge.targetPartyId, challenge.targetPartyNameHe || "")
     : "טוענים…";
@@ -1591,7 +1722,7 @@ function renderProgression({ announce = false } = {}) {
   elements.levelProgress.style.width = `${progression.percent}%`;
   elements.levelProgressCount.textContent = `${progression.unique - progression.start}/${progression.target - progression.start}`;
   if (progression.remaining) {
-    elements.levelNext.textContent = `גלה עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
+    elements.levelNext.textContent = `גלו עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
   } else {
     elements.levelNext.textContent = progression.nextReleaseRank
       ? `הרמה מוכנה · ${progression.nextReleaseRank} תיפתח בסדרה הבאה`
@@ -1631,60 +1762,12 @@ setInterval(updateCountdown, 1000);
 function sealedPackMarkup(extraClass = "") {
   return `
     <div class="pack-wrapper rip-pack ${extraClass}" aria-label="חבילת קְלָפִי סגורה">
-      <img src="/design-assets/pack-wrapper-transparent.png" alt="" />
+      <img src="/design-assets/pack-wrapper-klafi.png" alt="" />
     </div>`;
 }
 
-function playHomePackRip({ holdAtEnd = false } = {}) {
-  const video = elements.homePackRip;
-  if (!video || matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return { finished: Promise.resolve(), release() {} };
-  }
-  elements.homePack.hidden = true;
-  elements.homePackRipBackdrop.hidden = false;
-  video.hidden = false;
-  video.currentTime = 0;
-  elements.openPackFancy.textContent = "פותחים…";
-
-  let timer;
-  let finished = false;
-  let resolveFinished;
-  const cleanup = () => {
-    clearTimeout(timer);
-    video.removeEventListener("ended", finish);
-    video.removeEventListener("error", finish);
-    video.pause();
-    video.hidden = true;
-    elements.homePackRipBackdrop.hidden = true;
-    elements.homePack.hidden = false;
-  };
-  const finish = () => {
-    if (finished) return;
-    finished = true;
-    clearTimeout(timer);
-    video.pause();
-    if (!holdAtEnd) cleanup();
-    resolveFinished();
-  };
-  const finishedPromise = new Promise((resolve) => {
-    resolveFinished = resolve;
-    video.addEventListener("ended", finish);
-    video.addEventListener("error", finish);
-    timer = setTimeout(finish, 10000);
-    video.play().catch(finish);
-  });
-  return {
-    finished: finishedPromise,
-    release() {
-      if (!finished) {
-        finished = true;
-        resolveFinished();
-      }
-      video.removeEventListener("ended", finish);
-      video.removeEventListener("error", finish);
-      cleanup();
-    },
-  };
+function playHomePackRip() {
+  return { finished: Promise.resolve(), release() {} };
 }
 
 async function openIdleReturn(opening = "regular") {
@@ -1893,10 +1976,22 @@ async function handlePackAction() {
   }
 }
 
+function finishWalkoutCard() {
+  model.walkoutStage = WALKOUT_STAGES.length - 1;
+  renderWalkoutStage();
+  model.packPhase = "complete-card";
+  const isLast = model.currentCardIndex === model.currentPack.cards.length - 1;
+  setPackAction(isLast ? "לאוסף" : "הקלף הבא", false, "");
+}
+
 function startWalkout() {
   packTimers.forEach(clearTimeout);
   packTimers = [];
   model.packPhase = "walkout";
+  if (prefersReducedMotion()) {
+    finishWalkoutCard();
+    return;
+  }
   model.walkoutStage = 0;
   renderWalkoutStage();
   const configured = readRevealDelays();
@@ -1908,11 +2003,7 @@ function startWalkout() {
       if (model.packPhase !== "walkout") return;
       model.walkoutStage = index + 1;
       renderWalkoutStage();
-      if (model.walkoutStage === WALKOUT_STAGES.length - 1) {
-        model.packPhase = "complete-card";
-        const isLast = model.currentCardIndex === model.currentPack.cards.length - 1;
-        setPackAction(isLast ? "לאוסף" : "הקלף הבא", false, "");
-      }
+      if (model.walkoutStage === WALKOUT_STAGES.length - 1) finishWalkoutCard();
     }, elapsed));
   });
 }
@@ -1948,10 +2039,6 @@ function renderWalkoutStage() {
   const sourceLink = walkout.sourceUrl
     ? `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}" aria-label="${escapeHtml(`פתיחת המקור${sourceName} בכרטיסייה חדשה`)}">למקור המצורף ↗</a>`
     : "";
-  const contentClass = card.releaseTier === "critique"
-    ? "פרשנות/ביקורת"
-    : walkout.kind === "quote" ? "ציטוט" : "עובדתי";
-  const releaseName = model.gameConfig?.releaseSets?.find(({ id }) => id === card.releaseSetId)?.nameHe;
   elements.packStep.textContent = `קלף ${model.currentCardIndex + 1}`;
   elements.packCounter.textContent = `${model.currentCardIndex + 1} / ${model.currentPack.cards.length}`;
   elements.packHeading.textContent = {
@@ -1970,7 +2057,7 @@ function renderWalkoutStage() {
         <div class="walkout-content">
           ${cardMarkup(card, instance, { progressiveStage: "blank", surface: "walkout" })}
           <div class="walkout-receipt">
-            <span>${escapeHtml([contentClass, ...cardTrustReceipt(card), releaseName, formatTrustDate(walkout.date)].filter(Boolean).join(" · "))}</span>
+            <span>${escapeHtml(cardTrustLine(card))}</span>
             ${sourceLink}
           </div>
         </div>
@@ -2095,6 +2182,17 @@ function cardTrustReceipt(card) {
   return [quoteStatus, filingStatus].filter(Boolean);
 }
 
+function cardTrustLine(card) {
+  const walkout = card.walkout || {};
+  const contentClass = card.releaseTier === "critique"
+    ? "פרשנות/ביקורת"
+    : walkout.kind === "quote" ? "ציטוט" : "עובדתי";
+  const releaseName = model.gameConfig?.releaseSets?.find(({ id }) => id === card.releaseSetId)?.nameHe;
+  return [contentClass, ...cardTrustReceipt(card), releaseName, formatTrustDate(walkout.date)]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function configureSourceLink(link, card) {
   const sourceUrl = card.walkout?.sourceUrl;
   link.hidden = !sourceUrl;
@@ -2217,44 +2315,59 @@ function renderBinder() {
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
     .filter((id) => isLiveReleaseSet(id));
-  const setOrder = [
-    "ALL",
-    ...releaseOrder.map((id) => `RELEASE:${id}`),
-    ...new Set(playerCards.filter((card) => !card.eventOnly).map((card) => card.set)),
-  ];
-  const setLabels = Object.fromEntries(playerCards.map((card) => [card.set, cardSetName(card)]));
+  const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
+  const setLabels = {};
   for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
   setLabels.ALL = `הכול ${playerCards.length}`;
   setLabels.SPECIALS = "מיוחדים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
-  elements.binderFilters.innerHTML = setOrder.map((set) => {
-    const count = set === "ALL"
-      ? owned
-      : playerCards.filter((card) => {
-        const inSet = set === "SPECIALS"
-          ? card.eventOnly
-          : set.startsWith("RELEASE:") ? card.releaseSetId === set.slice(8) : card.set === set;
-        return inSet && inventory[card.id];
-      }).length;
-    const active = model.binderFilter === set;
-    return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
-  }).join("");
+  if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && !model.binderFilter.startsWith("RELEASE:")) {
+    model.binderParty = model.binderFilter;
+    model.binderFilter = "ALL";
+  }
+  const partyOptions = [...new Map(
+    playerCards.filter((card) => !card.eventOnly).map((card) => [card.set, cardSetName(card)]),
+  )].sort((left, right) => left[1].localeCompare(right[1], "he"));
+  if (model.binderParty && !partyOptions.some(([id]) => id === model.binderParty)) model.binderParty = "";
+  elements.binderFilters.innerHTML = [
+    `<label class="filter-party${model.binderParty ? " active" : ""}">
+      <span>מפלגה</span>
+      <select data-binder-party aria-label="בחירת מפלגה או הכול">
+        <option value="">הכול</option>
+        ${partyOptions.map(([id, name]) => {
+          const count = playerCards.filter((card) => card.set === id && inventory[card.id]).length;
+          return `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)} · ${count}</option>`;
+        }).join("")}
+      </select>
+    </label>`,
+    `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
+    ...setOrder.map((set) => {
+      const count = set === "ALL"
+        ? owned
+        : playerCards.filter((card) => card.releaseSetId === set.slice(8) && inventory[card.id]).length;
+      const active = model.binderFilter === set;
+      return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
+    }),
+    `</div>`,
+  ].join("");
 
-  const visible = playerCards.filter((card) => model.binderFilter === "ALL"
-    || (model.binderFilter === "SPECIALS" ? card.eventOnly
-      : model.binderFilter.startsWith("RELEASE:")
-        ? card.releaseSetId === model.binderFilter.slice(8)
-        : card.set === model.binderFilter));
+  const visible = playerCards.filter((card) => {
+    const releaseOk = model.binderFilter === "ALL"
+      || (model.binderFilter === "SPECIALS" ? card.eventOnly
+        : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
+    const partyOk = !model.binderParty || card.set === model.binderParty;
+    return releaseOk && partyOk;
+  });
   elements.binderGrid.innerHTML = visible.map((card) => {
     const count = inventory[card.id] ?? 0;
     if (!count) {
-      return `<div class="binder-slot" aria-label="${escapeHtml(cardCode(card))} חסר">
+      return `<div class="binder-slot" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · חסר באוסף`)}">
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
-        ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">unlock</button>` : ""}
+        ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
       </div>`;
     }
     return `
-      <div class="binder-slot owned new-card-thumb" style="--pip:${card.pip}">
+      <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
         <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}, ברשותכם ${count}">
           ${binderCardMarkup(card)}
         </button>
@@ -2508,6 +2621,161 @@ function creatorLink() {
   return url.toString();
 }
 
+function tradeThumbMarkup(card) {
+  if (!card) return "";
+  return `<span class="trade-thumb-frame">${binderCardMarkup(card)}</span>`;
+}
+
+function tradeHasCards(trade) {
+  return model.byId.has(trade.offeredCardId) && model.byId.has(trade.wantedCardId);
+}
+
+function tradeSideMarkup(cardId, card, role) {
+  const label = role === "give" ? "נותנים" : "מקבלים";
+  return `<div class="trade-side">
+    <small>${label}</small>
+    <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(cardId)}" ${card ? "" : "hidden"} aria-label="${label}: ${escapeHtml(card ? cardTitle(card) : cardId)}">
+      ${tradeThumbMarkup(card)}
+    </button>
+  </div>`;
+}
+
+function tradeBoardFilterOptions(trades, key) {
+  const seen = new Map();
+  for (const trade of trades) {
+    const id = trade[key];
+    if (!id || seen.has(id)) continue;
+    const card = model.byId.get(id);
+    seen.set(id, card ? cardTitle(card) : id);
+  }
+  return [...seen.entries()].sort((left, right) => left[1].localeCompare(right[1], "he"));
+}
+
+function fillTradeBoardFilter(select, trades, key, selected) {
+  if (!select) return selected;
+  const options = tradeBoardFilterOptions(trades, key);
+  select.innerHTML = [
+    '<option value="">הכול</option>',
+    ...options.map(([id, title]) => `<option value="${escapeHtml(id)}">${escapeHtml(title)}</option>`),
+  ].join("");
+  if (options.some(([id]) => id === selected)) {
+    select.value = selected;
+    return selected;
+  }
+  select.value = "";
+  return "";
+}
+
+function tradeBoardPagerMarkup(page, pages, remaining) {
+  if (pages <= 1) return "";
+  const nextCount = remaining > 0 ? Math.min(TRADE_BOARD_PAGE_SIZE, remaining) : TRADE_BOARD_PAGE_SIZE;
+  return `<button type="button" data-page-target="trades" data-page="${Math.max(0, page - 1)}" ${page === 0 ? "disabled" : ""}>הקודמות</button>
+    <span>${page + 1}/${pages}</span>
+    <button type="button" data-page-target="trades" data-page="${Math.min(pages - 1, page + 1)}" ${page === pages - 1 ? "disabled" : ""}>עוד ${nextCount}</button>`;
+}
+
+function renderTradeBoard() {
+  if (!elements.tradeBoard) return;
+  const openOffers = model.trades
+    .filter((trade) => trade.status === "open" && !trade.ownedByCurrent && tradeHasCards(trade))
+    .sort((left, right) => Number(right.canAccept) - Number(left.canAccept));
+  model.tradeBoardOffered = fillTradeBoardFilter(elements.tradeBoardOffered, openOffers, "offeredCardId", model.tradeBoardOffered);
+  model.tradeBoardWanted = fillTradeBoardFilter(elements.tradeBoardWanted, openOffers, "wantedCardId", model.tradeBoardWanted);
+  if (elements.tradeBoardToolbar) elements.tradeBoardToolbar.hidden = openOffers.length === 0;
+  const filtered = openOffers.filter((trade) => (
+    (!model.tradeBoardOffered || trade.offeredCardId === model.tradeBoardOffered)
+    && (!model.tradeBoardWanted || trade.wantedCardId === model.tradeBoardWanted)
+  ));
+  const pages = Math.max(1, Math.ceil(filtered.length / TRADE_BOARD_PAGE_SIZE));
+  model.tradeBoardPage = Math.min(model.tradeBoardPage, pages - 1);
+  const start = model.tradeBoardPage * TRADE_BOARD_PAGE_SIZE;
+  const page = filtered.slice(start, start + TRADE_BOARD_PAGE_SIZE);
+  const remaining = Math.max(0, filtered.length - start - page.length);
+  elements.tradeBoard.innerHTML = page.length
+    ? page.map((trade) => tradeRowMarkup(trade)).join("")
+    : `<p class="work-note">${openOffers.length ? "אין הצעות עם הסינון הזה." : "אין כרגע הצעות פתוחות."}</p>`;
+  if (elements.tradeBoardPager) elements.tradeBoardPager.innerHTML = tradeBoardPagerMarkup(model.tradeBoardPage, pages, remaining);
+  queueCardTextFit(elements.tradeBoard);
+}
+
+function tradeRowMarkup(trade) {
+  const offeredCard = model.byId.get(trade.offeredCardId);
+  const wantedCard = model.byId.get(trade.wantedCardId);
+  const until = new Date(trade.expiresAt).toLocaleString("he-IL", {
+    timeZone: "Asia/Jerusalem",
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+  });
+  const action = trade.ownedByCurrent
+    ? `<button type="button" class="trade-offer-action" data-cancel-trade="${trade.tradeId}">ביטול</button>`
+    : trade.canAccept
+      ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}">קבלה</button>`
+      : `<span class="trade-unavailable">אין לכם את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
+  const offeredRole = trade.ownedByCurrent ? "give" : "receive";
+  const wantedRole = trade.ownedByCurrent ? "receive" : "give";
+  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}">
+    ${tradeSideMarkup(trade.offeredCardId, offeredCard, offeredRole)}
+    <b aria-hidden="true">⇄</b>
+    ${tradeSideMarkup(trade.wantedCardId, wantedCard, wantedRole)}
+    <div class="trade-offer-bar">
+      <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
+      ${action}
+    </div>
+  </article>`;
+}
+
+function watchOpenTrade() {
+  const mine = model.trades.find((trade) => trade.ownedByCurrent && trade.status === "open");
+  if (mine) model.watchedTrade = { tradeId: mine.tradeId, receivedCardId: mine.wantedCardId };
+}
+
+function settleReceivedCard(cardId, message) {
+  renderBinder();
+  renderGrowth();
+  showToast(message);
+  if (cardId) openCardDialog(cardId);
+}
+
+function applyTradeResult(result) {
+  if (result?.state) model.serverState = { ...model.serverState, ...result.state };
+  if (result?.trades) model.trades = result.trades.trades || result.trades;
+  watchOpenTrade();
+  renderBinder();
+  renderGrowth();
+}
+
+async function pollWatchedTrade() {
+  if (!model.watchedTrade || document.visibilityState !== "visible" || !model.token) return;
+  const payload = await request("/api/trades");
+  const trades = payload.trades || payload;
+  model.trades = trades;
+  const watched = trades.find((trade) => trade.tradeId === model.watchedTrade.tradeId);
+  if (watched?.status === "accepted") {
+    const receivedCardId = model.watchedTrade.receivedCardId;
+    model.watchedTrade = null;
+    model.serverState = await request("/api/state");
+    settleReceivedCard(receivedCardId, "מישהו קיבל את ההצעה. הקלף נכנס לאוסף.");
+    return;
+  }
+  if (!watched || watched.status !== "open") {
+    model.watchedTrade = null;
+    renderGrowth();
+  }
+}
+
+async function refreshDailyChallenge() {
+  try {
+    const boards = await request("/api/leaderboards");
+    model.leaderboards = boards;
+    renderTodayDocket();
+    if (model.communityPage === "challenge" || model.communityPage === "collectors") renderGrowth();
+  } catch {
+    /* Race board stays on the last server snapshot. */
+  }
+}
+
 function renderGrowth() {
   const communityTabs = elements.communityTabs;
   const growthGrid = document.querySelector(".growth-grid");
@@ -2530,14 +2798,6 @@ function renderGrowth() {
   const isLive = count > 1;
   elements.tradePreview.dataset.cardId = card.id;
   elements.tradePreview.dataset.liveDuplicate = String(isLive);
-  elements.tradePreview.innerHTML = `
-    <button class="binder-slot owned new-card-thumb trade-card-button" type="button" data-trade-card="${card.id}" style="--pip:${card.pip}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}">
-      ${binderCardMarkup(card, count)}
-    </button>
-    <div>
-      <h3>${escapeHtml(cardTitle(card))}</h3>
-      <p class="${isLive ? "dupe-ready" : ""}">${isLive ? `${count} עותקים · אפשר להחליף` : "צריך עותק נוסף כדי להחליף"}</p>
-    </div>`;
   elements.tradeDemo.textContent = isLive ? "יצירת הצעה" : "העתקת קישור לדוגמה";
   elements.creatorLinkPreview.textContent = creatorLink();
 
@@ -2594,39 +2854,36 @@ function renderGrowth() {
     const chosen = select.selectedOptions[0];
     select.title = chosen?.text || "";
   }
-  elements.tradeCreate.disabled = !ownedCards.length;
-  const renderTradeChoice = (container, cardId) => {
+  const mine = model.trades.find((trade) => trade.ownedByCurrent && trade.status === "open");
+  elements.tradeCreate.disabled = Boolean(mine) || !ownedCards.length;
+  const paintThumb = (thumb, cardId) => {
     const selected = model.byId.get(cardId);
-    container.innerHTML = selected
-      ? `<button type="button" data-trade-choice-card="${selected.id}" aria-label="פתיחת ${escapeHtml(cardTitle(selected))}">
-          ${displayCardMarkup(selected)}
-        </button>`
-      : '<span class="work-note">אין קלף זמין</span>';
+    if (!thumb) return;
+    thumb.hidden = !selected;
+    if (!selected) {
+      thumb.replaceChildren();
+      return;
+    }
+    thumb.dataset.tradeChoiceCard = selected.id;
+    thumb.setAttribute("aria-label", `פתיחת ${cardTitle(selected)}`);
+    thumb.innerHTML = tradeThumbMarkup(selected);
+    queueCardTextFit(thumb);
   };
-  renderTradeChoice(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
-  renderTradeChoice(elements.tradeWantedPreview, elements.tradeWantedCard.value);
+  paintThumb(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
+  paintThumb(elements.tradeWantedPreview, elements.tradeWantedCard.value);
   prefetchCardArt([
     card,
     model.byId.get(elements.tradeOfferedCard.value),
     model.byId.get(elements.tradeWantedCard.value),
   ]);
-
-  const openOffers = model.trades.filter((trade) => trade.status === "open");
-  elements.tradeBoard.innerHTML = openOffers.length ? openOffers.map((trade) => {
-    const offeredCard = model.byId.get(trade.offeredCardId);
-    const wantedCard = model.byId.get(trade.wantedCardId);
-    return `<article class="trade-offer ${trade.status}">
-      <div><span>נותנים</span><strong>${escapeHtml(offeredCard ? cardTitle(offeredCard) : trade.offeredCardId)}</strong><small>${escapeHtml(offeredCard ? cardCode(offeredCard) : trade.offeredCardId)}</small></div>
-      <b aria-hidden="true">⇄</b>
-      <div><span>רוצים</span><strong>${escapeHtml(wantedCard ? cardTitle(wantedCard) : trade.wantedCardId)}</strong><small>${escapeHtml(wantedCard ? cardCode(wantedCard) : trade.wantedCardId)}</small></div>
-      <p>${escapeHtml(trade.ownerLabel)} מציע/ה · עד ${escapeHtml(new Date(trade.expiresAt).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }))}</p>
-      ${trade.ownedByCurrent
-        ? `<button type="button" data-cancel-trade="${trade.tradeId}">ביטול ההצעה</button>`
-        : trade.canAccept
-          ? `<button type="button" data-accept-trade="${trade.tradeId}">קבלת ההצעה</button>`
-          : `<span class="trade-unavailable">צריך את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף המבוקש")} כדי לקבל</span>`}
-    </article>`;
-  }).join("") : '<p class="work-note">אין כרגע הצעות פתוחות.</p>';
+  if (elements.tradeActive && elements.tradeCompose) {
+    elements.tradeActive.hidden = !mine;
+    elements.tradeCompose.hidden = Boolean(mine);
+    elements.tradeActive.innerHTML = mine ? `${tradeRowMarkup(mine)}<p class="work-note">אפשר הצעה אחת. כשמישהו מקבל, הקלף נכנס לאוסף מיד.</p>` : "";
+    if (mine) queueCardTextFit(elements.tradeActive);
+  }
+  watchOpenTrade();
+  renderTradeBoard();
 
   const selectedFaction = model.serverState.factionId;
   const parties = partyRegister();
@@ -2644,21 +2901,25 @@ function renderGrowth() {
   const factionEntries = model.leaderboards?.factions?.slice(0, 6) || [];
   const factionMaximum = Math.max(1, ...factionEntries.map(({ packs }) => packs));
   elements.factionBoard.innerHTML = factionEntries.length
-    ? factionEntries.map((entry, index) => `<div class="faction-chart-row">
-        <span>${index + 1}. ${escapeHtml(partyDisplayName(entry.partyId, entry.partyId))}</span>
-        <i aria-hidden="true"><b style="width:${Math.max(4, Math.round((entry.packs / factionMaximum) * 100))}%"></b></i>
+    ? factionEntries.map((entry, index) => {
+        const party = parties.find(({ id }) => id === entry.partyId);
+        const status = partyStatusShort(party);
+        return `<div class="faction-chart-row">
+        <span>${index + 1}. ${escapeHtml(partyDisplayName(entry.partyId, entry.partyId))}${status ? ` · ${escapeHtml(status)}` : ""}</span>
+        <i aria-hidden="true"><b style="width:${Math.max(4, Math.round((entry.packs / factionMaximum) * 100))}%; animation-delay:${index * 40}ms"></b></i>
         <strong>${entry.packs}</strong>
-      </div>`).join("")
+      </div>`;
+      }).join("")
     : '<p class="work-note">עדיין אין קלפים שנספרו.</p>';
   const collectorEntries = model.leaderboards?.collectors || [];
   const collectorPreview = collectorEntries.slice(0, 3);
   const currentCollector = collectorEntries.find(({ current }) => current);
   if (currentCollector && !collectorPreview.includes(currentCollector)) collectorPreview.push(currentCollector);
   elements.collectorBoard.innerHTML = collectorPreview.length
-    ? collectorPreview.map((entry) => `<div class="${entry.current ? "current-player" : ""}"><span>${entry.rank}. ${escapeHtml(entry.label)}</span><strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong></div>`).join("")
+    ? collectorPreview.map((entry) => `<div class="${entry.current ? "current-player" : ""}"><span>${entry.rank}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong></div>`).join("")
     : '<p class="work-note">הטבלה מחכה לשחקן הראשון.</p>';
 
-  const challenge = model.leaderboards?.dailyChallenge || localDailyChallenge();
+  const challenge = model.leaderboards?.dailyChallenge || (model.extrasReady ? null : localDailyChallenge());
   const challengeDate = challenge?.day ? new Date(`${challenge.day}T12:00:00`).toLocaleDateString("he-IL", { day: "numeric", month: "numeric" }) : "";
   const challengeLeaderCard = model.catalog.find((card) =>
     card.set === challenge?.targetPartyId && card.releaseSetId === "party-leaders");
@@ -2667,7 +2928,7 @@ function renderGrowth() {
   elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
   renderChallengeRecap();
   elements.dailyChallengeBoard.innerHTML = challenge?.leaders?.length
-    ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="${entry.current ? "current-player" : ""}"><span>${index + 1}. ${escapeHtml(entry.label)}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
+    ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="${entry.current ? "current-player" : ""}"><span>${index + 1}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
     : '<p class="work-note">עוד אין משיכות מהסיעה היומית.</p>';
 
   const specialDescriptions = {
@@ -2705,9 +2966,6 @@ function renderGrowth() {
     button.setAttribute("aria-selected", String(active));
     button.tabIndex = active ? 0 : -1;
   });
-  queueCardTextFit(elements.tradePreview);
-  queueCardTextFit(elements.tradeOfferedPreview);
-  queueCardTextFit(elements.tradeWantedPreview);
 }
 
 function renderEvents() {
@@ -3529,6 +3787,7 @@ function reportCategoryLabel(category) {
     quote: "Quote or wording",
     identity: "Name, role, or list",
     display: "Display",
+    name: "Public name",
     other: "Other",
   }[category] || category;
 }
@@ -3600,15 +3859,21 @@ async function createTradeOffer() {
   }
   elements.tradeCreate.disabled = true;
   try {
-    await request("/api/trades", {
+    const result = await request("/api/trades", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ offeredCardId, wantedCardId }),
     });
-    await refreshSocialBoards();
+    applyTradeResult(result);
+    watchOpenTrade();
     showToast("הצעת ההחלפה פורסמה.");
-  } catch {
-    showToast("לא הצלחנו לפרסם את ההצעה.");
+  } catch (error) {
+    if (error.status === 409 && error.body?.error === "ACTIVE_TRADE_EXISTS") {
+      applyTradeResult(error.body);
+      showToast("כבר יש לכם הצעה פתוחה.");
+    } else {
+      showToast("לא הצלחנו לפרסם את ההצעה.");
+    }
   } finally {
     elements.tradeCreate.disabled = false;
   }
@@ -3628,22 +3893,19 @@ async function simulateTradeAcceptance(tradeId) {
 async function acceptTradeOffer(tradeId) {
   try {
     const result = await request(`/api/trades/${encodeURIComponent(tradeId)}/accept`, { method: "POST" });
-    model.serverState = result.state;
-    await refreshSocialBoards();
-    showToast("ההחלפה הושלמה והקלפים עברו לאוספים.");
+    applyTradeResult(result);
+    settleReceivedCard(result.trade?.offeredCardId, "ההחלפה הושלמה. הקלף נכנס לאוסף.");
   } catch {
-    await refreshSocialBoards();
     showToast("ההצעה כבר לא זמינה או שחסר לכם הקלף המבוקש.");
   }
 }
 
 async function cancelTradeOffer(tradeId) {
   try {
-    await request(`/api/trades/${encodeURIComponent(tradeId)}/cancel`, { method: "POST" });
-    await refreshSocialBoards();
+    applyTradeResult(await request(`/api/trades/${encodeURIComponent(tradeId)}/cancel`, { method: "POST" }));
+    model.watchedTrade = null;
     showToast("הצעת ההחלפה בוטלה.");
   } catch {
-    await refreshSocialBoards();
     showToast("לא ניתן לבטל את ההצעה.");
   }
 }
@@ -3655,6 +3917,7 @@ async function saveFaction() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ factionId: elements.factionSelect.value || null }),
     });
+    renderProfile();
     renderBinder();
     renderGrowth();
     showToast(model.serverState.factionId ? "הסיעה נשמרה. הקלף הבא ייספר." : "בחירת הסיעה בוטלה.");
@@ -3704,36 +3967,65 @@ function openCardDialog(cardId) {
 function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   const ownedCount = model.serverState.inventory[card.id] ?? 0;
+  const dialogTitle = document.querySelector("#card-dialog-title");
+  if (dialogTitle) dialogTitle.textContent = cardTitle(card);
   elements.dialogCard.innerHTML = displayCardMarkup(card);
+  if (elements.dialogTrust) {
+    const line = cardTrustLine(card);
+    elements.dialogTrust.textContent = line;
+    elements.dialogTrust.hidden = !line;
+  }
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
   elements.dialogWhatsapp.hidden = ownedCount < 1;
   elements.dialogInstagram.hidden = ownedCount < 1;
 }
 
-function openReportDialog() {
+function currentReportSubject() {
+  if (model.reportSubject) return model.reportSubject;
   const card = model.byId.get(model.dialogCardId);
-  if (!card) return;
-  elements.dialog.close();
+  return card ? { kind: "card", cardId: card.id, label: `${cardTitle(card)} · ${card.id}` } : null;
+}
+
+function openReportDialog(subject = null) {
+  const card = subject?.cardId ? model.byId.get(subject.cardId) : model.byId.get(model.dialogCardId);
+  model.reportSubject = subject || (card ? { kind: "card", cardId: card.id, label: `${cardTitle(card)} · ${card.id}` } : null);
+  if (!model.reportSubject) return;
+  if (elements.dialog?.open) elements.dialog.close();
   elements.reportForm.reset();
   elements.reportStatus.textContent = "";
-  elements.reportCardLabel.textContent = `${cardTitle(card)} · ${card.id}`;
+  elements.reportCardLabel.textContent = model.reportSubject.label;
+  if (model.reportSubject.category) elements.reportCategory.value = model.reportSubject.category;
   elements.reportDialog.showModal();
-  elements.reportCategory.focus();
+  (model.reportSubject.category ? elements.reportDetails : elements.reportCategory).focus();
+}
+
+function openNameReport(label) {
+  const name = String(label || "").trim();
+  if (!name) return;
+  openReportDialog({
+    kind: "name",
+    category: "name",
+    label: `שם ציבורי · ${name}`,
+    detailsPrefix: `שם מדווח: ${name}`,
+    pagePath: "/?view=growth",
+  });
 }
 
 async function submitCorrectionReport(event) {
   event.preventDefault();
-  const card = model.byId.get(model.dialogCardId);
-  if (!card) return;
+  const subject = currentReportSubject();
+  if (!subject) return;
   const url = new URL(location.href);
   url.searchParams.delete("studioKey");
+  const typed = elements.reportDetails.value.trim();
+  const details = [subject.detailsPrefix, typed].filter(Boolean).join("\n");
   const report = {
     reportId: clientOperationId("report"),
-    cardId: card.id,
+    cardId: subject.cardId || "",
     category: elements.reportCategory.value,
-    details: elements.reportDetails.value.trim(),
-    pagePath: `${url.pathname}${url.search}`,
+    details,
+    pagePath: subject.pagePath || `${url.pathname}${url.search}`,
   };
   if (report.details.length < 5) {
     elements.reportStatus.textContent = "כתבו לפחות כמה מילים כדי שנוכל לבדוק.";
@@ -3874,15 +4166,16 @@ async function makeShareImage(card) {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
 
-const SHARE_PULL_LINE = "תראה מה שלפתי בקלפי!";
+const SHARE_PULL_LINE = "תראו מה שלפתי בקְלָפִי!";
 
 function shareCaption(card) {
   const url = makeDeepLink("card", card.id);
   const quote = String(card.walkout?.text || "").trim();
   const title = cardTitle(card);
+  const trust = cardTrustLine(card);
   return {
     title: `קְלָפִי · ${title}`,
-    text: `${SHARE_PULL_LINE}\n${quote}\n— ${title}\n${url}`,
+    text: [SHARE_PULL_LINE, quote, `— ${title}`, trust, url].filter(Boolean).join("\n"),
     url,
   };
 }
@@ -4207,7 +4500,8 @@ async function paintSharePortrait(card, { width, height }) {
   const captionSize = Math.round(width * 0.042);
   const footerSize = Math.round(width * 0.026);
   const captionTop = pad + captionSize;
-  const footerBlock = footerSize * 3.2;
+  const trustLine = cardTrustLine(card);
+  const footerBlock = footerSize * (trustLine ? 5.1 : 3.2);
   const availTop = captionTop + Math.round(width * 0.038);
   const availBottom = height - pad - footerBlock;
   const availHeight = Math.max(120, availBottom - availTop);
@@ -4229,9 +4523,41 @@ async function paintSharePortrait(card, { width, height }) {
   context.textAlign = "center";
   context.font = `600 ${footerSize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
   context.fillText("קְלָפִי", width / 2, footerY);
+  let urlY = footerY + footerSize * 1.35;
+  if (trustLine) {
+    context.font = `500 ${Math.round(width * 0.018)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
+    const trustHeight = paintCenteredLines(
+      context,
+      trustLine,
+      width / 2,
+      footerY + footerSize * 1.2,
+      width - pad * 2,
+      Math.round(width * 0.028),
+    );
+    urlY = footerY + footerSize * 1.2 + trustHeight * Math.round(width * 0.028) + footerSize * 0.35;
+  }
   context.font = `500 ${Math.round(width * 0.02)}px 'IBM Plex Sans', sans-serif`;
-  drawLtrCentered(context, shareUrl.replace(/^https?:\/\//, ""), width / 2, footerY + footerSize * 1.35);
+  drawLtrCentered(context, shareUrl.replace(/^https?:\/\//, ""), width / 2, urlY);
   return canvasToPng(canvas);
+}
+
+function paintCenteredLines(context, text, x, y, maxWidth, lineHeight) {
+  const parts = String(text).split(" · ");
+  const lines = [];
+  let current = "";
+  for (const part of parts) {
+    const next = current ? `${current} · ${part}` : part;
+    if (current && context.measureText(next).width > maxWidth) {
+      lines.push(current);
+      current = part;
+    } else {
+      current = next;
+    }
+  }
+  if (current) lines.push(current);
+  const painted = lines.slice(0, 2);
+  painted.forEach((line, index) => context.fillText(line, x, y + index * lineHeight));
+  return painted.length;
 }
 
 async function makeStoryImage(card) {
@@ -4502,6 +4828,14 @@ elements.addAchievement?.addEventListener("click", () => {
   }));
 });
 elements.profileForm.addEventListener("submit", saveProfile);
+elements.copyRecovery?.addEventListener("click", copyRecoveryCode);
+elements.restoreButton?.addEventListener("click", restoreSessionFromCode);
+elements.restoreInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    restoreSessionFromCode();
+  }
+});
 elements.avatarPicker?.addEventListener("click", (event) => {
   const choice = event.target.closest("[data-avatar-id]");
   if (!choice || choice.disabled) return;
@@ -4537,6 +4871,7 @@ elements.claimLevel.addEventListener("click", async () => {
     elements.levelDialog.close();
     showView("pack");
     startWalkout();
+    refreshDailyChallenge();
   } catch (error) {
     showToast(error.status === 409 ? "אין כרגע פרס שמחכה." : "לא הצלחנו לקבל את הפרס.");
   } finally {
@@ -4557,6 +4892,10 @@ elements.shareSheetSave?.addEventListener("click", () => {
 });
 elements.shareSheet?.addEventListener("click", (event) => {
   if (event.target === elements.shareSheet) closeShareSheet();
+});
+elements.skipToMain?.addEventListener("click", (event) => {
+  event.preventDefault();
+  document.querySelector("#main")?.focus();
 });
 elements.openTrustLegend.addEventListener("click", () => elements.trustDialog.showModal());
 elements.closeTrust.addEventListener("click", () => elements.trustDialog.close());
@@ -4585,7 +4924,7 @@ elements.tradeWantedSet.addEventListener("change", renderGrowth);
 elements.tradeOfferedCard.addEventListener("change", renderGrowth);
 elements.tradeWantedCard.addEventListener("change", renderGrowth);
 elements.tradeCreate.addEventListener("click", createTradeOffer);
-elements.tradeBoard.addEventListener("click", (event) => {
+function handleTradeBoardClick(event) {
   const cancel = event.target.closest("[data-cancel-trade]");
   if (cancel) {
     cancelTradeOffer(cancel.dataset.cancelTrade);
@@ -4596,8 +4935,38 @@ elements.tradeBoard.addEventListener("click", (event) => {
     acceptTradeOffer(accept.dataset.acceptTrade);
     return;
   }
+  const chip = event.target.closest("[data-trade-choice-card]");
+  if (chip) {
+    openCardDialog(chip.dataset.tradeChoiceCard);
+    return;
+  }
   const button = event.target.closest("[data-simulate-trade]");
   if (button) simulateTradeAcceptance(button.dataset.simulateTrade);
+}
+elements.tradeBoard.addEventListener("click", handleTradeBoardClick);
+function handlePublicNameReport(event) {
+  const button = event.target.closest("[data-report-name]");
+  if (!button) return;
+  openNameReport(button.dataset.reportName);
+}
+elements.collectorBoard?.addEventListener("click", handlePublicNameReport);
+elements.dailyChallengeBoard?.addEventListener("click", handlePublicNameReport);
+elements.tradeActive?.addEventListener("click", handleTradeBoardClick);
+elements.tradeBoardOffered?.addEventListener("change", () => {
+  model.tradeBoardOffered = elements.tradeBoardOffered.value;
+  model.tradeBoardPage = 0;
+  renderTradeBoard();
+});
+elements.tradeBoardWanted?.addEventListener("change", () => {
+  model.tradeBoardWanted = elements.tradeBoardWanted.value;
+  model.tradeBoardPage = 0;
+  renderTradeBoard();
+});
+elements.tradeBoardPager?.addEventListener("click", (event) => {
+  const button = event.target.closest('[data-page-target="trades"]');
+  if (!button) return;
+  model.tradeBoardPage = Number(button.dataset.page);
+  renderTradeBoard();
 });
 elements.saveFaction.addEventListener("click", saveFaction);
 elements.creatorCode.addEventListener("input", () => {
@@ -4717,6 +5086,13 @@ elements.binderFilters.addEventListener("click", (event) => {
   model.binderPage = 0;
   renderBinder();
 });
+elements.binderFilters.addEventListener("change", (event) => {
+  const select = event.target.closest("[data-binder-party]");
+  if (!select) return;
+  model.binderParty = select.value;
+  model.binderPage = 0;
+  renderBinder();
+});
 
 elements.binderPager.addEventListener("click", (event) => {
   const button = event.target.closest('[data-page-target="binder"]');
@@ -4737,6 +5113,7 @@ elements.communityTabs.addEventListener("click", (event) => {
   if (!button) return;
   model.communityPage = button.dataset.communityPage;
   renderGrowth();
+  pollWatchedTrade().catch(() => {});
 });
 
 elements.eventTabs?.addEventListener("click", (event) => {
@@ -4812,7 +5189,8 @@ function moveTabFocus(event) {
 document.addEventListener("keydown", (event) => {
   if (moveTabFocus(event)) return;
   const packIsOpen = document.querySelector("#pack-view").classList.contains("active");
-  if (event.key === "ArrowRight" && packIsOpen && !elements.packAction.disabled && !elements.dialog.open && !elements.advocacyDialog.open && !elements.profileDialog.open && !elements.trustDialog.open) {
+  const advancePack = event.key === "ArrowRight" || event.key === "ArrowLeft";
+  if (advancePack && packIsOpen && !elements.packAction.disabled && !playerDialogOpen()) {
     event.preventDefault();
     elements.packAction.click();
   }
@@ -4831,6 +5209,14 @@ document.addEventListener("click", (event) => {
 });
 window.addEventListener("online", () => flushPendingReports().catch(() => {}));
 
+if (!window.__klafiTradeWatch) {
+  window.__klafiTradeWatch = setInterval(() => {
+    pollWatchedTrade().catch(() => {});
+  }, 8000);
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") pollWatchedTrade().catch(() => {});
+});
 bootstrap().then(() => klafiTips.maybeStart());
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));

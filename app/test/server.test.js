@@ -264,6 +264,18 @@ test("correction reports persist once and remain reviewable", async (t) => {
   assert.equal(resolved.status, 200);
   const reviewed = await api(running.base, "/api/studio/reports", { studio: "review-secret" });
   assert.equal(reviewed.body.reports[0].status, "resolved");
+
+  const nameReport = {
+    reportId: "report-name-001",
+    category: "name",
+    details: "שם מדווח: בדיקה פוגענית בטבלה",
+    pagePath: "/?view=growth",
+  };
+  const named = await api(running.base, "/api/reports", { token, method: "POST", body: nameReport });
+  assert.equal(named.status, 202);
+  const queueAfter = await api(running.base, "/api/studio/reports", { studio: "review-secret" });
+  assert.equal(queueAfter.body.reports.length, 2);
+  assert.ok(queueAfter.body.reports.some(({ category }) => category === "name"));
 });
 
 test("legacy sessions migrate into the capped idle queue without losing inventory", async (t) => {
@@ -346,7 +358,17 @@ test("players can see and accept open trades from other collectors", async (t) =
     method: "POST",
     body: { offeredCardId: offered.id, wantedCardId: wanted.id },
   });
-  assert.equal(overReserved.status, 400);
+  assert.equal(overReserved.status, 409);
+  assert.equal(overReserved.body.error, "ACTIVE_TRADE_EXISTS");
+  assert.ok(Array.isArray(created.body.trades));
+  const otherWanted = catalog.find((card) => card.id !== offered.id && card.id !== wanted.id);
+  const secondSlot = await api(running.base, "/api/trades", {
+    token: ownerToken,
+    method: "POST",
+    body: { offeredCardId: offered.id, wantedCardId: otherWanted.id },
+  });
+  assert.equal(secondSlot.status, 409);
+  assert.equal(secondSlot.body.error, "ACTIVE_TRADE_EXISTS");
   const visible = await api(running.base, "/api/trades", { token: accepterToken });
   const offer = visible.body.trades.find(({ tradeId }) => tradeId === created.body.trade.tradeId);
   assert.equal(offer.ownerLabel, "מציע בדיקה");
@@ -449,6 +471,9 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   const likudSymbolArt = await fetch(`${running.base}/design-assets/hero-art-memchetlammed.png`);
   assert.equal(likudSymbolArt.status, 200);
   assert.equal(catalog.body.cards.find(({ id }) => id === "LIK-S-01").artKey, "hero-art-memchetlammed.png");
+  const klafiPack = await fetch(`${running.base}/design-assets/pack-wrapper-klafi.png`);
+  assert.equal(klafiPack.status, 200);
+  assert.equal(klafiPack.headers.get("content-type"), "image/png");
   const packVideoRange = await fetch(`${running.base}/design-assets/pack-rip-seedance-v01.mp4`, {
     headers: { range: "bytes=0-31" },
   });
