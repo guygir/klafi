@@ -45,6 +45,7 @@
       <div class="level-identity">
         <button type="button" id="level-avatar-button" class="level-avatar-button" aria-haspopup="dialog" aria-label="הפרופיל והאווטאר">
           <img id="level-avatar" class="level-avatar" alt="" />
+          <i id="avatar-seal" class="avatar-seal" hidden aria-hidden="true"></i>
         </button>
         <span id="level-rank">אזרח סקרן</span>
         <strong id="level-number" hidden>רמה 1/5</strong>
@@ -194,35 +195,51 @@
         <div class="growth-grid">
           <article id="community-panel-trade" class="work-card trade-desk" role="tabpanel" aria-labelledby="community-tab-trade" tabindex="0">
             <p class="work-kicker">החלפות</p>
-            <h2>מה נותנים ומה רוצים?</h2>
+            <h2>הצעה אחת פתוחה.</h2>
             <div id="trade-preview" class="trade-preview" hidden></div>
-            <div class="trade-form">
-              <fieldset>
-                <legend>אני נותן</legend>
-                <div id="trade-offered-preview" class="trade-choice-preview"></div>
-                <div class="trade-choice-fields">
-                  <label>סדרה / מפלגה <select id="trade-offered-set"></select></label>
-                  <label>קלף <select id="trade-offered-card"></select></label>
-                </div>
-              </fieldset>
-              <fieldset>
-                <legend>אני רוצה</legend>
-                <div id="trade-wanted-preview" class="trade-choice-preview"></div>
-                <div class="trade-choice-fields">
-                  <label>סדרה / מפלגה <select id="trade-wanted-set"></select></label>
-                  <label>קלף <select id="trade-wanted-card"></select></label>
-                </div>
-              </fieldset>
-            </div>
-            <div class="trade-actions">
-              <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
-              <button id="trade-demo" class="secondary-action" type="button">העתקת קישור</button>
+            <div id="trade-active" class="trade-active" hidden></div>
+            <div id="trade-compose" class="trade-compose">
+              <div class="trade-actions">
+                <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
+                <button id="trade-demo" class="secondary-action" type="button">העתקת קישור</button>
+              </div>
+              <div class="trade-form">
+                <fieldset>
+                  <legend>אני נותן</legend>
+                  <button type="button" id="trade-offered-preview" class="trade-thumb" hidden></button>
+                  <div class="trade-choice-fields">
+                    <label>סדרה / מפלגה <select id="trade-offered-set"></select></label>
+                    <label>קלף <select id="trade-offered-card"></select></label>
+                  </div>
+                </fieldset>
+                <fieldset>
+                  <legend>אני רוצה</legend>
+                  <button type="button" id="trade-wanted-preview" class="trade-thumb" hidden></button>
+                  <div class="trade-choice-fields">
+                    <label>סדרה / מפלגה <select id="trade-wanted-set"></select></label>
+                    <label>קלף <select id="trade-wanted-card"></select></label>
+                  </div>
+                </fieldset>
+              </div>
             </div>
           </article>
           <article id="community-panel-open-trades" class="work-card open-trades-desk" role="tabpanel" aria-labelledby="community-tab-open-trades" tabindex="0" hidden>
             <p class="work-kicker">הצעות פתוחות</p>
             <h2>עסקאות שמחכות לכם.</h2>
+            <div id="trade-board-toolbar" class="trade-board-toolbar" hidden>
+              <label>מקבלים
+                <select id="trade-board-offered" aria-label="סינון לפי הקלף שאתם מקבלים">
+                  <option value="">הכול</option>
+                </select>
+              </label>
+              <label>נותנים
+                <select id="trade-board-wanted" aria-label="סינון לפי הקלף שאתם נותנים">
+                  <option value="">הכול</option>
+                </select>
+              </label>
+            </div>
             <div id="trade-board" class="trade-board"></div>
+            <div id="trade-board-pager" class="view-pager trade-board-pager" aria-label="עמודי ההצעות"></div>
           </article>
           <article class="work-card debug-community" hidden>
             <p class="work-kicker">קישור שיתוף</p>
