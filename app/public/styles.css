@@ -2467,7 +2467,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-form select,
 .faction-desk select { width: 100%; min-height: 44px; padding: 9px 10px; font: 500 14px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 .trade-board { gap: 10px; margin-top: 16px; }
-.trade-offer { display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 10px; padding: 13px; border: 1px solid rgba(44, 51, 48, 0.32); border-radius: 8px; background: #eee5d4; }
+.trade-offer { display: grid; width: min(100%, 460px); margin-inline: auto; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 10px; padding: 13px; border: 1px solid rgba(44, 51, 48, 0.32); border-radius: 8px; background: #eee5d4; }
 .trade-offer > .trade-side {
   display: grid;
   justify-items: center;
@@ -2481,7 +2481,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .trade-offer .trade-thumb { margin-top: 0; }
 .trade-offer .trade-thumb-frame {
-  width: min(100%, 168px);
+  width: 100%;
   height: auto;
   aspect-ratio: 63 / 96;
 }

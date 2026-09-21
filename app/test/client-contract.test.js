@@ -251,7 +251,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-board-offered"/);
   assert.match(html, /id="trade-board-wanted"/);
   assert.match(html, /id="trade-board-pager"/);
-  assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,80}?width:\s*min\(100%,\s*168px\)/);
+  assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,80}?width:\s*100%/);
+  assert.match(css, /\.trade-offer \{[^}]*width:\s*min\(100%,\s*460px\)/);
   assert.match(javascript, /function partyDisplayName/);
   assert.match(javascript, /function partyRegister/);
   assert.match(javascript, /model\.gameConfig\?\.parties/);
