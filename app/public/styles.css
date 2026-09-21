@@ -9,6 +9,7 @@
   --holo-blue: #7e8b9a;
   --danger-mute: #8a4a3a;
   --shadow: 0 20px 48px rgba(26, 31, 28, 0.2);
+  --card-width: min(330px, calc(100vw - 42px));
   --safe-bottom: max(18px, env(safe-area-inset-bottom));
   color: var(--ink);
   background: var(--paper);
@@ -752,7 +753,7 @@ h1 {
 .kalpi-card {
   --pip: var(--civic);
   position: relative;
-  width: min(330px, calc(100vw - 42px));
+  width: var(--card-width);
   aspect-ratio: 63 / 96;
   border: 2px solid var(--rule);
   border-radius: 13px;
@@ -1818,7 +1819,7 @@ img.mini-art {
 }
 
 .card-dialog::backdrop { background: rgba(26, 31, 28, 0.72); backdrop-filter: blur(5px); }
-.card-dialog .kalpi-card { width: min(330px, calc(100vw - 68px)); margin: 0 auto; }
+.card-dialog .kalpi-card { width: min(var(--card-width), 100%); margin: 0 auto; }
 
 .dialog-close {
   position: absolute;
@@ -2022,8 +2023,7 @@ img.mini-art {
   .pack-plinth { min-height: 300px; }
   .pack-wrapper { width: 172px; }
   .rip-stage { min-height: 390px; }
-  .kalpi-card { width: 276px; }
-  .hold-meter { width: 276px; }
+  .hold-meter { width: var(--card-width); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2289,9 +2289,9 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   overflow: hidden;
   font-family: "IBM Plex Sans Hebrew", sans-serif;
 }
-.card-quote-zone { bottom: 2.5%; height: 13%; display: grid; place-items: center; text-align: center; font-size: clamp(5px, 4.2cqw, 19px); font-weight: 600; line-height: 1.16; }
-.card-party-zone { bottom: 15.4%; height: 5.8%; display: flex; align-items: center; gap: clamp(3px, 1.8cqw, 6px); white-space: nowrap; font-size: clamp(5.5px, 4cqw, 11px); font-weight: 500; line-height: 1; }
-.card-face.front .card-name-zone { bottom: 21.2%; height: 7.4%; display: flex; align-items: center; margin: 0; padding: 0 3cqw; white-space: nowrap; background: var(--civic); color: var(--paper); font-size: clamp(5.5px, 7cqw, 23px); line-height: 1; }
+.card-quote-zone { bottom: 2.5%; height: 13%; display: grid; place-items: center; text-align: center; font-size: clamp(8px, 4.2cqw, 19px); font-weight: 600; line-height: 1.16; }
+.card-party-zone { bottom: 15.4%; height: 5.8%; display: flex; align-items: center; gap: clamp(3px, 1.8cqw, 6px); white-space: nowrap; font-size: clamp(8px, 4cqw, 11px); font-weight: 500; line-height: 1; }
+.card-face.front .card-name-zone { bottom: 21.2%; height: 7.4%; display: flex; align-items: center; margin: 0; padding: 0 3cqw; white-space: nowrap; background: var(--civic); color: var(--paper); font-size: clamp(9px, 7cqw, 23px); line-height: 1; }
 .card-face.front > .card-pip { display: none; }
 
 .progressive-card .card-quote-zone,
@@ -3035,7 +3035,11 @@ body {
   min-height: 0;
 }
 .walkout { min-height: 0; height: 100%; }
-.walkout .kalpi-card { width: min(270px, 31dvh, calc(100vw - 56px)); }
+.walkout-content { height: 100%; min-height: 0; }
+.walkout .kalpi-card {
+  width: min(var(--card-width), 100%);
+  max-height: calc(100% - 52px);
+}
 
 @media (max-width: 760px) {
   .app-shell { padding-inline: 12px; }
@@ -3083,7 +3087,6 @@ body {
   #home-view .collection-line .progress { display: none; }
   .today-docket-row { min-height: 46px; }
   .pack-wrapper { width: min(124px, 18dvh, 34vw); }
-  .walkout .kalpi-card { width: min(235px, 30dvh, calc(100vw - 64px)); }
 }
 
 /* Compact collection shelf and selling-focused Today/community surfaces. */

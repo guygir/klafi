@@ -1272,8 +1272,8 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .card-quote-zone,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-quote-zone {
   bottom: 0;
-  height: 15%;
-  max-height: 15%;
+  height: 17%;
+  max-height: 17%;
   min-height: 0;
   padding: 1% 0 2%;
   overflow: hidden;
@@ -1281,7 +1281,7 @@ body:has(#app[data-theme="pack-v2"]) {
   place-items: center;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
-  font-size: 6.4cqw;
+  font-size: clamp(8px, 5.6cqw, 22px);
   font-weight: 600;
   line-height: 1.15;
 }
@@ -1302,7 +1302,7 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .shared-card .kalpi-card,
 #app .card-dialog .kalpi-card[data-card-frame="fullart-v1"],
 #app .shared-card .kalpi-card[data-card-frame="fullart-v1"] {
-  width: min(370px, 100%);
+  width: min(var(--card-width), 100%);
 }
 
 #app[data-card-frame="fullart-v1"] .card-dialog #dialog-card,
@@ -1319,10 +1319,10 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="fullart-v1"] #pack-view .walkout .kalpi-card {
-  width: auto;
+  width: min(var(--card-width), 100%);
   max-width: 100%;
-  height: 100%;
-  max-height: 100%;
+  height: auto;
+  max-height: calc(100% - 52px);
   aspect-ratio: 63 / 96;
 }
 

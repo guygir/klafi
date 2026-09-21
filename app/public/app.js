@@ -1020,18 +1020,22 @@ function describeError(error) {
 function fitCardText(element) {
   const frame = element.closest(".kalpi-card");
   const isFullart = frame?.dataset.cardFrame === "fullart-v1";
-  if (isFullart && element.dataset.fitCardText !== "quote") return;
+  const compact = ["binder", "peek", "trade"].includes(frame?.dataset.cardSurface);
+  if (isFullart && element.dataset.fitCardText !== "quote" && !compact) return;
   const frameWidth = frame?.clientWidth ?? 0;
   if (!frameWidth || !element.clientWidth || !element.clientHeight) return;
   const role = element.dataset.fitCardText;
-  const compact = ["binder", "peek"].includes(frame.dataset.cardSurface);
   const scale = (isFullart
-    ? { quote: { low: 0.042, high: 0.064, floor: 10, ceiling: 22 } }
+    ? {
+      quote: { low: 0.038, high: 0.064, floor: compact ? 8 : 12, ceiling: compact ? 14 : 22 },
+      party: { low: 0.03, high: 0.042, floor: compact ? 8 : 10, ceiling: 12 },
+      name: { low: 0.048, high: 0.08, floor: compact ? 9 : 13, ceiling: 24 },
+    }
     : {
-      quote: { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 },
-      party: { low: 0.035, high: 0.052, floor: compact ? 7 : 9, ceiling: 13 },
+      quote: { low: 0.04, high: 0.085, floor: compact ? 8 : 13, ceiling: 30 },
+      party: { low: 0.035, high: 0.052, floor: compact ? 8 : 10, ceiling: 13 },
       name: { low: 0.052, high: 0.078, floor: compact ? 9 : 13, ceiling: 27 },
-    })[role] || { low: 0.04, high: 0.085, floor: compact ? 7.5 : 11, ceiling: 30 };
+    })[role] || { low: 0.04, high: 0.085, floor: compact ? 8 : 13, ceiling: 30 };
   let low = Math.max(scale.floor, frameWidth * scale.low);
   let high = Math.min(scale.ceiling, frameWidth * scale.high);
   if (high < low) high = low;

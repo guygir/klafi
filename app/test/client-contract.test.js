@@ -54,7 +54,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /displayCardMarkup\(card\)/);
   assert.doesNotMatch(javascript, /displayCardMarkup\(selected, "trade"\)/);
   assert.doesNotMatch(javascript, /\["binder", "trade", "peek"\]/);
-  assert.match(javascript, /quote: \{ low: 0\.042, high: 0\.064, floor: 10, ceiling: 22 \}/);
+  assert.match(javascript, /quote: \{ low: 0\.038, high: 0\.064, floor: compact \? 8 : 12, ceiling: compact \? 14 : 22 \}/);
   assert.match(javascript, /const presentation = cardPresentation\(card\)/);
   assert.equal((javascript.match(/class="card-face front"/g) || []).length, 1, "all surfaces must share one card renderer");
   assert.doesNotMatch(javascript, /miniCardMarkup/);
@@ -74,13 +74,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(themeCss, /card-code-tag[\s\S]{0,280}?min-width:\s*max-content/);
   assert.doesNotMatch(themeCss, /max-width:\s*64%/);
   assert.match(themeCss, /card-face\.front \.card-name-zone[\s\S]{0,220}?font-size:\s*8cqw/);
-  assert.match(javascript, /isFullart && element\.dataset\.fitCardText !== "quote"/);
+  assert.match(javascript, /isFullart && element\.dataset\.fitCardText !== "quote" && !compact/);
   assert.match(javascript, /function localDailyChallenge/);
   assert.match(javascript, /hydrateExtras\(\)\.catch/);
   assert.match(themeCss, /card-face\.front \.card-name-zone[\s\S]{0,280}?bottom:\s*25%/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-party-zone[\s\S]{0,200}?bottom:\s*20%/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-rarity-zone[\s\S]{0,200}?bottom:\s*15%/);
-  assert.match(themeCss, /bottom:\s*0;\s*height:\s*15%;\s*max-height:\s*15%/);
+  assert.match(themeCss, /bottom:\s*0;\s*height:\s*17%;\s*max-height:\s*17%/);
   assert.match(javascript, /isFullart && role === "quote"/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-image-meta strong[\s\S]{0,120}?display:\s*none/);
   assert.match(css, /\.card-party-zone::before[\s\S]{0,160}?2\.4cqw/);
@@ -392,7 +392,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function hydrateStudioReports/);
   assert.match(javascript, /function applyStudioAccess/);
   assert.match(javascript, /\/api\/studio\/reports/);
-  assert.match(themeCss, /\.card-dialog \.kalpi-card[^}]*width:\s*min\(370px,\s*100%\)/s);
+  assert.match(themeCss, /\.card-dialog \.kalpi-card[^}]*width:\s*min\(var\(--card-width\),\s*100%\)/s);
+  assert.match(css, /--card-width:\s*min\(330px,\s*calc\(100vw - 42px\)\)/);
+  assert.doesNotMatch(css, /\.kalpi-card \{ width: 276px; \}/);
+  assert.doesNotMatch(css, /walkout \.kalpi-card \{ width: min\(270px/);
+  assert.doesNotMatch(css, /walkout \.kalpi-card \{ width: min\(235px/);
   assert.match(themeCss, /\.new-stamp[^}]*top:\s*50%[^}]*translateY\(-50%\)/s);
   assert.doesNotMatch(themeCss, /#pack-view \.walkout-receipt\s*\{\s*display:\s*none/);
   assert.match(javascript, /הציטוט קוצר/);
