@@ -390,7 +390,7 @@ export function attachKlafiTips(env = globalThis) {
     return { sync() {}, maybeStart() {}, replay() {}, getState() { return { mode: null, started: false, step: 1, parked: false, page: null }; } };
   }
 
-  const state = { mode: null, started: false, step: 1, parked: false, page: null };
+  const state = { mode: null, started: false, step: 1, parked: false, page: null, paintTries: 0 };
   let drawTimer = 0;
 
   function flags() {
@@ -481,8 +481,13 @@ export function attachKlafiTips(env = globalThis) {
     const ringNode = firstPaintTarget(step.ring) || firstPaintTarget(step.emptyRing) || firstVisible(step.ring, doc) || firstVisible(step.emptyRing, doc);
     if (!ringNode) {
       park();
+      if (state.mode === "page" && state.paintTries < 10) {
+        state.paintTries += 1;
+        env.setTimeout?.(() => { if (state.mode === "page") schedulePaint(); }, 180);
+      }
       return;
     }
+    state.paintTries = 0;
     const dest = host();
     if (dest && overlay.parentElement !== dest) dest.append(overlay);
     state.parked = false;
@@ -539,6 +544,7 @@ export function attachKlafiTips(env = globalThis) {
     state.page = page;
     state.step = 1;
     state.parked = false;
+    state.paintTries = 0;
     seedMute("page");
     schedulePaint();
   }
