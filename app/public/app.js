@@ -50,6 +50,7 @@ const model = {
   selectedAvatarId: null,
   extrasReady: false,
   reports: [],
+  watchedTrade: null,
 };
 let showcaseTimers = [];
 let packTimers = [];
@@ -1493,7 +1494,7 @@ function renderChallengeRecap() {
       <small>איך כולם משכו היום</small>
       <div class="challenge-hist-plot" aria-hidden="true">
         ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
-          <b style="height:${Math.max(8, Math.round((bin.count / recap.field) * 100))}%; animation-delay:${index * 45}ms"></b>
+          <b style="height:${Math.max(8, Math.round((bin.count / recap.field) * 100))}%; animation-delay:${index * 40}ms"></b>
         </div>`).join("")}
       </div>
       <div class="challenge-hist-axis">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
@@ -2531,6 +2532,11 @@ function creatorLink() {
   return url.toString();
 }
 
+function tradeThumbMarkup(card) {
+  if (!card) return "";
+  return `<span class="trade-thumb-frame">${binderCardMarkup(card)}</span><span>${escapeHtml(cardTitle(card))}</span>`;
+}
+
 function tradeRowMarkup(trade) {
   const offeredCard = model.byId.get(trade.offeredCardId);
   const wantedCard = model.byId.get(trade.wantedCardId);
@@ -2547,25 +2553,55 @@ function tradeRowMarkup(trade) {
       ? `<button type="button" data-accept-trade="${trade.tradeId}">קבלה</button>`
       : `<span class="trade-unavailable">צריך את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
   return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}">
-    <button type="button" class="trade-chip" data-trade-choice-card="${escapeHtml(trade.offeredCardId)}" ${offeredCard ? "" : "hidden"}>
-      <i class="trade-chip-pip" style="background:${escapeHtml(offeredCard?.pip || "var(--civic)")}"></i>
-      <span>${escapeHtml(offeredCard ? cardTitle(offeredCard) : trade.offeredCardId)}</span>
+    <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(trade.offeredCardId)}" ${offeredCard ? "" : "hidden"} aria-label="פתיחת ${escapeHtml(offeredCard ? cardTitle(offeredCard) : trade.offeredCardId)}">
+      ${tradeThumbMarkup(offeredCard)}
     </button>
     <b aria-hidden="true">⇄</b>
-    <button type="button" class="trade-chip" data-trade-choice-card="${escapeHtml(trade.wantedCardId)}" ${wantedCard ? "" : "hidden"}>
-      <i class="trade-chip-pip" style="background:${escapeHtml(wantedCard?.pip || "var(--civic)")}"></i>
-      <span>${escapeHtml(wantedCard ? cardTitle(wantedCard) : trade.wantedCardId)}</span>
+    <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(trade.wantedCardId)}" ${wantedCard ? "" : "hidden"} aria-label="פתיחת ${escapeHtml(wantedCard ? cardTitle(wantedCard) : trade.wantedCardId)}">
+      ${tradeThumbMarkup(wantedCard)}
     </button>
     <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
     ${action}
   </article>`;
 }
 
+function watchOpenTrade() {
+  const mine = model.trades.find((trade) => trade.ownedByCurrent && trade.status === "open");
+  if (mine) model.watchedTrade = { tradeId: mine.tradeId, receivedCardId: mine.wantedCardId };
+}
+
+function settleReceivedCard(cardId, message) {
+  renderBinder();
+  renderGrowth();
+  showToast(message);
+  if (cardId) openCardDialog(cardId);
+}
+
 function applyTradeResult(result) {
   if (result?.state) model.serverState = { ...model.serverState, ...result.state };
   if (result?.trades) model.trades = result.trades.trades || result.trades;
+  watchOpenTrade();
   renderBinder();
   renderGrowth();
+}
+
+async function pollWatchedTrade() {
+  if (!model.watchedTrade || document.visibilityState !== "visible" || !model.token) return;
+  const payload = await request("/api/trades");
+  const trades = payload.trades || payload;
+  model.trades = trades;
+  const watched = trades.find((trade) => trade.tradeId === model.watchedTrade.tradeId);
+  if (watched?.status === "accepted") {
+    const receivedCardId = model.watchedTrade.receivedCardId;
+    model.watchedTrade = null;
+    model.serverState = await request("/api/state");
+    settleReceivedCard(receivedCardId, "מישהו קיבל את ההצעה. הקלף נכנס לאוסף.");
+    return;
+  }
+  if (!watched || watched.status !== "open") {
+    model.watchedTrade = null;
+    renderGrowth();
+  }
 }
 
 async function refreshDailyChallenge() {
@@ -2659,20 +2695,21 @@ function renderGrowth() {
   }
   const mine = model.trades.find((trade) => trade.ownedByCurrent && trade.status === "open");
   elements.tradeCreate.disabled = Boolean(mine) || !ownedCards.length;
-  const paintChip = (chip, cardId) => {
+  const paintThumb = (thumb, cardId) => {
     const selected = model.byId.get(cardId);
-    if (!chip) return;
-    chip.hidden = !selected;
+    if (!thumb) return;
+    thumb.hidden = !selected;
     if (!selected) {
-      chip.replaceChildren();
+      thumb.replaceChildren();
       return;
     }
-    chip.dataset.tradeChoiceCard = selected.id;
-    chip.setAttribute("aria-label", `פתיחת ${cardTitle(selected)}`);
-    chip.innerHTML = `<i class="trade-chip-pip" style="background:${escapeHtml(selected.pip || "var(--civic)")}"></i><span>${escapeHtml(cardTitle(selected))}</span><small>${escapeHtml(cardCode(selected))}</small>`;
+    thumb.dataset.tradeChoiceCard = selected.id;
+    thumb.setAttribute("aria-label", `פתיחת ${cardTitle(selected)}`);
+    thumb.innerHTML = tradeThumbMarkup(selected);
+    queueCardTextFit(thumb);
   };
-  paintChip(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
-  paintChip(elements.tradeWantedPreview, elements.tradeWantedCard.value);
+  paintThumb(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
+  paintThumb(elements.tradeWantedPreview, elements.tradeWantedCard.value);
   prefetchCardArt([
     card,
     model.byId.get(elements.tradeOfferedCard.value),
@@ -2681,8 +2718,11 @@ function renderGrowth() {
   if (elements.tradeActive && elements.tradeCompose) {
     elements.tradeActive.hidden = !mine;
     elements.tradeCompose.hidden = Boolean(mine);
-    elements.tradeActive.innerHTML = mine ? `${tradeRowMarkup(mine)}<p class="work-note">אפשר הצעה אחת. בטלו כדי לפרסם אחרת.</p>` : "";
+    elements.tradeActive.innerHTML = mine ? `${tradeRowMarkup(mine)}<p class="work-note">אפשר הצעה אחת. כשמישהו מקבל, הקלף נכנס לאוסף מיד.</p>` : "";
+    if (mine) queueCardTextFit(elements.tradeActive);
   }
+  watchOpenTrade();
+  if (elements.tradeBoard) queueCardTextFit(elements.tradeBoard);
 
   const openOffers = model.trades
     .filter((trade) => trade.status === "open" && !trade.ownedByCurrent)
@@ -2709,7 +2749,7 @@ function renderGrowth() {
   elements.factionBoard.innerHTML = factionEntries.length
     ? factionEntries.map((entry, index) => `<div class="faction-chart-row">
         <span>${index + 1}. ${escapeHtml(partyDisplayName(entry.partyId, entry.partyId))}</span>
-        <i aria-hidden="true"><b style="width:${Math.max(4, Math.round((entry.packs / factionMaximum) * 100))}%"></b></i>
+        <i aria-hidden="true"><b style="width:${Math.max(4, Math.round((entry.packs / factionMaximum) * 100))}%; animation-delay:${index * 40}ms"></b></i>
         <strong>${entry.packs}</strong>
       </div>`).join("")
     : '<p class="work-note">עדיין אין קלפים שנספרו.</p>';
@@ -3666,6 +3706,7 @@ async function createTradeOffer() {
       body: JSON.stringify({ offeredCardId, wantedCardId }),
     });
     applyTradeResult(result);
+    watchOpenTrade();
     showToast("הצעת ההחלפה פורסמה.");
   } catch (error) {
     if (error.status === 409 && error.body?.error === "ACTIVE_TRADE_EXISTS") {
@@ -3694,7 +3735,7 @@ async function acceptTradeOffer(tradeId) {
   try {
     const result = await request(`/api/trades/${encodeURIComponent(tradeId)}/accept`, { method: "POST" });
     applyTradeResult(result);
-    showToast("ההחלפה הושלמה והקלפים עברו לאוספים.");
+    settleReceivedCard(result.trade?.offeredCardId, "ההחלפה הושלמה. הקלף נכנס לאוסף.");
   } catch {
     showToast("ההצעה כבר לא זמינה או שחסר לכם הקלף המבוקש.");
   }
@@ -3703,6 +3744,7 @@ async function acceptTradeOffer(tradeId) {
 async function cancelTradeOffer(tradeId) {
   try {
     applyTradeResult(await request(`/api/trades/${encodeURIComponent(tradeId)}/cancel`, { method: "POST" }));
+    model.watchedTrade = null;
     showToast("הצעת ההחלפה בוטלה.");
   } catch {
     showToast("לא ניתן לבטל את ההצעה.");
@@ -4807,6 +4849,7 @@ elements.communityTabs.addEventListener("click", (event) => {
   if (!button) return;
   model.communityPage = button.dataset.communityPage;
   renderGrowth();
+  pollWatchedTrade().catch(() => {});
 });
 
 elements.eventTabs?.addEventListener("click", (event) => {
@@ -4901,6 +4944,14 @@ document.addEventListener("click", (event) => {
 });
 window.addEventListener("online", () => flushPendingReports().catch(() => {}));
 
+if (!window.__klafiTradeWatch) {
+  window.__klafiTradeWatch = setInterval(() => {
+    pollWatchedTrade().catch(() => {});
+  }, 8000);
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") pollWatchedTrade().catch(() => {});
+});
 bootstrap().then(() => klafiTips.maybeStart());
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));

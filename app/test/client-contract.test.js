@@ -227,7 +227,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function refreshDailyChallenge/);
   assert.match(javascript, /function renderAvatarSeal/);
   assert.match(css, /\.avatar-seal/);
-  assert.match(css, /\.trade-chip-pip/);
+  assert.match(css, /\.trade-thumb-frame/);
+  assert.match(css, /fermi-bar-rise/);
+  assert.match(css, /cubic-bezier\(0\.16,\s*1,\s*0\.3,\s*1\)/);
+  assert.match(javascript, /function tradeThumbMarkup/);
+  assert.match(javascript, /function pollWatchedTrade/);
+  assert.match(javascript, /function settleReceivedCard/);
+  assert.match(html, /class="trade-thumb"/);
   assert.match(javascript, /function partyDisplayName/);
   assert.match(javascript, /function partyRegister/);
   assert.match(javascript, /model\.gameConfig\?\.parties/);

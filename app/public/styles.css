@@ -2437,36 +2437,41 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-form fieldset { min-width: 0; margin: 0; padding: 10px; border: 1px solid rgba(44, 51, 48, 0.22); border-radius: 8px; }
 .trade-form legend { padding: 0 4px; font-size: 13px; font-weight: 600; }
 .trade-form label { display: grid; gap: 5px; margin-top: 9px; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
-.trade-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.trade-thumb {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
   width: 100%;
-  min-height: 40px;
   margin-top: 8px;
-  padding: 6px 8px;
-  border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 40%, transparent);
-  border-radius: 8px;
-  background: #eee5d4;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: inherit;
-  text-align: start;
+  text-align: center;
   cursor: pointer;
 }
-.trade-chip-pip {
-  flex: 0 0 auto;
-  width: 8px;
-  height: 8px;
-  border-radius: 1px;
+.trade-thumb-frame {
+  position: relative;
+  width: min(128px, 100%);
+  aspect-ratio: 63 / 96;
+  overflow: hidden;
+  border-radius: 8px;
 }
-.trade-chip span { flex: 1; font: 600 13px/1.2 "IBM Plex Sans Hebrew", sans-serif; }
-.trade-chip small { color: rgba(60, 48, 38, 0.62); font: 500 11px/1 "IBM Plex Sans Hebrew", sans-serif; }
+.trade-thumb .binder-shared-card { border-radius: inherit; }
+.trade-thumb > span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  font: 600 12px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .trade-active { display: grid; gap: 8px; }
 .trade-offer.mine { border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent); }
 .trade-form select,
 .faction-desk select { width: 100%; min-height: 44px; padding: 9px 10px; font: 500 14px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 .trade-board { gap: 10px; margin-top: 16px; }
 .trade-offer { display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 10px; padding: 13px; border: 1px solid rgba(44, 51, 48, 0.32); border-radius: 8px; background: #eee5d4; }
-.trade-offer .trade-chip { margin-top: 0; }
+.trade-offer .trade-thumb { margin-top: 0; }
 .trade-offer > div { gap: 4px; text-align: right; }
 .trade-offer > div:nth-of-type(2) { text-align: right; }
 .trade-offer > b { color: var(--civic); font-size: 18px; text-align: center; }
@@ -3232,6 +3237,9 @@ body {
   height: 100%;
   border-radius: inherit;
   background: var(--civic);
+  transform: scaleX(0);
+  transform-origin: right center;
+  animation: fermi-bar-grow-x 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .daily-challenge-desk {
@@ -3350,9 +3358,9 @@ body {
   min-height: 4px;
   border-radius: 3px 3px 0 0;
   background: #9aa39b;
-  transform: scaleY(0.08);
+  transform: scaleY(0);
   transform-origin: bottom;
-  animation: challenge-bar-rise 720ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: fermi-bar-rise 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .challenge-hist-col.you b {
@@ -3361,15 +3369,19 @@ body {
 
 .challenge-hist-col.you::before {
   position: absolute;
-  top: -18px;
+  top: -22px;
   left: 50%;
-  color: var(--ink);
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--civic);
+  color: #eee5d4;
   font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   content: "אתם";
   transform: translateX(-50%);
-  animation: challenge-you-mark 420ms 280ms both;
+  animation: fermi-marker-in 380ms cubic-bezier(0.16, 1, 0.3, 1) 160ms both;
 }
 
 .challenge-hist-col.you::after {
@@ -3392,22 +3404,28 @@ body {
   text-align: center;
 }
 
-@keyframes challenge-bar-rise {
-  from { transform: scaleY(0.08); }
+@keyframes fermi-bar-rise {
+  from { transform: scaleY(0); }
   to { transform: scaleY(1); }
 }
 
-@keyframes challenge-you-mark {
-  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+@keyframes fermi-bar-grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes fermi-marker-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .challenge-hist-col b,
-  .challenge-hist-col.you::before {
+  .challenge-hist-col.you::before,
+  .faction-chart-row > i > b {
     animation: none;
+    transform: none;
   }
-  .challenge-hist-col b { transform: none; }
 }
 
 @media (max-width: 520px) {
