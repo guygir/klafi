@@ -688,8 +688,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-density="airy-v2"] .trade-form fieldset {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  grid-template-areas: "preview fields";
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   overflow: visible;
   padding: 12px !important;
@@ -913,13 +912,14 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 .level-avatar-button {
+  position: relative;
   flex: 0 0 auto;
   width: 42px;
   height: 42px;
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent);
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
   background: var(--pack-paper-deep, #d8cbb5);
   cursor: pointer;
 }
@@ -929,6 +929,17 @@ body:has(#app[data-theme="pack-v2"]) {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatar-seal {
+  position: absolute;
+  inset-inline-start: -1px;
+  bottom: 1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  box-shadow: 0 0 0 1px var(--pack-paper, #eee5d4);
 }
 
 #app[data-density="airy-v2"] .level-identity {

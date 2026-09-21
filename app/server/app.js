@@ -1546,15 +1546,27 @@ export async function createKalpiApp({
             idempotencyKey(request),
             url.pathname,
             async () => {
-              const trade = await store.createTrade({
+              const created = await store.createTrade({
                 sessionToken: token,
                 offeredCardId: input.offeredCardId,
                 wantedCardId: input.wantedCardId,
                 createdAt: new Date(now()).toISOString(),
                 expiresAt: new Date(now() + TRADE_TTL_MS).toISOString(),
               });
-              return trade
-                ? { status: 201, body: { trade: { ...trade, ownerToken: undefined }, simulated: false } }
+              const trades = await store.listTrades(token);
+              if (created?.blocked) {
+                return {
+                  status: 409,
+                  body: {
+                    error: "ACTIVE_TRADE_EXISTS",
+                    trade: trades.find(({ tradeId }) => tradeId === created.existing.tradeId) || { ...created.existing, ownerToken: undefined },
+                    trades,
+                    simulated: false,
+                  },
+                };
+              }
+              return created
+                ? { status: 201, body: { trade: { ...created, ownerToken: undefined }, trades, simulated: false } }
                 : { status: 400, body: { error: "INVALID_TRADE" } };
             },
           );
@@ -1574,7 +1586,8 @@ export async function createKalpiApp({
             json(response, 409, { error: "TRADE_NOT_CANCELLABLE" });
             return;
           }
-          json(response, 200, { trade: (await store.listTrades(token)).find(({ tradeId }) => tradeCancel[1]) });
+          const trades = await store.listTrades(token);
+          json(response, 200, { trade: trades.find(({ tradeId }) => tradeId === tradeCancel[1]), trades, simulated: false });
           return;
         }
 
@@ -1620,9 +1633,12 @@ export async function createKalpiApp({
             json(response, 409, { error: "TRADE_NOT_ACCEPTABLE" });
             return;
           }
+          const trades = await store.listTrades(token);
           json(response, 200, {
-            trade: (await store.listTrades(token)).find(({ tradeId }) => tradeAccept[1]),
+            trade: trades.find(({ tradeId }) => tradeId === tradeAccept[1]),
+            trades,
             state: stateFor(store.getSession(token)),
+            simulated: false,
           });
           return;
         }

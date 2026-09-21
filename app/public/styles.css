@@ -2433,19 +2433,46 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-form fieldset { min-width: 0; margin: 0; padding: 10px; border: 1px solid rgba(44, 51, 48, 0.22); border-radius: 8px; }
 .trade-form legend { padding: 0 4px; font-size: 13px; font-weight: 600; }
 .trade-form label { display: grid; gap: 5px; margin-top: 9px; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.trade-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 40%, transparent);
+  border-radius: 8px;
+  background: #eee5d4;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.trade-chip-pip {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+}
+.trade-chip span { flex: 1; font: 600 13px/1.2 "IBM Plex Sans Hebrew", sans-serif; }
+.trade-chip small { color: rgba(60, 48, 38, 0.62); font: 500 11px/1 "IBM Plex Sans Hebrew", sans-serif; }
+.trade-active { display: grid; gap: 8px; }
+.trade-offer.mine { border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent); }
 .trade-form select,
 .faction-desk select { width: 100%; min-height: 44px; padding: 9px 10px; font: 500 14px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 .trade-board { gap: 10px; margin-top: 16px; }
-.trade-offer { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 10px; padding: 13px; border-color: rgba(44, 51, 48, 0.32); border-radius: 8px; background: rgba(244, 239, 228, 0.7); }
+.trade-offer { display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 10px; padding: 13px; border: 1px solid rgba(44, 51, 48, 0.32); border-radius: 8px; background: #eee5d4; }
+.trade-offer .trade-chip { margin-top: 0; }
 .trade-offer > div { gap: 4px; text-align: right; }
 .trade-offer > div:nth-of-type(2) { text-align: right; }
 .trade-offer > b { color: var(--civic); font-size: 18px; text-align: center; }
 .trade-offer span,
 .trade-offer small { color: var(--ink-soft); font: 500 11px/1.25 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 .trade-offer strong { font-size: 14px; line-height: 1.25; }
-.trade-offer > p { grid-column: 1 / 3; color: var(--civic); font: 500 11px/1.3 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; text-transform: none; }
+.trade-offer > p { grid-column: 1 / -1; color: var(--civic); font: 500 11px/1.3 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; text-transform: none; }
 .growth-grid .trade-offer > p { font-size: 11px; }
-.trade-offer > button { grid-column: 3; width: auto; min-height: 44px; padding: 8px 10px; font-size: 11px; }
+.trade-offer > button,
+.trade-offer > .trade-unavailable { grid-column: 1 / -1; width: auto; min-height: 44px; padding: 8px 10px; font-size: 11px; }
 .leaderboard-list > div { padding: 11px 0; font-size: 13px; line-height: 1.3; }
 .leaderboard-list strong { font-size: 12px; }
 .leaderboard-list .current-player { font-weight: 600; color: var(--civic); }
@@ -3182,8 +3209,7 @@ body {
   display: grid;
   width: 100%;
   min-width: 0;
-  grid-template-columns: minmax(132px, 44%) minmax(0, 1fr);
-  grid-template-areas: "preview fields";
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 8px;
   overflow: visible;
