@@ -108,7 +108,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 13. Disclosed survey + published scoring table → matched-list party pack. **No need.**
 
 **Design first — do not implement yet**
-14. Numbered list-slot stamps + login streak on the avatar stack. **Settled, do not implement yet.** [open the HTML](https://raw.githack.com/guygir/klafi/cursor/hebrew-trust-a11y-025e/docs/design/step-14-holos-streaks-cec.html). Daily-date holos and CEC pulse are parked out of 14.
+14. Numbered list-slot stamps as tall-v2 holo cards + login streak on the avatar stack. **Settled, do not implement yet.** Ship windows via `numberedSets` — not all sets on day one. [open the HTML](https://raw.githack.com/guygir/klafi/cursor/hebrew-trust-a11y-025e/docs/design/step-14-holos-streaks-cec.html). Daily-date holos and CEC pulse are parked out of 14.
 15. Platform/live-ops: PWA + push, groups/leagues/seasonal ladders, event-controlled Specials, creator seeding. **Brainstorm design — review** [open the HTML](https://raw.githack.com/guygir/klafi/cursor/hebrew-trust-a11y-025e/docs/design/step-15-platform-liveops.html). Events player surface stays deferred.
 
 **Last**

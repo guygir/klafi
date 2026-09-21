@@ -78,19 +78,89 @@
       min-height: 220px;
       padding: 16px;
     }
-    .circle {
-      width: 132px;
-      height: 132px;
-      margin: 18px auto 8px;
-      border: 2px dashed var(--foil);
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      transform: rotate(-7deg);
+    .mock-cap { font-size: 11px; opacity: .65; margin: 0 0 10px; }
+    .mock-card {
+      position: relative;
+      width: 168px;
+      aspect-ratio: 63 / 96;
+      margin: 0 auto;
+      overflow: hidden;
+      border: 2px solid #b38d3f;
+      border-radius: 10px;
+      background:
+        radial-gradient(circle at 42% 18%, rgba(255,255,255,.35), transparent 36%),
+        #eee5d4;
+      box-shadow:
+        0 10px 22px rgba(0,0,0,.35),
+        inset 0 0 0 2px #3c3026,
+        inset 0 0 0 4px #b38d3f;
+      color: #3c3026;
     }
-    .circle strong { font-family: "Noto Serif Hebrew", serif; font-size: 40px; line-height: 0.9; }
-    .circle small { display: block; color: var(--foil); font-size: 11px; }
+    .mock-pip {
+      position: absolute;
+      z-index: 5;
+      inset-inline-start: 0;
+      top: 18%;
+      width: 8px;
+      height: 28px;
+      background: var(--pip);
+    }
+    .mock-art {
+      position: absolute;
+      inset: 8px 8px 22% 8px;
+      border: 1px solid rgba(60,48,38,.28);
+      border-radius: 7px;
+      background: #1a1612;
+    }
+    .mock-meta {
+      position: absolute;
+      inset: 7px 7px auto;
+      display: grid;
+      grid-template-columns: auto minmax(0,1fr) auto;
+      align-items: center;
+      direction: ltr;
+      gap: 4px;
+    }
+    .mock-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 16px;
+      padding: 2px 6px;
+      border: 1px solid rgba(179,141,63,.5);
+      border-radius: 999px;
+      background: rgba(238,229,212,.55);
+      color: #3c3026;
+      font: 600 8px/1 "IBM Plex Sans Hebrew", sans-serif;
+    }
+    .mock-num {
+      min-width: 28px;
+      color: #175b56;
+      font-size: 9px;
+    }
+    .mock-name {
+      position: absolute;
+      right: 10px; left: 10px; bottom: 16.4%;
+      height: 5.6%;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-top: 1px solid #175b56;
+      border-bottom: 1px solid rgba(179,141,63,.72);
+      background: #d8cbb5;
+      font: 700 11px/1 "IBM Plex Sans Hebrew", sans-serif;
+    }
+    .mock-party, .mock-quote {
+      position: absolute;
+      right: 10px; left: 10px;
+      margin: 0;
+      text-align: center;
+      font-family: "IBM Plex Sans Hebrew", sans-serif;
+    }
+    .mock-party { bottom: 12%; font-size: 7px; font-weight: 500; color: rgba(60,48,38,.76); }
+    .mock-quote { bottom: 2.4%; font-size: 8px; font-weight: 600; }
+    .ranks { font-size: 14px; color: rgba(26,31,28,.78); }
     .face {
       width: 72px;
       height: 72px;
@@ -131,15 +201,33 @@
       <p><strong>שמות הרמות והפריטים שנפתחים</strong> כבר חיים עם ההתקדמות (אותו שלב 11 / רמות). עכשיו: אזרח סקרן → … → ראש הממשלה. בחלון עליית רמה נפתחים שם דרגה, אווטאר חדש, וקלף בונוס. זה לא שלב 14, וזה לא משתנה כאן חוץ מזה שהרצף מצטרף לאותה ערימה.</p>
     </div>
 
+    <h2>איפה מגדירים רמות, כמה קלפים, ומה נפתח</h2>
+    <p>אין מסך «צריך 5 קלפים לרמה 2». השרת מחשב לפי כמה קלפים <em>שונים</em> יש באוסף מתוך הסדרות הפתוחות לאיסוף.</p>
+    <table>
+      <thead><tr><th>מה</th><th>איפה</th><th>ב־Studio?</th></tr></thead>
+      <tbody>
+        <tr><td>שמות הרמות</td><td><code>app/data/studio-content.json</code> → <code>gameConfig.progression.rankNames</code></td><td>לא. עורכים JSON.</td></tr>
+        <tr><td>כמה רמות כל סדרה מוסיפה</td><td>אותו קובץ → <code>releaseLevelIncrements</code> (מנהיגים 5, סגן 2, …)</td><td>כן. שדות המספר תחת «סף עקומה» / תוספת לכל סדרה. שומרים עם קונפיג הסטודיו.</td></tr>
+        <tr><td>כמה קלפים צריך בפועל</td><td>נוסחה: ייחודיים ≥ תקרה(גודל הקטלוג הפתוח × (מקום/רמות)^<code>thresholdExponent</code>). ברירת מחדל 1.2</td><td>כן. «סף עקומה».</td></tr>
+        <tr><td>תקרת רמה עכשיו</td><td>סכום התוספות של סדרות שפתוחות לאיסוף, ולא מעבר לאורך רשימת השמות</td><td>עקיף: מדליקים סדרה + התוספת שלה</td></tr>
+        <tr><td>אווטארים שנפתחים</td><td><code>app/data/avatars.json</code> → <code>unlockLevel</code></td><td>לא. עורכים JSON.</td></tr>
+        <tr><td>קלף בונוס בעלייה</td><td>קבוע בקוד. כל עליית רמה מציעה קלף בונוס</td><td>לא</td></tr>
+        <tr><td>אילו סדרות מקבלות חותמת (14)</td><td>רשימת <code>numberedSets</code> — עדיין לא קיימת. תוצע ב־JSON / Studio כשנממש</td><td>כן, כשנממש</td></tr>
+      </tbody>
+    </table>
+    <p class="ranks"><strong>שמות עכשיו:</strong> אזרח סקרן · קורא כותרות · מצביע מעורב · פעיל שכונתי · חבר סניף · רכז שטח · מנהל מטה · יועץ פרלמנטרי · חבר כנסת · יו״ר ועדה · סגן שר · שר · שר בכיר · ראש הממשלה.</p>
+    <p class="ranks"><strong>אווטארים:</strong> ילד/ילדה רמה 1 · אזרח/ית 3 · פעיל/ה 5 · נבחר 10 · ראש ממשלה 14.</p>
+    <p>Studio פתוח מקומית עם מפתח הסטודיו. «סף עקומה» והתוספות לכל סדרה נשמרים בשינוי. שמות ואווטארים — עריכת JSON ואז פריסה. בלייב זה קשיח עד אז.</p>
+
     <h2>ארבע מילים שהתערבבו</h2>
     <div class="words">
       <article>
         <b>ממוספר</b>
-        <p>חותמת עגולה <em>1/1</em> או <em>2/3</em> על קלף חבר רשימה. המספר אומר כמה עותקים ממוספרים קיימים למקום הזה ברשימה. זה מה שנכנס ל־14.</p>
+        <p>קלף הולו עם גלולה <em>1/1</em> או <em>2/3</em>. המספר אומר כמה עותקים ממוספרים קיימים למקום הזה ברשימה. זה מה שנכנס ל־14.</p>
       </article>
       <article>
         <b>הולו</b>
-        <p>הברק על מסגרת נדירה. כבר יש טיפול CSS. החותמת הממוספרת יושבת מעליו. לא מערכת נפרדת.</p>
+        <p>המסגרת הזוהרת שכבר קיימת על נדיר (<code>.kalpi-card.holo</code>, זהב/אומבר). הקלף הממוספר <strong>הוא</strong> קלף הולו, לא מדבקה על נפוץ.</p>
       </article>
       <article>
         <b>תאריך יומי</b>
@@ -151,17 +239,37 @@
       </article>
     </div>
 
-    <h2>נעול · ממוספרים לפי מקום ברשימה</h2>
-    <div class="lock">חותמת עיגול עם קו מקווקו, 1/x. טיפ ראשון מעל החותמת. באוסף נפתחת קטגוריה «ממוספרים» בלי משבצות ריקות.</div>
+    <h2>נעול · ממוספר = קלף הולו, על הפריסה החיה</h2>
+    <div class="lock">העותק הממוספר <strong>הוא</strong> קלף הולו על הפריסה החיה: אותה מסגרת זהב/אומבר של <code>.kalpi-card.holo</code>, וגלולה 1/x בשורת המטא. טיפ ראשון. קטגוריה «ממוספרים» בלי משבצות ריקות. לא בכל הסדרות ביום הראשון.</div>
+    <h3>מה רלוונטי לפריסה החיה (tall-v2)</h3>
+    <ul>
+      <li><strong>כן על הקלף:</strong> מחלקת <code>holo</code> (מסגרת זהב + אומבר פנימי) + גלולה 1/x ב־<code>card-image-meta</code> / <code>card-meta-end</code>, ליד תג העותקים. אותו פס 8 פיקסלים, באר דיוקן, תג קוד, פס שם, מפלגה, ציטוט.</li>
+      <li><strong>לא על הקלף:</strong> עיגול מקווקו גדול מעל האמנות. לא חותמת על הציטוט ולא במקום השם. רצף הימים — רק על האווטאר.</li>
+      <li>אותו <code>cardMarkup</code>. אין מנוע קלף שני. באוסף ובשיתוף אותו משטח.</li>
+      <li>fullart-v1 רק אם מחליפים פריים בהשוואה; אז הגלולה נשארת בפינת המטא. ברירת המחדל tall-v2.</li>
+    </ul>
     <div class="row">
       <div class="stamp-demo" aria-hidden="true">
-        <div class="circle"><div><small>מקום ברשימה</small><strong>1/1</strong></div></div>
-        <p style="text-align:center;font-size:13px;opacity:.7">ראש רשימה · אותו כלל בכל מפלגה</p>
+        <p class="mock-cap">tall-v2 · .kalpi-card.holo</p>
+        <article class="mock-card">
+          <span class="mock-pip"></span>
+          <div class="mock-art">
+            <div class="mock-meta">
+              <span class="mock-pill">LIK-M01</span>
+              <span></span>
+              <span class="mock-pill mock-num">1/1</span>
+            </div>
+          </div>
+          <h3 class="mock-name">נתניהו</h3>
+          <p class="mock-party">הליכוד · מקום 1</p>
+          <p class="mock-quote">הציטוט נשאר במקום</p>
+        </article>
       </div>
       <div>
-        <p>הכלל: מספר העותקים הממוספרים = המקום הרשמי ברשימה. ליכוד 1, דמוקרטים 1 ורע״ם 1 כולם מקבלים עותק ממוספר אחד: 1/1. מלמדים סדר, לא סקר.</p>
+        <p>הגלולה 1/x היא אחות של <code>card-copies-tag</code>, לא מדבקה חדשה. הולו = הטיפול שכבר על נדיר.</p>
+        <p>הכלל: מספר העותקים הממוספרים = המקום הרשמי ברשימה. ליכוד 1, דמוקרטים 1 ורע״ם 1 כולם 1/1. מלמדים סדר, לא סקר.</p>
         <table>
-          <thead><tr><th>מקום ברשימה</th><th>כמה חותמות יוצאות בעולם</th><th>מה כתוב בעיגול</th></tr></thead>
+          <thead><tr><th>מקום ברשימה</th><th>כמה חותמות יוצאות בעולם</th><th>מה כתוב בגלולה</th></tr></thead>
           <tbody>
             <tr><td>1 · ראש רשימה</td><td>עותק אחד</td><td>1/1</td></tr>
             <tr><td>2</td><td>שני עותקים</td><td>1/2 ואחר כך 2/2</td></tr>
@@ -172,17 +280,25 @@
       </div>
     </div>
 
+    <h3>מתי מתחילים למספר — לא ביום הראשון על הכול</h3>
+    <p>החותמת נפתחת לפי <strong>סדרה + חלון</strong>, לא לפי כל הקטלוג. רשימה <code>numberedSets</code> בקונפיג (Studio / JSON). סדרה נכנסת לרשימה רק אחרי שהחלטתם שהיא חיה מספיק זמן.</p>
+    <ul>
+      <li><strong>חלון 1:</strong> רק «מנהיגי המפלגות». 14 חותמות 1/1 בעולם (ראש אחד לכל מפלגה).</li>
+      <li><strong>חלון הבא:</strong> כשסדרת הסגנים כבר בחוץ מספיק — מוסיפים אותה. אז מתחיל מונה 1/2 · 2/2. משיכות ישנות בלי חותמת לא מקבלות מספר בדיעבד.</li>
+      <li>סט 5, מצע, סמל, החלטות — בחוץ עד שתפתחו במפורש. ברירת מחדל: אף פעם לא.</li>
+    </ul>
+    <p>כמה זמן «מספיק» זו החלטת שיגור, לא נוסחה בקוד. מדליקים סדרה ב־<code>numberedSets</code> כשרוצים שהמרוץ על החותמת יתחיל.</p>
+
     <h3>איך מחלקים בלי עומס</h3>
     <ul>
-      <li>רק קלף <strong>חבר רשימה</strong> (פוליטיקאי עם מקום). לא סמל, לא מצע, לא ציטוט־מערכת, לא סט 5.</li>
-      <li>השרת מחזיק מונה לכל זוג מפלגה+מקום. במשיכה: אם עוד לא יצאו n חותמות — העותק הזה מקבל את המספר הבא. אחר כך הקלף רגיל, בלי עיגול.</li>
-      <li>החותמת שייכת לעותק (מזהה משיכה), לא לסוג הקלף. בהחלפה היא עוברת עם העותק.</li>
-      <li>שני מכשירים עם אותו קוד שחזור = שחקן אחד. אין שתי חותמות מאותה משיכה.</li>
+      <li>רק קלף <strong>חבר רשימה</strong> בסדרה שברשימת הממוספרים. לא סמל, לא מצע, לא סט 5 אלא אם הכנסתם אותם.</li>
+      <li>השרת מחזיק מונה לכל זוג מפלגה+מקום. במשיכה אחרי פתיחת החלון: אם עוד לא יצאו n חותמות — העותק הזה נהיה הולו ומקבל את המספר. אחר כך הקלף רגיל.</li>
+      <li>החותמת שייכת לעותק (מזהה משיכה). בהחלפה היא עוברת איתו.</li>
+      <li>שני מכשירים עם אותו קוד שחזור = שחקן אחד.</li>
       <li>הלקוח לא יכול לכתוב 1/1 לעצמו.</li>
     </ul>
-    <p>בסדרה החיה «מנהיגי המפלגות» כולם מקום 1 — כלומר 1/1 אחד לכל מפלגה בכל המשחק. זה נדיר בכוונה. מקום 2 (סדרת הסגן) יוציא שתי חותמות, וכן הלאה.</p>
-    <p><strong>קטגוריה באוסף:</strong> «ממוספרים» נפתחת אחרי החותמת הראשונה. רק קלפים שיש לכם עליהם עיגול. בלי משבצות חסרות — אין טעם להראות 2/3 ריק כשיש המון מספרים אפשריים.</p>
-    <p><strong>טיפ:</strong> בחותמת הראשונה, כרטיס קצר מעל העיגול: «זה המקום ברשימה. ראש רשימה הוא 1 מתוך 1.» אותו עוגיות/טיפים שכבר קיימים. דילוג תמיד.</p>
+    <p><strong>קטגוריה באוסף:</strong> «ממוספרים» נפתחת אחרי החותמת הראשונה. רק קלפים שיש לכם עליהם גלולה. בלי משבצות חסרות — אין טעם להראות 2/3 ריק כשיש המון מספרים אפשריים.</p>
+    <p><strong>טיפ:</strong> בחותמת הראשונה, כרטיס קצר מעל הגלולה: «זה המקום ברשימה. ראש רשימה הוא 1 מתוך 1.» אותו עוגיות/טיפים שכבר קיימים. דילוג תמיד.</p>
     <p><strong>העתק:</strong> «מקום 1 · 1 מתוך 1 · הטביע השרת.»</p>
     <div class="park">לא לסקרים, לא למושבים, לא ל«כמה שחקנים מחזיקים». אחרי שה־n נגמר — אין חותמת חדשה, אין הדפסה שנייה עם תאריך.</div>
 
