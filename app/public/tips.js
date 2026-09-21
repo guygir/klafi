@@ -64,7 +64,7 @@ export const PAGE_GUIDES = Object.freeze({
     {
       ring: "#binder-filters",
       emptyRing: "#binder-grid, #binder-empty",
-      arrowTo: "#binder-grid .binder-shared-card, #binder-grid button, #binder-empty",
+      arrowTo: "#binder-grid .binder-shared-card, #binder-grid button",
       title: "הסדרות",
       body: "סינון לפי סדרה. לחצו על קלף — מקור ושיתוף.",
     },
@@ -317,6 +317,7 @@ function placeCard(card, ring, to) {
     { left: Math.max(pad, (vw - width) / 2), top: vh - height - pad },
   ];
   const fit = spots.find(({ left, top }) => !forbidden.some((box) => overlaps(left, top, width, height, box)))
+    || spots.find(({ left, top }) => !overlaps(left, top, width, height, forbidden[0]))
     || spots[0];
   card.style.left = `${Math.max(pad, Math.min(fit.left, vw - width - pad))}px`;
   card.style.top = `${Math.max(pad, Math.min(fit.top, vh - height - pad))}px`;
@@ -467,6 +468,7 @@ export function attachKlafiTips(env = globalThis) {
   }
 
   function paint() {
+    try {
     const steps = currentSteps();
     const step = steps[state.step - 1];
     const ready = state.mode === "pull"
@@ -521,6 +523,9 @@ export function attachKlafiTips(env = globalThis) {
     }
     placeCard(card, fromSpec.box, toSpec?.box || null);
     queueMicrotask(() => nextBtn?.focus({ preventScroll: true }));
+    } catch {
+      park();
+    }
   }
 
   function schedulePaint() {
