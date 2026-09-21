@@ -1155,7 +1155,10 @@ export async function createKalpiApp({
       avatars: avatarCatalog.avatars || [],
     });
     if (avatarsPath && !databaseUrl) {
-      await writeJsonAtomic(avatarsPath, avatarCatalog);
+      const canonicalAvatars = path.resolve(path.dirname(cardsPath), "avatars.json");
+      if (path.resolve(avatarsPath) !== canonicalAvatars) {
+        await writeJsonAtomic(avatarsPath, avatarCatalog);
+      }
     }
     if (studioContentPath && !databaseUrl) {
       const canonicalStudio = path.resolve(path.dirname(cardsPath), "studio-content.json");
