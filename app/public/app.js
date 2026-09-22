@@ -699,6 +699,7 @@ async function loadStaticCatalog() {
       catalogFailed = false;
       applyCatalog(payload.cards || payload);
       prefetchIdleAssets();
+      renderProfile();
       renderBinder();
       renderHome();
       handleInboundLink();
@@ -718,8 +719,14 @@ async function hydrateHome() {
   if (!homeHydrate) {
     const warmedHome = window.__kalpiWarmup?.home;
     if (window.__kalpiWarmup) window.__kalpiWarmup.home = null;
-    homeHydrate = (warmedHome || request("/api/home")).then((home) => {
+    homeHydrate = (warmedHome || request("/api/home")).then(async (home) => {
       applyHomePayload(home);
+      try {
+        const config = await request("/api/game-config");
+        if (config) model.gameConfig = { ...model.gameConfig, ...config };
+      } catch {
+        /* Shell parties stay until the live register arrives. */
+      }
       renderProfile();
       renderHome();
       renderBinder();
@@ -1229,7 +1236,11 @@ function factionLetters(party) {
 }
 
 function factionLetterArt(party) {
-  return party?.symbolCard?.artKey || "";
+  if (party?.letterArt || party?.symbolCard?.artKey) {
+    return party.letterArt || party.symbolCard.artKey;
+  }
+  if (!party?.id) return "";
+  return (model.catalog || []).find((card) => card.id === `${party.id}-S-01`)?.artKey || "";
 }
 
 function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
@@ -2347,7 +2358,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
         </div>
         <div class="card-identity-stack">
           <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
-          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
+          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}${instance.numberedIndex ? " · ★★★★ ממוספר" : ""}</p>
           <p class="card-rarity-zone" dir="rtl" lang="he"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</p>
           <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
         </div>

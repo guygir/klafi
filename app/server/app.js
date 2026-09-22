@@ -201,6 +201,7 @@ export function publicPartyRegister(studioContent, cards = []) {
       filingStatus,
       asOfDate,
       pip,
+      symbolCard,
     }) => ({
       id,
       displayNameHe,
@@ -211,6 +212,7 @@ export function publicPartyRegister(studioContent, cards = []) {
       filingStatus: filingStatus || null,
       asOfDate: asOfDate || null,
       pip,
+      letterArt: symbolCard?.artKey || null,
     }));
   }
   const parties = new Map();

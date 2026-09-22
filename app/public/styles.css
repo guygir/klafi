@@ -3969,12 +3969,12 @@ body {
 .collector-letter,
 .collector-letter-text {
   position: absolute;
-  top: -5px;
-  left: -8px;
+  top: -6px;
+  left: -10px;
   z-index: 3;
-  width: 22px;
-  height: 22px;
-  object-fit: cover;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
   border: 1px solid var(--pack-umber, #3c3026);
   border-radius: 3px;
   background: var(--pack-paper, #eee5d4);
