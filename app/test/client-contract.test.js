@@ -414,6 +414,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="studio-share-binder"/);
   assert.match(html, /id="studio-share-binder-link"/);
   assert.match(html, /id="dialog-holders"/);
+  assert.doesNotMatch(javascript, /card-holders-chip/);
   assert.match(html, /אין כאן שחקן במשחק/);
   assert.match(javascript, /\/api\/card-holders/);
   assert.match(javascript, /function holderLine/);
