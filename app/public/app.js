@@ -2686,8 +2686,7 @@ function cardTrustLine(card) {
     ? "פרשנות/ביקורת"
     : walkout.kind === "quote" ? "ציטוט" : "עובדתי";
   const releaseName = model.gameConfig?.releaseSets?.find(({ id }) => id === card.releaseSetId)?.nameHe;
-  const membershipNote = String(card.membershipNote || "").trim();
-  return [contentClass, membershipNote, ...cardTrustReceipt(card), releaseName, formatTrustDate(walkout.date)]
+  return [contentClass, ...cardTrustReceipt(card), releaseName, formatTrustDate(walkout.date)]
     .filter(Boolean)
     .join(" · ");
 }
