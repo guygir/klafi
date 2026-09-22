@@ -2296,6 +2296,44 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .shared-card .kalpi-card { width: 100%; }
 .shared-notice { max-width: 430px; margin: 16px auto 0; color: rgba(26, 31, 28, 0.68); font-size: 12px; line-height: 1.5; }
 .shared-showcase .primary-action { display: block; margin: 20px auto 0; }
+
+.app-shell.showcase-active {
+  padding-bottom: 28px;
+}
+.app-shell.showcase-active .level-strip,
+.app-shell.showcase-active .top-nav-row,
+.app-shell.showcase-active #player-name,
+.app-shell.showcase-active #site-card-peeks {
+  display: none !important;
+}
+.app-shell.showcase-active #main {
+  padding-bottom: 8px;
+}
+#showcase-view.active {
+  overflow: hidden;
+}
+.showcase-head {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(44, 51, 48, 0.16);
+}
+.showcase-head h1 { margin-bottom: 8px; }
+.showcase-head .shared-notice {
+  max-width: 36em;
+  margin: 0 0 10px;
+  text-align: start;
+}
+.showcase-count {
+  margin: 0 0 12px;
+  color: var(--civic);
+  font-size: 13px;
+  font-weight: 600;
+}
+.showcase-head .primary-action {
+  display: inline-flex;
+  margin: 0;
+}
 #pack-view { overflow-x: clip; }
 
 .kalpi-card { direction: rtl; container-type: inline-size; }

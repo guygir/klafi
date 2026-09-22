@@ -93,6 +93,43 @@ test("legitimate players are not blocked by a shared application rate bucket", a
   assert.ok(sessions.every(({ status, body }) => status === 201 && body.token));
 });
 
+test("share binder is look-only and does not create a player session", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-share-binder-test-"));
+  const clock = { value: Date.parse("2026-09-22T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const landing = await fetch(`${running.base}/share/binder`);
+  assert.equal(landing.status, 200);
+  const html = await landing.text();
+  assert.match(html, /האלבום המלא/);
+  assert.match(html, /showcase=1/);
+  assert.match(html, /אין כאן שחקן/);
+  assert.equal((await fetch(`${running.base}/share/binder`, { method: "HEAD" })).status, 200);
+
+  const catalog = await api(running.base, "/api/catalog");
+  const config = await api(running.base, "/api/game-config");
+  assert.equal(catalog.status, 200);
+  assert.ok(catalog.body.cards.length > 0);
+  assert.equal(config.status, 200);
+  assert.ok(Array.isArray(config.body.progression?.numberedSets));
+
+  const boards = await api(running.base, "/api/leaderboards");
+  const activity = await api(running.base, "/api/activity");
+  assert.equal(boards.status, 200);
+  assert.equal(boards.body.collectors.length, 0);
+  assert.equal(activity.body.participatingSessions, 0);
+
+  const home = await api(running.base, "/api/home");
+  assert.equal(home.status, 200);
+  assert.ok(home.body.token);
+  const after = await api(running.base, "/api/leaderboards");
+  assert.ok(after.body.collectors.length >= 1);
+});
+
 test("public party register keeps Hebrew names without opening Studio", () => {
   const fromStudio = publicPartyRegister({
     parties: [{
@@ -459,6 +496,13 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.match(shareHtml, /property="og:image"/);
   assert.match(shareHtml, /og:title" content="קְלָפִי · /);
   assert.match(shareHtml, /card=LIK-M01-Q01/);
+  const binderShare = await fetch(`${running.base}/share/binder`);
+  assert.equal(binderShare.status, 200);
+  assert.match(binderShare.headers.get("content-type"), /^text\/html/);
+  const binderHtml = await binderShare.text();
+  assert.match(binderHtml, /og:title" content="קְלָפִי · האלבום המלא"/);
+  assert.match(binderHtml, /showcase=1/);
+  assert.match(binderHtml, /אין כאן שחקן/);
   assert.equal((await fetch(`${running.base}/share/not-a-card`)).status, 404);
   const clientScript = await fetch(`${running.base}/app.js?v=test`);
   assert.match(clientScript.headers.get("cache-control"), /no-cache/);

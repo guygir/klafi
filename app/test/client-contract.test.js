@@ -366,6 +366,18 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trust-dialog"/);
   assert.match(html, /id="dialog-trust"/);
   assert.match(javascript, /function showSharedCard/);
+  assert.match(javascript, /function isLookOnlyShowcase/);
+  assert.match(javascript, /function bootstrapShowcase/);
+  assert.match(javascript, /function renderShowcaseBinder/);
+  assert.match(javascript, /function catalogCardMarkup/);
+  assert.match(javascript, /\/share\/binder/);
+  assert.match(javascript, /get\("showcase"\) === "1"/);
+  assert.match(html, /id="showcase-view"/);
+  assert.match(html, /id="showcase-grid"/);
+  assert.match(html, /אין כאן שחקן במשחק/);
+  assert.match(warmup, /lookOnlyShowcase/);
+  assert.match(warmup, /\/share\/binder/);
+  assert.doesNotMatch(javascript, /שחקנים נוספים מחזיקים/);
   assert.match(javascript, /תצוגת שיתוף בלבד/);
   assert.match(javascript, /הקלף לא נוסף לאוסף שלכם/);
   assert.match(javascript, /גלו עוד \$\{progression\.remaining\} קלפים חדשים כדי להתקדם לרמה הבאה/);
@@ -407,7 +419,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-30/);
+  assert.match(html, /card-surface-31/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -472,7 +484,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-30/);
+  assert.match(html, /card-surface-31/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

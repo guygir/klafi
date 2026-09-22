@@ -112,6 +112,49 @@ function escapeShareHtml(value = "") {
   })[character]);
 }
 
+function serveBinderShareLanding(request, response) {
+  const origin = requestOrigin(request);
+  const play = new URL("/", origin);
+  play.searchParams.set("showcase", "1");
+  const title = "קְלָפִי · האלבום המלא";
+  const description = "תצוגת האלבום כולו. אין כאן שחקן במשחק — בלי דירוג, בלי סטטיסטיקה ובלי ספירת מחזיקים.";
+  const shareUrl = `${origin}/share/binder`;
+  const image = `${origin}/design-assets/hero-art-kalpi.png`;
+  const playHref = `${play.pathname}${play.search}`;
+  const html = `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeShareHtml(title)}</title>
+  <meta name="description" content="${escapeShareHtml(description)}" />
+  <meta property="og:title" content="${escapeShareHtml(title)}" />
+  <meta property="og:description" content="${escapeShareHtml(description)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${escapeShareHtml(shareUrl)}" />
+  <meta property="og:image" content="${escapeShareHtml(image)}" />
+  <meta property="og:image:alt" content="קְלָפִי · האלבום המלא" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${escapeShareHtml(title)}" />
+  <meta name="twitter:description" content="${escapeShareHtml(description)}" />
+  <meta name="twitter:image" content="${escapeShareHtml(image)}" />
+  <link rel="canonical" href="${escapeShareHtml(play.toString())}" />
+  <meta http-equiv="refresh" content="0;url=${escapeShareHtml(playHref)}" />
+</head>
+<body>
+  <p><a href="${escapeShareHtml(playHref)}">פתחו את האלבום המלא בקְלָפִי</a></p>
+</body>
+</html>`;
+  const body = Buffer.from(html, "utf8");
+  response.writeHead(200, {
+    ...SECURITY_HEADERS,
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "public, max-age=300",
+    "content-length": body.length,
+  });
+  response.end(request.method === "HEAD" ? undefined : body);
+}
+
 function serveShareLanding(request, response, card, extras = {}) {
   const origin = requestOrigin(request);
   const play = new URL("/", origin);
@@ -2208,7 +2251,12 @@ export async function createKalpiApp({
       }
 
       if ((request.method === "GET" || request.method === "HEAD") && url.pathname.startsWith("/share/")) {
-        const cardId = decodeURIComponent(url.pathname.slice("/share/".length).replace(/\.html$/, ""));
+        const shareSlug = decodeURIComponent(url.pathname.slice("/share/".length).replace(/\.html$/, ""));
+        if (shareSlug === "binder") {
+          serveBinderShareLanding(request, response);
+          return;
+        }
+        const cardId = shareSlug;
         const card = cardsById.get(cardId);
         if (!card) {
           json(response, 404, { error: "NOT_FOUND" });

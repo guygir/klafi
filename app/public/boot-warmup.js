@@ -1,4 +1,9 @@
-const token = localStorage.getItem("kalpi-alpha-session");
+const lookOnlyShowcase = (() => {
+  const path = String(location.pathname || "").replace(/\.html$/, "");
+  if (path === "/share/binder") return true;
+  return new URLSearchParams(location.search).get("showcase") === "1";
+})();
+const token = lookOnlyShowcase ? null : localStorage.getItem("kalpi-alpha-session");
 const headers = token ? { authorization: `Bearer ${token}` } : {};
 const staticDataVersion = "visible-sets-2";
 const json = async (response) => {
@@ -8,16 +13,18 @@ const json = async (response) => {
 };
 let cachedHome = null;
 try {
-  cachedHome = JSON.parse(localStorage.getItem("kalpi-home-cache") || "null");
+  cachedHome = lookOnlyShowcase ? null : JSON.parse(localStorage.getItem("kalpi-home-cache") || "null");
 } catch {
   /* The application will replace malformed cache data. */
 }
 const homeDelay = token && cachedHome?.token === token
   ? 2000 + Math.floor(Math.random() * 8000)
   : 0;
-const home = new Promise((resolve) => setTimeout(resolve, homeDelay))
-  .then(() => fetch("/api/home", { cache: "no-store", headers }))
-  .then(json);
+const home = lookOnlyShowcase
+  ? null
+  : new Promise((resolve) => setTimeout(resolve, homeDelay))
+    .then(() => fetch("/api/home", { cache: "no-store", headers }))
+    .then(json);
 window.__kalpiWarmup = {
   shell: fetch(`/shell.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json),
   catalog: fetch(`/catalog.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json),

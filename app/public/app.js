@@ -67,6 +67,7 @@ const model = {
   renderedLevel: null,
   selectedAvatarId: null,
   extrasReady: false,
+  showcase: false,
   reports: [],
   reportSubject: null,
   watchedTrade: null,
@@ -142,6 +143,12 @@ const elements = {
   sharedTrust: document.querySelector("#shared-trust"),
   sharedSource: document.querySelector("#shared-source"),
   sharedOpenGame: document.querySelector("#shared-open-game"),
+  showcaseNotice: document.querySelector("#showcase-notice"),
+  showcaseCount: document.querySelector("#showcase-count"),
+  showcaseFilters: document.querySelector("#showcase-filters"),
+  showcaseGrid: document.querySelector("#showcase-grid"),
+  showcaseEmpty: document.querySelector("#showcase-empty"),
+  showcaseOpenGame: document.querySelector("#showcase-open-game"),
   binderPercent: document.querySelector("#binder-percent"),
   binderCount: document.querySelector("#binder-count"),
   binderFilters: document.querySelector("#binder-filters"),
@@ -668,7 +675,14 @@ function requestedPlayerView() {
   return PLAYER_VIEWS.includes(view) ? view : "";
 }
 
+function isLookOnlyShowcase() {
+  const path = String(location.pathname || "").replace(/\.html$/, "");
+  if (path === "/share/binder") return true;
+  return new URLSearchParams(location.search).get("showcase") === "1";
+}
+
 function persistPlayerView(name) {
+  if (model.showcase) return;
   const url = new URL(location.href);
   if (PLAYER_VIEWS.includes(name) && name !== "home") url.searchParams.set("view", name);
   else url.searchParams.delete("view");
@@ -711,6 +725,10 @@ async function loadStaticCatalog() {
       catalogFailed = false;
       applyCatalog(payload.cards || payload);
       prefetchIdleAssets();
+      if (model.showcase) {
+        renderShowcaseBinder();
+        return model;
+      }
       renderProfile();
       renderBinder();
       renderHome();
@@ -718,7 +736,8 @@ async function loadStaticCatalog() {
       return model;
     }).catch((error) => {
       catalogFailed = true;
-      renderBinder();
+      if (model.showcase) renderShowcaseBinder();
+      else renderBinder();
       throw error;
     }).finally(() => {
       catalogHydrate = null;
@@ -728,6 +747,7 @@ async function loadStaticCatalog() {
 }
 
 async function hydrateHome() {
+  if (model.showcase) return null;
   if (!homeHydrate) {
     const warmedHome = window.__kalpiWarmup?.home;
     if (window.__kalpiWarmup) window.__kalpiWarmup.home = null;
@@ -836,6 +856,7 @@ function flushPendingIdleSeen() {
 }
 
 async function hydrateIdleQueue() {
+  if (model.showcase) return null;
   if (!idleHydrate) {
     idleHydrate = (async () => {
       if (!model.token) await hydrateHome();
@@ -888,6 +909,7 @@ function paintExtras() {
 }
 
 async function hydrateExtras() {
+  if (model.showcase) return model;
   if (model.extrasReady) return model;
   if (!extrasHydrate) {
     extrasHydrate = (async () => {
@@ -944,8 +966,60 @@ async function hydrateCatalog() {
   }
 }
 
+function leaveShowcase() {
+  location.assign("/");
+}
+
+async function hydrateLookOnlyCatalog() {
+  await loadStaticCatalog().catch(() => null);
+  try {
+    const config = await request("/api/game-config");
+    if (config) {
+      model.gameConfig = { ...model.gameConfig, ...config };
+      if (Array.isArray(model.gameConfig.releaseSets)) {
+        model.gameConfig.releaseSets = model.gameConfig.releaseSets.filter((set) => isLiveReleaseSet(set.id));
+      }
+    }
+  } catch {
+    /* Shell release sets stay until the live config arrives. */
+  }
+  try {
+    const live = await request("/api/catalog");
+    const liveCards = (live.cards || []).filter((card) => isLiveReleaseSet(card.releaseSetId));
+    if (!model.catalog.length) applyCatalog(liveCards);
+    else {
+      mergeLiveCatalogFields(liveCards);
+      const extras = liveCards.filter((card) => !model.byId.has(card.id));
+      if (extras.length) applyCatalog([...model.catalog, ...extras]);
+    }
+  } catch {
+    /* Static catalog.json stays until the live list slots arrive. */
+  }
+}
+
+async function bootstrapShowcase() {
+  model.showcase = true;
+  model.token = null;
+  document.querySelector("#app")?.classList.add("showcase-active");
+  if (elements.headerStatus) elements.headerStatus.textContent = "תצוגה בלבד";
+  showView("showcase");
+  try {
+    await loadShell();
+    renderAdvocacy();
+    await hydrateLookOnlyCatalog();
+    renderShowcaseBinder();
+    showView("showcase");
+  } catch (error) {
+    showError("לא הצלחנו לפתוח את האלבום.", describeError(error));
+  }
+}
+
 async function bootstrap() {
   captureStudioSecret();
+  if (isLookOnlyShowcase()) {
+    model.token = null;
+    return bootstrapShowcase();
+  }
   applyCachedHome();
   if (model.token) hydrateExtras().catch(() => {});
   const inboundView = requestedPlayerView();
@@ -1003,6 +1077,7 @@ function renderAdvocacy() {
 }
 
 async function recordEvent(type, details = {}) {
+  if (model.showcase) return;
   try {
     await request("/api/events", {
       method: "POST",
@@ -1030,6 +1105,7 @@ function inboundShareCardId() {
 }
 
 function handleInboundLink() {
+  if (model.showcase) return;
   const params = new URLSearchParams(location.search);
   const cardId = inboundShareCardId();
   const referralCode = params.get("ref");
@@ -1154,7 +1230,7 @@ function showView(name) {
       else button.removeAttribute("aria-current");
     }
   }
-  elements.bottomNav.hidden = !["home", "binder", "achievements", "events", "growth"].includes(name);
+  elements.bottomNav.hidden = model.showcase || !["home", "binder", "achievements", "events", "growth"].includes(name);
   klafiTips.sync();
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
@@ -2078,7 +2154,7 @@ function finishWalkoutCard() {
 
 function maybeShowNumberedTip() {
   const tip = elements.numberedTip;
-  if (!tip) return;
+  if (!tip || model.showcase) return;
   const instance = model.currentPack?.cards?.[model.currentCardIndex] || stampForCard(model.byId.get(model.dialogCardId));
   if (!instance?.numberedIndex) {
     tip.hidden = true;
@@ -2355,6 +2431,112 @@ function stampForCard(card) {
   return copies.find((item) => item.cardId === card?.id)
     || instances.find((item) => item.cardId === card?.id && item.numberedIndex)
     || null;
+}
+
+function catalogNumberedSets() {
+  const configured = model.gameConfig?.progression?.numberedSets;
+  return Array.isArray(configured) && configured.length ? configured : ["set-5"];
+}
+
+function catalogNumberedInstance(card) {
+  const listSlot = Number(card?.listSlot);
+  const eligible = catalogNumberedSets().includes(card?.releaseSetId)
+    && Number.isInteger(listSlot)
+    && listSlot > 0
+    && !card.eventOnly;
+  return eligible ? { numberedIndex: 1, numberedOf: listSlot, finish: "Holo" } : {};
+}
+
+function catalogCardMarkup(card, surface = "binder") {
+  return cardMarkup(card, {
+    finish: card.rarity,
+    count: 1,
+    ...catalogNumberedInstance(card),
+  }, { progressiveStage: "portrait", surface });
+}
+
+function renderShowcaseBinder() {
+  const showcaseView = document.querySelector("#showcase-view");
+  if (!elements.showcaseGrid) return;
+  if (!catalogReady()) {
+    if (elements.showcaseCount) elements.showcaseCount.textContent = "";
+    if (elements.showcaseFilters) elements.showcaseFilters.innerHTML = "";
+    elements.showcaseGrid.innerHTML = catalogFailed ? "" : renderPendingWells();
+    setEmptyNote(elements.showcaseEmpty, pendingCopy("טוענים את האלבום…", "לא הצלחנו לטעון את האלבום."), {
+      pending: !catalogFailed,
+      failed: catalogFailed,
+    });
+    showcaseView?.setAttribute("aria-busy", catalogFailed ? "false" : "true");
+    return;
+  }
+  showcaseView?.setAttribute("aria-busy", "false");
+  const playerCards = playerCatalog();
+  const releaseOrder = (model.gameConfig?.releaseSets || [])
+    .map(({ id }) => id)
+    .filter((id) => isLiveReleaseSet(id));
+  const numberedIds = new Set(playerCards
+    .filter((card) => catalogNumberedInstance(card).numberedIndex)
+    .map((card) => card.id));
+  const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
+  if (numberedIds.size) setOrder.push("NUMBERED");
+  const setLabels = {};
+  for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
+  setLabels.ALL = `הכול ${playerCards.length}`;
+  setLabels.NUMBERED = "ממוספרים";
+  if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
+  if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && !model.binderFilter.startsWith("RELEASE:")) {
+    model.binderParty = model.binderFilter;
+    model.binderFilter = "ALL";
+  }
+  const partyOptions = [...new Map(
+    playerCards.filter((card) => !card.eventOnly).map((card) => [card.set, cardSetName(card)]),
+  )].sort((left, right) => left[1].localeCompare(right[1], "he"));
+  if (model.binderParty && !partyOptions.some(([id]) => id === model.binderParty)) model.binderParty = "";
+  if (elements.showcaseCount) {
+    elements.showcaseCount.textContent = `${playerCards.length} קלפים בסדרות הפתוחות`;
+  }
+  if (elements.showcaseFilters) {
+    elements.showcaseFilters.innerHTML = [
+      `<label class="filter-party${model.binderParty ? " active" : ""}">
+        <span>מפלגה</span>
+        <select data-showcase-party aria-label="בחירת מפלגה או הכול">
+          <option value="">הכול</option>
+          ${partyOptions.map(([id, name]) => {
+            const count = playerCards.filter((card) => card.set === id).length;
+            return `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)} · ${count}</option>`;
+          }).join("")}
+        </select>
+      </label>`,
+      `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
+      ...setOrder.map((set) => {
+        const count = set === "ALL"
+          ? playerCards.length
+          : set === "NUMBERED"
+            ? numberedIds.size
+          : playerCards.filter((card) => card.releaseSetId === set.slice(8)).length;
+        const active = model.binderFilter === set;
+        return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
+      }),
+      `</div>`,
+    ].join("");
+  }
+
+  const visible = playerCards.filter((card) => {
+    const releaseOk = model.binderFilter === "ALL"
+      || (model.binderFilter === "SPECIALS" ? card.eventOnly
+        : model.binderFilter === "NUMBERED" ? numberedIds.has(card.id)
+        : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
+    const partyOk = !model.binderParty || card.set === model.binderParty;
+    return releaseOk && partyOk;
+  });
+  elements.showcaseGrid.innerHTML = visible.map((card) => `
+      <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
+        <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}">
+          <div class="binder-shared-card">${catalogCardMarkup(card, "binder")}</div>
+        </button>
+      </div>`).join("");
+  setEmptyNote(elements.showcaseEmpty, "אין קלפים בסינון הזה.", { hidden: visible.length > 0 });
+  queueCardTextFit(elements.showcaseGrid);
 }
 
 function displayCardMarkup(card, surface = "display") {
@@ -4161,10 +4343,10 @@ function openCardDialog(cardId) {
 
 function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
-  const ownedCount = model.serverState.inventory[card.id] ?? 0;
+  const ownedCount = model.showcase ? 0 : (model.serverState?.inventory?.[card.id] ?? 0);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
-  elements.dialogCard.innerHTML = displayCardMarkup(card);
+  elements.dialogCard.innerHTML = model.showcase ? catalogCardMarkup(card, "display") : displayCardMarkup(card);
   if (elements.dialogTrust) {
     const line = cardTrustLine(card);
     elements.dialogTrust.textContent = line;
@@ -4174,6 +4356,7 @@ function renderDialogCard() {
   elements.dialogSource.dataset.sourceCard = card.id;
   elements.dialogWhatsapp.hidden = ownedCount < 1;
   elements.dialogInstagram.hidden = ownedCount < 1;
+  if (elements.dialogReport) elements.dialogReport.hidden = model.showcase;
 }
 
 function currentReportSubject() {
@@ -4991,6 +5174,7 @@ async function offerDuplicate() {
 elements.openPack.addEventListener("click", openIdleReturn);
 elements.openPackFancy.addEventListener("click", () => openIdleReturn("fancy"));
 elements.sharedOpenGame.addEventListener("click", leaveSharedCard);
+elements.showcaseOpenGame?.addEventListener("click", leaveShowcase);
 elements.openBibiPack.addEventListener("click", openBibiDebugPack);
 elements.packAction.addEventListener("click", handlePackAction);
 elements.eventPull?.addEventListener("click", pullEventCard);
@@ -5256,6 +5440,10 @@ elements.studioReportList?.addEventListener("click", (event) => {
 
 elements.navButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    if (model.showcase) {
+      leaveShowcase();
+      return;
+    }
     if (button.dataset.nav === "binder") {
       loadStaticCatalog().catch(() => {});
       hydrateExtras().catch(() => {});
@@ -5332,6 +5520,24 @@ elements.binderGrid.addEventListener("click", (event) => {
     debugUnlockCard(unlock.dataset.debugUnlock);
     return;
   }
+  const button = event.target.closest("[data-card-id]");
+  if (button) openCardDialog(button.dataset.cardId);
+});
+elements.showcaseFilters?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-filter]");
+  if (!button) return;
+  model.binderFilter = button.dataset.filter;
+  model.binderPage = 0;
+  renderShowcaseBinder();
+});
+elements.showcaseFilters?.addEventListener("change", (event) => {
+  const select = event.target.closest("[data-showcase-party]");
+  if (!select) return;
+  model.binderParty = select.value;
+  model.binderPage = 0;
+  renderShowcaseBinder();
+});
+elements.showcaseGrid?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-card-id]");
   if (button) openCardDialog(button.dataset.cardId);
 });
@@ -5420,7 +5626,9 @@ if (!window.__klafiTradeWatch) {
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") pollWatchedTrade().catch(() => {});
 });
-bootstrap().then(() => klafiTips.maybeStart());
+bootstrap().then(() => {
+  if (!model.showcase) klafiTips.maybeStart();
+});
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
 window.__kalpiDebug = {
