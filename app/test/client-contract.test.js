@@ -77,7 +77,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /displayCardMarkup\(card\)/);
   assert.doesNotMatch(javascript, /displayCardMarkup\(selected, "trade"\)/);
   assert.doesNotMatch(javascript, /\["binder", "trade", "peek"\]/);
-  assert.match(javascript, /quote: \{ low: 0\.038, high: 0\.064, floor: compact \? 8 : 12, ceiling: compact \? 14 : 22 \}/);
+  assert.match(javascript, /quote: \{ low: 0\.024, high: 0\.058, floor: compact \? 6 : 7, ceiling: compact \? 13 : 20 \}/);
+  assert.match(javascript, /while \(size > hardMin && !fitsAt\(size\)\) size -= 0\.25/);
+  assert.match(javascript, /const slop = role === "quote" \? 0 : 1/);
+  assert.doesNotMatch(javascript, /JNT-M01-Q01/);
   assert.match(javascript, /const presentation = cardPresentation\(card/);
   assert.equal((javascript.match(/class="card-face front"/g) || []).length, 1, "all surfaces must share one card renderer");
   assert.doesNotMatch(javascript, /miniCardMarkup/);
@@ -100,11 +103,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /isFullart && element\.dataset\.fitCardText !== "quote" && !compact/);
   assert.match(javascript, /function localDailyChallenge/);
   assert.match(javascript, /hydrateExtras\(\)\.catch/);
-  assert.match(themeCss, /card-face\.front \.card-name-zone[\s\S]{0,280}?bottom:\s*25%/);
-  assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-party-zone[\s\S]{0,200}?bottom:\s*20%/);
-  assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-rarity-zone[\s\S]{0,200}?bottom:\s*15%/);
-  assert.match(themeCss, /bottom:\s*0;\s*height:\s*14%;\s*max-height:\s*14%/);
-  assert.match(javascript, /isFullart && role === "quote"/);
+  assert.match(themeCss, /card-face\.front \.card-name-zone[\s\S]{0,280}?bottom:\s*28%/);
+  assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-party-zone[\s\S]{0,200}?bottom:\s*23%/);
+  assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-rarity-zone[\s\S]{0,200}?bottom:\s*18%/);
+  assert.match(themeCss, /bottom:\s*0;\s*height:\s*17%;\s*max-height:\s*17%/);
+  assert.match(javascript, /const hardMin = role === "quote" \? Math\.min\(6, scale\.floor\) : scale\.floor/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-image-meta strong[\s\S]{0,120}?display:\s*none/);
   assert.match(css, /\.card-party-zone::before[\s\S]{0,160}?2\.4cqw/);
   assert.doesNotMatch(css, /\.trade-choice-preview/);
@@ -465,7 +468,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-38/);
+  assert.match(html, /card-surface-40/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -533,7 +536,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-38/);
+  assert.match(html, /card-surface-40/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
@@ -569,13 +572,14 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /#card-dialog \.dialog-close:focus-visible[^}]*var\(--foil\)/);
   assert.match(javascript, /\/share\/\$\{encodeURIComponent\(cardId\)\}/);
   assert.match(html, /id="share-sheet"/);
-  assert.match(html, /id="binder-flip-frame"/);
-  assert.ok(
-    html.indexOf('id="earned-badge-rail"') < html.indexOf('id="binder-flip-frame"')
-      && html.indexOf('id="binder-flip-frame"') < html.indexOf('class="binder-head"'),
-    "debug full-art flip must stay visible in the binder rail, not the hidden head",
-  );
-  assert.match(javascript, /DEBUG_CARD_FRAME_KEY/);
+  assert.doesNotMatch(html, /id="binder-flip-frame"/);
+  assert.doesNotMatch(javascript, /function toggleBinderCardFrame/);
+  assert.match(javascript, /function prefetchAvatars/);
+  assert.match(javascript, /function localAchievementMeasures/);
+  assert.match(html, /id="home-enable-notify"/);
+  assert.match(html, /data-replay-tips/);
+  assert.match(javascript, /data-binder-owned/);
+  assert.match(javascript, /binderOwnedOnly/);
   assert.match(html, /fullart-v1/);
   assert.match(javascript, /card-identity-stack/);
   assert.match(javascript, /card-rarity-zone/);
