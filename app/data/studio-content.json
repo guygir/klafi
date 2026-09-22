@@ -231,7 +231,8 @@
       "RSE",
       "BW"
     ],
-    "sparseRule": "If fewer than three strong distinct quotes qualify, Common and Uncommon stay blank and only the best quote occupies Rare."
+    "sparseRule": "If fewer than three strong distinct quotes qualify, Common and Uncommon stay blank and only the best quote occupies Rare.",
+    "partyAffiliation": "One live partyId is the current 2026 ballot list. Previous parties are a dated membershipNote on that card (ליכוד לשעבר). The 8px pip stays the current party. Do not invent a second card or an ex-faction set. List drops and era figures (Gafni after ~38 years) stay in records or prestige-legacy, pack-ineligible."
   },
   "parties": [
     {
@@ -4052,8 +4053,8 @@
         "license": "CC BY-SA 4.0 for page text; individual image licenses vary",
         "status": "verified"
       },
-      "membershipNote": "",
-      "researchNotes": "The two 2026 joining-statement lines are distinct but related; each is supported by multiple contemporaneous outlets. The older sovereignty quotation was included because it is direct, policy-specific and preserves the full balancing context rather than extracting only a generic democracy phrase.",
+      "membershipNote": "המחנה הממלכתי לשעבר",
+      "researchNotes": "2026 ballot: Beyachad #8 after leaving Gantz / National Unity (ynet hjla8ox8zx; Walla 3858693). The two 2026 joining-statement lines are distinct but related; each is supported by multiple contemporaneous outlets. The older sovereignty quotation was included because it is direct, policy-specific and preserves the full balancing context rather than extracting only a generic democracy phrase.",
       "alternateCandidates": [],
       "visualMemeMoments": [],
       "quoteSlots": [
@@ -4538,8 +4539,8 @@
         "license": "unknown",
         "status": "identity-verified-not-cleared-for-reuse"
       },
-      "membershipNote": "",
-      "researchNotes": "The first two quotes come from the same announcement because they cleanly establish motivation and policy objective. The podcast date follows the publisher's April 2026 episode sequence; recheck page metadata before publication if day-level precision is critical.",
+      "membershipNote": "ליכוד לשעבר",
+      "researchNotes": "2026 ballot: Yisrael Beiteinu #2 after leaving Likud (ynet yokra14725012, March 2026). The first two quotes come from the same announcement because they cleanly establish motivation and policy objective. The podcast date follows the publisher's April 2026 episode sequence; recheck page metadata before publication if day-level precision is critical.",
       "alternateCandidates": [],
       "visualMemeMoments": [],
       "quoteSlots": [
@@ -7096,8 +7097,8 @@
         "license": "Verify the selected Commons file-page license before export.",
         "status": "research-reference"
       },
-      "membershipNote": "",
-      "researchNotes": "",
+      "membershipNote": "ליכוד לשעבר",
+      "researchNotes": "2026 ballot: Otzma #2. ynet sjtsgkudzl / bjiaqbd00ml: Likud and Otzma agreed she would run on Otzma, not be declared פורשת, and stay under Likud Knesset discipline until the 26th Knesset. Card partyId and pip are Otzma only.",
       "alternateCandidates": [
         {
           "originalText": "לפני המלחמה סיפרתי בטוויטר, שהיתה פגישה בין שקמה ברסלר, 'גברת מחאה', לבין ראש המוסד.",
@@ -9570,8 +9571,8 @@
         "license": "Varies by file; verify the selected file's license and attribution requirements.",
         "status": "reference-only"
       },
-      "membershipNote": "",
-      "researchNotes": "",
+      "membershipNote": "יש עתיד לשעבר",
+      "researchNotes": "2026 ballot: Ra'am #2 after leaving Yesh Atid. Party caveat: joined the Ra'am slate with agreed voting independence; that does not make Yesh Atid a Ra'am constituent.",
       "alternateCandidates": [],
       "visualMemeMoments": [],
       "quoteSlots": [

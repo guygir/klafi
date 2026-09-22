@@ -262,3 +262,29 @@ test("Sets 1 and 2 ship complete art-backed catalogs", async () => {
   await Promise.all([...leaders, ...numberTwos].map(({ artKey }) =>
     readFile(path.resolve(here, "../../docs/design/assets", artKey))));
 });
+
+test("party movers keep the current ballot list and a לשעבר receipt", async () => {
+  const { cards, specials, extras, studio } = await loadCatalogSources();
+  const expanded = expandPublicCatalog(cards, specials, extras);
+  const gotliv = expanded.filter((card) => card.titleHe === "טלי גוטליב");
+  const benShitrit = expanded.filter((card) => card.titleHe === "רפי בן שטרית");
+  const segalovitz = expanded.filter((card) => card.titleHe === "יואב סגלוביץ");
+  const ginzburg = expanded.filter((card) => card.titleHe === "איתן גינצבורג" || card.titleHe === "איתן גינזבורג");
+  const gafni = expanded.find(({ id }) => id === "REC-GAFNI-LONGEVITY-2026-01");
+
+  assert.equal(studio.members.find(({ id }) => id === "OTZ-M02")?.membershipNote, "ליכוד לשעבר");
+  assert.ok(gotliv.length >= 2);
+  assert.ok(gotliv.every((card) => card.set === "OTZ" && card.membershipNote === "ליכוד לשעבר"));
+  assert.ok(gotliv.some(({ id }) => id === "OTZ-M02-Q01"));
+  assert.ok(gotliv.some(({ id }) => id === "SET5-07"));
+
+  assert.ok(benShitrit.every((card) => card.set === "YB" && card.membershipNote === "ליכוד לשעבר"));
+  assert.ok(segalovitz.every((card) => card.set === "RAM" && card.membershipNote === "יש עתיד לשעבר"));
+  assert.ok(ginzburg.every((card) => card.set === "BYD" && card.membershipNote === "המחנה הממלכתי לשעבר"));
+
+  assert.equal(gafni?.releaseSetId, "records");
+  assert.equal(gafni?.idleEligible, false);
+  assert.equal(gafni?.packEligible, false);
+  assert.ok(!gafni?.membershipNote);
+  assert.match(gafni?.subtitleHe || gafni?.subtitle || "", /38/);
+});

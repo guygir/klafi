@@ -257,6 +257,7 @@ const quoteCards = studio.members.flatMap((member) => {
       whyItMatters: card.editorial.selectionRationale || "Selected under the disclosed editorial treatment.",
       source: sourceLabel(card.quote),
       listSlot: member.slot,
+      membershipNote: String(member.membershipNote || "").trim(),
       artKey: card.art?.artKey || null,
       walkout: {
         kind: "quote",

@@ -349,6 +349,7 @@ function runtimeCardFromStudio(party, member, card, releaseSets = [], releasedDi
     whyItMatters: card.editorial?.selectionRationale || "",
     source: quote.sourceTitle || quote.publisher || "",
     listSlot: member.slot,
+    membershipNote: String(member.membershipNote || "").trim(),
     artKey: card.art?.artKey || null,
     releaseSetId,
     releaseOrder: isLeader ? 1 : isSlotTwo ? 2 : 90,
