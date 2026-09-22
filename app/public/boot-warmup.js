@@ -29,4 +29,5 @@ window.__kalpiWarmup = {
   shell: fetch(`/shell.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json),
   catalog: fetch(`/catalog.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json),
   home,
+  holders: fetch("/api/card-holders").then(json).catch(() => null),
 };

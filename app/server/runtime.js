@@ -59,6 +59,7 @@ export async function createRuntimeHandler({ loadDotEnv = false } = {}) {
   const debugEnabled = process.env.KALPI_DEBUG === "1" && process.env.NODE_ENV !== "production";
   return createKalpiApp({
     ...paths,
+    holderWarm: true,
     sourcesPath: debugEnabled ? paths.sourcesPath : null,
     sequencesPath: debugEnabled ? paths.sequencesPath : null,
     samplesPath: debugEnabled ? paths.samplesPath : null,

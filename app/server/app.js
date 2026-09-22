@@ -1,7 +1,7 @@
 import { readFile, rename, stat, writeFile } from "node:fs/promises";
 import { randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
-import { JsonStore } from "./store.js";
+import { CARD_HOLDER_SYNC_MS, JsonStore } from "./store.js";
 import { PostgresStore } from "./postgres-store.js";
 import { generateIdlePull, generatePack, rarityTier } from "./pack-engine.js";
 import {
@@ -223,6 +223,7 @@ const STATELESS_API_PATHS = new Set([
   "/api/studio/content",
   "/api/game-config",
   "/api/presentation/content",
+  "/api/card-holders",
 ]);
 
 function secretsMatch(provided, expected) {
@@ -879,6 +880,8 @@ export async function createKalpiApp({
   studioSecret = process.env.STUDIO_SECRET || null,
   now = () => Date.now(),
   rng = randomInt,
+  holderWarm = false,
+  holderSyncMs = CARD_HOLDER_SYNC_MS,
 } = {}) {
   const cards = JSON.parse(await readFile(cardsPath, "utf8"));
   const advocacy = JSON.parse(await readFile(advocacyPath, "utf8"));
@@ -950,8 +953,8 @@ export async function createKalpiApp({
     }
   }
   const store = databaseUrl
-    ? new PostgresStore(databaseUrl, { ssl: databaseSsl })
-    : new JsonStore(path.join(dataDir, "state.json"));
+    ? new PostgresStore(databaseUrl, { ssl: databaseSsl, now })
+    : new JsonStore(path.join(dataDir, "state.json"), { now });
   const initialized = await store.init();
   const studioOverlay = initialized && Object.hasOwn(initialized, "studioConfig")
     ? initialized.studioConfig
@@ -1263,6 +1266,7 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/warm") {
+        await store.refreshCardHolderSnapshot().catch(() => null);
         json(response, 200, { status: "ready" });
         return;
       }
@@ -1375,7 +1379,15 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/card-holders") {
-        json(response, 200, await store.cardHolderSummary());
+        const snapshot = await store.cardHolderSummary();
+        const body = Buffer.from(JSON.stringify(snapshot), "utf8");
+        response.writeHead(200, {
+          ...SECURITY_HEADERS,
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "public, max-age=60, stale-while-revalidate=3600",
+          "content-length": body.length,
+        });
+        response.end(request.method === "HEAD" ? undefined : body);
         return;
       }
 
@@ -2303,9 +2315,16 @@ export async function createKalpiApp({
       else response.end();
     }
   };
+  if (holderWarm) store.refreshCardHolderSnapshot().catch(() => {});
+  if (holderSyncMs > 0) {
+    const holderTimer = setInterval(() => {
+      store.refreshCardHolderSnapshot().catch(() => {});
+    }, holderSyncMs);
+    holderTimer.unref?.();
+  }
   return store.withRequest
     ? (request, response) => store.withRequest(() => handleRequest(request, response))
     : handleRequest;
 }
 
-export { DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, LEVEL_RATIOS, RANK_TITLES };
+export { CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, LEVEL_RATIOS, RANK_TITLES };

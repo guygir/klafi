@@ -69,6 +69,7 @@ const model = {
   extrasReady: false,
   showcase: false,
   cardHolders: { holders: {}, numberedHolders: {} },
+  cardHoldersReady: false,
   dialogNumbered: false,
   reports: [],
   reportSubject: null,
@@ -771,7 +772,7 @@ async function hydrateHome() {
       } catch {
         /* Static catalog.json stays until the live list slots arrive. */
       }
-      await hydrateCardHolders();
+      hydrateCardHolders().catch(() => {});
       renderProfile();
       renderHome();
       renderBinder();
@@ -1002,7 +1003,7 @@ async function hydrateLookOnlyCatalog() {
   } catch {
     /* Static catalog.json stays until the live list slots arrive. */
   }
-  await hydrateCardHolders();
+  hydrateCardHolders().catch(() => {});
 }
 
 async function bootstrapShowcase() {
@@ -2487,15 +2488,20 @@ function holderLine(count, numbered = false) {
 
 async function hydrateCardHolders() {
   try {
-    const payload = await request("/api/card-holders");
+    const warmed = window.__kalpiWarmup?.holders;
+    if (window.__kalpiWarmup) window.__kalpiWarmup.holders = null;
+    const payload = await (warmed || request("/api/card-holders"));
+    if (!payload) return;
     model.cardHolders = {
       holders: payload.holders || {},
       numberedHolders: payload.numberedHolders || {},
     };
+    model.cardHoldersReady = true;
     if (model.showcase) renderShowcaseBinder();
     else if (catalogReady()) renderBinder();
+    if (elements.dialog?.open) renderDialogCard();
   } catch {
-    /* Holder counts stay empty until the live tally arrives. */
+    /* Holder counts stay empty until the hourly snapshot arrives. */
   }
 }
 
@@ -2582,7 +2588,7 @@ function renderShowcaseBinder() {
         <button class="binder-card-open" type="button" data-card-id="${card.id}"${numberedView ? ' data-numbered="1"' : ""} aria-label="פתיחת ${escapeHtml(cardTitle(card))}">
           <div class="binder-shared-card">${catalogCardMarkup(card, "binder", numberedView)}</div>
         </button>
-        <small class="card-holders-chip">${escapeHtml(holderLine(holders, numberedView))}</small>
+        ${model.cardHoldersReady ? `<small class="card-holders-chip">${escapeHtml(holderLine(holders, numberedView))}</small>` : ""}
       </div>`;
   }).join("");
   setEmptyNote(elements.showcaseEmpty, "אין קלפים בסינון הזה.", { hidden: visible.length > 0 });
@@ -2747,7 +2753,7 @@ function renderBinder() {
         <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}, ברשותכם ${count}">
           ${binderCardMarkup(card)}
         </button>
-        <small class="card-holders-chip">${escapeHtml(holderLine(holderCountFor(card, numbered), numbered))}</small>
+        ${model.cardHoldersReady ? `<small class="card-holders-chip">${escapeHtml(holderLine(holderCountFor(card, numbered), numbered))}</small>` : ""}
       </div>`;
   }).join("");
   const visibleColumns = window.innerWidth <= 520 ? 3 : window.innerWidth <= 760 ? 5 : 6;
@@ -4415,7 +4421,7 @@ function renderDialogCard() {
   }
   if (elements.dialogHolders) {
     elements.dialogHolders.textContent = holderLine(holderCountFor(card, numbered), numbered);
-    elements.dialogHolders.hidden = false;
+    elements.dialogHolders.hidden = !model.cardHoldersReady;
   }
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;

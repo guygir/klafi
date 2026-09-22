@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { createKalpiApp, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES, publicPartyRegister } from "../server/app.js";
+import { createKalpiApp, CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES, publicPartyRegister } from "../server/app.js";
 import { createRuntimeHandler } from "../server/runtime.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -152,6 +152,21 @@ test("card holder counts are real session inventories, not fixtures", async (t) 
   assert.equal(tally.status, 200);
   assert.equal(tally.body.holders[cardId], 2);
   assert.equal(tally.body.numberedHolders[cardId] || 0, 0);
+  assert.ok(tally.body.computedAt);
+  const third = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await api(running.base, "/api/debug/unlock-card", { token: third, method: "POST", body: { cardId } });
+  const cached = await api(running.base, "/api/card-holders");
+  assert.equal(cached.body.holders[cardId], 2);
+  assert.equal(cached.body.computedAt, tally.body.computedAt);
+  clock.value += CARD_HOLDER_SYNC_MS + 1;
+  const stale = await api(running.base, "/api/card-holders");
+  assert.equal(stale.body.holders[cardId], 2);
+  let refreshed = stale;
+  for (let attempt = 0; attempt < 20 && refreshed.body.holders[cardId] !== 3; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    refreshed = await api(running.base, "/api/card-holders");
+  }
+  assert.equal(refreshed.body.holders[cardId], 3);
 });
 
 test("public party register keeps Hebrew names without opening Studio", () => {
@@ -1033,6 +1048,9 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(again.body.token, home.body.token);
   const warm = await api(running.base, "/api/warm");
   assert.deepEqual(warm, { status: 200, body: { status: "ready" } });
+  const holders = await api(running.base, "/api/card-holders");
+  assert.equal(holders.status, 200);
+  assert.ok(holders.body.computedAt);
 });
 
 test("bootstrap creates a guest session in one request", async (t) => {

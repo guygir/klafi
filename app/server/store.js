@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { moveOwnedCard } from "./numbered.js";
 
+export const CARD_HOLDER_SYNC_MS = 60 * 60 * 1000;
+
 export const EMPTY_STATE = {
   version: 6,
   sessions: {},
@@ -13,6 +15,7 @@ export const EMPTY_STATE = {
   reports: [],
   idempotency: {},
   numberedIssued: {},
+  cardHolderSnapshot: { holders: {}, numberedHolders: {}, computedAt: null },
 };
 
 export function normalizeState(value = {}) {
@@ -26,6 +29,11 @@ export function normalizeState(value = {}) {
   state.reports ??= [];
   state.idempotency ??= {};
   state.numberedIssued ??= {};
+  state.cardHolderSnapshot = {
+    holders: state.cardHolderSnapshot?.holders || {},
+    numberedHolders: state.cardHolderSnapshot?.numberedHolders || {},
+    computedAt: state.cardHolderSnapshot?.computedAt || null,
+  };
   for (const [token, session] of Object.entries(state.sessions)) {
     session.eventCounts ??= {};
     session.factionId ??= null;
@@ -58,12 +66,37 @@ function cardStars(card) {
   return 1;
 }
 
+export function tallyCardHolders(sessions = {}) {
+  const holders = {};
+  const numberedHolders = {};
+  for (const session of Object.values(sessions || {})) {
+    for (const [cardId, copies] of Object.entries(session.inventory || {})) {
+      if (Number(copies) > 0) holders[cardId] = (holders[cardId] || 0) + 1;
+    }
+    const seen = new Set();
+    for (const instance of session.instances || []) {
+      if (Number(instance?.numberedIndex) > 0 && instance.cardId && !seen.has(instance.cardId)) {
+        seen.add(instance.cardId);
+        numberedHolders[instance.cardId] = (numberedHolders[instance.cardId] || 0) + 1;
+      }
+    }
+  }
+  return { holders, numberedHolders };
+}
+
+export function cardHolderSnapshotFresh(snapshot, nowMs, ttlMs = CARD_HOLDER_SYNC_MS) {
+  const at = Date.parse(snapshot?.computedAt || "");
+  return Number.isFinite(at) && (nowMs - at) < ttlMs;
+}
+
 export class JsonStore {
-  constructor(filePath) {
+  constructor(filePath, { now = () => Date.now() } = {}) {
     this.filePath = filePath;
+    this.now = now;
     this.state = structuredClone(EMPTY_STATE);
     this.queue = Promise.resolve();
     this.transaction = new AsyncLocalStorage();
+    this.holderRefresh = null;
   }
 
   async init() {
@@ -464,22 +497,32 @@ export class JsonStore {
     };
   }
 
+  scheduleCardHolderRefresh() {
+    if (this.holderRefresh) return this.holderRefresh;
+    this.holderRefresh = this.refreshCardHolderSnapshot()
+      .catch(() => null)
+      .finally(() => {
+        this.holderRefresh = null;
+      });
+    return this.holderRefresh;
+  }
+
+  async refreshCardHolderSnapshot() {
+    const tally = tallyCardHolders(this.state.sessions);
+    const snapshot = {
+      ...tally,
+      computedAt: new Date(this.now()).toISOString(),
+    };
+    this.state.cardHolderSnapshot = snapshot;
+    await this.persist();
+    return snapshot;
+  }
+
   async cardHolderSummary() {
-    const holders = {};
-    const numberedHolders = {};
-    for (const session of Object.values(this.state.sessions || {})) {
-      for (const [cardId, copies] of Object.entries(session.inventory || {})) {
-        if (Number(copies) > 0) holders[cardId] = (holders[cardId] || 0) + 1;
-      }
-      const seen = new Set();
-      for (const instance of session.instances || []) {
-        if (Number(instance?.numberedIndex) > 0 && instance.cardId && !seen.has(instance.cardId)) {
-          seen.add(instance.cardId);
-          numberedHolders[instance.cardId] = (numberedHolders[instance.cardId] || 0) + 1;
-        }
-      }
-    }
-    return { holders, numberedHolders };
+    const snapshot = this.state.cardHolderSnapshot;
+    if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
+    if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
+    return snapshot;
   }
 
   async claimNumberedStamp(key, max) {

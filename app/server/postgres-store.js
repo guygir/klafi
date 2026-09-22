@@ -2,7 +2,7 @@ import pg from "pg";
 import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { normalizeState } from "./store.js";
+import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { moveOwnedCard } from "./numbered.js";
 
@@ -13,6 +13,7 @@ const MIGRATIONS = [
   ["002_normalized_runtime", "002_normalized_runtime.sql"],
   ["003_launch_reliability", "003_launch_reliability.sql"],
   ["004_numbered_streaks", "004_numbered_streaks.sql"],
+  ["005_card_holder_snapshot", "005_card_holder_snapshot.sql"],
 ];
 
 function iso(value) {
@@ -131,13 +132,16 @@ export function sessionDeltas(previous, session) {
 }
 
 export class PostgresStore {
-  constructor(connectionString, { ssl = false } = {}) {
+  constructor(connectionString, { ssl = false, now = () => Date.now() } = {}) {
     const poolOptions = postgresPoolOptions(connectionString, { ssl });
     this.transactionPooling = poolOptions.connectionString !== connectionString;
     this.pool = guardPool(new Pool(poolOptions));
     this.transaction = new AsyncLocalStorage();
     this.requestSessions = new AsyncLocalStorage();
     this.sessionCache = new Map();
+    this.now = now;
+    this.holderRefresh = null;
+    this.holderSnapshot = null;
   }
 
   executor() {
@@ -1117,7 +1121,33 @@ export class PostgresStore {
     return issued ? { index: issued, of: max } : null;
   }
 
-  async cardHolderSummary() {
+  async readCardHolderSnapshot() {
+    if (this.holderSnapshot?.computedAt) return this.holderSnapshot;
+    const result = await this.pool.query(
+      `SELECT holders, numbered_holders, computed_at
+       FROM kalpi_card_holder_snapshot
+       WHERE id = 1`,
+    );
+    const row = result.rows[0];
+    this.holderSnapshot = {
+      holders: row?.holders || {},
+      numberedHolders: row?.numbered_holders || {},
+      computedAt: row?.computed_at ? iso(row.computed_at) : null,
+    };
+    return this.holderSnapshot;
+  }
+
+  scheduleCardHolderRefresh() {
+    if (this.holderRefresh) return this.holderRefresh;
+    this.holderRefresh = this.refreshCardHolderSnapshot()
+      .catch(() => null)
+      .finally(() => {
+        this.holderRefresh = null;
+      });
+    return this.holderRefresh;
+  }
+
+  async refreshCardHolderSnapshot() {
     const [owned, numbered] = await Promise.all([
       this.pool.query(
         `SELECT card_id, COUNT(*)::int AS holders
@@ -1136,7 +1166,25 @@ export class PostgresStore {
     const numberedHolders = {};
     for (const row of owned.rows) holders[row.card_id] = row.holders;
     for (const row of numbered.rows) numberedHolders[row.card_id] = row.holders;
-    return { holders, numberedHolders };
+    const computedAt = new Date(this.now()).toISOString();
+    await this.pool.query(
+      `INSERT INTO kalpi_card_holder_snapshot (id, holders, numbered_holders, computed_at)
+       VALUES (1, $1::jsonb, $2::jsonb, $3::timestamptz)
+       ON CONFLICT (id) DO UPDATE SET
+         holders = EXCLUDED.holders,
+         numbered_holders = EXCLUDED.numbered_holders,
+         computed_at = EXCLUDED.computed_at`,
+      [JSON.stringify(holders), JSON.stringify(numberedHolders), computedAt],
+    );
+    this.holderSnapshot = { holders, numberedHolders, computedAt };
+    return this.holderSnapshot;
+  }
+
+  async cardHolderSummary() {
+    const snapshot = await this.readCardHolderSnapshot();
+    if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
+    if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
+    return snapshot;
   }
 
   async getStudioConfig() {
