@@ -4055,25 +4055,25 @@ body {
 .collector-letter-text {
   display: grid;
   place-items: center;
-  padding: 4px 2px;
+  padding: 2px 1px;
   color: #1a2540;
-  font: 700 7.5px/1 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
+  font: 700 9px/0.9 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
   text-align: center;
 }
 
 .level-letter-text[data-letters="1"],
 .collector-letter-text[data-letters="1"] {
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .level-letter-text[data-letters="2"],
 .collector-letter-text[data-letters="2"] {
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .level-letter-text[data-letters="3"],
 .collector-letter-text[data-letters="3"] {
-  font-size: 6.5px;
+  font-size: 9px;
 }
 
 .collector-letter,
@@ -4084,9 +4084,9 @@ body {
   height: 24px;
 }
 
-.collector-letter-text[data-letters="1"] { font-size: 9px; }
-.collector-letter-text[data-letters="2"] { font-size: 7px; }
-.collector-letter-text[data-letters="3"] { font-size: 5px; }
+.collector-letter-text[data-letters="1"] { font-size: 12px; }
+.collector-letter-text[data-letters="2"] { font-size: 9px; }
+.collector-letter-text[data-letters="3"] { font-size: 6.5px; }
 
 #avatar-seal { display: none; }
 
