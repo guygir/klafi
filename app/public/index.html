@@ -17,12 +17,12 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-38"></script>
+  <script src="/boot-warmup.js?v=card-surface-39"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-38" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-38" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-39" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-39" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -30,9 +30,9 @@
   <div id="app" class="app-shell home-active" data-theme="pack-v2" data-card-frame="tall-v2" data-density="airy-v2" data-quote-reveal="ink-v2">
     <div id="site-card-peeks" class="site-card-peeks" aria-hidden="true"></div>
     <header class="masthead">
-      <div class="advocacy-bar">
-        <span id="advocacy-short">מהדורת עמדה גלויה · קְלָפִי תומכת בשינוי</span>
-        <button id="open-advocacy" type="button" aria-haspopup="dialog">גילוי נאות</button>
+      <div class="advocacy-bar advocacy-bar-compact">
+        <span id="advocacy-short" hidden></span>
+        <button id="open-advocacy" type="button" aria-haspopup="dialog" aria-label="גילוי נאות">גילוי נאות</button>
       </div>
       <div class="masthead-row">
       <button class="wordmark" type="button" data-nav="home" aria-label="לעמוד הבית">
@@ -116,7 +116,10 @@
           <button id="open-bibi-pack" class="debug-pack-action" type="button" hidden>פתיחת חבילת ביבי</button>
           <button id="open-pending-level" class="secondary-action" type="button" hidden>פרס רמה מחכה</button>
           <p id="cooldown-copy" class="action-note">הקלף הבא בעוד 03:00:00</p>
-          <button id="replay-tips" class="tips-replay" type="button">איך משחקים</button>
+          <div class="home-utility-row">
+            <button id="replay-tips" class="tips-replay" type="button">איך משחקים</button>
+            <button id="home-enable-notify" class="tips-replay" type="button" hidden>להפעיל התראות</button>
+          </div>
         </div>
         <section class="today-docket" aria-labelledby="today-docket-title">
           <header>
@@ -193,7 +196,6 @@
             <strong id="binder-percent">0%</strong>
             <span id="binder-count">0 מתוך 14 בסדרה הפעילה</span>
           </div>
-          <button id="binder-flip-frame" class="binder-flip-frame" type="button" aria-pressed="false" title="כפתור זמני: השוואת הגרסה המקורית לאמנות מלאה">אמנות מלאה</button>
           <div id="earned-badge-list" class="earned-badge-list"></div>
         </div>
         <div class="binder-head">
@@ -201,6 +203,7 @@
             <p class="eyebrow">האוסף שלי</p>
             <h1>האלבום.</h1>
           </div>
+          <button type="button" class="tips-replay" data-replay-tips>איך זה עובד</button>
         </div>
         <div id="binder-filters" class="filter-strip" aria-label="סינון האוסף לפי סדרה או מפלגה"></div>
         <div id="binder-grid" class="binder-grid" role="list"></div>
@@ -211,6 +214,7 @@
       <section id="achievements-view" class="view">
         <p class="eyebrow">הישגים</p>
         <h1>התגים שלי.</h1>
+        <button type="button" class="tips-replay" data-replay-tips>איך זה עובד</button>
         <p id="achievements-empty" class="empty-note" hidden>טוענים את התגים…</p>
         <div id="achievement-grid" class="achievement-grid"></div>
         <div id="achievement-pager" class="view-pager" aria-label="עמודי ההישגים"></div>
@@ -221,6 +225,7 @@
           <div>
             <p class="eyebrow">קהילה</p>
             <h1>משחקים יחד.</h1>
+            <button type="button" class="tips-replay" data-replay-tips>איך זה עובד</button>
           </div>
         </div>
         <p id="growth-empty" class="empty-note" hidden>טוענים את הקהילה…</p>
@@ -240,14 +245,15 @@
             <div id="trade-compose" class="trade-compose">
               <div class="trade-actions">
                 <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
-                <button id="trade-demo" class="secondary-action" type="button">העתקת קישור</button>
+                <button id="trade-demo" class="secondary-action" type="button">קישור לדוגמה</button>
               </div>
+              <p id="trade-board-hint" class="work-note">פרסום מעלה הצעה ללוח. קישור לדוגמה רק מעתיק קישור.</p>
               <div class="trade-form">
                 <fieldset>
                   <legend>אני נותן</legend>
                   <button type="button" id="trade-offered-preview" class="trade-thumb" hidden></button>
                   <div class="trade-choice-fields">
-                    <label>סדרה / מפלגה <select id="trade-offered-set"></select></label>
+                    <label>סדרה <select id="trade-offered-set"></select></label>
                     <label>קלף <select id="trade-offered-card"></select></label>
                   </div>
                 </fieldset>
@@ -255,7 +261,7 @@
                   <legend>אני רוצה</legend>
                   <button type="button" id="trade-wanted-preview" class="trade-thumb" hidden></button>
                   <div class="trade-choice-fields">
-                    <label>סדרה / מפלגה <select id="trade-wanted-set"></select></label>
+                    <label>סדרה <select id="trade-wanted-set"></select></label>
                     <label>קלף <select id="trade-wanted-card"></select></label>
                   </div>
                 </fieldset>
@@ -645,7 +651,7 @@
   <div id="klafi-tips" class="klafi-tips" hidden aria-hidden="true">
     <svg id="klafi-tips-dim" class="klafi-tips-dim" aria-hidden="true"></svg>
     <aside id="klafi-tips-card" class="klafi-tips-card" role="dialog" aria-modal="false" aria-labelledby="klafi-tips-title" aria-describedby="klafi-tips-body">
-      <p class="klafi-tips-kicker" id="klafi-tips-step">1 / 3</p>
+      <p class="klafi-tips-kicker" id="klafi-tips-step" dir="ltr">1/3</p>
       <h2 id="klafi-tips-title">המשחק</h2>
       <p id="klafi-tips-body">קלף אחד באיסוף. פתחו את החבילה.</p>
       <label class="klafi-tips-mute" for="klafi-tips-mute">
@@ -673,6 +679,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-38"></script>
+  <script type="module" src="/app.js?v=card-surface-39"></script>
 </body>
 </html>

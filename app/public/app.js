@@ -7,7 +7,6 @@ const HOME_CACHE_KEY = "kalpi-home-cache";
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
-const DEBUG_CARD_FRAME_KEY = "kalpi-debug-card-frame";
 const STATIC_DATA_VERSION = "visible-sets-2";
 const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5"];
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -34,7 +33,7 @@ const model = {
   editorial: null,
   studioContent: null,
   gameConfig: {
-    revealTiming: { quote: 200, party: 1100, name: 700, portrait: 1000 },
+    revealTiming: { quote: 400, party: 2200, name: 1400, portrait: 2000 },
     visual: { theme: "pack-v2", cardFrame: "tall-v2", density: "airy-v2", quoteReveal: "ink-v2" },
   },
   activity: null,
@@ -53,6 +52,7 @@ const model = {
   previewMode: false,
   binderFilter: "ALL",
   binderParty: "",
+  binderOwnedOnly: false,
   binderPage: 0,
   achievementPage: 0,
   communityPage: "trade",
@@ -109,6 +109,7 @@ const elements = {
   restoreButton: document.querySelector("#restore-recovery-code"),
   restoreStatus: document.querySelector("#profile-restore-status"),
   enableIdleNotify: document.querySelector("#enable-idle-notify"),
+  homeEnableNotify: document.querySelector("#home-enable-notify"),
   notifyStatus: document.querySelector("#notify-status"),
   leagueNameInput: document.querySelector("#league-name-input"),
   createLeague: document.querySelector("#create-league"),
@@ -285,7 +286,6 @@ const elements = {
   dialogSource: document.querySelector("#dialog-source"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
   dialogInstagram: document.querySelector("#dialog-instagram"),
-  binderFlipFrame: document.querySelector("#binder-flip-frame"),
   shareSheet: document.querySelector("#share-sheet"),
   shareSheetTitle: document.querySelector("#share-sheet-title"),
   shareSheetImage: document.querySelector("#share-sheet-image"),
@@ -359,15 +359,10 @@ function applyVisualConfig() {
     if (input) input.value = configured[key] || values[key];
   }
   queueCardTextFit(app);
-  syncBinderFlipButton();
 }
 
 function isLiveReleaseSet(id) {
   return LIVE_RELEASE_SET_IDS.includes(id);
-}
-
-function isFirstSetCard(card) {
-  return card?.releaseSetId === "party-leaders";
 }
 
 function usesFullartFrame(card) {
@@ -378,30 +373,9 @@ function playerCatalog() {
   return model.catalog.filter((card) => isLiveReleaseSet(card.releaseSetId));
 }
 
-function debugFullartEnabled() {
-  return localStorage.getItem(DEBUG_CARD_FRAME_KEY) === "fullart-v1";
-}
-
 function cardDisplayFrame(card) {
   if (usesFullartFrame(card)) return "fullart-v1";
-  if (isFirstSetCard(card) && debugFullartEnabled()) return "fullart-v1";
   return document.querySelector("#app")?.dataset.cardFrame || "tall-v2";
-}
-
-function syncBinderFlipButton() {
-  const button = elements.binderFlipFrame;
-  if (!button) return;
-  const on = debugFullartEnabled();
-  button.setAttribute("aria-pressed", on ? "true" : "false");
-  button.textContent = on ? "חזרה למקור" : "אמנות מלאה";
-}
-
-function toggleBinderCardFrame() {
-  if (debugFullartEnabled()) localStorage.removeItem(DEBUG_CARD_FRAME_KEY);
-  else localStorage.setItem(DEBUG_CARD_FRAME_KEY, "fullart-v1");
-  applyVisualConfig();
-  renderBinder();
-  if (elements.dialog.open) renderDialogCard();
 }
 
 function studioSecret() {
@@ -573,8 +547,11 @@ function applyHomePayload(home) {
         loginStreak: home.state.loginStreak || 0,
         factionId: home.state.factionId || null,
         numberedCopies: home.state.numberedCopies || [],
+        idlePullCount: home.state.idlePullCount || 0,
+        achievements: home.state.achievements || [],
       },
     }));
+    prefetchAvatars(home.state.avatars);
   }
 }
 
@@ -1102,7 +1079,7 @@ async function bootstrap() {
 function renderAdvocacy() {
   const profile = model.editorial?.advocacy;
   if (!profile) return;
-  elements.advocacyShort.textContent = "מהדורת עמדה גלויה · קְלָפִי תומכת בשינוי";
+  if (elements.advocacyShort) elements.advocacyShort.textContent = "";
   elements.advocacySponsor.textContent = `בחסות ${profile.sponsor}`;
   elements.advocacyFull.textContent = "קְלָפִי מתחילה בהיכרות עובדתית, ממשיכה לעמדות ולהחלטות, ובהמשך מפרסמת גם סדרות ביקורת לפי קו עריכתי גלוי. בחירת הציטוטים אינה ניטרלית; המקור והסיווג מופיעים בכל קלף.";
   elements.advocacyPhases.innerHTML = "<li><strong>היכרות.</strong> מנהיגים ומספרי שתיים.</li><li><strong>עומק.</strong> עמדות, החלטות ורקורדים.</li><li><strong>ביקורת.</strong> סדרות מסומנות במפורש.</li><li><strong>מקור.</strong> לכל קלף מצורף קישור; ניסוח מחדש מסומן בכוכבית.</li>";
@@ -1200,7 +1177,7 @@ function fitCardText(element) {
   const role = element.dataset.fitCardText;
   const scale = (isFullart
     ? {
-      quote: { low: 0.038, high: 0.064, floor: compact ? 8 : 12, ceiling: compact ? 14 : 22 },
+      quote: { low: 0.028, high: 0.058, floor: compact ? 7 : 8, ceiling: compact ? 13 : 20 },
       party: { low: 0.03, high: 0.042, floor: compact ? 8 : 10, ceiling: 12 },
       name: { low: 0.048, high: 0.08, floor: compact ? 9 : 13, ceiling: 24 },
     }
@@ -1220,12 +1197,17 @@ function fitCardText(element) {
   if (isFullart && role === "quote") {
     if (fitsAt(high)) return;
   }
-  for (let index = 0; index < 9; index += 1) {
+  for (let index = 0; index < 14; index += 1) {
     const size = (low + high) / 2;
     if (fitsAt(size)) low = size;
     else high = size;
   }
-  element.style.fontSize = `${low}px`;
+  if (!fitsAt(low) && low > scale.floor) {
+    element.style.fontSize = `${scale.floor}px`;
+    low = scale.floor;
+  }
+  if (!fitsAt(low)) element.style.fontSize = `${Math.max(6, scale.floor - 1)}px`;
+  else element.style.fontSize = `${low}px`;
 }
 
 function fitVisibleCardText(root = document) {
@@ -1334,6 +1316,16 @@ function avatarUrl(avatar) {
   return avatar?.art ? `/design-assets/${avatar.art}` : "";
 }
 
+function prefetchAvatars(avatars = model.serverState?.avatars || model.gameConfig?.avatars || []) {
+  for (const avatar of avatars) {
+    const url = avatarUrl(avatar);
+    if (!url) continue;
+    const image = new Image();
+    image.decoding = "async";
+    image.src = url;
+  }
+}
+
 function selectedAvatar() {
   const avatars = model.serverState?.avatars || model.gameConfig?.avatars || [];
   return avatars.find(({ selected }) => selected) || avatars.find(({ id }) => id === model.serverState?.avatarId) || avatars[0];
@@ -1353,7 +1345,9 @@ function renderProfile() {
     elements.levelAvatar.src = avatarUrl(avatar);
     elements.levelAvatar.alt = avatar.nameHe || "";
   }
+  prefetchAvatars();
   renderAvatarSeal();
+  renderNotifyControl();
 }
 
 function factionParty(factionId = model.serverState?.factionId) {
@@ -1444,6 +1438,7 @@ function openProfileDialog() {
   elements.profileError.textContent = "";
   fillRecoveryCode();
   renderNotifyControl();
+  prefetchAvatars();
   renderAvatarPicker();
   hydrateLeagues().catch(() => {});
   consumeInboundLeague().catch(() => {});
@@ -1478,22 +1473,28 @@ function notifyPermission() {
 }
 
 function renderNotifyControl() {
-  if (!elements.enableIdleNotify) return;
   const permission = notifyPermission();
-  if (permission === "unsupported") {
-    elements.enableIdleNotify.hidden = true;
-    if (elements.notifyStatus) elements.notifyStatus.textContent = "הדפדפן הזה לא תומך בהתראות.";
-    return;
+  const home = elements.homeEnableNotify;
+  const profile = elements.enableIdleNotify;
+  const unsupported = permission === "unsupported";
+  const granted = permission === "granted";
+  const denied = permission === "denied";
+  if (profile) {
+    profile.hidden = unsupported || granted;
+    profile.textContent = denied ? "התראות חסומות בדפדפן" : "להפעיל התראות";
+    profile.disabled = denied;
   }
-  elements.enableIdleNotify.hidden = permission === "granted";
-  elements.enableIdleNotify.textContent = permission === "denied" ? "התראות חסומות בדפדפן" : "להפעיל התראות";
-  elements.enableIdleNotify.disabled = permission === "denied";
+  if (home) {
+    home.hidden = unsupported || granted || denied;
+    home.textContent = "להפעיל התראות";
+    home.disabled = denied;
+  }
   if (elements.notifyStatus) {
-    elements.notifyStatus.textContent = permission === "granted"
-      ? "התראה אחת תישלח כשהקלף מוכן."
-      : permission === "denied"
-        ? "אפשר לשחק בלי התראות. האוסף עדיין נשמר."
-        : "אפשר לשחק בלי התראות. האוסף עדיין נשמר.";
+    elements.notifyStatus.textContent = unsupported
+      ? "הדפדפן הזה לא תומך בהתראות."
+      : granted
+        ? "התראה אחת תישלח כשהקלף מוכן."
+        : "אפשר לשחק בלי התראות. האוסף עדיין נשמר. באייפון: הוסיפו למסך הבית ואז הפעילו התראות.";
   }
 }
 
@@ -2404,10 +2405,8 @@ async function handlePackAction() {
       renderProgression({ announce: true });
       if (model.idleQueue.length) {
         showView("home");
-        showToast(`הקלף נוסף לאוסף · עוד ${model.idleQueue.length} מחכים.`);
       } else {
         showView("binder");
-        showToast("הקלף נוסף לאוסף.");
       }
       const ownershipReady = model.currentPack.mode === "idle-return" && model.currentPack.preparedReveal
         ? model.currentPack.settlement.then((outcome) => {
@@ -2431,7 +2430,6 @@ async function handlePackAction() {
       showView("binder");
       recordEvent("binder_reached", { packId: model.currentPack.packId });
       renderProgression({ announce: true });
-      showToast("הקלף נוסף לאוסף.");
     }
   }
 }
@@ -2945,9 +2943,9 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
               ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
               ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
+              ${instance.isNew && !instance.numberedIndex ? '<b class="new-stamp">חדש</b>' : ""}
             </span>
           </div>
-          ${instance.isNew ? '<span class="new-stamp">חדש</span>' : ""}
         </div>
         <div class="card-identity-stack">
           <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
@@ -3042,6 +3040,10 @@ function renderBinder() {
         }).join("")}
       </select>
     </label>`,
+    `<label class="filter-owned${model.binderOwnedOnly ? " active" : ""}">
+      <input type="checkbox" data-binder-owned ${model.binderOwnedOnly ? "checked" : ""} />
+      באוסף
+    </label>`,
     `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
     ...setOrder.map((set) => {
       const count = set === "ALL"
@@ -3061,7 +3063,8 @@ function renderBinder() {
         : model.binderFilter === "NUMBERED" ? numberedIds.has(card.id)
         : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
     const partyOk = !model.binderParty || card.set === model.binderParty;
-    return releaseOk && partyOk;
+    const ownedOk = !model.binderOwnedOnly || Boolean(inventory[card.id]);
+    return releaseOk && partyOk && ownedOk;
   });
   elements.binderGrid.innerHTML = visible.map((card) => {
     const count = inventory[card.id] ?? 0;
@@ -3273,23 +3276,121 @@ function hebrewBadge(badge) {
   return { name: copy?.[0] || badge.name, description: copy?.[1] || badge.description };
 }
 
+function localAchievementMeasures() {
+  const inventory = model.serverState?.inventory || {};
+  const ownedIds = Object.keys(inventory);
+  const unique = ownedIds.length;
+  const cards = playerCatalog();
+  const leaders = cards.filter((card) => card.releaseSetId === "party-leaders" && inventory[card.id]);
+  const partySets = [...new Map(cards.filter((card) => card.set !== "SYS").map((card) => [card.set, cards.filter((item) => item.set === card.set)]))];
+  const bestSet = partySets
+    .map(([, group]) => {
+      const owned = group.filter((card) => inventory[card.id]).length;
+      return { owned, total: group.length || 1 };
+    })
+    .sort((left, right) => (right.owned / right.total) - (left.owned / left.total))[0];
+  return {
+    idlePulls: model.serverState?.idlePullCount || unique,
+    unique,
+    sources: model.activity?.counts?.source_opened ?? 0,
+    shares: model.activity?.counts?.share_created ?? 0,
+    leaders: leaders.length,
+    leadersTotal: cards.filter((card) => card.releaseSetId === "party-leaders").length || 1,
+    bestSetOwned: bestSet?.owned ?? 0,
+    bestSetTotal: bestSet?.total ?? 1,
+    trades: model.serverState?.tradeCount || 0,
+    events: 0,
+    leaderParties: new Set(leaders.map((card) => card.set)).size,
+    stars: model.serverState?.starCount || unique,
+    duplicate: Math.max(0, ...Object.values(inventory).map(Number), 0),
+    rank: model.serverState?.progression?.level || 1,
+    binderHalf: unique,
+    binderHalfTarget: Math.max(1, Math.ceil((model.serverState?.totalCards || cards.length || 1) / 2)),
+  };
+}
+
 function localAchievementList() {
-  if (model.gameConfig?.achievements?.length) {
-    return model.gameConfig.achievements.map((badge) => ({
-      ...badge,
-      earned: Boolean(badge.earned),
-      progress: badge.progress ?? 0,
-      target: badge.target ?? 1,
+  const measures = localAchievementMeasures();
+  const rules = {
+    "first-rip": "idlePulls",
+    "register-five": "unique",
+    "source-check": "sources",
+    "share-pull": "shares",
+    "commons-complete": "leaders",
+    "set-chase": "bestSet",
+    "trade-match": "trades",
+    "collector-ten": "unique",
+    "event-first": "events",
+    "source-three": "sources",
+    "trade-three": "trades",
+    "three-parties": "leaderParties",
+    "twenty-stars": "stars",
+    "idle-eight": "idlePulls",
+    "first-double": "duplicate",
+    "five-leaders": "leaderParties",
+    "event-three": "events",
+    "share-three": "shares",
+    "rank-three": "rank",
+    "fifty-stars": "stars",
+    "binder-half": "binderHalf",
+  };
+  const targets = {
+    "register-five": 5,
+    "collector-ten": 10,
+    "source-three": 3,
+    "trade-three": 3,
+    "three-parties": 3,
+    "twenty-stars": 20,
+    "idle-eight": 8,
+    "first-double": 2,
+    "five-leaders": 5,
+    "event-three": 3,
+    "share-three": 3,
+    "rank-three": 3,
+    "fifty-stars": 50,
+  };
+  const source = model.gameConfig?.achievements?.length
+    ? model.gameConfig.achievements
+    : Object.keys(BADGE_COPY).map((id) => ({
+      id,
+      name: BADGE_COPY[id][0],
+      description: BADGE_COPY[id][1],
     }));
-  }
-  return Object.keys(BADGE_COPY).map((id) => ({
-    id,
-    earned: false,
-    progress: 0,
-    target: 1,
-    name: BADGE_COPY[id][0],
-    description: BADGE_COPY[id][1],
+  const definitions = source.map((badge) => ({
+    ...badge,
+    rule: badge.rule || rules[badge.id] || "unique",
+    target: badge.target || targets[badge.id] || 1,
   }));
+  const dynamicTargets = {
+    leaders: measures.leadersTotal,
+    bestSet: measures.bestSetTotal,
+    binderHalf: measures.binderHalfTarget,
+  };
+  return definitions.map((badge) => {
+    const target = dynamicTargets[badge.rule] || Math.max(1, Number(badge.target) || 1);
+    const raw = {
+      idlePulls: measures.idlePulls,
+      unique: measures.unique,
+      sources: measures.sources,
+      shares: measures.shares,
+      leaders: measures.leaders,
+      bestSet: measures.bestSetOwned,
+      trades: measures.trades,
+      events: measures.events,
+      leaderParties: measures.leaderParties,
+      stars: measures.stars,
+      duplicate: measures.duplicate,
+      rank: measures.rank,
+      binderHalf: measures.binderHalf,
+    }[badge.rule] ?? 0;
+    const progress = Math.min(raw, target);
+    return {
+      ...badge,
+      earned: raw >= target,
+      progress,
+      target,
+    };
+  });
 }
 
 function isHeartedAchievement(badge) {
@@ -3297,8 +3398,14 @@ function isHeartedAchievement(badge) {
 }
 
 function achievementList() {
-  const badges = model.serverState?.achievements?.length ? model.serverState.achievements : localAchievementList();
-  return badges.filter((badge) => !isHeartedAchievement(badge));
+  const local = localAchievementList().filter((badge) => !isHeartedAchievement(badge));
+  const server = (model.serverState?.achievements || []).filter((badge) => !isHeartedAchievement(badge));
+  if (!server.length) return local;
+  return server.map((badge) => {
+    const fallback = local.find((item) => item.id === badge.id);
+    if (badge.earned || !fallback?.earned) return badge;
+    return fallback;
+  });
 }
 
 function renderAchievements() {
@@ -3509,7 +3616,7 @@ function renderGrowth() {
   const isLive = count > 1;
   elements.tradePreview.dataset.cardId = card.id;
   elements.tradePreview.dataset.liveDuplicate = String(isLive);
-  elements.tradeDemo.textContent = isLive ? "יצירת הצעה" : "העתקת קישור לדוגמה";
+  elements.tradeDemo.textContent = "קישור לדוגמה";
   elements.creatorLinkPreview.textContent = creatorLink();
 
   const counts = model.activity?.counts ?? {};
@@ -3535,15 +3642,12 @@ function renderGrowth() {
     releaseNames[candidate.releaseSetId] || fallbackReleaseNames[candidate.releaseSetId] || "סדרה אחרת";
   const groupedOptions = (cards) => {
     const releases = [...new Map(cards.map((candidate) => [`release:${candidate.releaseSetId || "other"}`, releaseName(candidate)]))];
-    const parties = [...new Map(cards.map((candidate) => [`party:${candidate.set}`, cardSetName(candidate)]))];
-    const options = (choices) => choices
+    return releases
       .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`)
       .join("");
-    return `<optgroup label="סדרות">${options(releases)}</optgroup><optgroup label="מפלגות">${options(parties)}</optgroup>`;
   };
-  const matchesTradeGroup = (candidate, value) => value.startsWith("release:")
-    ? (candidate.releaseSetId || "other") === value.slice(8)
-    : candidate.set === value.slice(6);
+  const matchesTradeGroup = (candidate, value) =>
+    (candidate.releaseSetId || "other") === String(value || "").replace(/^release:/, "");
   const previousOfferedSet = elements.tradeOfferedSet.value;
   const previousWantedSet = elements.tradeWantedSet.value;
   const offeredValue = elements.tradeOfferedCard.value;
@@ -3685,6 +3789,16 @@ function renderGrowth() {
     button.setAttribute("aria-selected", String(active));
     button.tabIndex = active ? 0 : -1;
   });
+  const openCount = model.trades.filter((trade) => trade.status === "open" && !trade.ownedByCurrent).length;
+  const openTab = document.querySelector("#community-tab-open-trades");
+  if (openTab) openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";
+  const boardHint = document.querySelector("#trade-board-hint");
+  if (boardHint) {
+    boardHint.hidden = openCount === 0;
+    boardHint.textContent = openCount
+      ? `${openCount} הצעות ממתינות בלוח. פרסום מעלה הצעה. קישור לדוגמה רק מעתיק קישור.`
+      : "";
+  }
 }
 
 function renderEvents() {
@@ -3798,7 +3912,10 @@ function revealDelayInputs() {
 }
 
 function readRevealDelays() {
-  return { ...model.gameConfig.revealTiming };
+  const configured = model.gameConfig.revealTiming || {};
+  const defaults = { quote: 400, party: 2200, name: 1400, portrait: 2000 };
+  const stale = !configured.quote || configured.quote < 200 || (configured.party ?? 0) < 400;
+  return stale ? { ...defaults } : { ...defaults, ...configured };
 }
 
 function readStudioRevealDelays() {
@@ -5641,6 +5758,9 @@ elements.copyRecovery?.addEventListener("click", copyRecoveryCode);
 elements.enableIdleNotify?.addEventListener("click", () => {
   requestIdleNotifications().catch(() => {});
 });
+elements.homeEnableNotify?.addEventListener("click", () => {
+  requestIdleNotifications().catch(() => {});
+});
 elements.createLeague?.addEventListener("click", () => {
   createLeagueRoom().catch(() => {});
 });
@@ -5714,7 +5834,6 @@ elements.claimLevel.addEventListener("click", async () => {
 });
 elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);
 elements.dialogInstagram.addEventListener("click", shareToInstagram);
-elements.binderFlipFrame?.addEventListener("click", toggleBinderCardFrame);
 elements.closeShareSheet?.addEventListener("click", closeShareSheet);
 elements.shareSheetSend?.addEventListener("click", () => {
   sendPendingShare().catch(() => showToast("לא הצלחנו לפתוח את השיתוף."));
@@ -5937,6 +6056,13 @@ elements.binderFilters.addEventListener("click", (event) => {
   renderBinder();
 });
 elements.binderFilters.addEventListener("change", (event) => {
+  const owned = event.target.closest("[data-binder-owned]");
+  if (owned) {
+    model.binderOwnedOnly = owned.checked;
+    model.binderPage = 0;
+    renderBinder();
+    return;
+  }
   const select = event.target.closest("[data-binder-party]");
   if (!select) return;
   model.binderParty = select.value;

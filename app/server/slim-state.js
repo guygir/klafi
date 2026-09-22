@@ -38,6 +38,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     preparedPulls: session.preparedPulls || [],
     idleCapacity: IDLE_CAPACITY,
     nextIdleAt: session.nextIdleAt,
+    idlePullCount: session.idlePullCount ?? 0,
     packAvailable: Boolean((session.unseenPulls || []).length),
     highestRank: session.highestRank || 1,
     loginStreak: session.loginStreak || 0,

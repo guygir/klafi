@@ -159,6 +159,13 @@ export function markPageSeen(page, env = globalThis) {
   return writeSeenPages(seen, env);
 }
 
+export function unmarkPageSeen(page, env = globalThis) {
+  const seen = readSeenPages(env);
+  if (page) delete seen[page];
+  delete seen["*"];
+  return writeSeenPages(seen, env);
+}
+
 export function mutePageGuides(env = globalThis) {
   const seen = readSeenPages(env);
   seen["*"] = true;
@@ -468,6 +475,7 @@ export function attachKlafiTips(env = globalThis) {
   const backBtn = doc.querySelector("#klafi-tips-back");
   const skipBtn = doc.querySelector("#klafi-tips-skip");
   const replay = doc.querySelector("#replay-tips");
+  const pageReplays = [...doc.querySelectorAll("[data-replay-tips]")];
   const packHint = doc.querySelector("#pack-hint");
   if (!overlay || !dim || !marks || !card) {
     return { sync() {}, maybeStart() {}, replay() {}, getState() { return { mode: null, started: false, step: 1, parked: false, page: null }; } };
@@ -569,7 +577,10 @@ export function attachKlafiTips(env = globalThis) {
     overlay.setAttribute("aria-hidden", "false");
     title.textContent = step.title;
     body.textContent = step.body;
-    stepLabel.textContent = `${state.step} / ${steps.length}`;
+    if (stepLabel) {
+      stepLabel.setAttribute("dir", "ltr");
+      stepLabel.textContent = `${state.step}/${steps.length}`;
+    }
     nextBtn.textContent = state.step === steps.length ? "הבנתי" : "הבא";
     skipBtn.hidden = state.step !== 1;
     backBtn.hidden = state.step === 1;
@@ -735,6 +746,17 @@ export function attachKlafiTips(env = globalThis) {
     sync();
   }
 
+  function replayCurrentPage() {
+    persistOn();
+    const page = activeGuidePage(flags());
+    unmarkPageSeen(page, env);
+    if (page && PAGE_GUIDES[page]) {
+      startPage(page);
+      return;
+    }
+    replayTour();
+  }
+
   function goNext() {
     if (state.step >= currentSteps().length) {
       finish();
@@ -753,6 +775,7 @@ export function attachKlafiTips(env = globalThis) {
   backBtn?.addEventListener("click", goBack);
   skipBtn?.addEventListener("click", () => finish({ forceOff: state.mode === "pull" }));
   replay?.addEventListener("click", replayTour);
+  pageReplays.forEach((button) => button.addEventListener("click", replayCurrentPage));
   window.addEventListener("resize", () => { if (state.started && !state.parked) schedulePaint(); });
   doc.addEventListener("scroll", () => { if (state.started && !state.parked) schedulePaint(); }, true);
   const dialog = doc.querySelector("#card-dialog");
@@ -796,6 +819,7 @@ export function attachKlafiTips(env = globalThis) {
     sync,
     maybeStart,
     replay: replayTour,
+    replayPage: replayCurrentPage,
     getState() { return { ...state }; },
   };
 }

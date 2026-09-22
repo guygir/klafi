@@ -4,10 +4,10 @@
   "asOfDate": "2026-09-09",
   "gameConfig": {
     "revealTiming": {
-      "quote": 80,
-      "party": 0,
-      "name": 600,
-      "portrait": 400
+      "quote": 400,
+      "party": 2200,
+      "name": 1400,
+      "portrait": 2000
     },
     "visual": {
       "theme": "pack-v2",
