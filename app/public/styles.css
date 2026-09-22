@@ -3945,6 +3945,19 @@ body {
   );
 }
 
+.kalpi-card.holo.numbered.holo-chroma::before {
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #2ec8ff 0deg,
+    #7dffb3 60deg,
+    #ffe566 120deg,
+    #ff8a3d 180deg,
+    #ff5ad5 240deg,
+    #8b7bff 300deg,
+    #2ec8ff 360deg
+  );
+}
+
 .numbered-tip {
   position: fixed;
   z-index: 40;
@@ -4009,52 +4022,71 @@ body {
 }
 
 .level-letter,
-.collector-letter {
-  display: none;
-}
-
+.collector-letter,
 .level-letter-text,
 .collector-letter-text {
   position: absolute;
-  top: -6px;
-  left: -6px;
+  top: -11px;
+  left: -4px;
   z-index: 3;
-  display: grid;
-  place-items: center;
   box-sizing: border-box;
-  width: max-content;
-  min-width: 16px;
-  max-width: 42px;
-  height: 16px;
-  padding: 0 4px;
+  width: 22px;
+  height: 33px;
+  aspect-ratio: 2 / 3;
+  padding: 0;
   border: 1px solid #111;
-  border-radius: 3px;
+  border-radius: 2px;
   background-color: #ead9b4;
   background-image: url("/design-assets/ballot-paper.png");
   background-size: cover;
   background-position: center;
-  color: #1a2540;
-  font: 700 9px/1 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
   box-shadow: none;
+}
+
+.level-letter,
+.collector-letter {
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  background-image: none;
+}
+
+.level-letter-text,
+.collector-letter-text {
+  display: grid;
+  place-items: center;
+  padding: 4px 2px;
+  color: #1a2540;
+  font: 700 7.5px/1 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
+  text-align: center;
 }
 
 .level-letter-text[data-letters="1"],
 .collector-letter-text[data-letters="1"] {
-  min-width: 14px;
-  padding: 0 3px;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .level-letter-text[data-letters="2"],
 .collector-letter-text[data-letters="2"] {
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .level-letter-text[data-letters="3"],
 .collector-letter-text[data-letters="3"] {
-  font-size: 7px;
-  padding: 0 5px;
+  font-size: 6.5px;
 }
+
+.collector-letter,
+.collector-letter-text {
+  top: -8px;
+  left: -3px;
+  width: 16px;
+  height: 24px;
+}
+
+.collector-letter-text[data-letters="1"] { font-size: 9px; }
+.collector-letter-text[data-letters="2"] { font-size: 7px; }
+.collector-letter-text[data-letters="3"] { font-size: 5px; }
 
 #avatar-seal { display: none; }
 

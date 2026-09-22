@@ -102,7 +102,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(themeCss, /card-face\.front \.card-name-zone[\s\S]{0,280}?bottom:\s*25%/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-party-zone[\s\S]{0,200}?bottom:\s*20%/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-rarity-zone[\s\S]{0,200}?bottom:\s*15%/);
-  assert.match(themeCss, /bottom:\s*0;\s*height:\s*17%;\s*max-height:\s*17%/);
+  assert.match(themeCss, /bottom:\s*0;\s*height:\s*14%;\s*max-height:\s*14%/);
   assert.match(javascript, /isFullart && role === "quote"/);
   assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-image-meta strong[\s\S]{0,120}?display:\s*none/);
   assert.match(css, /\.card-party-zone::before[\s\S]{0,160}?2\.4cqw/);
@@ -261,7 +261,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /<small>מקום ברשימה<\/small>/);
   assert.match(css, /#b42318/);
   assert.match(javascript, /letterChip/);
+  assert.match(javascript, /letterArt/);
   assert.match(javascript, /data-letters/);
+  assert.match(javascript, /card-rarity-run/);
+  assert.match(javascript, /holo-chroma/);
+  assert.match(css, /aspect-ratio:\s*2\s*\/\s*3/);
+  assert.match(css, /holo-chroma/);
   assert.match(javascript, /function mergeLiveCatalogFields/);
   assert.match(javascript, /function streakFireMarkup/);
   assert.match(javascript, /numberedCopies/);
@@ -397,7 +402,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-26/);
+  assert.match(html, /card-surface-27/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -462,7 +467,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-26/);
+  assert.match(html, /card-surface-27/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

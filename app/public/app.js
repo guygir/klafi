@@ -1254,6 +1254,8 @@ function factionLetters(party) {
 }
 
 function factionLetterArt(party) {
+  if (party?.letterArt) return party.letterArt;
+  if (party?.id === "LIK") return "hero-art-memchetlammed.png";
   return party?.letterChip || "";
 }
 
@@ -1263,6 +1265,11 @@ function streakFireMarkup() {
 
 function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
   const letters = factionLetters(party);
+  const art = factionLetterArt(party);
+  if (art) {
+    const imageClass = className.replace(/-text$/, "") || "collector-letter";
+    return `<img class="${imageClass}" src="/design-assets/${encodeURIComponent(art)}" alt="${escapeHtml(letters)}">`;
+  }
   if (!letters) return "";
   return `<b class="${className}" data-letters="${[...letters].length}">${escapeHtml(letters)}</b>`;
 }
@@ -1270,18 +1277,25 @@ function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
 function renderAvatarSeal() {
   const party = factionParty();
   const letters = factionLetters(party);
+  const art = factionLetterArt(party);
   if (elements.avatarSeal) elements.avatarSeal.hidden = true;
   if (elements.levelLetter) {
-    elements.levelLetter.hidden = true;
-    elements.levelLetter.removeAttribute("src");
-    elements.levelLetter.alt = "";
+    if (art) {
+      elements.levelLetter.hidden = false;
+      elements.levelLetter.src = `/design-assets/${encodeURIComponent(art)}`;
+      elements.levelLetter.alt = letters;
+    } else {
+      elements.levelLetter.hidden = true;
+      elements.levelLetter.removeAttribute("src");
+      elements.levelLetter.alt = "";
+    }
   }
   if (elements.levelLetterText) {
-    elements.levelLetterText.hidden = !letters;
+    elements.levelLetterText.hidden = Boolean(art) || !letters;
     elements.levelLetterText.textContent = letters;
     elements.levelLetterText.dataset.letters = String([...letters].length);
   }
-  elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(letters));
+  elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(art || letters));
   elements.levelAvatarButton?.classList.toggle("has-faction-seal", false);
 }
 
@@ -2309,9 +2323,11 @@ function cardPresentation(card, instance = {}) {
     setName: cardSetName(card),
     typeLabel: card.typeHe || "קלף",
     finishLabel,
-    finishClass: [String(finishLabel ?? "Common").split(/\s|\//)[0].toLowerCase(), numbered ? "numbered" : ""]
-      .filter(Boolean)
-      .join(" "),
+    finishClass: [
+      String(finishLabel ?? "Common").split(/\s|\//)[0].toLowerCase(),
+      numbered ? "numbered" : "",
+      numbered && instance.holoStyle === "chroma" ? "holo-chroma" : "",
+    ].filter(Boolean).join(" "),
     rarityMark: rarityMark(rarityLabel),
     rarityName: rarityNameHe(rarityLabel),
     listSlot: Number.isInteger(listSlot) && listSlot > 0 ? listSlot : null,
@@ -2369,7 +2385,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
         <div class="card-identity-stack">
           <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
           <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
-          <p class="card-rarity-zone" dir="rtl" lang="he"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</p>
+          <p class="card-rarity-zone" dir="rtl" lang="he"><span class="card-rarity-run"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</span></p>
           <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
         </div>
       </section>
@@ -4489,7 +4505,7 @@ function paintFullartShareIdentity(context, card, presentation, { x, y, width, h
   const nameBand = { top: y + height * 0.69, height: height * 0.06 };
   const partyY = y + height * 0.775;
   const rarityY = y + height * 0.825;
-  const quoteBox = { top: y + height * 0.85, height: height * 0.15 };
+  const quoteBox = { top: y + height * 0.86, height: height * 0.13 };
   context.font = `600 ${nameSize}px 'Noto Serif Hebrew', Fraunces, serif`;
   const nameLines = measureWrappedLines(context, presentation.title, textWidth, 2);
   const quoteFit = fitShareQuote(

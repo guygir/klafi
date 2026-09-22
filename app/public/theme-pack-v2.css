@@ -192,6 +192,19 @@ body:has(#app[data-theme="pack-v2"]) {
   );
 }
 
+#app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered.holo-chroma::before {
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #2ec8ff 0deg,
+    #7dffb3 60deg,
+    #ffe566 120deg,
+    #ff8a3d 180deg,
+    #ff5ad5 240deg,
+    #8b7bff 300deg,
+    #2ec8ff 360deg
+  );
+}
+
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
   width: clamp(26px, 11.4cqw, 36px);
@@ -1191,6 +1204,20 @@ body:has(#app[data-theme="pack-v2"]) {
   );
 }
 
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered.holo-chroma::before,
+#app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered.holo-chroma::before {
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #2ec8ff 0deg,
+    #7dffb3 60deg,
+    #ffe566 120deg,
+    #ff8a3d 180deg,
+    #ff5ad5 240deg,
+    #8b7bff 300deg,
+    #2ec8ff 360deg
+  );
+}
+
 #app[data-card-frame="fullart-v1"] .kalpi-card.uncommon,
 #app .kalpi-card[data-card-frame="fullart-v1"].uncommon {
   box-shadow:
@@ -1372,10 +1399,9 @@ body:has(#app[data-theme="pack-v2"]) {
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone {
   bottom: 15%;
   height: 5%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45em;
+  display: grid;
+  place-items: center;
+  gap: 0;
   color: var(--foil);
   font-family: "IBM Plex Sans Hebrew", sans-serif;
   font-size: 3.5cqw;
@@ -1386,20 +1412,31 @@ body:has(#app[data-theme="pack-v2"]) {
   text-align: center;
 }
 
+#app[data-card-frame="fullart-v1"] .card-rarity-run,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-run {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32em;
+  max-width: 100%;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
 #app[data-card-frame="fullart-v1"] .card-rarity-zone strong,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone strong {
   display: inline-block;
   font-size: inherit;
   font-weight: inherit;
   line-height: 1;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 #app[data-card-frame="fullart-v1"] .card-quote-zone,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-quote-zone {
   bottom: 0;
-  height: 17%;
-  max-height: 17%;
+  height: 14%;
+  max-height: 14%;
   min-height: 0;
   padding: 1% 0 2%;
   overflow: hidden;
@@ -1410,6 +1447,31 @@ body:has(#app[data-theme="pack-v2"]) {
   font-size: clamp(8px, 5.6cqw, 22px);
   font-weight: 600;
   line-height: 1.15;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-name-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"].numbered .card-name-zone {
+  bottom: 25%;
+  height: 6%;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-party-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"].numbered .card-party-zone {
+  bottom: 20%;
+  height: 5%;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-rarity-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"].numbered .card-rarity-zone {
+  bottom: 15%;
+  height: 5%;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-quote-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"].numbered .card-quote-zone {
+  bottom: 0;
+  height: 14%;
+  max-height: 14%;
 }
 
 #app[data-card-frame="fullart-v1"] .new-stamp,
