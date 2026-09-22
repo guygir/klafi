@@ -1267,7 +1267,7 @@ function collectorFaceMarkup(entry = {}) {
   const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
   const party = factionParty(entry.factionId);
   const streak = Number(entry.loginStreak) >= 3 ? Number(entry.loginStreak) : 0;
-  return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b>${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
+  return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
 }
 
 function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
@@ -2321,9 +2321,10 @@ function cardPresentation(card, instance = {}) {
   const finishLabel = numbered ? "Holo" : (instance.finish ?? card.rarity);
   const rarityLabel = numbered ? "ממוספר" : finishLabel;
   const listSlot = Number(card?.listSlot);
+  const slotLabel = Number.isInteger(listSlot) && listSlot > 0 ? `מקום ${listSlot}` : "";
   return {
     title: cardTitle(card),
-    subtitle: card.subtitleHe || card.subtitle || "",
+    subtitle: slotLabel || card.subtitleHe || card.subtitle || "",
     quote: displayedCardQuote(card),
     rawQuote: String(card.walkout?.text || "").trim(),
     code: cardCode(card),

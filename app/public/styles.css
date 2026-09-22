@@ -4026,8 +4026,8 @@ body {
 .level-letter-text,
 .collector-letter-text {
   position: absolute;
-  top: -12px;
-  left: -3px;
+  top: -6px;
+  left: 1px;
   z-index: 3;
   box-sizing: border-box;
   width: 11px;
@@ -4135,5 +4135,14 @@ body {
   position: absolute;
   top: -6px;
   right: -7px;
-  font-size: 11px;
+  z-index: 3;
+  height: 18px;
+  font: 800 13px/1 "IBM Plex Sans Hebrew", sans-serif;
+}
+
+.collector-streak .streak-count {
+  display: inline-block;
+  min-width: 0.7em;
+  font: inherit;
+  color: inherit;
 }
