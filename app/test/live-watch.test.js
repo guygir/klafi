@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { createKalpiApp } from "../server/app.js";
+import { handleSlimShare } from "../server/slim-share.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
@@ -100,4 +101,27 @@ test("WhatsApp and Instagram crawlers get share titles and images", async (t) =>
     assert.match(cardHtml, /og:image" content="http:\/\/127\.0\.0\.1:\d+\/design-assets\/hero-art-gadi-eisenkot-slot1\.png"/);
     assert.match(cardHtml, /card=YSR-M01-Q01/);
   }
+});
+
+test("Vercel sends card share to the slim function, not the fat API", async () => {
+  const vercel = await readFile(path.join(projectRoot, "vercel.json"), "utf8");
+  assert.match(vercel, /"source": "\/share\/:id"/);
+  assert.match(vercel, /"destination": "\/api\/share\?__kalpi_path=\/share\/:id"/);
+  assert.match(vercel, /"api\/share\.js"/);
+});
+
+test("slim card share serves OG tags without booting the fat API", async (t) => {
+  const server = createServer((request, response) => handleSlimShare(request, response));
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => new Promise((resolve) => server.close(resolve)));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const card = await fetch(`${base}/share/JNT-M01-Q01?__kalpi_path=/share/JNT-M01-Q01`);
+  const html = await card.text();
+  assert.equal(card.status, 200);
+  assert.match(html, /og:title" content="קְלָפִי · /);
+  assert.match(html, /og:image" content="http:\/\/127\.0\.0\.1:\d+\/design-assets\//);
+  assert.match(html, /card=JNT-M01-Q01/);
+  assert.match(html, /ושוחרת שלום|שלום/);
+  const missing = await fetch(`${base}/share/NOPE?__kalpi_path=/share/NOPE`);
+  assert.equal(missing.status, 404);
 });

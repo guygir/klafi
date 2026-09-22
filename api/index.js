@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { createRuntimeHandler } from "../app/server/runtime.js";
 
 let handlerPromise;
@@ -33,7 +34,29 @@ function restoreRequestUrl(request) {
 }
 
 export default async function vercelHandler(request, response) {
-  handlerPromise ??= createRuntimeHandler({ loadDotEnv: false });
-  const handler = await handlerPromise;
-  return handler(restoreRequestUrl(request), response);
+  const requestId = request.headers["x-request-id"] || randomUUID();
+  try {
+    handlerPromise ??= createRuntimeHandler({ loadDotEnv: false });
+    const handler = await handlerPromise;
+    return handler(restoreRequestUrl(request), response);
+  } catch (error) {
+    console.error(JSON.stringify({
+      level: "error",
+      requestId,
+      message: error.message,
+      stack: error.stack,
+    }));
+    if (response.headersSent) return;
+    response.setHeader("x-request-id", requestId);
+    response.writeHead(500, {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+      "x-request-id": requestId,
+    });
+    response.end(JSON.stringify({
+      error: "SERVER_ERROR",
+      requestId,
+      detail: error.message,
+    }));
+  }
 }
