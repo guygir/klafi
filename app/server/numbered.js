@@ -44,6 +44,8 @@ export function stampEligible(card, numberedSets = []) {
   );
 }
 
+// Mint is idle-only and only for sets listed in progression.numberedSets.
+// Closed while that list is empty: first owned copy should not become #1.
 export function stampFromGrant(card, numberedSets, acquiredBy) {
   return acquiredBy === "idle" && stampEligible(card, numberedSets);
 }

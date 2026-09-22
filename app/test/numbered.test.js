@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   applyLoginStreak,
   jerusalemDay,
@@ -14,6 +17,12 @@ import {
   takeInstanceForCard,
 } from "../server/numbered.js";
 
+const studio = JSON.parse(await readFile(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../data/studio-content.json"), "utf8"));
+
+test("studio ships with numbered minting closed", () => {
+  assert.deepEqual(studio.gameConfig.progression.numberedSets, []);
+});
+
 test("stamp eligibility is list-slot print runs plus numberedSets, idle only", () => {
   const set5 = { id: "SET5-01", set: "LIK", listSlot: 1, releaseSetId: "set-5" };
   const slotTwo = { id: "SET5-12", set: "DEM", listSlot: 2, releaseSetId: "set-5" };
@@ -27,6 +36,7 @@ test("stamp eligibility is list-slot print runs plus numberedSets, idle only", (
   assert.equal(stampEligible(set5, ["party-leaders"]), false);
   assert.equal(stampEligible({ ...set5, eventOnly: true }, ["set-5"]), false);
   assert.equal(stampFromGrant(set5, ["set-5"], "idle"), true);
+  assert.equal(stampFromGrant(set5, [], "idle"), false);
   assert.equal(stampFromGrant(set5, ["set-5"], "quiz"), false);
   assert.equal(stampFromGrant(set5, ["set-5"], "debug-unlock"), false);
   assert.equal(stampFromGrant(set5, ["set-5"], "rank-2"), false);

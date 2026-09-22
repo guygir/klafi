@@ -862,6 +862,7 @@ export async function createKalpiApp({
   const studioOverlay = initialized && Object.hasOwn(initialized, "studioConfig")
     ? initialized.studioConfig
     : await store.getStudioConfig();
+  const fileNumberedSets = studioContent?.gameConfig?.progression?.numberedSets;
   if (studioContent && studioOverlay?.gameConfig) {
     studioContent.gameConfig = {
       ...studioContent.gameConfig,
@@ -871,6 +872,7 @@ export async function createKalpiApp({
       progression: {
         ...studioContent.gameConfig.progression,
         ...studioOverlay.gameConfig.progression,
+        numberedSets: fileNumberedSets,
       },
       releaseSets: studioOverlay.gameConfig.releaseSets || studioContent.gameConfig.releaseSets,
       pack: mergePackConfig(studioContent.gameConfig.pack, studioOverlay.gameConfig.pack),
