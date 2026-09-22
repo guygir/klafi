@@ -1151,6 +1151,54 @@ body:has(#app[data-theme="pack-v2"]) {
   content: none;
 }
 
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo::before,
+#app .kalpi-card[data-card-frame="fullart-v1"].holo::before {
+  content: "";
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  padding: 3px;
+  pointer-events: none;
+  border-radius: inherit;
+  background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 52%, #fff6c8 62%, #ffffff 70%, #e0c36a 78%, transparent 88%);
+  animation: holo-orbit 2.2s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered,
+#app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered {
+  border-color: #c4a35a;
+  box-shadow:
+    0 20px 46px rgba(5, 5, 5, 0.42),
+    0 0 0 2px color-mix(in srgb, #c4a35a 60%, #7e8b9a),
+    0 0 18px rgba(196, 163, 90, 0.5),
+    inset 0 0 0 2px #050505,
+    inset 0 0 0 3px var(--foil);
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered::before,
+#app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered::before {
+  padding: 5px;
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #7e8b9a 0deg,
+    #c4a35a 55deg,
+    #fff6c8 90deg,
+    #5e7a74 145deg,
+    #e8b4a0 200deg,
+    #ffffff 250deg,
+    #b42318 305deg,
+    #7e8b9a 360deg
+  );
+}
+
 #app[data-card-frame="fullart-v1"] .kalpi-card.uncommon,
 #app .kalpi-card[data-card-frame="fullart-v1"].uncommon {
   box-shadow:
