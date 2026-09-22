@@ -108,7 +108,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 13. Disclosed survey + published scoring table → matched-list party pack. **No need.**
 
 **Design first — do not implement yet**
-14. [x] Numbered set-5 holos (print run 3, lined red 1/x, ★★★★ ממוספר) + login streak on the avatar stack. Live start is sets 1, 2, and 5 at pack odds 3:2:1. Only idle grants stamp. Ballot-letter tag top-left, fire streak top-right, rank below the avatar. Daily-date holos and CEC pulse stay parked.
+14. [x] Numbered set-5 holos (print run = list slot, dashed מקום ברשימה stamp, moving outer lights) + login streak on the avatar stack. Live start is sets 1, 2, and 5 at pack odds 3:2:1. Every open set adds 1 rank. Only idle grants stamp. Upper meta is מקום N; rarity is not doubled. Ballot-letter tag top-left, fire streak top-right, rank below the avatar. Daily-date holos and CEC pulse stay parked.
 15. Platform/live-ops: PWA + push, groups/leagues/seasonal ladders, event-controlled Specials, creator seeding. **Brainstorm design — review** [open the HTML](https://raw.githack.com/guygir/klafi/cursor/hebrew-trust-a11y-025e/docs/design/step-15-platform-liveops.html). Events player surface stays deferred.
 
 **Last**

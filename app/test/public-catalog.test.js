@@ -215,7 +215,7 @@ test("Sets 3 and 4 ship complete art-backed catalogs with their collectible rari
 
 
 test("Set 5 ships as live Quote cards with party pips and pull rarities", async () => {
-  const [{ extras, set5 }, catalog] = await Promise.all([
+  const [{ extras, set5, cards, specials }, catalog] = await Promise.all([
     loadCatalogSources(),
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
   ]);
@@ -236,6 +236,9 @@ test("Set 5 ships as live Quote cards with party pips and pull rarities", async 
   assert.deepEqual(counts, { Common: 12, Uncommon: 6, Rare: 4 });
   assert.equal(live.find(({ id }) => id === "SET5-22").rarity, "Rare");
   assert.equal(live.find(({ id }) => id === "SET5-20").set, "LIK");
+  const netanyahu = expandPublicCatalog(cards, specials, extras).find(({ id }) => id === "SET5-01");
+  assert.equal(netanyahu?.listSlot, 1);
+  assert.equal(netanyahu?.subtitleHe, "מקום 1");
   assert.equal(extras.set5.candidates.length, 22);
   await Promise.all(live.map(({ artKey }) =>
     readFile(path.resolve(here, "../../docs/design/assets", artKey))));

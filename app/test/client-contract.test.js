@@ -257,14 +257,17 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="numbered-sets"/);
   assert.match(html, /id="numbered-tip"/);
   assert.match(javascript, /card-numbered-tag/);
+  assert.match(javascript, /card-slot-tag/);
   assert.match(javascript, /numberedCopies/);
   assert.match(javascript, /maybeShowNumberedTip/);
   assert.match(javascript, /ממוספר/);
+  assert.match(javascript, /מקום ברשימה/);
   assert.match(javascript, /streak-fire/);
   assert.match(css, /\.card-numbered-tag/);
+  assert.match(css, /\.card-slot-tag/);
   assert.match(css, /\.numbered-tip/);
   assert.match(css, /streak-fire/);
-  assert.match(css, /#b42318/);
+  assert.match(css, /holo-orbit/);
   assert.match(javascript, /ACTIVE_TRADE_EXISTS/);
   assert.match(javascript, /function applyTradeResult/);
   assert.match(javascript, /function refreshDailyChallenge/);

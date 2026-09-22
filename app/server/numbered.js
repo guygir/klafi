@@ -30,7 +30,6 @@ export function normalizeNumberedSets(value, releaseIds = []) {
 }
 
 export function stampMax(card) {
-  if (card?.releaseSetId === "set-5") return card?.id ? 3 : 0;
   const slot = Number(card?.listSlot);
   return Number.isInteger(slot) && slot > 0 ? slot : 0;
 }

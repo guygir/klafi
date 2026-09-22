@@ -2291,6 +2291,7 @@ function cardPresentation(card, instance = {}) {
   const numbered = Number(instance.numberedIndex) > 0;
   const finishLabel = numbered ? "Holo" : (instance.finish ?? card.rarity);
   const rarityLabel = numbered ? "ממוספר" : finishLabel;
+  const listSlot = Number(card?.listSlot);
   return {
     title: cardTitle(card),
     subtitle: card.subtitleHe || card.subtitle || "",
@@ -2305,6 +2306,7 @@ function cardPresentation(card, instance = {}) {
       .join(" "),
     rarityMark: rarityMark(rarityLabel),
     rarityName: rarityNameHe(rarityLabel),
+    listSlot: Number.isInteger(listSlot) && listSlot > 0 ? listSlot : null,
     trustLabel: cardTrustSummary(card),
     pip: card.pip,
     artKey: card.artKey || null,
@@ -2349,8 +2351,10 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-code-tag">${escapeHtml(presentation.code)}</span>
             <span class="card-meta-mid"></span>
             <span class="card-meta-end">
-              ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
-              ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
+              ${presentation.listSlot
+                ? `<strong class="card-slot-tag" aria-label="מקום ${presentation.listSlot}">מקום ${presentation.listSlot}</strong>`
+                : frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
+              ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}"><small>מקום ברשימה</small><em>${instance.numberedIndex}/${instance.numberedOf}</em></b>` : ""}
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
             </span>
           </div>
@@ -2358,7 +2362,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
         </div>
         <div class="card-identity-stack">
           <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
-          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}${instance.numberedIndex ? " · ★★★★ ממוספר" : ""}</p>
+          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
           <p class="card-rarity-zone" dir="rtl" lang="he"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</p>
           <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
         </div>
@@ -3194,7 +3198,7 @@ function populateLevelIncrements() {
     <label>${escapeHtml(set.nameHe)}
       <input type="number" min="0" max="20" data-level-increment="${escapeHtml(set.id)}" value="${increments[set.id] ?? 0}" />
     </label>`).join("")}
-    <p class="work-note">תקרת רמה = סכום התוספות של סדרות שפתוחות לאיסוף. מנהיגים ${increments["party-leaders"] ?? 5}, סגנים ${increments["party-slot-2"] ?? 2}, החלטות/רקורדים/רגעים/עמדות 1. לא שווים — כל סדרה פותחת כמה רמות, לא לפי גודל הקטלוג.</p>`;
+    <p class="work-note">תקרת רמה = סכום התוספות של סדרות שפתוחות לאיסוף. ברירת המחדל 1 לכל סדרה — הטקסט «גלו עוד N קלפים» הוא הסף, לא משקל נסתר. סדרה חדשה מוסיפה רמה אחת.</p>`;
   if (elements.rankNames) {
     elements.rankNames.value = (model.gameConfig.progression?.rankNames || model.gameConfig.progression?.ranks || []).join("\n");
   }

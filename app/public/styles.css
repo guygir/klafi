@@ -763,13 +763,33 @@ h1 {
 .kalpi-card.uncommon { box-shadow: var(--shadow), inset 0 0 0 1px var(--foil); }
 .kalpi-card.holo { box-shadow: var(--shadow), inset 0 0 0 3px var(--foil); }
 
+.kalpi-card.holo::before,
 .kalpi-card.holo::after {
   content: "";
   position: absolute;
-  z-index: 4;
-  inset: 0;
   pointer-events: none;
   border-radius: inherit;
+}
+
+.kalpi-card.holo::before {
+  z-index: 5;
+  inset: -2px;
+  padding: 2px;
+  background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 58%, #fff6c8 64%, #ffffff 70%, #c4a35a 76%, transparent 84%);
+  animation: holo-orbit 2.2s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+.kalpi-card.holo::after {
+  z-index: 4;
+  inset: 0;
   background: linear-gradient(120deg, transparent 12%, rgba(126, 139, 154, 0.2) 35%, rgba(196, 163, 90, 0.28) 49%, rgba(94, 122, 116, 0.18) 63%, transparent 86%);
   background-size: 220% 100%;
   mix-blend-mode: multiply;
@@ -777,6 +797,12 @@ h1 {
 }
 
 @keyframes shimmer { to { background-position: -220% 0; } }
+@property --holo-spin {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes holo-orbit { to { --holo-spin: 360deg; } }
 
 .kalpi-card.reveal {
   animation: card-reveal 520ms cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
@@ -2088,6 +2114,7 @@ img.mini-art {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  .kalpi-card.holo::before,
   .kalpi-card.holo::after { display: none; }
 }
 
@@ -3867,34 +3894,55 @@ body {
 
 .kalpi-card.numbered .card-numbered-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-numbered-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
+  display: grid;
+  place-items: center;
+  align-content: center;
   box-sizing: border-box;
-  width: clamp(26px, 11.4cqw, 36px);
-  min-width: clamp(26px, 11.4cqw, 36px);
-  height: clamp(26px, 11.4cqw, 36px);
-  min-height: clamp(26px, 11.4cqw, 36px);
+  width: clamp(48px, 20cqw, 64px);
+  min-width: clamp(48px, 20cqw, 64px);
+  height: clamp(48px, 20cqw, 64px);
+  min-height: clamp(48px, 20cqw, 64px);
   padding: 0;
+  gap: 2px;
+  border: max(2px, 0.7cqw) solid transparent;
   border-radius: 50%;
-  border: max(1.5px, 0.55cqw) solid #b42318;
   background:
-    radial-gradient(circle at 38% 30%, #fff8f2 0 38%, #f6d4cb 100%);
-  color: #8a1610;
-  font: 800 clamp(8px, 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
-  letter-spacing: 0;
-  box-shadow:
-    inset 0 0 0 max(1px, 0.35cqw) #f8e4dc,
-    inset 0 0 0 max(2.4px, 0.9cqw) #b42318;
+    radial-gradient(circle at 50% 38%, #2c2418 0 56%, #080706 100%) padding-box,
+    repeating-conic-gradient(#e6d39a 0 8deg, transparent 8deg 18deg) border-box;
+  color: #fffaf0;
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: hidden;
 }
 
-.kalpi-card.holo.numbered {
-  box-shadow:
-    var(--shadow),
-    0 0 0 1px color-mix(in srgb, #b42318 42%, transparent),
-    inset 0 0 0 3px var(--foil);
+.kalpi-card.numbered .card-numbered-tag small,
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-numbered-tag small {
+  display: block;
+  color: #e6d39a;
+  font: 600 clamp(5px, 2.15cqw, 7px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  letter-spacing: 0.01em;
 }
 
-.kalpi-card.holo.numbered::after {
-  background: linear-gradient(120deg, transparent 10%, rgba(180, 35, 24, 0.14) 32%, rgba(196, 163, 90, 0.34) 49%, rgba(126, 139, 154, 0.16) 68%, transparent 88%);
+.kalpi-card.numbered .card-numbered-tag em,
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-numbered-tag em {
+  font: 800 clamp(11px, 5cqw, 17px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  font-style: normal;
+  color: #fffaf0;
+}
+
+#app[data-card-frame="tall-v2"] .card-image-meta .card-slot-tag,
+.card-slot-tag {
+  width: max-content;
+  min-width: max-content;
+  padding: 0 6px;
+  border-radius: 999px;
+  font: 700 clamp(7px, 3.2cqw, 11px)/1 "IBM Plex Sans Hebrew", sans-serif;
+}
+
+.kalpi-card.holo.numbered::before {
+  background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 50%, #fff6c8 60%, #ffffff 68%, #e0c36a 76%, transparent 86%);
 }
 
 .numbered-tip {
@@ -3933,9 +3981,10 @@ body {
 
 .level-streak {
   position: absolute;
-  top: -8px;
-  right: -13px;
+  top: -2px;
+  right: -12px;
   z-index: 3;
+  height: 22px;
 }
 
 .streak-count {
@@ -3969,22 +4018,29 @@ body {
 .collector-letter,
 .collector-letter-text {
   position: absolute;
-  top: -6px;
+  top: -2px;
   left: -10px;
   z-index: 3;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
-  border: 1px solid var(--pack-umber, #3c3026);
-  border-radius: 3px;
-  background: var(--pack-paper, #eee5d4);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--pack-gold, #b38d3f) 70%, #3c3026);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.level-letter,
+.collector-letter {
+  mix-blend-mode: multiply;
 }
 
 .level-letter-text,
 .collector-letter-text {
   display: grid;
   place-items: center;
+  border-radius: 3px;
+  background: var(--pack-paper, #eee5d4);
   color: var(--pack-umber, #3c3026);
   font: 800 8px/1 "IBM Plex Sans Hebrew", sans-serif;
 }

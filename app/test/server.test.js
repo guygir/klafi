@@ -512,7 +512,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(stateAfterDemo.body.packCount, 0);
   assert.deepEqual(stateAfterDemo.body.inventory, {});
   assert.equal(stateAfterDemo.body.progression.level, 1);
-  assert.equal(stateAfterDemo.body.progression.totalLevels, 5);
+  assert.equal(stateAfterDemo.body.progression.totalLevels, 2);
   assert.equal(stateAfterDemo.body.progression.rank, "אזרח סקרן");
   assert.equal(stateAfterDemo.body.progression.nextRank, "קורא כותרות");
 
@@ -1193,7 +1193,7 @@ function withPackWeights(studio, weights) {
   return studio;
 }
 
-test("numbered stamps are idle-only set-5 holos of 3 and streaks count Jerusalem days", async (t) => {
+test("numbered stamps are idle-only set-5 holos by list slot and streaks count Jerusalem days", async (t) => {
   const clock = { value: Date.parse("2026-09-21T10:00:00+03:00") };
   const parkedDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-parked-"));
   const parkedStudioPath = path.join(parkedDir, "studio-content.json");
@@ -1229,8 +1229,6 @@ test("numbered stamps are idle-only set-5 holos of 3 and streaks count Jerusalem
 
   const first = await api(running.base, "/api/session", { method: "POST" });
   const second = await api(running.base, "/api/session", { method: "POST" });
-  const third = await api(running.base, "/api/session", { method: "POST" });
-  const fourth = await api(running.base, "/api/session", { method: "POST" });
   const debuggerSession = await api(running.base, "/api/session", { method: "POST" });
   const debugCard = "SET5-01";
   const unlocked = await api(running.base, "/api/debug/unlock-card", {
@@ -1253,38 +1251,24 @@ test("numbered stamps are idle-only set-5 holos of 3 and streaks count Jerusalem
   assert.match(copy.cardId, /^SET5-/);
   assert.equal(copy.finish, "Holo");
   assert.equal(copy.numberedIndex, 1);
-  assert.equal(copy.numberedOf, 3);
+  assert.ok(copy.numberedOf >= 1);
   assert.equal(stamped.body.state.numberedCopies.length, 1);
 
-  const secondPull = await api(running.base, "/api/idle/settle", {
-    token: second.body.token,
-    method: "POST",
-  });
-  const secondCopy = secondPull.body.cards.find((item) => item.acquiredBy === "idle") || secondPull.body.cards[0];
-  assert.equal(secondCopy.cardId, copy.cardId);
-  assert.equal(secondCopy.finish, "Holo");
-  assert.equal(secondCopy.numberedIndex, 2);
-  assert.equal(secondCopy.numberedOf, 3);
-
-  const thirdPull = await api(running.base, "/api/idle/settle", {
-    token: third.body.token,
-    method: "POST",
-  });
-  const thirdCopy = thirdPull.body.cards.find((item) => item.acquiredBy === "idle") || thirdPull.body.cards[0];
-  assert.equal(thirdCopy.cardId, copy.cardId);
-  assert.equal(thirdCopy.finish, "Holo");
-  assert.equal(thirdCopy.numberedIndex, 3);
-  assert.equal(thirdCopy.numberedOf, 3);
-
   const late = await api(running.base, "/api/idle/settle", {
-    token: fourth.body.token,
+    token: second.body.token,
     method: "POST",
   });
   const lateCopy = late.body.cards.find((item) => item.acquiredBy === "idle") || late.body.cards[0];
   assert.equal(lateCopy.cardId, copy.cardId);
-  assert.notEqual(lateCopy.finish, "Holo");
-  assert.equal(lateCopy.numberedIndex, undefined);
-  assert.equal((late.body.state.numberedCopies || []).length, 0);
+  if (copy.numberedOf === 1) {
+    assert.notEqual(lateCopy.finish, "Holo");
+    assert.equal(lateCopy.numberedIndex, undefined);
+    assert.equal((late.body.state.numberedCopies || []).length, 0);
+  } else {
+    assert.equal(lateCopy.finish, "Holo");
+    assert.equal(lateCopy.numberedIndex, 2);
+    assert.equal(lateCopy.numberedOf, copy.numberedOf);
+  }
 
   const leadersDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-leaders-"));
   const leadersStudioPath = path.join(leadersDir, "studio-content.json");

@@ -14,10 +14,13 @@ import {
   takeInstanceForCard,
 } from "../server/numbered.js";
 
-test("stamp eligibility is set-5 print runs plus numberedSets, idle only", () => {
-  const set5 = { id: "SET5-01", set: "LIK", listSlot: null, releaseSetId: "set-5" };
+test("stamp eligibility is list-slot print runs plus numberedSets, idle only", () => {
+  const set5 = { id: "SET5-01", set: "LIK", listSlot: 1, releaseSetId: "set-5" };
+  const slotTwo = { id: "SET5-12", set: "DEM", listSlot: 2, releaseSetId: "set-5" };
   const leader = { id: "LIK-M01-Q01", set: "LIK", listSlot: 1, releaseSetId: "party-leaders" };
-  assert.equal(stampMax(set5), 3);
+  assert.equal(stampMax(set5), 1);
+  assert.equal(stampMax(slotTwo), 2);
+  assert.equal(stampMax({ ...set5, listSlot: null }), 0);
   assert.equal(stampKey(set5), "SET5-01");
   assert.equal(stampEligible(set5, ["set-5"]), true);
   assert.equal(stampEligible(set5, []), false);
@@ -56,7 +59,7 @@ test("login streak counts Jerusalem days and resets after a gap", () => {
 test("trades move the numbered instance instead of minting a new stamp", () => {
   const from = {
     inventory: { "SET5-01": 1 },
-    instances: [{ instanceId: "a", cardId: "SET5-01", numberedIndex: 1, numberedOf: 3, finish: "Holo" }],
+    instances: [{ instanceId: "a", cardId: "SET5-01", numberedIndex: 1, numberedOf: 1, finish: "Holo" }],
   };
   const to = { inventory: {}, instances: [] };
   const moved = moveOwnedCard(from, to, "SET5-01", {
@@ -69,7 +72,7 @@ test("trades move the numbered instance instead of minting a new stamp", () => {
   assert.equal(from.inventory["SET5-01"], undefined);
   assert.equal(to.inventory["SET5-01"], 1);
   assert.equal(to.instances[0].numberedIndex, 1);
-  assert.equal(to.instances[0].numberedOf, 3);
+  assert.equal(to.instances[0].numberedOf, 1);
   assert.equal(to.instances[0].acquiredBy, "trade-accepted");
   assert.equal(takeInstanceForCard(to, "SET5-01")?.instanceId, "a");
 });

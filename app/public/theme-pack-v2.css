@@ -155,12 +155,49 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered {
-  --card-frame: #b42318;
+  --card-frame: var(--pack-gold, #b38d3f);
   box-shadow:
     0 20px 46px rgba(60, 48, 38, 0.24),
-    0 0 0 1px color-mix(in srgb, #b42318 40%, transparent),
     inset 0 0 0 clamp(2px, 1cqw, 4px) var(--pack-umber, #3c3026),
     inset 0 0 0 clamp(3px, 1.65cqw, 7px) var(--pack-gold, #b38d3f);
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card.holo::before {
+  inset: clamp(2px, 1.1cqw, 5px);
+  padding: 2px;
+  border: 0;
+  background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 52%, #fff6c8 62%, #ffffff 70%, #e0c36a 78%, transparent 88%);
+  animation: holo-orbit 2.2s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered::before {
+  background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 48%, #fff6c8 58%, #ffffff 66%, #e0c36a 74%, transparent 86%);
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
+  width: clamp(48px, 20cqw, 64px);
+  min-width: clamp(48px, 20cqw, 64px);
+  height: clamp(48px, 20cqw, 64px);
+  min-height: clamp(48px, 20cqw, 64px);
+  padding: 0;
+  border: max(2px, 0.7cqw) solid transparent;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 38%, #2c2418 0 56%, #080706 100%) padding-box,
+    repeating-conic-gradient(#e6d39a 0 8deg, transparent 8deg 18deg) border-box;
+  color: #fffaf0;
+  font: inherit;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 #app[data-card-frame="tall-v2"] .card-face.front {
@@ -823,7 +860,8 @@ body:has(#app[data-theme="pack-v2"]) {
 @media (prefers-reduced-motion: reduce) {
   #app[data-quote-reveal="ink-v2"] .progressive-card.stage-quote .card-quote-zone,
   #app[data-quote-reveal="ink-v2"] .progressive-card.stage-quote::after,
-  #app[data-density="airy-v2"] .live-pulse {
+  #app[data-density="airy-v2"] .live-pulse,
+  #app[data-card-frame="tall-v2"] .kalpi-card.holo::before {
     animation: none;
   }
 }
