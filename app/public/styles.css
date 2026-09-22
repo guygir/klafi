@@ -4006,7 +4006,7 @@ body {
 .level-streak {
   position: absolute;
   top: -6px;
-  right: -7px;
+  right: -11px;
   z-index: 3;
   height: 18px;
 }
@@ -4038,7 +4038,7 @@ body {
 .collector-letter-text {
   position: absolute;
   top: -6px;
-  left: 1px;
+  left: -3px;
   z-index: 3;
   box-sizing: border-box;
   width: 11px;
@@ -4145,7 +4145,7 @@ body {
 .collector-streak {
   position: absolute;
   top: -6px;
-  right: -7px;
+  right: -11px;
   z-index: 3;
   height: 18px;
   font: 800 13px/1 "IBM Plex Sans Hebrew", sans-serif;
