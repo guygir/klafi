@@ -2475,8 +2475,15 @@ function holderCountFor(card, numbered = false) {
   return Number(bag?.[card?.id] || 0);
 }
 
-function holderLine(count, numbered = false) {
+function printRunFor(card) {
+  const slot = Number(card?.listSlot);
+  return Number.isInteger(slot) && slot > 0 ? slot : 0;
+}
+
+function holderLine(count, numbered = false, card = null) {
   if (numbered) {
+    const of = printRunFor(card);
+    if (of > 0) return `${count}/${of} מחזיקים עותק ממוספר`;
     if (count <= 0) return "אף שחקן עדיין לא מחזיק עותק ממוספר";
     if (count === 1) return "שחקן אחד מחזיק עותק ממוספר";
     return `${count} שחקנים מחזיקים עותק ממוספר`;
@@ -2588,7 +2595,7 @@ function renderShowcaseBinder() {
         <button class="binder-card-open" type="button" data-card-id="${card.id}"${numberedView ? ' data-numbered="1"' : ""} aria-label="פתיחת ${escapeHtml(cardTitle(card))}">
           <div class="binder-shared-card">${catalogCardMarkup(card, "binder", numberedView)}</div>
         </button>
-        ${model.cardHoldersReady ? `<small class="card-holders-chip">${escapeHtml(holderLine(holders, numberedView))}</small>` : ""}
+        ${model.cardHoldersReady ? `<small class="card-holders-chip">${escapeHtml(holderLine(holders, numberedView, card))}</small>` : ""}
       </div>`;
   }).join("");
   setEmptyNote(elements.showcaseEmpty, "אין קלפים בסינון הזה.", { hidden: visible.length > 0 });
@@ -2753,7 +2760,7 @@ function renderBinder() {
         <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}, ברשותכם ${count}">
           ${binderCardMarkup(card)}
         </button>
-        ${model.cardHoldersReady ? `<small class="card-holders-chip">${escapeHtml(holderLine(holderCountFor(card, numbered), numbered))}</small>` : ""}
+        ${model.cardHoldersReady ? `<small class="card-holders-chip">${escapeHtml(holderLine(holderCountFor(card, numbered), numbered, card))}</small>` : ""}
       </div>`;
   }).join("");
   const visibleColumns = window.innerWidth <= 520 ? 3 : window.innerWidth <= 760 ? 5 : 6;
@@ -4420,7 +4427,7 @@ function renderDialogCard() {
     elements.dialogTrust.hidden = !line;
   }
   if (elements.dialogHolders) {
-    elements.dialogHolders.textContent = holderLine(holderCountFor(card, numbered), numbered);
+    elements.dialogHolders.textContent = holderLine(holderCountFor(card, numbered), numbered, card);
     elements.dialogHolders.hidden = !model.cardHoldersReady;
   }
   configureSourceLink(elements.dialogSource, card);
