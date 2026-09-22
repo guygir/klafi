@@ -8,10 +8,11 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.resolve(here, "../data");
 
 test("every expanded card has embedded provenance and an explicit review status", async () => {
-  const [cards, advocacy, sequences] = await Promise.all([
+  const [cards, advocacy, sequences, studio] = await Promise.all([
     readFile(path.join(dataDir, "cards.json"), "utf8").then(JSON.parse),
     readFile(path.join(dataDir, "advocacy.json"), "utf8").then(JSON.parse),
     readFile(path.join(dataDir, "editorial-sequences.json"), "utf8").then(JSON.parse),
+    readFile(path.join(dataDir, "studio-content.json"), "utf8").then(JSON.parse),
   ]);
 
   assert.ok(cards.length > 100);
@@ -28,11 +29,25 @@ test("every expanded card has embedded provenance and an explicit review status"
     assert.equal(typeof card.idleEligible, "boolean", `${card.id} needs idle eligibility`);
     assert.ok(card.binderGroup, `${card.id} needs a Binder group`);
   }
-  assert.equal(cards.filter(({ releaseSetId }) => releaseSetId === "party-leaders").length, 14);
-  assert.equal(cards.filter(({ releaseSetId }) => releaseSetId === "party-slot-2").length, 13);
-  assert.equal(cards.filter(({ idleEligible }) => idleEligible).length, 14);
-  assert.ok(cards.filter(({ releaseSetId }) => releaseSetId === "party-slot-2").every(({ releaseState, idleEligible }) =>
-    releaseState === "held" && idleEligible === false));
+  const activeReleases = new Set(
+    (studio.gameConfig?.releaseSets || [])
+      .filter(({ runtimeState }) => runtimeState === "active")
+      .map(({ id }) => id),
+  );
+  const leaders = cards.filter(({ releaseSetId }) => releaseSetId === "party-leaders");
+  const slotTwo = cards.filter(({ releaseSetId }) => releaseSetId === "party-slot-2");
+  const leadersOpen = activeReleases.has("party-leaders");
+  const slotTwoOpen = activeReleases.has("party-slot-2");
+  assert.equal(leaders.length, 14);
+  assert.equal(slotTwo.length, 13);
+  assert.equal(
+    cards.filter(({ idleEligible }) => idleEligible).length,
+    (leadersOpen ? leaders.length : 0) + (slotTwoOpen ? slotTwo.length : 0),
+  );
+  assert.ok(leaders.every(({ releaseState, idleEligible }) =>
+    releaseState === (leadersOpen ? "active" : "held") && idleEligible === leadersOpen));
+  assert.ok(slotTwo.every(({ releaseState, idleEligible }) =>
+    releaseState === (slotTwoOpen ? "active" : "held") && idleEligible === slotTwoOpen));
 
   assert.equal(advocacy.editorialPolicy.rulesStayFixed, true);
   assert.equal(advocacy.editorialPolicy.oneProgramForEveryone, true);
