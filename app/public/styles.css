@@ -964,14 +964,28 @@ img.mini-art {
 }
 
 .filter-strip button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   flex: 0 0 auto;
-  padding: 9px 12px;
+  max-width: 9.5rem;
+  padding: 7px 10px;
   border: 1px solid rgba(44, 51, 48, 0.35);
   border-radius: 999px;
   background: transparent;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+}
+.filter-strip .filter-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.filter-strip .filter-count {
+  flex: 0 0 auto;
+  opacity: 0.72;
+  font-variant-numeric: tabular-nums;
 }
 
 .filter-strip button.active { border-color: var(--civic); background: var(--civic); color: var(--paper); }
@@ -4055,7 +4069,8 @@ body {
 
 .kalpi-card.holo.numbered::before {
   inset: 0;
-  padding: 8px;
+  padding: 4px;
+  animation-duration: 3.8s;
   background: conic-gradient(
     from var(--holo-spin, 0deg),
     #b38d3f 0deg,

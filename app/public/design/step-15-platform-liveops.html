@@ -161,7 +161,7 @@
     <section class="decide" aria-label="Decisions to lock">
       <article>
         <b>PWA <span class="lock">locked</span></b>
-        <p>Phone and desktop. Add to Home Screen + one “The card is ready” notification. No App Store.</p>
+        <p>Phone product. Notifications can fire without Add to Home Screen where the OS allows. No App Store.</p>
       </article>
       <article>
         <b>Rooms <span class="lock">locked</span></b>
@@ -169,11 +169,11 @@
       </article>
       <article>
         <b>Specials <span class="lock">locked</span></b>
-        <p>Need a Today line while a window is open. Still no Events tab.</p>
+        <p>A Today line only while a window is open. No empty line. No Events tab.</p>
       </article>
       <article>
-        <b>Creators</b>
-        <p>Launch help for the first 10 posters — not a player feature. See the explainer.</p>
+        <b>Creators <span class="lock">dropped</span></b>
+        <p>Not in 15. Share the binder link. No kit page.</p>
       </article>
     </section>
 
@@ -188,11 +188,12 @@
         </div>
         <div class="copy">
           <h2>PWA is the phone product.</h2>
-          <p>Locked: Klafi ships as a website you pin to the phone (and desktop) home screen. Safari / Chrome “Add to Home Screen.” No App Store, no Play Store, no email login. Toolbar color <code>#1f4f4a</code>, existing pack icon. There is no offline mode that invents a pull.</p>
+          <p>Locked: Klafi is the phone product in the browser. Add to Home Screen is optional polish (icon + fullscreen). No App Store, no Play Store, no email login. Toolbar color <code>#1f4f4a</code>, existing pack icon. There is no offline mode that invents a pull.</p>
           <ul>
+            <li>Notifications can fire without adding to Home Screen on Android Chrome and desktop, after the player grants permission.</li>
+            <li>iPhone still requires Add to Home Screen for web push — that is an iOS rule, not ours.</li>
             <li>One allowed notification: the idle card is ready. It fires only after the server says <code>nextIdleAt</code> has passed.</li>
-            <li>No marketing push, no “come back before the streak breaks,” no email.</li>
-            <li>Refusing notifications does not hurt play. Installing does not unlock a new ability.</li>
+            <li>No marketing push, no “come back before the streak breaks,” no email. Refusing notifications does not hurt play.</li>
             <li>Two devices + the same recovery code = the same player. The notification does not grant a second pull.</li>
           </ul>
           <p><strong>Proposed copy:</strong> “The card is ready to collect.” / “You can play without notifications. The collection still saves.”</p>
@@ -235,7 +236,7 @@
         </div>
         <div class="copy">
           <h2>Window-controlled Specials — a Today line, no Events tab.</h2>
-          <p>Locked: the player Events tab stays closed. While Studio has a Specials window open, Today shows one line. After the window closes the line goes away. Cards already pulled stay in the binder. One card per Jerusalem day. Studio writes <code>opensAt</code> / <code>closesAt</code>; the server rejects a pull outside the window.</p>
+          <p>Locked: the player Events tab stays closed. While Studio has a Specials window open, Today shows one line. If no window is open, that line is absent — no empty slot. Cards already pulled stay in the binder. One card per Jerusalem day. Studio writes <code>opensAt</code> / <code>closesAt</code>; the server rejects a pull outside the window.</p>
           <div class="examples">
             <b>Example windows</b>
             <ul>
@@ -247,46 +248,22 @@
             <ul>
               <li>“Special window open until 28 Sep. One extra card today.”</li>
               <li>“Rabin memorial — one card today. It stays in your binder.”</li>
-              <li>“This week’s Special is closed. Cards already pulled stay.”</li>
+              <li>No window → no line.</li>
             </ul>
           </div>
           <div class="no">Do not build an Events tab, a quiz, or a volunteer pack. Do not change the regular pack generator.</div>
         </div>
       </article>
 
-      <article class="row">
-        <div class="stub" aria-hidden="true">
-          <small>Creator kit</small>
-          <h3 style="margin-top:28px">?ref=creator-maya</h3>
-          <p>9:16 walk · 4:5 story · still for WhatsApp</p>
-          <p style="margin-top:24px;font-size:13px">Shared 60–90 minute window. Same content for everyone.</p>
-        </div>
-        <div class="copy">
-          <h2>What the “creator kit” actually is.</h2>
-          <p>This is <strong>not a feature inside the game</strong>. It is launch help: how the first players find Klafi.</p>
-          <p>Before a public push, we ask about ten people who already have an audience (a campus page, a politics explainer, a big WhatsApp group) to post Klafi in the <em>same</em> 60–90 minutes. Each person gets a unique link so we can see who sent players:</p>
-          <p><code>https://klafi.vercel.app/?ref=maya</code></p>
-          <p>The “kit” is the three posts we would hand them, ready to publish — not an app they log into:</p>
-          <ul>
-            <li>A vertical walk video (9:16) of one card opening.</li>
-            <li>An Instagram / story still (4:5).</li>
-            <li>A WhatsApp image they can forward.</li>
-          </ul>
-          <p>They do not get extra cards, a dashboard, or a payout. Players who tap the link see the same game as everyone else. The <code>ref=</code> only marks the door they came through.</p>
-          <p>The share-binder link is a simpler version of the same idea: one URL that shows the album. The kit is only if we also want those ten people to post a <em>video</em> of a pull. That video waits on step 16 (pack-open animation).</p>
-          <p><strong>Still open:</strong> keep this as a later static page, or drop it and just share the binder link?</p>
-          <div class="no">No follower counts on screen, no creator ranking for players, no pull prize for the poster.</div>
-        </div>
-      </article>
     </div>
 
     <section>
-      <h2>Still open</h2>
+      <h2>Locked for 15</h2>
       <div class="questions">
-        <label><input type="checkbox" checked disabled /> PWA is the phone product: Add to Home Screen + one ready-card notification. No store.</label>
+        <label><input type="checkbox" checked disabled /> PWA is the phone product. Notifications without Home Screen where the OS allows; iPhone still needs the icon for push.</label>
         <label><input type="checkbox" checked disabled /> Leagues: invite code and paper QR.</label>
-        <label><input type="checkbox" checked disabled /> Specials: a Today line while a window is open. Examples above.</label>
-        <label><input type="checkbox" /> Creator kit: keep as a later static handoff for 10 posters, or drop it and only share the binder link?</label>
+        <label><input type="checkbox" checked disabled /> Specials: a Today line only while a window is open. No empty line.</label>
+        <label><input type="checkbox" checked disabled /> Creator kit: dropped. Share the binder link.</label>
       </div>
     </section>
   </main>

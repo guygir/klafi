@@ -31,3 +31,11 @@ window.__kalpiWarmup = {
   home,
   holders: fetch("/api/card-holders").then(json).catch(() => null),
 };
+window.__kalpiWarmup.catalog.then((catalog) => {
+  for (const card of (catalog?.cards || []).slice(0, 12)) {
+    if (!card?.artKey) continue;
+    const image = new Image();
+    image.decoding = "async";
+    image.src = `/design-assets/${encodeURIComponent(card.artKey)}`;
+  }
+}).catch(() => {});

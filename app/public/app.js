@@ -773,6 +773,7 @@ async function hydrateHome() {
         /* Static catalog.json stays until the live list slots arrive. */
       }
       hydrateCardHolders().catch(() => {});
+      prefetchBinderArt(playerCatalog());
       renderProfile();
       renderHome();
       renderBinder();
@@ -1004,6 +1005,7 @@ async function hydrateLookOnlyCatalog() {
     /* Static catalog.json stays until the live list slots arrive. */
   }
   hydrateCardHolders().catch(() => {});
+  prefetchBinderArt(playerCatalog());
 }
 
 async function bootstrapShowcase() {
@@ -2302,13 +2304,36 @@ function rarityNameHe(rarity) {
   return "נפוץ";
 }
 
-function artMarkup(card, mini = false) {
+function artMarkup(card, mini = false, eager = false) {
   const className = mini ? "mini-art" : "card-art";
   const url = artUrl(card);
   if (url) {
-    return `<img class="${className}" src="${url}" alt="" decoding="async" aria-label="איור של ${escapeHtml(cardTitle(card))}">`;
+    const load = eager ? 'fetchpriority="high"' : 'loading="lazy"';
+    return `<img class="${className}" src="${url}" alt="" decoding="async" ${load} aria-label="איור של ${escapeHtml(cardTitle(card))}">`;
   }
   return `<div class="${className} placeholder" role="img" aria-label="איור זמני של ${escapeHtml(cardTitle(card))}" data-mark="${escapeHtml(placeholderMark(card))}"></div>`;
+}
+
+function prefetchBinderArt(cards = []) {
+  const list = cards.filter((card) => artUrl(card));
+  prefetchCardArt(list.slice(0, 12));
+  const rest = list.slice(12);
+  if (!rest.length) return;
+  const run = () => prefetchCardArt(rest);
+  if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 2500 });
+  else setTimeout(run, 200);
+}
+
+const FILTER_SET_SHORT = {
+  "party-leaders": "מנהיגים",
+  "party-slot-2": "שתיים",
+  "set-5": "רגעים",
+  "decisions": "החלטות",
+  "records": "הישגים",
+};
+
+function filterSetChip(set, label, count, active) {
+  return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${escapeHtml(set)}"><span class="filter-name">${escapeHtml(label)}</span><span class="filter-count">${count}</span></button>`;
 }
 
 function displayedCardQuote(card) {
@@ -2526,6 +2551,8 @@ function renderShowcaseBinder() {
     showcaseView?.setAttribute("aria-busy", catalogFailed ? "false" : "true");
     return;
   }
+  const filterX = elements.showcaseFilters?.querySelector(".filter-sets")?.scrollLeft || 0;
+  const gridY = elements.showcaseGrid.scrollTop || 0;
   showcaseView?.setAttribute("aria-busy", "false");
   const playerCards = playerCatalog();
   const releaseOrder = (model.gameConfig?.releaseSets || [])
@@ -2535,8 +2562,10 @@ function renderShowcaseBinder() {
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
   if (numberedCards.length) setOrder.push("NUMBERED");
   const setLabels = {};
-  for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
-  setLabels.ALL = `הכול ${playerCards.length}`;
+  for (const release of model.gameConfig?.releaseSets || []) {
+    setLabels[`RELEASE:${release.id}`] = FILTER_SET_SHORT[release.id] || release.nameHe;
+  }
+  setLabels.ALL = "הכול";
   setLabels.NUMBERED = "ממוספרים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
   if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && model.binderFilter !== "NUMBERED" && !model.binderFilter.startsWith("RELEASE:")) {
@@ -2572,7 +2601,7 @@ function renderShowcaseBinder() {
             ? numberedCards.length
           : playerCards.filter((card) => card.releaseSetId === set.slice(8)).length;
         const active = model.binderFilter === set;
-        return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
+        return filterSetChip(set, setLabels[set] || set, count, active);
       }),
       `</div>`,
     ].join("");
@@ -2600,6 +2629,9 @@ function renderShowcaseBinder() {
   }).join("");
   setEmptyNote(elements.showcaseEmpty, "אין קלפים בסינון הזה.", { hidden: visible.length > 0 });
   queueCardTextFit(elements.showcaseGrid);
+  const nextStrip = elements.showcaseFilters?.querySelector(".filter-sets");
+  if (nextStrip) nextStrip.scrollLeft = filterX;
+  elements.showcaseGrid.scrollTop = gridY;
 }
 
 function displayCardMarkup(card, surface = "display") {
@@ -2623,7 +2655,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
-          ${artMarkup(card)}
+          ${artMarkup(card, false, surface === "display" || surface === "walkout")}
           <div class="card-image-meta">
             <span class="card-code-tag">${escapeHtml(presentation.code)}</span>
             <span class="card-meta-mid"></span>
@@ -2677,6 +2709,8 @@ function renderBinder() {
     binderView?.setAttribute("aria-busy", catalogFailed ? "false" : "true");
     return;
   }
+  const filterX = elements.binderFilters?.querySelector(".filter-sets")?.scrollLeft || 0;
+  const gridY = elements.binderGrid?.scrollTop || 0;
   const waitingOwnership = !ownershipReady();
   binderView?.setAttribute("aria-busy", waitingOwnership ? "true" : "false");
   const inventory = model.serverState?.inventory || {};
@@ -2700,8 +2734,10 @@ function renderBinder() {
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
   if (numberedIds.size) setOrder.push("NUMBERED");
   const setLabels = {};
-  for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
-  setLabels.ALL = `הכול ${playerCards.length}`;
+  for (const release of model.gameConfig?.releaseSets || []) {
+    setLabels[`RELEASE:${release.id}`] = FILTER_SET_SHORT[release.id] || release.nameHe;
+  }
+  setLabels.ALL = "הכול";
   setLabels.SPECIALS = "מיוחדים";
   setLabels.NUMBERED = "ממוספרים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
@@ -2732,7 +2768,7 @@ function renderBinder() {
           ? numberedIds.size
         : playerCards.filter((card) => card.releaseSetId === set.slice(8) && inventory[card.id]).length;
       const active = model.binderFilter === set;
-      return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
+      return filterSetChip(set, setLabels[set] || set, count, active);
     }),
     `</div>`,
   ].join("");
@@ -2782,6 +2818,9 @@ function renderBinder() {
     ? `<button class="badge-overflow" type="button" data-open-achievements aria-label="עוד ${earned.length - visibleBadges.length} הישגים">+${earned.length - visibleBadges.length}</button>`
     : "");
   queueCardTextFit(elements.binderGrid);
+  const nextStrip = elements.binderFilters?.querySelector(".filter-sets");
+  if (nextStrip) nextStrip.scrollLeft = filterX;
+  if (elements.binderGrid) elements.binderGrid.scrollTop = gridY;
 }
 
 function badgeArtwork(id) {

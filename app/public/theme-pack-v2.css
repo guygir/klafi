@@ -180,7 +180,8 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered::before {
   inset: 0;
-  padding: 8px;
+  padding: 4px;
+  animation-duration: 3.8s;
   background: conic-gradient(
     from var(--holo-spin, 0deg),
     #b38d3f 0deg,
@@ -1192,7 +1193,8 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered::before,
 #app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered::before {
-  padding: 8px;
+  padding: 4px;
+  animation-duration: 3.8s;
   background: conic-gradient(
     from var(--holo-spin, 0deg),
     #b38d3f 0deg,
