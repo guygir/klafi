@@ -114,7 +114,7 @@ test("rooms use a short code, paper QR, shared stars, and stop at 32", async (t)
   const created = await api(running.base, "/api/leagues", {
     token: owner.body.token,
     method: "POST",
-    body: { name: "חדר תשרי" },
+    body: { name: "ליגת תשרי" },
   });
   assert.equal(created.status, 201);
   assert.match(created.body.league.code, /^[A-Z2-9]{6}$/);

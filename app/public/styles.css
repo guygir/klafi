@@ -3150,9 +3150,19 @@ body {
 
 #home-view .home-grid {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: min(248px, 40dvh);
   grid-template-columns: minmax(0, 1fr) minmax(120px, 190px);
   gap: 20px;
+}
+#home-view .pack-plinth {
+  min-height: min(220px, 36dvh);
+}
+#home-view.has-specials .today-docket-row {
+  min-height: 44px;
+  padding-block: 5px;
+}
+#home-view.has-specials .today-docket-row > small {
+  display: none;
 }
 
 .home-title-row {

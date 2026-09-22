@@ -1622,7 +1622,7 @@ async function hydrateLeagues() {
     model.leagues = payload.leagues || [];
     renderLeagues();
   } catch {
-    /* Profile still opens without a room list. */
+    /* Profile still opens without a league list. */
   }
 }
 
@@ -1642,9 +1642,9 @@ async function createLeagueRoom() {
     model.leagues = [payload.league, ...(model.leagues || []).filter((room) => room.code !== payload.league.code)];
     renderLeagues();
     if (elements.leagueNameInput) elements.leagueNameInput.value = "";
-    showToast("החדר נפתח.");
+    showToast("הליגה נפתחה.");
   } catch {
-    setLeagueStatus("לא הצלחנו לפתוח חדר עכשיו.");
+    setLeagueStatus("לא הצלחנו לפתוח ליגה עכשיו.");
   } finally {
     if (elements.createLeague) elements.createLeague.disabled = false;
   }
@@ -1667,13 +1667,13 @@ async function joinLeagueFromInput(rawCode) {
     model.leagues = [payload.league, ...(model.leagues || []).filter((room) => room.code !== payload.league.code)];
     renderLeagues();
     if (elements.leagueJoinInput) elements.leagueJoinInput.value = "";
-    showToast("נכנסתם לחדר.");
+    showToast("נכנסתם לליגה.");
   } catch (error) {
     setLeagueStatus(error.status === 409
-      ? "החדר מלא. אפשר עד 32 שחקנים."
+      ? "הליגה מלאה. אפשר עד 32 שחקנים."
       : error.status === 404
         ? "הקוד לא נמצא."
-        : "לא הצלחנו להצטרף לחדר.");
+        : "לא הצלחנו להצטרף לליגה.");
   } finally {
     if (elements.joinLeague) elements.joinLeague.disabled = false;
   }
@@ -2078,6 +2078,7 @@ function renderTodaySpecials() {
   if (!elements.todaySpecialsRow) return;
   const windowOpen = model.specialWindow;
   elements.todaySpecialsRow.hidden = !windowOpen;
+  document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
   if (!windowOpen) return;
   elements.todaySpecialsHook.textContent = windowOpen.nameHe;
   const closes = new Date(windowOpen.closesAt);
@@ -5656,7 +5657,7 @@ elements.leagueRooms?.addEventListener("click", (event) => {
   const copy = event.target.closest("[data-copy-league]");
   if (copy) {
     copyText(copy.dataset.copyLeague).then((copied) => {
-      showToast(copied ? "קישור החדר הועתק." : "העתיקו את הקישור מהקוד.");
+      showToast(copied ? "קישור הליגה הועתק." : "העתיקו את הקישור מהקוד.");
     });
     return;
   }

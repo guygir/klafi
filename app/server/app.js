@@ -1665,7 +1665,7 @@ export async function createKalpiApp({
 
         if (request.method === "POST" && url.pathname === "/api/leagues") {
           const input = await readJson(request);
-          const name = normalizeDisplayName(input.name) || "חדר";
+          const name = normalizeDisplayName(input.name) || "ליגה";
           const created = await store.createLeague(token, name, now());
           if (created.error) {
             json(response, created.error === "UNAUTHORIZED" ? 401 : 400, { error: created.error });

@@ -345,12 +345,17 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /\/api\/leagues/);
   assert.match(javascript, /function createLeagueRoom/);
   assert.match(javascript, /function joinLeagueFromInput/);
+  assert.match(javascript, /הליגה נפתחה/);
+  assert.match(javascript, /נכנסתם לליגה/);
   assert.match(html, /rel="manifest"/);
   assert.match(html, /manifest\.webmanifest/);
   assert.match(html, /id="enable-idle-notify"/);
   assert.match(html, /id="create-league"/);
   assert.match(html, /id="join-league"/);
   assert.match(html, /id="league-rooms"/);
+  assert.match(html, /id="profile-leagues-title">ליגות/);
+  assert.match(html, /שם הליגה/);
+  assert.doesNotMatch(html, /id="profile-leagues-title">חדרים/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(html, /id="today-challenge-visual"/);
   assert.match(html, /hero-art-knesset\.png/);
@@ -458,7 +463,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-36/);
+  assert.match(html, /card-surface-37/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -526,7 +531,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-36/);
+  assert.match(html, /card-surface-37/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
