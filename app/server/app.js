@@ -695,6 +695,7 @@ function publicIdleState(session, now, cards, config = {}) {
     progression,
     avatars: publicAvatars(session, config.avatars, progression.level),
     loginStreak: session.loginStreak || 0,
+    factionId: session.factionId || null,
     numberedCopies: numberedCopies(session.instances),
   };
 }

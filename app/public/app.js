@@ -542,6 +542,7 @@ function applyHomePayload(home) {
         favorites: home.state.favorites || [],
         starCount: home.state.starCount,
         loginStreak: home.state.loginStreak || 0,
+        factionId: home.state.factionId || null,
         numberedCopies: home.state.numberedCopies || [],
       },
     }));
@@ -604,6 +605,17 @@ function applyCatalog(cards) {
   const visible = cards.filter((card) => isLiveReleaseSet(card.releaseSetId));
   model.catalog = visible;
   model.byId = new Map(visible.map((card) => [card.id, card]));
+}
+
+function mergeLiveCatalogFields(liveCards = []) {
+  for (const live of liveCards) {
+    const card = model.byId.get(live.id);
+    if (!card) continue;
+    const slot = Number(live.listSlot);
+    if (Number.isInteger(slot) && slot > 0) card.listSlot = slot;
+    if (live.subtitleHe) card.subtitleHe = live.subtitleHe;
+    if (live.subtitle) card.subtitle = live.subtitle;
+  }
 }
 
 function applyFullBoot(boot) {
@@ -726,6 +738,12 @@ async function hydrateHome() {
         if (config) model.gameConfig = { ...model.gameConfig, ...config };
       } catch {
         /* Shell parties stay until the live register arrives. */
+      }
+      try {
+        const live = await request("/api/catalog");
+        mergeLiveCatalogFields(live.cards || []);
+      } catch {
+        /* Static catalog.json stays until the live list slots arrive. */
       }
       renderProfile();
       renderHome();
@@ -2352,7 +2370,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-meta-mid"></span>
             <span class="card-meta-end">
               ${presentation.listSlot
-                ? `<strong class="card-slot-tag" aria-label="מקום ${presentation.listSlot}">מקום ${presentation.listSlot}</strong>`
+                ? `<b class="card-slot-tag" aria-label="מקום ${presentation.listSlot}">מקום ${presentation.listSlot}</b>`
                 : frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
               ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}"><small>מקום ברשימה</small><em>${instance.numberedIndex}/${instance.numberedOf}</em></b>` : ""}
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}

@@ -2359,7 +2359,8 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .card-identity-stack { display: contents; }
 .card-rarity-zone,
-.card-slot-mark { display: none; }
+.card-slot-mark,
+.kalpi-card.numbered .card-rarity-zone { display: none; }
 .card-quote-zone,
 .card-party-zone,
 .card-rarity-zone,
@@ -3933,10 +3934,15 @@ body {
 }
 
 #app[data-card-frame="tall-v2"] .card-image-meta .card-slot-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-slot-tag,
 .card-slot-tag {
   width: max-content;
   min-width: max-content;
+  max-width: none;
+  height: clamp(18px, 8cqw, 24px);
+  min-height: clamp(18px, 8cqw, 24px);
   padding: 0 6px;
+  overflow: visible;
   border-radius: 999px;
   font: 700 clamp(7px, 3.2cqw, 11px)/1 "IBM Plex Sans Hebrew", sans-serif;
 }
@@ -4032,7 +4038,8 @@ body {
 
 .level-letter,
 .collector-letter {
-  mix-blend-mode: multiply;
+  background: var(--pack-paper, #eee5d4);
+  border-radius: 3px;
 }
 
 .level-letter-text,

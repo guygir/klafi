@@ -182,6 +182,19 @@ body:has(#app[data-theme="pack-v2"]) {
   background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 48%, #fff6c8 58%, #ffffff 66%, #e0c36a 74%, transparent 86%);
 }
 
+#app[data-card-frame="tall-v2"] .card-image-meta .card-slot-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-slot-tag {
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
+  height: 8cqw;
+  min-height: 8cqw;
+  padding: 0 1.8cqw;
+  overflow: visible;
+  border-radius: 999px;
+  font: 700 5.4cqw/1 "IBM Plex Sans Hebrew", sans-serif;
+}
+
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
   width: clamp(48px, 20cqw, 64px);
@@ -1309,6 +1322,11 @@ body:has(#app[data-theme="pack-v2"]) {
   font-size: 3.5cqw;
   font-weight: 500;
   line-height: 1.15;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-rarity-zone,
+#app .kalpi-card.numbered[data-card-frame="fullart-v1"] .card-rarity-zone {
+  display: none;
 }
 
 #app[data-card-frame="fullart-v1"] .card-rarity-zone strong,

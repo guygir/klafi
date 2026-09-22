@@ -60,6 +60,7 @@ test("slim home state includes inventory for binder reads", () => {
   assert.deepEqual(state.favorites, ["LIK-M01-Q01"]);
   assert.equal(state.ownedUnique, 1);
   assert.equal(state.starCount, 0);
+  assert.equal(state.factionId, null);
 });
 
 test("slim home counts stars from the visible card index", () => {
