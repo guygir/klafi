@@ -210,12 +210,16 @@ function serveShareLanding(request, response, card, extras = {}) {
 }
 
 function json(response, status, value) {
+  const requestId = response.getHeader("x-request-id");
+  const payload = status >= 500 && value && typeof value === "object"
+    ? { ...value, requestId: value.requestId || requestId || undefined }
+    : value;
   response.writeHead(status, {
     ...SECURITY_HEADERS,
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
   });
-  response.end(JSON.stringify(value));
+  response.end(JSON.stringify(payload));
 }
 
 const STATELESS_API_PATHS = new Set([
@@ -281,7 +285,12 @@ export function publicPartyRegister(studioContent, cards = []) {
 
 async function readJsonFile(filePath, fallback) {
   if (!filePath) return fallback;
-  return JSON.parse(await readFile(filePath, "utf8"));
+  try {
+    return JSON.parse(await readFile(filePath, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") return fallback;
+    throw error;
+  }
 }
 
 function bearer(request) {

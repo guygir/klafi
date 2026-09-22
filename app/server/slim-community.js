@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import pg from "pg";
 import { collectionStarCount } from "./visible-sets.js";
@@ -18,9 +19,26 @@ let shellLoad;
 let eventsCatalog;
 let eventsLoad;
 
+function stamp(response) {
+  const requestId = response.getHeader("x-request-id") || randomUUID();
+  response.setHeader("x-request-id", requestId);
+  return requestId;
+}
+
 function json(response, status, value) {
+  const requestId = stamp(response);
+  const payload = status >= 500 && value && typeof value === "object"
+    ? { ...value, requestId: value.requestId || requestId }
+    : value;
+  if (status >= 500) {
+    console.error(JSON.stringify({
+      level: "error",
+      requestId,
+      message: payload?.detail || payload?.error || "SERVER_ERROR",
+    }));
+  }
   response.writeHead(status, SECURITY_HEADERS);
-  response.end(JSON.stringify(value));
+  response.end(JSON.stringify(payload));
 }
 
 function bearer(request) {
