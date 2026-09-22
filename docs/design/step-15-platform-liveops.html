@@ -124,6 +124,23 @@
       background: var(--paper-deep);
       padding: 10px 12px;
     }
+    .lock {
+      display: inline-block;
+      margin-inline-start: 8px;
+      padding: 1px 7px;
+      border: 1px solid var(--foil);
+      color: var(--civic);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .examples {
+      background: var(--paper-deep);
+      padding: 12px 14px;
+      margin: 10px 0 0;
+      font-size: 14px;
+    }
+    .examples b { display: block; margin-bottom: 6px; color: var(--civic); font-size: 12px; }
+    .examples li { margin: 0 0 8px; }
     @media (max-width: 820px) {
       .decide, .row { grid-template-columns: 1fr; }
     }
@@ -133,7 +150,7 @@
   <header class="mast">
     <p class="status">Sketch only · do not build · step 15</p>
     <h1>The device, the room, and the window.</h1>
-    <p class="lede">Four ops surfaces on top of the core that is already live. The player Events tab stays closed. Pulls stay server-authoritative. Nothing here adds a sand timer or email login.</p>
+    <p class="lede">This is the main product, including the phone. Four ops surfaces on top of the core that is already live. The player Events tab stays closed. Pulls stay server-authoritative. Nothing here adds a sand timer or email login.</p>
     <nav>
       <a href="step-14-holos-streaks-cec.html">14 · holo / streak / pulse</a> ·
       <a href="../growth/bootstrap-playbook.md">Seeding notebook</a> ·
@@ -143,20 +160,20 @@
   <main>
     <section class="decide" aria-label="Decisions to lock">
       <article>
-        <b>PWA</b>
-        <p>Add to Home Screen + one “The card is ready” notification. No gameplay urgency.</p>
+        <b>PWA <span class="lock">locked</span></b>
+        <p>Phone and desktop. Add to Home Screen + one “The card is ready” notification. No App Store.</p>
       </article>
       <article>
-        <b>Rooms</b>
-        <p>A friends / campus / unit league. Same rules, smaller room.</p>
+        <b>Rooms <span class="lock">locked</span></b>
+        <p>Invite code and a paper QR. Same rules, smaller room.</p>
       </article>
       <article>
-        <b>Specials</b>
-        <p>Studio opens a dated window. The player does not get an Events tab.</p>
+        <b>Specials <span class="lock">locked</span></b>
+        <p>Need a Today line while a window is open. Still no Events tab.</p>
       </article>
       <article>
         <b>Creators</b>
-        <p>Ten links, three formats, one shared 60–90 minute window.</p>
+        <p>Launch help for the first 10 posters — not a player feature. See the explainer.</p>
       </article>
     </section>
 
@@ -170,8 +187,8 @@
           <p style="margin-top:28px;font-size:13px;color:var(--foil)">Notification · The card is ready to collect</p>
         </div>
         <div class="copy">
-          <h2>PWA and one notification.</h2>
-          <p>The game already runs in the browser. Install is a shortcut to klafi.vercel.app, with toolbar color <code>#1f4f4a</code> and the existing pack icon. There is no offline mode that invents a pull.</p>
+          <h2>PWA is the phone product.</h2>
+          <p>Locked: Klafi ships as a website you pin to the phone (and desktop) home screen. Safari / Chrome “Add to Home Screen.” No App Store, no Play Store, no email login. Toolbar color <code>#1f4f4a</code>, existing pack icon. There is no offline mode that invents a pull.</p>
           <ul>
             <li>One allowed notification: the idle card is ready. It fires only after the server says <code>nextIdleAt</code> has passed.</li>
             <li>No marketing push, no “come back before the streak breaks,” no email.</li>
@@ -179,7 +196,7 @@
             <li>Two devices + the same recovery code = the same player. The notification does not grant a second pull.</li>
           </ul>
           <p><strong>Proposed copy:</strong> “The card is ready to collect.” / “You can play without notifications. The collection still saves.”</p>
-          <div class="no">No email login, no store, no gameplay throttle, no offline queue that awards a card.</div>
+          <div class="no">No email login, no store listing, no gameplay throttle, no offline queue that awards a card.</div>
         </div>
       </article>
 
@@ -195,9 +212,10 @@
         </div>
         <div class="copy">
           <h2>Rooms, not a second country.</h2>
-          <p>The national collectors board is already live. A league is that same board in a closed room: invite code, 32 players max, a dated season (Hebrew month or election window). Scoring stays real collection stars + distinct cards. There is no separate league score.</p>
+          <p>Locked: join with an invite code <em>and</em> a paper QR (same room, two ways in). The national collectors board is already live. A league is that same board in a closed room: 32 players max, a dated season (Hebrew month or election window). Scoring stays real collection stars + distinct cards. There is no separate league score.</p>
           <ul>
-            <li>Create a room from Profile. The code is a short string, not a UUID.</li>
+            <li>Create a room from Profile. The code is a short string, not a UUID. The QR encodes that same code.</li>
+            <li>Print the QR on a flyer / classroom slip / unit notice. Scanning it opens the join screen.</li>
             <li>Same name-report rules. No chat.</li>
             <li>A seasonal ladder is the same table with a month stamp. When the season ends the stamp stays cosmetic.</li>
             <li>Faction stays national and anonymous. The room does not reveal faction.</li>
@@ -216,14 +234,22 @@
           <p style="margin-top:22px;opacity:.7">The player sees the card in the collection after the server grants it. There is no Events tab.</p>
         </div>
         <div class="copy">
-          <h2>Window-controlled Specials — no Events screen.</h2>
-          <p>Locked decision: the player Events surface stays deferred. Specials already exist in a collection once they have been opened. This step only designs the ops switch: open/close dates, one card per Jerusalem day, and after the window closes the card stays with whoever pulled it.</p>
-          <ul>
-            <li>Studio writes <code>opensAt</code> / <code>closesAt</code>. The server rejects a pull outside the window.</li>
-            <li>If we want a hint without a new tab: one line on Today only while a window is open.</li>
-            <li>Without that line, Specials stay completely quiet until someone already holds them.</li>
-          </ul>
-          <p><strong>Optional Today line:</strong> “A Specials window is open until 28.09. One card today.”</p>
+          <h2>Window-controlled Specials — a Today line, no Events tab.</h2>
+          <p>Locked: the player Events tab stays closed. While Studio has a Specials window open, Today shows one line. After the window closes the line goes away. Cards already pulled stay in the binder. One card per Jerusalem day. Studio writes <code>opensAt</code> / <code>closesAt</code>; the server rejects a pull outside the window.</p>
+          <div class="examples">
+            <b>Example windows</b>
+            <ul>
+              <li><strong>Memorial week</strong> — Rabin last-speech card, 21–28 Sep.</li>
+              <li><strong>Election week</strong> — one extra civic card while ballots are in the news.</li>
+              <li><strong>Party-register night</strong> — a letter / ballot card the evening letters are locked.</li>
+            </ul>
+            <b>Example Today lines (pick tone later)</b>
+            <ul>
+              <li>“Special window open until 28 Sep. One extra card today.”</li>
+              <li>“Rabin memorial — one card today. It stays in your binder.”</li>
+              <li>“This week’s Special is closed. Cards already pulled stay.”</li>
+            </ul>
+          </div>
           <div class="no">Do not build an Events tab, a quiz, or a volunteer pack. Do not change the regular pack generator.</div>
         </div>
       </article>
@@ -236,27 +262,31 @@
           <p style="margin-top:24px;font-size:13px">Shared 60–90 minute window. Same content for everyone.</p>
         </div>
         <div class="copy">
-          <h2>Creator seeding — links, not a dashboard.</h2>
-          <p>The notebook already exists: ten creators, three formats, one window. The code marks where someone arrived from, not a political profile. Everyone sees the same editorial sequence.</p>
+          <h2>What the “creator kit” actually is.</h2>
+          <p>This is <strong>not a feature inside the game</strong>. It is launch help: how the first players find Klafi.</p>
+          <p>Before a public push, we ask about ten people who already have an audience (a campus page, a politics explainer, a big WhatsApp group) to post Klafi in the <em>same</em> 60–90 minutes. Each person gets a unique link so we can see who sent players:</p>
+          <p><code>https://klafi.vercel.app/?ref=maya</code></p>
+          <p>The “kit” is the three posts we would hand them, ready to publish — not an app they log into:</p>
           <ul>
-            <li>The link already works: <code>/?ref=creator-name</code>, including with <code>&amp;card=</code>.</li>
-            <li>What still needs design: a static kit page for the creator (outside the game) with the three exports after step 16.</li>
-            <li>No creator dashboard in alpha. Counts stay real event totals only.</li>
-            <li>If a share stalls, fix the image and the walk — do not invent motion.</li>
+            <li>A vertical walk video (9:16) of one card opening.</li>
+            <li>An Instagram / story still (4:5).</li>
+            <li>A WhatsApp image they can forward.</li>
           </ul>
-          <p><strong>Diagnostic bar, not a pull claim:</strong> 10/10 open a pack · ≥30% create a share · ≥20% of referrals start as a guest.</p>
-          <div class="no">No follower counts on screen, no creator ranking for players, no pull prize for the creator.</div>
+          <p>They do not get extra cards, a dashboard, or a payout. Players who tap the link see the same game as everyone else. The <code>ref=</code> only marks the door they came through.</p>
+          <p>The share-binder link is a simpler version of the same idea: one URL that shows the album. The kit is only if we also want those ten people to post a <em>video</em> of a pull. That video waits on step 16 (pack-open animation).</p>
+          <p><strong>Still open:</strong> keep this as a later static page, or drop it and just share the binder link?</p>
+          <div class="no">No follower counts on screen, no creator ranking for players, no pull prize for the poster.</div>
         </div>
       </article>
     </div>
 
     <section>
-      <h2>Questions for review</h2>
+      <h2>Still open</h2>
       <div class="questions">
-        <label><input type="checkbox" /> Ship the PWA now, or only after the pack-open animation in step 16?</label>
-        <label><input type="checkbox" /> Leagues: invite code only, or also a paper QR scan?</label>
-        <label><input type="checkbox" /> Specials: a quiet line on Today while a window is open, or total silence until the card is in a collection?</label>
-        <label><input type="checkbox" /> Creator kit: a separate static page, or stay out of the product until real video exists?</label>
+        <label><input type="checkbox" checked disabled /> PWA is the phone product: Add to Home Screen + one ready-card notification. No store.</label>
+        <label><input type="checkbox" checked disabled /> Leagues: invite code and paper QR.</label>
+        <label><input type="checkbox" checked disabled /> Specials: a Today line while a window is open. Examples above.</label>
+        <label><input type="checkbox" /> Creator kit: keep as a later static handoff for 10 posters, or drop it and only share the binder link?</label>
       </div>
     </section>
   </main>

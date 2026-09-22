@@ -5,6 +5,7 @@
   "installCommand": "npm ci --prefix app",
   "buildCommand": "node scripts/prepare-vercel-static.mjs",
   "rewrites": [
+    { "source": "/share/binder", "destination": "/share/binder.html" },
     { "source": "/share/:id", "destination": "/api?__kalpi_path=/share/:id" },
     { "source": "/api/:path*", "destination": "/api?__kalpi_path=/api/:path*" }
   ],

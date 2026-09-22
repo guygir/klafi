@@ -1,3 +1,4 @@
+-- Applied lazily by PostgresStore.ensureHolderSnapshotTable (transaction-pooler safe).
 CREATE TABLE IF NOT EXISTS kalpi_card_holder_snapshot (
   id SMALLINT PRIMARY KEY CHECK (id = 1),
   holders JSONB NOT NULL DEFAULT '{}'::jsonb,

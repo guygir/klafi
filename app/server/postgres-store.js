@@ -13,7 +13,6 @@ const MIGRATIONS = [
   ["002_normalized_runtime", "002_normalized_runtime.sql"],
   ["003_launch_reliability", "003_launch_reliability.sql"],
   ["004_numbered_streaks", "004_numbered_streaks.sql"],
-  ["005_card_holder_snapshot", "005_card_holder_snapshot.sql"],
 ];
 
 function iso(value) {
@@ -142,6 +141,7 @@ export class PostgresStore {
     this.now = now;
     this.holderRefresh = null;
     this.holderSnapshot = null;
+    this.holderTableReady = false;
   }
 
   executor() {
@@ -1121,8 +1121,21 @@ export class PostgresStore {
     return issued ? { index: issued, of: max } : null;
   }
 
+  async ensureHolderSnapshotTable() {
+    if (this.holderTableReady) return;
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS kalpi_card_holder_snapshot (
+        id SMALLINT PRIMARY KEY CHECK (id = 1),
+        holders JSONB NOT NULL DEFAULT '{}'::jsonb,
+        numbered_holders JSONB NOT NULL DEFAULT '{}'::jsonb,
+        computed_at TIMESTAMPTZ
+      )`);
+    this.holderTableReady = true;
+  }
+
   async readCardHolderSnapshot() {
     if (this.holderSnapshot?.computedAt) return this.holderSnapshot;
+    await this.ensureHolderSnapshotTable();
     const result = await this.pool.query(
       `SELECT holders, numbered_holders, computed_at
        FROM kalpi_card_holder_snapshot
@@ -1148,6 +1161,7 @@ export class PostgresStore {
   }
 
   async refreshCardHolderSnapshot() {
+    await this.ensureHolderSnapshotTable();
     const [owned, numbered] = await Promise.all([
       this.pool.query(
         `SELECT card_id, COUNT(*)::int AS holders
@@ -1181,10 +1195,14 @@ export class PostgresStore {
   }
 
   async cardHolderSummary() {
-    const snapshot = await this.readCardHolderSnapshot();
-    if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
-    if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
-    return snapshot;
+    try {
+      const snapshot = await this.readCardHolderSnapshot();
+      if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
+      if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
+      return snapshot;
+    } catch {
+      return { holders: {}, numberedHolders: {}, computedAt: new Date(this.now()).toISOString() };
+    }
   }
 
   async getStudioConfig() {
