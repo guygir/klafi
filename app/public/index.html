@@ -4,6 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#1f4f4a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="קְלָפִי" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/design-assets/pack-wrapper-klafi.png" />
   <meta name="description" content="קְלָפִי — אוספים את הבחירות." />
   <meta property="og:title" content="קְלָפִי · KLAFI" />
   <meta property="og:description" content="אוספים את הבחירות." />
@@ -11,12 +17,12 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-35"></script>
+  <script src="/boot-warmup.js?v=card-surface-36"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-35" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-35" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-36" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-36" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -131,6 +137,13 @@
               <strong id="today-leader-hook">המרוץ עוד פתוח</strong>
               <small id="today-leader-meta">טבלת האספנים</small>
               <em class="today-docket-go">לטבלה</em>
+            </button>
+            <button type="button" class="today-docket-row" id="today-specials-row" hidden data-today-nav="specials">
+              <span id="today-specials-visual" class="today-docket-visual event-visual" aria-hidden="true"></span>
+              <span class="today-docket-label">חלון מיוחד:</span>
+              <strong id="today-specials-hook"></strong>
+              <small id="today-specials-meta"></small>
+              <em id="today-specials-go" class="today-docket-go">לאיסוף</em>
             </button>
           </div>
         </section>
@@ -580,6 +593,29 @@
       </div>
       <p id="profile-restore-status" class="profile-error" role="status"></p>
     </section>
+    <section class="profile-notify" aria-labelledby="profile-notify-title">
+      <h3 id="profile-notify-title">התראות</h3>
+      <p>הודעה אחת כשהקלף מוכן לאיסוף. אפשר לשחק בלי התראות. האוסף עדיין נשמר.</p>
+      <p class="profile-recovery-note">באייפון צריך קודם להוסיף למסך הבית כדי לקבל התראות כשהדף סגור.</p>
+      <button id="enable-idle-notify" class="secondary-action" type="button">להפעיל התראות</button>
+      <p id="notify-status" class="profile-recovery-note" role="status"></p>
+    </section>
+    <section class="profile-leagues" aria-labelledby="profile-leagues-title">
+      <h3 id="profile-leagues-title">חדרים</h3>
+      <p>אותה טבלה, חדר קטן יותר. הכוכבים כבר נספרו בשרת.</p>
+      <label class="profile-name-label" for="league-name-input">שם החדר</label>
+      <div class="copy-field profile-recovery-row">
+        <input id="league-name-input" maxlength="24" autocomplete="off" placeholder="חדר תשרי" />
+        <button id="create-league" type="button">פתיחה</button>
+      </div>
+      <label class="profile-name-label" for="league-join-input">קוד הזמנה</label>
+      <div class="copy-field profile-recovery-row">
+        <input id="league-join-input" dir="ltr" spellcheck="false" autocomplete="off" placeholder="K7T3M2" />
+        <button id="join-league" type="button">הצטרפות</button>
+      </div>
+      <p id="league-status" class="profile-error" role="status"></p>
+      <div id="league-rooms" class="league-rooms"></div>
+    </section>
   </dialog>
 
   <dialog id="trust-dialog" class="policy-dialog" aria-labelledby="trust-dialog-title">
@@ -637,6 +673,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-35"></script>
+  <script type="module" src="/app.js?v=card-surface-36"></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { moveOwnedCard } from "./numbered.js";
+import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
 
 const { Pool } = pg;
 
@@ -142,6 +143,7 @@ export class PostgresStore {
     this.holderRefresh = null;
     this.holderSnapshot = null;
     this.holderTableReady = false;
+    this.leaguesTableReady = false;
   }
 
   executor() {
@@ -1203,6 +1205,127 @@ export class PostgresStore {
     } catch {
       return { holders: {}, numberedHolders: {}, computedAt: new Date(this.now()).toISOString() };
     }
+  }
+
+  async ensureLeaguesTable() {
+    if (this.leaguesTableReady) return;
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS kalpi_leagues (
+        code TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        season_label TEXT NOT NULL,
+        owner_token TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL,
+        member_tokens JSONB NOT NULL DEFAULT '[]'::jsonb
+      )`);
+    this.leaguesTableReady = true;
+  }
+
+  leagueFromRow(row) {
+    if (!row) return null;
+    return {
+      code: row.code,
+      name: row.name,
+      seasonLabel: row.season_label,
+      createdAt: iso(row.created_at),
+      ownerToken: row.owner_token,
+      memberTokens: row.member_tokens || [],
+    };
+  }
+
+  async scoreLeagueMembers(memberTokens, cards = []) {
+    const cardsById = new Map(cards.map((card) => [card.id, card]));
+    if (!memberTokens.length) return [];
+    const result = await this.pool.query(
+      `SELECT s.token, s.display_name, s.avatar_id, s.highest_rank,
+              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+              COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
+       FROM kalpi_sessions s
+       LEFT JOIN kalpi_inventory i ON i.session_token = s.token
+       WHERE s.token = ANY($1)
+       GROUP BY s.token`,
+      [memberTokens],
+    );
+    const byToken = new Map(result.rows.map((row) => [row.token, row]));
+    return memberTokens.map((token) => {
+      const row = byToken.get(token);
+      const session = {
+        inventory: row?.inventory || {},
+      };
+      return {
+        token,
+        label: row?.display_name || "שחקן קְלָפִי",
+        avatarId: row?.avatar_id || "kid-boy",
+        loginStreak: row?.login_streak || 0,
+        rankLevel: row?.highest_rank || 1,
+        ...leagueMemberScore(session, cardsById),
+      };
+    });
+  }
+
+  async createLeague(ownerToken, name, now = this.now()) {
+    await this.ensureLeaguesTable();
+    return this.exclusive(async () => {
+      const owner = await this.loadSession(ownerToken);
+      if (!owner) return { error: "UNAUTHORIZED" };
+      let code = newLeagueCode();
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const created = await this.executor().query(
+          `INSERT INTO kalpi_leagues (code, name, season_label, owner_token, created_at, member_tokens)
+           VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+           ON CONFLICT (code) DO NOTHING
+           RETURNING *`,
+          [code, name, hebrewSeasonLabel(now), ownerToken, new Date(now).toISOString(), JSON.stringify([ownerToken])],
+        );
+        if (created.rows[0]) return { league: this.leagueFromRow(created.rows[0]) };
+        code = newLeagueCode();
+      }
+      return { error: "LEAGUE_CREATE_FAILED" };
+    });
+  }
+
+  async joinLeague(token, rawCode) {
+    await this.ensureLeaguesTable();
+    return this.exclusive(async () => {
+      const session = await this.loadSession(token);
+      if (!session) return { error: "UNAUTHORIZED" };
+      const code = normalizeLeagueCode(rawCode);
+      if (!code) return { error: "LEAGUE_NOT_FOUND" };
+      const result = await this.executor().query(
+        "SELECT * FROM kalpi_leagues WHERE code = $1 FOR UPDATE",
+        [code],
+      );
+      const league = this.leagueFromRow(result.rows[0]);
+      if (!league) return { error: "LEAGUE_NOT_FOUND" };
+      if (!league.memberTokens.includes(token)) {
+        if (league.memberTokens.length >= LEAGUE_MAX) return { error: "LEAGUE_FULL" };
+        league.memberTokens.push(token);
+        await this.executor().query(
+          "UPDATE kalpi_leagues SET member_tokens = $2::jsonb WHERE code = $1",
+          [code, JSON.stringify(league.memberTokens)],
+        );
+      }
+      return { league };
+    });
+  }
+
+  async listLeagues(token) {
+    await this.ensureLeaguesTable();
+    const result = await this.pool.query(
+      `SELECT * FROM kalpi_leagues
+       WHERE owner_token = $1 OR member_tokens @> $2::jsonb
+       ORDER BY created_at DESC`,
+      [token, JSON.stringify([token])],
+    );
+    return result.rows.map((row) => this.leagueFromRow(row));
+  }
+
+  async getLeague(code) {
+    await this.ensureLeaguesTable();
+    const normalized = normalizeLeagueCode(code);
+    if (!normalized) return null;
+    const result = await this.pool.query("SELECT * FROM kalpi_leagues WHERE code = $1", [normalized]);
+    return this.leagueFromRow(result.rows[0]);
   }
 
   async getStudioConfig() {

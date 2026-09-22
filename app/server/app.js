@@ -25,6 +25,9 @@ import {
   stampKey,
   stampMax,
 } from "./numbered.js";
+import { publicLeague } from "./leagues.js";
+import { qrSvg } from "./qr-svg.js";
+import { openSpecialWindow } from "./special-window.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -85,6 +88,7 @@ const MIME = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
 };
 const SECURITY_HEADERS = Object.freeze({
   "x-content-type-options": "nosniff",
@@ -813,7 +817,7 @@ async function serveFile(request, response, base, relativePath) {
     if (!info.isFile()) throw Object.assign(new Error("Not a file"), { code: "ENOENT" });
     const content = await readFile(requested);
     const extension = path.extname(requested).toLowerCase();
-    const revalidate = new Set([".html", ".css", ".js", ".json", ".mp4"]).has(extension);
+    const revalidate = new Set([".html", ".css", ".js", ".json", ".mp4", ".webmanifest"]).has(extension);
     const headers = {
       ...SECURITY_HEADERS,
       "content-type": MIME[extension] ?? "application/octet-stream",
@@ -1069,6 +1073,14 @@ export async function createKalpiApp({
       claimedToday: Boolean(session.eventClaims?.[event.id]?.[dayKey]),
       cards: event.cardIds.map((id) => cardsById.get(id)).filter(Boolean),
     }));
+  }
+
+  async function presentLeague(league, token, request) {
+    if (!league) return null;
+    const members = await store.scoreLeagueMembers(league.memberTokens, cards);
+    const presented = publicLeague(league, members, token, requestOrigin(request));
+    presented.qrSvg = qrSvg(presented.joinUrl);
+    return presented;
   }
 
   async function settleIdle(token) {
@@ -1399,6 +1411,7 @@ export async function createKalpiApp({
           trades: { trades: await store.listTrades(token), simulated: false },
           leaderboards: await store.leaderboardSummary(cards, now(), token),
           activity: await store.activitySummary(),
+          specialWindow: openSpecialWindow(events.events, now(), store.getSession(token)),
         });
         return;
       }
@@ -1647,6 +1660,49 @@ export async function createKalpiApp({
 
         if (request.method === "GET" && url.pathname === "/api/events") {
           json(response, 200, { events: publicEvents(session) });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/leagues") {
+          const input = await readJson(request);
+          const name = normalizeDisplayName(input.name) || "חדר";
+          const created = await store.createLeague(token, name, now());
+          if (created.error) {
+            json(response, created.error === "UNAUTHORIZED" ? 401 : 400, { error: created.error });
+            return;
+          }
+          json(response, 201, { league: await presentLeague(created.league, token, request) });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/leagues/join") {
+          const input = await readJson(request);
+          const joined = await store.joinLeague(token, input.code);
+          if (joined.error) {
+            const status = joined.error === "LEAGUE_FULL" ? 409 : joined.error === "UNAUTHORIZED" ? 401 : 404;
+            json(response, status, { error: joined.error });
+            return;
+          }
+          json(response, 200, { league: await presentLeague(joined.league, token, request) });
+          return;
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/leagues") {
+          const rooms = await store.listLeagues(token);
+          json(response, 200, {
+            leagues: await Promise.all(rooms.map((league) => presentLeague(league, token, request))),
+          });
+          return;
+        }
+
+        const leagueRoom = url.pathname.match(/^\/api\/leagues\/([^/]+)$/);
+        if (request.method === "GET" && leagueRoom) {
+          const league = await store.getLeague(decodeURIComponent(leagueRoom[1]));
+          if (!league || !league.memberTokens.includes(token)) {
+            json(response, 404, { error: "LEAGUE_NOT_FOUND" });
+            return;
+          }
+          json(response, 200, { league: await presentLeague(league, token, request) });
           return;
         }
 

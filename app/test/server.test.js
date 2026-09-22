@@ -701,6 +701,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.ok(currentDaily?.avatarId);
   const community = await api(running.base, "/api/community", { token });
   assert.equal(community.status, 200);
+  assert.equal(community.body.specialWindow, null);
   assert.equal(community.body.leaderboards.dailyChallenge.day, leaderboards.body.dailyChallenge.day);
   assert.ok(Array.isArray(community.body.trades.trades));
   assert.equal(community.body.activity.counts.pack_opened, 1);

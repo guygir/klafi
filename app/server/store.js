@@ -3,6 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { moveOwnedCard } from "./numbered.js";
+import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
 
 export const CARD_HOLDER_SYNC_MS = 60 * 60 * 1000;
 
@@ -16,6 +17,7 @@ export const EMPTY_STATE = {
   idempotency: {},
   numberedIssued: {},
   cardHolderSnapshot: { holders: {}, numberedHolders: {}, computedAt: null },
+  leagues: {},
 };
 
 export function normalizeState(value = {}) {
@@ -29,6 +31,7 @@ export function normalizeState(value = {}) {
   state.reports ??= [];
   state.idempotency ??= {};
   state.numberedIssued ??= {};
+  state.leagues ??= {};
   state.cardHolderSnapshot = {
     holders: state.cardHolderSnapshot?.holders || {},
     numberedHolders: state.cardHolderSnapshot?.numberedHolders || {},
@@ -532,6 +535,67 @@ export class JsonStore {
     const next = current + 1;
     this.state.numberedIssued[key] = next;
     return { index: next, of: max };
+  }
+
+  scoreLeagueMembers(memberTokens, cards = []) {
+    const cardsById = new Map(cards.map((card) => [card.id, card]));
+    return memberTokens.map((token) => {
+      const session = this.getSession(token);
+      const score = leagueMemberScore(session, cardsById);
+      return {
+        token,
+        label: session?.displayName || "שחקן קְלָפִי",
+        avatarId: session?.avatarId || "kid-boy",
+        loginStreak: session?.loginStreak || 0,
+        rankLevel: session?.highestRank || 1,
+        ...score,
+      };
+    });
+  }
+
+  async createLeague(ownerToken, name, now = this.now()) {
+    return this.exclusive(async () => {
+      if (!this.getSession(ownerToken)) return { error: "UNAUTHORIZED" };
+      this.state.leagues ??= {};
+      let code = newLeagueCode();
+      while (this.state.leagues[code]) code = newLeagueCode();
+      const league = {
+        code,
+        name,
+        seasonLabel: hebrewSeasonLabel(now),
+        createdAt: new Date(now).toISOString(),
+        ownerToken,
+        memberTokens: [ownerToken],
+      };
+      this.state.leagues[code] = league;
+      await this.persist();
+      return { league };
+    });
+  }
+
+  async joinLeague(token, rawCode) {
+    return this.exclusive(async () => {
+      if (!this.getSession(token)) return { error: "UNAUTHORIZED" };
+      const code = normalizeLeagueCode(rawCode);
+      const league = code ? this.state.leagues?.[code] : null;
+      if (!league) return { error: "LEAGUE_NOT_FOUND" };
+      if (!league.memberTokens.includes(token)) {
+        if (league.memberTokens.length >= LEAGUE_MAX) return { error: "LEAGUE_FULL" };
+        league.memberTokens.push(token);
+        await this.persist();
+      }
+      return { league };
+    });
+  }
+
+  async listLeagues(token) {
+    return Object.values(this.state.leagues || {})
+      .filter((league) => league.memberTokens.includes(token))
+      .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
+  }
+
+  async getLeague(code) {
+    return this.state.leagues?.[normalizeLeagueCode(code)] || null;
   }
 
   exclusive(operation) {

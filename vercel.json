@@ -16,7 +16,7 @@
       "maxDuration": 10
     },
     "api/community.js": {
-      "includeFiles": "{app/public/shell.json,app/server/**}",
+      "includeFiles": "{app/public/shell.json,app/server/**,app/data/events.json}",
       "maxDuration": 10
     },
     "api/index.js": {

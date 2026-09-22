@@ -67,6 +67,8 @@ const model = {
   renderedLevel: null,
   selectedAvatarId: null,
   extrasReady: false,
+  specialWindow: null,
+  leagues: [],
   showcase: false,
   cardHolders: { holders: {}, numberedHolders: {} },
   cardHoldersReady: false,
@@ -106,6 +108,19 @@ const elements = {
   restoreInput: document.querySelector("#profile-restore-input"),
   restoreButton: document.querySelector("#restore-recovery-code"),
   restoreStatus: document.querySelector("#profile-restore-status"),
+  enableIdleNotify: document.querySelector("#enable-idle-notify"),
+  notifyStatus: document.querySelector("#notify-status"),
+  leagueNameInput: document.querySelector("#league-name-input"),
+  createLeague: document.querySelector("#create-league"),
+  leagueJoinInput: document.querySelector("#league-join-input"),
+  joinLeague: document.querySelector("#join-league"),
+  leagueStatus: document.querySelector("#league-status"),
+  leagueRooms: document.querySelector("#league-rooms"),
+  todaySpecialsRow: document.querySelector("#today-specials-row"),
+  todaySpecialsVisual: document.querySelector("#today-specials-visual"),
+  todaySpecialsHook: document.querySelector("#today-specials-hook"),
+  todaySpecialsMeta: document.querySelector("#today-specials-meta"),
+  todaySpecialsGo: document.querySelector("#today-specials-go"),
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
   homeCopy: document.querySelector("#home-copy"),
@@ -898,12 +913,13 @@ function scheduleIdleRefill({ priority = "buffered" } = {}) {
   }, delay);
 }
 
-function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state }) {
+function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state, specialWindow }) {
   if (events) model.events = events.events || events;
   if (trades) model.trades = trades.trades || trades;
   if (leaderboards) model.leaderboards = leaderboards;
   if (activity) model.activity = activity;
   if (specials) model.specials = specials;
+  if (specialWindow !== undefined) model.specialWindow = specialWindow;
   if (state) model.serverState = { ...model.serverState, ...state };
 }
 
@@ -1032,6 +1048,9 @@ async function bootstrap() {
     return bootstrapShowcase();
   }
   applyCachedHome();
+  if (notifyPermission() === "granted") {
+    ensureServiceWorker().then(() => scheduleIdleNotification()).catch(() => {});
+  }
   if (model.token) hydrateExtras().catch(() => {});
   const inboundView = requestedPlayerView();
   if (inboundView && inboundView !== "home") paintPlayerView(inboundView);
@@ -1065,6 +1084,8 @@ async function bootstrap() {
         scheduleIdleRefill({ priority });
       }
       hydrateExtras().catch(() => {});
+      scheduleIdleNotification();
+      if (inboundLeagueCode()) consumeInboundLeague().catch(() => {});
     }).catch(() => {});
     if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
     else homePromise.catch(() => null);
@@ -1126,6 +1147,10 @@ function handleInboundLink() {
   }
   if (cardId && model.byId.has(cardId)) {
     showSharedCard(cardId, params.has("gift"));
+    return;
+  }
+  if (params.get("league")) {
+    openProfileDialog();
     return;
   }
   const requestedView = params.get("view");
@@ -1418,10 +1443,240 @@ function openProfileDialog() {
   model.selectedAvatarId = model.serverState?.avatarId || "kid-boy";
   elements.profileError.textContent = "";
   fillRecoveryCode();
+  renderNotifyControl();
   renderAvatarPicker();
+  hydrateLeagues().catch(() => {});
+  consumeInboundLeague().catch(() => {});
   elements.profileDialog.showModal();
   elements.profileNameInput.focus();
   elements.profileNameInput.select();
+}
+
+const IDLE_NOTIFY_KEY = "klafi:idle-notify";
+const IDLE_NOTIFY_COPY = "הקלף מוכן לאיסוף";
+let idleNotifyTimer = null;
+let scheduledIdleAt = "";
+
+function lastIdleNotify() {
+  try {
+    return localStorage.getItem(IDLE_NOTIFY_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function markIdleNotified(at) {
+  try {
+    localStorage.setItem(IDLE_NOTIFY_KEY, at);
+  } catch {
+    /* Permission still works without the once-key. */
+  }
+}
+
+function notifyPermission() {
+  return "Notification" in window ? Notification.permission : "unsupported";
+}
+
+function renderNotifyControl() {
+  if (!elements.enableIdleNotify) return;
+  const permission = notifyPermission();
+  if (permission === "unsupported") {
+    elements.enableIdleNotify.hidden = true;
+    if (elements.notifyStatus) elements.notifyStatus.textContent = "הדפדפן הזה לא תומך בהתראות.";
+    return;
+  }
+  elements.enableIdleNotify.hidden = permission === "granted";
+  elements.enableIdleNotify.textContent = permission === "denied" ? "התראות חסומות בדפדפן" : "להפעיל התראות";
+  elements.enableIdleNotify.disabled = permission === "denied";
+  if (elements.notifyStatus) {
+    elements.notifyStatus.textContent = permission === "granted"
+      ? "התראה אחת תישלח כשהקלף מוכן."
+      : permission === "denied"
+        ? "אפשר לשחק בלי התראות. האוסף עדיין נשמר."
+        : "אפשר לשחק בלי התראות. האוסף עדיין נשמר.";
+  }
+}
+
+async function ensureServiceWorker() {
+  if (!("serviceWorker" in navigator) || model.showcase) return null;
+  try {
+    return await navigator.serviceWorker.register("/sw.js");
+  } catch {
+    return null;
+  }
+}
+
+async function requestIdleNotifications() {
+  if (notifyPermission() === "unsupported") {
+    renderNotifyControl();
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission === "granted") {
+    await ensureServiceWorker();
+    scheduleIdleNotification();
+  }
+  renderNotifyControl();
+}
+
+async function notifyIdleReady(nextIdleAt) {
+  if (!nextIdleAt || lastIdleNotify() === nextIdleAt) return;
+  if (Date.parse(nextIdleAt) > Date.now()) return;
+  markIdleNotified(nextIdleAt);
+  const options = {
+    body: IDLE_NOTIFY_COPY,
+    tag: nextIdleAt,
+    lang: "he",
+    dir: "rtl",
+    icon: "/design-assets/pack-wrapper-klafi.png",
+  };
+  try {
+    const ready = navigator.serviceWorker?.ready;
+    if (ready) {
+      const registration = await ready;
+      if (registration.showNotification) {
+        await registration.showNotification("קְלָפִי", options);
+        return;
+      }
+    }
+  } catch {
+    /* Fall through to the page Notification. */
+  }
+  if (notifyPermission() === "granted") {
+    try {
+      new Notification("קְלָפִי", options);
+    } catch {
+      /* Safari can reject the constructor after a granted prompt. */
+    }
+  }
+}
+
+function scheduleIdleNotification() {
+  if (model.showcase || notifyPermission() !== "granted") return;
+  const nextIdleAt = model.serverState?.nextIdleAt;
+  if (!nextIdleAt || lastIdleNotify() === nextIdleAt) return;
+  const when = Date.parse(nextIdleAt);
+  if (!Number.isFinite(when)) return;
+  if (when <= Date.now()) {
+    notifyIdleReady(nextIdleAt);
+    return;
+  }
+  if (scheduledIdleAt === nextIdleAt && idleNotifyTimer) return;
+  clearTimeout(idleNotifyTimer);
+  scheduledIdleAt = nextIdleAt;
+  idleNotifyTimer = setTimeout(() => notifyIdleReady(nextIdleAt), Math.min(when - Date.now(), 2_000_000_000));
+}
+
+function inboundLeagueCode() {
+  return new URLSearchParams(location.search).get("league") || "";
+}
+
+function clearInboundLeague() {
+  const url = new URL(location.href);
+  if (!url.searchParams.has("league")) return;
+  url.searchParams.delete("league");
+  history.replaceState({}, "", url);
+}
+
+async function consumeInboundLeague() {
+  const code = inboundLeagueCode();
+  if (!code || !model.token) return;
+  if (elements.leagueJoinInput) elements.leagueJoinInput.value = code;
+  await joinLeagueFromInput(code);
+  clearInboundLeague();
+}
+
+function leagueFaceMarkup(entry = {}) {
+  const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
+  const streak = Number(entry.loginStreak) >= 3 ? Number(entry.loginStreak) : 0;
+  return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
+}
+
+function renderLeagues() {
+  if (!elements.leagueRooms) return;
+  const rooms = model.leagues || [];
+  elements.leagueRooms.innerHTML = rooms.map((league) => `
+    <article class="league-room" data-league-code="${escapeHtml(league.code)}">
+      <span class="league-season">${escapeHtml(league.seasonLabel || "")}</span>
+      <h4>${escapeHtml(league.name)}</h4>
+      <div class="league-room-code">
+        <b dir="ltr">${escapeHtml(league.code)}</b>
+        <button type="button" data-copy-league="${escapeHtml(league.joinUrl || league.code)}">העתקת קישור</button>
+      </div>
+      <div class="league-qr">${league.qrSvg || ""}</div>
+      <ol class="league-board">
+        ${(league.members || []).map((entry) => `
+          <li class="${entry.current ? "current-player" : ""}">
+            ${leagueFaceMarkup(entry)}
+            <span>${entry.rank}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
+            <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
+          </li>`).join("")}
+      </ol>
+    </article>`).join("");
+}
+
+async function hydrateLeagues() {
+  if (!model.token || model.showcase) return;
+  try {
+    const payload = await request("/api/leagues");
+    model.leagues = payload.leagues || [];
+    renderLeagues();
+  } catch {
+    /* Profile still opens without a room list. */
+  }
+}
+
+function setLeagueStatus(message) {
+  if (elements.leagueStatus) elements.leagueStatus.textContent = message || "";
+}
+
+async function createLeagueRoom() {
+  setLeagueStatus("");
+  if (elements.createLeague) elements.createLeague.disabled = true;
+  try {
+    const payload = await request("/api/leagues", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: elements.leagueNameInput?.value || "" }),
+    });
+    model.leagues = [payload.league, ...(model.leagues || []).filter((room) => room.code !== payload.league.code)];
+    renderLeagues();
+    if (elements.leagueNameInput) elements.leagueNameInput.value = "";
+    showToast("החדר נפתח.");
+  } catch {
+    setLeagueStatus("לא הצלחנו לפתוח חדר עכשיו.");
+  } finally {
+    if (elements.createLeague) elements.createLeague.disabled = false;
+  }
+}
+
+async function joinLeagueFromInput(rawCode) {
+  const code = (rawCode || elements.leagueJoinInput?.value || "").trim();
+  setLeagueStatus("");
+  if (!code) {
+    setLeagueStatus("הדביקו קוד הזמנה.");
+    return;
+  }
+  if (elements.joinLeague) elements.joinLeague.disabled = true;
+  try {
+    const payload = await request("/api/leagues/join", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    model.leagues = [payload.league, ...(model.leagues || []).filter((room) => room.code !== payload.league.code)];
+    renderLeagues();
+    if (elements.leagueJoinInput) elements.leagueJoinInput.value = "";
+    showToast("נכנסתם לחדר.");
+  } catch (error) {
+    setLeagueStatus(error.status === 409
+      ? "החדר מלא. אפשר עד 32 שחקנים."
+      : error.status === 404
+        ? "הקוד לא נמצא."
+        : "לא הצלחנו להצטרף לחדר.");
+  } finally {
+    if (elements.joinLeague) elements.joinLeague.disabled = false;
+  }
 }
 
 async function copyRecoveryCode() {
@@ -1816,6 +2071,31 @@ function renderTodayDocket() {
       ? "אתם מקום 1"
       : "המקום הראשון פנוי";
   elements.todayLeaderMeta.textContent = "";
+  renderTodaySpecials();
+}
+
+function renderTodaySpecials() {
+  if (!elements.todaySpecialsRow) return;
+  const windowOpen = model.specialWindow;
+  elements.todaySpecialsRow.hidden = !windowOpen;
+  if (!windowOpen) return;
+  elements.todaySpecialsHook.textContent = windowOpen.nameHe;
+  const closes = new Date(windowOpen.closesAt);
+  const until = Number.isNaN(closes.getTime())
+    ? ""
+    : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
+  elements.todaySpecialsMeta.textContent = windowOpen.claimedToday
+    ? "הקלף היומי כבר באוסף. הוא נשאר באלבום."
+    : until
+      ? `פתוח עד ${until}. קלף אחד היום.`
+      : "קלף אחד היום. הוא נשאר באלבום.";
+  if (elements.todaySpecialsGo) {
+    elements.todaySpecialsGo.textContent = windowOpen.claimedToday ? "לאלבום" : "לאיסוף";
+  }
+  if (elements.todaySpecialsVisual && elements.todaySpecialsVisual.dataset.event !== windowOpen.id) {
+    elements.todaySpecialsVisual.dataset.event = windowOpen.id;
+    elements.todaySpecialsVisual.innerHTML = `<img src="/design-assets/hero-art-kalpi.png" alt="" loading="lazy" />`;
+  }
 }
 
 function renderActivity() {
@@ -1921,6 +2201,7 @@ function renderProgression({ announce = false } = {}) {
 
 function updateCountdown() {
   renderTodayDocket();
+  scheduleIdleNotification();
   const remaining = timeUntil(model.serverState?.nextIdleAt);
   const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
   if (!remaining) {
@@ -3453,6 +3734,37 @@ function renderEvents() {
     button.classList.toggle("active", activePage);
     button.setAttribute("aria-selected", String(activePage));
   });
+}
+
+async function claimTodaySpecial() {
+  const windowOpen = model.specialWindow;
+  if (!windowOpen) return;
+  if (windowOpen.claimedToday) {
+    elements.navButtons.find((button) => button.dataset.nav === "binder")?.click();
+    return;
+  }
+  elements.todaySpecialsRow.disabled = true;
+  try {
+    model.currentPack = await request(`/api/events/${encodeURIComponent(windowOpen.id)}/pull`, { method: "POST" });
+    model.serverState = await request("/api/state");
+    model.specialWindow = { ...windowOpen, claimedToday: true };
+    model.currentCardIndex = 0;
+    model.previewMode = false;
+    model.currentPack.cards = (model.currentPack.cards || []).slice(0, 1);
+    renderTodayDocket();
+    showView("pack");
+    startWalkout();
+  } catch (error) {
+    if (error.status === 409) {
+      model.specialWindow = { ...windowOpen, claimedToday: true };
+      renderTodayDocket();
+      showToast("קלף האירוע כבר נאסף היום.");
+      return;
+    }
+    showToast("חלון האיסוף סגור עכשיו.");
+  } finally {
+    elements.todaySpecialsRow.disabled = false;
+  }
 }
 
 async function pullEventCard() {
@@ -5325,6 +5637,31 @@ elements.addAchievement?.addEventListener("click", () => {
 });
 elements.profileForm.addEventListener("submit", saveProfile);
 elements.copyRecovery?.addEventListener("click", copyRecoveryCode);
+elements.enableIdleNotify?.addEventListener("click", () => {
+  requestIdleNotifications().catch(() => {});
+});
+elements.createLeague?.addEventListener("click", () => {
+  createLeagueRoom().catch(() => {});
+});
+elements.joinLeague?.addEventListener("click", () => {
+  joinLeagueFromInput().catch(() => {});
+});
+elements.leagueJoinInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    joinLeagueFromInput().catch(() => {});
+  }
+});
+elements.leagueRooms?.addEventListener("click", (event) => {
+  const copy = event.target.closest("[data-copy-league]");
+  if (copy) {
+    copyText(copy.dataset.copyLeague).then((copied) => {
+      showToast(copied ? "קישור החדר הועתק." : "העתיקו את הקישור מהקוד.");
+    });
+    return;
+  }
+  handlePublicNameReport(event);
+});
 elements.restoreButton?.addEventListener("click", restoreSessionFromCode);
 elements.restoreInput?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
@@ -5411,6 +5748,10 @@ for (const preview of [elements.tradeOfferedPreview, elements.tradeWantedPreview
 document.querySelector(".today-docket").addEventListener("click", (event) => {
   const hook = event.target.closest("[data-today-nav]");
   if (!hook) return;
+  if (hook.dataset.todayNav === "specials") {
+    claimTodaySpecial().catch(() => showToast("לא הצלחנו לאסוף את הקלף המיוחד."));
+    return;
+  }
   if (hook.dataset.communityPage) model.communityPage = hook.dataset.communityPage;
   elements.navButtons.find((button) => button.dataset.nav === hook.dataset.todayNav)?.click();
   if (hook.dataset.communityPage) renderGrowth();
