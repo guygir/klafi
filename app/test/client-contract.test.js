@@ -575,7 +575,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function localAchievementMeasures/);
   assert.match(html, /id="home-enable-notify"/);
   assert.match(html, /data-replay-tips/);
-  assert.match(html, /data-binder-owned/);
+  assert.match(javascript, /data-binder-owned/);
   assert.match(javascript, /binderOwnedOnly/);
   assert.match(html, /fullart-v1/);
   assert.match(javascript, /card-identity-stack/);
