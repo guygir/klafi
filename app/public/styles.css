@@ -3867,8 +3867,9 @@ body {
 .numbered-tip {
   position: fixed;
   z-index: 40;
-  inset-inline-end: 16px;
-  top: 18%;
+  inset-inline-start: 50%;
+  inset-block-end: 10%;
+  translate: -50% 0;
   max-width: 16rem;
   padding: 12px 14px;
   border: 1px solid var(--foil, #c4a35a);

@@ -18,7 +18,7 @@
     "progression": {
       "thresholdExponent": 1.2,
       "grantLevelReward": true,
-      "numberedSets": ["party-leaders"],
+      "numberedSets": [],
       "releaseLevelIncrements": {
         "party-leaders": 5,
         "party-slot-2": 2,

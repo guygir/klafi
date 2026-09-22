@@ -24,7 +24,7 @@ export function streakLabel(streak) {
 }
 
 export function normalizeNumberedSets(value, releaseIds = []) {
-  if (!Array.isArray(value)) return ["party-leaders"];
+  if (!Array.isArray(value)) return [];
   const allowed = new Set(releaseIds);
   return [...new Set(value.map(String))].filter((id) => !allowed.size || allowed.has(id));
 }
@@ -39,6 +39,10 @@ export function stampEligible(card, numberedSets = []) {
     && numberedSets.includes(card.releaseSetId)
     && !card.eventOnly,
   );
+}
+
+export function stampFromGrant(card, numberedSets, acquiredBy) {
+  return acquiredBy === "idle" && stampEligible(card, numberedSets);
 }
 
 export function stampKey(card) {

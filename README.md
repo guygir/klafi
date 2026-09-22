@@ -108,7 +108,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 13. Disclosed survey + published scoring table → matched-list party pack. **No need.**
 
 **Design first — do not implement yet**
-14. [x] Numbered list-slot stamps as tall-v2 holo cards + login streak on the avatar stack. Studio now edits rank names, thresholds, avatar unlocks, bonus-card flag, and `numberedSets` windows. Day one is party-leaders only. Daily-date holos and CEC pulse stay parked.
+14. [x] Numbered list-slot stamps as tall-v2 holo cards + login streak on the avatar stack. Studio edits rank names, thresholds, avatar unlocks, bonus-card flag, and `numberedSets` windows. Window ships empty; only idle grants stamp; first window when ticked is party-leaders. Daily-date holos and CEC pulse stay parked.
 15. Platform/live-ops: PWA + push, groups/leagues/seasonal ladders, event-controlled Specials, creator seeding. **Brainstorm design — review** [open the HTML](https://raw.githack.com/guygir/klafi/cursor/hebrew-trust-a11y-025e/docs/design/step-15-platform-liveops.html). Events player surface stays deferred.
 
 **Last**

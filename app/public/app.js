@@ -3148,7 +3148,7 @@ function populateLevelIncrements() {
     <label>${escapeHtml(set.nameHe)}
       <input type="number" min="0" max="20" data-level-increment="${escapeHtml(set.id)}" value="${increments[set.id] ?? 0}" />
     </label>`).join("")}
-    <p class="work-note">Max level = sum of increments for sets that are currently idle-eligible. First set ${increments["party-leaders"] ?? 5}; each later set adds its own increment.</p>`;
+    <p class="work-note">תקרת רמה = סכום התוספות של סדרות שפתוחות לאיסוף. מנהיגים ${increments["party-leaders"] ?? 5}, סגנים ${increments["party-slot-2"] ?? 2}, החלטות/רקורדים/רגעים/עמדות 1. לא שווים — כל סדרה פותחת כמה רמות, לא לפי גודל הקטלוג.</p>`;
   if (elements.rankNames) {
     elements.rankNames.value = (model.gameConfig.progression?.rankNames || model.gameConfig.progression?.ranks || []).join("\n");
   }
@@ -3163,7 +3163,7 @@ function populateLevelIncrements() {
       </label>`).join("");
   }
   if (elements.numberedSets) {
-    const selected = new Set(model.gameConfig.progression?.numberedSets || ["party-leaders"]);
+    const selected = new Set(model.gameConfig.progression?.numberedSets || []);
     elements.numberedSets.innerHTML = sets.map((set) => `
       <label>
         <input type="checkbox" data-numbered-set="${escapeHtml(set.id)}"${selected.has(set.id) ? " checked" : ""} />

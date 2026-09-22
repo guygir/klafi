@@ -1183,10 +1183,29 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   assert.equal(restoredSecond.body.inventory[secondCardId], 1);
 });
 
-test("numbered stamps are one holo per party slot and streaks count Jerusalem days", async (t) => {
-  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-"));
+test("numbered stamps are idle-only holos per party slot and streaks count Jerusalem days", async (t) => {
   const clock = { value: Date.parse("2026-09-21T10:00:00+03:00") };
-  const running = await start(dataDir, clock);
+  const parkedDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-parked-"));
+  const parked = await start(parkedDir, clock);
+  t.after(async () => {
+    await parked.close();
+    await rm(parkedDir, { recursive: true, force: true });
+  });
+  const parkedSession = await api(parked.base, "/api/session", { method: "POST" });
+  const parkedIdle = await api(parked.base, "/api/idle/settle", {
+    token: parkedSession.body.token,
+    method: "POST",
+  });
+  assert.equal(parkedIdle.status, 200);
+  assert.equal(parkedIdle.body.cards?.[0]?.numberedIndex, undefined);
+  assert.equal((parkedIdle.body.state.numberedCopies || []).length, 0);
+
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-"));
+  const studioContentPath = path.join(dataDir, "studio-content.json");
+  const studio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
+  studio.gameConfig.progression.numberedSets = ["party-leaders"];
+  await writeFile(studioContentPath, `${JSON.stringify(studio, null, 2)}\n`);
+  const running = await start(dataDir, clock, { studioContentPath });
   t.after(async () => {
     await running.close();
     await rm(dataDir, { recursive: true, force: true });
@@ -1194,36 +1213,38 @@ test("numbered stamps are one holo per party slot and streaks count Jerusalem da
 
   const first = await api(running.base, "/api/session", { method: "POST" });
   const second = await api(running.base, "/api/session", { method: "POST" });
-  const cardId = "LIK-M01-Q01";
-  const otherId = "YSR-M01-Q01";
-  const stamped = await api(running.base, "/api/debug/unlock-card", {
+  const debugCard = "LIK-M01-Q01";
+  const unlocked = await api(running.base, "/api/debug/unlock-card", {
     token: first.body.token,
     method: "POST",
-    body: { cardId },
+    body: { cardId: debugCard },
+  });
+  assert.equal(unlocked.status, 200);
+  const debugCopy = unlocked.body.instances.find((item) => item.cardId === debugCard);
+  assert.notEqual(debugCopy.finish, "Holo");
+  assert.equal(debugCopy.numberedIndex, undefined);
+  assert.equal(unlocked.body.numberedCopies.length, 0);
+
+  const stamped = await api(running.base, "/api/idle/settle", {
+    token: first.body.token,
+    method: "POST",
   });
   assert.equal(stamped.status, 200);
-  const copy = stamped.body.instances.find((item) => item.cardId === cardId);
+  const copy = stamped.body.cards[0];
   assert.equal(copy.finish, "Holo");
   assert.equal(copy.numberedIndex, 1);
   assert.equal(copy.numberedOf, 1);
-  assert.equal(stamped.body.numberedCopies.length, 1);
+  assert.equal(stamped.body.state.numberedCopies.length, 1);
 
-  const late = await api(running.base, "/api/debug/unlock-card", {
+  const late = await api(running.base, "/api/idle/settle", {
     token: second.body.token,
     method: "POST",
-    body: { cardId },
   });
-  const lateCopy = late.body.instances.find((item) => item.cardId === cardId);
+  const lateCopy = late.body.cards[0];
+  assert.equal(lateCopy.cardId, copy.cardId);
   assert.notEqual(lateCopy.finish, "Holo");
   assert.equal(lateCopy.numberedIndex, undefined);
-  assert.equal(late.body.numberedCopies.length, 0);
-
-  const other = await api(running.base, "/api/debug/unlock-card", {
-    token: first.body.token,
-    method: "POST",
-    body: { cardId: otherId },
-  });
-  assert.equal(other.body.instances.find((item) => item.cardId === otherId).numberedIndex, 1);
+  assert.equal((late.body.state.numberedCopies || []).length, 0);
 
   const dayOne = await api(running.base, "/api/state", { token: first.body.token });
   assert.equal(dayOne.body.loginStreak, 1);

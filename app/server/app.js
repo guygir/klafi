@@ -21,7 +21,7 @@ import {
   jerusalemDay,
   normalizeNumberedSets,
   numberedCopies,
-  stampEligible,
+  stampFromGrant,
   stampKey,
 } from "./numbered.js";
 
@@ -1123,7 +1123,7 @@ export async function createKalpiApp({
       studioContent?.gameConfig?.progression?.numberedSets,
       (studioContent?.gameConfig?.releaseSets || []).map(({ id }) => id),
     );
-    const stamp = stampEligible(card, sets)
+    const stamp = stampFromGrant(card, sets, acquiredBy)
       ? await store.claimNumberedStamp(stampKey(card), Number(card.listSlot))
       : null;
     const instance = {

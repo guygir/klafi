@@ -7,6 +7,7 @@ import {
   normalizeNumberedSets,
   previousJerusalemDay,
   stampEligible,
+  stampFromGrant,
   stampKey,
   streakLabel,
   takeInstanceForCard,
@@ -18,8 +19,12 @@ test("stamp eligibility is list-slot plus numberedSets only", () => {
   assert.equal(stampEligible(card, []), false);
   assert.equal(stampEligible({ ...card, listSlot: null }, ["party-leaders"]), false);
   assert.equal(stampEligible({ ...card, eventOnly: true }, ["party-leaders"]), false);
+  assert.equal(stampFromGrant(card, ["party-leaders"], "idle"), true);
+  assert.equal(stampFromGrant(card, ["party-leaders"], "quiz"), false);
+  assert.equal(stampFromGrant(card, ["party-leaders"], "debug-unlock"), false);
+  assert.equal(stampFromGrant(card, ["party-leaders"], "rank-2"), false);
   assert.equal(stampKey(card), "LIK:1");
-  assert.deepEqual(normalizeNumberedSets(undefined), ["party-leaders"]);
+  assert.deepEqual(normalizeNumberedSets(undefined), []);
   assert.deepEqual(normalizeNumberedSets(["party-leaders", "set-5"], ["party-leaders"]), ["party-leaders"]);
 });
 
