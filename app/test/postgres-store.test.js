@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { sessionDeltas } from "../server/postgres-store.js";
 import { postgresPoolOptions, runtimeConnectionString } from "../server/postgres-pool.js";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
 
 function instance(id, overrides = {}) {
   return {
@@ -105,6 +110,13 @@ test("serverless pools hold at most one short-lived database connection", () => 
   assert.ok(options.connectionTimeoutMillis < 10_000);
   assert.ok(options.idleTimeoutMillis < 10_000);
   assert.deepEqual(options.ssl, { rejectUnauthorized: false });
+});
+
+test("transaction-pooler boot applies leftover IF NOT EXISTS migrations", async () => {
+  const source = await readFile(path.join(here, "../server/postgres-store.js"), "utf8");
+  assert.doesNotMatch(source, /Database migrations require the Supabase session pooler/);
+  assert.match(source, /if \(this\.transactionPooling\) \{\s*await client\.query\(sql\)/);
+  assert.match(source, /005_card_holder_snapshot/);
 });
 
 test("serverless Supabase traffic uses transaction pooling", () => {

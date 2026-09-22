@@ -14,6 +14,7 @@ const MIGRATIONS = [
   ["002_normalized_runtime", "002_normalized_runtime.sql"],
   ["003_launch_reliability", "003_launch_reliability.sql"],
   ["004_numbered_streaks", "004_numbered_streaks.sql"],
+  ["005_card_holder_snapshot", "005_card_holder_snapshot.sql"],
 ];
 
 function iso(value) {
@@ -177,11 +178,12 @@ export class PostgresStore {
         appliedVersions = new Set(appliedResult.rows.map(({ version }) => version));
       }
       if (appliedVersions.size !== versions.length) {
-        if (this.transactionPooling) {
-          throw new Error("Database migrations require the Supabase session pooler on port 5432.");
+        // Session pooler can take an advisory lock. Transaction pooler (Vercel :6543)
+        // cannot, but every checked-in migration is CREATE/ADD IF NOT EXISTS.
+        if (!this.transactionPooling) {
+          await client.query("SELECT pg_advisory_lock(hashtext('kalpi-schema-migrations'))");
+          migrationLock = true;
         }
-        await client.query("SELECT pg_advisory_lock(hashtext('kalpi-schema-migrations'))");
-        migrationLock = true;
         await client.query(`
           CREATE TABLE IF NOT EXISTS kalpi_schema_migrations (
             version TEXT PRIMARY KEY,
@@ -196,6 +198,14 @@ export class PostgresStore {
         for (const [version, fileName] of MIGRATIONS) {
           if (appliedVersions.has(version)) continue;
           const sql = await readFile(new URL(`./migrations/${fileName}`, import.meta.url), "utf8");
+          if (this.transactionPooling) {
+            await client.query(sql);
+            await client.query(
+              "INSERT INTO kalpi_schema_migrations (version) VALUES ($1) ON CONFLICT (version) DO NOTHING",
+              [version],
+            );
+            continue;
+          }
           await client.query("BEGIN");
           try {
             await client.query(sql);
