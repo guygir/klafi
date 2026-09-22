@@ -464,6 +464,24 @@ export class JsonStore {
     };
   }
 
+  async cardHolderSummary() {
+    const holders = {};
+    const numberedHolders = {};
+    for (const session of Object.values(this.state.sessions || {})) {
+      for (const [cardId, copies] of Object.entries(session.inventory || {})) {
+        if (Number(copies) > 0) holders[cardId] = (holders[cardId] || 0) + 1;
+      }
+      const seen = new Set();
+      for (const instance of session.instances || []) {
+        if (Number(instance?.numberedIndex) > 0 && instance.cardId && !seen.has(instance.cardId)) {
+          seen.add(instance.cardId);
+          numberedHolders[instance.cardId] = (numberedHolders[instance.cardId] || 0) + 1;
+        }
+      }
+    }
+    return { holders, numberedHolders };
+  }
+
   async claimNumberedStamp(key, max) {
     this.state.numberedIssued ??= {};
     const current = this.state.numberedIssued[key] || 0;

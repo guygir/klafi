@@ -68,6 +68,8 @@ const model = {
   selectedAvatarId: null,
   extrasReady: false,
   showcase: false,
+  cardHolders: { holders: {}, numberedHolders: {} },
+  dialogNumbered: false,
   reports: [],
   reportSubject: null,
   watchedTrade: null,
@@ -149,6 +151,10 @@ const elements = {
   showcaseGrid: document.querySelector("#showcase-grid"),
   showcaseEmpty: document.querySelector("#showcase-empty"),
   showcaseOpenGame: document.querySelector("#showcase-open-game"),
+  studioShareBinder: document.querySelector("#studio-share-binder"),
+  studioShareBinderLink: document.querySelector("#studio-share-binder-link"),
+  studioShareBinderCopy: document.querySelector("#studio-share-binder-copy"),
+  dialogHolders: document.querySelector("#dialog-holders"),
   binderPercent: document.querySelector("#binder-percent"),
   binderCount: document.querySelector("#binder-count"),
   binderFilters: document.querySelector("#binder-filters"),
@@ -765,6 +771,7 @@ async function hydrateHome() {
       } catch {
         /* Static catalog.json stays until the live list slots arrive. */
       }
+      await hydrateCardHolders();
       renderProfile();
       renderHome();
       renderBinder();
@@ -995,6 +1002,7 @@ async function hydrateLookOnlyCatalog() {
   } catch {
     /* Static catalog.json stays until the live list slots arrive. */
   }
+  await hydrateCardHolders();
 }
 
 async function bootstrapShowcase() {
@@ -2447,12 +2455,44 @@ function catalogNumberedInstance(card) {
   return eligible ? { numberedIndex: 1, numberedOf: listSlot, finish: "Holo" } : {};
 }
 
-function catalogCardMarkup(card, surface = "binder") {
+function catalogCardMarkup(card, surface = "binder", numbered = false) {
   return cardMarkup(card, {
     finish: card.rarity,
     count: 1,
-    ...catalogNumberedInstance(card),
+    ...(numbered ? catalogNumberedInstance(card) : {}),
   }, { progressiveStage: "portrait", surface });
+}
+
+function possibleNumberedCards() {
+  return playerCatalog().filter((card) => catalogNumberedInstance(card).numberedIndex);
+}
+
+function holderCountFor(card, numbered = false) {
+  const bag = numbered ? model.cardHolders?.numberedHolders : model.cardHolders?.holders;
+  return Number(bag?.[card?.id] || 0);
+}
+
+function holderLine(count, numbered = false) {
+  if (numbered) {
+    if (count <= 0) return "אף שחקן עדיין לא מחזיק עותק ממוספר";
+    if (count === 1) return "שחקן אחד מחזיק עותק ממוספר";
+    return `${count} שחקנים מחזיקים עותק ממוספר`;
+  }
+  if (count <= 0) return "אף שחקן עדיין לא מחזיק בקלף הזה";
+  if (count === 1) return "שחקן אחד מחזיק בקלף הזה";
+  return `${count} שחקנים מחזיקים בקלף הזה`;
+}
+
+async function hydrateCardHolders() {
+  try {
+    const payload = await request("/api/card-holders");
+    model.cardHolders = {
+      holders: payload.holders || {},
+      numberedHolders: payload.numberedHolders || {},
+    };
+  } catch {
+    /* Holder counts stay empty until the live tally arrives. */
+  }
 }
 
 function renderShowcaseBinder() {
@@ -2474,15 +2514,13 @@ function renderShowcaseBinder() {
   const releaseOrder = (model.gameConfig?.releaseSets || [])
     .map(({ id }) => id)
     .filter((id) => isLiveReleaseSet(id));
-  const numberedIds = new Set(playerCards
-    .filter((card) => catalogNumberedInstance(card).numberedIndex)
-    .map((card) => card.id));
+  const numberedCards = possibleNumberedCards();
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
-  if (numberedIds.size) setOrder.push("NUMBERED");
+  if (numberedCards.length) setOrder.push("NUMBERED");
   const setLabels = {};
   for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
   setLabels.ALL = `הכול ${playerCards.length}`;
-  setLabels.NUMBERED = "ממוספרים";
+  setLabels.NUMBERED = `ממוספרים ${numberedCards.length}`;
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
   if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && model.binderFilter !== "NUMBERED" && !model.binderFilter.startsWith("RELEASE:")) {
     model.binderParty = model.binderFilter;
@@ -2493,7 +2531,9 @@ function renderShowcaseBinder() {
   )].sort((left, right) => left[1].localeCompare(right[1], "he"));
   if (model.binderParty && !partyOptions.some(([id]) => id === model.binderParty)) model.binderParty = "";
   if (elements.showcaseCount) {
-    elements.showcaseCount.textContent = `${playerCards.length} קלפים בסדרות הפתוחות`;
+    elements.showcaseCount.textContent = numberedCards.length
+      ? `${playerCards.length} קלפים בסדרות הפתוחות · ${numberedCards.length} ממוספרים אפשריים`
+      : `${playerCards.length} קלפים בסדרות הפתוחות`;
   }
   if (elements.showcaseFilters) {
     elements.showcaseFilters.innerHTML = [
@@ -2512,7 +2552,7 @@ function renderShowcaseBinder() {
         const count = set === "ALL"
           ? playerCards.length
           : set === "NUMBERED"
-            ? numberedIds.size
+            ? numberedCards.length
           : playerCards.filter((card) => card.releaseSetId === set.slice(8)).length;
         const active = model.binderFilter === set;
         return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${set}">${escapeHtml(setLabels[set] || set)} · ${count}</button>`;
@@ -2521,20 +2561,26 @@ function renderShowcaseBinder() {
     ].join("");
   }
 
-  const visible = playerCards.filter((card) => {
+  const numberedView = model.binderFilter === "NUMBERED";
+  const sourceCards = numberedView ? numberedCards : playerCards;
+  const visible = sourceCards.filter((card) => {
+    if (numberedView) return !model.binderParty || card.set === model.binderParty;
     const releaseOk = model.binderFilter === "ALL"
       || (model.binderFilter === "SPECIALS" ? card.eventOnly
-        : model.binderFilter === "NUMBERED" ? numberedIds.has(card.id)
         : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
     const partyOk = !model.binderParty || card.set === model.binderParty;
     return releaseOk && partyOk;
   });
-  elements.showcaseGrid.innerHTML = visible.map((card) => `
+  elements.showcaseGrid.innerHTML = visible.map((card) => {
+    const holders = holderCountFor(card, numberedView);
+    return `
       <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
-        <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}">
-          <div class="binder-shared-card">${catalogCardMarkup(card, "binder")}</div>
+        <button class="binder-card-open" type="button" data-card-id="${card.id}"${numberedView ? ' data-numbered="1"' : ""} aria-label="פתיחת ${escapeHtml(cardTitle(card))}">
+          <div class="binder-shared-card">${catalogCardMarkup(card, "binder", numberedView)}</div>
         </button>
-      </div>`).join("");
+        <small class="card-holders-chip">${escapeHtml(holderLine(holders, numberedView))}</small>
+      </div>`;
+  }).join("");
   setEmptyNote(elements.showcaseEmpty, "אין קלפים בסינון הזה.", { hidden: visible.length > 0 });
   queueCardTextFit(elements.showcaseGrid);
 }
@@ -2691,11 +2737,13 @@ function renderBinder() {
         ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
       </div>`;
     }
+    const numbered = Boolean(stampForCard(card)?.numberedIndex);
     return `
       <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
         <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}, ברשותכם ${count}">
           ${binderCardMarkup(card)}
         </button>
+        <small class="card-holders-chip">${escapeHtml(holderLine(holderCountFor(card, numbered), numbered))}</small>
       </div>`;
   }).join("");
   const visibleColumns = window.innerWidth <= 520 ? 3 : window.innerWidth <= 760 ? 5 : 6;
@@ -4114,6 +4162,11 @@ async function saveReleaseSets() {
 
 function renderStudio() {
   if (studioSecret()) hydrateStudioReports().catch(() => {});
+  if (elements.studioShareBinderLink) {
+    const shareUrl = new URL("/share/binder", location.origin);
+    elements.studioShareBinderLink.href = shareUrl.href;
+    elements.studioShareBinderLink.textContent = shareUrl.href.replace(/\/$/, "");
+  }
   if (!model.editorial || !model.catalog.length || !elements.cardReviewList) return;
   const profile = model.editorial.advocacy;
   const draftCount = model.catalog.filter((card) => card.walkout.contentStatus === "draft").length;
@@ -4332,9 +4385,10 @@ async function debugUnlockCard(cardId) {
   }
 }
 
-function openCardDialog(cardId) {
+function openCardDialog(cardId, numbered = false) {
   model.dialogCardId = cardId;
   model.dialogBack = false;
+  model.dialogNumbered = Boolean(numbered);
   renderDialogCard();
   elements.dialog.showModal();
   queueCardTextFit(elements.dialog);
@@ -4344,13 +4398,20 @@ function openCardDialog(cardId) {
 function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   const ownedCount = model.showcase ? 0 : (model.serverState?.inventory?.[card.id] ?? 0);
+  const numbered = model.showcase ? model.dialogNumbered : Boolean(stampForCard(card)?.numberedIndex);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
-  elements.dialogCard.innerHTML = model.showcase ? catalogCardMarkup(card, "display") : displayCardMarkup(card);
+  elements.dialogCard.innerHTML = model.showcase
+    ? catalogCardMarkup(card, "display", model.dialogNumbered)
+    : displayCardMarkup(card);
   if (elements.dialogTrust) {
     const line = cardTrustLine(card);
     elements.dialogTrust.textContent = line;
     elements.dialogTrust.hidden = !line;
+  }
+  if (elements.dialogHolders) {
+    elements.dialogHolders.textContent = holderLine(holderCountFor(card, numbered), numbered);
+    elements.dialogHolders.hidden = false;
   }
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
@@ -5539,7 +5600,16 @@ elements.showcaseFilters?.addEventListener("change", (event) => {
 });
 elements.showcaseGrid?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-card-id]");
-  if (button) openCardDialog(button.dataset.cardId);
+  if (button) openCardDialog(button.dataset.cardId, button.hasAttribute("data-numbered"));
+});
+elements.studioShareBinderCopy?.addEventListener("click", async () => {
+  const href = elements.studioShareBinderLink?.href || new URL("/share/binder", location.origin).href;
+  try {
+    await navigator.clipboard.writeText(href);
+    showToast("קישור האלבום הועתק.");
+  } catch {
+    showToast(href);
+  }
 });
 
 function showCollectionTooltip(target) {

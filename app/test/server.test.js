@@ -119,15 +119,39 @@ test("share binder is look-only and does not create a player session", async (t)
 
   const boards = await api(running.base, "/api/leaderboards");
   const activity = await api(running.base, "/api/activity");
+  const holders = await api(running.base, "/api/card-holders");
   assert.equal(boards.status, 200);
   assert.equal(boards.body.collectors.length, 0);
   assert.equal(activity.body.participatingSessions, 0);
+  assert.equal(holders.status, 200);
+  assert.deepEqual(holders.body.holders, {});
+  assert.deepEqual(holders.body.numberedHolders, {});
 
   const home = await api(running.base, "/api/home");
   assert.equal(home.status, 200);
   assert.ok(home.body.token);
   const after = await api(running.base, "/api/leaderboards");
   assert.ok(after.body.collectors.length >= 1);
+});
+
+test("card holder counts are real session inventories, not fixtures", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-card-holders-test-"));
+  const clock = { value: Date.parse("2026-09-22T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const cardId = (await api(running.base, "/api/catalog")).body.cards.find(({ eventOnly }) => !eventOnly).id;
+  const first = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const second = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await api(running.base, "/api/debug/unlock-card", { token: first, method: "POST", body: { cardId } });
+  await api(running.base, "/api/debug/unlock-card", { token: second, method: "POST", body: { cardId } });
+  const tally = await api(running.base, "/api/card-holders");
+  assert.equal(tally.status, 200);
+  assert.equal(tally.body.holders[cardId], 2);
+  assert.equal(tally.body.numberedHolders[cardId] || 0, 0);
 });
 
 test("public party register keeps Hebrew names without opening Studio", () => {

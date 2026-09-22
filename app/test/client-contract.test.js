@@ -375,7 +375,14 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /get\("showcase"\) === "1"/);
   assert.match(html, /id="showcase-view"/);
   assert.match(html, /id="showcase-grid"/);
+  assert.match(html, /id="studio-share-binder"/);
+  assert.match(html, /id="studio-share-binder-link"/);
+  assert.match(html, /id="dialog-holders"/);
   assert.match(html, /אין כאן שחקן במשחק/);
+  assert.match(javascript, /\/api\/card-holders/);
+  assert.match(javascript, /function holderLine/);
+  assert.match(javascript, /function possibleNumberedCards/);
+  assert.match(javascript, /שחקנים מחזיקים בקלף הזה/);
   assert.match(warmup, /lookOnlyShowcase/);
   assert.match(warmup, /\/share\/binder/);
   assert.doesNotMatch(javascript, /שחקנים נוספים מחזיקים/);
@@ -420,7 +427,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-31/);
+  assert.match(html, /card-surface-32/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -485,7 +492,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-31/);
+  assert.match(html, /card-surface-32/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

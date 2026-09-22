@@ -117,7 +117,7 @@ function serveBinderShareLanding(request, response) {
   const play = new URL("/", origin);
   play.searchParams.set("showcase", "1");
   const title = "קְלָפִי · האלבום המלא";
-  const description = "תצוגת האלבום כולו. אין כאן שחקן במשחק — בלי דירוג, בלי סטטיסטיקה ובלי ספירת מחזיקים.";
+  const description = "תצוגת האלבום כולו, כולל ממוספרים אפשריים. אין כאן שחקן במשחק — בלי דירוג. ספירת המחזיקים אמיתית.";
   const shareUrl = `${origin}/share/binder`;
   const image = `${origin}/design-assets/hero-art-kalpi.png`;
   const playHref = `${play.pathname}${play.search}`;
@@ -1371,6 +1371,11 @@ export async function createKalpiApp({
 
       if (request.method === "GET" && url.pathname === "/api/leaderboards") {
         json(response, 200, await store.leaderboardSummary(cards, now(), bearer(request)));
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/card-holders") {
+        json(response, 200, await store.cardHolderSummary());
         return;
       }
 

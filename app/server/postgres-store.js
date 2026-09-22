@@ -1117,6 +1117,28 @@ export class PostgresStore {
     return issued ? { index: issued, of: max } : null;
   }
 
+  async cardHolderSummary() {
+    const [owned, numbered] = await Promise.all([
+      this.pool.query(
+        `SELECT card_id, COUNT(*)::int AS holders
+         FROM kalpi_inventory
+         WHERE copies > 0
+         GROUP BY card_id`,
+      ),
+      this.pool.query(
+        `SELECT card_id, COUNT(DISTINCT session_token)::int AS holders
+         FROM kalpi_instances
+         WHERE numbered_index > 0
+         GROUP BY card_id`,
+      ),
+    ]);
+    const holders = {};
+    const numberedHolders = {};
+    for (const row of owned.rows) holders[row.card_id] = row.holders;
+    for (const row of numbered.rows) numberedHolders[row.card_id] = row.holders;
+    return { holders, numberedHolders };
+  }
+
   async getStudioConfig() {
     const result = await this.pool.query("SELECT config FROM kalpi_studio_config WHERE id = 1");
     return result.rows[0]?.config || null;
