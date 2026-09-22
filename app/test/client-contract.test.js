@@ -261,6 +261,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /<small>מקום ברשימה<\/small>/);
   assert.match(css, /#b42318/);
   assert.match(javascript, /letterChip/);
+  assert.match(javascript, /data-letters/);
   assert.match(javascript, /function mergeLiveCatalogFields/);
   assert.match(javascript, /function streakFireMarkup/);
   assert.match(javascript, /numberedCopies/);

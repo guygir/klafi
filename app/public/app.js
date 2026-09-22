@@ -1254,7 +1254,7 @@ function factionLetters(party) {
 }
 
 function factionLetterArt(party) {
-  return party?.letterChip || party?.letterArt || "";
+  return party?.letterChip || "";
 }
 
 function streakFireMarkup() {
@@ -1263,35 +1263,25 @@ function streakFireMarkup() {
 
 function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
   const letters = factionLetters(party);
-  const art = factionLetterArt(party);
-  if (art) {
-    return `<img class="collector-letter" src="/design-assets/${encodeURIComponent(art)}" alt="${escapeHtml(letters)}">`;
-  }
   if (!letters) return "";
-  return `<b class="${className}">${escapeHtml(letters)}</b>`;
+  return `<b class="${className}" data-letters="${[...letters].length}">${escapeHtml(letters)}</b>`;
 }
 
 function renderAvatarSeal() {
   const party = factionParty();
   const letters = factionLetters(party);
-  const art = factionLetterArt(party);
   if (elements.avatarSeal) elements.avatarSeal.hidden = true;
   if (elements.levelLetter) {
-    if (art) {
-      elements.levelLetter.hidden = false;
-      elements.levelLetter.src = `/design-assets/${encodeURIComponent(art)}`;
-      elements.levelLetter.alt = letters;
-    } else {
-      elements.levelLetter.hidden = true;
-      elements.levelLetter.removeAttribute("src");
-      elements.levelLetter.alt = "";
-    }
+    elements.levelLetter.hidden = true;
+    elements.levelLetter.removeAttribute("src");
+    elements.levelLetter.alt = "";
   }
   if (elements.levelLetterText) {
-    elements.levelLetterText.hidden = Boolean(art) || !letters;
+    elements.levelLetterText.hidden = !letters;
     elements.levelLetterText.textContent = letters;
+    elements.levelLetterText.dataset.letters = String([...letters].length);
   }
-  elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(art || letters));
+  elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(letters));
   elements.levelAvatarButton?.classList.toggle("has-faction-seal", false);
 }
 

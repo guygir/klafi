@@ -180,7 +180,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered::before {
   inset: 0;
-  padding: 3px;
+  padding: 8px;
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
@@ -1170,7 +1170,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered::before,
 #app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered::before {
-  padding: 3px;
+  padding: 8px;
 }
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.uncommon,
