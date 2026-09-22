@@ -2446,13 +2446,15 @@ function catalogNumberedSets() {
   return Array.isArray(configured) && configured.length ? configured : ["set-5"];
 }
 
+function isPossibleNumberedCard(card) {
+  return Boolean(card && catalogNumberedSets().includes(card.releaseSetId) && !card.eventOnly);
+}
+
 function catalogNumberedInstance(card) {
+  if (!isPossibleNumberedCard(card)) return {};
   const listSlot = Number(card?.listSlot);
-  const eligible = catalogNumberedSets().includes(card?.releaseSetId)
-    && Number.isInteger(listSlot)
-    && listSlot > 0
-    && !card.eventOnly;
-  return eligible ? { numberedIndex: 1, numberedOf: listSlot, finish: "Holo" } : {};
+  const of = Number.isInteger(listSlot) && listSlot > 0 ? listSlot : 1;
+  return { numberedIndex: 1, numberedOf: of, finish: "Holo" };
 }
 
 function catalogCardMarkup(card, surface = "binder", numbered = false) {
@@ -2464,7 +2466,7 @@ function catalogCardMarkup(card, surface = "binder", numbered = false) {
 }
 
 function possibleNumberedCards() {
-  return playerCatalog().filter((card) => catalogNumberedInstance(card).numberedIndex);
+  return playerCatalog().filter(isPossibleNumberedCard);
 }
 
 function holderCountFor(card, numbered = false) {
@@ -2490,6 +2492,8 @@ async function hydrateCardHolders() {
       holders: payload.holders || {},
       numberedHolders: payload.numberedHolders || {},
     };
+    if (model.showcase) renderShowcaseBinder();
+    else if (catalogReady()) renderBinder();
   } catch {
     /* Holder counts stay empty until the live tally arrives. */
   }
@@ -2520,7 +2524,7 @@ function renderShowcaseBinder() {
   const setLabels = {};
   for (const release of model.gameConfig?.releaseSets || []) setLabels[`RELEASE:${release.id}`] = release.nameHe;
   setLabels.ALL = `הכול ${playerCards.length}`;
-  setLabels.NUMBERED = `ממוספרים ${numberedCards.length}`;
+  setLabels.NUMBERED = "ממוספרים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
   if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && model.binderFilter !== "NUMBERED" && !model.binderFilter.startsWith("RELEASE:")) {
     model.binderParty = model.binderFilter;

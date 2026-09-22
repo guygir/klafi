@@ -382,6 +382,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /\/api\/card-holders/);
   assert.match(javascript, /function holderLine/);
   assert.match(javascript, /function possibleNumberedCards/);
+  assert.match(javascript, /function isPossibleNumberedCard/);
   assert.match(javascript, /שחקנים מחזיקים בקלף הזה/);
   assert.match(warmup, /lookOnlyShowcase/);
   assert.match(warmup, /\/share\/binder/);
