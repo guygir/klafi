@@ -1177,7 +1177,7 @@ function fitCardText(element) {
   const role = element.dataset.fitCardText;
   const scale = (isFullart
     ? {
-      quote: { low: 0.028, high: 0.058, floor: compact ? 7 : 8, ceiling: compact ? 13 : 20 },
+      quote: { low: 0.024, high: 0.058, floor: compact ? 6 : 7, ceiling: compact ? 13 : 20 },
       party: { low: 0.03, high: 0.042, floor: compact ? 8 : 10, ceiling: 12 },
       name: { low: 0.048, high: 0.08, floor: compact ? 9 : 13, ceiling: 24 },
     }
@@ -1186,28 +1186,25 @@ function fitCardText(element) {
       party: { low: 0.035, high: 0.052, floor: compact ? 8 : 10, ceiling: 13 },
       name: { low: 0.052, high: 0.078, floor: compact ? 9 : 13, ceiling: 27 },
     })[role] || { low: 0.04, high: 0.085, floor: compact ? 8 : 13, ceiling: 30 };
-  let low = Math.max(scale.floor, frameWidth * scale.low);
-  let high = Math.min(scale.ceiling, frameWidth * scale.high);
-  if (high < low) high = low;
+  const hardMin = role === "quote" ? Math.min(6, scale.floor) : scale.floor;
+  let low = hardMin;
+  let high = Math.max(hardMin, Math.min(scale.ceiling, frameWidth * scale.high));
+  const slop = role === "quote" ? 0 : 1;
   const fitsAt = (size) => {
     element.style.fontSize = `${size}px`;
-    return element.scrollHeight <= element.clientHeight + 1
-      && element.scrollWidth <= element.clientWidth + 1;
+    return element.scrollHeight <= element.clientHeight + slop
+      && element.scrollWidth <= element.clientWidth + slop;
   };
-  if (isFullart && role === "quote") {
-    if (fitsAt(high)) return;
-  }
-  for (let index = 0; index < 14; index += 1) {
+  if (fitsAt(high)) return;
+  for (let index = 0; index < 16; index += 1) {
     const size = (low + high) / 2;
     if (fitsAt(size)) low = size;
     else high = size;
   }
-  if (!fitsAt(low) && low > scale.floor) {
-    element.style.fontSize = `${scale.floor}px`;
-    low = scale.floor;
-  }
-  if (!fitsAt(low)) element.style.fontSize = `${Math.max(6, scale.floor - 1)}px`;
-  else element.style.fontSize = `${low}px`;
+  let size = fitsAt(low) ? low : high;
+  while (size > hardMin && !fitsAt(size)) size -= 0.25;
+  if (!fitsAt(size)) element.style.fontSize = `${hardMin}px`;
+  else element.style.fontSize = `${size}px`;
 }
 
 function fitVisibleCardText(root = document) {
@@ -5191,14 +5188,15 @@ function fitShareQuote(context, quote, maxWidth, maxHeight, high, low) {
   let size = high;
   let lines = [];
   let lineHeight = size * 1.15;
-  while (size > low) {
+  const floor = Math.min(low, 10);
+  while (size >= floor) {
     context.font = `600 ${size}px 'Noto Serif Hebrew', Fraunces, serif`;
-    lines = measureWrappedLines(context, quote, maxWidth, 4);
-    lineHeight = size * 1.15;
+    lines = measureWrappedLines(context, quote, maxWidth, 5);
+    lineHeight = size * 1.12;
     if (lines.length * lineHeight <= maxHeight) break;
     size -= 1;
   }
-  return { size, lines, lineHeight };
+  return { size: Math.max(floor, size), lines, lineHeight };
 }
 
 function paintFullartShareIdentity(context, card, presentation, { x, y, width, height }) {
@@ -5247,9 +5245,9 @@ function paintFullartShareIdentity(context, card, presentation, { x, y, width, h
     context,
     presentation.quote,
     textWidth,
-    quoteBox.height * 0.82,
+    quoteBox.height * 0.92,
     width * 0.064,
-    width * 0.042,
+    width * 0.028,
   );
 
   context.textAlign = "center";
