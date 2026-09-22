@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import pg from "pg";
 import { collectionStarCount } from "./visible-sets.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
+import { openSpecialWindow } from "./special-window.js";
 
 const { Pool } = pg;
 const SECURITY_HEADERS = Object.freeze({
@@ -14,6 +15,8 @@ const SECURITY_HEADERS = Object.freeze({
 let pool;
 let shell;
 let shellLoad;
+let eventsCatalog;
+let eventsLoad;
 
 function json(response, status, value) {
   response.writeHead(status, SECURITY_HEADERS);
@@ -36,6 +39,20 @@ async function loadShell() {
       shellLoad = null;
     });
   return shellLoad;
+}
+
+async function loadEvents() {
+  if (eventsCatalog) return eventsCatalog;
+  eventsLoad ??= readFile(new URL("../data/events.json", import.meta.url), "utf8")
+    .then((text) => {
+      eventsCatalog = JSON.parse(text);
+      return eventsCatalog;
+    })
+    .catch(() => ({ events: [] }))
+    .finally(() => {
+      eventsLoad = null;
+    });
+  return eventsLoad;
 }
 
 function getPool() {
@@ -66,11 +83,12 @@ export function slimLeaderboards(config, collectors = [], factions = [], now = D
   };
 }
 
-export function emptyCommunity(config, now = Date.now()) {
+export function emptyCommunity(config, now = Date.now(), specialWindow = null) {
   return {
     trades: { trades: [], simulated: false },
     leaderboards: slimLeaderboards(config, [], [], now),
     activity: { counts: {}, participatingSessions: 0, fixture: false, label: "Recorded PoC activity" },
+    specialWindow,
   };
 }
 
@@ -139,6 +157,8 @@ async function collectorBoards(db, config, now, token) {
   const cardIndex = config.cardIndex || [];
   const sessions = await db.query(
     `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
+            s.avatar_id, s.faction_id, s.highest_rank,
+            COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
             COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
      FROM kalpi_sessions s
      LEFT JOIN kalpi_inventory i ON i.session_token = s.token
@@ -153,6 +173,10 @@ async function collectorBoards(db, config, now, token) {
         stars: collectionStarCount(inventory, cardIndex),
         packs: row.idle_pull_count ?? row.pack_count,
         current: row.token === token,
+        avatarId: row.avatar_id || "kid-boy",
+        factionId: row.faction_id || null,
+        loginStreak: row.login_streak || 0,
+        rankLevel: row.highest_rank || 1,
       };
     })
     .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
@@ -189,8 +213,15 @@ export async function handleSlimCommunity(request, response) {
     const token = bearer(request);
     const now = Date.now();
     const db = getPool();
+    const events = await loadEvents();
+    let eventClaims = {};
+    if (db && token) {
+      const extras = await db.query("SELECT extras FROM kalpi_sessions WHERE token = $1", [token]).catch(() => ({ rows: [] }));
+      eventClaims = extras.rows[0]?.extras?.eventClaims || {};
+    }
+    const specialWindow = openSpecialWindow(events.events, now, { eventClaims });
     if (!db) {
-      json(response, 200, emptyCommunity(config, now));
+      json(response, 200, emptyCommunity(config, now, specialWindow));
       return;
     }
     const [trades, leaderboards, activity] = await Promise.all([
@@ -202,6 +233,7 @@ export async function handleSlimCommunity(request, response) {
       trades: { trades, simulated: false },
       leaderboards,
       activity,
+      specialWindow,
     });
   } catch (error) {
     json(response, 500, { error: "SERVER_ERROR", detail: error.code || error.message });

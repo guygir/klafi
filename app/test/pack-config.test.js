@@ -29,8 +29,27 @@ test("current time only opens dated active sets", () => {
   const table = resolvePackTable({ pack: {}, releaseSets, cards, now });
   assert.deepEqual(table.sets.map(({ id }) => id), ["party-leaders"]);
   assert.equal(table.sets[0].percent, 100);
+  assert.equal(table.sets[0].weight, 10);
   assert.equal(table.sets[0].effectiveRarities.Uncommon, 0);
   assert.ok(table.sets[0].effectiveRarities.Common > table.sets[0].effectiveRarities.Rare);
+});
+
+test("default table is 3:2:1 for sets 5, 2, and 1 when those three are open", () => {
+  const table = resolvePackTable({
+    pack: {},
+    releaseSets: releaseSets.map((set) => (
+      ["party-leaders", "party-slot-2", "set-5"].includes(set.id)
+        ? { ...set, runtimeState: "active", runtimeAvailableFrom: "2026-09-10T00:00:00+03:00" }
+        : set
+    )),
+    cards: [...cards, { id: "F-C", releaseSetId: "set-5", rarity: "Common" }],
+    now,
+  });
+  assert.deepEqual(table.sets.map(({ id, weight, percent }) => [id, weight, percent]), [
+    ["party-leaders", 10, 16.7],
+    ["party-slot-2", 20, 33.3],
+    ["set-5", 30, 50],
+  ]);
 });
 
 test("held future sets stay out even when they have weight", () => {

@@ -80,7 +80,7 @@ Source artwork path: `docs/design/assets/pack-wrapper.png`
 
 > Front-facing premium paper wrapper for the KLAFI civic card game, preserving the supplied wrapper's exact parchment, deep umber, wax-seal teal, antique-gold print, ballot-box illustration, folds, and worn letterpress finish. Redesign the Latin wordmark so it reads exactly **KLAFI** in clear uppercase Latin letters. Never render KALPI. One-card pack, slim physical volume, centered on a transparent background with generous safe area. No hands, no cards outside the wrapper, no extra logos, no photoreal plastic, no modern neon, no additional text, no warped or misspelled lettering.
 
-Export the approved transparent still as `docs/design/assets/pack-wrapper-klafi.png`; keep `pack-wrapper.png` only as the visual reference until the replacement is approved.
+The live still is `docs/design/assets/pack-wrapper-klafi.png` (KLAFI / קְלָפִי overprinted on the approved parchment wrapper). Keep `pack-wrapper.png` as the visual reference. Do not ship KALPI lettering.
 
 Generate at least four candidates for each variant; approve one. Do not automatically publish the first output.
 

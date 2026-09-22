@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { createKalpiApp, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES, publicPartyRegister } from "../server/app.js";
+import { createKalpiApp, CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES, publicPartyRegister } from "../server/app.js";
 import { createRuntimeHandler } from "../server/runtime.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -91,6 +91,82 @@ test("legitimate players are not blocked by a shared application rate bucket", a
     Array.from({ length: 25 }, () => api(running.base, "/api/session", { method: "POST" })),
   );
   assert.ok(sessions.every(({ status, body }) => status === 201 && body.token));
+});
+
+test("share binder is look-only and does not create a player session", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-share-binder-test-"));
+  const clock = { value: Date.parse("2026-09-22T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const landing = await fetch(`${running.base}/share/binder`);
+  assert.equal(landing.status, 200);
+  const html = await landing.text();
+  assert.match(html, /האלבום המלא/);
+  assert.match(html, /showcase=1/);
+  assert.match(html, /אין כאן שחקן/);
+  assert.equal((await fetch(`${running.base}/share/binder`, { method: "HEAD" })).status, 200);
+
+  const catalog = await api(running.base, "/api/catalog");
+  const config = await api(running.base, "/api/game-config");
+  assert.equal(catalog.status, 200);
+  assert.ok(catalog.body.cards.length > 0);
+  assert.equal(config.status, 200);
+  assert.ok(Array.isArray(config.body.progression?.numberedSets));
+
+  const boards = await api(running.base, "/api/leaderboards");
+  const activity = await api(running.base, "/api/activity");
+  const holders = await api(running.base, "/api/card-holders");
+  assert.equal(boards.status, 200);
+  assert.equal(boards.body.collectors.length, 0);
+  assert.equal(activity.body.participatingSessions, 0);
+  assert.equal(holders.status, 200);
+  assert.deepEqual(holders.body.holders, {});
+  assert.deepEqual(holders.body.numberedHolders, {});
+
+  const home = await api(running.base, "/api/home");
+  assert.equal(home.status, 200);
+  assert.ok(home.body.token);
+  const after = await api(running.base, "/api/leaderboards");
+  assert.ok(after.body.collectors.length >= 1);
+});
+
+test("card holder counts are real session inventories, not fixtures", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-card-holders-test-"));
+  const clock = { value: Date.parse("2026-09-22T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const cardId = (await api(running.base, "/api/catalog")).body.cards.find(({ eventOnly }) => !eventOnly).id;
+  const first = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const second = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await api(running.base, "/api/debug/unlock-card", { token: first, method: "POST", body: { cardId } });
+  await api(running.base, "/api/debug/unlock-card", { token: second, method: "POST", body: { cardId } });
+  const tally = await api(running.base, "/api/card-holders");
+  assert.equal(tally.status, 200);
+  assert.equal(tally.body.holders[cardId], 2);
+  assert.equal(tally.body.numberedHolders[cardId] || 0, 0);
+  assert.ok(tally.body.computedAt);
+  const third = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await api(running.base, "/api/debug/unlock-card", { token: third, method: "POST", body: { cardId } });
+  const cached = await api(running.base, "/api/card-holders");
+  assert.equal(cached.body.holders[cardId], 2);
+  assert.equal(cached.body.computedAt, tally.body.computedAt);
+  clock.value += CARD_HOLDER_SYNC_MS + 1;
+  const stale = await api(running.base, "/api/card-holders");
+  assert.equal(stale.body.holders[cardId], 2);
+  let refreshed = stale;
+  for (let attempt = 0; attempt < 20 && refreshed.body.holders[cardId] !== 3; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    refreshed = await api(running.base, "/api/card-holders");
+  }
+  assert.equal(refreshed.body.holders[cardId], 3);
 });
 
 test("public party register keeps Hebrew names without opening Studio", () => {
@@ -264,6 +340,18 @@ test("correction reports persist once and remain reviewable", async (t) => {
   assert.equal(resolved.status, 200);
   const reviewed = await api(running.base, "/api/studio/reports", { studio: "review-secret" });
   assert.equal(reviewed.body.reports[0].status, "resolved");
+
+  const nameReport = {
+    reportId: "report-name-001",
+    category: "name",
+    details: "שם מדווח: בדיקה פוגענית בטבלה",
+    pagePath: "/?view=growth",
+  };
+  const named = await api(running.base, "/api/reports", { token, method: "POST", body: nameReport });
+  assert.equal(named.status, 202);
+  const queueAfter = await api(running.base, "/api/studio/reports", { studio: "review-secret" });
+  assert.equal(queueAfter.body.reports.length, 2);
+  assert.ok(queueAfter.body.reports.some(({ category }) => category === "name"));
 });
 
 test("legacy sessions migrate into the capped idle queue without losing inventory", async (t) => {
@@ -346,7 +434,17 @@ test("players can see and accept open trades from other collectors", async (t) =
     method: "POST",
     body: { offeredCardId: offered.id, wantedCardId: wanted.id },
   });
-  assert.equal(overReserved.status, 400);
+  assert.equal(overReserved.status, 409);
+  assert.equal(overReserved.body.error, "ACTIVE_TRADE_EXISTS");
+  assert.ok(Array.isArray(created.body.trades));
+  const otherWanted = catalog.find((card) => card.id !== offered.id && card.id !== wanted.id);
+  const secondSlot = await api(running.base, "/api/trades", {
+    token: ownerToken,
+    method: "POST",
+    body: { offeredCardId: offered.id, wantedCardId: otherWanted.id },
+  });
+  assert.equal(secondSlot.status, 409);
+  assert.equal(secondSlot.body.error, "ACTIVE_TRADE_EXISTS");
   const visible = await api(running.base, "/api/trades", { token: accepterToken });
   const offer = visible.body.trades.find(({ tradeId }) => tradeId === created.body.trade.tradeId);
   assert.equal(offer.ownerLabel, "מציע בדיקה");
@@ -437,6 +535,13 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.match(shareHtml, /property="og:image"/);
   assert.match(shareHtml, /og:title" content="קְלָפִי · /);
   assert.match(shareHtml, /card=LIK-M01-Q01/);
+  const binderShare = await fetch(`${running.base}/share/binder`);
+  assert.equal(binderShare.status, 200);
+  assert.match(binderShare.headers.get("content-type"), /^text\/html/);
+  const binderHtml = await binderShare.text();
+  assert.match(binderHtml, /og:title" content="קְלָפִי · האלבום המלא"/);
+  assert.match(binderHtml, /showcase=1/);
+  assert.match(binderHtml, /אין כאן שחקן/);
   assert.equal((await fetch(`${running.base}/share/not-a-card`)).status, 404);
   const clientScript = await fetch(`${running.base}/app.js?v=test`);
   assert.match(clientScript.headers.get("cache-control"), /no-cache/);
@@ -449,6 +554,9 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   const likudSymbolArt = await fetch(`${running.base}/design-assets/hero-art-memchetlammed.png`);
   assert.equal(likudSymbolArt.status, 200);
   assert.equal(catalog.body.cards.find(({ id }) => id === "LIK-S-01").artKey, "hero-art-memchetlammed.png");
+  const klafiPack = await fetch(`${running.base}/design-assets/pack-wrapper-klafi.png`);
+  assert.equal(klafiPack.status, 200);
+  assert.equal(klafiPack.headers.get("content-type"), "image/png");
   const packVideoRange = await fetch(`${running.base}/design-assets/pack-rip-seedance-v01.mp4`, {
     headers: { range: "bytes=0-31" },
   });
@@ -487,7 +595,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(stateAfterDemo.body.packCount, 0);
   assert.deepEqual(stateAfterDemo.body.inventory, {});
   assert.equal(stateAfterDemo.body.progression.level, 1);
-  assert.equal(stateAfterDemo.body.progression.totalLevels, 5);
+  assert.equal(stateAfterDemo.body.progression.totalLevels, 2);
   assert.equal(stateAfterDemo.body.progression.rank, "אזרח סקרן");
   assert.equal(stateAfterDemo.body.progression.nextRank, "קורא כותרות");
 
@@ -586,8 +694,14 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(activity.body.counts.share_created, undefined);
   const leaderboards = await api(running.base, "/api/leaderboards", { token });
   assert.equal(leaderboards.status, 200);
+  const currentCollector = leaderboards.body.collectors.find(({ current }) => current);
+  assert.ok(currentCollector?.avatarId);
+  assert.equal(typeof currentCollector.loginStreak, "number");
+  const currentDaily = leaderboards.body.dailyChallenge.leaders.find(({ current }) => current);
+  assert.ok(currentDaily?.avatarId);
   const community = await api(running.base, "/api/community", { token });
   assert.equal(community.status, 200);
+  assert.equal(community.body.specialWindow, null);
   assert.equal(community.body.leaderboards.dailyChallenge.day, leaderboards.body.dailyChallenge.day);
   assert.ok(Array.isArray(community.body.trades.trades));
   assert.equal(community.body.activity.counts.pack_opened, 1);
@@ -868,7 +982,9 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   assert.equal(boot.status, 200);
   assert.equal(boot.body.studioContent, null);
   assert.equal(boot.body.gameConfig.parties.find(({ id }) => id === "RZ").displayNameHe, "הציונות הדתית וזהות");
-  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-leaders").weight, 70);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-leaders").weight, 10);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-slot-2").weight, 20);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-5").weight, 30);
   assert.deepEqual(boot.body.gameConfig.pack.current.sets.map(({ id }) => id), []);
   assert.ok(boot.body.catalog.cards.length);
   assert.ok(boot.body.idleReturn.state);
@@ -933,6 +1049,9 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(again.body.token, home.body.token);
   const warm = await api(running.base, "/api/warm");
   assert.deepEqual(warm, { status: 200, body: { status: "ready" } });
+  const holders = await api(running.base, "/api/card-holders");
+  assert.equal(holders.status, 200);
+  assert.ok(holders.body.computedAt);
 });
 
 test("bootstrap creates a guest session in one request", async (t) => {
@@ -1156,4 +1275,154 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   const restoredSecond = await api(second.base, "/api/state", { token: secondToken });
   assert.equal(restoredSecond.status, 200);
   assert.equal(restoredSecond.body.inventory[secondCardId], 1);
+});
+
+function withPackWeights(studio, weights) {
+  studio.gameConfig.pack.sets = studio.gameConfig.pack.sets.map((set) => ({
+    ...set,
+    weight: Object.hasOwn(weights, set.id) ? weights[set.id] : 0,
+  }));
+  return studio;
+}
+
+test("numbered stamps are idle-only set-5 holos by list slot and streaks count Jerusalem days", async (t) => {
+  const clock = { value: Date.parse("2026-09-21T10:00:00+03:00") };
+  const parkedDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-parked-"));
+  const parkedStudioPath = path.join(parkedDir, "studio-content.json");
+  const parkedStudio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
+  parkedStudio.gameConfig.progression.numberedSets = [];
+  withPackWeights(parkedStudio, { "set-5": 30 });
+  await writeFile(parkedStudioPath, `${JSON.stringify(parkedStudio, null, 2)}\n`);
+  const parked = await start(parkedDir, clock, { studioContentPath: parkedStudioPath });
+  t.after(async () => {
+    await parked.close();
+    await rm(parkedDir, { recursive: true, force: true });
+  });
+  const parkedSession = await api(parked.base, "/api/session", { method: "POST" });
+  const parkedIdle = await api(parked.base, "/api/idle/settle", {
+    token: parkedSession.body.token,
+    method: "POST",
+  });
+  assert.equal(parkedIdle.status, 200);
+  assert.equal(parkedIdle.body.cards?.[0]?.numberedIndex, undefined);
+  assert.equal((parkedIdle.body.state.numberedCopies || []).length, 0);
+
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-"));
+  const studioContentPath = path.join(dataDir, "studio-content.json");
+  const studio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
+  studio.gameConfig.progression.numberedSets = ["set-5"];
+  withPackWeights(studio, { "set-5": 30 });
+  await writeFile(studioContentPath, `${JSON.stringify(studio, null, 2)}\n`);
+  const running = await start(dataDir, clock, { studioContentPath });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const first = await api(running.base, "/api/session", { method: "POST" });
+  const second = await api(running.base, "/api/session", { method: "POST" });
+  const debuggerSession = await api(running.base, "/api/session", { method: "POST" });
+  const debugCard = "SET5-01";
+  const unlocked = await api(running.base, "/api/debug/unlock-card", {
+    token: debuggerSession.body.token,
+    method: "POST",
+    body: { cardId: debugCard },
+  });
+  assert.equal(unlocked.status, 200);
+  const debugCopy = unlocked.body.instances.find((item) => item.cardId === debugCard);
+  assert.notEqual(debugCopy.finish, "Holo");
+  assert.equal(debugCopy.numberedIndex, undefined);
+  assert.equal(unlocked.body.numberedCopies.length, 0);
+
+  const stamped = await api(running.base, "/api/idle/settle", {
+    token: first.body.token,
+    method: "POST",
+  });
+  assert.equal(stamped.status, 200);
+  const copy = stamped.body.cards.find((item) => item.acquiredBy === "idle") || stamped.body.cards[0];
+  assert.match(copy.cardId, /^SET5-/);
+  assert.equal(copy.finish, "Holo");
+  assert.equal(copy.numberedIndex, 1);
+  assert.ok(copy.numberedOf >= 1);
+  assert.equal(stamped.body.state.numberedCopies.length, 1);
+
+  const late = await api(running.base, "/api/idle/settle", {
+    token: second.body.token,
+    method: "POST",
+  });
+  const lateCopy = late.body.cards.find((item) => item.acquiredBy === "idle") || late.body.cards[0];
+  assert.equal(lateCopy.cardId, copy.cardId);
+  if (copy.numberedOf === 1) {
+    assert.notEqual(lateCopy.finish, "Holo");
+    assert.equal(lateCopy.numberedIndex, undefined);
+    assert.equal((late.body.state.numberedCopies || []).length, 0);
+  } else {
+    assert.equal(lateCopy.finish, "Holo");
+    assert.equal(lateCopy.numberedIndex, 2);
+    assert.equal(lateCopy.numberedOf, copy.numberedOf);
+  }
+
+  const leadersDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-leaders-"));
+  const leadersStudioPath = path.join(leadersDir, "studio-content.json");
+  const leadersStudio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
+  leadersStudio.gameConfig.progression.numberedSets = ["set-5"];
+  withPackWeights(leadersStudio, { "party-leaders": 10 });
+  await writeFile(leadersStudioPath, `${JSON.stringify(leadersStudio, null, 2)}\n`);
+  const leaders = await start(leadersDir, clock, { studioContentPath: leadersStudioPath });
+  t.after(async () => {
+    await leaders.close();
+    await rm(leadersDir, { recursive: true, force: true });
+  });
+  const leaderSession = await api(leaders.base, "/api/session", { method: "POST" });
+  const leaderIdle = await api(leaders.base, "/api/idle/settle", {
+    token: leaderSession.body.token,
+    method: "POST",
+  });
+  const leaderCopy = leaderIdle.body.cards.find((item) => item.acquiredBy === "idle") || leaderIdle.body.cards[0];
+  assert.ok(!String(leaderCopy.cardId).startsWith("SET5-"));
+  assert.equal(leaderCopy.numberedIndex, undefined);
+
+  const dayOne = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(dayOne.body.loginStreak, 1);
+  clock.value = Date.parse("2026-09-22T10:00:00+03:00");
+  const dayTwo = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(dayTwo.body.loginStreak, 2);
+  clock.value = Date.parse("2026-09-23T10:00:00+03:00");
+  const dayThree = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(dayThree.body.loginStreak, 3);
+  clock.value = Date.parse("2026-09-25T10:00:00+03:00");
+  const reset = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(reset.body.loginStreak, 1);
+});
+
+test("studio publishes rank names, unlocks, bonus flag, and numbered sets", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-studio-progression-"));
+  const studioContentPath = path.join(dataDir, "studio-content.json");
+  await copyFile(path.join(appRoot, "data/studio-content.json"), studioContentPath);
+  const running = await start(dataDir, { value: Date.parse("2026-09-21T12:00:00.000Z") }, {
+    studioContentPath,
+  });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const created = await api(running.base, "/api/session", { method: "POST" });
+  const saved = await api(running.base, "/api/studio/config", {
+    token: created.body.token,
+    method: "POST",
+    body: {
+      progression: {
+        rankNames: ["אזרח סקרן", "קורא כותרות", "ראש הממשלה"],
+        grantLevelReward: false,
+        numberedSets: ["party-leaders"],
+        thresholdExponent: 1.2,
+      },
+      avatars: [{ id: "grown-man", unlockLevel: 2 }],
+    },
+  });
+  assert.equal(saved.status, 200);
+  assert.deepEqual(saved.body.progression.rankNames.slice(0, 3), ["אזרח סקרן", "קורא כותרות", "ראש הממשלה"]);
+  assert.equal(saved.body.progression.grantLevelReward, false);
+  assert.deepEqual(saved.body.progression.numberedSets, ["party-leaders"]);
+  assert.equal(saved.body.avatars.find(({ id }) => id === "grown-man").unlockLevel, 2);
 });

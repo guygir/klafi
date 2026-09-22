@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>15 · PWA / leagues / Specials / creator seeding — review sketch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a1f1c;
+      --paper: #f4efe4;
+      --paper-deep: #e7dfd0;
+      --rule: #2c3330;
+      --civic: #1f4f4a;
+      --foil: #c4a35a;
+      --danger-mute: #8a4a3a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        repeating-linear-gradient(180deg, transparent, transparent 31px, rgba(44, 51, 48, 0.04) 32px),
+        var(--paper);
+      color: var(--ink);
+      font: 16px/1.5 "IBM Plex Sans", sans-serif;
+    }
+    header.mast, main { max-width: 1040px; margin: 0 auto; padding: 28px 22px; }
+    main { padding-top: 8px; padding-bottom: 80px; }
+    .status {
+      display: inline-block;
+      margin: 0 0 12px;
+      padding: 4px 10px;
+      border: 1px solid var(--foil);
+      color: var(--civic);
+      font-size: 12px;
+    }
+    h1, h2, h3 { font-family: Fraunces, serif; font-weight: 700; margin: 0 0 8px; }
+    h1 { font-size: clamp(32px, 6vw, 52px); line-height: 1.05; }
+    .lede { max-width: 42em; color: rgba(26, 31, 28, 0.78); }
+    nav { margin: 18px 0 0; font-size: 14px; }
+    nav a { color: var(--civic); }
+    .decide {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 26px 0 8px;
+    }
+    .decide article {
+      background: var(--paper-deep);
+      border: 1px solid rgba(44, 51, 48, 0.22);
+      padding: 14px;
+    }
+    .decide b { display: block; font-size: 12px; color: var(--civic); margin-bottom: 6px; }
+    .decide p { margin: 0; font-size: 14px; }
+    .stack { display: grid; gap: 26px; margin-top: 18px; }
+    .row {
+      display: grid;
+      grid-template-columns: minmax(240px, 0.85fr) minmax(0, 1.15fr);
+      gap: 26px;
+      padding-top: 22px;
+      border-top: 1px solid rgba(44, 51, 48, 0.2);
+    }
+    .stub, .envelope, .ops {
+      background: #111;
+      color: #f7f2e8;
+      min-height: 280px;
+      padding: 18px 18px 20px;
+      box-shadow: 0 18px 40px rgba(26, 31, 28, 0.18);
+    }
+    .stub {
+      background:
+        linear-gradient(#111 0 42px, transparent 42px),
+        repeating-linear-gradient(90deg, #111 0 12px, #1b1b1b 12px 24px);
+      border-bottom: 10px solid var(--foil);
+    }
+    .stub small { opacity: 0.65; font-size: 11px; }
+    .stub h3 { margin-top: 36px; font-size: 28px; }
+    .home-icon {
+      width: 64px;
+      height: 64px;
+      margin: 18px 0 8px;
+      background: var(--civic);
+      color: #f7f2e8;
+      display: grid;
+      place-items: center;
+      font-family: Fraunces, serif;
+      font-size: 22px;
+    }
+    .envelope { position: relative; }
+    .envelope::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 46%;
+      background: linear-gradient(to top left, transparent 49.5%, var(--foil) 50%, transparent 50.5%),
+                  linear-gradient(to top right, transparent 49.5%, var(--foil) 50%, transparent 50.5%),
+                  #171717;
+    }
+    .league-list { margin: 20px 0 0; font-size: 14px; }
+    .league-list div { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(247,242,232,.12); }
+    .ops { font-size: 13px; }
+    .ops code { color: var(--foil); }
+    .copy p { margin: 0 0 10px; }
+    .copy ul { margin: 8px 0 0; padding-inline-start: 1.2em; }
+    .copy li { margin: 0 0 6px; }
+    .no {
+      background: #f3e6e0;
+      border-inline-start: 4px solid var(--danger-mute);
+      padding: 12px 14px;
+      margin: 10px 0 0;
+      font-size: 14px;
+    }
+    .deferred {
+      outline: 2px dashed rgba(138, 74, 58, 0.55);
+      outline-offset: 4px;
+    }
+    .questions { display: grid; gap: 8px; margin-top: 10px; }
+    .questions label {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      background: var(--paper-deep);
+      padding: 10px 12px;
+    }
+    .lock {
+      display: inline-block;
+      margin-inline-start: 8px;
+      padding: 1px 7px;
+      border: 1px solid var(--foil);
+      color: var(--civic);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .examples {
+      background: var(--paper-deep);
+      padding: 12px 14px;
+      margin: 10px 0 0;
+      font-size: 14px;
+    }
+    .examples b { display: block; margin-bottom: 6px; color: var(--civic); font-size: 12px; }
+    .examples li { margin: 0 0 8px; }
+    @media (max-width: 820px) {
+      .decide, .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="mast">
+    <p class="status">Locked · implemented · step 15</p>
+    <h1>The device, the room, and the window.</h1>
+    <p class="lede">This is the main product, including the phone. Four ops surfaces on top of the core that is already live. The player Events tab stays closed. Pulls stay server-authoritative. Nothing here adds a sand timer or email login.</p>
+    <nav>
+      <a href="step-14-holos-streaks-cec.html">14 · holo / streak / pulse</a> ·
+      <a href="../growth/bootstrap-playbook.md">Seeding notebook</a> ·
+      <a href="../../README.md">Product sequence</a>
+    </nav>
+  </header>
+  <main>
+    <section class="decide" aria-label="Decisions to lock">
+      <article>
+        <b>PWA <span class="lock">locked</span></b>
+        <p>Phone product. Notifications can fire without Add to Home Screen where the OS allows. No App Store.</p>
+      </article>
+      <article>
+        <b>Leagues <span class="lock">locked</span></b>
+        <p>Invite code and a paper QR. Same rules, smaller league.</p>
+      </article>
+      <article>
+        <b>Specials <span class="lock">locked</span></b>
+        <p>A Today line only while a window is open. No empty line. No Events tab.</p>
+      </article>
+      <article>
+        <b>Creators <span class="lock">dropped</span></b>
+        <p>Not in 15. Share the binder link. No kit page.</p>
+      </article>
+    </section>
+
+    <div class="stack">
+      <article class="row">
+        <div class="stub" aria-hidden="true">
+          <small>Install stub</small>
+          <div class="home-icon">קְ</div>
+          <h3>KLAFI</h3>
+          <p>Add to Home Screen. No store, no email.</p>
+          <p style="margin-top:28px;font-size:13px;color:var(--foil)">Notification · The card is ready to collect</p>
+        </div>
+        <div class="copy">
+          <h2>PWA is the phone product.</h2>
+          <p>Locked: Klafi is the phone product in the browser. Add to Home Screen is optional polish (icon + fullscreen). No App Store, no Play Store, no email login. Toolbar color <code>#1f4f4a</code>, existing pack icon. There is no offline mode that invents a pull.</p>
+          <ul>
+            <li>Notifications can fire without adding to Home Screen on Android Chrome and desktop, after the player grants permission.</li>
+            <li>iPhone still requires Add to Home Screen for web push — that is an iOS rule, not ours.</li>
+            <li>One allowed notification: the idle card is ready. It fires only after the server says <code>nextIdleAt</code> has passed.</li>
+            <li>No marketing push, no “come back before the streak breaks,” no email. Refusing notifications does not hurt play.</li>
+            <li>Two devices + the same recovery code = the same player. The notification does not grant a second pull.</li>
+          </ul>
+          <p><strong>Proposed copy:</strong> “The card is ready to collect.” / “You can play without notifications. The collection still saves.”</p>
+          <div class="no">No email login, no store listing, no gameplay throttle, no offline queue that awards a card.</div>
+        </div>
+      </article>
+
+      <article class="row">
+        <div class="envelope" aria-hidden="true">
+          <small>League envelope</small>
+          <h3 style="margin-top:20px">Prep-room · Tishrei</h3>
+          <div class="league-list">
+            <div><span>1. Noa</span><strong>★48</strong></div>
+            <div><span>2. You</span><strong>★41</strong></div>
+            <div><span>3. Yuval</span><strong>★37</strong></div>
+          </div>
+        </div>
+        <div class="copy">
+          <h2>Rooms, not a second country.</h2>
+          <p>Locked: join with an invite code <em>and</em> a paper QR (same room, two ways in). The national collectors board is already live. A league is that same board in a closed room: 32 players max, a dated season (Hebrew month or election window). Scoring stays real collection stars + distinct cards. There is no separate league score.</p>
+          <ul>
+            <li>Create a league from Profile. The code is a short string, not a UUID. The QR encodes that same code.</li>
+            <li>Print the QR on a flyer / classroom slip / unit notice. Scanning it opens the join screen.</li>
+            <li>Same name-report rules. No chat.</li>
+            <li>A seasonal ladder is the same table with a month stamp. When the season ends the stamp stays cosmetic.</li>
+            <li>Faction stays national and anonymous. The room does not reveal faction.</li>
+          </ul>
+          <p><strong>Proposed copy:</strong> “Same table, smaller league. The stars were already counted on the server.”</p>
+          <div class="no">No paid seats, no invented crowd counts, no league that changes pulls.</div>
+        </div>
+      </article>
+
+      <article class="row">
+        <div class="ops deferred" aria-hidden="true">
+          <small>Studio · not a player screen</small>
+          <h3 style="margin-top:18px">Specials window</h3>
+          <p><code>prestige-legacy</code> · open 21.09 → 28.09</p>
+          <p><code>mouthpieces</code> · blocked</p>
+          <p style="margin-top:22px;opacity:.7">The player sees the card in the collection after the server grants it. There is no Events tab.</p>
+        </div>
+        <div class="copy">
+          <h2>Window-controlled Specials — a Today line, no Events tab.</h2>
+          <p>Locked: the player Events tab stays closed. While Studio has a Specials window open, Today shows one line. If no window is open, that line is absent — no empty slot. Cards already pulled stay in the binder. One card per Jerusalem day. Studio writes <code>opensAt</code> / <code>closesAt</code>; the server rejects a pull outside the window.</p>
+          <div class="examples">
+            <b>Example windows</b>
+            <ul>
+              <li><strong>Memorial week</strong> — Rabin last-speech card, 21–28 Sep.</li>
+              <li><strong>Election week</strong> — one extra civic card while ballots are in the news.</li>
+              <li><strong>Party-register night</strong> — a letter / ballot card the evening letters are locked.</li>
+            </ul>
+            <b>Example Today lines (pick tone later)</b>
+            <ul>
+              <li>“Special window open until 28 Sep. One extra card today.”</li>
+              <li>“Rabin memorial — one card today. It stays in your binder.”</li>
+              <li>No window → no line.</li>
+            </ul>
+          </div>
+          <div class="no">Do not build an Events tab, a quiz, or a volunteer pack. Do not change the regular pack generator.</div>
+        </div>
+      </article>
+
+    </div>
+
+    <section>
+      <h2>Locked for 15</h2>
+      <div class="questions">
+        <label><input type="checkbox" checked disabled /> PWA is the phone product. Notifications without Home Screen where the OS allows; iPhone still needs the icon for push.</label>
+        <label><input type="checkbox" checked disabled /> Leagues: invite code and paper QR. Player copy is league, not room.</label>
+        <label><input type="checkbox" checked disabled /> Specials: a Today line only while a window is open. No empty line.</label>
+        <label><input type="checkbox" checked disabled /> Creator kit: dropped. Share the binder link.</label>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -2,8 +2,10 @@ import pg from "pg";
 import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { normalizeState } from "./store.js";
+import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
+import { moveOwnedCard } from "./numbered.js";
+import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
 
 const { Pool } = pg;
 
@@ -11,6 +13,7 @@ const MIGRATIONS = [
   ["001_runtime_state", "001_runtime_state.sql"],
   ["002_normalized_runtime", "002_normalized_runtime.sql"],
   ["003_launch_reliability", "003_launch_reliability.sql"],
+  ["004_numbered_streaks", "004_numbered_streaks.sql"],
 ];
 
 function iso(value) {
@@ -52,6 +55,8 @@ function emptySession(token, createdAt) {
     pendingRankRewards: [],
     quizWonDay: null,
     currentQuiz: null,
+    loginDay: null,
+    loginStreak: 0,
   };
 }
 
@@ -65,6 +70,8 @@ function extrasFromSession(session) {
     claimedRankRewards: session.claimedRankRewards || [],
     pendingRankRewards: session.pendingRankRewards || [],
     currentQuiz: session.currentQuiz || null,
+    loginDay: session.loginDay || null,
+    loginStreak: session.loginStreak || 0,
   };
 }
 
@@ -125,13 +132,18 @@ export function sessionDeltas(previous, session) {
 }
 
 export class PostgresStore {
-  constructor(connectionString, { ssl = false } = {}) {
+  constructor(connectionString, { ssl = false, now = () => Date.now() } = {}) {
     const poolOptions = postgresPoolOptions(connectionString, { ssl });
     this.transactionPooling = poolOptions.connectionString !== connectionString;
     this.pool = guardPool(new Pool(poolOptions));
     this.transaction = new AsyncLocalStorage();
     this.requestSessions = new AsyncLocalStorage();
     this.sessionCache = new Map();
+    this.now = now;
+    this.holderRefresh = null;
+    this.holderSnapshot = null;
+    this.holderTableReady = false;
+    this.leaguesTableReady = false;
   }
 
   executor() {
@@ -312,9 +324,14 @@ export class PostgresStore {
     for (const instance of session.instances || []) {
       await client.query(
         `INSERT INTO kalpi_instances (
-           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-         ON CONFLICT (instance_id) DO NOTHING`,
+           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at,
+           numbered_index, numbered_of
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         ON CONFLICT (instance_id) DO UPDATE SET
+           session_token = EXCLUDED.session_token,
+           finish = EXCLUDED.finish,
+           numbered_index = EXCLUDED.numbered_index,
+           numbered_of = EXCLUDED.numbered_of`,
         [
           instance.instanceId,
           token,
@@ -324,6 +341,8 @@ export class PostgresStore {
           Boolean(instance.isNew),
           instance.acquiredBy || null,
           instance.seenAt || null,
+          instance.numberedIndex || null,
+          instance.numberedOf || null,
         ],
       );
     }
@@ -389,7 +408,9 @@ export class PostgresStore {
              'pulledAt', instance.pulled_at,
              'isNew', instance.is_new,
              'acquiredBy', instance.acquired_by,
-             'seenAt', instance.seen_at
+             'seenAt', instance.seen_at,
+             'numberedIndex', instance.numbered_index,
+             'numberedOf', instance.numbered_of
            ) ORDER BY instance.pulled_at ASC)
            FROM kalpi_instances AS instance
            WHERE instance.session_token = session.token
@@ -447,6 +468,8 @@ export class PostgresStore {
       pendingRankRewards: extras.pendingRankRewards || [],
       quizWonDay: row.quiz_won_day,
       currentQuiz: extras.currentQuiz || null,
+      loginDay: extras.loginDay || null,
+      loginStreak: extras.loginStreak || 0,
     };
   }
 
@@ -510,20 +533,27 @@ export class PostgresStore {
            (item->>'pulledAt')::timestamptz AS pulled_at,
            COALESCE((item->>'isNew')::boolean, false) AS is_new,
            NULLIF(item->>'acquiredBy', '') AS acquired_by,
-           NULLIF(item->>'seenAt', '')::timestamptz AS seen_at
+           NULLIF(item->>'seenAt', '')::timestamptz AS seen_at,
+           NULLIF(item->>'numberedIndex', '')::integer AS numbered_index,
+           NULLIF(item->>'numberedOf', '')::integer AS numbered_of
          FROM jsonb_array_elements($18::jsonb) AS item
        ),
        instance_upsert AS (
          INSERT INTO kalpi_instances (
-           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at
+           instance_id, session_token, card_id, finish, pulled_at, is_new, acquired_by, seen_at,
+           numbered_index, numbered_of
          )
-         SELECT instance_id, $1, card_id, finish, pulled_at, is_new, acquired_by, seen_at
+         SELECT instance_id, $1, card_id, finish, pulled_at, is_new, acquired_by, seen_at,
+           numbered_index, numbered_of
          FROM instance_input
          ON CONFLICT (instance_id) DO UPDATE SET
+           session_token = EXCLUDED.session_token,
            finish = EXCLUDED.finish,
            is_new = EXCLUDED.is_new,
            acquired_by = EXCLUDED.acquired_by,
-           seen_at = EXCLUDED.seen_at
+           seen_at = EXCLUDED.seen_at,
+           numbered_index = EXCLUDED.numbered_index,
+           numbered_of = EXCLUDED.numbered_of
          RETURNING instance_id
        ),
        instance_delete AS (
@@ -794,6 +824,13 @@ export class PostgresStore {
     return this.exclusive(async () => {
       const session = await this.loadSession(sessionToken, { forUpdate: true });
       if (!session || !session.inventory[offeredCardId] || offeredCardId === wantedCardId) return null;
+      const open = await this.executor().query(
+        `SELECT * FROM kalpi_trades
+         WHERE owner_token = $1 AND status = 'open' AND expires_at > $2
+         LIMIT 1`,
+        [sessionToken, createdAt],
+      );
+      if (open.rows[0]) return { blocked: true, existing: this.tradeFromRow(open.rows[0]) };
       const reserved = await this.executor().query(
         `SELECT COUNT(*)::int AS count FROM kalpi_trades
          WHERE owner_token = $1 AND offered_card_id = $2 AND status = 'open' AND expires_at > $3`,
@@ -875,22 +912,18 @@ export class PostgresStore {
       if (!owner?.inventory[trade.offeredCardId] || !accepter?.inventory[trade.wantedCardId]) return null;
       const previousOwner = structuredClone(owner);
       const previousAccepter = structuredClone(accepter);
-      const transfer = (from, to, cardId, finish, acquiredBy) => {
-        from.inventory[cardId] -= 1;
-        if (!from.inventory[cardId]) delete from.inventory[cardId];
-        const isNew = !to.inventory[cardId];
-        to.inventory[cardId] = (to.inventory[cardId] ?? 0) + 1;
-        to.instances.push({
-          instanceId: randomUUID(),
-          cardId,
-          finish,
-          pulledAt: acceptedAt,
-          isNew,
-          acquiredBy,
-        });
-      };
-      transfer(owner, accepter, trade.offeredCardId, offeredFinish, "trade-accepted");
-      transfer(accepter, owner, trade.wantedCardId, wantedFinish, "trade-accepted");
+      moveOwnedCard(owner, accepter, trade.offeredCardId, {
+        acquiredBy: "trade-accepted",
+        pulledAt: acceptedAt,
+        finish: offeredFinish,
+        instanceId: randomUUID(),
+      });
+      moveOwnedCard(accepter, owner, trade.wantedCardId, {
+        acquiredBy: "trade-accepted",
+        pulledAt: acceptedAt,
+        finish: wantedFinish,
+        instanceId: randomUUID(),
+      });
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
       trade.status = "accepted";
@@ -990,6 +1023,8 @@ export class PostgresStore {
     const cardsById = new Map(cards.map((card) => [card.id, card]));
     const sessions = await this.pool.query(
       `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
+              s.avatar_id, s.faction_id, s.highest_rank,
+              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
               COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
        FROM kalpi_sessions s
        LEFT JOIN kalpi_inventory i ON i.session_token = s.token
@@ -1004,6 +1039,10 @@ export class PostgresStore {
           stars: Object.keys(inventory).reduce((sum, cardId) => sum + cardStars(cardsById.get(cardId)), 0),
           packs: row.idle_pull_count ?? row.pack_count,
           current: row.token === currentToken,
+          avatarId: row.avatar_id || "kid-boy",
+          factionId: row.faction_id || null,
+          loginStreak: row.login_streak || 0,
+          rankLevel: row.highest_rank || 1,
         };
       })
       .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
@@ -1022,7 +1061,9 @@ export class PostgresStore {
     const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
     const targetPartyId = partyIds.length ? partyIds[dayNumber % partyIds.length] : null;
     const packRows = await this.pool.query(
-      `SELECT p.session_token, s.display_name, p.cards
+      `SELECT p.session_token, s.display_name, p.cards,
+              s.avatar_id, s.faction_id, s.highest_rank,
+              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak
        FROM kalpi_packs p
        JOIN kalpi_sessions s ON s.token = p.session_token
        WHERE (p.pulled_at AT TIME ZONE 'Asia/Jerusalem')::date = $1::date`,
@@ -1033,6 +1074,10 @@ export class PostgresStore {
       const existing = dailyCounts.get(row.session_token) || {
         label: row.display_name,
         current: row.session_token === currentToken,
+        avatarId: row.avatar_id || "kid-boy",
+        factionId: row.faction_id || null,
+        loginStreak: row.login_streak || 0,
+        rankLevel: row.highest_rank || 1,
         cards: 0,
       };
       existing.cards += (row.cards || []).filter((instance) => cardsById.get(instance.cardId)?.set === targetPartyId).length;
@@ -1043,6 +1088,10 @@ export class PostgresStore {
       dailyCounts.set(currentToken, {
         label: current?.display_name || "שחקן קְלָפִי",
         current: true,
+        avatarId: current?.avatar_id || "kid-boy",
+        factionId: current?.faction_id || null,
+        loginStreak: current?.login_streak || 0,
+        rankLevel: current?.highest_rank || 1,
         cards: 0,
       });
     }
@@ -1058,6 +1107,225 @@ export class PostgresStore {
       fixture: false,
       label: "Real activity in this local PoC",
     };
+  }
+
+  async claimNumberedStamp(key, max) {
+    const result = await this.executor().query(
+      `INSERT INTO kalpi_numbered_issued (stamp_key, issued)
+       VALUES ($1, 1)
+       ON CONFLICT (stamp_key) DO UPDATE
+       SET issued = kalpi_numbered_issued.issued + 1
+       WHERE kalpi_numbered_issued.issued < $2
+       RETURNING issued`,
+      [key, max],
+    );
+    const issued = result.rows[0]?.issued;
+    return issued ? { index: issued, of: max } : null;
+  }
+
+  async ensureHolderSnapshotTable() {
+    if (this.holderTableReady) return;
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS kalpi_card_holder_snapshot (
+        id SMALLINT PRIMARY KEY CHECK (id = 1),
+        holders JSONB NOT NULL DEFAULT '{}'::jsonb,
+        numbered_holders JSONB NOT NULL DEFAULT '{}'::jsonb,
+        computed_at TIMESTAMPTZ
+      )`);
+    this.holderTableReady = true;
+  }
+
+  async readCardHolderSnapshot() {
+    if (this.holderSnapshot?.computedAt) return this.holderSnapshot;
+    await this.ensureHolderSnapshotTable();
+    const result = await this.pool.query(
+      `SELECT holders, numbered_holders, computed_at
+       FROM kalpi_card_holder_snapshot
+       WHERE id = 1`,
+    );
+    const row = result.rows[0];
+    this.holderSnapshot = {
+      holders: row?.holders || {},
+      numberedHolders: row?.numbered_holders || {},
+      computedAt: row?.computed_at ? iso(row.computed_at) : null,
+    };
+    return this.holderSnapshot;
+  }
+
+  scheduleCardHolderRefresh() {
+    if (this.holderRefresh) return this.holderRefresh;
+    this.holderRefresh = this.refreshCardHolderSnapshot()
+      .catch(() => null)
+      .finally(() => {
+        this.holderRefresh = null;
+      });
+    return this.holderRefresh;
+  }
+
+  async refreshCardHolderSnapshot() {
+    await this.ensureHolderSnapshotTable();
+    const [owned, numbered] = await Promise.all([
+      this.pool.query(
+        `SELECT card_id, COUNT(*)::int AS holders
+         FROM kalpi_inventory
+         WHERE copies > 0
+         GROUP BY card_id`,
+      ),
+      this.pool.query(
+        `SELECT card_id, COUNT(DISTINCT session_token)::int AS holders
+         FROM kalpi_instances
+         WHERE numbered_index > 0
+         GROUP BY card_id`,
+      ),
+    ]);
+    const holders = {};
+    const numberedHolders = {};
+    for (const row of owned.rows) holders[row.card_id] = row.holders;
+    for (const row of numbered.rows) numberedHolders[row.card_id] = row.holders;
+    const computedAt = new Date(this.now()).toISOString();
+    await this.pool.query(
+      `INSERT INTO kalpi_card_holder_snapshot (id, holders, numbered_holders, computed_at)
+       VALUES (1, $1::jsonb, $2::jsonb, $3::timestamptz)
+       ON CONFLICT (id) DO UPDATE SET
+         holders = EXCLUDED.holders,
+         numbered_holders = EXCLUDED.numbered_holders,
+         computed_at = EXCLUDED.computed_at`,
+      [JSON.stringify(holders), JSON.stringify(numberedHolders), computedAt],
+    );
+    this.holderSnapshot = { holders, numberedHolders, computedAt };
+    return this.holderSnapshot;
+  }
+
+  async cardHolderSummary() {
+    try {
+      const snapshot = await this.readCardHolderSnapshot();
+      if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
+      if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
+      return snapshot;
+    } catch {
+      return { holders: {}, numberedHolders: {}, computedAt: new Date(this.now()).toISOString() };
+    }
+  }
+
+  async ensureLeaguesTable() {
+    if (this.leaguesTableReady) return;
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS kalpi_leagues (
+        code TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        season_label TEXT NOT NULL,
+        owner_token TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL,
+        member_tokens JSONB NOT NULL DEFAULT '[]'::jsonb
+      )`);
+    this.leaguesTableReady = true;
+  }
+
+  leagueFromRow(row) {
+    if (!row) return null;
+    return {
+      code: row.code,
+      name: row.name,
+      seasonLabel: row.season_label,
+      createdAt: iso(row.created_at),
+      ownerToken: row.owner_token,
+      memberTokens: row.member_tokens || [],
+    };
+  }
+
+  async scoreLeagueMembers(memberTokens, cards = []) {
+    const cardsById = new Map(cards.map((card) => [card.id, card]));
+    if (!memberTokens.length) return [];
+    const result = await this.pool.query(
+      `SELECT s.token, s.display_name, s.avatar_id, s.highest_rank,
+              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+              COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
+       FROM kalpi_sessions s
+       LEFT JOIN kalpi_inventory i ON i.session_token = s.token
+       WHERE s.token = ANY($1)
+       GROUP BY s.token`,
+      [memberTokens],
+    );
+    const byToken = new Map(result.rows.map((row) => [row.token, row]));
+    return memberTokens.map((token) => {
+      const row = byToken.get(token);
+      const session = {
+        inventory: row?.inventory || {},
+      };
+      return {
+        token,
+        label: row?.display_name || "שחקן קְלָפִי",
+        avatarId: row?.avatar_id || "kid-boy",
+        loginStreak: row?.login_streak || 0,
+        rankLevel: row?.highest_rank || 1,
+        ...leagueMemberScore(session, cardsById),
+      };
+    });
+  }
+
+  async createLeague(ownerToken, name, now = this.now()) {
+    await this.ensureLeaguesTable();
+    return this.exclusive(async () => {
+      const owner = await this.loadSession(ownerToken);
+      if (!owner) return { error: "UNAUTHORIZED" };
+      let code = newLeagueCode();
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const created = await this.executor().query(
+          `INSERT INTO kalpi_leagues (code, name, season_label, owner_token, created_at, member_tokens)
+           VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+           ON CONFLICT (code) DO NOTHING
+           RETURNING *`,
+          [code, name, hebrewSeasonLabel(now), ownerToken, new Date(now).toISOString(), JSON.stringify([ownerToken])],
+        );
+        if (created.rows[0]) return { league: this.leagueFromRow(created.rows[0]) };
+        code = newLeagueCode();
+      }
+      return { error: "LEAGUE_CREATE_FAILED" };
+    });
+  }
+
+  async joinLeague(token, rawCode) {
+    await this.ensureLeaguesTable();
+    return this.exclusive(async () => {
+      const session = await this.loadSession(token);
+      if (!session) return { error: "UNAUTHORIZED" };
+      const code = normalizeLeagueCode(rawCode);
+      if (!code) return { error: "LEAGUE_NOT_FOUND" };
+      const result = await this.executor().query(
+        "SELECT * FROM kalpi_leagues WHERE code = $1 FOR UPDATE",
+        [code],
+      );
+      const league = this.leagueFromRow(result.rows[0]);
+      if (!league) return { error: "LEAGUE_NOT_FOUND" };
+      if (!league.memberTokens.includes(token)) {
+        if (league.memberTokens.length >= LEAGUE_MAX) return { error: "LEAGUE_FULL" };
+        league.memberTokens.push(token);
+        await this.executor().query(
+          "UPDATE kalpi_leagues SET member_tokens = $2::jsonb WHERE code = $1",
+          [code, JSON.stringify(league.memberTokens)],
+        );
+      }
+      return { league };
+    });
+  }
+
+  async listLeagues(token) {
+    await this.ensureLeaguesTable();
+    const result = await this.pool.query(
+      `SELECT * FROM kalpi_leagues
+       WHERE owner_token = $1 OR member_tokens @> $2::jsonb
+       ORDER BY created_at DESC`,
+      [token, JSON.stringify([token])],
+    );
+    return result.rows.map((row) => this.leagueFromRow(row));
+  }
+
+  async getLeague(code) {
+    await this.ensureLeaguesTable();
+    const normalized = normalizeLeagueCode(code);
+    if (!normalized) return null;
+    const result = await this.pool.query("SELECT * FROM kalpi_leagues WHERE code = $1", [normalized]);
+    return this.leagueFromRow(result.rows[0]);
   }
 
   async getStudioConfig() {

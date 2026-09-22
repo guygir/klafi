@@ -97,13 +97,15 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-theme="pack-v2"] .secondary-action,
 #app[data-theme="pack-v2"] .contained-tabs button,
-#app[data-theme="pack-v2"] .filter-strip button {
+#app[data-theme="pack-v2"] .filter-strip button,
+#app[data-theme="pack-v2"] .filter-party {
   border-color: color-mix(in srgb, var(--pack-umber) 26%, transparent);
   background: color-mix(in srgb, var(--pack-paper) 76%, transparent);
 }
 
 #app[data-theme="pack-v2"] .contained-tabs button.active,
-#app[data-theme="pack-v2"] .filter-strip button.active {
+#app[data-theme="pack-v2"] .filter-strip button.active,
+#app[data-theme="pack-v2"] .filter-party.active {
   border-color: var(--pack-seal);
   background: var(--pack-seal);
   color: var(--pack-paper);
@@ -152,6 +154,77 @@ body:has(#app[data-theme="pack-v2"]) {
     inset 0 0 0 clamp(3px, 1.65cqw, 7px) var(--pack-gold, #b38d3f);
 }
 
+#app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered {
+  --card-frame: var(--pack-gold, #b38d3f);
+  box-shadow:
+    0 20px 46px rgba(60, 48, 38, 0.24),
+    inset 0 0 0 clamp(2px, 1cqw, 4px) var(--pack-umber, #3c3026),
+    inset 0 0 0 clamp(3px, 1.65cqw, 7px) var(--pack-gold, #b38d3f);
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card.holo::before {
+  inset: clamp(2px, 1.1cqw, 5px);
+  padding: 2px;
+  border: 0;
+  background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 52%, #fff6c8 62%, #ffffff 70%, #e0c36a 78%, transparent 88%);
+  animation: holo-orbit 2.2s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered::before {
+  inset: 0;
+  padding: 4px;
+  animation-duration: 3.8s;
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #b38d3f 0deg,
+    #fff6c8 70deg,
+    #e0c36a 140deg,
+    #c4a35a 210deg,
+    #fff6c8 280deg,
+    #b38d3f 360deg
+  );
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered.holo-chroma::before {
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #2ec8ff 0deg,
+    #7dffb3 60deg,
+    #ffe566 120deg,
+    #ff8a3d 180deg,
+    #ff5ad5 240deg,
+    #8b7bff 300deg,
+    #2ec8ff 360deg
+  );
+}
+
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
+  width: clamp(26px, 11.4cqw, 36px);
+  min-width: clamp(26px, 11.4cqw, 36px);
+  height: clamp(26px, 11.4cqw, 36px);
+  min-height: clamp(26px, 11.4cqw, 36px);
+  padding: 0;
+  border: max(1.5px, 0.55cqw) solid #b42318;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 30%, #fff8f2 0 38%, #f6d4cb 100%);
+  color: #8a1610;
+  font: 800 clamp(8px, 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  box-shadow:
+    inset 0 0 0 max(1px, 0.35cqw) #f8e4dc,
+    inset 0 0 0 max(2.4px, 0.9cqw) #b42318;
+  backdrop-filter: none;
+}
+
 #app[data-card-frame="tall-v2"] .card-face.front {
   padding: 0;
 }
@@ -179,7 +252,8 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .card-image-meta .card-code-tag,
 #app[data-card-frame="tall-v2"] .card-image-meta strong,
-#app[data-card-frame="tall-v2"] .card-image-meta .card-copies-tag {
+#app[data-card-frame="tall-v2"] .card-image-meta .card-copies-tag,
+#app[data-card-frame="tall-v2"] .card-image-meta .card-numbered-tag {
   box-sizing: border-box;
   min-height: clamp(18px, 8cqw, 24px);
   padding: clamp(2px, 1.1cqw, 5px) clamp(5px, 1.8cqw, 8px);
@@ -332,20 +406,6 @@ body:has(#app[data-theme="pack-v2"]) {
   place-items: center;
 }
 
-#app[data-card-frame="tall-v2"] .trade-choice-preview button {
-  width: 100%;
-  height: 100%;
-}
-
-#app[data-card-frame="tall-v2"] .trade-choice-preview .kalpi-card {
-  width: 330px;
-  max-width: none;
-  height: calc(330px * 96 / 63);
-  aspect-ratio: 63 / 96;
-  transform: scale(calc(100cqw / 330px));
-  transform-origin: top right;
-}
-
 #app[data-card-frame="tall-v2"] .binder-shared-card .kalpi-card,
 #app[data-card-frame="tall-v2"] .site-card-peek .kalpi-card {
   width: 100%;
@@ -367,7 +427,8 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-code-tag,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag {
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-copies-tag,
+#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
   box-sizing: border-box;
   width: max-content;
   min-width: max-content;
@@ -395,13 +456,13 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong {
-  width: 8cqw;
+  width: max-content;
   min-width: 8cqw;
   max-width: none;
   height: 8cqw;
   min-height: 8cqw;
   flex: 0 0 auto;
-  padding: 0;
+  padding: 0 1.4cqw;
   border-width: max(1px, 0.5cqw);
   font-size: 6.4cqw;
   line-height: 1;
@@ -643,7 +704,8 @@ body:has(#app[data-theme="pack-v2"]) {
   margin: 8px 0 14px;
 }
 
-#app[data-density="airy-v2"] .filter-strip button {
+#app[data-density="airy-v2"] .filter-strip button,
+#app[data-density="airy-v2"] .filter-party {
   min-height: 38px;
   padding: 7px 12px;
   font-size: 12px;
@@ -688,8 +750,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-density="airy-v2"] .trade-form fieldset {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
-  grid-template-areas: "preview fields";
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   overflow: visible;
   padding: 12px !important;
@@ -703,8 +764,7 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] .site-card-peeks {
-  opacity: 0.46;
-  filter: sepia(0.15);
+  display: none;
 }
 
 .visual-config,
@@ -799,11 +859,6 @@ body:has(#app[data-theme="pack-v2"]) {
     font-size: 11px;
   }
 
-  #app[data-card-frame="tall-v2"] .trade-choice-preview button {
-    width: 100%;
-    height: 100%;
-  }
-
   .studio-meta-desk,
   .avatar-picker {
     grid-template-columns: 1fr 1fr;
@@ -820,11 +875,6 @@ body:has(#app[data-theme="pack-v2"]) {
     overflow-y: auto;
   }
 
-  #app[data-card-frame="tall-v2"] .trade-choice-preview button {
-    width: 100%;
-    height: 100%;
-  }
-
   #app[data-card-frame="tall-v2"] #pack-view .walkout .kalpi-card {
     height: 100%;
     max-height: 100%;
@@ -834,7 +884,8 @@ body:has(#app[data-theme="pack-v2"]) {
 @media (prefers-reduced-motion: reduce) {
   #app[data-quote-reveal="ink-v2"] .progressive-card.stage-quote .card-quote-zone,
   #app[data-quote-reveal="ink-v2"] .progressive-card.stage-quote::after,
-  #app[data-density="airy-v2"] .live-pulse {
+  #app[data-density="airy-v2"] .live-pulse,
+  #app[data-card-frame="tall-v2"] .kalpi-card.holo::before {
     animation: none;
   }
 }
@@ -913,13 +964,14 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 .level-avatar-button {
+  position: relative;
   flex: 0 0 auto;
   width: 42px;
   height: 42px;
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent);
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
   background: var(--pack-paper-deep, #d8cbb5);
   cursor: pointer;
 }
@@ -929,17 +981,23 @@ body:has(#app[data-theme="pack-v2"]) {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatar-seal {
+  display: none;
 }
 
 #app[data-density="airy-v2"] .level-identity {
-  display: flex;
+  display: grid;
+  justify-items: center;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
 }
 
 #app[data-density="airy-v2"] .level-identity span {
   margin-top: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1102,6 +1160,65 @@ body:has(#app[data-theme="pack-v2"]) {
   content: none;
 }
 
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo::before,
+#app .kalpi-card[data-card-frame="fullart-v1"].holo::before {
+  content: "";
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  padding: 3px;
+  pointer-events: none;
+  border-radius: inherit;
+  background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 52%, #fff6c8 62%, #ffffff 70%, #e0c36a 78%, transparent 88%);
+  animation: holo-orbit 2.2s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered,
+#app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered {
+  border-color: var(--foil);
+  box-shadow:
+    0 20px 46px rgba(5, 5, 5, 0.42),
+    inset 0 0 0 2px #050505,
+    inset 0 0 0 3px var(--foil);
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered::before,
+#app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered::before {
+  padding: 4px;
+  animation-duration: 3.8s;
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #b38d3f 0deg,
+    #fff6c8 70deg,
+    #e0c36a 140deg,
+    #c4a35a 210deg,
+    #fff6c8 280deg,
+    #b38d3f 360deg
+  );
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered.holo-chroma::before,
+#app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered.holo-chroma::before {
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #2ec8ff 0deg,
+    #7dffb3 60deg,
+    #ffe566 120deg,
+    #ff8a3d 180deg,
+    #ff5ad5 240deg,
+    #8b7bff 300deg,
+    #2ec8ff 360deg
+  );
+}
+
 #app[data-card-frame="fullart-v1"] .kalpi-card.uncommon,
 #app .kalpi-card[data-card-frame="fullart-v1"].uncommon {
   box-shadow:
@@ -1191,6 +1308,25 @@ body:has(#app[data-theme="pack-v2"]) {
   white-space: nowrap;
 }
 
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
+#app .kalpi-card.numbered[data-card-frame="fullart-v1"] .card-image-meta .card-numbered-tag {
+  width: clamp(26px, 11.4cqw, 36px);
+  min-width: clamp(26px, 11.4cqw, 36px);
+  height: clamp(26px, 11.4cqw, 36px);
+  min-height: clamp(26px, 11.4cqw, 36px);
+  padding: 0;
+  border: max(1.5px, 0.55cqw) solid #b42318;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 30%, #fff8f2 0 38%, #f6d4cb 100%);
+  color: #8a1610;
+  font: 800 clamp(8px, 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  box-shadow:
+    inset 0 0 0 max(1px, 0.35cqw) #f8e4dc,
+    inset 0 0 0 max(2.4px, 0.9cqw) #b42318;
+  backdrop-filter: none;
+}
+
 #app[data-card-frame="fullart-v1"] .card-image-meta strong,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta strong {
   display: none;
@@ -1264,29 +1400,44 @@ body:has(#app[data-theme="pack-v2"]) {
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone {
   bottom: 15%;
   height: 5%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.2cqw;
+  display: grid;
+  place-items: center;
+  gap: 0;
   color: var(--foil);
   font-family: "IBM Plex Sans Hebrew", sans-serif;
   font-size: 3.5cqw;
   font-weight: 500;
-  line-height: 1.15;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-align: center;
+}
+
+#app[data-card-frame="fullart-v1"] .card-rarity-run,
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-run {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.32em;
+  max-width: 100%;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 #app[data-card-frame="fullart-v1"] .card-rarity-zone strong,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone strong {
+  display: inline-block;
   font-size: inherit;
   font-weight: inherit;
-  letter-spacing: inherit;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 #app[data-card-frame="fullart-v1"] .card-quote-zone,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-quote-zone {
   bottom: 0;
-  height: 15%;
-  max-height: 15%;
+  height: 14%;
+  max-height: 14%;
   min-height: 0;
   padding: 1% 0 2%;
   overflow: hidden;
@@ -1294,9 +1445,34 @@ body:has(#app[data-theme="pack-v2"]) {
   place-items: center;
   color: #f7f2e8;
   font-family: "Noto Serif Hebrew", serif;
-  font-size: 6.4cqw;
+  font-size: clamp(8px, 5.6cqw, 22px);
   font-weight: 600;
   line-height: 1.15;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-name-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"].numbered .card-name-zone {
+  bottom: 25%;
+  height: 6%;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-party-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"].numbered .card-party-zone {
+  bottom: 20%;
+  height: 5%;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-rarity-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"].numbered .card-rarity-zone {
+  bottom: 15%;
+  height: 5%;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-quote-zone,
+#app .kalpi-card[data-card-frame="fullart-v1"].numbered .card-quote-zone {
+  bottom: 0;
+  height: 14%;
+  max-height: 14%;
 }
 
 #app[data-card-frame="fullart-v1"] .new-stamp,
@@ -1315,7 +1491,7 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .shared-card .kalpi-card,
 #app .card-dialog .kalpi-card[data-card-frame="fullart-v1"],
 #app .shared-card .kalpi-card[data-card-frame="fullart-v1"] {
-  width: min(370px, 100%);
+  width: min(var(--card-width), 100%);
 }
 
 #app[data-card-frame="fullart-v1"] .card-dialog #dialog-card,
@@ -1331,25 +1507,11 @@ body:has(#app[data-theme="pack-v2"]) {
   width: 100%;
 }
 
-#app[data-card-frame="fullart-v1"] .trade-choice-preview button {
-  height: 100%;
-}
-
-#app[data-card-frame="fullart-v1"] .trade-choice-preview .kalpi-card,
-#app .trade-choice-preview .kalpi-card[data-card-frame="fullart-v1"] {
-  width: 330px;
-  max-width: none;
-  height: calc(330px * 96 / 63);
-  aspect-ratio: 63 / 96;
-  transform: scale(calc(100cqw / 330px));
-  transform-origin: top right;
-}
-
 #app[data-card-frame="fullart-v1"] #pack-view .walkout .kalpi-card {
-  width: auto;
+  width: min(var(--card-width), 100%);
   max-width: 100%;
-  height: 100%;
-  max-height: 100%;
+  height: auto;
+  max-height: calc(100% - 52px);
   aspect-ratio: 63 / 96;
 }
 

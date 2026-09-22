@@ -2,6 +2,10 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { moveOwnedCard } from "./numbered.js";
+import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
+
+export const CARD_HOLDER_SYNC_MS = 60 * 60 * 1000;
 
 export const EMPTY_STATE = {
   version: 6,
@@ -11,6 +15,9 @@ export const EMPTY_STATE = {
   factions: {},
   reports: [],
   idempotency: {},
+  numberedIssued: {},
+  cardHolderSnapshot: { holders: {}, numberedHolders: {}, computedAt: null },
+  leagues: {},
 };
 
 export function normalizeState(value = {}) {
@@ -23,6 +30,13 @@ export function normalizeState(value = {}) {
   state.factions ??= {};
   state.reports ??= [];
   state.idempotency ??= {};
+  state.numberedIssued ??= {};
+  state.leagues ??= {};
+  state.cardHolderSnapshot = {
+    holders: state.cardHolderSnapshot?.holders || {},
+    numberedHolders: state.cardHolderSnapshot?.numberedHolders || {},
+    computedAt: state.cardHolderSnapshot?.computedAt || null,
+  };
   for (const [token, session] of Object.entries(state.sessions)) {
     session.eventCounts ??= {};
     session.factionId ??= null;
@@ -42,6 +56,8 @@ export function normalizeState(value = {}) {
     session.avatarId ??= "kid-boy";
     session.quizWonDay ??= null;
     session.currentQuiz ??= null;
+    session.loginDay ??= null;
+    session.loginStreak ??= 0;
   }
   return state;
 }
@@ -53,12 +69,37 @@ function cardStars(card) {
   return 1;
 }
 
+export function tallyCardHolders(sessions = {}) {
+  const holders = {};
+  const numberedHolders = {};
+  for (const session of Object.values(sessions || {})) {
+    for (const [cardId, copies] of Object.entries(session.inventory || {})) {
+      if (Number(copies) > 0) holders[cardId] = (holders[cardId] || 0) + 1;
+    }
+    const seen = new Set();
+    for (const instance of session.instances || []) {
+      if (Number(instance?.numberedIndex) > 0 && instance.cardId && !seen.has(instance.cardId)) {
+        seen.add(instance.cardId);
+        numberedHolders[instance.cardId] = (numberedHolders[instance.cardId] || 0) + 1;
+      }
+    }
+  }
+  return { holders, numberedHolders };
+}
+
+export function cardHolderSnapshotFresh(snapshot, nowMs, ttlMs = CARD_HOLDER_SYNC_MS) {
+  const at = Date.parse(snapshot?.computedAt || "");
+  return Number.isFinite(at) && (nowMs - at) < ttlMs;
+}
+
 export class JsonStore {
-  constructor(filePath) {
+  constructor(filePath, { now = () => Date.now() } = {}) {
     this.filePath = filePath;
+    this.now = now;
     this.state = structuredClone(EMPTY_STATE);
     this.queue = Promise.resolve();
     this.transaction = new AsyncLocalStorage();
+    this.holderRefresh = null;
   }
 
   async init() {
@@ -120,6 +161,8 @@ export class JsonStore {
         highestRank: 1,
         claimedRankRewards: [],
         pendingRankRewards: [],
+        loginDay: null,
+        loginStreak: 0,
       };
       await this.persist();
       return token;
@@ -273,6 +316,11 @@ export class JsonStore {
     return this.exclusive(async () => {
       const session = this.getSession(sessionToken);
       if (!session || !session.inventory[offeredCardId] || offeredCardId === wantedCardId) return null;
+      const existing = this.state.trades.find((trade) =>
+        trade.ownerToken === sessionToken
+        && trade.status === "open"
+        && Date.parse(trade.expiresAt || 0) > Date.parse(createdAt));
+      if (existing) return { blocked: true, existing };
       const reservedCopies = this.state.trades.filter((trade) =>
         trade.ownerToken === sessionToken
         && trade.offeredCardId === offeredCardId
@@ -333,22 +381,18 @@ export class JsonStore {
         || !owner?.inventory[trade.offeredCardId] || !accepter?.inventory[trade.wantedCardId]) {
         return null;
       }
-      const transfer = (from, to, cardId, finish, acquiredBy) => {
-        from.inventory[cardId] -= 1;
-        if (!from.inventory[cardId]) delete from.inventory[cardId];
-        const isNew = !to.inventory[cardId];
-        to.inventory[cardId] = (to.inventory[cardId] ?? 0) + 1;
-        to.instances.push({
-          instanceId: randomUUID(),
-          cardId,
-          finish,
-          pulledAt: acceptedAt,
-          isNew,
-          acquiredBy,
-        });
-      };
-      transfer(owner, accepter, trade.offeredCardId, offeredFinish, "trade-accepted");
-      transfer(accepter, owner, trade.wantedCardId, wantedFinish, "trade-accepted");
+      moveOwnedCard(owner, accepter, trade.offeredCardId, {
+        acquiredBy: "trade-accepted",
+        pulledAt: acceptedAt,
+        finish: offeredFinish,
+        instanceId: randomUUID(),
+      });
+      moveOwnedCard(accepter, owner, trade.wantedCardId, {
+        acquiredBy: "trade-accepted",
+        pulledAt: acceptedAt,
+        finish: wantedFinish,
+        instanceId: randomUUID(),
+      });
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
       trade.status = "accepted";
@@ -412,6 +456,10 @@ export class JsonStore {
         stars: Object.keys(session.inventory).reduce((sum, cardId) => sum + cardStars(cardsById.get(cardId)), 0),
         packs: session.idlePullCount ?? session.packCount,
         current: token === currentToken,
+        avatarId: session.avatarId || "kid-boy",
+        factionId: session.factionId || null,
+        loginStreak: session.loginStreak || 0,
+        rankLevel: session.highestRank || 1,
       }))
       .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
@@ -429,6 +477,10 @@ export class JsonStore {
       .map(([token, session]) => ({
         label: session.displayName,
         current: token === currentToken,
+        avatarId: session.avatarId || "kid-boy",
+        factionId: session.factionId || null,
+        loginStreak: session.loginStreak || 0,
+        rankLevel: session.highestRank || 1,
         cards: session.packs
           .filter((pack) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(pack.pulledAt)) === day)
           .flatMap((pack) => pack.cards)
@@ -446,6 +498,104 @@ export class JsonStore {
       fixture: false,
       label: "Real activity in this local PoC",
     };
+  }
+
+  scheduleCardHolderRefresh() {
+    if (this.holderRefresh) return this.holderRefresh;
+    this.holderRefresh = this.refreshCardHolderSnapshot()
+      .catch(() => null)
+      .finally(() => {
+        this.holderRefresh = null;
+      });
+    return this.holderRefresh;
+  }
+
+  async refreshCardHolderSnapshot() {
+    const tally = tallyCardHolders(this.state.sessions);
+    const snapshot = {
+      ...tally,
+      computedAt: new Date(this.now()).toISOString(),
+    };
+    this.state.cardHolderSnapshot = snapshot;
+    await this.persist();
+    return snapshot;
+  }
+
+  async cardHolderSummary() {
+    const snapshot = this.state.cardHolderSnapshot;
+    if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
+    if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
+    return snapshot;
+  }
+
+  async claimNumberedStamp(key, max) {
+    this.state.numberedIssued ??= {};
+    const current = this.state.numberedIssued[key] || 0;
+    if (current >= max) return null;
+    const next = current + 1;
+    this.state.numberedIssued[key] = next;
+    return { index: next, of: max };
+  }
+
+  scoreLeagueMembers(memberTokens, cards = []) {
+    const cardsById = new Map(cards.map((card) => [card.id, card]));
+    return memberTokens.map((token) => {
+      const session = this.getSession(token);
+      const score = leagueMemberScore(session, cardsById);
+      return {
+        token,
+        label: session?.displayName || "שחקן קְלָפִי",
+        avatarId: session?.avatarId || "kid-boy",
+        loginStreak: session?.loginStreak || 0,
+        rankLevel: session?.highestRank || 1,
+        ...score,
+      };
+    });
+  }
+
+  async createLeague(ownerToken, name, now = this.now()) {
+    return this.exclusive(async () => {
+      if (!this.getSession(ownerToken)) return { error: "UNAUTHORIZED" };
+      this.state.leagues ??= {};
+      let code = newLeagueCode();
+      while (this.state.leagues[code]) code = newLeagueCode();
+      const league = {
+        code,
+        name,
+        seasonLabel: hebrewSeasonLabel(now),
+        createdAt: new Date(now).toISOString(),
+        ownerToken,
+        memberTokens: [ownerToken],
+      };
+      this.state.leagues[code] = league;
+      await this.persist();
+      return { league };
+    });
+  }
+
+  async joinLeague(token, rawCode) {
+    return this.exclusive(async () => {
+      if (!this.getSession(token)) return { error: "UNAUTHORIZED" };
+      const code = normalizeLeagueCode(rawCode);
+      const league = code ? this.state.leagues?.[code] : null;
+      if (!league) return { error: "LEAGUE_NOT_FOUND" };
+      if (!league.memberTokens.includes(token)) {
+        if (league.memberTokens.length >= LEAGUE_MAX) return { error: "LEAGUE_FULL" };
+        league.memberTokens.push(token);
+        await this.persist();
+      }
+      return { league };
+    });
+  }
+
+  async listLeagues(token) {
+    return Object.values(this.state.leagues || {})
+      .filter((league) => league.memberTokens.includes(token))
+      .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
+  }
+
+  async getLeague(code) {
+    return this.state.leagues?.[normalizeLeagueCode(code)] || null;
   }
 
   exclusive(operation) {

@@ -73,7 +73,7 @@ function normalizePersonName(value) {
   return String(value || "").replace(/[׳'ʼ`״"]/g, "").replace(/\s+/g, " ").trim();
 }
 
-function findSet5Party(candidate, parties = [], members = []) {
+function findSet5Match(candidate, parties = [], members = []) {
   const nameHe = normalizePersonName(candidate.nameHe);
   const nameEn = normalizePersonName(candidate.nameEn);
   const member = members.find((item) =>
@@ -82,14 +82,19 @@ function findSet5Party(candidate, parties = [], members = []) {
   const partyId = member?.partyId
     || SET5_PARTY_FALLBACK[candidate.nameHe]
     || SET5_PARTY_FALLBACK[candidate.nameEn];
-  return parties.find((party) => party.id === partyId) || null;
+  return {
+    member: member || null,
+    party: parties.find((party) => party.id === partyId) || null,
+  };
 }
 
 export function runtimeSet5Card(candidate, extras = {}) {
-  const party = findSet5Party(candidate, extras.parties, extras.members);
+  const { party, member } = findSet5Match(candidate, extras.parties, extras.members);
   const critical = new Set(extras.criticalBloc || []);
   const treatment = party && critical.has(party.id) ? "critical" : "favorable";
   const index = Number(candidate.n) || 0;
+  const slot = Number(member?.slot);
+  const listSlot = Number.isInteger(slot) && slot > 0 ? slot : null;
   const sourceUrl = (candidate.sources || []).find(Boolean) || "";
   const context = candidate.notes || candidate.art?.note || "";
   return {
@@ -106,12 +111,13 @@ export function runtimeSet5Card(candidate, extras = {}) {
     type: "Quote",
     typeHe: "ציטוט",
     rarity: candidate.rarity || "Common",
-    subtitle: `${SET5_NAME_HE} · ${party?.displayNameHe || ""}`.replace(/ · $/, ""),
-    subtitleHe: SET5_NAME_HE,
+    subtitle: listSlot ? `מקום ${listSlot} · ${party?.displayNameHe || SET5_NAME_HE}` : `${SET5_NAME_HE} · ${party?.displayNameHe || ""}`.replace(/ · $/, ""),
+    subtitleHe: listSlot ? `מקום ${listSlot}` : SET5_NAME_HE,
     body: context,
     whyItMatters: candidate.notes || "Selected for Set 5 from the accepted quote pool.",
     source: sourceUrl || "Source pending",
-    listSlot: null,
+    listSlot,
+    set5Index: index,
     artKey: candidate.art?.artKey || null,
     walkout: {
       kind: "quote",

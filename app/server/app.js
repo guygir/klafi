@@ -1,7 +1,7 @@
 import { readFile, rename, stat, writeFile } from "node:fs/promises";
 import { randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
-import { JsonStore } from "./store.js";
+import { CARD_HOLDER_SYNC_MS, JsonStore } from "./store.js";
 import { PostgresStore } from "./postgres-store.js";
 import { generateIdlePull, generatePack, rarityTier } from "./pack-engine.js";
 import {
@@ -16,6 +16,18 @@ import {
   validPackConfig,
 } from "./pack-config.js";
 import { catalogExtrasFromStudio, expandPublicCatalog, runtimeSpecialCard } from "./public-catalog.js";
+import {
+  applyLoginStreak,
+  jerusalemDay,
+  normalizeNumberedSets,
+  numberedCopies,
+  stampFromGrant,
+  stampKey,
+  stampMax,
+} from "./numbered.js";
+import { publicLeague } from "./leagues.js";
+import { qrSvg } from "./qr-svg.js";
+import { openSpecialWindow } from "./special-window.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -76,6 +88,7 @@ const MIME = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
 };
 const SECURITY_HEADERS = Object.freeze({
   "x-content-type-options": "nosniff",
@@ -101,6 +114,49 @@ function escapeShareHtml(value = "") {
     '"': "&quot;",
     "'": "&#039;",
   })[character]);
+}
+
+function serveBinderShareLanding(request, response) {
+  const origin = requestOrigin(request);
+  const play = new URL("/", origin);
+  play.searchParams.set("showcase", "1");
+  const title = "קְלָפִי · האלבום המלא";
+  const description = "תצוגת האלבום כולו, כולל ממוספרים אפשריים. אין כאן שחקן במשחק — בלי דירוג. ספירת המחזיקים אמיתית.";
+  const shareUrl = `${origin}/share/binder`;
+  const image = `${origin}/design-assets/hero-art-kalpi.png`;
+  const playHref = `${play.pathname}${play.search}`;
+  const html = `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeShareHtml(title)}</title>
+  <meta name="description" content="${escapeShareHtml(description)}" />
+  <meta property="og:title" content="${escapeShareHtml(title)}" />
+  <meta property="og:description" content="${escapeShareHtml(description)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${escapeShareHtml(shareUrl)}" />
+  <meta property="og:image" content="${escapeShareHtml(image)}" />
+  <meta property="og:image:alt" content="קְלָפִי · האלבום המלא" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${escapeShareHtml(title)}" />
+  <meta name="twitter:description" content="${escapeShareHtml(description)}" />
+  <meta name="twitter:image" content="${escapeShareHtml(image)}" />
+  <link rel="canonical" href="${escapeShareHtml(play.toString())}" />
+  <meta http-equiv="refresh" content="0;url=${escapeShareHtml(playHref)}" />
+</head>
+<body>
+  <p><a href="${escapeShareHtml(playHref)}">פתחו את האלבום המלא בקְלָפִי</a></p>
+</body>
+</html>`;
+  const body = Buffer.from(html, "utf8");
+  response.writeHead(200, {
+    ...SECURITY_HEADERS,
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "public, max-age=300",
+    "content-length": body.length,
+  });
+  response.end(request.method === "HEAD" ? undefined : body);
 }
 
 function serveShareLanding(request, response, card, extras = {}) {
@@ -171,6 +227,7 @@ const STATELESS_API_PATHS = new Set([
   "/api/studio/content",
   "/api/game-config",
   "/api/presentation/content",
+  "/api/card-holders",
 ]);
 
 function secretsMatch(provided, expected) {
@@ -192,6 +249,7 @@ export function publicPartyRegister(studioContent, cards = []) {
       filingStatus,
       asOfDate,
       pip,
+      symbolCard,
     }) => ({
       id,
       displayNameHe,
@@ -202,6 +260,8 @@ export function publicPartyRegister(studioContent, cards = []) {
       filingStatus: filingStatus || null,
       asOfDate: asOfDate || null,
       pip,
+      letterArt: symbolCard?.artKey || null,
+      letterChip: id === "LIK" ? "ballot-letter-lik.png" : null,
     }));
   }
   const parties = new Map();
@@ -308,7 +368,32 @@ function validProgressionPatch(value) {
     const exponent = Number(value.thresholdExponent);
     if (!Number.isFinite(exponent) || exponent < 0.5 || exponent > 3) return false;
   }
+  if (value.rankNames !== undefined) {
+    if (!Array.isArray(value.rankNames) || value.rankNames.length < 2 || value.rankNames.length > 24) return false;
+    if (!value.rankNames.every((name) => typeof name === "string" && name.trim().length >= 2 && name.trim().length <= 32)) {
+      return false;
+    }
+  }
+  if (value.grantLevelReward !== undefined && typeof value.grantLevelReward !== "boolean") return false;
+  if (value.numberedSets !== undefined) {
+    if (!Array.isArray(value.numberedSets) || value.numberedSets.length > 40) return false;
+    if (!value.numberedSets.every((id) => typeof id === "string" && /^[a-z0-9-]{2,40}$/.test(id))) return false;
+  }
+  if (value.reward !== undefined && (typeof value.reward !== "string" || value.reward.length > 80)) return false;
   return true;
+}
+
+function validAvatarUnlocks(value, catalog = []) {
+  if (value === undefined) return true;
+  if (!Array.isArray(value) || !value.length) return false;
+  const known = new Set(catalog.map((avatar) => avatar.id));
+  return value.every((item) => (
+    item
+    && known.has(item.id)
+    && Number.isInteger(item.unlockLevel)
+    && item.unlockLevel >= 1
+    && item.unlockLevel <= 24
+  ));
 }
 
 function normalizeDisplayName(value) {
@@ -543,6 +628,9 @@ function progressionConfig(config = {}, activeReleaseIds = null) {
     releaseLevelIncrements: increments,
     thresholdExponent: exponent,
     reward: config.reward || "קלף בונוס מיידי",
+    rankNames: ranks,
+    grantLevelReward: config.grantLevelReward !== false,
+    numberedSets: normalizeNumberedSets(config.numberedSets),
   };
 }
 
@@ -586,9 +674,11 @@ function syncProgression(session, cards, config, current) {
   if (progression.level > previous) {
     session.pendingRankRewards ??= [];
     session.claimedRankRewards ??= [];
-    for (let rank = previous + 1; rank <= progression.level; rank += 1) {
-      if (!session.claimedRankRewards.includes(rank) && !session.pendingRankRewards.includes(rank)) {
-        session.pendingRankRewards.push(rank);
+    if (config.grantLevelReward !== false) {
+      for (let rank = previous + 1; rank <= progression.level; rank += 1) {
+        if (!session.claimedRankRewards.includes(rank) && !session.pendingRankRewards.includes(rank)) {
+          session.pendingRankRewards.push(rank);
+        }
       }
     }
     session.highestRank = progression.level;
@@ -625,6 +715,9 @@ function publicState(session, now, cards, config = {}) {
     achievements: achievementState(session, cards, config.achievements),
     avatars: publicAvatars(session, config.avatars, progressionState(session, cards, config, now).level),
     avatarId: session.avatarId || "kid-boy",
+    loginStreak: session.loginStreak || 0,
+    loginDay: session.loginDay || null,
+    numberedCopies: numberedCopies(session.instances),
     progression: progressionState(session, cards, config, now),
     quizAvailable: Boolean(config.quizEnabled)
       && Boolean(Object.keys(session.inventory || {}).length)
@@ -650,11 +743,10 @@ function publicIdleState(session, now, cards, config = {}) {
     preparedPulls: session.preparedPulls ?? [],
     progression,
     avatars: publicAvatars(session, config.avatars, progression.level),
+    loginStreak: session.loginStreak || 0,
+    factionId: session.factionId || null,
+    numberedCopies: numberedCopies(session.instances),
   };
-}
-
-function jerusalemDay(ms) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(ms));
 }
 
 function unitRandom(rng) {
@@ -725,7 +817,7 @@ async function serveFile(request, response, base, relativePath) {
     if (!info.isFile()) throw Object.assign(new Error("Not a file"), { code: "ENOENT" });
     const content = await readFile(requested);
     const extension = path.extname(requested).toLowerCase();
-    const revalidate = new Set([".html", ".css", ".js", ".json", ".mp4"]).has(extension);
+    const revalidate = new Set([".html", ".css", ".js", ".json", ".mp4", ".webmanifest"]).has(extension);
     const headers = {
       ...SECURITY_HEADERS,
       "content-type": MIME[extension] ?? "application/octet-stream",
@@ -792,6 +884,8 @@ export async function createKalpiApp({
   studioSecret = process.env.STUDIO_SECRET || null,
   now = () => Date.now(),
   rng = randomInt,
+  holderWarm = false,
+  holderSyncMs = CARD_HOLDER_SYNC_MS,
 } = {}) {
   const cards = JSON.parse(await readFile(cardsPath, "utf8"));
   const advocacy = JSON.parse(await readFile(advocacyPath, "utf8"));
@@ -809,7 +903,7 @@ export async function createKalpiApp({
     : { schemaVersion: 1, deckId: "poc-response", updatedAt: null, fields: {} };
   const events = eventsPath ? JSON.parse(await readFile(eventsPath, "utf8")) : { events: [] };
   let achievementCatalog = achievementsPath ? JSON.parse(await readFile(achievementsPath, "utf8")) : { achievements: [] };
-  const avatarCatalog = avatarsPath ? JSON.parse(await readFile(avatarsPath, "utf8")) : { avatars: [] };
+  let avatarCatalog = avatarsPath ? JSON.parse(await readFile(avatarsPath, "utf8")) : { avatars: [] };
   const allCards = expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studioContent, set5));
   const cardsById = new Map(allCards.map((card) => [card.id, card]));
   const partyIds = new Set(cards.filter(({ set }) => set !== "SYS").map(({ set }) => set));
@@ -863,8 +957,8 @@ export async function createKalpiApp({
     }
   }
   const store = databaseUrl
-    ? new PostgresStore(databaseUrl, { ssl: databaseSsl })
-    : new JsonStore(path.join(dataDir, "state.json"));
+    ? new PostgresStore(databaseUrl, { ssl: databaseSsl, now })
+    : new JsonStore(path.join(dataDir, "state.json"), { now });
   const initialized = await store.init();
   const studioOverlay = initialized && Object.hasOwn(initialized, "studioConfig")
     ? initialized.studioConfig
@@ -881,6 +975,15 @@ export async function createKalpiApp({
       },
       releaseSets: studioOverlay.gameConfig.releaseSets || studioContent.gameConfig.releaseSets,
       pack: mergePackConfig(studioContent.gameConfig.pack, studioOverlay.gameConfig.pack),
+    };
+  }
+  if (studioOverlay?.avatars?.length) {
+    const unlocks = new Map(studioOverlay.avatars.map((avatar) => [avatar.id, avatar.unlockLevel]));
+    avatarCatalog = {
+      ...avatarCatalog,
+      avatars: (avatarCatalog.avatars || []).map((avatar) => (
+        unlocks.has(avatar.id) ? { ...avatar, unlockLevel: unlocks.get(avatar.id) } : avatar
+      )),
     };
   }
   function applyReleaseSets() {
@@ -972,11 +1075,19 @@ export async function createKalpiApp({
     }));
   }
 
+  async function presentLeague(league, token, request) {
+    if (!league) return null;
+    const members = await store.scoreLeagueMembers(league.memberTokens, cards);
+    const presented = publicLeague(league, members, token, requestOrigin(request));
+    presented.qrSvg = qrSvg(presented.joinUrl);
+    return presented;
+  }
+
   async function settleIdle(token) {
     const currentMs = now();
-    const pool = activeIdleCards(cards, currentMs);
+    const pool = activeIdleCards(allCards, currentMs);
     if (!pool.length) return { error: "NO_ACTIVE_RELEASE" };
-    const result = await store.withSession(token, (current) => {
+    const result = await store.withSession(token, async (current) => {
       current.unseenPulls ??= [];
       current.preparedPulls = (current.preparedPulls || [])
         .filter((pull) => pull?.instanceId && pull?.cardId && Number.isFinite(Date.parse(pull.availableAt)))
@@ -1023,7 +1134,7 @@ export async function createKalpiApp({
         && Date.parse(current.preparedPulls[0]?.availableAt) <= currentMs
       ) {
         const prepared = current.preparedPulls.shift();
-        const instance = grantCard(current, prepared, {
+        const instance = await grantCard(current, prepared, {
           acquiredBy: "idle",
           pulledAt: prepared.availableAt,
           instanceId: prepared.instanceId,
@@ -1043,6 +1154,7 @@ export async function createKalpiApp({
         scheduleAt = currentMs + IDLE_INTERVAL_MS;
       }
       fillPreparedQueue();
+      applyLoginStreak(current, currentMs);
       current.nextIdleAt = current.preparedPulls[0]?.availableAt ?? new Date(scheduleAt).toISOString();
       current.idleAnchorAt ??= new Date(anchorAt).toISOString();
       current.packs = current.packs.slice(-100);
@@ -1066,17 +1178,26 @@ export async function createKalpiApp({
       state: publicIdleState(session, currentMs, allCards, runtimeProgression()),
     };
   }
-  function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID() }) {
+  async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID() }) {
     const isNew = !session.inventory[pull.cardId];
     session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
+    const card = cardsById.get(pull.cardId);
+    const sets = normalizeNumberedSets(
+      studioContent?.gameConfig?.progression?.numberedSets,
+      (studioContent?.gameConfig?.releaseSets || []).map(({ id }) => id),
+    );
+    const stamp = stampFromGrant(card, sets, acquiredBy)
+      ? await store.claimNumberedStamp(stampKey(card), stampMax(card))
+      : null;
     const instance = {
       instanceId,
       cardId: pull.cardId,
-      finish: pull.finish,
+      finish: stamp ? "Holo" : pull.finish,
       pulledAt,
       isNew,
       acquiredBy,
       seenAt: null,
+      ...(stamp ? { numberedIndex: stamp.index, numberedOf: stamp.of } : {}),
     };
     session.instances.push(instance);
     session.unseenPulls ??= [];
@@ -1094,7 +1215,14 @@ export async function createKalpiApp({
         releaseSets: studioContent.gameConfig.releaseSets,
         pack: normalizePackConfig(studioContent.gameConfig.pack),
       },
+      avatars: avatarCatalog.avatars || [],
     });
+    if (avatarsPath && !databaseUrl) {
+      const canonicalAvatars = path.resolve(path.dirname(cardsPath), "avatars.json");
+      if (path.resolve(avatarsPath) !== canonicalAvatars) {
+        await writeJsonAtomic(avatarsPath, avatarCatalog);
+      }
+    }
     if (studioContentPath && !databaseUrl) {
       const canonicalStudio = path.resolve(path.dirname(cardsPath), "studio-content.json");
       if (path.resolve(studioContentPath) !== canonicalStudio) {
@@ -1150,6 +1278,7 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/warm") {
+        await store.refreshCardHolderSnapshot().catch(() => null);
         json(response, 200, { status: "ready" });
         return;
       }
@@ -1261,6 +1390,19 @@ export async function createKalpiApp({
         return;
       }
 
+      if (request.method === "GET" && url.pathname === "/api/card-holders") {
+        const snapshot = await store.cardHolderSummary();
+        const body = Buffer.from(JSON.stringify(snapshot), "utf8");
+        response.writeHead(200, {
+          ...SECURITY_HEADERS,
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "public, max-age=60, stale-while-revalidate=3600",
+          "content-length": body.length,
+        });
+        response.end(request.method === "HEAD" ? undefined : body);
+        return;
+      }
+
       if (request.method === "GET" && url.pathname === "/api/community") {
         const token = bearer(request);
         await store.hydrateSession(token);
@@ -1269,6 +1411,7 @@ export async function createKalpiApp({
           trades: { trades: await store.listTrades(token), simulated: false },
           leaderboards: await store.leaderboardSummary(cards, now(), token),
           activity: await store.activitySummary(),
+          specialWindow: openSpecialWindow(events.events, now(), store.getSession(token)),
         });
         return;
       }
@@ -1294,7 +1437,10 @@ export async function createKalpiApp({
         }
 
         if (request.method === "GET" && url.pathname === "/api/state") {
-          json(response, 200, stateFor(session));
+          await store.withSession(token, (current) => {
+            applyLoginStreak(current, now());
+          });
+          json(response, 200, stateFor(store.getSession(token)));
           return;
         }
 
@@ -1309,7 +1455,7 @@ export async function createKalpiApp({
             json(response, 400, { error: "INVALID_REPORT_ID" });
             return;
           }
-          if (!["source", "quote", "identity", "display", "other"].includes(category)) {
+          if (!["source", "quote", "identity", "display", "name", "other"].includes(category)) {
             json(response, 400, { error: "INVALID_REPORT_CATEGORY" });
             return;
           }
@@ -1424,8 +1570,8 @@ export async function createKalpiApp({
           const input = await readJson(request);
           const currentMs = now();
           const day = jerusalemDay(currentMs);
-          const pool = activeIdleCards(cards, currentMs);
-          const result = await store.withSession(token, (current) => {
+          const pool = activeIdleCards(allCards, currentMs);
+          const result = await store.withSession(token, async (current) => {
             const quiz = current.currentQuiz;
             if (!quiz || quiz.quizId !== input.quizId) {
               return { status: 409, body: { error: "QUIZ_NOT_OPEN" } };
@@ -1445,7 +1591,7 @@ export async function createKalpiApp({
             }
             const pull = generateIdlePull(idlePullOptions(pool, current.inventory, current.idleDuplicateStreak));
             const pulledAt = new Date(currentMs).toISOString();
-            const instance = grantCard(current, pull, { acquiredBy: "quiz", pulledAt });
+            const instance = await grantCard(current, pull, { acquiredBy: "quiz", pulledAt });
             current.quizWonDay = day;
             current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
             current.packs.push({
@@ -1482,14 +1628,14 @@ export async function createKalpiApp({
             url.pathname,
             async () => {
               const currentMs = now();
-              const pool = activeIdleCards(cards, currentMs);
-              const reward = await store.withSession(token, (current) => {
+              const pool = activeIdleCards(allCards, currentMs);
+              const reward = await store.withSession(token, async (current) => {
                 syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
                 const rank = current.pendingRankRewards?.shift();
                 if (!rank) return null;
                 const pull = generateIdlePull(idlePullOptions(pool, current.inventory, current.idleDuplicateStreak));
                 const pulledAt = new Date(currentMs).toISOString();
-                const instance = grantCard(current, pull, { acquiredBy: `rank-${rank}`, pulledAt });
+                const instance = await grantCard(current, pull, { acquiredBy: `rank-${rank}`, pulledAt });
                 current.claimedRankRewards ??= [];
                 current.claimedRankRewards.push(rank);
                 current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
@@ -1514,6 +1660,49 @@ export async function createKalpiApp({
 
         if (request.method === "GET" && url.pathname === "/api/events") {
           json(response, 200, { events: publicEvents(session) });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/leagues") {
+          const input = await readJson(request);
+          const name = normalizeDisplayName(input.name) || "ליגה";
+          const created = await store.createLeague(token, name, now());
+          if (created.error) {
+            json(response, created.error === "UNAUTHORIZED" ? 401 : 400, { error: created.error });
+            return;
+          }
+          json(response, 201, { league: await presentLeague(created.league, token, request) });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/leagues/join") {
+          const input = await readJson(request);
+          const joined = await store.joinLeague(token, input.code);
+          if (joined.error) {
+            const status = joined.error === "LEAGUE_FULL" ? 409 : joined.error === "UNAUTHORIZED" ? 401 : 404;
+            json(response, status, { error: joined.error });
+            return;
+          }
+          json(response, 200, { league: await presentLeague(joined.league, token, request) });
+          return;
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/leagues") {
+          const rooms = await store.listLeagues(token);
+          json(response, 200, {
+            leagues: await Promise.all(rooms.map((league) => presentLeague(league, token, request))),
+          });
+          return;
+        }
+
+        const leagueRoom = url.pathname.match(/^\/api\/leagues\/([^/]+)$/);
+        if (request.method === "GET" && leagueRoom) {
+          const league = await store.getLeague(decodeURIComponent(leagueRoom[1]));
+          if (!league || !league.memberTokens.includes(token)) {
+            json(response, 404, { error: "LEAGUE_NOT_FOUND" });
+            return;
+          }
+          json(response, 200, { league: await presentLeague(league, token, request) });
           return;
         }
 
@@ -1546,15 +1735,27 @@ export async function createKalpiApp({
             idempotencyKey(request),
             url.pathname,
             async () => {
-              const trade = await store.createTrade({
+              const created = await store.createTrade({
                 sessionToken: token,
                 offeredCardId: input.offeredCardId,
                 wantedCardId: input.wantedCardId,
                 createdAt: new Date(now()).toISOString(),
                 expiresAt: new Date(now() + TRADE_TTL_MS).toISOString(),
               });
-              return trade
-                ? { status: 201, body: { trade: { ...trade, ownerToken: undefined }, simulated: false } }
+              const trades = await store.listTrades(token);
+              if (created?.blocked) {
+                return {
+                  status: 409,
+                  body: {
+                    error: "ACTIVE_TRADE_EXISTS",
+                    trade: trades.find(({ tradeId }) => tradeId === created.existing.tradeId) || { ...created.existing, ownerToken: undefined },
+                    trades,
+                    simulated: false,
+                  },
+                };
+              }
+              return created
+                ? { status: 201, body: { trade: { ...created, ownerToken: undefined }, trades, simulated: false } }
                 : { status: 400, body: { error: "INVALID_TRADE" } };
             },
           );
@@ -1574,7 +1775,8 @@ export async function createKalpiApp({
             json(response, 409, { error: "TRADE_NOT_CANCELLABLE" });
             return;
           }
-          json(response, 200, { trade: (await store.listTrades(token)).find(({ tradeId }) => tradeCancel[1]) });
+          const trades = await store.listTrades(token);
+          json(response, 200, { trade: trades.find(({ tradeId }) => tradeId === tradeCancel[1]), trades, simulated: false });
           return;
         }
 
@@ -1620,9 +1822,12 @@ export async function createKalpiApp({
             json(response, 409, { error: "TRADE_NOT_ACCEPTABLE" });
             return;
           }
+          const trades = await store.listTrades(token);
           json(response, 200, {
-            trade: (await store.listTrades(token)).find(({ tradeId }) => tradeAccept[1]),
+            trade: trades.find(({ tradeId }) => tradeId === tradeAccept[1]),
+            trades,
             state: stateFor(store.getSession(token)),
+            simulated: false,
           });
           return;
         }
@@ -1650,17 +1855,11 @@ export async function createKalpiApp({
             json(response, 400, { error: "INVALID_CARD" });
             return;
           }
-          await store.withSession(token, (current) => {
+          await store.withSession(token, async (current) => {
             if (current.inventory[card.id]) return;
-            const pulledAt = new Date(now()).toISOString();
-            current.inventory[card.id] = 1;
-            current.instances.push({
-              instanceId: randomUUID(),
-              cardId: card.id,
-              finish: card.rarity,
-              pulledAt,
-              isNew: true,
+            await grantCard(current, { cardId: card.id, finish: card.rarity }, {
               acquiredBy: "debug-unlock",
+              pulledAt: new Date(now()).toISOString(),
             });
           });
           json(response, 200, stateFor(store.getSession(token)));
@@ -1839,10 +2038,11 @@ export async function createKalpiApp({
             return;
           }
           const input = await readJson(request);
-          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual) || !validProgressionPatch(input.progression) || !validReleaseSets(input.releaseSets) || !validPackConfig(input.pack)) {
+          if (!validRevealTiming(input.revealTiming) || !validVisualConfig(input.visual) || !validProgressionPatch(input.progression) || !validReleaseSets(input.releaseSets) || !validPackConfig(input.pack) || !validAvatarUnlocks(input.avatars, avatarCatalog.avatars)) {
             json(response, 400, { error: "INVALID_GAME_CONFIG" });
             return;
           }
+          const releaseIds = (studioContent.gameConfig.releaseSets || []).map(({ id }) => id);
           studioContent.gameConfig = {
             ...studioContent.gameConfig,
             revealTiming: normalizeRevealTiming(input.revealTiming ?? studioContent.gameConfig?.revealTiming),
@@ -1855,10 +2055,28 @@ export async function createKalpiApp({
               },
               thresholdExponent: input.progression?.thresholdExponent
                 ?? studioContent.gameConfig.progression?.thresholdExponent,
+              rankNames: input.progression?.rankNames
+                ? input.progression.rankNames.map((name) => name.trim())
+                : studioContent.gameConfig.progression?.rankNames,
+              grantLevelReward: input.progression?.grantLevelReward
+                ?? studioContent.gameConfig.progression?.grantLevelReward,
+              numberedSets: input.progression?.numberedSets
+                ? normalizeNumberedSets(input.progression.numberedSets, releaseIds)
+                : studioContent.gameConfig.progression?.numberedSets,
+              reward: input.progression?.reward ?? studioContent.gameConfig.progression?.reward,
             },
             releaseSets: mergeReleaseSets(studioContent.gameConfig.releaseSets, input.releaseSets),
             pack: mergePackConfig(studioContent.gameConfig.pack, input.pack),
           };
+          if (input.avatars) {
+            const unlocks = new Map(input.avatars.map((avatar) => [avatar.id, avatar.unlockLevel]));
+            avatarCatalog = {
+              ...avatarCatalog,
+              avatars: (avatarCatalog.avatars || []).map((avatar) => (
+                unlocks.has(avatar.id) ? { ...avatar, unlockLevel: unlocks.get(avatar.id) } : avatar
+              )),
+            };
+          }
           studioContent.generatedAt = new Date(now()).toISOString();
           applyReleaseSets();
           await persistStudioConfig();
@@ -2106,7 +2324,12 @@ export async function createKalpiApp({
       }
 
       if ((request.method === "GET" || request.method === "HEAD") && url.pathname.startsWith("/share/")) {
-        const cardId = decodeURIComponent(url.pathname.slice("/share/".length).replace(/\.html$/, ""));
+        const shareSlug = decodeURIComponent(url.pathname.slice("/share/".length).replace(/\.html$/, ""));
+        if (shareSlug === "binder") {
+          serveBinderShareLanding(request, response);
+          return;
+        }
+        const cardId = shareSlug;
         const card = cardsById.get(cardId);
         if (!card) {
           json(response, 404, { error: "NOT_FOUND" });
@@ -2148,9 +2371,16 @@ export async function createKalpiApp({
       else response.end();
     }
   };
+  if (holderWarm) store.refreshCardHolderSnapshot().catch(() => {});
+  if (holderSyncMs > 0) {
+    const holderTimer = setInterval(() => {
+      store.refreshCardHolderSnapshot().catch(() => {});
+    }, holderSyncMs);
+    holderTimer.unref?.();
+  }
   return store.withRequest
     ? (request, response) => store.withRequest(() => handleRequest(request, response))
     : handleRequest;
 }
 
-export { DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, LEVEL_RATIOS, RANK_TITLES };
+export { CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, LEVEL_RATIOS, RANK_TITLES };

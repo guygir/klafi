@@ -1,0 +1,20 @@
+{
+  "name": "קְלָפִי",
+  "short_name": "KLAFI",
+  "description": "אוספים את הבחירות.",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1f4f4a",
+  "theme_color": "#1f4f4a",
+  "icons": [
+    {
+      "src": "/design-assets/pack-wrapper-klafi.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

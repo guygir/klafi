@@ -60,6 +60,7 @@ test("slim home state includes inventory for binder reads", () => {
   assert.deepEqual(state.favorites, ["LIK-M01-Q01"]);
   assert.equal(state.ownedUnique, 1);
   assert.equal(state.starCount, 0);
+  assert.equal(state.factionId, null);
 });
 
 test("slim home counts stars from the visible card index", () => {
@@ -103,7 +104,10 @@ test("Vercel copies live card art including Set 5", async () => {
   ]);
   const names = liveDeployAssetNames({ catalog, avatars });
   assert.ok(names.includes("hero-art-gadi-eisenkot-slot1.png"));
-  assert.ok(names.includes("pack-wrapper-transparent.png"));
+  assert.ok(names.includes("pack-wrapper-klafi.png"));
+  assert.ok(names.includes("ballot-letter-lik.png"));
+  assert.ok(names.includes("ballot-paper.png"));
+  assert.ok(!names.includes("pack-rip-seedance-v01.mp4"));
   let set5Bytes = 0;
   let liveBytes = 0;
   for (const candidate of set5.candidates) {
@@ -116,7 +120,7 @@ test("Vercel copies live card art including Set 5", async () => {
     const file = path.resolve(here, "../../docs/design/assets", name);
     const size = (await stat(file)).size;
     liveBytes += size;
-    if (name.endsWith(".mp4") || name === "hero-art-kalpi.png" || name === "pack-wrapper-transparent.png") continue;
+    if (name.endsWith(".mp4") || name === "hero-art-kalpi.png" || name === "pack-wrapper-klafi.png") continue;
     assert.ok(size < 700 * 1024, `${name} is still too heavy for the Hobby copy (${size})`);
   }
   assert.ok(set5Bytes < 8 * 1024 * 1024, `Set 5 live JPEGs should stay well under Hobby headroom (${set5Bytes})`);
@@ -174,6 +178,7 @@ test("current live pack keeps any specific Rare harder than any specific Common"
   });
   const openIds = [...new Set(odds.map((row) => row.releaseSetId))];
   assert.ok(openIds.includes("party-leaders"));
+  assert.ok(openIds.includes("party-slot-2"));
   assert.ok(openIds.includes("set-5"));
   for (const setId of openIds) {
     const report = rarityOrderReport(odds.filter((row) => row.releaseSetId === setId));
@@ -213,7 +218,7 @@ test("Sets 3 and 4 ship complete art-backed catalogs with their collectible rari
 
 
 test("Set 5 ships as live Quote cards with party pips and pull rarities", async () => {
-  const [{ extras, set5 }, catalog] = await Promise.all([
+  const [{ extras, set5, cards, specials }, catalog] = await Promise.all([
     loadCatalogSources(),
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
   ]);
@@ -234,6 +239,9 @@ test("Set 5 ships as live Quote cards with party pips and pull rarities", async 
   assert.deepEqual(counts, { Common: 12, Uncommon: 6, Rare: 4 });
   assert.equal(live.find(({ id }) => id === "SET5-22").rarity, "Rare");
   assert.equal(live.find(({ id }) => id === "SET5-20").set, "LIK");
+  const netanyahu = expandPublicCatalog(cards, specials, extras).find(({ id }) => id === "SET5-01");
+  assert.equal(netanyahu?.listSlot, 1);
+  assert.equal(netanyahu?.subtitleHe, "מקום 1");
   assert.equal(extras.set5.candidates.length, 22);
   await Promise.all(live.map(({ artKey }) =>
     readFile(path.resolve(here, "../../docs/design/assets", artKey))));
