@@ -269,6 +269,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /holo-chroma/);
   assert.match(javascript, /function mergeLiveCatalogFields/);
   assert.match(javascript, /function streakFireMarkup/);
+  assert.match(javascript, /function collectorFaceMarkup/);
+  assert.match(css, /width:\s*11px/);
+  assert.match(css, /height:\s*16\.5px/);
   assert.match(javascript, /numberedCopies/);
   assert.match(javascript, /maybeShowNumberedTip/);
   assert.match(javascript, /ממוספר/);
@@ -402,7 +405,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-27/);
+  assert.match(html, /card-surface-28/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -467,7 +470,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-27/);
+  assert.match(html, /card-surface-28/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

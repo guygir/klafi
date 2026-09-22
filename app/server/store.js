@@ -441,6 +441,10 @@ export class JsonStore {
       .map(([token, session]) => ({
         label: session.displayName,
         current: token === currentToken,
+        avatarId: session.avatarId || "kid-boy",
+        factionId: session.factionId || null,
+        loginStreak: session.loginStreak || 0,
+        rankLevel: session.highestRank || 1,
         cards: session.packs
           .filter((pack) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(pack.pulledAt)) === day)
           .flatMap((pack) => pack.cards)

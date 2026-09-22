@@ -1055,7 +1055,9 @@ export class PostgresStore {
     const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
     const targetPartyId = partyIds.length ? partyIds[dayNumber % partyIds.length] : null;
     const packRows = await this.pool.query(
-      `SELECT p.session_token, s.display_name, p.cards
+      `SELECT p.session_token, s.display_name, p.cards,
+              s.avatar_id, s.faction_id, s.highest_rank,
+              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak
        FROM kalpi_packs p
        JOIN kalpi_sessions s ON s.token = p.session_token
        WHERE (p.pulled_at AT TIME ZONE 'Asia/Jerusalem')::date = $1::date`,
@@ -1066,6 +1068,10 @@ export class PostgresStore {
       const existing = dailyCounts.get(row.session_token) || {
         label: row.display_name,
         current: row.session_token === currentToken,
+        avatarId: row.avatar_id || "kid-boy",
+        factionId: row.faction_id || null,
+        loginStreak: row.login_streak || 0,
+        rankLevel: row.highest_rank || 1,
         cards: 0,
       };
       existing.cards += (row.cards || []).filter((instance) => cardsById.get(instance.cardId)?.set === targetPartyId).length;
@@ -1076,6 +1082,10 @@ export class PostgresStore {
       dailyCounts.set(currentToken, {
         label: current?.display_name || "שחקן קְלָפִי",
         current: true,
+        avatarId: current?.avatar_id || "kid-boy",
+        factionId: current?.faction_id || null,
+        loginStreak: current?.login_streak || 0,
+        rankLevel: current?.highest_rank || 1,
         cards: 0,
       });
     }

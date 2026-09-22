@@ -611,6 +611,11 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(activity.body.counts.share_created, undefined);
   const leaderboards = await api(running.base, "/api/leaderboards", { token });
   assert.equal(leaderboards.status, 200);
+  const currentCollector = leaderboards.body.collectors.find(({ current }) => current);
+  assert.ok(currentCollector?.avatarId);
+  assert.equal(typeof currentCollector.loginStreak, "number");
+  const currentDaily = leaderboards.body.dailyChallenge.leaders.find(({ current }) => current);
+  assert.ok(currentDaily?.avatarId);
   const community = await api(running.base, "/api/community", { token });
   assert.equal(community.status, 200);
   assert.equal(community.body.leaderboards.dailyChallenge.day, leaderboards.body.dailyChallenge.day);

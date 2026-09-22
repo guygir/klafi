@@ -4026,16 +4026,16 @@ body {
 .level-letter-text,
 .collector-letter-text {
   position: absolute;
-  top: -24px;
-  left: -6px;
+  top: -12px;
+  left: -3px;
   z-index: 3;
   box-sizing: border-box;
-  width: 22px;
-  height: 33px;
+  width: 11px;
+  height: 16.5px;
   aspect-ratio: 2 / 3;
   padding: 0;
   border: 1px solid #111;
-  border-radius: 2px;
+  border-radius: 1px;
   background-color: #ead9b4;
   background-image: url("/design-assets/ballot-paper.png");
   background-size: cover;
@@ -4055,38 +4055,26 @@ body {
 .collector-letter-text {
   display: grid;
   place-items: center;
-  padding: 2px 1px;
+  padding: 1px 0;
   color: #1a2540;
-  font: 700 9px/0.9 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
+  font: 700 4.5px/0.9 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
   text-align: center;
 }
 
 .level-letter-text[data-letters="1"],
 .collector-letter-text[data-letters="1"] {
-  font-size: 16px;
+  font-size: 8px;
 }
 
 .level-letter-text[data-letters="2"],
 .collector-letter-text[data-letters="2"] {
-  font-size: 12px;
+  font-size: 6px;
 }
 
 .level-letter-text[data-letters="3"],
 .collector-letter-text[data-letters="3"] {
-  font-size: 9px;
+  font-size: 4.5px;
 }
-
-.collector-letter,
-.collector-letter-text {
-  top: -16px;
-  left: -4px;
-  width: 16px;
-  height: 24px;
-}
-
-.collector-letter-text[data-letters="1"] { font-size: 12px; }
-.collector-letter-text[data-letters="2"] { font-size: 9px; }
-.collector-letter-text[data-letters="3"] { font-size: 6.5px; }
 
 #avatar-seal { display: none; }
 
@@ -4121,12 +4109,15 @@ body {
   grid-template-columns: 36px 1fr auto;
   gap: 8px;
   align-items: center;
+  overflow: visible;
+  padding-block: 10px;
 }
 
 .collector-face {
   position: relative;
   width: 36px;
   height: 36px;
+  overflow: visible;
 }
 
 .collector-face img {

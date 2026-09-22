@@ -1263,6 +1263,13 @@ function streakFireMarkup() {
   return `<i class="streak-fire" aria-hidden="true"><svg viewBox="0 0 12 16" width="16" height="18"><path class="flame-outer" d="M6 16C2.6 16 .6 13.6.6 10.6.6 7.2 3.4 5.1 4.3 2.4c.4 1.7 1.5 2.8 2.6 2.8 1.7 0 2.3-2 1.6-4.8C11 3.2 12.4 6.4 12.4 9.6 12.4 13.2 9.8 16 6 16z"/><path class="flame-inner" d="M6 14.1c-1.8 0-2.9-1.2-2.9-2.9 0-1.6 1.3-2.7 1.8-4.1.3 1 .9 1.7 1.6 1.7.9 0 1.3-1.1 1-2.5 1 1.3 1.7 2.8 1.7 4.4 0 1.9-1.3 3.4-3.2 3.4z"/></svg></i>`;
 }
 
+function collectorFaceMarkup(entry = {}) {
+  const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
+  const party = factionParty(entry.factionId);
+  const streak = Number(entry.loginStreak) >= 3 ? Number(entry.loginStreak) : 0;
+  return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b>${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
+}
+
 function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
   const letters = factionLetters(party);
   const art = factionLetterArt(party);
@@ -3052,13 +3059,10 @@ function renderGrowth() {
   if (currentCollector && !collectorPreview.includes(currentCollector)) collectorPreview.push(currentCollector);
   elements.collectorBoard.innerHTML = collectorPreview.length
     ? collectorPreview.map((entry) => {
-        const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
-        const party = factionParty(entry.factionId);
         const ranks = model.gameConfig?.progression?.rankNames || model.gameConfig?.progression?.ranks || [];
         const rankName = ranks[(entry.rankLevel || 1) - 1] || "";
-        const streak = Number(entry.loginStreak) >= 3 ? Number(entry.loginStreak) : 0;
         return `<div class="collector-row${entry.current ? " current-player" : ""}">
-          <span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b>${streak}</b>${streakFireMarkup()}</em>` : ""}</span>
+          ${collectorFaceMarkup(entry)}
           <span>${entry.rank}. ${escapeHtml(entry.label)}${rankName ? ` · ${escapeHtml(rankName)}` : ""}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
           <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
         </div>`;
@@ -3074,7 +3078,7 @@ function renderGrowth() {
   elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
   renderChallengeRecap();
   elements.dailyChallengeBoard.innerHTML = challenge?.leaders?.length
-    ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="${entry.current ? "current-player" : ""}"><span>${index + 1}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
+    ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${index + 1}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
     : '<p class="work-note">עוד אין משיכות מהסיעה היומית.</p>';
 
   const specialDescriptions = {
