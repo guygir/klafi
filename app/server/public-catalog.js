@@ -112,6 +112,7 @@ export function runtimeSet5Card(candidate, extras = {}) {
     whyItMatters: candidate.notes || "Selected for Set 5 from the accepted quote pool.",
     source: sourceUrl || "Source pending",
     listSlot: null,
+    set5Index: index,
     artKey: candidate.art?.artKey || null,
     walkout: {
       kind: "quote",

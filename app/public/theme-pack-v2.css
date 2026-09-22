@@ -154,6 +154,15 @@ body:has(#app[data-theme="pack-v2"]) {
     inset 0 0 0 clamp(3px, 1.65cqw, 7px) var(--pack-gold, #b38d3f);
 }
 
+#app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered {
+  --card-frame: #b42318;
+  box-shadow:
+    0 20px 46px rgba(60, 48, 38, 0.24),
+    0 0 0 1px color-mix(in srgb, #b42318 40%, transparent),
+    inset 0 0 0 clamp(2px, 1cqw, 4px) var(--pack-umber, #3c3026),
+    inset 0 0 0 clamp(3px, 1.65cqw, 7px) var(--pack-gold, #b38d3f);
+}
+
 #app[data-card-frame="tall-v2"] .card-face.front {
   padding: 0;
 }
@@ -914,24 +923,19 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 .avatar-seal {
-  position: absolute;
-  inset-inline-start: -1px;
-  bottom: 1px;
-  width: 8px;
-  height: 8px;
-  border-radius: 1px;
-  box-shadow: 0 0 0 1px var(--pack-paper, #eee5d4);
+  display: none;
 }
 
 #app[data-density="airy-v2"] .level-identity {
-  display: flex;
+  display: grid;
+  justify-items: center;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
 }
 
 #app[data-density="airy-v2"] .level-identity span {
   margin-top: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
 }
 

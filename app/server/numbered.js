@@ -29,12 +29,16 @@ export function normalizeNumberedSets(value, releaseIds = []) {
   return [...new Set(value.map(String))].filter((id) => !allowed.size || allowed.has(id));
 }
 
-export function stampEligible(card, numberedSets = []) {
+export function stampMax(card) {
+  if (card?.releaseSetId === "set-5") return card?.id ? 3 : 0;
   const slot = Number(card?.listSlot);
+  return Number.isInteger(slot) && slot > 0 ? slot : 0;
+}
+
+export function stampEligible(card, numberedSets = []) {
   return Boolean(
     card
-    && Number.isInteger(slot)
-    && slot > 0
+    && stampMax(card) > 0
     && Array.isArray(numberedSets)
     && numberedSets.includes(card.releaseSetId)
     && !card.eventOnly,
@@ -46,6 +50,7 @@ export function stampFromGrant(card, numberedSets, acquiredBy) {
 }
 
 export function stampKey(card) {
+  if (card?.releaseSetId === "set-5") return String(card.id);
   return `${card.set}:${Number(card.listSlot)}`;
 }
 

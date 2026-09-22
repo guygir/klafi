@@ -175,6 +175,7 @@ test("current live pack keeps any specific Rare harder than any specific Common"
   });
   const openIds = [...new Set(odds.map((row) => row.releaseSetId))];
   assert.ok(openIds.includes("party-leaders"));
+  assert.ok(openIds.includes("party-slot-2"));
   assert.ok(openIds.includes("set-5"));
   for (const setId of openIds) {
     const report = rarityOrderReport(odds.filter((row) => row.releaseSetId === setId));

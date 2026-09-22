@@ -167,6 +167,9 @@ const elements = {
   closeLevel: document.querySelector("#close-level"),
   claimLevel: document.querySelector("#claim-level"),
   avatarSeal: document.querySelector("#avatar-seal"),
+  levelLetter: document.querySelector("#level-letter"),
+  levelLetterText: document.querySelector("#level-letter-text"),
+  levelStreakCount: document.querySelector("#level-streak-count"),
   tradePreview: document.querySelector("#trade-preview"),
   tradeActive: document.querySelector("#trade-active"),
   tradeCompose: document.querySelector("#trade-compose"),
@@ -1216,22 +1219,51 @@ function renderProfile() {
   renderAvatarSeal();
 }
 
-function factionPipColor() {
-  const factionId = model.serverState?.factionId;
-  if (!factionId) return "";
-  return partyRegister().find(({ id }) => id === factionId)?.pip
-    || model.catalog.find((card) => card.set === factionId)?.pip
-    || "";
+function factionParty(factionId = model.serverState?.factionId) {
+  if (!factionId) return null;
+  return partyRegister().find(({ id }) => id === factionId) || null;
+}
+
+function factionLetters(party) {
+  return (party?.finalLetters || party?.requestedLetters || [])[0] || "";
+}
+
+function factionLetterArt(party) {
+  return party?.symbolCard?.artKey || "";
+}
+
+function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
+  const letters = factionLetters(party);
+  const art = factionLetterArt(party);
+  if (art) {
+    return `<img class="collector-letter" src="/design-assets/${encodeURIComponent(art)}" alt="${escapeHtml(letters)}">`;
+  }
+  if (!letters) return "";
+  return `<b class="${className}">${escapeHtml(letters)}</b>`;
 }
 
 function renderAvatarSeal() {
-  const seal = elements.avatarSeal;
-  const button = elements.levelAvatarButton;
-  if (!seal) return;
-  const pip = factionPipColor();
-  seal.hidden = !pip;
-  seal.style.background = pip || "transparent";
-  button?.classList.toggle("has-faction-seal", Boolean(pip));
+  const party = factionParty();
+  const letters = factionLetters(party);
+  const art = factionLetterArt(party);
+  if (elements.avatarSeal) elements.avatarSeal.hidden = true;
+  if (elements.levelLetter) {
+    if (art) {
+      elements.levelLetter.hidden = false;
+      elements.levelLetter.src = `/design-assets/${encodeURIComponent(art)}`;
+      elements.levelLetter.alt = letters;
+    } else {
+      elements.levelLetter.hidden = true;
+      elements.levelLetter.removeAttribute("src");
+      elements.levelLetter.alt = "";
+    }
+  }
+  if (elements.levelLetterText) {
+    elements.levelLetterText.hidden = Boolean(art) || !letters;
+    elements.levelLetterText.textContent = letters;
+  }
+  elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(art || letters));
+  elements.levelAvatarButton?.classList.toggle("has-faction-seal", false);
 }
 
 function renderAvatarPicker() {
@@ -1724,17 +1756,17 @@ function renderProgression({ announce = false } = {}) {
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
   const streak = Number(model.serverState?.loginStreak) || 0;
-  const streakText = streak >= 3 ? `רצף ${streak}` : "";
-  elements.levelRank.textContent = streakText ? `${progression.rank} · ${streakText}` : progression.rank;
+  const showStreak = streak >= 3;
+  elements.levelRank.textContent = progression.rank;
   if (elements.levelStreak) {
-    elements.levelStreak.hidden = !streakText;
-    elements.levelStreak.textContent = streakText;
+    elements.levelStreak.hidden = !showStreak;
+    if (elements.levelStreakCount) elements.levelStreakCount.textContent = showStreak ? String(streak) : "";
   }
-  elements.levelAvatarButton?.classList.toggle("has-streak", streak >= 3);
+  elements.levelAvatarButton?.classList.toggle("has-streak", showStreak);
   elements.levelAvatarButton?.classList.toggle("has-week-streak", streak >= 7);
   if (elements.levelAvatarButton) {
-    elements.levelAvatarButton.setAttribute("aria-label", streakText
-      ? `${progression.rank} · ${streakText} · הפרופיל והאווטאר`
+    elements.levelAvatarButton.setAttribute("aria-label", showStreak
+      ? `${progression.rank} · רצף ${streak} · הפרופיל והאווטאר`
       : `${progression.rank} · הפרופיל והאווטאר`);
   }
   if (elements.levelTeaser) elements.levelTeaser.textContent = progression.teaser;
@@ -2128,6 +2160,7 @@ function partyLetters(card) {
 
 function rarityMark(rarity) {
   const normalized = String(rarity).toLowerCase();
+  if (normalized.includes("ממוספר") || normalized.includes("numbered")) return "★★★★";
   if (normalized.includes("promo") || normalized.includes("legendary") || normalized.includes("event")) return "P";
   if (normalized.includes("rare") || normalized.includes("holo")) return "★★★";
   if (normalized.includes("uncommon")) return "★★";
@@ -2136,6 +2169,7 @@ function rarityMark(rarity) {
 
 function rarityNameHe(rarity) {
   const normalized = String(rarity).toLowerCase();
+  if (normalized.includes("ממוספר") || normalized.includes("numbered")) return "ממוספר";
   if (normalized.includes("promo")) return "קידום";
   if (normalized.includes("holo")) return "הולו";
   if (normalized.includes("rare")) return "נדיר";
@@ -2243,7 +2277,9 @@ function configureSourceLink(link, card) {
 }
 
 function cardPresentation(card, instance = {}) {
-  const finishLabel = instance.finish ?? card.rarity;
+  const numbered = Number(instance.numberedIndex) > 0;
+  const finishLabel = numbered ? "Holo" : (instance.finish ?? card.rarity);
+  const rarityLabel = numbered ? "ממוספר" : finishLabel;
   return {
     title: cardTitle(card),
     subtitle: card.subtitleHe || card.subtitle || "",
@@ -2253,9 +2289,11 @@ function cardPresentation(card, instance = {}) {
     setName: cardSetName(card),
     typeLabel: card.typeHe || "קלף",
     finishLabel,
-    finishClass: String(finishLabel ?? "Common").split(/\s|\//)[0].toLowerCase(),
-    rarityMark: rarityMark(finishLabel),
-    rarityName: rarityNameHe(finishLabel),
+    finishClass: [String(finishLabel ?? "Common").split(/\s|\//)[0].toLowerCase(), numbered ? "numbered" : ""]
+      .filter(Boolean)
+      .join(" "),
+    rarityMark: rarityMark(rarityLabel),
+    rarityName: rarityNameHe(rarityLabel),
     trustLabel: cardTrustSummary(card),
     pip: card.pip,
     artKey: card.artKey || null,
@@ -2291,7 +2329,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
   const copies = Number(instance.count ?? 0);
   const frame = cardDisplayFrame(card);
   return `
-    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" data-card-frame="${escapeHtml(frame)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}${instance.numberedIndex ? `. מקום ${instance.numberedOf} · ${instance.numberedIndex} מתוך ${instance.numberedOf}` : ""}${presentation.trustLabel ? `. ${escapeHtml(presentation.trustLabel)}` : ""}">
+    <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" data-card-frame="${escapeHtml(frame)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}${instance.numberedIndex ? `. ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}` : ""}${presentation.trustLabel ? `. ${escapeHtml(presentation.trustLabel)}` : ""}">
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
@@ -2301,7 +2339,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-meta-mid"></span>
             <span class="card-meta-end">
               ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
-              ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="מקום ${instance.numberedOf} · ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
+              ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
             </span>
           </div>
@@ -2978,16 +3016,13 @@ function renderGrowth() {
   elements.collectorBoard.innerHTML = collectorPreview.length
     ? collectorPreview.map((entry) => {
         const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
-        const pip = partyRegister().find(({ id }) => id === entry.factionId)?.pip
-          || model.catalog.find((card) => card.set === entry.factionId)?.pip
-          || "";
+        const party = factionParty(entry.factionId);
         const ranks = model.gameConfig?.progression?.rankNames || model.gameConfig?.progression?.ranks || [];
         const rankName = ranks[(entry.rankLevel || 1) - 1] || "";
-        const streak = Number(entry.loginStreak) >= 3 ? `רצף ${entry.loginStreak}` : "";
-        const stack = [rankName, streak].filter(Boolean).join(" · ");
+        const streak = Number(entry.loginStreak) >= 3 ? Number(entry.loginStreak) : 0;
         return `<div class="collector-row${entry.current ? " current-player" : ""}">
-          <span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${pip ? `<i class="avatar-seal" style="background:${pip}" aria-hidden="true"></i>` : ""}</span>
-          <span>${entry.rank}. ${escapeHtml(entry.label)}${stack ? ` · ${escapeHtml(stack)}` : ""}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
+          <span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b>${streak}</b><i class="streak-fire" aria-hidden="true">🔥</i></em>` : ""}</span>
+          <span>${entry.rank}. ${escapeHtml(entry.label)}${rankName ? ` · ${escapeHtml(rankName)}` : ""}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
           <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
         </div>`;
       }).join("")
@@ -4207,7 +4242,7 @@ async function loadImage(url) {
 }
 
 async function makeShareImage(card) {
-  const presentation = cardPresentation(card);
+  const presentation = cardPresentation(card, stampForCard(card) || {});
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
   canvas.height = 1350;
@@ -4532,7 +4567,7 @@ function paintTallShareIdentity(context, card, presentation, { x, y, width, heig
 }
 
 async function paintShareCardFace(context, card, box) {
-  const presentation = cardPresentation(card);
+  const presentation = cardPresentation(card, stampForCard(card) || {});
   const frame = cardDisplayFrame(card);
   const radius = Math.min(12, box.width * 0.032);
   context.save();

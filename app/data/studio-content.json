@@ -18,13 +18,13 @@
     "progression": {
       "thresholdExponent": 1.2,
       "grantLevelReward": true,
-      "numberedSets": [],
+      "numberedSets": ["set-5"],
       "releaseLevelIncrements": {
         "party-leaders": 5,
-        "party-slot-2": 2,
+        "party-slot-2": 4,
         "decisions": 1,
         "records": 1,
-        "set-5": 1,
+        "set-5": 5,
         "party-position-security": 1,
         "party-position-economy": 1,
         "party-position-religion-state": 1,
@@ -56,7 +56,7 @@
       "sets": [
         {
           "id": "party-leaders",
-          "weight": 70,
+          "weight": 10,
           "includeEventCards": false,
           "rarities": {
             "Common": 67,
@@ -76,7 +76,7 @@
         },
         {
           "id": "decisions",
-          "weight": 8,
+          "weight": 0,
           "includeEventCards": false,
           "rarities": {
             "Common": 55,
@@ -86,7 +86,7 @@
         },
         {
           "id": "records",
-          "weight": 2,
+          "weight": 0,
           "includeEventCards": false,
           "rarities": {
             "Common": 50,
@@ -96,7 +96,7 @@
         },
         {
           "id": "set-5",
-          "weight": 10,
+          "weight": 30,
           "includeEventCards": false,
           "rarities": {
             "Common": 65,
@@ -122,7 +122,8 @@
         "nameHe": "מספרי שתיים",
         "order": 2,
         "tier": "objective",
-        "runtimeState": "held",
+        "runtimeState": "active",
+        "runtimeAvailableFrom": "2026-09-10T00:00:00+03:00",
         "plannedPublishAt": "2026-09-24T06:00:00.000Z",
         "launchGate": "blocked"
       },

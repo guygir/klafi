@@ -9,23 +9,30 @@ import {
   stampEligible,
   stampFromGrant,
   stampKey,
+  stampMax,
   streakLabel,
   takeInstanceForCard,
 } from "../server/numbered.js";
 
-test("stamp eligibility is list-slot plus numberedSets only", () => {
-  const card = { set: "LIK", listSlot: 1, releaseSetId: "party-leaders" };
-  assert.equal(stampEligible(card, ["party-leaders"]), true);
-  assert.equal(stampEligible(card, []), false);
-  assert.equal(stampEligible({ ...card, listSlot: null }, ["party-leaders"]), false);
-  assert.equal(stampEligible({ ...card, eventOnly: true }, ["party-leaders"]), false);
-  assert.equal(stampFromGrant(card, ["party-leaders"], "idle"), true);
-  assert.equal(stampFromGrant(card, ["party-leaders"], "quiz"), false);
-  assert.equal(stampFromGrant(card, ["party-leaders"], "debug-unlock"), false);
-  assert.equal(stampFromGrant(card, ["party-leaders"], "rank-2"), false);
-  assert.equal(stampKey(card), "LIK:1");
+test("stamp eligibility is set-5 print runs plus numberedSets, idle only", () => {
+  const set5 = { id: "SET5-01", set: "LIK", listSlot: null, releaseSetId: "set-5" };
+  const leader = { id: "LIK-M01-Q01", set: "LIK", listSlot: 1, releaseSetId: "party-leaders" };
+  assert.equal(stampMax(set5), 3);
+  assert.equal(stampKey(set5), "SET5-01");
+  assert.equal(stampEligible(set5, ["set-5"]), true);
+  assert.equal(stampEligible(set5, []), false);
+  assert.equal(stampEligible(set5, ["party-leaders"]), false);
+  assert.equal(stampEligible({ ...set5, eventOnly: true }, ["set-5"]), false);
+  assert.equal(stampFromGrant(set5, ["set-5"], "idle"), true);
+  assert.equal(stampFromGrant(set5, ["set-5"], "quiz"), false);
+  assert.equal(stampFromGrant(set5, ["set-5"], "debug-unlock"), false);
+  assert.equal(stampFromGrant(set5, ["set-5"], "rank-2"), false);
+  assert.equal(stampEligible(leader, ["set-5"]), false);
+  assert.equal(stampEligible(leader, ["party-leaders"]), true);
+  assert.equal(stampMax(leader), 1);
+  assert.equal(stampKey(leader), "LIK:1");
   assert.deepEqual(normalizeNumberedSets(undefined), []);
-  assert.deepEqual(normalizeNumberedSets(["party-leaders", "set-5"], ["party-leaders"]), ["party-leaders"]);
+  assert.deepEqual(normalizeNumberedSets(["set-5", "party-leaders"], ["set-5"]), ["set-5"]);
 });
 
 test("login streak counts Jerusalem days and resets after a gap", () => {
@@ -48,20 +55,21 @@ test("login streak counts Jerusalem days and resets after a gap", () => {
 
 test("trades move the numbered instance instead of minting a new stamp", () => {
   const from = {
-    inventory: { "LIK-M01-Q01": 1 },
-    instances: [{ instanceId: "a", cardId: "LIK-M01-Q01", numberedIndex: 1, numberedOf: 1, finish: "Holo" }],
+    inventory: { "SET5-01": 1 },
+    instances: [{ instanceId: "a", cardId: "SET5-01", numberedIndex: 1, numberedOf: 3, finish: "Holo" }],
   };
   const to = { inventory: {}, instances: [] };
-  const moved = moveOwnedCard(from, to, "LIK-M01-Q01", {
+  const moved = moveOwnedCard(from, to, "SET5-01", {
     acquiredBy: "trade-accepted",
     pulledAt: "2026-09-21T12:00:00.000Z",
     finish: "Common",
     instanceId: "fresh",
   });
   assert.equal(moved.instanceId, "a");
-  assert.equal(from.inventory["LIK-M01-Q01"], undefined);
-  assert.equal(to.inventory["LIK-M01-Q01"], 1);
+  assert.equal(from.inventory["SET5-01"], undefined);
+  assert.equal(to.inventory["SET5-01"], 1);
   assert.equal(to.instances[0].numberedIndex, 1);
+  assert.equal(to.instances[0].numberedOf, 3);
   assert.equal(to.instances[0].acquiredBy, "trade-accepted");
-  assert.equal(takeInstanceForCard(to, "LIK-M01-Q01")?.instanceId, "a");
+  assert.equal(takeInstanceForCard(to, "SET5-01")?.instanceId, "a");
 });

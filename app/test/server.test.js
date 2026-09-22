@@ -893,7 +893,9 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   assert.equal(boot.status, 200);
   assert.equal(boot.body.studioContent, null);
   assert.equal(boot.body.gameConfig.parties.find(({ id }) => id === "RZ").displayNameHe, "הציונות הדתית וזהות");
-  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-leaders").weight, 70);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-leaders").weight, 10);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-slot-2").weight, 20);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-5").weight, 30);
   assert.deepEqual(boot.body.gameConfig.pack.current.sets.map(({ id }) => id), []);
   assert.ok(boot.body.catalog.cards.length);
   assert.ok(boot.body.idleReturn.state);
@@ -1183,10 +1185,23 @@ test("postgres store keeps a session after a second process boots", async (t) =>
   assert.equal(restoredSecond.body.inventory[secondCardId], 1);
 });
 
-test("numbered stamps are idle-only holos per party slot and streaks count Jerusalem days", async (t) => {
+function withPackWeights(studio, weights) {
+  studio.gameConfig.pack.sets = studio.gameConfig.pack.sets.map((set) => ({
+    ...set,
+    weight: Object.hasOwn(weights, set.id) ? weights[set.id] : 0,
+  }));
+  return studio;
+}
+
+test("numbered stamps are idle-only set-5 holos of 3 and streaks count Jerusalem days", async (t) => {
   const clock = { value: Date.parse("2026-09-21T10:00:00+03:00") };
   const parkedDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-parked-"));
-  const parked = await start(parkedDir, clock);
+  const parkedStudioPath = path.join(parkedDir, "studio-content.json");
+  const parkedStudio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
+  parkedStudio.gameConfig.progression.numberedSets = [];
+  withPackWeights(parkedStudio, { "set-5": 30 });
+  await writeFile(parkedStudioPath, `${JSON.stringify(parkedStudio, null, 2)}\n`);
+  const parked = await start(parkedDir, clock, { studioContentPath: parkedStudioPath });
   t.after(async () => {
     await parked.close();
     await rm(parkedDir, { recursive: true, force: true });
@@ -1203,7 +1218,8 @@ test("numbered stamps are idle-only holos per party slot and streaks count Jerus
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-"));
   const studioContentPath = path.join(dataDir, "studio-content.json");
   const studio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
-  studio.gameConfig.progression.numberedSets = ["party-leaders"];
+  studio.gameConfig.progression.numberedSets = ["set-5"];
+  withPackWeights(studio, { "set-5": 30 });
   await writeFile(studioContentPath, `${JSON.stringify(studio, null, 2)}\n`);
   const running = await start(dataDir, clock, { studioContentPath });
   t.after(async () => {
@@ -1213,8 +1229,10 @@ test("numbered stamps are idle-only holos per party slot and streaks count Jerus
 
   const first = await api(running.base, "/api/session", { method: "POST" });
   const second = await api(running.base, "/api/session", { method: "POST" });
+  const third = await api(running.base, "/api/session", { method: "POST" });
+  const fourth = await api(running.base, "/api/session", { method: "POST" });
   const debuggerSession = await api(running.base, "/api/session", { method: "POST" });
-  const debugCard = "LIK-M01-Q01";
+  const debugCard = "SET5-01";
   const unlocked = await api(running.base, "/api/debug/unlock-card", {
     token: debuggerSession.body.token,
     method: "POST",
@@ -1232,13 +1250,34 @@ test("numbered stamps are idle-only holos per party slot and streaks count Jerus
   });
   assert.equal(stamped.status, 200);
   const copy = stamped.body.cards.find((item) => item.acquiredBy === "idle") || stamped.body.cards[0];
+  assert.match(copy.cardId, /^SET5-/);
   assert.equal(copy.finish, "Holo");
   assert.equal(copy.numberedIndex, 1);
-  assert.equal(copy.numberedOf, 1);
+  assert.equal(copy.numberedOf, 3);
   assert.equal(stamped.body.state.numberedCopies.length, 1);
 
-  const late = await api(running.base, "/api/idle/settle", {
+  const secondPull = await api(running.base, "/api/idle/settle", {
     token: second.body.token,
+    method: "POST",
+  });
+  const secondCopy = secondPull.body.cards.find((item) => item.acquiredBy === "idle") || secondPull.body.cards[0];
+  assert.equal(secondCopy.cardId, copy.cardId);
+  assert.equal(secondCopy.finish, "Holo");
+  assert.equal(secondCopy.numberedIndex, 2);
+  assert.equal(secondCopy.numberedOf, 3);
+
+  const thirdPull = await api(running.base, "/api/idle/settle", {
+    token: third.body.token,
+    method: "POST",
+  });
+  const thirdCopy = thirdPull.body.cards.find((item) => item.acquiredBy === "idle") || thirdPull.body.cards[0];
+  assert.equal(thirdCopy.cardId, copy.cardId);
+  assert.equal(thirdCopy.finish, "Holo");
+  assert.equal(thirdCopy.numberedIndex, 3);
+  assert.equal(thirdCopy.numberedOf, 3);
+
+  const late = await api(running.base, "/api/idle/settle", {
+    token: fourth.body.token,
     method: "POST",
   });
   const lateCopy = late.body.cards.find((item) => item.acquiredBy === "idle") || late.body.cards[0];
@@ -1246,6 +1285,26 @@ test("numbered stamps are idle-only holos per party slot and streaks count Jerus
   assert.notEqual(lateCopy.finish, "Holo");
   assert.equal(lateCopy.numberedIndex, undefined);
   assert.equal((late.body.state.numberedCopies || []).length, 0);
+
+  const leadersDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-leaders-"));
+  const leadersStudioPath = path.join(leadersDir, "studio-content.json");
+  const leadersStudio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
+  leadersStudio.gameConfig.progression.numberedSets = ["set-5"];
+  withPackWeights(leadersStudio, { "party-leaders": 10 });
+  await writeFile(leadersStudioPath, `${JSON.stringify(leadersStudio, null, 2)}\n`);
+  const leaders = await start(leadersDir, clock, { studioContentPath: leadersStudioPath });
+  t.after(async () => {
+    await leaders.close();
+    await rm(leadersDir, { recursive: true, force: true });
+  });
+  const leaderSession = await api(leaders.base, "/api/session", { method: "POST" });
+  const leaderIdle = await api(leaders.base, "/api/idle/settle", {
+    token: leaderSession.body.token,
+    method: "POST",
+  });
+  const leaderCopy = leaderIdle.body.cards.find((item) => item.acquiredBy === "idle") || leaderIdle.body.cards[0];
+  assert.ok(!String(leaderCopy.cardId).startsWith("SET5-"));
+  assert.equal(leaderCopy.numberedIndex, undefined);
 
   const dayOne = await api(running.base, "/api/state", { token: first.body.token });
   assert.equal(dayOne.body.loginStreak, 1);

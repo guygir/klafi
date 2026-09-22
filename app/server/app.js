@@ -23,6 +23,7 @@ import {
   numberedCopies,
   stampFromGrant,
   stampKey,
+  stampMax,
 } from "./numbered.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -1022,7 +1023,7 @@ export async function createKalpiApp({
 
   async function settleIdle(token) {
     const currentMs = now();
-    const pool = activeIdleCards(cards, currentMs);
+    const pool = activeIdleCards(allCards, currentMs);
     if (!pool.length) return { error: "NO_ACTIVE_RELEASE" };
     const result = await store.withSession(token, async (current) => {
       current.unseenPulls ??= [];
@@ -1124,7 +1125,7 @@ export async function createKalpiApp({
       (studioContent?.gameConfig?.releaseSets || []).map(({ id }) => id),
     );
     const stamp = stampFromGrant(card, sets, acquiredBy)
-      ? await store.claimNumberedStamp(stampKey(card), Number(card.listSlot))
+      ? await store.claimNumberedStamp(stampKey(card), stampMax(card))
       : null;
     const instance = {
       instanceId,
@@ -1492,7 +1493,7 @@ export async function createKalpiApp({
           const input = await readJson(request);
           const currentMs = now();
           const day = jerusalemDay(currentMs);
-          const pool = activeIdleCards(cards, currentMs);
+          const pool = activeIdleCards(allCards, currentMs);
           const result = await store.withSession(token, async (current) => {
             const quiz = current.currentQuiz;
             if (!quiz || quiz.quizId !== input.quizId) {
@@ -1550,7 +1551,7 @@ export async function createKalpiApp({
             url.pathname,
             async () => {
               const currentMs = now();
-              const pool = activeIdleCards(cards, currentMs);
+              const pool = activeIdleCards(allCards, currentMs);
               const reward = await store.withSession(token, async (current) => {
                 syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
                 const rank = current.pendingRankRewards?.shift();

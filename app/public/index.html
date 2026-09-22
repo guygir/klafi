@@ -51,11 +51,16 @@
       <p id="level-teaser" class="level-teaser">האם תגיעו לדרגת ראש הממשלה?</p>
       <div class="level-identity">
         <button type="button" id="level-avatar-button" class="level-avatar-button" aria-haspopup="dialog" aria-label="הפרופיל והאווטאר">
+          <img id="level-letter" class="level-letter" alt="" hidden />
+          <b id="level-letter-text" class="level-letter-text" hidden></b>
           <img id="level-avatar" class="level-avatar" alt="" />
           <i id="avatar-seal" class="avatar-seal" hidden aria-hidden="true"></i>
+          <em id="level-streak" class="level-streak" hidden>
+            <b id="level-streak-count" class="streak-count"></b>
+            <i class="streak-fire" aria-hidden="true">🔥</i>
+          </em>
         </button>
         <span id="level-rank">אזרח סקרן</span>
-        <em id="level-streak" hidden></em>
         <strong id="level-number" hidden>רמה 1/5</strong>
       </div>
       <div class="level-progress-block">
@@ -577,7 +582,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <aside id="numbered-tip" class="numbered-tip" hidden>
-    <p>זה המקום ברשימה. ראש רשימה הוא 1 מתוך 1.</p>
+    <p>עותק ממוספר. המספר אומר כמה כאלה יצאו בעולם.</p>
     <button type="button" id="numbered-tip-dismiss">הבנתי</button>
   </aside>
   <div id="klafi-tips" class="klafi-tips" hidden aria-hidden="true">
