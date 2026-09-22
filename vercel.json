@@ -6,7 +6,7 @@
   "buildCommand": "node scripts/prepare-vercel-static.mjs",
   "rewrites": [
     { "source": "/share/binder", "destination": "/share/binder.html" },
-    { "source": "/share/:id", "destination": "/api?__kalpi_path=/share/:id" },
+    { "source": "/share/:id", "destination": "/api/share?__kalpi_path=/share/:id" },
     { "source": "/api/:path*", "destination": "/api?__kalpi_path=/api/:path*" }
   ],
   "functions": {
@@ -18,6 +18,10 @@
     "api/community.js": {
       "includeFiles": "{app/public/shell.json,app/server/**,app/data/events.json}",
       "maxDuration": 10
+    },
+    "api/share.js": {
+      "includeFiles": "{app/public/catalog.json,app/server/**}",
+      "maxDuration": 5
     },
     "api/index.js": {
       "includeFiles": "{app/data/**,app/server/**,docs/intake/research/set5-wip-pool.json}",
