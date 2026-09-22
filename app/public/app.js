@@ -2897,16 +2897,12 @@ function renderShowcaseBinder() {
     const partyOk = !model.binderParty || card.set === model.binderParty;
     return releaseOk && partyOk;
   });
-  elements.showcaseGrid.innerHTML = visible.map((card) => {
-    const holders = holderCountFor(card, numberedView);
-    return `
+  elements.showcaseGrid.innerHTML = visible.map((card) => `
       <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
         <button class="binder-card-open" type="button" data-card-id="${card.id}"${numberedView ? ' data-numbered="1"' : ""} aria-label="פתיחת ${escapeHtml(cardTitle(card))}">
           <div class="binder-shared-card">${catalogCardMarkup(card, "binder", numberedView)}</div>
         </button>
-        ${model.cardHoldersReady ? `<small class="card-holders-chip">${escapeHtml(holderLine(holders, numberedView, card))}</small>` : ""}
-      </div>`;
-  }).join("");
+      </div>`).join("");
   setEmptyNote(elements.showcaseEmpty, "אין קלפים בסינון הזה.", { hidden: visible.length > 0 });
   queueCardTextFit(elements.showcaseGrid);
   const nextStrip = elements.showcaseFilters?.querySelector(".filter-sets");
@@ -3075,13 +3071,11 @@ function renderBinder() {
         ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
       </div>`;
     }
-    const numbered = Boolean(stampForCard(card)?.numberedIndex);
     return `
       <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
         <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}, ברשותכם ${count}">
           ${binderCardMarkup(card)}
         </button>
-        ${model.cardHoldersReady ? `<small class="card-holders-chip">${escapeHtml(holderLine(holderCountFor(card, numbered), numbered, card))}</small>` : ""}
       </div>`;
   }).join("");
   const visibleColumns = window.innerWidth <= 520 ? 3 : window.innerWidth <= 760 ? 5 : 6;

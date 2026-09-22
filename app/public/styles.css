@@ -2455,20 +2455,6 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   text-align: center;
 }
 .card-holders-note[hidden] { display: none; }
-.card-holders-chip {
-  position: absolute;
-  z-index: 3;
-  inset-inline: 0;
-  bottom: 0;
-  padding: 3px 4px 4px;
-  background: rgba(244, 239, 228, 0.94);
-  color: var(--civic);
-  font-size: 8px;
-  font-weight: 700;
-  line-height: 1.25;
-  text-align: center;
-  pointer-events: none;
-}
 
 .app-shell.showcase-active {
   padding-bottom: 28px;
