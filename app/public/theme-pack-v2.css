@@ -189,11 +189,9 @@ body:has(#app[data-theme="pack-v2"]) {
   height: clamp(48px, 20cqw, 64px);
   min-height: clamp(48px, 20cqw, 64px);
   padding: 0;
-  border: max(2px, 0.7cqw) solid transparent;
+  border: max(1.5px, 0.55cqw) dotted #d4b56a;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 36%, #1a1610 0 42%, #050403 100%) padding-box,
-    repeating-conic-gradient(#d4b56a 0 6deg, transparent 6deg 15deg) border-box;
+  background: radial-gradient(circle at 50% 36%, #1a1610 0 42%, #050403 100%);
   color: #fffaf0;
   font: inherit;
   box-shadow: none;
@@ -1232,11 +1230,9 @@ body:has(#app[data-theme="pack-v2"]) {
   height: clamp(48px, 20cqw, 64px);
   min-height: clamp(48px, 20cqw, 64px);
   padding: 0;
-  border: max(2px, 0.7cqw) solid transparent;
+  border: max(1.5px, 0.55cqw) dotted #d4b56a;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 36%, #1a1610 0 42%, #050403 100%) padding-box,
-    repeating-conic-gradient(#d4b56a 0 6deg, transparent 6deg 15deg) border-box;
+  background: radial-gradient(circle at 50% 36%, #1a1610 0 42%, #050403 100%);
   color: #fffaf0;
   font: inherit;
   box-shadow: none;
