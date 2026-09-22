@@ -3108,6 +3108,17 @@ body {
   overflow: hidden;
 }
 
+.growth-grid > .work-card.leaderboard-desk,
+.growth-grid > .work-card.daily-challenge-desk {
+  overflow: visible;
+}
+
+#collector-board,
+#daily-challenge-board {
+  overflow: visible;
+  padding-inline: 10px;
+}
+
 #pack-view .pack-header { flex: 0 0 auto; }
 #pack-view .rip-stage {
   flex: 1;
