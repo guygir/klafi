@@ -1213,9 +1213,10 @@ test("numbered stamps are idle-only holos per party slot and streaks count Jerus
 
   const first = await api(running.base, "/api/session", { method: "POST" });
   const second = await api(running.base, "/api/session", { method: "POST" });
+  const debuggerSession = await api(running.base, "/api/session", { method: "POST" });
   const debugCard = "LIK-M01-Q01";
   const unlocked = await api(running.base, "/api/debug/unlock-card", {
-    token: first.body.token,
+    token: debuggerSession.body.token,
     method: "POST",
     body: { cardId: debugCard },
   });
@@ -1230,7 +1231,7 @@ test("numbered stamps are idle-only holos per party slot and streaks count Jerus
     method: "POST",
   });
   assert.equal(stamped.status, 200);
-  const copy = stamped.body.cards[0];
+  const copy = stamped.body.cards.find((item) => item.acquiredBy === "idle") || stamped.body.cards[0];
   assert.equal(copy.finish, "Holo");
   assert.equal(copy.numberedIndex, 1);
   assert.equal(copy.numberedOf, 1);
@@ -1240,7 +1241,7 @@ test("numbered stamps are idle-only holos per party slot and streaks count Jerus
     token: second.body.token,
     method: "POST",
   });
-  const lateCopy = late.body.cards[0];
+  const lateCopy = late.body.cards.find((item) => item.acquiredBy === "idle") || late.body.cards[0];
   assert.equal(lateCopy.cardId, copy.cardId);
   assert.notEqual(lateCopy.finish, "Holo");
   assert.equal(lateCopy.numberedIndex, undefined);
