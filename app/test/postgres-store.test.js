@@ -117,6 +117,7 @@ test("transaction-pooler boot applies leftover IF NOT EXISTS migrations", async 
   assert.doesNotMatch(source, /Database migrations require the Supabase session pooler/);
   assert.match(source, /if \(this\.transactionPooling\) \{\s*await client\.query\(sql\)/);
   assert.match(source, /005_card_holder_snapshot/);
+  assert.match(source, /006_numbered_grant_cadence/);
 });
 
 test("serverless Supabase traffic uses transaction pooling", () => {

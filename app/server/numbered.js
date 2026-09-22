@@ -23,10 +23,28 @@ export function streakLabel(streak) {
   return count >= 3 ? `רצף ${count}` : "";
 }
 
+export const DEFAULT_NUMBERED_EVERY = 30;
+
 export function normalizeNumberedSets(value, releaseIds = []) {
   if (!Array.isArray(value)) return [];
   const allowed = new Set(releaseIds);
   return [...new Set(value.map(String))].filter((id) => !allowed.size || allowed.has(id));
+}
+
+export function normalizeNumberedEvery(value) {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1) return DEFAULT_NUMBERED_EVERY;
+  return Math.min(1000, n);
+}
+
+export function stampFromGrantCount(grants, max, every = DEFAULT_NUMBERED_EVERY) {
+  const interval = normalizeNumberedEvery(every);
+  const cap = Math.max(0, Math.round(Number(max) || 0));
+  const count = Math.max(0, Math.round(Number(grants) || 0));
+  if (!interval || !cap || count < interval || count % interval !== 0) return null;
+  const index = count / interval;
+  if (index > cap) return null;
+  return { index, of: cap };
 }
 
 export function stampMax(card) {

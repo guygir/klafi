@@ -19,6 +19,7 @@ import { catalogExtrasFromStudio, expandPublicCatalog, runtimeSpecialCard } from
 import {
   applyLoginStreak,
   jerusalemDay,
+  normalizeNumberedEvery,
   normalizeNumberedSets,
   numberedCopies,
   stampFromGrant,
@@ -277,6 +278,10 @@ function validProgressionPatch(value) {
     if (!Array.isArray(value.numberedSets) || value.numberedSets.length > 40) return false;
     if (!value.numberedSets.every((id) => typeof id === "string" && /^[a-z0-9-]{2,40}$/.test(id))) return false;
   }
+  if (value.numberedEvery !== undefined) {
+    const every = Number(value.numberedEvery);
+    if (!Number.isInteger(every) || every < 1 || every > 1000) return false;
+  }
   if (value.reward !== undefined && (typeof value.reward !== "string" || value.reward.length > 80)) return false;
   return true;
 }
@@ -530,6 +535,7 @@ function progressionConfig(config = {}, activeReleaseIds = null) {
     rankNames: ranks,
     grantLevelReward: config.grantLevelReward !== false,
     numberedSets: normalizeNumberedSets(config.numberedSets),
+    numberedEvery: normalizeNumberedEvery(config.numberedEvery),
   };
 }
 
@@ -1086,7 +1092,11 @@ export async function createKalpiApp({
       (studioContent?.gameConfig?.releaseSets || []).map(({ id }) => id),
     );
     const stamp = stampFromGrant(card, sets, acquiredBy)
-      ? await store.claimNumberedStamp(stampKey(card), stampMax(card))
+      ? await store.claimNumberedStamp(
+        stampKey(card),
+        stampMax(card),
+        normalizeNumberedEvery(studioContent?.gameConfig?.progression?.numberedEvery),
+      )
       : null;
     const instance = {
       instanceId,
@@ -1962,6 +1972,9 @@ export async function createKalpiApp({
               numberedSets: input.progression?.numberedSets
                 ? normalizeNumberedSets(input.progression.numberedSets, releaseIds)
                 : studioContent.gameConfig.progression?.numberedSets,
+              numberedEvery: input.progression?.numberedEvery !== undefined
+                ? normalizeNumberedEvery(input.progression.numberedEvery)
+                : normalizeNumberedEvery(studioContent.gameConfig.progression?.numberedEvery),
               reward: input.progression?.reward ?? studioContent.gameConfig.progression?.reward,
             },
             releaseSets: mergeReleaseSets(studioContent.gameConfig.releaseSets, input.releaseSets),
