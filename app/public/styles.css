@@ -2303,7 +2303,10 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .app-shell.showcase-active .level-strip,
 .app-shell.showcase-active .top-nav-row,
 .app-shell.showcase-active #player-name,
-.app-shell.showcase-active #site-card-peeks {
+.app-shell.showcase-active #site-card-peeks,
+.app-shell.showcase-active [data-debug-only],
+.app-shell.showcase-active [data-studio-only],
+.app-shell.showcase-active #klafi-tips {
   display: none !important;
 }
 .app-shell.showcase-active #main {

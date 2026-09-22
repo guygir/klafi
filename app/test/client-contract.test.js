@@ -369,6 +369,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function isLookOnlyShowcase/);
   assert.match(javascript, /function bootstrapShowcase/);
   assert.match(javascript, /function renderShowcaseBinder/);
+  assert.match(javascript, /model.binderFilter !== "NUMBERED"/);
   assert.match(javascript, /function catalogCardMarkup/);
   assert.match(javascript, /\/share\/binder/);
   assert.match(javascript, /get\("showcase"\) === "1"/);

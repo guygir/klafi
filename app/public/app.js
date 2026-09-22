@@ -1231,7 +1231,7 @@ function showView(name) {
     }
   }
   elements.bottomNav.hidden = model.showcase || !["home", "binder", "achievements", "events", "growth"].includes(name);
-  klafiTips.sync();
+  if (!model.showcase) klafiTips.sync();
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
     fitVisibleCardText(elements.main);
@@ -2484,7 +2484,7 @@ function renderShowcaseBinder() {
   setLabels.ALL = `הכול ${playerCards.length}`;
   setLabels.NUMBERED = "ממוספרים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
-  if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && !model.binderFilter.startsWith("RELEASE:")) {
+  if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && model.binderFilter !== "NUMBERED" && !model.binderFilter.startsWith("RELEASE:")) {
     model.binderParty = model.binderFilter;
     model.binderFilter = "ALL";
   }
@@ -2642,7 +2642,7 @@ function renderBinder() {
   setLabels.SPECIALS = "מיוחדים";
   setLabels.NUMBERED = "ממוספרים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
-  if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && !model.binderFilter.startsWith("RELEASE:")) {
+  if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && model.binderFilter !== "NUMBERED" && !model.binderFilter.startsWith("RELEASE:")) {
     model.binderParty = model.binderFilter;
     model.binderFilter = "ALL";
   }
