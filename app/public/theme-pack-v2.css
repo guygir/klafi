@@ -764,8 +764,7 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] .site-card-peeks {
-  opacity: 0.46;
-  filter: sepia(0.15);
+  display: none;
 }
 
 .visual-config,

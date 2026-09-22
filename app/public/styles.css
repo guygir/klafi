@@ -288,14 +288,7 @@ h1 {
 }
 
 .pack-shadow {
-  position: absolute;
-  bottom: 56px;
-  width: 250px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(26, 31, 28, 0.26);
-  filter: blur(18px);
-  transform: rotate(-4deg);
+  display: none;
 }
 
 .pack-wrapper {
@@ -312,7 +305,7 @@ h1 {
 }
 
 .pack-wrapper:hover { transform: rotate(0.5deg) translateY(-6px); }
-.pack-wrapper img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 12px 18px rgba(26, 31, 28, 0.2)); }
+.pack-wrapper img { display: block; width: 100%; height: 100%; object-fit: contain; filter: none; }
 
 .pack-wrapper::before,
 .pack-wrapper::after {
@@ -2262,11 +2255,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .app-shell.home-active .level-progress-block small { font-size: 14px; }
 
 .site-card-peeks {
-  position: fixed;
-  z-index: 0;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
+  display: none;
 }
 .site-card-peek {
   position: absolute;

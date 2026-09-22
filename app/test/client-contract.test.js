@@ -357,6 +357,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /שם הליגה/);
   assert.doesNotMatch(html, /id="profile-leagues-title">חדרים/);
   assert.match(html, /id="site-card-peeks"/);
+  assert.match(css, /\.pack-shadow \{\s*display: none;/);
+  assert.match(css, /\.site-card-peeks \{\s*display: none;/);
   assert.match(html, /id="today-challenge-visual"/);
   assert.match(html, /hero-art-knesset\.png/);
   assert.match(javascript, /function renderSiteCardPeeks/);
@@ -463,7 +465,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-37/);
+  assert.match(html, /card-surface-38/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -531,7 +533,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-37/);
+  assert.match(html, /card-surface-38/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
