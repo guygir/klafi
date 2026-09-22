@@ -4026,8 +4026,8 @@ body {
 .level-letter-text,
 .collector-letter-text {
   position: absolute;
-  top: -11px;
-  left: -4px;
+  top: -24px;
+  left: -6px;
   z-index: 3;
   box-sizing: border-box;
   width: 22px;
@@ -4078,8 +4078,8 @@ body {
 
 .collector-letter,
 .collector-letter-text {
-  top: -8px;
-  left: -3px;
+  top: -16px;
+  left: -4px;
   width: 16px;
   height: 24px;
 }
