@@ -182,19 +182,6 @@ body:has(#app[data-theme="pack-v2"]) {
   background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 48%, #fff6c8 58%, #ffffff 66%, #e0c36a 74%, transparent 86%);
 }
 
-#app[data-card-frame="tall-v2"] .card-image-meta .card-slot-tag,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-slot-tag {
-  width: max-content;
-  min-width: max-content;
-  max-width: none;
-  height: 8cqw;
-  min-height: 8cqw;
-  padding: 0 1.8cqw;
-  overflow: visible;
-  border-radius: 999px;
-  font: 700 5.4cqw/1 "IBM Plex Sans Hebrew", sans-serif;
-}
-
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
   width: clamp(48px, 20cqw, 64px);
@@ -205,8 +192,8 @@ body:has(#app[data-theme="pack-v2"]) {
   border: max(2px, 0.7cqw) solid transparent;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 38%, #2c2418 0 56%, #080706 100%) padding-box,
-    repeating-conic-gradient(#e6d39a 0 8deg, transparent 8deg 18deg) border-box;
+    radial-gradient(circle at 50% 36%, #1a1610 0 42%, #050403 100%) padding-box,
+    repeating-conic-gradient(#d4b56a 0 6deg, transparent 6deg 15deg) border-box;
   color: #fffaf0;
   font: inherit;
   box-shadow: none;
@@ -1219,10 +1206,8 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
 #app[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
-#app[data-card-frame="fullart-v1"] .card-image-meta .card-numbered-tag,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-code-tag,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag,
-#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-numbered-tag {
+#app .kalpi-card[data-card-frame="fullart-v1"] .card-image-meta .card-copies-tag {
   box-sizing: border-box;
   width: max-content;
   min-width: max-content;
@@ -1238,6 +1223,24 @@ body:has(#app[data-theme="pack-v2"]) {
   font-size: 6.1cqw;
   line-height: 1;
   white-space: nowrap;
+}
+
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
+#app .kalpi-card.numbered[data-card-frame="fullart-v1"] .card-image-meta .card-numbered-tag {
+  width: clamp(48px, 20cqw, 64px);
+  min-width: clamp(48px, 20cqw, 64px);
+  height: clamp(48px, 20cqw, 64px);
+  min-height: clamp(48px, 20cqw, 64px);
+  padding: 0;
+  border: max(2px, 0.7cqw) solid transparent;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 36%, #1a1610 0 42%, #050403 100%) padding-box,
+    repeating-conic-gradient(#d4b56a 0 6deg, transparent 6deg 15deg) border-box;
+  color: #fffaf0;
+  font: inherit;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 #app[data-card-frame="fullart-v1"] .card-image-meta strong,
@@ -1322,11 +1325,6 @@ body:has(#app[data-theme="pack-v2"]) {
   font-size: 3.5cqw;
   font-weight: 500;
   line-height: 1.15;
-}
-
-#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-rarity-zone,
-#app .kalpi-card.numbered[data-card-frame="fullart-v1"] .card-rarity-zone {
-  display: none;
 }
 
 #app[data-card-frame="fullart-v1"] .card-rarity-zone strong,

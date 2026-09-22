@@ -2,6 +2,7 @@ const CHROME_ASSETS = Object.freeze([
   "pack-wrapper-klafi.png",
   "hero-art-kalpi.png",
   "hero-art-knesset.png",
+  "ballot-letter-lik.png",
 ]);
 
 export function liveDeployAssetNames({ catalog, avatars } = {}) {

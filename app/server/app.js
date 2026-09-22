@@ -213,6 +213,7 @@ export function publicPartyRegister(studioContent, cards = []) {
       asOfDate: asOfDate || null,
       pip,
       letterArt: symbolCard?.artKey || null,
+      letterChip: id === "LIK" ? "ballot-letter-lik.png" : null,
     }));
   }
   const parties = new Map();

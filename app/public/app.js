@@ -1254,11 +1254,11 @@ function factionLetters(party) {
 }
 
 function factionLetterArt(party) {
-  if (party?.letterArt || party?.symbolCard?.artKey) {
-    return party.letterArt || party.symbolCard.artKey;
-  }
-  if (!party?.id) return "";
-  return (model.catalog || []).find((card) => card.id === `${party.id}-S-01`)?.artKey || "";
+  return party?.letterChip || "";
+}
+
+function streakFireMarkup() {
+  return `<i class="streak-fire" aria-hidden="true"><svg viewBox="0 0 12 16" width="16" height="18"><path class="flame-outer" d="M6 16C2.6 16 .6 13.6.6 10.6.6 7.2 3.4 5.1 4.3 2.4c.4 1.7 1.5 2.8 2.6 2.8 1.7 0 2.3-2 1.6-4.8C11 3.2 12.4 6.4 12.4 9.6 12.4 13.2 9.8 16 6 16z"/><path class="flame-inner" d="M6 14.1c-1.8 0-2.9-1.2-2.9-2.9 0-1.6 1.3-2.7 1.8-4.1.3 1 .9 1.7 1.6 1.7.9 0 1.3-1.1 1-2.5 1 1.3 1.7 2.8 1.7 4.4 0 1.9-1.3 3.4-3.2 3.4z"/></svg></i>`;
 }
 
 function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
@@ -2369,9 +2369,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-code-tag">${escapeHtml(presentation.code)}</span>
             <span class="card-meta-mid"></span>
             <span class="card-meta-end">
-              ${presentation.listSlot
-                ? `<b class="card-slot-tag" aria-label="מקום ${presentation.listSlot}">מקום ${presentation.listSlot}</b>`
-                : frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
+              ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
               ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}"><small>מקום ברשימה</small><em>${instance.numberedIndex}/${instance.numberedOf}</em></b>` : ""}
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
             </span>
@@ -3054,7 +3052,7 @@ function renderGrowth() {
         const rankName = ranks[(entry.rankLevel || 1) - 1] || "";
         const streak = Number(entry.loginStreak) >= 3 ? Number(entry.loginStreak) : 0;
         return `<div class="collector-row${entry.current ? " current-player" : ""}">
-          <span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b>${streak}</b><i class="streak-fire" aria-hidden="true">🔥</i></em>` : ""}</span>
+          <span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b>${streak}</b>${streakFireMarkup()}</em>` : ""}</span>
           <span>${entry.rank}. ${escapeHtml(entry.label)}${rankName ? ` · ${escapeHtml(rankName)}` : ""}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
           <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
         </div>`;

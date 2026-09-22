@@ -2359,8 +2359,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .card-identity-stack { display: contents; }
 .card-rarity-zone,
-.card-slot-mark,
-.kalpi-card.numbered .card-rarity-zone { display: none; }
+.card-slot-mark { display: none; }
 .card-quote-zone,
 .card-party-zone,
 .card-rarity-zone,
@@ -3885,7 +3884,8 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .klafi-tips-card { transition: none; }
-  .streak-fire { animation: none; }
+  .streak-fire,
+  .streak-fire .flame-inner { animation: none; }
 }
 
 .card-numbered-tag {
@@ -3896,7 +3896,9 @@ body {
 .kalpi-card.numbered .card-numbered-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-numbered-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
-#app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag,
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
+#app .kalpi-card.numbered[data-card-frame="fullart-v1"] .card-image-meta .card-numbered-tag {
   display: grid;
   place-items: center;
   align-content: center;
@@ -3910,8 +3912,8 @@ body {
   border: max(2px, 0.7cqw) solid transparent;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 38%, #2c2418 0 56%, #080706 100%) padding-box,
-    repeating-conic-gradient(#e6d39a 0 8deg, transparent 8deg 18deg) border-box;
+    radial-gradient(circle at 50% 36%, #1a1610 0 42%, #050403 100%) padding-box,
+    repeating-conic-gradient(#d4b56a 0 6deg, transparent 6deg 15deg) border-box;
   color: #fffaf0;
   box-shadow: none;
   backdrop-filter: none;
@@ -3919,33 +3921,33 @@ body {
 }
 
 .kalpi-card.numbered .card-numbered-tag small,
-#app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-numbered-tag small {
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-numbered-tag small,
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-numbered-tag small,
+#app .kalpi-card.numbered[data-card-frame="fullart-v1"] .card-numbered-tag small {
   display: block;
-  color: #e6d39a;
+  color: #d8c48a;
   font: 600 clamp(5px, 2.15cqw, 7px)/1 "IBM Plex Sans Hebrew", sans-serif;
   letter-spacing: 0.01em;
 }
 
 .kalpi-card.numbered .card-numbered-tag em,
-#app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-numbered-tag em {
+#app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-numbered-tag em,
+#app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-numbered-tag em,
+#app .kalpi-card.numbered[data-card-frame="fullart-v1"] .card-numbered-tag em {
   font: 800 clamp(11px, 5cqw, 17px)/1 "IBM Plex Sans Hebrew", sans-serif;
   font-style: normal;
   color: #fffaf0;
 }
 
-#app[data-card-frame="tall-v2"] .card-image-meta .card-slot-tag,
-#app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta .card-slot-tag,
-.card-slot-tag {
-  width: max-content;
-  min-width: max-content;
-  max-width: none;
-  height: clamp(18px, 8cqw, 24px);
-  min-height: clamp(18px, 8cqw, 24px);
-  padding: 0 6px;
+.streak-fire svg {
+  display: block;
+  width: 16px;
+  height: 18px;
   overflow: visible;
-  border-radius: 999px;
-  font: 700 clamp(7px, 3.2cqw, 11px)/1 "IBM Plex Sans Hebrew", sans-serif;
 }
+
+.streak-fire .flame-outer { fill: #ff6a00; }
+.streak-fire .flame-inner { fill: #ffd24a; animation: flame-inner 180ms steps(1) infinite; }
 
 .kalpi-card.holo.numbered::before {
   background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 50%, #fff6c8 60%, #ffffff 68%, #e0c36a 76%, transparent 86%);
@@ -3998,21 +4000,16 @@ body {
 }
 
 .streak-fire {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-style: normal;
   line-height: 1;
-  transform-origin: 50% 85%;
-  animation: streak-fire 200ms steps(1) infinite;
 }
 
-@keyframes streak-fire {
-  0% { transform: scale(1) rotate(-8deg); filter: brightness(1) saturate(1.05); }
-  16.666% { transform: scale(1.2) rotate(6deg) translateY(-1px); filter: brightness(1.28) saturate(1.45); }
-  33.333% { transform: scale(0.88) rotate(-3deg); filter: brightness(0.92) hue-rotate(-14deg); }
-  50% { transform: scale(1.16) rotate(8deg) translateY(-2px); filter: brightness(1.35) saturate(1.55); }
-  66.666% { transform: scale(1) rotate(-6deg); filter: brightness(1.08) hue-rotate(10deg); }
-  83.333% { transform: scale(1.22) rotate(4deg) translateY(-1px); filter: brightness(1.22) saturate(1.4); }
-  100% { transform: scale(1) rotate(-8deg); filter: brightness(1) saturate(1.05); }
+@keyframes flame-inner {
+  0%, 100% { opacity: 1; transform: translateY(0) scaleY(1); }
+  33% { opacity: 0.72; transform: translateY(0.4px) scaleY(0.9); }
+  66% { opacity: 1; transform: translateY(-0.5px) scaleY(1.08); }
 }
 
 .level-avatar-button.has-week-streak {
@@ -4025,10 +4022,10 @@ body {
 .collector-letter-text {
   position: absolute;
   top: -2px;
-  left: -10px;
+  left: -12px;
   z-index: 3;
-  width: 22px;
-  height: 22px;
+  width: 36px;
+  height: 20px;
   object-fit: contain;
   border: 0;
   border-radius: 0;
@@ -4036,20 +4033,15 @@ body {
   box-shadow: none;
 }
 
-.level-letter,
-.collector-letter {
-  background: var(--pack-paper, #eee5d4);
-  border-radius: 3px;
-}
-
 .level-letter-text,
 .collector-letter-text {
   display: grid;
   place-items: center;
-  border-radius: 3px;
-  background: var(--pack-paper, #eee5d4);
+  width: max-content;
+  min-width: 22px;
+  padding: 0;
   color: var(--pack-umber, #3c3026);
-  font: 800 8px/1 "IBM Plex Sans Hebrew", sans-serif;
+  font: 800 11px/1 "IBM Plex Sans Hebrew", sans-serif;
 }
 
 #avatar-seal { display: none; }
