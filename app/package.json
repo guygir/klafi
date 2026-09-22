@@ -15,6 +15,7 @@
     "backup:database": "node scripts/backup-database.mjs",
     "restore:drill": "node scripts/restore-drill.mjs",
     "stress:idle": "node scripts/stress-idle.mjs",
+    "watch:production": "node scripts/watch-production.mjs",
     "verify:release": "node scripts/release-smoke.mjs",
     "import:quotes": "node scripts/import-quote-archive.mjs",
     "sync:art": "node scripts/sync-generated-art.mjs",

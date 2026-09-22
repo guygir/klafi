@@ -90,7 +90,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 
 **Shipped**
 1. [x] GitHub repo https://github.com/guygir/klafi + local PostgreSQL store (`DATABASE_URL`, docker-compose, persist-across-restart test).
-2. [x] Public URL https://klafi.vercel.app (Vercel Hobby + Supabase transaction-pooled runtime). `/api/health` is `backend=postgres`. Quiz and debug stay off. **Live-deploy monitoring is not done; it ships last with step 16.**
+2. [x] Public URL https://klafi.vercel.app (Vercel Hobby + Supabase transaction-pooled runtime). `/api/health` is `backend=postgres`. Quiz and debug stay off. Live-deploy watch is recorded with step 16 in [docs/operations/production-watch.md](docs/operations/production-watch.md).
 5. [x] Account recovery and moderation. Guest recovery code in the profile (copy / restore against the existing session). Card and public-name reports share the Studio queue. Gameplay stays unthrottled; anonymous-session abuse protection belongs at the edge.
 6. [x] Remaining KALPI pack art → KLAFI. Live pack still is `pack-wrapper-klafi.png` (KLAFI / קְלָפִי). The old KALPI wrapper and Seedance rip stay as reference only.
 7. [x] Unified card pipeline, taller cards, no fake social counts. One `--card-width` token sizes walkout, dialog and share. Quote-fit keeps a readable floor on binder/peek/trade. Trades use the same renderer and dialog.
@@ -112,7 +112,7 @@ Reorder in the Cursor implementation-plan canvas. After every step: verify on ph
 15. Platform/live-ops: PWA + push, groups/leagues/seasonal ladders, event-controlled Specials, creator seeding. **Brainstorm design — review** [open the HTML](https://raw.githack.com/guygir/klafi/cursor/hebrew-trust-a11y-025e/docs/design/step-15-platform-liveops.html). Events player surface stays deferred.
 
 **Last**
-16. Pack-open animation branded KLAFI (Weavy/video) **and** step 2 live-deploy monitoring. CSS peel is parked. Extra Weavy promo loops stay with the step 14 design.
+16. Pack-open animation branded KLAFI (Weavy/video). CSS peel is parked. Extra Weavy promo loops stay with the step 14 design. **Live-deploy watch is recorded** in [docs/operations/production-watch.md](docs/operations/production-watch.md): share crawlers, idle stress, backup/restore drill, `x-request-id` error logs, and the current/previous production URLs.
 
 ### Later (designed, not Alpha)
 

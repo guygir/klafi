@@ -20,7 +20,7 @@
       "maxDuration": 10
     },
     "api/index.js": {
-      "includeFiles": "{app/data/**,app/server/**}",
+      "includeFiles": "{app/data/**,app/server/**,docs/intake/research/set5-wip-pool.json}",
       "maxDuration": 10
     }
   },
