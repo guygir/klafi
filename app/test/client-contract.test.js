@@ -281,6 +281,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /width:\s*11px/);
   assert.match(css, /height:\s*16\.5px/);
   assert.match(javascript, /numberedCopies/);
+  assert.match(javascript, /numberedEvery/);
+  assert.match(javascript, /#numbered-every/);
   assert.match(javascript, /maybeShowNumberedTip/);
   assert.match(javascript, /ממוספר/);
   assert.match(javascript, /מקום ברשימה/);

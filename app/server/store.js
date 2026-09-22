@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { moveOwnedCard } from "./numbered.js";
+import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
 import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
 
 export const CARD_HOLDER_SYNC_MS = 60 * 60 * 1000;
@@ -528,13 +528,11 @@ export class JsonStore {
     return snapshot;
   }
 
-  async claimNumberedStamp(key, max) {
+  async claimNumberedStamp(key, max, every = 30) {
     this.state.numberedIssued ??= {};
-    const current = this.state.numberedIssued[key] || 0;
-    if (current >= max) return null;
-    const next = current + 1;
+    const next = (this.state.numberedIssued[key] || 0) + 1;
     this.state.numberedIssued[key] = next;
-    return { index: next, of: max };
+    return stampFromGrantCount(next, max, every);
   }
 
   scoreLeagueMembers(memberTokens, cards = []) {

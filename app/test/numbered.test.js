@@ -4,10 +4,12 @@ import {
   applyLoginStreak,
   jerusalemDay,
   moveOwnedCard,
+  normalizeNumberedEvery,
   normalizeNumberedSets,
   previousJerusalemDay,
   stampEligible,
   stampFromGrant,
+  stampFromGrantCount,
   stampKey,
   stampMax,
   streakLabel,
@@ -36,6 +38,23 @@ test("stamp eligibility is list-slot print runs plus numberedSets, idle only", (
   assert.equal(stampKey(leader), "LIK:1");
   assert.deepEqual(normalizeNumberedSets(undefined), []);
   assert.deepEqual(normalizeNumberedSets(["set-5", "party-leaders"], ["set-5"]), ["set-5"]);
+});
+
+test("numbered cadence is every N grants up to list place", () => {
+  assert.equal(normalizeNumberedEvery(undefined), 30);
+  assert.equal(normalizeNumberedEvery(0), 30);
+  assert.equal(normalizeNumberedEvery(30), 30);
+  assert.deepEqual(stampFromGrantCount(1, 1, 30), null);
+  assert.deepEqual(stampFromGrantCount(29, 1, 30), null);
+  assert.deepEqual(stampFromGrantCount(30, 1, 30), { index: 1, of: 1 });
+  assert.deepEqual(stampFromGrantCount(60, 1, 30), null);
+  assert.deepEqual(stampFromGrantCount(30, 3, 30), { index: 1, of: 3 });
+  assert.deepEqual(stampFromGrantCount(60, 3, 30), { index: 2, of: 3 });
+  assert.deepEqual(stampFromGrantCount(90, 3, 30), { index: 3, of: 3 });
+  assert.deepEqual(stampFromGrantCount(120, 3, 30), null);
+  assert.deepEqual(stampFromGrantCount(2, 2, 2), { index: 1, of: 2 });
+  assert.deepEqual(stampFromGrantCount(4, 2, 2), { index: 2, of: 2 });
+  assert.deepEqual(stampFromGrantCount(3, 2, 2), null);
 });
 
 test("login streak counts Jerusalem days and resets after a gap", () => {

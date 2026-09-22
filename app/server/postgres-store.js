@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
-import { moveOwnedCard } from "./numbered.js";
+import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
 import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
 
 const { Pool } = pg;
@@ -15,6 +15,7 @@ const MIGRATIONS = [
   ["003_launch_reliability", "003_launch_reliability.sql"],
   ["004_numbered_streaks", "004_numbered_streaks.sql"],
   ["005_card_holder_snapshot", "005_card_holder_snapshot.sql"],
+  ["006_numbered_grant_cadence", "006_numbered_grant_cadence.sql"],
 ];
 
 function iso(value) {
@@ -1119,18 +1120,16 @@ export class PostgresStore {
     };
   }
 
-  async claimNumberedStamp(key, max) {
+  async claimNumberedStamp(key, max, every = 30) {
     const result = await this.executor().query(
       `INSERT INTO kalpi_numbered_issued (stamp_key, issued)
        VALUES ($1, 1)
        ON CONFLICT (stamp_key) DO UPDATE
        SET issued = kalpi_numbered_issued.issued + 1
-       WHERE kalpi_numbered_issued.issued < $2
        RETURNING issued`,
-      [key, max],
+      [key],
     );
-    const issued = result.rows[0]?.issued;
-    return issued ? { index: issued, of: max } : null;
+    return stampFromGrantCount(result.rows[0]?.issued, max, every);
   }
 
   async ensureHolderSnapshotTable() {

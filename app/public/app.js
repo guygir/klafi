@@ -268,6 +268,7 @@ const elements = {
   grantLevelReward: document.querySelector("#grant-level-reward"),
   avatarUnlocks: document.querySelector("#avatar-unlocks"),
   numberedSets: document.querySelector("#numbered-sets"),
+  numberedEvery: document.querySelector("#numbered-every"),
   numberedTip: document.querySelector("#numbered-tip"),
   numberedTipDismiss: document.querySelector("#numbered-tip-dismiss"),
   copyPackPrompts: document.querySelector("#copy-pack-prompts"),
@@ -3954,6 +3955,9 @@ function populateLevelIncrements() {
         <input type="number" min="1" max="24" data-avatar-unlock="${escapeHtml(avatar.id)}" value="${avatar.unlockLevel || 1}" />
       </label>`).join("");
   }
+  if (elements.numberedEvery) {
+    elements.numberedEvery.value = Number(model.gameConfig.progression?.numberedEvery) || 30;
+  }
   if (elements.numberedSets) {
     const selected = new Set(model.gameConfig.progression?.numberedSets || []);
     elements.numberedSets.innerHTML = sets.map((set) => `
@@ -4086,6 +4090,7 @@ function readStudioProgression() {
     rankNames: rankNames.length >= 2 ? rankNames : model.gameConfig.progression?.rankNames,
     grantLevelReward: elements.grantLevelReward ? elements.grantLevelReward.checked : model.gameConfig.progression?.grantLevelReward !== false,
     numberedSets,
+    numberedEvery: Math.min(1000, Math.max(1, Math.round(Number(elements.numberedEvery?.value) || 30))),
   };
 }
 
@@ -5951,6 +5956,7 @@ elements.rankNames?.addEventListener("change", saveLevelIncrements);
 elements.grantLevelReward?.addEventListener("change", saveLevelIncrements);
 elements.avatarUnlocks?.addEventListener("change", saveLevelIncrements);
 elements.numberedSets?.addEventListener("change", saveLevelIncrements);
+elements.numberedEvery?.addEventListener("change", saveLevelIncrements);
 elements.numberedTipDismiss?.addEventListener("click", () => {
   markPageSeen("numbered");
   if (elements.numberedTip) elements.numberedTip.hidden = true;

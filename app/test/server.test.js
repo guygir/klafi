@@ -1307,10 +1307,32 @@ test("numbered stamps are idle-only set-5 holos by list slot and streaks count J
   assert.equal(parkedIdle.body.cards?.[0]?.numberedIndex, undefined);
   assert.equal((parkedIdle.body.state.numberedCopies || []).length, 0);
 
+  const defaultDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-default-"));
+  const defaultStudioPath = path.join(defaultDir, "studio-content.json");
+  const defaultStudio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
+  defaultStudio.gameConfig.progression.numberedSets = ["set-5"];
+  defaultStudio.gameConfig.progression.numberedEvery = 30;
+  withPackWeights(defaultStudio, { "set-5": 30 });
+  await writeFile(defaultStudioPath, `${JSON.stringify(defaultStudio, null, 2)}\n`);
+  const defaults = await start(defaultDir, clock, { studioContentPath: defaultStudioPath });
+  t.after(async () => {
+    await defaults.close();
+    await rm(defaultDir, { recursive: true, force: true });
+  });
+  const defaultSession = await api(defaults.base, "/api/session", { method: "POST" });
+  const defaultIdle = await api(defaults.base, "/api/idle/settle", {
+    token: defaultSession.body.token,
+    method: "POST",
+  });
+  assert.equal(defaultIdle.status, 200);
+  assert.equal(defaultIdle.body.cards?.[0]?.numberedIndex, undefined);
+  assert.equal((defaultIdle.body.state.numberedCopies || []).length, 0);
+
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-"));
   const studioContentPath = path.join(dataDir, "studio-content.json");
   const studio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
   studio.gameConfig.progression.numberedSets = ["set-5"];
+  studio.gameConfig.progression.numberedEvery = 1;
   withPackWeights(studio, { "set-5": 30 });
   await writeFile(studioContentPath, `${JSON.stringify(studio, null, 2)}\n`);
   const running = await start(dataDir, clock, { studioContentPath });
@@ -1366,6 +1388,7 @@ test("numbered stamps are idle-only set-5 holos by list slot and streaks count J
   const leadersStudioPath = path.join(leadersDir, "studio-content.json");
   const leadersStudio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
   leadersStudio.gameConfig.progression.numberedSets = ["set-5"];
+  leadersStudio.gameConfig.progression.numberedEvery = 1;
   withPackWeights(leadersStudio, { "party-leaders": 10 });
   await writeFile(leadersStudioPath, `${JSON.stringify(leadersStudio, null, 2)}\n`);
   const leaders = await start(leadersDir, clock, { studioContentPath: leadersStudioPath });
