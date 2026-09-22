@@ -181,6 +181,15 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered::before {
   inset: 0;
   padding: 8px;
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #b38d3f 0deg,
+    #fff6c8 70deg,
+    #e0c36a 140deg,
+    #c4a35a 210deg,
+    #fff6c8 280deg,
+    #b38d3f 360deg
+  );
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
@@ -1171,6 +1180,15 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered::before,
 #app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered::before {
   padding: 8px;
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #b38d3f 0deg,
+    #fff6c8 70deg,
+    #e0c36a 140deg,
+    #c4a35a 210deg,
+    #fff6c8 280deg,
+    #b38d3f 360deg
+  );
 }
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.uncommon,

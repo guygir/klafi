@@ -273,6 +273,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.numbered-tip/);
   assert.match(css, /streak-fire/);
   assert.match(css, /holo-orbit/);
+  assert.match(css, /ballot-paper\.png/);
   assert.match(html, /flame-outer/);
   assert.match(javascript, /ACTIVE_TRADE_EXISTS/);
   assert.match(javascript, /function applyTradeResult/);

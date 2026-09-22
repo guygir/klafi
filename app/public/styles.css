@@ -3934,6 +3934,15 @@ body {
 .kalpi-card.holo.numbered::before {
   inset: 0;
   padding: 8px;
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #b38d3f 0deg,
+    #fff6c8 70deg,
+    #e0c36a 140deg,
+    #c4a35a 210deg,
+    #fff6c8 280deg,
+    #b38d3f 360deg
+  );
 }
 
 .numbered-tip {
@@ -4018,9 +4027,12 @@ body {
   max-width: 42px;
   height: 16px;
   padding: 0 4px;
-  border: 0;
+  border: 1px solid #111;
   border-radius: 3px;
-  background: #eee5d4;
+  background-color: #ead9b4;
+  background-image: url("/design-assets/ballot-paper.png");
+  background-size: cover;
+  background-position: center;
   color: #1a2540;
   font: 700 9px/1 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
   box-shadow: none;
