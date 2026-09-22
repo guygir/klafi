@@ -158,6 +158,8 @@ body:has(#app[data-theme="pack-v2"]) {
   --card-frame: var(--pack-gold, #b38d3f);
   box-shadow:
     0 20px 46px rgba(60, 48, 38, 0.24),
+    0 0 0 2px color-mix(in srgb, #c4a35a 55%, #7e8b9a),
+    0 0 18px rgba(196, 163, 90, 0.42),
     inset 0 0 0 clamp(2px, 1cqw, 4px) var(--pack-umber, #3c3026),
     inset 0 0 0 clamp(3px, 1.65cqw, 7px) var(--pack-gold, #b38d3f);
 }
@@ -179,22 +181,37 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered::before {
-  background: conic-gradient(from var(--holo-spin, 0deg), transparent 0 48%, #fff6c8 58%, #ffffff 66%, #e0c36a 74%, transparent 86%);
+  inset: 0;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--holo-spin, 0deg),
+    #7e8b9a 0deg,
+    #c4a35a 55deg,
+    #fff6c8 90deg,
+    #5e7a74 145deg,
+    #e8b4a0 200deg,
+    #ffffff 250deg,
+    #b42318 305deg,
+    #7e8b9a 360deg
+  );
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
-  width: clamp(48px, 20cqw, 64px);
-  min-width: clamp(48px, 20cqw, 64px);
-  height: clamp(48px, 20cqw, 64px);
-  min-height: clamp(48px, 20cqw, 64px);
+  width: clamp(26px, 11.4cqw, 36px);
+  min-width: clamp(26px, 11.4cqw, 36px);
+  height: clamp(26px, 11.4cqw, 36px);
+  min-height: clamp(26px, 11.4cqw, 36px);
   padding: 0;
-  border: max(1.5px, 0.55cqw) dotted #d4b56a;
+  border: max(1.5px, 0.55cqw) solid #b42318;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 36%, #1a1610 0 42%, #050403 100%);
-  color: #fffaf0;
-  font: inherit;
-  box-shadow: none;
+  background:
+    radial-gradient(circle at 38% 30%, #fff8f2 0 38%, #f6d4cb 100%);
+  color: #8a1610;
+  font: 800 clamp(8px, 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  box-shadow:
+    inset 0 0 0 max(1px, 0.35cqw) #f8e4dc,
+    inset 0 0 0 max(2.4px, 0.9cqw) #b42318;
   backdrop-filter: none;
 }
 
@@ -429,13 +446,13 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card:not([data-card-surface="walkout"]) .card-image-meta strong {
-  width: 8cqw;
+  width: max-content;
   min-width: 8cqw;
   max-width: none;
   height: 8cqw;
   min-height: 8cqw;
   flex: 0 0 auto;
-  padding: 0;
+  padding: 0 1.4cqw;
   border-width: max(1px, 0.5cqw);
   font-size: 6.4cqw;
   line-height: 1;
@@ -1225,17 +1242,20 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
 #app .kalpi-card.numbered[data-card-frame="fullart-v1"] .card-image-meta .card-numbered-tag {
-  width: clamp(48px, 20cqw, 64px);
-  min-width: clamp(48px, 20cqw, 64px);
-  height: clamp(48px, 20cqw, 64px);
-  min-height: clamp(48px, 20cqw, 64px);
+  width: clamp(26px, 11.4cqw, 36px);
+  min-width: clamp(26px, 11.4cqw, 36px);
+  height: clamp(26px, 11.4cqw, 36px);
+  min-height: clamp(26px, 11.4cqw, 36px);
   padding: 0;
-  border: max(1.5px, 0.55cqw) dotted #d4b56a;
+  border: max(1.5px, 0.55cqw) solid #b42318;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 36%, #1a1610 0 42%, #050403 100%);
-  color: #fffaf0;
-  font: inherit;
-  box-shadow: none;
+  background:
+    radial-gradient(circle at 38% 30%, #fff8f2 0 38%, #f6d4cb 100%);
+  color: #8a1610;
+  font: 800 clamp(8px, 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  box-shadow:
+    inset 0 0 0 max(1px, 0.35cqw) #f8e4dc,
+    inset 0 0 0 max(2.4px, 0.9cqw) #b42318;
   backdrop-filter: none;
 }
 

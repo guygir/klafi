@@ -1254,7 +1254,7 @@ function factionLetters(party) {
 }
 
 function factionLetterArt(party) {
-  return party?.letterChip || "";
+  return party?.letterChip || party?.letterArt || "";
 }
 
 function streakFireMarkup() {
@@ -2370,7 +2370,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-meta-mid"></span>
             <span class="card-meta-end">
               ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
-              ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}"><small>מקום ברשימה</small><em>${instance.numberedIndex}/${instance.numberedOf}</em></b>` : ""}
+              ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
               ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
             </span>
           </div>

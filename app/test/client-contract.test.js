@@ -257,6 +257,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="numbered-sets"/);
   assert.match(html, /id="numbered-tip"/);
   assert.match(javascript, /card-numbered-tag/);
+  assert.match(javascript, /card-numbered-tag[^>]*>\$\{instance\.numberedIndex\}\/\$\{instance\.numberedOf\}<\/b>/);
+  assert.doesNotMatch(javascript, /<small>מקום ברשימה<\/small>/);
+  assert.match(css, /#b42318/);
   assert.match(javascript, /letterChip/);
   assert.match(javascript, /function mergeLiveCatalogFields/);
   assert.match(javascript, /function streakFireMarkup/);

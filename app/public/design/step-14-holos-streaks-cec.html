@@ -136,22 +136,16 @@
     .mock-num {
       display: grid;
       place-items: center;
-      width: 42px;
-      min-width: 42px;
-      height: 42px;
+      width: 28px;
+      min-width: 28px;
+      height: 28px;
       padding: 0;
-      border: 2px solid transparent;
+      border: 1.5px solid #b42318;
       border-radius: 50%;
-      background:
-        radial-gradient(circle at 50% 38%, #2c2418 0 56%, #080706 100%) padding-box,
-        repeating-conic-gradient(#e6d39a 0 8deg, transparent 8deg 18deg) border-box;
-      color: #fffaf0;
-      font: 800 11px/1 "IBM Plex Sans Hebrew", sans-serif;
-    }
-    .mock-num small {
-      display: block;
-      color: #e6d39a;
-      font: 600 5px/1 "IBM Plex Sans Hebrew", sans-serif;
+      background: radial-gradient(circle at 38% 30%, #fff8f2 0 38%, #f6d4cb 100%);
+      color: #8a1610;
+      box-shadow: inset 0 0 0 1px #f8e4dc, inset 0 0 0 2.4px #b42318;
+      font: 800 9px/1 "IBM Plex Sans Hebrew", sans-serif;
     }
     .mock-name {
       position: absolute;
@@ -238,7 +232,7 @@
     <div class="words">
       <article>
         <b>ממוספר</b>
-        <p>קלף הולו עם עיגול שחור ונקודות זהב <em>מקום ברשימה 1/x</em>. רק סט 5. גודל ההדפסה = מקום ברשימה (ביבי 1/1, מקום 2 הוא 1/2 או 2/2).</p>
+        <p>קלף רגיל עם הולו צבעוני במסגרת החיצונית ועיגול אדום משורטט <em>1/x</em> בפינה. רק סט 5. גודל ההדפסה = מקום ברשימה (ביבי 1/1, מקום 2 הוא 1/2 או 2/2).</p>
       </article>
       <article>
         <b>הולו</b>
@@ -255,10 +249,10 @@
     </div>
 
     <h2>נעול · ממוספר = קלף הולו, על הפריסה החיה</h2>
-    <div class="lock">העותק הממוספר <strong>הוא</strong> קלף הולו על הפריסה החיה: אורות זהב על המסגרת החיצונית, עיגול שחור מנוקד 1/x בשורת המטא, ובשורה העליונה «מקום N» כמו קלף רגיל — בלי כוכבי נדירות כפולים. טיפ ראשון. רק סט 5.</div>
+    <div class="lock">העותק הממוספר <strong>הוא</strong> קלף רגיל על הפריסה החיה: שם, מפלגה, מקום ונדירות ★★★★ ממוספר כמו כל קלף. ההבדלים היחידים: הולו צבעוני שמסתובב על המסגרת החיצונית, ועיגול אדום משורטט 1/x בפינה הימנית העליונה. טיפ ראשון. רק סט 5.</div>
     <h3>מה רלוונטי לפריסה החיה (tall-v2)</h3>
     <ul>
-      <li><strong>כן על הקלף:</strong> מחלקות <code>holo numbered</code> + תג «מקום N» בשורת המטא + עיגול שחור מנוקד «מקום ברשימה 1/x». אותו באר דיוקן, תג קוד, פס שם, מפלגה, ציטוט.</li>
+      <li><strong>כן על הקלף:</strong> מחלקות <code>holo numbered</code> + עיגול אדום משורטט 1/x בשורת המטא. אותו באר דיוקן, תג קוד, פס שם, מפלגה · מקום, נדירות ★★★★ ממוספר, ציטוט.</li>
       <li><strong>לא על הקלף:</strong> עיגול ענק מעל כל האמנות. לא חותמת על הציטוט ולא במקום השם. רצף הימים — רק על האווטאר.</li>
       <li>אותו <code>cardMarkup</code>. אין מנוע קלף שני. באוסף ובשיתוף אותו משטח.</li>
       <li>fullart-v1 רק אם מחליפים פריים בהשוואה; אז הגלולה נשארת בפינת המטא. ברירת המחדל tall-v2.</li>
@@ -272,8 +266,8 @@
             <div class="mock-meta">
               <span class="mock-pill">LIK-M01</span>
               <span></span>
-              <span class="mock-pill">מקום 1</span>
-              <span class="mock-num"><small>מקום ברשימה</small>1/1</span>
+              <span class="mock-pill">★★★★</span>
+              <span class="mock-num">1/1</span>
             </div>
           </div>
           <h3 class="mock-name">נתניהו</h3>
@@ -282,7 +276,7 @@
         </article>
       </div>
       <div>
-        <p>העיגול השחור 1/x יושב ליד תג «מקום N». הולו + ממוספר = נדירות־על, לא מדבקה על נפוץ. הנדירות לא מופיעה פעמיים בשורה העליונה.</p>
+        <p>העיגול האדום 1/x יושב בפינה הימנית העליונה על הפריסה הרגילה. הולו צבעוני חיצוני + ממוספר = נדירות־על, לא מדבקה על נפוץ.</p>
         <p>הכלל החי: רק סט 5. גודל ההדפסה לפי מקום ברשימה, מפתח לפי מזהה הקלף — כל רגע עם ריצה משלו.</p>
         <table>
           <thead><tr><th>סדרה</th><th>כמה חותמות יוצאות לקלף</th><th>מה כתוב בעיגול</th></tr></thead>
