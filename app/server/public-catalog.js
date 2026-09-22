@@ -118,6 +118,7 @@ export function runtimeSet5Card(candidate, extras = {}) {
     source: sourceUrl || "Source pending",
     listSlot,
     set5Index: index,
+    membershipNote: String(member?.membershipNote || "").trim(),
     artKey: candidate.art?.artKey || null,
     walkout: {
       kind: "quote",
@@ -157,11 +158,39 @@ export function catalogExtrasFromStudio(studio, set5) {
   };
 }
 
+export function memberIdFromCardId(cardId) {
+  const match = /^([A-Z]+-M\d{2})/.exec(String(cardId || ""));
+  return match ? match[1] : "";
+}
+
+export function attachMembershipNotes(cards, members = []) {
+  const byMemberId = new Map();
+  const byName = new Map();
+  for (const member of members) {
+    const note = String(member.membershipNote || "").trim();
+    if (!note) continue;
+    byMemberId.set(member.id, note);
+    const nameHe = normalizePersonName(member.nameHe);
+    const nameEn = normalizePersonName(member.nameEn);
+    if (nameHe) byName.set(nameHe, note);
+    if (nameEn) byName.set(nameEn, note);
+  }
+  for (const card of cards) {
+    if (String(card.membershipNote || "").trim()) continue;
+    const note = byMemberId.get(memberIdFromCardId(card.id))
+      || byName.get(normalizePersonName(card.titleHe || card.hebrewTitle))
+      || byName.get(normalizePersonName(card.title));
+    if (note) card.membershipNote = note;
+  }
+  return cards;
+}
+
 export function expandPublicCatalog(cards, specials = { sets: [], cards: [] }, extras = {}) {
   const set5Cards = (extras.set5?.candidates || []).map((candidate) => runtimeSet5Card(candidate, extras));
-  return [
+  const expanded = [
     ...cards,
     ...(specials.cards || []).map((card) => runtimeSpecialCard(card, specials)),
     ...set5Cards,
   ];
+  return attachMembershipNotes(expanded, extras.members || []);
 }

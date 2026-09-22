@@ -621,6 +621,7 @@ function mergeLiveCatalogFields(liveCards = []) {
     if (Number.isInteger(slot) && slot > 0) card.listSlot = slot;
     if (live.subtitleHe) card.subtitleHe = live.subtitleHe;
     if (live.subtitle) card.subtitle = live.subtitle;
+    if (live.membershipNote) card.membershipNote = live.membershipNote;
   }
 }
 
@@ -2709,9 +2710,10 @@ function cardPresentation(card, instance = {}) {
   const rarityLabel = numbered ? "ממוספר" : finishLabel;
   const listSlot = Number(card?.listSlot);
   const slotLabel = Number.isInteger(listSlot) && listSlot > 0 ? `מקום ${listSlot}` : "";
+  const membershipNote = String(card.membershipNote || "").trim();
   return {
     title: cardTitle(card),
-    subtitle: slotLabel || card.subtitleHe || card.subtitle || "",
+    subtitle: [slotLabel || card.subtitleHe || card.subtitle || "", membershipNote].filter(Boolean).join(" · "),
     quote: displayedCardQuote(card),
     rawQuote: String(card.walkout?.text || "").trim(),
     code: cardCode(card),
@@ -4237,6 +4239,7 @@ function studioCardForRuntime(party, member, card) {
     rarity: card.rarity,
     subtitle: `מקום ${member.slot} · ${party.displayNameHe}`,
     subtitleHe: `מקום ${member.slot}`,
+    membershipNote: String(member.membershipNote || "").trim(),
     artKey: card.art?.artKey || null,
     walkout: {
       text: card.quote?.displayText?.trim() || "",

@@ -276,6 +276,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function collectorFaceMarkup/);
   assert.match(javascript, /collector-streak[\s\S]{0,80}?streak-count/);
   assert.match(javascript, /slotLabel \|\| card\.subtitleHe/);
+  assert.match(javascript, /membershipNote/);
+  assert.match(javascript, /if \(live\.membershipNote\) card\.membershipNote = live\.membershipNote/);
   assert.match(css, /width:\s*11px/);
   assert.match(css, /height:\s*16\.5px/);
   assert.match(javascript, /numberedCopies/);
