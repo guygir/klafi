@@ -158,8 +158,6 @@ body:has(#app[data-theme="pack-v2"]) {
   --card-frame: var(--pack-gold, #b38d3f);
   box-shadow:
     0 20px 46px rgba(60, 48, 38, 0.24),
-    0 0 0 2px color-mix(in srgb, #c4a35a 55%, #7e8b9a),
-    0 0 18px rgba(196, 163, 90, 0.42),
     inset 0 0 0 clamp(2px, 1cqw, 4px) var(--pack-umber, #3c3026),
     inset 0 0 0 clamp(3px, 1.65cqw, 7px) var(--pack-gold, #b38d3f);
 }
@@ -183,17 +181,6 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="tall-v2"] .kalpi-card.holo.numbered::before {
   inset: 0;
   padding: 3px;
-  background: conic-gradient(
-    from var(--holo-spin, 0deg),
-    #7e8b9a 0deg,
-    #c4a35a 55deg,
-    #fff6c8 90deg,
-    #5e7a74 145deg,
-    #e8b4a0 200deg,
-    #ffffff 250deg,
-    #b42318 305deg,
-    #7e8b9a 360deg
-  );
 }
 
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
@@ -1174,29 +1161,16 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered,
 #app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered {
-  border-color: #c4a35a;
+  border-color: var(--foil);
   box-shadow:
     0 20px 46px rgba(5, 5, 5, 0.42),
-    0 0 0 2px color-mix(in srgb, #c4a35a 60%, #7e8b9a),
-    0 0 18px rgba(196, 163, 90, 0.5),
     inset 0 0 0 2px #050505,
     inset 0 0 0 3px var(--foil);
 }
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.holo.numbered::before,
 #app .kalpi-card[data-card-frame="fullart-v1"].holo.numbered::before {
-  padding: 5px;
-  background: conic-gradient(
-    from var(--holo-spin, 0deg),
-    #7e8b9a 0deg,
-    #c4a35a 55deg,
-    #fff6c8 90deg,
-    #5e7a74 145deg,
-    #e8b4a0 200deg,
-    #ffffff 250deg,
-    #b42318 305deg,
-    #7e8b9a 360deg
-  );
+  padding: 3px;
 }
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.uncommon,
@@ -1383,19 +1357,24 @@ body:has(#app[data-theme="pack-v2"]) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1.2cqw;
+  gap: 0.45em;
   color: var(--foil);
   font-family: "IBM Plex Sans Hebrew", sans-serif;
   font-size: 3.5cqw;
   font-weight: 500;
-  line-height: 1.15;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-align: center;
 }
 
 #app[data-card-frame="fullart-v1"] .card-rarity-zone strong,
 #app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone strong {
+  display: inline-block;
   font-size: inherit;
   font-weight: inherit;
-  letter-spacing: inherit;
+  line-height: 1;
+  letter-spacing: 0.08em;
 }
 
 #app[data-card-frame="fullart-v1"] .card-quote-zone,
