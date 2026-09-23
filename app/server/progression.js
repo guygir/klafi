@@ -12,3 +12,10 @@ export function levelThresholds(_eligibleCount, totalLevels) {
     return needed;
   });
 }
+
+export function rankAt(uniqueCount, totalLevels = 14) {
+  const owned = Math.max(0, Math.round(Number(uniqueCount) || 0));
+  return levelThresholds(owned, totalLevels).reduce((rank, need, index) => (
+    owned >= need ? index + 1 : rank
+  ), 1);
+}
