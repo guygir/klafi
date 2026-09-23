@@ -171,7 +171,7 @@ button:focus-visible {
   max-width: max-content;
   min-height: 0;
   margin: 0;
-  padding: 2px 0;
+  padding: 2px 0 4px;
   border: 0;
   background: transparent;
   color: var(--danger-mute);
@@ -180,6 +180,7 @@ button:focus-visible {
   text-align: left;
   text-decoration: underline;
   text-underline-offset: 1px;
+  text-decoration-thickness: 1px;
   cursor: pointer;
   pointer-events: auto;
 }
@@ -3117,7 +3118,7 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 10px calc(13px + env(safe-area-inset-bottom));
+  padding: 0 10px calc(15px + env(safe-area-inset-bottom));
   border: 0;
   pointer-events: none;
 }
@@ -3405,7 +3406,7 @@ body {
     grid-template-columns: minmax(102px, 124px) minmax(0, 1fr);
   }
   #main { padding-bottom: calc(60px + var(--safe-bottom)); }
-  .top-nav-row { min-height: 0; padding-inline: 8px; padding-bottom: calc(13px + env(safe-area-inset-bottom)); }
+  .top-nav-row { min-height: 0; padding-inline: 8px; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
   .top-nav-row .bottom-nav { height: 46px; }
   #home-view .home-grid {
     grid-template-columns: minmax(0, 1fr) 116px;

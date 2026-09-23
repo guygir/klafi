@@ -1088,6 +1088,7 @@ async function bootstrap() {
 }
 
 function renderAdvocacy() {
+  requestAnimationFrame(layoutAdvocacyDock);
   const profile = model.editorial?.advocacy;
   if (!profile) return;
   if (elements.advocacyShort) elements.advocacyShort.textContent = "";
@@ -1919,6 +1920,7 @@ function renderHome() {
   renderTodayDocket();
   updateCountdown();
   if (elements.openQuiz) elements.openQuiz.hidden = true;
+  layoutAdvocacyDock();
 }
 
 function renderSiteCardPeeks() {
@@ -2111,6 +2113,16 @@ function layoutTodaySpecials() {
   const row = elements.todaySpecialsRow;
   if (!row || row.hidden) return;
   row.classList.add("is-marquee", "is-ready");
+}
+
+function layoutAdvocacyDock() {
+  const dock = elements.openAdvocacy;
+  const nav = document.querySelector(".top-nav-row .bottom-nav");
+  const row = dock?.parentElement;
+  if (!dock || !nav || !row) return;
+  const inset = 8;
+  const left = Math.round(nav.getBoundingClientRect().left - row.getBoundingClientRect().left + inset);
+  dock.style.left = `${Math.max(inset, left)}px`;
 }
 
 function renderActivity() {
@@ -6227,6 +6239,7 @@ window.addEventListener("resize", () => {
   renderAchievements();
   queueCardTextFit(elements.main);
   layoutTodaySpecials();
+  layoutAdvocacyDock();
 });
 document.addEventListener("click", (event) => {
   const sourceLink = event.target.closest("[data-source-card]");
