@@ -1447,33 +1447,36 @@ function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
 function paintLetterChip(image, text, party) {
   const letters = factionLetters(party);
   const art = factionLetterArt(party);
+  const paintText = (visible) => {
+    if (!text) return;
+    text.hidden = !visible;
+    text.textContent = visible && letters ? letters : "";
+    if (visible && letters) text.dataset.letters = String([...letters].length);
+    else delete text.dataset.letters;
+  };
   if (image) {
+    image.onload = null;
+    image.onerror = null;
     if (art) {
       image.hidden = false;
       image.alt = letters;
+      image.onload = () => paintText(false);
       image.onerror = () => {
         image.hidden = true;
         image.removeAttribute("src");
-        if (text && letters) {
-          text.hidden = false;
-          text.textContent = letters;
-          text.dataset.letters = String([...letters].length);
-        }
+        paintText(Boolean(letters));
       };
       image.src = `/design-assets/${encodeURIComponent(art)}`;
+      if (image.complete && image.naturalWidth) paintText(false);
+      else paintText(Boolean(letters));
     } else {
-      image.onerror = null;
       image.hidden = true;
       image.removeAttribute("src");
       image.alt = "";
+      paintText(Boolean(letters));
     }
-  }
-  if (text) {
-    const showText = Boolean(letters) && !art;
-    text.hidden = !showText;
-    text.textContent = showText ? letters : "";
-    if (showText) text.dataset.letters = String([...letters].length);
-    else delete text.dataset.letters;
+  } else {
+    paintText(Boolean(letters) && !art);
   }
 }
 

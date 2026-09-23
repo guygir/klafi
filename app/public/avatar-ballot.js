@@ -1,11 +1,14 @@
 export function factionLetters(party) {
-  return (party?.finalLetters || party?.requestedLetters || [])[0] || "";
+  const listed = (party?.finalLetters || party?.requestedLetters || [])[0] || "";
+  if (listed) return listed;
+  if (party?.id === "LIK") return "מחל";
+  return "";
 }
 
 export function factionLetterArt(party) {
-  if (party?.letterArt) return party.letterArt;
-  if (party?.id === "LIK") return "hero-art-memchetlammed.png";
-  return party?.letterChip || "";
+  if (party?.letterChip) return party.letterChip;
+  if (party?.id === "LIK") return "ballot-letter-lik.png";
+  return "";
 }
 
 export function avatarBallotState(party) {

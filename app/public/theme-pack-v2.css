@@ -1000,6 +1000,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
 .level-avatar-button {
   position: relative;
+  isolation: isolate;
   flex: 0 0 auto;
   width: 42px;
   height: 42px;
@@ -1012,6 +1013,8 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 .level-avatar {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;

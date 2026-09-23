@@ -10,11 +10,15 @@ test("avatar ballot is hidden without a faction and visible for every party", ()
   const likud = avatarBallotState({
     id: "LIK",
     requestedLetters: ["מחל"],
+    letterArt: "hero-art-memchetlammed.png",
   });
   assert.equal(likud.visible, true);
   assert.equal(likud.showLetterArt, true);
-  assert.equal(factionLetterArt({ id: "LIK" }), "hero-art-memchetlammed.png");
+  assert.equal(likud.art, "ballot-letter-lik.png");
+  assert.equal(factionLetterArt({ id: "LIK", letterArt: "hero-art-memchetlammed.png" }), "ballot-letter-lik.png");
+  assert.equal(factionLetterArt({ id: "LIK", letterChip: "ballot-letter-lik.png" }), "ballot-letter-lik.png");
   assert.equal(factionLetters({ requestedLetters: ["מחל"] }), "מחל");
+  assert.equal(factionLetters({ id: "LIK" }), "מחל");
 
   const democrats = avatarBallotState({
     id: "DEM",
