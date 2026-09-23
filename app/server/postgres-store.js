@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
+import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
 import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
@@ -1061,11 +1062,7 @@ export class PostgresStore {
     const collectors = allCollectors.slice(0, 8);
     const currentCollector = allCollectors.find(({ current }) => current);
     if (currentCollector && !collectors.some(({ current }) => current)) collectors.splice(7, 1, currentCollector);
-
-    const factionRows = await this.pool.query(
-      "SELECT faction_id, packs FROM kalpi_factions ORDER BY packs DESC",
-    );
-    const factions = factionRows.rows.map((row) => ({ partyId: row.faction_id, packs: row.packs }));
+    const factions = factionStandingsFromCollectors(allCollectors);
 
     const partyIds = [...new Set(cards.filter(({ set }) => set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set))].sort();
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));

@@ -50,7 +50,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
       start,
       target,
       remaining: Math.max(0, target - unique),
-      percent: target === start ? 100 : Math.max(0, Math.min(100, Math.round(((unique - start) / (target - start)) * 100))),
+      percent: target ? Math.max(0, Math.min(100, Math.round((unique / target) * 100))) : 100,
       teaser: shell.gameConfig?.progression?.teaser || "האם תגיעו לדרגת ראש הממשלה?",
       pendingRewards: [...(session.pendingRankRewards || [])],
     },

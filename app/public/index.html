@@ -17,12 +17,12 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-46"></script>
+  <script src="/boot-warmup.js?v=card-surface-58"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-46" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-46" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-58" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-58" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -68,9 +68,9 @@
       <div class="level-progress-block">
         <div class="level-track">
           <span id="level-progress"></span>
-          <b id="level-progress-count">0/3</b>
-          <small id="level-next">גלו עוד 3 קלפים חדשים כדי להתקדם לרמה הבאה</small>
+          <b id="level-progress-count">0/2</b>
         </div>
+        <small id="level-next">גלו עוד 2 קלפים חדשים כדי להתקדם לרמה הבאה</small>
       </div>
     </section>
 
@@ -90,7 +90,6 @@
                 <h1 id="home-title">הקלפים נאספים גם כשאתם לא כאן.</h1>
                 <p id="cooldown-copy" class="next-pack-clock">הבא בעוד 03:00:00</p>
               </div>
-              <button id="open-trust-legend" class="trust-info" type="button" aria-haspopup="dialog" aria-label="מה מסמנת הכוכבית בקלפים?" title="מה מסמנת הכוכבית?">?</button>
             </div>
             <p class="lede" id="home-copy">קלף אחד בכל שלוש שעות.</p>
             <div class="collection-line">
@@ -107,6 +106,7 @@
             <div class="pack-wrapper" id="home-pack" aria-hidden="true">
               <img src="/design-assets/pack-wrapper-klafi.png" alt="" />
             </div>
+            <button id="open-trust-legend" class="trust-info" type="button" aria-haspopup="dialog" aria-label="מה מסמנת הכוכבית בקלפים?" title="מה מסמנת הכוכבית?">?</button>
           </div>
         </div>
         <div class="action-dock">
@@ -229,7 +229,7 @@
         <div id="community-tabs" class="contained-tabs" role="tablist" aria-label="אזורי הקהילה">
           <button id="community-tab-trade" type="button" role="tab" aria-selected="true" aria-controls="community-panel-trade" tabindex="0" data-community-page="trade" class="active">החלפות</button>
           <button id="community-tab-open-trades" type="button" role="tab" aria-selected="false" aria-controls="community-panel-open-trades" tabindex="-1" data-community-page="open-trades">הצעות פתוחות</button>
-          <button id="community-tab-faction" type="button" role="tab" aria-selected="false" aria-controls="community-panel-faction" tabindex="-1" data-community-page="faction">סיעות</button>
+          <button id="community-tab-faction" type="button" role="tab" aria-selected="false" aria-controls="community-panel-faction" tabindex="-1" data-community-page="faction">מפלגות</button>
           <button id="community-tab-collectors" type="button" role="tab" aria-selected="false" aria-controls="community-panel-collectors" tabindex="-1" data-community-page="collectors">אספנים</button>
           <button id="community-tab-challenge" type="button" role="tab" aria-selected="false" aria-controls="community-panel-challenge" tabindex="-1" data-community-page="challenge">האתגר היומי</button>
         </div>
@@ -242,24 +242,28 @@
             <div id="trade-compose" class="trade-compose">
               <div class="trade-actions">
                 <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
-                <button id="trade-demo" class="secondary-action" type="button">קישור לדוגמה</button>
+                <button id="trade-demo" class="secondary-action" type="button" hidden>קישור לדוגמה</button>
               </div>
               <p id="trade-board-hint" class="work-note">כאן מפרסמים החלפה: קלף שיש לכם תמורת קלף שאתם רוצים. רק אחרי שאישרו את העסקה הקלפים מתחלפים. שיתוף בוואטסאפ הוא תמונה בלבד — זה לא מעביר קלף לאלבום.</p>
               <div class="trade-form">
                 <fieldset>
                   <legend>אני נותן</legend>
-                  <button type="button" id="trade-offered-preview" class="trade-thumb" hidden></button>
-                  <div class="trade-choice-fields">
-                    <label>סדרה <select id="trade-offered-set"></select></label>
-                    <label>קלף <select id="trade-offered-card"></select></label>
+                  <div class="trade-choice-row">
+                    <button type="button" id="trade-offered-preview" class="trade-thumb" hidden></button>
+                    <div class="trade-choice-fields">
+                      <label>סדרה <select id="trade-offered-set"></select></label>
+                      <label>קלף <select id="trade-offered-card"></select></label>
+                    </div>
                   </div>
                 </fieldset>
                 <fieldset>
                   <legend>אני רוצה</legend>
-                  <button type="button" id="trade-wanted-preview" class="trade-thumb" hidden></button>
-                  <div class="trade-choice-fields">
-                    <label>סדרה <select id="trade-wanted-set"></select></label>
-                    <label>קלף <select id="trade-wanted-card"></select></label>
+                  <div class="trade-choice-row">
+                    <button type="button" id="trade-wanted-preview" class="trade-thumb" hidden></button>
+                    <div class="trade-choice-fields">
+                      <label>סדרה <select id="trade-wanted-set"></select></label>
+                      <label>קלף <select id="trade-wanted-card"></select></label>
+                    </div>
                   </div>
                 </fieldset>
               </div>
@@ -268,7 +272,7 @@
           <article id="community-panel-open-trades" class="work-card open-trades-desk" role="tabpanel" aria-labelledby="community-tab-open-trades" tabindex="0" hidden>
             <p class="work-kicker">הצעות פתוחות</p>
             <h2>עסקאות שאחרים פרסמו.</h2>
-            <p class="work-note">זה הלוח הציבורי. בוחרים הצעה ומאשרים — רק אז הקלפים מתחלפים. בלי אישור אף קלף לא זז, וקלף ששותף איתכם לא נכנס לאוסף.</p>
+            <p class="work-note">זה הלוח הציבורי, כולל ההצעה שלכם אם פרסמתם. בוחרים הצעה ומאשרים — רק אז הקלפים מתחלפים. בלי אישור אף קלף לא זז, וקלף ששותף איתכם לא נכנס לאוסף.</p>
             <div id="trade-board-toolbar" class="trade-board-toolbar" hidden>
               <label>מקבלים
                 <select id="trade-board-offered" aria-label="סינון לפי הקלף שאתם מקבלים">
@@ -298,13 +302,15 @@
             <div id="growth-metrics" class="metric-ledger"></div>
           </article>
           <article id="community-panel-faction" class="work-card faction-desk" role="tabpanel" aria-labelledby="community-tab-faction" tabindex="0">
-            <p class="work-kicker">מלחמת הסיעות</p>
-            <h2>לאיזו סיעה ייספר הקלף הבא?</h2>
+            <p class="work-kicker">מלחמת המפלגות</p>
+            <h2>לאיזו מפלגה ייספרו כוכבי האוסף?</h2>
             <label class="field-label" for="faction-select">בחירה אנונימית</label>
             <select id="faction-select"></select>
-            <p id="faction-cec-note" class="work-note">סטטוס האותיות נלקח ממאגר ועדת הבחירות, לא מהמשחק.</p>
+            <p id="faction-cec-note" class="work-note">נקודות המפלגה הן כוכבי האוסף של מי שבחרו במפלגה.</p>
             <button id="save-faction" class="primary-action" type="button">בחירה</button>
-            <div id="faction-board" class="leaderboard-list"></div>
+            <h3 class="faction-board-title" id="faction-members-title">מי אסף הכי הרבה כוכבים עבור המפלגה?</h3>
+            <div id="faction-members" class="faction-member-board" aria-live="polite"></div>
+            <div id="faction-board" class="leaderboard-list" hidden></div>
           </article>
           <article id="community-panel-collectors" class="work-card leaderboard-desk" role="tabpanel" aria-labelledby="community-tab-collectors" tabindex="0">
             <p class="work-kicker">טבלת האספנים</p>
@@ -646,6 +652,9 @@
     <p class="policy-lock">אותם כללי משחק ואותו תוכן לכל השחקנים. הפעילות המוצגת נמדדת בפועל.</p>
   </dialog>
 
+  <dialog id="wait-dialog" class="policy-dialog wait-dialog" aria-live="assertive" aria-busy="true">
+    <p id="wait-dialog-copy">רגע…</p>
+  </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <aside id="numbered-tip" class="numbered-tip" hidden>
     <p>עותק ממוספר. המספר אומר כמה כאלה יצאו בעולם.</p>
@@ -682,6 +691,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-46"></script>
+  <script type="module" src="/app.js?v=card-surface-58"></script>
 </body>
 </html>

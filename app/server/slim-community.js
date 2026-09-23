@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import pg from "pg";
 import { collectionStarCount } from "./visible-sets.js";
+import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { openSpecialWindow } from "./special-window.js";
 
@@ -202,8 +203,7 @@ async function collectorBoards(db, config, now, token) {
   const collectors = allCollectors.slice(0, 8);
   const currentCollector = allCollectors.find(({ current }) => current);
   if (currentCollector && !collectors.some(({ current }) => current)) collectors.splice(7, 1, currentCollector);
-  const factionRows = await db.query("SELECT faction_id, packs FROM kalpi_factions ORDER BY packs DESC").catch(() => ({ rows: [] }));
-  const factions = factionRows.rows.map((row) => ({ partyId: row.faction_id, packs: row.packs }));
+  const factions = factionStandingsFromCollectors(allCollectors);
   return slimLeaderboards(config, collectors, factions, now);
 }
 

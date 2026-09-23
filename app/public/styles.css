@@ -983,10 +983,10 @@ img.mini-art {
 .filter-strip button.active { border-color: var(--civic); background: var(--civic); color: var(--paper); }
 .filter-sets {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   flex: 1 1 auto;
   min-width: 0;
-  overflow-x: auto;
 }
 .filter-party {
   display: flex;
@@ -2067,6 +2067,15 @@ img.mini-art {
 }
 
 .policy-dialog::backdrop { background: rgba(26, 31, 28, 0.72); backdrop-filter: blur(5px); }
+.wait-dialog {
+  width: min(280px, calc(100% - 48px));
+  padding: 22px 20px;
+  text-align: center;
+}
+.wait-dialog p {
+  margin: 0;
+  font: 600 16px/1.4 "IBM Plex Sans Hebrew", sans-serif;
+}
 .policy-dialog h2 { margin-bottom: 10px; font-size: 30px; }
 .policy-dialog h3 { margin: 24px 0 8px; font-size: 18px; }
 .policy-dialog p, .policy-dialog li { font-size: 13px; line-height: 1.5; }
@@ -2304,7 +2313,8 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .level-identity strong { margin-top: 0; font-size: 18px; }
 .level-identity span { margin-top: 0; color: var(--civic); font-size: 13px; }
 .level-progress-block { grid-area: progress; min-width: 0; display: grid; gap: 6px; direction: rtl; }
-.level-progress-block small { color: rgba(26, 31, 28, 0.58); font-size: 11px; line-height: 1.25; text-align: start; overflow-wrap: anywhere; }
+.level-progress-block small,
+#level-next { color: rgba(26, 31, 28, 0.58); font-size: 11px; line-height: 1.25; text-align: start; overflow-wrap: anywhere; }
 .level-pack-icon { display: none; }
 .level-reward-pack { display: block; width: 92px; height: auto; margin: 8px auto 16px; }
 .level-track { position: relative; height: 21px; overflow: hidden; border-radius: 5px; background: var(--paper-deep); }
@@ -2653,6 +2663,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .progressive-card.stage-portrait .card-rarity-zone,
 .progressive-card.stage-identity .card-name-zone,
 .progressive-card.stage-portrait .card-name-zone,
+.progressive-card.stage-identity .card-image-zone,
 .progressive-card.stage-portrait .card-image-zone,
 .progressive-card.stage-portrait .card-pip,
 .progressive-card.stage-portrait .new-stamp,
@@ -2770,7 +2781,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-compose { display: grid; gap: 10px; }
 .trade-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 520px) {
-  .trade-thumb-frame {
+  .trade-offer .trade-thumb-frame {
     width: 104px;
     height: calc(104px * 96 / 63);
   }
@@ -2791,10 +2802,14 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   text-align: center;
   cursor: pointer;
 }
+@media (max-width: 520px) {
+  .trade-desk > h2 { font-size: 18px; }
+  .trade-desk .work-note { font-size: 11px; line-height: 1.35; }
+}
 .trade-thumb-frame {
   position: relative;
-  width: 128px;
-  height: calc(128px * 96 / 63);
+  width: 72px;
+  height: calc(72px * 96 / 63);
   overflow: hidden;
   border-radius: 8px;
 }
@@ -3216,13 +3231,46 @@ body {
 
 
 #home-view .home-grid {
-  flex: 1 1 auto;
+  --today-pack-w: 96px;
+  flex: 0 0 auto;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 190px);
-  gap: 20px;
+  height: auto;
+  grid-template-columns: minmax(0, 1fr) var(--today-pack-w);
+  gap: 12px;
+  align-items: stretch;
+}
+#home-view .home-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: stretch;
+  text-align: start;
+}
+#home-view .home-copy .eyebrow,
+#home-view .home-copy .lede,
+#home-view .collection-line {
+  display: none;
 }
 #home-view .pack-plinth {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: 100%;
+  min-height: calc(var(--today-pack-w) * 1390 / 769 * 1.5);
+  height: auto;
+  box-sizing: border-box;
+  padding-block: calc(var(--today-pack-w) * 1390 / 769 * 0.25);
+  gap: 0;
   min-height: 0;
+  overflow: visible;
+}
+#home-view .pack-plinth > .trust-info {
+  position: absolute;
+  bottom: 2px;
+  margin-top: 0;
 }
 #home-view.has-specials .today-docket-row {
   min-height: 44px;
@@ -3241,14 +3289,20 @@ body {
 .today-open-copy {
   flex: 1;
   min-width: 0;
+  overflow: visible;
 }
 .next-pack-clock,
 #home-view #cooldown-copy {
-  margin: 4px 0 10px;
+  flex: 0 0 auto;
+  margin: 6px 0 0;
   color: var(--civic);
   font: 700 clamp(26px, 7vw, 40px)/1.05 "IBM Plex Sans Hebrew", sans-serif;
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
+}
+#home-view #cooldown-copy.is-full {
+  font-size: clamp(15px, 4.2cqw, 20px);
+  line-height: 1.25;
 }
 .trust-info {
   flex: 0 0 auto;
@@ -3275,7 +3329,9 @@ body {
 
 #home-view .home-copy .lede { margin-bottom: 8px; }
 .pack-plinth { min-height: 0; }
-.pack-wrapper { width: min(118px, 16dvh, 28vw); }
+.pack-wrapper { width: min(96px, 22vw); height: auto; overflow: visible; }
+#home-view .pack-wrapper { width: 100%; }
+#home-view .pack-wrapper img { width: 100%; height: auto; object-fit: contain; }
 #home-view .action-dock,
 #home-view .today-docket { flex: 0 0 auto; }
 .action-dock { margin-top: 4px; }
@@ -3296,7 +3352,8 @@ body {
   display: block;
   overflow: hidden;
   width: 100%;
-  margin-top: 4px;
+  min-height: 22px;
+  margin-top: 8px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -3488,9 +3545,12 @@ body {
   .top-nav-row { min-height: 0; padding-inline: 8px; padding-bottom: 17px; }
   .top-nav-row .bottom-nav { height: 46px; }
   #home-view .home-grid {
-    grid-template-columns: minmax(0, 1fr) 88px;
+    --today-pack-w: 92px;
+    grid-template-columns: minmax(0, 1fr) var(--today-pack-w);
     gap: 8px;
+    align-items: stretch;
   }
+  #home-view .home-copy { text-align: start; }
   #home-view .home-copy h1 { font-size: clamp(20px, 6.4vw, 28px); }
   .next-pack-clock,
   #home-view #cooldown-copy { font-size: clamp(22px, 6.4vw, 30px); }
@@ -3523,7 +3583,10 @@ body {
   #home-view .collection-line .progress { display: none; }
   .today-docket-row { min-height: 46px; }
   .pack-wrapper { width: min(96px, 14dvh, 26vw); }
-  #home-view .home-grid { grid-template-columns: minmax(0, 1fr) 78px; }
+  #home-view .home-grid {
+    --today-pack-w: min(78px, 14dvh, 26vw);
+    grid-template-columns: minmax(0, 1fr) var(--today-pack-w);
+  }
 }
 
 /* Compact collection shelf and selling-focused Today/community surfaces. */
@@ -3623,18 +3686,19 @@ body {
 
 .trade-desk #trade-create,
 .trade-desk #trade-demo {
-  width: calc(50% - 3px);
+  width: 100%;
   min-height: 36px;
   display: inline-block;
   padding: 6px 8px;
   vertical-align: top;
-  font-size: 10px;
+  font-size: 13px;
 }
+.trade-desk #trade-demo[hidden] { display: none; }
 
 .trade-form {
   flex: 1;
   min-height: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   align-items: stretch;
   margin: 3px 0 6px;
 }
@@ -3647,8 +3711,9 @@ body {
 
 .trade-form fieldset {
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   padding: 6px !important;
 }
 
@@ -3660,18 +3725,12 @@ body {
 
 .trade-form select {
   width: 100%;
-  min-height: 30px !important;
-  overflow: hidden;
-  padding: 3px 5px !important;
-  font-size: 10px !important;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.trade-form select:focus {
-  position: relative;
-  z-index: 6;
-  width: max(100%, min(240px, 72vw));
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 38px !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
 }
 
 .open-trades-desk {
@@ -3739,10 +3798,36 @@ body {
   direction: rtl;
 }
 
-.trade-choice-fields {
-  grid-area: fields;
+.trade-choice-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
   min-width: 0;
   direction: rtl;
+}
+
+.trade-compose .trade-thumb {
+  width: auto;
+  margin-top: 0;
+  justify-self: start;
+}
+
+.trade-compose .trade-thumb-frame {
+  width: 64px;
+  height: calc(64px * 96 / 63);
+}
+
+.trade-choice-fields {
+  display: grid;
+  min-width: 0;
+  direction: rtl;
+}
+
+.trade-choice-fields label,
+.trade-choice-fields select {
+  width: 100%;
+  min-width: 0;
 }
 
 .trade-actions {
@@ -3756,11 +3841,73 @@ body {
   width: 100%;
 }
 
+.faction-member-board {
+  margin: 0 0 4px;
+}
+
+.faction-board-title {
+  margin: 16px 0 8px;
+  color: var(--civic);
+  font: 700 13px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
+
+.faction-member-board,
+.faction-member-board .faction-hist,
+.faction-member-board .faction-hist-plot,
+.faction-member-board .challenge-hist-axis {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.faction-member-board .faction-hist {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 0 8px;
+  overflow: hidden;
+}
+
+.faction-hist-plot,
+.faction-hist .challenge-hist-axis {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  overflow: hidden;
+  gap: clamp(2px, 1.2vw, 8px);
+}
+
+.faction-hist .challenge-hist-col,
+.faction-hist .challenge-hist-axis span {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.faction-hist .challenge-hist-col b {
+  width: min(28px, 100%);
+}
+
+.faction-hist .challenge-hist-axis span {
+  overflow: hidden;
+  color: inherit;
+  font: inherit;
+  font-size: 8px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
 .faction-chart-row {
   display: grid !important;
-  grid-template-columns: minmax(80px, auto) minmax(80px, 1fr) 34px;
+  grid-template-columns: minmax(80px, auto) minmax(80px, 1fr) 42px;
   gap: 9px;
   align-items: center;
+}
+
+.faction-chart-row.current-player span {
+  font-weight: 700;
 }
 
 .faction-chart-row > i {
@@ -4015,11 +4162,12 @@ body {
     overflow: hidden !important;
   }
   .trade-form {
-    flex: 0 0 auto;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    flex: 1 1 auto;
+    grid-template-columns: minmax(0, 1fr) !important;
+    overflow-y: auto;
   }
   .trade-form fieldset {
-    min-height: 148px;
+    min-height: 0;
   }
 }
 

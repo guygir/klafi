@@ -1,4 +1,5 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
+import { starContributionBins } from "./star-contribution-bins.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
@@ -221,6 +222,7 @@ const elements = {
   growthMetrics: document.querySelector("#growth-metrics"),
   factionSelect: document.querySelector("#faction-select"),
   saveFaction: document.querySelector("#save-faction"),
+  factionMembers: document.querySelector("#faction-members"),
   factionBoard: document.querySelector("#faction-board"),
   collectorBoard: document.querySelector("#collector-board"),
   dailyChallengeTitle: document.querySelector("#daily-challenge-title"),
@@ -306,6 +308,8 @@ const elements = {
   submitReport: document.querySelector("#submit-report"),
   closeReport: document.querySelector("#close-report"),
   toast: document.querySelector("#toast"),
+  waitDialog: document.querySelector("#wait-dialog"),
+  waitDialogCopy: document.querySelector("#wait-dialog-copy"),
   bottomNav: document.querySelector(".bottom-nav"),
 };
 
@@ -1094,7 +1098,7 @@ function renderAdvocacy() {
   if (elements.advocacyShort) elements.advocacyShort.textContent = "";
   elements.advocacySponsor.textContent = `בחסות ${profile.sponsor}`;
   elements.advocacyFull.textContent = "קְלָפִי מתחילה בהיכרות עובדתית, ממשיכה לעמדות ולהחלטות, ובהמשך מפרסמת גם סדרות ביקורת לפי קו עריכתי גלוי. בחירת הציטוטים אינה ניטרלית; המקור והסיווג מופיעים בכל קלף.";
-  elements.advocacyPhases.innerHTML = "<li><strong>היכרות.</strong> מנהיגים ומספרי שתיים.</li><li><strong>עומק.</strong> עמדות, החלטות ורקורדים.</li><li><strong>ביקורת.</strong> סדרות מסומנות במפורש.</li><li><strong>מקור.</strong> לכל קלף מצורף קישור; ניסוח מחדש מסומן בכוכבית.</li>";
+    elements.advocacyPhases.innerHTML = "<li><strong>היכרות.</strong> מנהיגים ומשנים.</li><li><strong>עומק.</strong> עמדות, החלטות ורקורדים.</li><li><strong>ביקורת.</strong> סדרות מסומנות במפורש.</li><li><strong>מקור.</strong> לכל קלף מצורף קישור; ניסוח מחדש מסומן בכוכבית.</li>";
 }
 
 async function recordEvent(type, details = {}) {
@@ -1308,12 +1312,31 @@ function timeUntil(iso) {
   return Math.max(0, Date.parse(iso) - Date.now());
 }
 
+function nextCollectionRemaining() {
+  const upcoming = (model.serverState?.preparedPulls || [])
+    .map((pull) => timeUntil(pull.availableAt))
+    .filter((ms) => ms > 0)
+    .sort((left, right) => left - right);
+  if (upcoming[0]) return upcoming[0];
+  return timeUntil(model.serverState?.nextIdleAt);
+}
+
 function formatCountdown(milliseconds) {
-  const seconds = Math.ceil(milliseconds / 1000);
+  const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const remainder = seconds % 60;
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+
+function showWait(copy) {
+  if (!elements.waitDialog) return;
+  if (elements.waitDialogCopy) elements.waitDialogCopy.textContent = copy || "רגע…";
+  if (!elements.waitDialog.open) elements.waitDialog.showModal();
+}
+
+function hideWait() {
+  if (elements.waitDialog?.open) elements.waitDialog.close();
 }
 
 function formatEventCountdown(milliseconds) {
@@ -2102,22 +2125,21 @@ function renderTodayDocket() {
 function renderTodaySpecials() {
   if (!elements.todaySpecialsRow) return;
   const windowOpen = model.specialWindow;
-  elements.todaySpecialsRow.hidden = !windowOpen;
+  elements.todaySpecialsRow.hidden = false;
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
-  if (!windowOpen) {
-    elements.todaySpecialsRow.classList.remove("is-marquee", "is-ready");
-    return;
+  let line = "אין אירוע כרגע";
+  if (windowOpen) {
+    const closes = new Date(windowOpen.closesAt);
+    const until = Number.isNaN(closes.getTime())
+      ? ""
+      : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
+    const detail = windowOpen.claimedToday
+      ? "הקלף היומי כבר באוסף. הוא נשאר באלבום."
+      : until
+        ? `פתוח עד ${until}. קלף אחד היום.`
+        : "קלף אחד היום. הוא נשאר באלבום.";
+    line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
   }
-  const closes = new Date(windowOpen.closesAt);
-  const until = Number.isNaN(closes.getTime())
-    ? ""
-    : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
-  const detail = windowOpen.claimedToday
-    ? "הקלף היומי כבר באוסף. הוא נשאר באלבום."
-    : until
-      ? `פתוח עד ${until}. קלף אחד היום.`
-      : "קלף אחד היום. הוא נשאר באלבום.";
-  const line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
   if (elements.todaySpecialsCopy) elements.todaySpecialsCopy.textContent = line;
   if (elements.todaySpecialsCopyRepeat) elements.todaySpecialsCopyRepeat.textContent = line;
   requestAnimationFrame(layoutTodaySpecials);
@@ -2216,8 +2238,11 @@ function renderProgression({ announce = false } = {}) {
       : `${progression.rank} · הפרופיל והאווטאר`);
   }
   if (elements.levelTeaser) elements.levelTeaser.textContent = progression.teaser;
-  elements.levelProgress.style.width = `${progression.percent}%`;
-  elements.levelProgressCount.textContent = `${progression.unique - progression.start}/${progression.target - progression.start}`;
+  const unique = progression.unique || 0;
+  const target = Math.max(progression.target || 0, unique);
+  const filled = target ? Math.max(0, Math.min(100, Math.round((unique / target) * 100))) : 100;
+  elements.levelProgress.style.width = `${filled}%`;
+  elements.levelProgressCount.textContent = `${unique}/${target}`;
   if (progression.remaining) {
     elements.levelNext.textContent = progression.remaining === 1
       ? "גלו עוד קלף אחד חדש כדי להתקדם לרמה הבאה"
@@ -2243,12 +2268,23 @@ function renderProgression({ announce = false } = {}) {
 function updateCountdown() {
   renderTodayDocket();
   scheduleIdleNotification();
-  const remaining = timeUntil(model.serverState?.nextIdleAt);
-  const interval = model.serverState?.idleIntervalMs || 3 * 60 * 60 * 1000;
-  const clock = formatCountdown(remaining || interval);
+  const remaining = nextCollectionRemaining();
+  const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
+  const cap = model.serverState?.idleCapacity ?? 8;
+  const full = unseen >= cap;
+  const clock = formatCountdown(remaining);
   if (elements.cooldownCopy) {
-    elements.cooldownCopy.textContent = `הבא בעוד ${clock}`;
+    elements.cooldownCopy.textContent = full
+      ? "המחסן מלא. פתחו קלף כדי שהאיסוף יתחיל שוב."
+      : `הבא בעוד ${clock}`;
     elements.cooldownCopy.hidden = false;
+    elements.cooldownCopy.classList.toggle("is-clock", !full);
+    elements.cooldownCopy.classList.toggle("is-full", full);
+  }
+  if (full) {
+    elements.headerStatus.textContent = "המחסן מלא";
+    if (elements.debugClock) elements.debugClock.textContent = "Idle pull · full";
+    return;
   }
   if (!remaining) {
     elements.headerStatus.textContent = "אוספים עכשיו";
@@ -2510,13 +2546,14 @@ function startWalkout() {
   model.walkoutStage = 0;
   renderWalkoutStage();
   const configured = readRevealDelays();
-  const delays = [configured.quote, configured.party, configured.name, configured.portrait];
+  const delays = [configured.quote, configured.party, configured.name];
+  const nextStage = [1, 2, WALKOUT_STAGES.length - 1];
   let elapsed = 0;
   delays.forEach((delay, index) => {
     elapsed += delay;
     packTimers.push(setTimeout(() => {
       if (model.packPhase !== "walkout") return;
-      model.walkoutStage = index + 1;
+      model.walkoutStage = nextStage[index];
       renderWalkoutStage();
       if (model.walkoutStage === WALKOUT_STAGES.length - 1) finishWalkoutCard();
     }, elapsed));
@@ -2647,11 +2684,21 @@ function prefetchBinderArt(cards = []) {
 
 const FILTER_SET_SHORT = {
   "party-leaders": "מנהיגים",
-  "party-slot-2": "שתיים",
+  "party-slot-2": "משנה",
   "set-5": "רגעים",
   "decisions": "החלטות",
   "records": "הישגים",
 };
+
+function openBinderReleaseIds() {
+  const catalog = model.catalog || [];
+  const hidden = new Set(["decisions", "records"]);
+  return (model.gameConfig?.releaseSets || [])
+    .map(({ id, runtimeState }) => ({ id, runtimeState }))
+    .filter(({ id }) => isLiveReleaseSet(id) && !hidden.has(id))
+    .filter(({ id }) => catalog.some((card) => card.releaseSetId === id && !card.eventOnly))
+    .map(({ id }) => id);
+}
 
 function filterSetChip(set, label, count, active) {
   return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${escapeHtml(set)}"><span class="filter-name">${escapeHtml(label)}</span><span class="filter-count">${count}</span></button>`;
@@ -2877,9 +2924,7 @@ function renderShowcaseBinder() {
   const gridY = elements.showcaseGrid.scrollTop || 0;
   showcaseView?.setAttribute("aria-busy", "false");
   const playerCards = playerCatalog();
-  const releaseOrder = (model.gameConfig?.releaseSets || [])
-    .map(({ id }) => id)
-    .filter((id) => isLiveReleaseSet(id));
+  const releaseOrder = openBinderReleaseIds();
   const numberedCards = possibleNumberedCards();
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
   if (numberedCards.length) setOrder.push("NUMBERED");
@@ -3043,14 +3088,15 @@ function renderBinder() {
   );
 
   const playerCards = playerCatalog();
-  const releaseOrder = (model.gameConfig?.releaseSets || [])
-    .map(({ id }) => id)
-    .filter((id) => isLiveReleaseSet(id));
+  const releaseOrder = openBinderReleaseIds();
   const numberedIds = new Set((model.serverState?.numberedCopies || model.serverState?.instances || [])
     .filter((item) => item.numberedIndex)
     .map((item) => item.cardId));
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
   if (numberedIds.size) setOrder.push("NUMBERED");
+  if (model.binderFilter.startsWith("RELEASE:") && !releaseOrder.includes(model.binderFilter.slice(8))) {
+    model.binderFilter = "ALL";
+  }
   const setLabels = {};
   for (const release of model.gameConfig?.releaseSets || []) {
     setLabels[`RELEASE:${release.id}`] = FILTER_SET_SHORT[release.id] || release.nameHe;
@@ -3125,7 +3171,7 @@ function renderBinder() {
     ? '<span class="binder-scroll-hint">עוד קלפים מחכים למטה ↓</span>'
     : "";
 
-  const earned = (model.serverState?.achievements || []).filter(({ earned }) => earned);
+  const earned = achievementList().filter(({ earned }) => earned);
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
   const starCount = localStarCount();
   const starCounter = `<span class="collection-star-count" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b aria-hidden="true">★</b><strong>${starCount}</strong></span>`;
@@ -3544,8 +3590,8 @@ function tradeBoardPagerMarkup(page, pages, remaining) {
 function renderTradeBoard() {
   if (!elements.tradeBoard) return;
   const openOffers = model.trades
-    .filter((trade) => trade.status === "open" && !trade.ownedByCurrent && tradeHasCards(trade))
-    .sort((left, right) => Number(right.canAccept) - Number(left.canAccept));
+    .filter((trade) => trade.status === "open" && tradeHasCards(trade))
+    .sort((left, right) => Number(right.ownedByCurrent) - Number(left.ownedByCurrent) || Number(right.canAccept) - Number(left.canAccept));
   model.tradeBoardOffered = fillTradeBoardFilter(elements.tradeBoardOffered, openOffers, "offeredCardId", model.tradeBoardOffered);
   model.tradeBoardWanted = fillTradeBoardFilter(elements.tradeBoardWanted, openOffers, "wantedCardId", model.tradeBoardWanted);
   if (elements.tradeBoardToolbar) elements.tradeBoardToolbar.hidden = openOffers.length === 0;
@@ -3641,6 +3687,39 @@ async function refreshDailyChallenge() {
   } catch {
     /* Race board stays on the last server snapshot. */
   }
+}
+
+function factionHistMarkup(bins) {
+  const field = Math.max(1, ...bins.map(({ count }) => count));
+  const cols = bins.map((bin, index) => {
+    const height = bin.count ? Math.max(8, Math.round((bin.count / field) * 100)) : 0;
+    return `<div class="challenge-hist-col${bin.you ? " you" : ""}">
+      <b style="height:${height}%; animation-delay:${index * 40}ms"></b>
+    </div>`;
+  }).join("");
+  const axis = bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("");
+  return `<div class="faction-hist challenge-hist">
+    <div class="challenge-hist-plot faction-hist-plot" dir="ltr" aria-hidden="true">${cols}</div>
+    <div class="challenge-hist-axis" dir="ltr">${axis}</div>
+  </div>`;
+}
+
+function renderFactionMembers() {
+  if (!elements.factionMembers) return;
+  const partyId = elements.factionSelect?.value || "";
+  const entry = (model.leaderboards?.factions || []).find((faction) => faction.partyId === partyId);
+  const scores = entry?.scores || (entry?.members || []).map((member) => ({
+    stars: member.stars || 0,
+    current: Boolean(member.current),
+  }));
+  if (!partyId) {
+    elements.factionMembers.innerHTML = '<p class="work-note">בחרו מפלגה כדי לראות איפה אתם עומדים.</p>';
+    return;
+  }
+  const bins = starContributionBins(scores);
+  elements.factionMembers.innerHTML = bins.length
+    ? factionHistMarkup(bins)
+    : '<p class="work-note">עדיין אין מי שבחר במפלגה הזו.</p>';
 }
 
 function renderGrowth() {
@@ -3752,29 +3831,17 @@ function renderGrowth() {
   const selectedFaction = model.serverState.factionId;
   const parties = partyRegister();
   elements.factionSelect.innerHTML = [
-    '<option value="">ללא סיעה</option>',
+    '<option value="">ללא מפלגה</option>',
     ...parties.map((party) => {
-      const status = partyStatusShort(party);
+      const letters = (party.finalLetters || party.requestedLetters || []).join(" / ");
       return `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml([
         party.displayNameHe,
-        (party.finalLetters || party.requestedLetters || []).join(" / "),
-        status,
+        letters,
       ].filter(Boolean).join(" · "))}</option>`;
     }),
   ].join("");
-  const factionEntries = model.leaderboards?.factions?.slice(0, 6) || [];
-  const factionMaximum = Math.max(1, ...factionEntries.map(({ packs }) => packs));
-  elements.factionBoard.innerHTML = factionEntries.length
-    ? factionEntries.map((entry, index) => {
-        const party = parties.find(({ id }) => id === entry.partyId);
-        const status = partyStatusShort(party);
-        return `<div class="faction-chart-row">
-        <span>${index + 1}. ${escapeHtml(partyDisplayName(entry.partyId, entry.partyId))}${status ? ` · ${escapeHtml(status)}` : ""}</span>
-        <i aria-hidden="true"><b style="width:${Math.max(4, Math.round((entry.packs / factionMaximum) * 100))}%; animation-delay:${index * 40}ms"></b></i>
-        <strong>${entry.packs}</strong>
-      </div>`;
-      }).join("")
-    : '<p class="work-note">עדיין אין קלפים שנספרו.</p>';
+  if (elements.factionBoard) elements.factionBoard.innerHTML = "";
+  renderFactionMembers();
   const collectorEntries = model.leaderboards?.collectors || [];
   const collectorPreview = collectorEntries.slice(0, 3);
   const currentCollector = collectorEntries.find(({ current }) => current);
@@ -4827,6 +4894,7 @@ async function createTradeOffer() {
     return;
   }
   elements.tradeCreate.disabled = true;
+  showWait("מפרסמים את ההחלפה…");
   try {
     const result = await request("/api/trades", {
       method: "POST",
@@ -4844,6 +4912,7 @@ async function createTradeOffer() {
       showToast("לא הצלחנו לפרסם את ההצעה.");
     }
   } finally {
+    hideWait();
     elements.tradeCreate.disabled = false;
   }
 }
@@ -4880,6 +4949,7 @@ async function cancelTradeOffer(tradeId) {
 }
 
 async function saveFaction() {
+  showWait("שומרים את המפלגה…");
   try {
     model.serverState = await request("/api/faction", {
       method: "POST",
@@ -4889,9 +4959,11 @@ async function saveFaction() {
     renderProfile();
     renderBinder();
     renderGrowth();
-    showToast(model.serverState.factionId ? "הסיעה נשמרה. הקלף הבא ייספר." : "בחירת הסיעה בוטלה.");
+    showToast(model.serverState.factionId ? "המפלגה נשמרה. כוכבי האוסף נספרים למפלגה." : "בחירת המפלגה בוטלה.");
   } catch {
-    showToast("לא הצלחנו לשמור את הסיעה.");
+    showToast("לא הצלחנו לשמור את המפלגה.");
+  } finally {
+    hideWait();
   }
 }
 
@@ -5980,6 +6052,7 @@ elements.tradeBoardPager?.addEventListener("click", (event) => {
   model.tradeBoardPage = Number(button.dataset.page);
   renderTradeBoard();
 });
+elements.factionSelect.addEventListener("change", renderFactionMembers);
 elements.saveFaction.addEventListener("click", saveFaction);
 elements.creatorCode.addEventListener("input", () => {
   elements.creatorLinkPreview.textContent = creatorLink();
