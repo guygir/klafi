@@ -693,6 +693,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /class="binder-stats-row"/);
   assert.match(html, /class="pack-plinth"[\s\S]*id="today-specials-row"/);
   assert.match(css, /#home-view \.pack-plinth \.today-specials-line/);
+  assert.match(css, /#home-view \.pack-plinth \.pack-wrapper,\s*#home-view \.pack-plinth \.today-specials-line/);
   assert.match(css, /padding-inline-end:\s*100%/);
   assert.match(css, /animation: specials-marquee 7s linear infinite/);
   assert.match(javascript, /function explainUnavailableNotifications/);
