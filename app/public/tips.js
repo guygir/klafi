@@ -584,7 +584,7 @@ export function attachKlafiTips(env = globalThis) {
       markPageSeen(state.page, env);
     } else if (state.mode === "pull") {
       markPullPages();
-      if (forceOff || !mute || mute.checked) persistOff();
+      if (forceOff || mute?.checked) persistOff();
       else persistOn();
     }
     state.mode = null;
@@ -790,7 +790,6 @@ export function attachKlafiTips(env = globalThis) {
     }
     const next = state.step + 1;
     if (state.mode === "pull" && !stepViewReady(next, flags())) {
-      finish({ forceOff: true });
       return;
     }
     state.step = next;

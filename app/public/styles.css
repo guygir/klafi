@@ -3091,9 +3091,10 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 
 @media (max-width: 420px) {
   .binder-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .masthead-meta .live-mark,
-  #header-status { display: none; }
+  .masthead-meta .live-mark { display: none; }
 }
+
+#header-status { display: none !important; }
 
 .visually-hidden {
   position: absolute !important;
@@ -3239,6 +3240,14 @@ body {
   min-height: 0;
   padding: 12px 0 6px;
   overflow: hidden;
+}
+
+#growth-view.view.active,
+#achievements-view.view.active,
+#binder-view.view.active {
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: 12px;
 }
 
 .view.active {
@@ -3884,8 +3893,8 @@ body {
 }
 
 .trade-compose .trade-thumb-frame {
-  width: 64px;
-  height: calc(64px * 96 / 63);
+  width: 48px;
+  height: calc(48px * 96 / 63);
 }
 
 .trade-choice-fields {
@@ -3945,6 +3954,9 @@ body {
   justify-content: space-between;
   overflow: hidden;
   gap: clamp(2px, 1.2vw, 8px);
+}
+.faction-hist-plot {
+  height: min(148px, 24dvh);
 }
 
 .faction-hist .challenge-hist-col,
@@ -4097,7 +4109,7 @@ body {
   justify-content: center;
   align-items: stretch;
   gap: 10px;
-  height: 188px;
+  height: min(148px, 24dvh);
   padding-top: 36px;
   box-sizing: border-box;
 }
