@@ -3851,21 +3851,32 @@ body {
   font: 700 13px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
 }
 
+.leaderboard-list > .faction-hist {
+  display: grid;
+  gap: 8px;
+  padding: 4px 0 8px;
+  border: 0;
+}
+
 .faction-hist {
   margin: 0;
+}
+
+.faction-hist-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .faction-hist-plot,
 .faction-hist .challenge-hist-axis {
   justify-content: flex-start;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  min-width: min-content;
 }
 
 .faction-hist .challenge-hist-col,
 .faction-hist .challenge-hist-axis span {
-  width: 36px;
-  flex: 0 0 36px;
+  width: 44px;
+  flex: 0 0 44px;
 }
 
 .faction-hist .challenge-hist-axis span {

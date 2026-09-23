@@ -3701,8 +3701,10 @@ function factionHistMarkup(entries) {
     return `<span>${entry.label}${you}<small>★${entry.score}</small></span>`;
   }).join("");
   return `<div class="faction-hist challenge-hist">
-    <div class="challenge-hist-plot faction-hist-plot" dir="ltr" aria-hidden="true">${cols}</div>
-    <div class="challenge-hist-axis" dir="ltr">${axis}</div>
+    <div class="faction-hist-scroll">
+      <div class="challenge-hist-plot faction-hist-plot" dir="ltr" aria-hidden="true">${cols}</div>
+      <div class="challenge-hist-axis" dir="ltr">${axis}</div>
+    </div>
   </div>`;
 }
 

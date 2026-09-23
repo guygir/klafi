@@ -59,6 +59,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /הטבלה בסיעה/);
   assert.match(html, /id="faction-board-title"/);
   assert.match(css, /\.faction-hist-plot/);
+  assert.match(css, /\.faction-hist-scroll/);
+  assert.match(javascript, /faction-hist-scroll/);
   assert.match(html, /role="list"/);
   assert.match(javascript, /function cardTrustLine/);
   assert.match(javascript, /function prefersReducedMotion/);
