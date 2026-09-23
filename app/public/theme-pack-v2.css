@@ -559,6 +559,7 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-density="airy-v2"] #home-view .collection-line .progress,
 #app[data-density="airy-v2"] #home-view #active-release,
 #app[data-density="airy-v2"] .today-docket-row > small,
+#app[data-density="airy-v2"] #binder-view .binder-head,
 #app[data-density="airy-v2"] #binder-view .binder-head .eyebrow,
 #app[data-density="airy-v2"] #binder-view .binder-head h1,
 #app[data-density="airy-v2"] #achievements-view > .eyebrow,
@@ -729,9 +730,10 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-density="airy-v2"] .filter-strip button,
 #app[data-density="airy-v2"] .filter-party,
 #app[data-density="airy-v2"] .filter-owned {
-  min-height: 38px;
-  padding: 7px 12px;
-  font-size: 12px;
+  min-height: 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
 }
 
 #app[data-density="airy-v2"] .binder-grid {
@@ -1018,6 +1020,10 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 .avatar-seal {
+  display: block;
+}
+
+.avatar-seal[hidden] {
   display: none;
 }
 
@@ -1078,8 +1084,16 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-density="airy-v2"] .earned-badge-rail {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#app[data-density="airy-v2"] .binder-stats-row {
+  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 #app[data-density="airy-v2"] .binder-total {
@@ -1100,9 +1114,9 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-density="airy-v2"] .earned-badge-list {
   display: flex;
-  flex: 1;
+  flex: 0 0 auto;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 8px;
   min-width: 0;
 }

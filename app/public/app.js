@@ -1400,7 +1400,18 @@ function renderProfile() {
 
 function factionParty(factionId = model.serverState?.factionId) {
   if (!factionId) return null;
-  return partyRegister().find(({ id }) => id === factionId) || null;
+  const found = partyRegister().find(({ id }) => id === factionId);
+  if (found) return found;
+  const card = (model.catalog || []).find((item) => item.set === factionId);
+  if (!card) return { id: factionId };
+  return {
+    id: factionId,
+    displayNameHe: card.setNameHe || factionId,
+    requestedLetters: card.letters ? [card.letters] : [],
+    letterChip: card.letterChip || "",
+    letterArt: card.letterArt || "",
+    pip: card.pip || null,
+  };
 }
 
 function factionLetters(party) {
@@ -1478,12 +1489,13 @@ function renderAvatarSeal() {
   const party = factionParty();
   const letters = factionLetters(party);
   const art = factionLetterArt(party);
-  if (elements.avatarSeal) elements.avatarSeal.hidden = true;
+  const hasFaction = Boolean(party);
   paintLetterChip(elements.levelLetter, elements.levelLetterText, party);
   paintLetterChip(elements.playerLetter, elements.playerLetterText, party);
+  if (elements.avatarSeal) elements.avatarSeal.hidden = Boolean(art || letters) || !hasFaction;
   elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(art || letters));
   elements.playerName?.classList.toggle("has-faction-letter", Boolean(art || letters));
-  elements.levelAvatarButton?.classList.toggle("has-faction-seal", false);
+  elements.levelAvatarButton?.classList.toggle("has-faction-seal", hasFaction && !art && !letters);
 }
 
 function renderAvatarPicker() {
@@ -1559,9 +1571,13 @@ function renderNotifyControl() {
     profile.disabled = denied;
   }
   if (home) {
-    home.hidden = unsupported || granted || denied;
-    home.textContent = "להפעיל התראות";
-    home.disabled = denied;
+    home.hidden = granted;
+    home.textContent = denied
+      ? "התראות חסומות בדפדפן"
+      : unsupported
+        ? "התראות לא זמינות כאן"
+        : "להפעיל התראות";
+    home.disabled = denied || unsupported;
   }
   if (elements.notifyStatus) {
     elements.notifyStatus.textContent = unsupported
@@ -2181,10 +2197,10 @@ function layoutTodaySpecials() {
 
 function layoutAdvocacyDock() {
   const dock = elements.openAdvocacy;
-  const nav = document.querySelector(".top-nav-row .bottom-nav");
-  if (!dock || !nav) return;
-  dock.style.left = `${Math.round(nav.getBoundingClientRect().left + 8)}px`;
-  dock.style.bottom = "8px";
+  if (!dock) return;
+  dock.style.left = "";
+  dock.style.right = "";
+  dock.style.bottom = "";
 }
 
 function renderActivity() {
