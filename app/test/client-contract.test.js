@@ -60,7 +60,6 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="player-letter"/);
   assert.match(html, /id="header-status" hidden/);
   assert.match(javascript, /מבטלים את ההחלפה/);
-  assert.match(javascript, /level-unlock-faces/);
   assert.match(tipsJs, /replay\?\.addEventListener\("click", replayCurrentPage\)/);
   assert.doesNotMatch(html, /כאן מפרסמים החלפה: קלף שיש לכם/);
   assert.match(html, /id="faction-members-title"/);
@@ -557,7 +556,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /window\.__kalpiWarmup\?\.holders/);
   assert.match(warmup, /\/api\/card-holders/);
   assert.match(javascript, /hydrateCardHolders\(\)\.catch/);
-  assert.match(javascript, /const due = !timeUntil\(model\.serverState\?\.nextIdleAt\)/);
+  assert.match(javascript, /const due = Boolean\(model\.serverState\?\.nextIdleAt\) && !timeUntil\(model\.serverState\.nextIdleAt\)/);
+  assert.match(javascript, /elements\.homeTitle\.textContent = unseen > 0/);
+  assert.match(javascript, /home\.hidden = unsupported \|\| granted \|\| denied/);
+  assert.doesNotMatch(javascript, /home\.hidden = granted;/);
+  assert.match(javascript, /אפשר לקבל את קלף הבונוס עכשיו/);
+  assert.doesNotMatch(javascript, /קלף בונוס נכנס למחסן/);
+  assert.doesNotMatch(javascript, /level-unlock-faces/);
+  assert.doesNotMatch(javascript, /openPendingLevelDialog\(\);\s*return;/);
+  assert.doesNotMatch(css, /\.level-unlock-faces/);
   assert.match(javascript, /jobs\.push\(\["events", \(\) => request\("\/api\/events"\)\]\)/);
   assert.match(javascript, /request\("\/api\/community"\)/);
   assert.match(javascript, /LIVE_RELEASE_SET_IDS/);

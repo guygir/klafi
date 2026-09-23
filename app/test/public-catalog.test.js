@@ -40,6 +40,21 @@ test("static catalog.json matches the public card expansion", async () => {
   assert.ok(!catalog.cards.some(({ releaseSetId }) => String(releaseSetId).startsWith("party-position")));
 });
 
+test("live walkout quotes stay on the published wording", async () => {
+  const catalog = JSON.parse(await readFile(path.join(publicDir, "catalog.json"), "utf8"));
+  const pins = {
+    "SET5-16": "לא צדקה אלא צדק; לא רחמים אלא הכרה.",
+    "BW-M02-Q01": "כל אחת מנהיגה בחלקת האלוהים שלה.",
+    "AMH-M01-Q01": "הפתרון בעזה הוא אחד: הגירה",
+    "SET5-10": "אתה רמטכ״ל מבולבל, אתה כפוף לראש הממשלה ולדרג המדיני.*",
+  };
+  for (const [id, text] of Object.entries(pins)) {
+    const card = catalog.cards.find((entry) => entry.id === id);
+    assert.ok(card, `missing ${id}`);
+    assert.equal(card.walkout?.text, text, `${id} quote was rewritten`);
+  }
+});
+
 test("slim home state includes inventory for binder reads", () => {
   const state = slimPublicState({
     displayName: "שחקן",

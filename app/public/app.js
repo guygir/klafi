@@ -1541,13 +1541,9 @@ function renderNotifyControl() {
     profile.disabled = denied;
   }
   if (home) {
-    home.hidden = granted;
-    home.textContent = unsupported
-      ? "התראות לא זמינות כאן"
-      : denied
-        ? "התראות חסומות בדפדפן"
-        : "להפעיל התראות";
-    home.disabled = unsupported || denied;
+    home.hidden = unsupported || granted || denied;
+    home.textContent = "להפעיל התראות";
+    home.disabled = denied;
   }
   if (elements.notifyStatus) {
     elements.notifyStatus.textContent = unsupported
@@ -1944,25 +1940,23 @@ async function submitQuiz() {
 function renderHome() {
   const { owned, total, percent } = completion();
   const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
-  const pendingPacks = (model.serverState?.progression?.pendingRewards || []).length;
-  const readyPacks = unseen + pendingPacks;
-  const due = !timeUntil(model.serverState?.nextIdleAt);
-  const available = readyPacks > 0 || due;
+  const due = Boolean(model.serverState?.nextIdleAt) && !timeUntil(model.serverState.nextIdleAt);
+  const available = unseen > 0 || due;
   elements.collectionCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה · ${percent}%`;
   elements.collectionProgress.style.width = `${percent}%`;
   elements.openPack.disabled = !available;
   elements.openPack.textContent = available ? "פתיחת קלף" : "ממשיכים לאסוף";
   if (elements.idleStorage) {
     elements.idleStorage.hidden = true;
-    elements.idleStorage.textContent = `${readyPacks}/${model.serverState?.idleCapacity ?? 8}`;
+    elements.idleStorage.textContent = `${unseen}/${model.serverState?.idleCapacity ?? 8}`;
   }
   const activeReleaseIds = [...new Set(model.catalog.filter(({ idleEligible }) => idleEligible).map(({ releaseSetId }) => releaseSetId))];
   const releaseNames = activeReleaseIds
     .map((id) => model.gameConfig?.releaseSets?.find((release) => release.id === id)?.nameHe)
     .filter(Boolean);
   if (elements.activeRelease) elements.activeRelease.textContent = releaseNames.join(" + ");
-  elements.homeTitle.textContent = available
-    ? readyPacks === 1 ? "נאסף עבורך קלף אחד." : `נאספו עבורך ${readyPacks} קלפים.`
+  elements.homeTitle.textContent = unseen > 0
+    ? unseen === 1 ? "נאסף עבורך קלף אחד." : `נאספו עבורך ${unseen} קלפים.`
     : "הקלף הבא בדרך.";
   elements.homeCopy.textContent = available
     ? "פותחים קלף אחד בכל פעם."
@@ -2214,30 +2208,16 @@ function fillLevelDialog(progression, fromLevel) {
   const toLevel = Math.max(progression.level, ...(progression.pendingRewards || []), fromLevel + 1);
   elements.levelDialogTitle.textContent = `הגעתם לרמה ${progression.level}`;
   const items = levelUnlockItems(fromLevel, toLevel);
-  const avatars = (model.serverState?.avatars || []).filter((avatar) => {
-    const unlock = Number(avatar.unlockLevel) || 0;
-    return unlock > fromLevel && unlock <= toLevel;
-  });
   if (elements.levelUnlocks) {
-    const lines = items.map((item) => `<li>${escapeHtml(item)}</li>`);
-    if (avatars.length) {
-      lines.push(`<li class="level-unlock-faces">${avatars.map((avatar) =>
-        `<figure><img src="${avatarUrl(avatar)}" alt=""><figcaption>${escapeHtml(avatar.nameHe)}</figcaption></figure>`
-      ).join("")}</li>`);
-    }
-    elements.levelUnlocks.hidden = !lines.length;
-    elements.levelUnlocks.innerHTML = lines.join("");
+    elements.levelUnlocks.hidden = !items.length;
+    elements.levelUnlocks.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   }
-  elements.levelDialogReward.textContent = items.length ? "קלף בונוס נכנס למחסן. אפשר לפתוח אותו עכשיו." : (progression.reward || "");
+  elements.levelDialogReward.textContent = items.length ? "אפשר לקבל את קלף הבונוס עכשיו." : (progression.reward || "");
 }
 
 function renderPendingLevelCue() {
-  if (elements.openPendingLevel) elements.openPendingLevel.hidden = true;
   const pending = model.serverState?.progression?.pendingRewards || [];
-  if (pending.length && !elements.levelDialog?.open && !model.levelPrompted) {
-    model.levelPrompted = true;
-    openPendingLevelDialog();
-  }
+  if (elements.openPendingLevel) elements.openPendingLevel.hidden = pending.length === 0;
 }
 
 function openPendingLevelDialog() {
@@ -2342,10 +2322,6 @@ function playHomePackRip() {
 }
 
 async function openIdleReturn(opening = "regular") {
-  if ((model.serverState?.progression?.pendingRewards || []).length) {
-    openPendingLevelDialog();
-    return;
-  }
   if (!model.catalog.length) loadStaticCatalog().catch(() => {});
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
