@@ -161,32 +161,23 @@ button:focus-visible {
 }
 .presentation-studio-link { display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; }
 
-.advocacy-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  min-height: 22px;
-  padding: 2px 0 0;
-  border-bottom: 0;
-  color: var(--danger-mute);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-.advocacy-bar-compact { justify-content: flex-end; }
-
-.advocacy-bar button {
-  flex: 0 0 auto;
-  min-height: 22px;
-  padding: 2px 0;
+.advocacy-dock {
+  position: fixed;
+  z-index: 16;
+  left: max(10px, env(safe-area-inset-left));
+  bottom: max(4px, env(safe-area-inset-bottom));
+  min-height: 18px;
+  padding: 0;
   border: 0;
-  border-bottom: 1px solid currentColor;
   background: transparent;
   color: var(--danger-mute);
-  font-size: 10px;
+  font: 600 10px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+  letter-spacing: 0.02em;
+  text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
 }
+.advocacy-dock:focus-visible { outline: 2px solid var(--civic); outline-offset: 3px; }
 
 .live-mark {
   width: 7px;
@@ -2468,6 +2459,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .app-shell.showcase-active #klafi-tips {
   display: none !important;
 }
+.app-shell.showcase-active .advocacy-dock,
 .app-shell.showcase-active #main {
   padding-bottom: 8px;
 }
@@ -3091,7 +3083,7 @@ body {
 #main {
   min-height: 0;
   overflow: hidden;
-  padding-bottom: calc(52px + var(--safe-bottom));
+  padding-bottom: calc(72px + var(--safe-bottom));
 }
 
 .view,
@@ -3115,11 +3107,11 @@ body {
   position: fixed;
   z-index: 15;
   inset: auto 0 0;
-  min-height: calc(46px + var(--safe-bottom));
+  min-height: calc(64px + var(--safe-bottom));
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 10px 2px;
+  padding: 0 10px calc(20px + var(--safe-bottom));
   border: 0;
   pointer-events: none;
 }
@@ -3218,13 +3210,36 @@ body {
   display: none !important;
 }
 
-#home-view.has-specials .today-docket-list {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.today-specials-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--civic);
+  font: 600 12px/1.3 "IBM Plex Sans Hebrew", sans-serif;
+  text-align: start;
+  cursor: pointer;
+}
+.today-specials-line[hidden] { display: none; }
+.today-specials-kicker {
+  color: rgba(26, 31, 28, 0.58);
+  font-size: 10px;
+}
+.today-specials-line > strong { font-size: 12px; }
+.today-specials-line > small {
+  color: rgba(26, 31, 28, 0.55);
+  font-size: 10px;
+  font-weight: 500;
 }
 
 .today-docket > header { display: none; }
 .today-docket-list {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 6px;
 }
 
@@ -3369,8 +3384,8 @@ body {
     min-height: 70px;
     grid-template-columns: minmax(102px, 124px) minmax(0, 1fr);
   }
-  #main { padding-bottom: calc(50px + var(--safe-bottom)); }
-  .top-nav-row { min-height: calc(46px + var(--safe-bottom)); padding-inline: 8px; }
+  #main { padding-bottom: calc(72px + var(--safe-bottom)); }
+  .top-nav-row { min-height: calc(64px + var(--safe-bottom)); padding-inline: 8px; padding-bottom: calc(20px + var(--safe-bottom)); }
   .top-nav-row .bottom-nav { height: 46px; }
   #home-view .home-grid {
     grid-template-columns: minmax(0, 1fr) 116px;
@@ -3378,7 +3393,7 @@ body {
   }
   #home-view .home-copy h1 { font-size: clamp(22px, 7vw, 31px); }
   .collection-line { margin-top: 8px; }
-  .today-docket-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+  .today-docket-list { grid-template-columns: 1fr; gap: 4px; }
   .today-docket-row { grid-template-columns: 28px minmax(0, 1fr); grid-template-areas: "visual title" "visual meta"; }
   .today-docket-row > b { display: none; }
   .today-docket-visual { width: 26px; }
@@ -3883,7 +3898,7 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
   .today-docket-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
   .today-docket-row {
     min-height: 48px;

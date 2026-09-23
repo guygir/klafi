@@ -1043,16 +1043,16 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(home.status, 200);
   assert.match(home.body.token, /^[0-9a-f-]{36}$/i);
   assert.ok(home.body.state.displayName);
-  assert.equal(home.body.state.loginStreak, 1);
+  assert.equal(home.body.state.loginStreak, 0);
   assert.equal(home.body.state.progression.rank, "אזרח סקרן");
   assert.equal(home.body.catalog, undefined);
   assert.equal(typeof home.body.state.inventory, "object");
   const again = await api(running.base, "/api/home", { token: home.body.token });
   assert.equal(again.body.token, home.body.token);
-  assert.equal(again.body.state.loginStreak, 1);
+  assert.equal(again.body.state.loginStreak, 0);
   clock.value = Date.parse("2026-09-16T12:00:00.000Z");
   const nextDay = await api(running.base, "/api/home", { token: home.body.token });
-  assert.equal(nextDay.body.state.loginStreak, 2);
+  assert.equal(nextDay.body.state.loginStreak, 0);
   const warm = await api(running.base, "/api/warm");
   assert.deepEqual(warm, { status: 200, body: { status: "ready" } });
   const holders = await api(running.base, "/api/card-holders");
@@ -1411,16 +1411,29 @@ test("numbered stamps are idle-only set-5 holos by list slot and streaks count J
   assert.ok(!String(leaderCopy.cardId).startsWith("SET5-"));
   assert.equal(leaderCopy.numberedIndex, undefined);
 
-  const dayOne = await api(running.base, "/api/state", { token: first.body.token });
+  async function openSettled(token) {
+    const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+    const ids = [...(settled.body.cards || []), ...(settled.body.queue || [])]
+      .map((card) => card.instanceId)
+      .filter(Boolean);
+    return api(running.base, "/api/idle/seen", {
+      token,
+      method: "POST",
+      body: { instanceIds: ids },
+    });
+  }
+  const visit = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(visit.body.loginStreak, 0);
+  const dayOne = await openSettled(first.body.token);
   assert.equal(dayOne.body.loginStreak, 1);
   clock.value = Date.parse("2026-09-22T10:00:00+03:00");
-  const dayTwo = await api(running.base, "/api/state", { token: first.body.token });
+  const dayTwo = await openSettled(first.body.token);
   assert.equal(dayTwo.body.loginStreak, 2);
   clock.value = Date.parse("2026-09-23T10:00:00+03:00");
-  const dayThree = await api(running.base, "/api/state", { token: first.body.token });
+  const dayThree = await openSettled(first.body.token);
   assert.equal(dayThree.body.loginStreak, 3);
   clock.value = Date.parse("2026-09-25T10:00:00+03:00");
-  const reset = await api(running.base, "/api/state", { token: first.body.token });
+  const reset = await openSettled(first.body.token);
   assert.equal(reset.body.loginStreak, 1);
 });
 

@@ -1059,7 +1059,6 @@ export async function createKalpiApp({
         scheduleAt = currentMs + IDLE_INTERVAL_MS;
       }
       fillPreparedQueue();
-      applyLoginStreak(current, currentMs);
       current.nextIdleAt = current.preparedPulls[0]?.availableAt ?? new Date(scheduleAt).toISOString();
       current.idleAnchorAt ??= new Date(anchorAt).toISOString();
       current.packs = current.packs.slice(-100);
@@ -1271,9 +1270,6 @@ export async function createKalpiApp({
         if (!store.getSession(token)) {
           token = await store.createSession(new Date(now()).toISOString());
         }
-        await store.withSession(token, (current) => {
-          applyLoginStreak(current, now());
-        });
         json(response, 200, { token, state: stateFor(store.getSession(token)) });
         return;
       }
@@ -1349,9 +1345,6 @@ export async function createKalpiApp({
         }
 
         if (request.method === "GET" && url.pathname === "/api/state") {
-          await store.withSession(token, (current) => {
-            applyLoginStreak(current, now());
-          });
           json(response, 200, stateFor(store.getSession(token)));
           return;
         }
@@ -1447,6 +1440,7 @@ export async function createKalpiApp({
               if (accepted.has(instance.instanceId)) instance.seenAt = seenAt;
             });
             current.unseenPulls = [...unseen].filter((id) => !accepted.has(id));
+            if (accepted.size) applyLoginStreak(current, now());
           });
           json(response, 200, stateFor(store.getSession(token)));
           return;

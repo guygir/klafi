@@ -30,10 +30,6 @@
   <div id="app" class="app-shell home-active" data-theme="pack-v2" data-card-frame="tall-v2" data-density="airy-v2" data-quote-reveal="ink-v2">
     <div id="site-card-peeks" class="site-card-peeks" aria-hidden="true"></div>
     <header class="masthead">
-      <div class="advocacy-bar">
-        <span id="advocacy-short" hidden></span>
-        <button id="open-advocacy" type="button" aria-haspopup="dialog" aria-label="גילוי נאות">גילוי נאות</button>
-      </div>
       <div class="masthead-row">
       <button class="wordmark" type="button" data-nav="home" aria-label="לעמוד הבית">
         <b>קְלָפִי</b>
@@ -141,14 +137,12 @@
               <small id="today-leader-meta">טבלת האספנים</small>
               <em class="today-docket-go">לטבלה</em>
             </button>
-            <button type="button" class="today-docket-row" id="today-specials-row" hidden data-today-nav="specials">
-              <span id="today-specials-visual" class="today-docket-visual event-visual" aria-hidden="true"></span>
-              <span class="today-docket-label">חלון מיוחד:</span>
-              <strong id="today-specials-hook"></strong>
-              <small id="today-specials-meta"></small>
-              <em id="today-specials-go" class="today-docket-go">לאיסוף</em>
-            </button>
           </div>
+          <button type="button" class="today-specials-line" id="today-specials-row" hidden data-today-nav="specials">
+            <span class="today-specials-kicker">חלון מיוחד</span>
+            <strong id="today-specials-hook"></strong>
+            <small id="today-specials-meta"></small>
+          </button>
         </section>
       </section>
 
@@ -517,6 +511,8 @@
         <button type="button" data-nav="growth"><span aria-hidden="true">▣</span>קהילה</button>
       </nav>
     </div>
+    <span id="advocacy-short" hidden></span>
+    <button id="open-advocacy" class="advocacy-dock" type="button" aria-haspopup="dialog" aria-label="גילוי נאות">גילוי נאות</button>
 
   <dialog id="card-dialog" class="card-dialog" aria-labelledby="card-dialog-title" aria-describedby="dialog-trust">
     <button id="close-dialog" class="dialog-close" type="button" aria-label="סגירת הקלף">×</button>

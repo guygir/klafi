@@ -34,7 +34,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /aria-live/);
   assert.match(html, /id="skip-to-main"/);
   assert.match(html, /דילוג לתוכן/);
-  assert.match(html, /class="advocacy-bar"/);
+  assert.match(html, /class="advocacy-dock"/);
   assert.match(html, /id="dialog-trust"/);
   assert.match(html, /aria-labelledby="card-dialog-title"/);
   assert.match(html, /aria-labelledby="report-dialog-title"/);
@@ -257,7 +257,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="level-letter-text"/);
   assert.match(html, /id="level-streak"/);
   assert.match(html, /id="level-streak-count"/);
-  assert.match(javascript, /const showStreak = streak >= 1/);
+  assert.match(javascript, /const showStreak = streak >= 3/);
   assert.match(javascript, /elements\.cooldownCopy\.hidden = true/);
   assert.match(css, /\.masthead \.presentation-link/);
   assert.match(html, /id="rank-names"/);
@@ -343,9 +343,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(html, /id="today-event-hook"/);
   assert.match(html, /id="today-leader-hook"/);
   assert.match(html, /id="today-specials-row"/);
+  assert.match(html, /class="today-specials-line"/);
   assert.match(html, /id="today-specials-hook"/);
   assert.match(html, /data-today-nav="specials"/);
   assert.match(html, /id="today-specials-row"[^>]*hidden/);
+  assert.doesNotMatch(html, /id="today-specials-visual"/);
   assert.match(javascript, /function renderTodaySpecials/);
   assert.match(javascript, /function claimTodaySpecial/);
   assert.match(javascript, /model\.specialWindow/);

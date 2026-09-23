@@ -118,10 +118,8 @@ const elements = {
   leagueStatus: document.querySelector("#league-status"),
   leagueRooms: document.querySelector("#league-rooms"),
   todaySpecialsRow: document.querySelector("#today-specials-row"),
-  todaySpecialsVisual: document.querySelector("#today-specials-visual"),
   todaySpecialsHook: document.querySelector("#today-specials-hook"),
   todaySpecialsMeta: document.querySelector("#today-specials-meta"),
-  todaySpecialsGo: document.querySelector("#today-specials-go"),
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
   homeCopy: document.querySelector("#home-copy"),
@@ -2090,13 +2088,6 @@ function renderTodaySpecials() {
     : until
       ? `פתוח עד ${until}. קלף אחד היום.`
       : "קלף אחד היום. הוא נשאר באלבום.";
-  if (elements.todaySpecialsGo) {
-    elements.todaySpecialsGo.textContent = windowOpen.claimedToday ? "לאלבום" : "לאיסוף";
-  }
-  if (elements.todaySpecialsVisual && elements.todaySpecialsVisual.dataset.event !== windowOpen.id) {
-    elements.todaySpecialsVisual.dataset.event = windowOpen.id;
-    elements.todaySpecialsVisual.innerHTML = `<img src="/design-assets/hero-art-kalpi.png" alt="" loading="lazy" />`;
-  }
 }
 
 function renderActivity() {
@@ -2164,7 +2155,7 @@ function renderProgression({ announce = false } = {}) {
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
   const streak = Number(model.serverState?.loginStreak) || 0;
-  const showStreak = streak >= 1;
+  const showStreak = streak >= 3;
   elements.levelRank.textContent = progression.rank;
   if (elements.levelStreak) {
     elements.levelStreak.hidden = !showStreak;
