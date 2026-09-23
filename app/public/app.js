@@ -92,6 +92,10 @@ const elements = {
   playerName: document.querySelector("#player-name"),
   playerNameLabel: document.querySelector("#player-name-label"),
   playerAvatar: document.querySelector("#player-avatar"),
+  playerLetter: document.querySelector("#player-letter"),
+  playerLetterText: document.querySelector("#player-letter-text"),
+  playerStreak: document.querySelector("#player-streak"),
+  playerStreakCount: document.querySelector("#player-streak-count"),
   levelAvatar: document.querySelector("#level-avatar"),
   levelAvatarButton: document.querySelector("#level-avatar-button"),
   avatarPicker: document.querySelector("#avatar-picker"),
@@ -1419,42 +1423,48 @@ function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
   return `<b class="${className}" data-letters="${[...letters].length}">${escapeHtml(letters)}</b>`;
 }
 
+function paintLetterChip(image, text, party) {
+  const letters = factionLetters(party);
+  const art = factionLetterArt(party);
+  if (image) {
+    if (art) {
+      image.hidden = false;
+      image.alt = letters;
+      image.onerror = () => {
+        image.hidden = true;
+        image.removeAttribute("src");
+        if (text && letters) {
+          text.hidden = false;
+          text.textContent = letters;
+          text.dataset.letters = String([...letters].length);
+        }
+      };
+      image.src = `/design-assets/${encodeURIComponent(art)}`;
+    } else {
+      image.onerror = null;
+      image.hidden = true;
+      image.removeAttribute("src");
+      image.alt = "";
+    }
+  }
+  if (text) {
+    const showText = Boolean(letters) && !art;
+    text.hidden = !showText;
+    text.textContent = showText ? letters : "";
+    if (showText) text.dataset.letters = String([...letters].length);
+    else delete text.dataset.letters;
+  }
+}
+
 function renderAvatarSeal() {
   const party = factionParty();
   const letters = factionLetters(party);
   const art = factionLetterArt(party);
   if (elements.avatarSeal) elements.avatarSeal.hidden = true;
-  if (elements.levelLetter) {
-    if (art) {
-      elements.levelLetter.hidden = false;
-      elements.levelLetter.alt = letters;
-      elements.levelLetter.onerror = () => {
-        elements.levelLetter.hidden = true;
-        elements.levelLetter.removeAttribute("src");
-        if (elements.levelLetterText && letters) {
-          elements.levelLetterText.hidden = false;
-          elements.levelLetterText.textContent = letters;
-          elements.levelLetterText.dataset.letters = String([...letters].length);
-        } else {
-          elements.levelAvatarButton?.classList.remove("has-faction-letter");
-        }
-      };
-      elements.levelLetter.src = `/design-assets/${encodeURIComponent(art)}`;
-    } else {
-      elements.levelLetter.onerror = null;
-      elements.levelLetter.hidden = true;
-      elements.levelLetter.removeAttribute("src");
-      elements.levelLetter.alt = "";
-    }
-  }
-  if (elements.levelLetterText) {
-    const showText = Boolean(letters) && !art;
-    elements.levelLetterText.hidden = !showText;
-    elements.levelLetterText.textContent = showText ? letters : "";
-    if (showText) elements.levelLetterText.dataset.letters = String([...letters].length);
-    else delete elements.levelLetterText.dataset.letters;
-  }
+  paintLetterChip(elements.levelLetter, elements.levelLetterText, party);
+  paintLetterChip(elements.playerLetter, elements.playerLetterText, party);
   elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(art || letters));
+  elements.playerName?.classList.toggle("has-faction-letter", Boolean(art || letters));
   elements.levelAvatarButton?.classList.toggle("has-faction-seal", false);
 }
 
@@ -1930,7 +1940,7 @@ async function submitQuiz() {
 function renderHome() {
   const { owned, total, percent } = completion();
   const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
-  const due = !timeUntil(model.serverState?.nextIdleAt);
+  const due = Boolean(model.serverState?.nextIdleAt) && !timeUntil(model.serverState.nextIdleAt);
   const available = unseen > 0 || due;
   elements.collectionCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה · ${percent}%`;
   elements.collectionProgress.style.width = `${percent}%`;
@@ -1945,7 +1955,7 @@ function renderHome() {
     .map((id) => model.gameConfig?.releaseSets?.find((release) => release.id === id)?.nameHe)
     .filter(Boolean);
   if (elements.activeRelease) elements.activeRelease.textContent = releaseNames.join(" + ");
-  elements.homeTitle.textContent = available
+  elements.homeTitle.textContent = unseen > 0
     ? unseen === 1 ? "נאסף עבורך קלף אחד." : `נאספו עבורך ${unseen} קלפים.`
     : "הקלף הבא בדרך.";
   elements.homeCopy.textContent = available
@@ -2230,8 +2240,13 @@ function renderProgression({ announce = false } = {}) {
     elements.levelStreak.hidden = !showStreak;
     if (elements.levelStreakCount) elements.levelStreakCount.textContent = showStreak ? String(streak) : "";
   }
+  if (elements.playerStreak) {
+    elements.playerStreak.hidden = !showStreak;
+    if (elements.playerStreakCount) elements.playerStreakCount.textContent = showStreak ? String(streak) : "";
+  }
   elements.levelAvatarButton?.classList.toggle("has-streak", showStreak);
   elements.levelAvatarButton?.classList.toggle("has-week-streak", streak >= 7);
+  elements.playerName?.classList.toggle("has-streak", showStreak);
   if (elements.levelAvatarButton) {
     elements.levelAvatarButton.setAttribute("aria-label", showStreak
       ? `${progression.rank} · רצף ${streak} · הפרופיל והאווטאר`
@@ -2281,17 +2296,15 @@ function updateCountdown() {
     elements.cooldownCopy.classList.toggle("is-clock", !full);
     elements.cooldownCopy.classList.toggle("is-full", full);
   }
+  if (elements.headerStatus) elements.headerStatus.hidden = true;
   if (full) {
-    elements.headerStatus.textContent = "המחסן מלא";
     if (elements.debugClock) elements.debugClock.textContent = "Idle pull · full";
     return;
   }
   if (!remaining) {
-    elements.headerStatus.textContent = "אוספים עכשיו";
     if (elements.debugClock) elements.debugClock.textContent = "Idle pull · ready";
     return;
   }
-  elements.headerStatus.textContent = `הקלף הבא · ${clock}`;
   if (elements.debugClock) elements.debugClock.textContent = `Next idle pull · ${clock}`;
 }
 
@@ -3910,10 +3923,8 @@ function renderGrowth() {
   if (openTab) openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";
   const boardHint = document.querySelector("#trade-board-hint");
   if (boardHint) {
-    boardHint.hidden = false;
-    boardHint.textContent = openCount
-      ? `${openCount} הצעות ממתינות בלוח. מפרסמים כאן החלפה של קלף שיש לכם בקלף שאתם רוצים. רק אחרי אישור הקלפים מתחלפים. שיתוף הוא תמונה בלבד.`
-      : "כאן מפרסמים החלפה: קלף שיש לכם תמורת קלף שאתם רוצים. רק אחרי שאישרו את העסקה הקלפים מתחלפים. שיתוף בוואטסאפ הוא תמונה בלבד — זה לא מעביר קלף לאלבום.";
+    boardHint.hidden = true;
+    boardHint.textContent = "";
   }
 }
 
@@ -4939,12 +4950,15 @@ async function acceptTradeOffer(tradeId) {
 }
 
 async function cancelTradeOffer(tradeId) {
+  showWait("מבטלים את ההחלפה…");
   try {
     applyTradeResult(await request(`/api/trades/${encodeURIComponent(tradeId)}/cancel`, { method: "POST" }));
     model.watchedTrade = null;
     showToast("הצעת ההחלפה בוטלה.");
   } catch {
     showToast("לא ניתן לבטל את ההצעה.");
+  } finally {
+    hideWait();
   }
 }
 

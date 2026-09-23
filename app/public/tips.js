@@ -578,10 +578,10 @@ export function attachKlafiTips(env = globalThis) {
   function finish({ forceOff = false } = {}) {
     if (state.mode === "page" && state.page) {
       markPageSeen(state.page, env);
-      if (forceOff || mute?.checked !== false) mutePageGuides(env);
+      if (forceOff || mute?.checked) mutePageGuides(env);
     } else if (state.mode === "pull") {
       markPullPages();
-      if (forceOff || !mute || mute.checked) persistOff();
+      if (forceOff || mute?.checked) persistOff();
       else persistOn();
     }
     state.mode = null;
@@ -796,7 +796,6 @@ export function attachKlafiTips(env = globalThis) {
     }
     const next = state.step + 1;
     if (state.mode === "pull" && !stepViewReady(next, flags())) {
-      finish({ forceOff: true });
       return;
     }
     state.step = next;
@@ -812,7 +811,7 @@ export function attachKlafiTips(env = globalThis) {
   backBtn?.addEventListener("click", goBack);
   skipBtn?.addEventListener("click", () => finish({ forceOff: true }));
   dim?.addEventListener("click", () => finish({ forceOff: true }));
-  replay?.addEventListener("click", replayTour);
+  replay?.addEventListener("click", replayCurrentPage);
   pageReplays.forEach((button) => button.addEventListener("click", replayCurrentPage));
   window.addEventListener("resize", () => { if (state.started && !state.parked) schedulePaint(); });
   doc.addEventListener("scroll", () => { if (state.started && !state.parked) schedulePaint(); }, true);
