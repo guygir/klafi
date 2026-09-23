@@ -1033,7 +1033,8 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
 
 test("home route creates a guest session without the full catalog", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-home-route-"));
-  const running = await start(dataDir, { value: Date.parse("2026-09-15T12:00:00.000Z") }, { debugEnabled: false });
+  const clock = { value: Date.parse("2026-09-15T12:00:00.000Z") };
+  const running = await start(dataDir, clock, { debugEnabled: false });
   t.after(async () => {
     await running.close();
     await rm(dataDir, { recursive: true, force: true });
@@ -1042,11 +1043,16 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(home.status, 200);
   assert.match(home.body.token, /^[0-9a-f-]{36}$/i);
   assert.ok(home.body.state.displayName);
+  assert.equal(home.body.state.loginStreak, 1);
   assert.equal(home.body.state.progression.rank, "אזרח סקרן");
   assert.equal(home.body.catalog, undefined);
   assert.equal(typeof home.body.state.inventory, "object");
   const again = await api(running.base, "/api/home", { token: home.body.token });
   assert.equal(again.body.token, home.body.token);
+  assert.equal(again.body.state.loginStreak, 1);
+  clock.value = Date.parse("2026-09-16T12:00:00.000Z");
+  const nextDay = await api(running.base, "/api/home", { token: home.body.token });
+  assert.equal(nextDay.body.state.loginStreak, 2);
   const warm = await api(running.base, "/api/warm");
   assert.deepEqual(warm, { status: 200, body: { status: "ready" } });
   const holders = await api(running.base, "/api/card-holders");

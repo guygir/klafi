@@ -1271,6 +1271,9 @@ export async function createKalpiApp({
         if (!store.getSession(token)) {
           token = await store.createSession(new Date(now()).toISOString());
         }
+        await store.withSession(token, (current) => {
+          applyLoginStreak(current, now());
+        });
         json(response, 200, { token, state: stateFor(store.getSession(token)) });
         return;
       }

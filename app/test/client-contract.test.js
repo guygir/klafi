@@ -257,6 +257,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="level-letter-text"/);
   assert.match(html, /id="level-streak"/);
   assert.match(html, /id="level-streak-count"/);
+  assert.match(javascript, /const showStreak = streak >= 1/);
+  assert.match(javascript, /elements\.cooldownCopy\.hidden = true/);
+  assert.match(css, /\.masthead \.presentation-link/);
   assert.match(html, /id="rank-names"/);
   assert.match(html, /id="numbered-sets"/);
   assert.match(html, /id="numbered-tip"/);

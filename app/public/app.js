@@ -2164,7 +2164,7 @@ function renderProgression({ announce = false } = {}) {
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
   const streak = Number(model.serverState?.loginStreak) || 0;
-  const showStreak = streak >= 3;
+  const showStreak = streak >= 1;
   elements.levelRank.textContent = progression.rank;
   if (elements.levelStreak) {
     elements.levelStreak.hidden = !showStreak;
@@ -2206,13 +2206,19 @@ function updateCountdown() {
   const remaining = timeUntil(model.serverState?.nextIdleAt);
   const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
   if (!remaining) {
-    elements.cooldownCopy.textContent = unseen ? "פותחים אחד-אחד" : "קלף חדש מוכן לאיסוף";
+    if (elements.cooldownCopy) {
+      elements.cooldownCopy.textContent = unseen ? "פותחים אחד-אחד" : "קלף חדש מוכן לאיסוף";
+      elements.cooldownCopy.hidden = true;
+    }
     elements.headerStatus.textContent = "אוספים עכשיו";
     if (elements.debugClock) elements.debugClock.textContent = "Idle pull · ready";
     return;
   }
   const clock = formatCountdown(remaining);
-  elements.cooldownCopy.textContent = `הבא בעוד ${clock}`;
+  if (elements.cooldownCopy) {
+    elements.cooldownCopy.textContent = `הבא בעוד ${clock}`;
+    elements.cooldownCopy.hidden = false;
+  }
   elements.headerStatus.textContent = `הקלף הבא · ${clock}`;
   if (elements.debugClock) elements.debugClock.textContent = `Next idle pull · ${clock}`;
 }

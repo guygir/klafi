@@ -3157,7 +3157,7 @@ body {
 
 #home-view .home-grid {
   flex: 1 1 auto;
-  min-height: min(248px, 40dvh);
+  min-height: 0;
   grid-template-columns: minmax(0, 1fr) minmax(120px, 190px);
   gap: 20px;
 }
@@ -3210,7 +3210,16 @@ body {
 .today-docket {
   flex: 0 0 auto;
   width: 100%;
-  margin: 8px auto 0;
+  margin: 6px auto 0;
+}
+
+.masthead .presentation-link,
+.masthead .presentation-studio-link {
+  display: none !important;
+}
+
+#home-view.has-specials .today-docket-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .today-docket > header { display: none; }
@@ -3352,8 +3361,9 @@ body {
 @media (max-width: 760px) {
   .app-shell { padding-inline: 12px; }
   .masthead { min-height: 48px; }
-  .header-debug-reset:not(.presentation-link) { display: none; }
-  .presentation-studio-link { display: none; }
+  .header-debug-reset { display: none; }
+  .presentation-link,
+  .presentation-studio-link { display: none !important; }
   .level-strip,
   .app-shell.home-active .level-strip {
     min-height: 70px;
@@ -3368,7 +3378,7 @@ body {
   }
   #home-view .home-copy h1 { font-size: clamp(22px, 7vw, 31px); }
   .collection-line { margin-top: 8px; }
-  .today-docket-list { gap: 4px; }
+  .today-docket-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
   .today-docket-row { grid-template-columns: 28px minmax(0, 1fr); grid-template-areas: "visual title" "visual meta"; }
   .today-docket-row > b { display: none; }
   .today-docket-visual { width: 26px; }
@@ -3379,7 +3389,8 @@ body {
   .wordmark { font-size: 18px; }
   .wordmark b { font-size: 19px; }
   .player-name { max-width: 92px; }
-  .presentation-link { display: none; }
+  .presentation-link,
+  .presentation-studio-link { display: none !important; }
   .level-identity small { max-width: 112px; }
   .level-progress-block small { white-space: normal; }
   .binder-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3872,7 +3883,7 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
   .today-docket-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .today-docket-row {
     min-height: 48px;
