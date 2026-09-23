@@ -3375,13 +3375,21 @@ body {
   flex: 0 0 auto;
   margin: 6px 0 0;
   color: var(--civic);
-  font: 700 clamp(26px, 7vw, 40px)/1.05 "IBM Plex Sans Hebrew", sans-serif;
+  font: 600 clamp(15px, 4.2cqw, 20px)/1.25 "IBM Plex Sans Hebrew", sans-serif;
   letter-spacing: 0.01em;
+}
+.next-pack-clock.is-clock,
+#home-view #cooldown-copy.is-clock {
+  font-size: clamp(26px, 7vw, 40px);
+  font-weight: 700;
+  line-height: 1.05;
   font-variant-numeric: tabular-nums;
 }
 #home-view #cooldown-copy.is-full {
   font-size: clamp(15px, 4.2cqw, 20px);
+  font-weight: 600;
   line-height: 1.25;
+  font-variant-numeric: normal;
 }
 .trust-info {
   flex: 0 0 auto;
@@ -3631,8 +3639,8 @@ body {
   }
   #home-view .home-copy { text-align: start; }
   #home-view .home-copy h1 { font-size: clamp(20px, 6.4vw, 28px); }
-  .next-pack-clock,
-  #home-view #cooldown-copy { font-size: clamp(22px, 6.4vw, 30px); }
+  .next-pack-clock.is-clock,
+  #home-view #cooldown-copy.is-clock { font-size: clamp(22px, 6.4vw, 30px); }
   .collection-line { margin-top: 8px; }
   .today-docket-list { grid-template-columns: 1fr; gap: 4px; }
   .today-docket-row { grid-template-columns: 28px minmax(0, 1fr); grid-template-areas: "visual title" "visual meta"; }

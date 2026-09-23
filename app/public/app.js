@@ -1,4 +1,5 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
+import { applyIdleCountdown, formatCountdown, idleCountdownCopy, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 
@@ -1346,28 +1347,6 @@ function pagerMarkup(page, pages, target) {
     <button type="button" data-page-target="${target}" data-page="${Math.min(pages - 1, page + 1)}" ${page === pages - 1 ? "disabled" : ""} aria-label="העמוד הבא">←</button>`;
 }
 
-function timeUntil(iso) {
-  if (!iso) return 0;
-  return Math.max(0, Date.parse(iso) - Date.now());
-}
-
-function nextCollectionRemaining() {
-  const upcoming = (model.serverState?.preparedPulls || [])
-    .map((pull) => timeUntil(pull.availableAt))
-    .filter((ms) => ms > 0)
-    .sort((left, right) => left - right);
-  if (upcoming[0]) return upcoming[0];
-  return timeUntil(model.serverState?.nextIdleAt);
-}
-
-function formatCountdown(milliseconds) {
-  const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainder = seconds % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
-}
-
 function showWait(copy) {
   if (!elements.waitDialog) return;
   if (elements.waitDialogCopy) elements.waitDialogCopy.textContent = copy || "רגע…";
@@ -2362,29 +2341,21 @@ function renderProgression({ announce = false } = {}) {
 function updateCountdown() {
   renderTodayDocket();
   scheduleIdleNotification();
-  const remaining = nextCollectionRemaining();
-  const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
-  const cap = model.serverState?.idleCapacity ?? 8;
-  const full = unseen >= cap;
-  const clock = formatCountdown(remaining);
-  if (elements.cooldownCopy) {
-    elements.cooldownCopy.textContent = full
-      ? "המחסן מלא. פתחו קלף כדי שהאיסוף יתחיל שוב."
-      : `הבא בעוד ${clock}`;
-    elements.cooldownCopy.hidden = false;
-    elements.cooldownCopy.classList.toggle("is-clock", !full);
-    elements.cooldownCopy.classList.toggle("is-full", full);
-  }
+  const view = idleCountdownCopy({
+    serverState: model.serverState,
+    idleQueueLength: model.idleQueue.length,
+  });
+  applyIdleCountdown(elements.cooldownCopy, view);
   if (elements.headerStatus) elements.headerStatus.hidden = true;
-  if (full) {
+  if (view.full) {
     if (elements.debugClock) elements.debugClock.textContent = "Idle pull · full";
     return;
   }
-  if (!remaining) {
+  if (!view.remaining) {
     if (elements.debugClock) elements.debugClock.textContent = "Idle pull · ready";
     return;
   }
-  if (elements.debugClock) elements.debugClock.textContent = `Next idle pull · ${clock}`;
+  if (elements.debugClock) elements.debugClock.textContent = `Next idle pull · ${formatCountdown(view.remaining)}`;
 }
 
 setInterval(updateCountdown, 1000);
