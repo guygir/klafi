@@ -548,7 +548,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-63/);
+  assert.match(html, /card-surface-64/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +638,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-63/);
+  assert.match(html, /card-surface-64/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -702,6 +702,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.app-shell\.home-active \.level-letter/);
   assert.match(css, /width:\s*26px/);
   assert.match(css, /\.filter-strip button \{[^}]*border-radius:\s*8px/);
+  assert.match(css, /\.filter-sets \{[^}]*flex-wrap:\s*nowrap/);
+  assert.match(css, /\.filter-sets \{[^}]*overflow-x:\s*auto/);
+  assert.doesNotMatch(css, /\.filter-sets \{[^}]*flex-wrap:\s*wrap/);
   assert.match(css, /#home-view\.view\.active/);
   assert.match(javascript, /data-binder-owned/);
   assert.match(javascript, /binderOwnedOnly/);

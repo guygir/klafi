@@ -723,17 +723,17 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] .filter-strip {
-  gap: 8px;
-  margin: 8px 0 14px;
+  gap: 6px;
+  margin: 4px 0 8px;
 }
 
 #app[data-density="airy-v2"] .filter-strip button,
 #app[data-density="airy-v2"] .filter-party,
 #app[data-density="airy-v2"] .filter-owned {
   min-height: 0;
-  padding: 4px 8px;
+  padding: 2px 6px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 #app[data-density="airy-v2"] .binder-grid {
