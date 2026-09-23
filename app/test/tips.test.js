@@ -136,6 +136,8 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(shouldAutoOpenPage({ home: true }, "binder"), true);
   assert.equal(shouldAutoOpenPage({ "*": true }, "binder"), false);
   assert.equal(shouldAutoOpenPage({}, "studio"), false);
+  assert.equal(shouldAutoOpenPage({}, "binder", { guestBinder: true }), false);
+  assert.equal(shouldAutoOpenPage({}, "binder", { guestBinder: false }), true);
 
   const store = {};
   const env = {

@@ -810,7 +810,22 @@ async function hydrateHome() {
   return homeHydrate;
 }
 
+function dropUnknownIdleHead() {
+  if (!model.catalog.length) return [];
+  const unknown = [];
+  while (model.idleQueue.length && !model.byId.get(model.idleQueue[0].cardId)) {
+    unknown.push(model.idleQueue.shift().instanceId);
+  }
+  const knownIds = unknown.filter(Boolean);
+  if (knownIds.length) {
+    rememberPendingIdleSeen(knownIds);
+    flushPendingIdleSeen().catch(() => {});
+  }
+  return unknown;
+}
+
 function nextCachedIdleCard(current = Date.now()) {
+  dropUnknownIdleHead();
   if (model.idleQueue.length) return { instance: model.idleQueue[0], prepared: false };
   const prepared = [...(model.serverState?.preparedPulls || [])]
     .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));
@@ -6127,7 +6142,7 @@ elements.saveAchievements?.addEventListener("click", saveStudioAchievements);
 elements.saveEvents?.addEventListener("click", saveStudioEvents);
 elements.closeProfile.addEventListener("click", () => elements.profileDialog.close());
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
-elements.dialogReport.addEventListener("click", openReportDialog);
+elements.dialogReport.addEventListener("click", () => openReportDialog());
 elements.closeReport.addEventListener("click", () => elements.reportDialog.close());
 elements.reportForm.addEventListener("submit", submitCorrectionReport);
 elements.openBugReport?.addEventListener("click", openBugDialog);
