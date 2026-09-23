@@ -358,7 +358,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-board-wanted"/);
   assert.match(html, /id="trade-board-pager"/);
   assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,80}?width:\s*100%/);
-  assert.match(css, /\.trade-form fieldset[\s\S]{0,180}?grid-template-columns:\s*auto minmax\(0,\s*1fr\)/);
+  assert.match(css, /\.trade-choice-row[\s\S]{0,180}?grid-template-columns:\s*auto minmax\(0,\s*1fr\)/);
+  assert.match(html, /class="trade-choice-row"/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame[\s\S]{0,80}?width:\s*64px/);
   assert.doesNotMatch(css, /\.trade-compose \.trade-thumb \{ display: none/);
   assert.match(css, /--today-pack-w/);

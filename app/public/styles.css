@@ -3327,7 +3327,7 @@ body {
 .pack-plinth { min-height: 0; }
 .pack-wrapper { width: min(96px, 22vw); height: auto; overflow: visible; }
 #home-view .pack-wrapper { width: 100%; }
-#home-view .pack-wrapper img { height: auto; object-fit: contain; }
+#home-view .pack-wrapper img { width: 100%; height: auto; object-fit: contain; }
 #home-view .action-dock,
 #home-view .today-docket { flex: 0 0 auto; }
 .action-dock { margin-top: 4px; }
@@ -3707,13 +3707,9 @@ body {
 .trade-form fieldset {
   min-height: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   padding: 6px !important;
-}
-
-.trade-form fieldset > legend {
-  grid-column: 1 / -1;
 }
 
 .trade-form label {
@@ -3790,10 +3786,19 @@ body {
   display: grid;
   width: 100%;
   min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  overflow: visible;
+  direction: rtl;
+}
+
+.trade-choice-row {
+  display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-  overflow: visible;
+  min-width: 0;
   direction: rtl;
 }
 
