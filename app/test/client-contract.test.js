@@ -698,8 +698,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="replay-tips"/);
   assert.doesNotMatch(html, /data-replay-tips/);
   assert.match(html, /class="binder-stats-row"/);
-  assert.match(html, /class="pack-plinth"[\s\S]*id="today-specials-row"[\s\S]*id="home-pack"/);
-  assert.match(css, /#home-view \.pack-plinth > \.today-specials-line/);
+  assert.match(html, /class="home-grid"[\s\S]*id="today-specials-row"[\s\S]*class="pack-plinth"/);
+  assert.match(css, /#home-view \.home-grid > \.today-specials-line/);
   assert.match(css, /#home-view \.pack-wrapper:hover \{ transform: rotate\(0\.5deg\); \}/);
   assert.match(css, /grid-column:\s*1\s*\/\s*-1/);
   assert.match(css, /\.level-letter,\s*\.collector-letter \{[^}]*object-fit:\s*contain/);
