@@ -1275,6 +1275,10 @@ function fitBallotLetterText(node) {
     return;
   }
   node.style.fontSize = "";
+  node.querySelectorAll("span").forEach((glyph) => {
+    glyph.style.fontSize = "1em";
+    glyph.style.lineHeight = "inherit";
+  });
   const count = Math.max(
     1,
     Number(node.dataset.letters) || node.querySelectorAll("span").length || [...node.textContent].length,

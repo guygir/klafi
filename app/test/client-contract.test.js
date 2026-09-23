@@ -548,7 +548,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-67/);
+  assert.match(html, /card-surface-68/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +638,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-67/);
+  assert.match(html, /card-surface-68/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -698,6 +698,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.level-letter-text,\s*\.collector-letter-text \{[^}]*flex-direction:\s*column/);
   assert.match(javascript, /glyph\.textContent = mark/);
   assert.match(javascript, /function fitBallotLetterText/);
+  assert.match(css, /\.level-identity > span/);
+  assert.doesNotMatch(css, /#app\[data-density="airy-v2"\] \.level-identity span \{/);
   assert.match(javascript, /function queueBallotLetterFit/);
   assert.match(html, /id="earned-badge-list"[^>]*binder-badge-row/);
   assert.match(html, /id="earned-badge-rail"[\s\S]*binder-stats-row[\s\S]*<\/div>\s*<\/div>\s*<div id="earned-badge-list"/);

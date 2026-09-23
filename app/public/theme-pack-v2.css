@@ -1037,7 +1037,7 @@ body:has(#app[data-theme="pack-v2"]) {
   gap: 4px;
 }
 
-#app[data-density="airy-v2"] .level-identity span {
+#app[data-density="airy-v2"] .level-identity > span {
   margin-top: 0;
   font-size: 13px;
   font-weight: 700;
@@ -1138,7 +1138,6 @@ body:has(#app[data-theme="pack-v2"]) {
 #binder-view .filter-strip {
   display: flex;
   flex: 0 0 auto;
-  flex-basis: 100%;
   align-self: stretch;
   width: 100%;
   max-width: 100%;

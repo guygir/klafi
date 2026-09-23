@@ -2377,7 +2377,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .level-identity { grid-area: identity; min-width: 0; display: grid; justify-items: center; text-align: center; direction: rtl; line-height: 1.15; gap: 4px; overflow: visible; padding-top: 8px; }
 .level-identity small { color: rgba(26, 31, 28, 0.58); font-size: 11px; white-space: nowrap; }
 .level-identity strong { margin-top: 0; font-size: 18px; }
-.level-identity span { margin-top: 0; color: var(--civic); font-size: 13px; }
+.level-identity > span { margin-top: 0; color: var(--civic); font-size: 13px; }
 .level-progress-block { grid-area: progress; min-width: 0; display: grid; gap: 6px; direction: rtl; }
 .level-progress-block small,
 #level-next { color: rgba(26, 31, 28, 0.58); font-size: 11px; line-height: 1.25; text-align: start; overflow-wrap: anywhere; }
@@ -2395,7 +2395,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .app-shell.home-active .level-identity small { font-size: 13px; }
 .app-shell.home-active .level-identity strong { font-size: 26px; }
-.app-shell.home-active .level-identity span { font-size: 18px; }
+.app-shell.home-active .level-identity > span { font-size: 18px; }
 .app-shell.home-active .level-track { height: 26px; }
 .app-shell.home-active .level-track b { font-size: 14px; }
 .app-shell.home-active .level-progress-block small { font-size: 14px; }
@@ -3076,14 +3076,14 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   .level-strip { min-height: 96px; grid-template-columns: 128px minmax(70px, 1fr); gap: 8px; }
   .level-identity small { font-size: 9px; white-space: normal; }
   .level-identity strong { font-size: 17px; }
-  .level-identity span { font-size: 12px; }
+  .level-identity > span { font-size: 12px; }
   .level-track { height: 20px; }
   .level-track b { font-size: 12px; }
   .level-progress-block small { font-size: 10px; }
   .app-shell.home-active .level-strip { min-height: 122px; grid-template-columns: 128px minmax(70px, 1fr); gap: 8px; }
   .app-shell.home-active .level-identity small { font-size: 10px; }
   .app-shell.home-active .level-identity strong { font-size: 22px; }
-  .app-shell.home-active .level-identity span { font-size: 15px; }
+  .app-shell.home-active .level-identity > span { font-size: 15px; }
   .app-shell.home-active .level-track { height: 22px; }
   .app-shell.home-active .level-track b { font-size: 12px; }
   .app-shell.home-active .level-progress-block small { font-size: 11px; }
@@ -3238,7 +3238,7 @@ body {
 }
 
 .app-shell.home-active .level-identity strong { font-size: 20px; }
-.app-shell.home-active .level-identity span { font-size: 14px; }
+.app-shell.home-active .level-identity > span { font-size: 14px; }
 .app-shell.home-active .level-track { height: 22px; }
 .app-shell.home-active .level-progress-block small { font-size: 11px; }
 
