@@ -2313,7 +2313,8 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .level-identity strong { margin-top: 0; font-size: 18px; }
 .level-identity span { margin-top: 0; color: var(--civic); font-size: 13px; }
 .level-progress-block { grid-area: progress; min-width: 0; display: grid; gap: 6px; direction: rtl; }
-.level-progress-block small { color: rgba(26, 31, 28, 0.58); font-size: 11px; line-height: 1.25; text-align: start; overflow-wrap: anywhere; }
+.level-progress-block small,
+#level-next { color: rgba(26, 31, 28, 0.58); font-size: 11px; line-height: 1.25; text-align: start; overflow-wrap: anywhere; }
 .level-pack-icon { display: none; }
 .level-reward-pack { display: block; width: 92px; height: auto; margin: 8px auto 16px; }
 .level-track { position: relative; height: 21px; overflow: hidden; border-radius: 5px; background: var(--paper-deep); }
@@ -3258,7 +3259,8 @@ body {
   justify-content: center;
   align-self: stretch;
   width: 100%;
-  height: calc(var(--today-pack-w) * 1390 / 769 * 1.5);
+  min-height: calc(var(--today-pack-w) * 1390 / 769 * 1.5);
+  height: auto;
   box-sizing: border-box;
   padding-block: calc(var(--today-pack-w) * 1390 / 769 * 0.25);
   gap: 0;
@@ -3287,10 +3289,12 @@ body {
 .today-open-copy {
   flex: 1;
   min-width: 0;
+  overflow: visible;
 }
 .next-pack-clock,
 #home-view #cooldown-copy {
-  margin: 4px 0 0;
+  flex: 0 0 auto;
+  margin: 6px 0 0;
   color: var(--civic);
   font: 700 clamp(26px, 7vw, 40px)/1.05 "IBM Plex Sans Hebrew", sans-serif;
   letter-spacing: 0.01em;
@@ -3348,7 +3352,8 @@ body {
   display: block;
   overflow: hidden;
   width: 100%;
-  margin-top: 4px;
+  min-height: 22px;
+  margin-top: 8px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -3837,7 +3842,44 @@ body {
 }
 
 .faction-member-board {
-  margin: 12px 0 4px;
+  margin: 0 0 4px;
+}
+
+.faction-board-title {
+  margin: 16px 0 8px;
+  color: var(--civic);
+  font: 700 13px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
+
+.faction-hist {
+  margin: 0;
+}
+
+.faction-hist-plot,
+.faction-hist .challenge-hist-axis {
+  justify-content: flex-start;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.faction-hist .challenge-hist-col,
+.faction-hist .challenge-hist-axis span {
+  width: 36px;
+  flex: 0 0 36px;
+}
+
+.faction-hist .challenge-hist-axis span {
+  display: grid;
+  gap: 2px;
+  overflow-wrap: anywhere;
+  font-size: 9px;
+  line-height: 1.15;
+}
+
+.faction-hist .challenge-hist-axis small {
+  color: var(--civic);
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .faction-chart-row {

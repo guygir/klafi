@@ -1025,34 +1025,31 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] .level-progress-block {
-  gap: 0;
+  gap: 5px;
 }
 
 #app[data-density="airy-v2"] .level-track {
-  min-height: 36px;
+  min-height: 28px;
 }
 
 #app[data-density="airy-v2"] .level-track b {
-  display: none;
-}
-
-#app[data-density="airy-v2"] .level-track .level-next,
-#app[data-density="airy-v2"] .level-track small {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
   display: grid;
   place-items: center;
-  overflow: hidden;
-  padding: 0 8px;
-  color: var(--pack-umber, #3c3026);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#app[data-density="airy-v2"] .level-progress-block > small,
+#app[data-density="airy-v2"] #level-next {
+  position: static;
+  display: block;
+  padding: 0;
+  color: rgba(60, 48, 38, 0.62);
   font-size: 10px;
   font-weight: 600;
-  line-height: 1.2;
-  text-align: center;
-  text-overflow: unset;
+  line-height: 1.25;
+  text-align: start;
   white-space: normal;
-  pointer-events: none;
 }
 
 #app[data-density="airy-v2"] .binder-head {

@@ -54,7 +54,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="faction-members"/);
   assert.match(html, /כוכבי האוסף של מי שבחרו בסיעה/);
   assert.match(javascript, /function renderFactionMembers/);
-  assert.match(javascript, /function factionFermiRow/);
+  assert.match(javascript, /function factionHistMarkup/);
+  assert.match(html, /id="faction-members-title"/);
+  assert.match(html, /הטבלה בסיעה/);
+  assert.match(html, /id="faction-board-title"/);
+  assert.match(css, /\.faction-hist-plot/);
   assert.match(html, /role="list"/);
   assert.match(javascript, /function cardTrustLine/);
   assert.match(javascript, /function prefersReducedMotion/);
@@ -486,6 +490,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /הקלף לא נוסף לאוסף שלכם/);
   assert.match(javascript, /גלו עוד קלף אחד חדש כדי להתקדם לרמה הבאה/);
   assert.match(javascript, /גלו עוד \$\{progression\.remaining\} קלפים חדשים כדי להתקדם לרמה הבאה/);
+  assert.match(javascript, /\$\{unique\}\/\$\{target\}/);
+  assert.match(javascript, /function nextCollectionRemaining/);
+  assert.match(javascript, /אין אירוע כרגע/);
   assert.match(html, /data-today-nav="growth"/);
   assert.doesNotMatch(html, /data-today-nav="events"/);
   assert.match(javascript, /data-trade-card/);
@@ -524,7 +531,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-50/);
+  assert.match(html, /card-surface-51/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -592,7 +599,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-50/);
+  assert.match(html, /card-surface-51/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

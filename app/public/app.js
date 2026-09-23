@@ -1311,6 +1311,15 @@ function timeUntil(iso) {
   return Math.max(0, Date.parse(iso) - Date.now());
 }
 
+function nextCollectionRemaining() {
+  const upcoming = (model.serverState?.preparedPulls || [])
+    .map((pull) => timeUntil(pull.availableAt))
+    .filter((ms) => ms > 0)
+    .sort((left, right) => left - right);
+  if (upcoming[0]) return upcoming[0];
+  return timeUntil(model.serverState?.nextIdleAt);
+}
+
 function formatCountdown(milliseconds) {
   const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
   const hours = Math.floor(seconds / 3600);
@@ -2115,22 +2124,21 @@ function renderTodayDocket() {
 function renderTodaySpecials() {
   if (!elements.todaySpecialsRow) return;
   const windowOpen = model.specialWindow;
-  elements.todaySpecialsRow.hidden = !windowOpen;
+  elements.todaySpecialsRow.hidden = false;
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
-  if (!windowOpen) {
-    elements.todaySpecialsRow.classList.remove("is-marquee", "is-ready");
-    return;
+  let line = "אין אירוע כרגע";
+  if (windowOpen) {
+    const closes = new Date(windowOpen.closesAt);
+    const until = Number.isNaN(closes.getTime())
+      ? ""
+      : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
+    const detail = windowOpen.claimedToday
+      ? "הקלף היומי כבר באוסף. הוא נשאר באלבום."
+      : until
+        ? `פתוח עד ${until}. קלף אחד היום.`
+        : "קלף אחד היום. הוא נשאר באלבום.";
+    line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
   }
-  const closes = new Date(windowOpen.closesAt);
-  const until = Number.isNaN(closes.getTime())
-    ? ""
-    : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
-  const detail = windowOpen.claimedToday
-    ? "הקלף היומי כבר באוסף. הוא נשאר באלבום."
-    : until
-      ? `פתוח עד ${until}. קלף אחד היום.`
-      : "קלף אחד היום. הוא נשאר באלבום.";
-  const line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
   if (elements.todaySpecialsCopy) elements.todaySpecialsCopy.textContent = line;
   if (elements.todaySpecialsCopyRepeat) elements.todaySpecialsCopyRepeat.textContent = line;
   requestAnimationFrame(layoutTodaySpecials);
@@ -2229,8 +2237,11 @@ function renderProgression({ announce = false } = {}) {
       : `${progression.rank} · הפרופיל והאווטאר`);
   }
   if (elements.levelTeaser) elements.levelTeaser.textContent = progression.teaser;
-  elements.levelProgress.style.width = `${progression.percent}%`;
-  elements.levelProgressCount.textContent = `${progression.unique - progression.start}/${progression.target - progression.start}`;
+  const unique = progression.unique || 0;
+  const target = Math.max(progression.target || 0, unique);
+  const filled = target ? Math.max(0, Math.min(100, Math.round((unique / target) * 100))) : 100;
+  elements.levelProgress.style.width = `${filled}%`;
+  elements.levelProgressCount.textContent = `${unique}/${target}`;
   if (progression.remaining) {
     elements.levelNext.textContent = progression.remaining === 1
       ? "גלו עוד קלף אחד חדש כדי להתקדם לרמה הבאה"
@@ -2256,7 +2267,7 @@ function renderProgression({ announce = false } = {}) {
 function updateCountdown() {
   renderTodayDocket();
   scheduleIdleNotification();
-  const remaining = timeUntil(model.serverState?.nextIdleAt);
+  const remaining = nextCollectionRemaining();
   const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
   const cap = model.serverState?.idleCapacity ?? 8;
   const full = unseen >= cap;
@@ -2264,13 +2275,9 @@ function updateCountdown() {
   if (elements.cooldownCopy) {
     elements.cooldownCopy.textContent = full
       ? "המחסן מלא. פתחו קלף כדי שהאיסוף יתחיל שוב."
-      : remaining
-        ? `הבא בעוד ${clock}`
-        : unseen
-          ? "קלף מוכן. פותחים."
-          : "הקלף הבא בדרך.";
+      : `הבא בעוד ${clock}`;
     elements.cooldownCopy.hidden = false;
-    elements.cooldownCopy.classList.toggle("is-clock", Boolean(remaining && !full));
+    elements.cooldownCopy.classList.toggle("is-clock", !full);
     elements.cooldownCopy.classList.toggle("is-full", full);
   }
   if (full) {
@@ -3681,12 +3688,21 @@ async function refreshDailyChallenge() {
   }
 }
 
-function factionFermiRow(label, score, maximum, index, current = false) {
-  const width = Math.max(4, Math.round((score / Math.max(1, maximum)) * 100));
-  return `<div class="faction-chart-row${current ? " current-player" : ""}">
-    <span>${index + 1}. ${label}${current ? " · אתם" : ""}</span>
-    <i aria-hidden="true"><b style="width:${width}%; animation-delay:${index * 40}ms"></b></i>
-    <strong>★${score}</strong>
+function factionHistMarkup(entries) {
+  const maximum = Math.max(1, ...entries.map(({ score }) => score || 0));
+  const cols = entries.map((entry, index) => {
+    const height = entry.score ? Math.max(4, Math.round((entry.score / maximum) * 100)) : 0;
+    return `<div class="challenge-hist-col${entry.current ? " you" : ""}">
+      <b style="height:${height}%; animation-delay:${index * 40}ms"></b>
+    </div>`;
+  }).join("");
+  const axis = entries.map((entry) => {
+    const you = entry.current ? " · אתם" : "";
+    return `<span>${entry.label}${you}<small>★${entry.score}</small></span>`;
+  }).join("");
+  return `<div class="faction-hist challenge-hist">
+    <div class="challenge-hist-plot faction-hist-plot" dir="ltr" aria-hidden="true">${cols}</div>
+    <div class="challenge-hist-axis" dir="ltr">${axis}</div>
   </div>`;
 }
 
@@ -3695,19 +3711,16 @@ function renderFactionMembers() {
   const partyId = elements.factionSelect?.value || "";
   const entry = (model.leaderboards?.factions || []).find((faction) => faction.partyId === partyId);
   const members = entry?.members || [];
-  const maximum = Math.max(1, ...members.map(({ stars }) => stars || 0));
   if (!partyId) {
     elements.factionMembers.innerHTML = '<p class="work-note">בחרו סיעה כדי לראות איפה אתם עומדים.</p>';
     return;
   }
   elements.factionMembers.innerHTML = members.length
-    ? members.map((member, index) => factionFermiRow(
-      escapeHtml(member.label),
-      member.stars || 0,
-      maximum,
-      index,
-      Boolean(member.current),
-    )).join("")
+    ? factionHistMarkup(members.map((member) => ({
+      label: escapeHtml(member.label),
+      score: member.stars || 0,
+      current: Boolean(member.current),
+    })))
     : '<p class="work-note">עדיין אין מי שבחר בסיעה הזו.</p>';
 }
 
@@ -3829,15 +3842,12 @@ function renderGrowth() {
       ].filter(Boolean).join(" · "))}</option>`;
     }),
   ].join("");
-  const factionEntries = model.leaderboards?.factions?.slice(0, 6) || [];
-  const factionMaximum = Math.max(1, ...factionEntries.map(({ stars, packs }) => stars ?? packs));
+  const factionEntries = model.leaderboards?.factions?.slice(0, 8) || [];
   elements.factionBoard.innerHTML = factionEntries.length
-    ? factionEntries.map((entry, index) => factionFermiRow(
-      escapeHtml(partyDisplayName(entry.partyId, entry.partyId)),
-      entry.stars ?? entry.packs ?? 0,
-      factionMaximum,
-      index,
-    )).join("")
+    ? factionHistMarkup(factionEntries.map((entry) => ({
+      label: escapeHtml(partyDisplayName(entry.partyId, entry.partyId)),
+      score: entry.stars ?? entry.packs ?? 0,
+    })))
     : '<p class="work-note">עדיין אין סיעות עם אוספים.</p>';
   renderFactionMembers();
   const collectorEntries = model.leaderboards?.collectors || [];
