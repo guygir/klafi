@@ -79,6 +79,26 @@ test("slim home state includes inventory for binder reads", () => {
   assert.equal(state.factionId, null);
 });
 
+test("slim home state keeps a selected faction on the player", () => {
+  const state = slimPublicState({
+    displayName: "שחקן",
+    avatarId: "kid-boy",
+    createdAt: "2026-09-16T00:00:00.000Z",
+    highestRank: 1,
+    nextIdleAt: null,
+    inventory: { "LIK-M01-Q01": 1 },
+    unseenPulls: [],
+    pendingRankRewards: [],
+    favorites: [],
+    factionId: "LIK",
+  }, {
+    idleCardIds: ["LIK-M01-Q01"],
+    totals: { idleEligible: 14 },
+    gameConfig: { progression: { rankNames: ["אזרח סקרן", "קורא כותרות"] } },
+  });
+  assert.equal(state.factionId, "LIK");
+});
+
 test("slim home counts stars from the visible card index", () => {
   const state = slimPublicState({
     displayName: "שחקן",

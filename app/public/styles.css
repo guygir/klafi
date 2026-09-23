@@ -1000,26 +1000,30 @@ img.mini-art {
 
 .filter-strip {
   display: flex;
-  gap: 8px;
-  margin: 0 0 20px;
-  padding: 4px 0 8px;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0 0 12px;
+  padding: 2px 0;
+  overflow: hidden;
 }
 
 .filter-strip button {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex: 0 0 auto;
-  max-width: 9.5rem;
+  max-width: 8.5rem;
   min-height: 0;
-  padding: 4px 8px;
+  padding: 2px 6px;
   border: 1px solid rgba(44, 51, 48, 0.35);
   border-radius: 8px;
   background: transparent;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
 }
 .filter-strip .filter-name {
@@ -1036,22 +1040,26 @@ img.mini-art {
 .filter-strip button.active { border-color: var(--civic); background: var(--civic); color: var(--paper); }
 .filter-sets {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 4px;
   flex: 1 1 auto;
   min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 .filter-party {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex: 0 0 auto;
   min-height: 0;
-  padding: 4px 8px;
+  padding: 2px 6px;
   border: 1px solid rgba(44, 51, 48, 0.35);
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+  line-height: 1.2;
 }
 .filter-party.active {
   border-color: var(--civic);
@@ -1059,27 +1067,30 @@ img.mini-art {
   color: var(--paper);
 }
 .filter-party select {
-  max-width: 11rem;
+  max-width: 7.5rem;
   width: auto;
-  min-width: 6.5rem;
+  min-width: 4.25rem;
+  height: 1.35em;
   border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
+  line-height: 1.2;
   cursor: pointer;
 }
 .filter-party span { display: none; }
 .filter-owned {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex: 0 0 auto;
   min-height: 0;
-  padding: 4px 8px;
+  padding: 2px 6px;
   border: 1px solid rgba(44, 51, 48, 0.35);
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -1088,7 +1099,7 @@ img.mini-art {
   background: var(--civic);
   color: var(--paper);
 }
-.filter-owned input { margin: 0; accent-color: var(--civic); }
+.filter-owned input { width: 12px; height: 12px; margin: 0; accent-color: var(--civic); }
 
 .binder-grid {
   display: grid;
@@ -2363,10 +2374,10 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   font-size: 14px;
   direction: rtl;
 }
-.level-identity { grid-area: identity; min-width: 0; display: grid; justify-items: center; text-align: center; direction: rtl; line-height: 1.15; gap: 4px; overflow: visible; }
+.level-identity { grid-area: identity; min-width: 0; display: grid; justify-items: center; text-align: center; direction: rtl; line-height: 1.15; gap: 4px; overflow: visible; padding-top: 8px; }
 .level-identity small { color: rgba(26, 31, 28, 0.58); font-size: 11px; white-space: nowrap; }
 .level-identity strong { margin-top: 0; font-size: 18px; }
-.level-identity span { margin-top: 0; color: var(--civic); font-size: 13px; }
+.level-identity > span { margin-top: 0; color: var(--civic); font-size: 13px; }
 .level-progress-block { grid-area: progress; min-width: 0; display: grid; gap: 6px; direction: rtl; }
 .level-progress-block small,
 #level-next { color: rgba(26, 31, 28, 0.58); font-size: 11px; line-height: 1.25; text-align: start; overflow-wrap: anywhere; }
@@ -2384,7 +2395,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .app-shell.home-active .level-identity small { font-size: 13px; }
 .app-shell.home-active .level-identity strong { font-size: 26px; }
-.app-shell.home-active .level-identity span { font-size: 18px; }
+.app-shell.home-active .level-identity > span { font-size: 18px; }
 .app-shell.home-active .level-track { height: 26px; }
 .app-shell.home-active .level-track b { font-size: 14px; }
 .app-shell.home-active .level-progress-block small { font-size: 14px; }
@@ -2736,7 +2747,15 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   direction: rtl;
 }
 .binder-stats-row .tips-replay { margin: 0; flex: 0 0 auto; }
-.earned-badge-list { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.earned-badge-list {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
 .earned-badge-rail:empty::after { content: "התגים שיושגו יופיעו כאן"; color: rgba(26, 31, 28, 0.48); font-size: 11px; }
 .badge-medallion { position: relative; width: 46px; height: 54px; display: grid; place-items: center; outline: none; cursor: pointer; }
 .collection-star-count {
@@ -3057,14 +3076,14 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   .level-strip { min-height: 96px; grid-template-columns: 128px minmax(70px, 1fr); gap: 8px; }
   .level-identity small { font-size: 9px; white-space: normal; }
   .level-identity strong { font-size: 17px; }
-  .level-identity span { font-size: 12px; }
+  .level-identity > span { font-size: 12px; }
   .level-track { height: 20px; }
   .level-track b { font-size: 12px; }
   .level-progress-block small { font-size: 10px; }
   .app-shell.home-active .level-strip { min-height: 122px; grid-template-columns: 128px minmax(70px, 1fr); gap: 8px; }
   .app-shell.home-active .level-identity small { font-size: 10px; }
   .app-shell.home-active .level-identity strong { font-size: 22px; }
-  .app-shell.home-active .level-identity span { font-size: 15px; }
+  .app-shell.home-active .level-identity > span { font-size: 15px; }
   .app-shell.home-active .level-track { height: 22px; }
   .app-shell.home-active .level-track b { font-size: 12px; }
   .app-shell.home-active .level-progress-block small { font-size: 11px; }
@@ -3219,7 +3238,7 @@ body {
 }
 
 .app-shell.home-active .level-identity strong { font-size: 20px; }
-.app-shell.home-active .level-identity span { font-size: 14px; }
+.app-shell.home-active .level-identity > span { font-size: 14px; }
 .app-shell.home-active .level-track { height: 22px; }
 .app-shell.home-active .level-progress-block small { font-size: 11px; }
 
@@ -3325,6 +3344,16 @@ body {
 #home-view .home-copy .lede,
 #home-view .collection-line {
   display: none;
+}
+#home-view .home-grid > .today-specials-line {
+  grid-column: 1 / -1;
+  align-self: start;
+  z-index: 4;
+  width: 100%;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
 }
 #home-view .pack-plinth {
   position: relative;
@@ -3454,9 +3483,13 @@ body {
   direction: ltr;
 }
 .today-specials-copy {
-  padding-inline-end: 50vw;
+  padding-inline-end: 100%;
   font: 600 11px/1.3 "IBM Plex Sans Hebrew", sans-serif;
   direction: rtl;
+}
+#home-view .home-grid > .today-specials-copy,
+#home-view .today-specials-copy {
+  font-size: 10px;
 }
 .today-specials-copy[aria-hidden="true"] { display: none; }
 .today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: inline; }
@@ -3511,13 +3544,17 @@ body {
 }
 
 .earned-badge-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
   min-height: 38px;
-  margin-bottom: 6px;
-  padding-bottom: 5px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
 }
 
 .badge-medallion { width: 34px; height: 40px; }
-.filter-strip { flex: 0 0 auto; margin: 5px 0 8px; padding-bottom: 3px; }
+.filter-strip { flex: 0 0 auto; margin: 4px 0 6px; padding-bottom: 0; }
 
 .binder-grid {
   flex: 1 1 auto;
@@ -4641,7 +4678,7 @@ body {
   position: absolute;
   top: -7px;
   left: -5px;
-  z-index: 3;
+  z-index: 5;
   box-sizing: border-box;
   width: 18px;
   height: 27px;
@@ -4653,7 +4690,9 @@ body {
   background-image: url("/design-assets/ballot-paper.png");
   background-size: cover;
   background-position: center;
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.28);
+  pointer-events: none;
+  overflow: hidden;
 }
 .level-letter:not([src]),
 .level-letter[src=""],
@@ -4664,33 +4703,84 @@ body {
 .level-letter,
 .collector-letter {
   display: block;
+  padding: 2px 1px;
   object-fit: contain;
   object-position: center;
 }
 
+.app-shell.home-active .level-letter,
+.app-shell.home-active .level-letter-text,
+.app-shell.home-active .avatar-seal {
+  top: -8px;
+  left: -7px;
+  width: 26px;
+  height: 39px;
+}
+
+.app-shell.home-active .level-letter-text[data-letters="1"] { font-size: 72cqh; }
+.app-shell.home-active .level-letter-text[data-letters="2"] { font-size: 48cqh; }
+.app-shell.home-active .level-letter-text[data-letters="3"] { font-size: 34cqh; }
+.app-shell.home-active .level-letter-text[data-letters="4"] { font-size: 26cqh; }
+
+.app-shell.home-active .level-identity {
+  padding-top: 12px;
+}
+
 .level-letter-text,
 .collector-letter-text {
-  display: grid;
-  place-items: center;
-  padding: 2px 1px;
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  padding: 1px 1px 2px;
+  overflow: hidden;
   color: #1a2540;
-  font: 700 8px/0.95 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
+  font: 700 70cqh/0.68 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
   text-align: center;
+}
+
+.app-shell.home-active .level-identity .level-letter-text span {
+  font-size: 1em;
+  line-height: inherit;
+}
+
+.level-letter-text .letter-fit,
+.collector-letter-text .letter-fit {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  font: inherit;
+  font-style: normal;
+  line-height: inherit;
+  transform-origin: center center;
+}
+
+.level-letter-text span,
+.collector-letter-text span {
+  display: block;
+  flex: 0 0 auto;
+  font-size: 1em;
+  font-style: normal;
+  line-height: 0.68;
 }
 
 .level-letter-text[data-letters="1"],
 .collector-letter-text[data-letters="1"] {
-  font-size: 13px;
+  font-size: 70cqh;
 }
 
 .level-letter-text[data-letters="2"],
 .collector-letter-text[data-letters="2"] {
-  font-size: 10px;
+  font-size: 46cqh;
 }
 
 .level-letter-text[data-letters="3"],
 .collector-letter-text[data-letters="3"] {
-  font-size: 8px;
+  font-size: 34cqh;
 }
 
 #avatar-seal {

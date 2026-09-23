@@ -1,4 +1,5 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
+import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
 import { applyIdleCountdown, formatCountdown, idleCountdownCopy, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
@@ -1267,6 +1268,51 @@ function fitVisibleCardText(root = document) {
   root.querySelectorAll("[data-fit-card-text]").forEach(fitCardText);
 }
 
+function fitBallotLetterText(node) {
+  if (!node || node.hidden || node.clientWidth < 2 || node.clientHeight < 2) return;
+  const stack = node.querySelector(".letter-fit") || node;
+  if (!stack.textContent.trim()) {
+    stack.style.fontSize = "";
+    stack.style.transform = "";
+    return;
+  }
+  stack.style.transform = "none";
+  stack.querySelectorAll("span").forEach((glyph) => {
+    glyph.style.fontSize = "1em";
+    glyph.style.lineHeight = "inherit";
+  });
+  const count = Math.max(
+    1,
+    Number(node.dataset.letters) || stack.querySelectorAll("span").length || [...stack.textContent].length,
+  );
+  stack.style.fontSize = `${count === 1 ? 24 : 20}px`;
+  const inset = 3;
+  const scaleX = Math.max(0, node.clientWidth - inset) / Math.max(1, stack.scrollWidth);
+  const scaleY = Math.max(0, node.clientHeight - inset) / Math.max(1, stack.scrollHeight);
+  const scale = Math.min(scaleX, scaleY);
+  const widen = Math.min(1.38, scaleX / Math.max(scale, 0.01));
+  stack.style.transformOrigin = "center center";
+  stack.style.transform = `scale(${Math.max(0.45, scale * widen)}, ${Math.max(0.45, scale)})`;
+}
+
+const ballotLetterObserver = typeof ResizeObserver === "undefined"
+  ? null
+  : new ResizeObserver((entries) => {
+    for (const entry of entries) fitBallotLetterText(entry.target);
+  });
+
+function queueBallotLetterFit(root = document) {
+  const nodes = root.matches?.(".level-letter-text, .collector-letter-text")
+    ? [root]
+    : [...root.querySelectorAll(".level-letter-text, .collector-letter-text")];
+  requestAnimationFrame(() => {
+    nodes.forEach((node) => {
+      fitBallotLetterText(node);
+      ballotLetterObserver?.observe(node);
+    });
+  });
+}
+
 const observedCardFrames = new WeakSet();
 const cardResizeObserver = typeof ResizeObserver === "undefined"
   ? null
@@ -1277,6 +1323,7 @@ const cardResizeObserver = typeof ResizeObserver === "undefined"
 function queueCardTextFit(root = document) {
   requestAnimationFrame(() => {
     fitVisibleCardText(root);
+    queueBallotLetterFit(root);
     if (!cardResizeObserver) return;
     root.querySelectorAll(".kalpi-card").forEach((frame) => {
       if (observedCardFrames.has(frame)) return;
@@ -1306,6 +1353,7 @@ function showView(name) {
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
     fitVisibleCardText(elements.main);
+    queueBallotLetterFit(elements.main);
   });
 }
 
@@ -1414,15 +1462,6 @@ function factionParty(factionId = model.serverState?.factionId) {
   };
 }
 
-function factionLetters(party) {
-  return (party?.finalLetters || party?.requestedLetters || [])[0] || "";
-}
-
-function factionLetterArt(party) {
-  if (party?.letterArt) return party.letterArt;
-  if (party?.id === "LIK") return "hero-art-memchetlammed.png";
-  return party?.letterChip || "";
-}
 
 function streakFireMarkup() {
   return `<i class="streak-fire" aria-hidden="true"><svg viewBox="0 0 12 16" width="16" height="18"><path class="flame-outer" d="M6 16C2.6 16 .6 13.6.6 10.6.6 7.2 3.4 5.1 4.3 2.4c.4 1.7 1.5 2.8 2.6 2.8 1.7 0 2.3-2 1.6-4.8C11 3.2 12.4 6.4 12.4 9.6 12.4 13.2 9.8 16 6 16z"/><path class="flame-inner" d="M6 14.1c-1.8 0-2.9-1.2-2.9-2.9 0-1.6 1.3-2.7 1.8-4.1.3 1 .9 1.7 1.6 1.7.9 0 1.3-1.1 1-2.5 1 1.3 1.7 2.8 1.7 4.4 0 1.9-1.3 3.4-3.2 3.4z"/></svg></i>`;
@@ -1449,53 +1488,77 @@ function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
     return `<img class="${imageClass}" src="/design-assets/${encodeURIComponent(art)}" alt="${escapeHtml(letters)}">`;
   }
   if (!letters) return "";
-  return `<b class="${className}" data-letters="${[...letters].length}">${escapeHtml(letters)}</b>`;
+  const marks = [...letters];
+  const inner = marks.length > 1
+    ? `<i class="letter-fit">${marks.map((mark) => `<span>${escapeHtml(mark)}</span>`).join("")}</i>`
+    : `<i class="letter-fit">${escapeHtml(letters)}</i>`;
+  return `<b class="${className}" data-letters="${marks.length}">${inner}</b>`;
 }
 
 function paintLetterChip(image, text, party) {
   const letters = factionLetters(party);
   const art = factionLetterArt(party);
+  const paintText = (visible) => {
+    if (!text) return;
+    text.hidden = !visible;
+    text.replaceChildren();
+    if (visible && letters) {
+      const marks = [...letters];
+      text.dataset.letters = String(marks.length);
+      const stack = document.createElement("i");
+      stack.className = "letter-fit";
+      if (marks.length > 1) {
+        for (const mark of marks) {
+          const glyph = document.createElement("span");
+          glyph.textContent = mark;
+          stack.append(glyph);
+        }
+      } else {
+        stack.textContent = letters;
+      }
+      text.append(stack);
+      queueBallotLetterFit(text);
+    } else {
+      delete text.dataset.letters;
+      text.style.fontSize = "";
+      text.style.transform = "";
+    }
+  };
   if (image) {
+    image.onload = null;
+    image.onerror = null;
     if (art) {
       image.hidden = false;
       image.alt = letters;
+      image.onload = () => paintText(false);
       image.onerror = () => {
         image.hidden = true;
         image.removeAttribute("src");
-        if (text && letters) {
-          text.hidden = false;
-          text.textContent = letters;
-          text.dataset.letters = String([...letters].length);
-        }
+        paintText(Boolean(letters));
       };
       image.src = `/design-assets/${encodeURIComponent(art)}`;
+      if (image.complete && image.naturalWidth) paintText(false);
+      else paintText(Boolean(letters));
     } else {
-      image.onerror = null;
       image.hidden = true;
       image.removeAttribute("src");
       image.alt = "";
+      paintText(Boolean(letters));
     }
-  }
-  if (text) {
-    const showText = Boolean(letters) && !art;
-    text.hidden = !showText;
-    text.textContent = showText ? letters : "";
-    if (showText) text.dataset.letters = String([...letters].length);
-    else delete text.dataset.letters;
+  } else {
+    paintText(Boolean(letters) && !art);
   }
 }
 
 function renderAvatarSeal() {
   const party = factionParty();
-  const letters = factionLetters(party);
-  const art = factionLetterArt(party);
-  const hasFaction = Boolean(party);
+  const view = avatarBallotState(party);
   paintLetterChip(elements.levelLetter, elements.levelLetterText, party);
   paintLetterChip(elements.playerLetter, elements.playerLetterText, party);
-  if (elements.avatarSeal) elements.avatarSeal.hidden = Boolean(art || letters) || !hasFaction;
-  elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(art || letters));
-  elements.playerName?.classList.toggle("has-faction-letter", Boolean(art || letters));
-  elements.levelAvatarButton?.classList.toggle("has-faction-seal", hasFaction && !art && !letters);
+  if (elements.avatarSeal) elements.avatarSeal.hidden = !view.showBlankSeal;
+  elements.levelAvatarButton?.classList.toggle("has-faction-letter", view.showLetterArt || view.showLetterText);
+  elements.playerName?.classList.toggle("has-faction-letter", view.showLetterArt || view.showLetterText);
+  elements.levelAvatarButton?.classList.toggle("has-faction-seal", view.showBlankSeal);
 }
 
 function renderAvatarPicker() {
@@ -1577,7 +1640,7 @@ function renderNotifyControl() {
       : unsupported
         ? "התראות לא זמינות כאן"
         : "להפעיל התראות";
-    home.disabled = denied || unsupported;
+    home.disabled = false;
   }
   if (elements.notifyStatus) {
     elements.notifyStatus.textContent = unsupported
@@ -1597,8 +1660,21 @@ async function ensureServiceWorker() {
   }
 }
 
+function explainUnavailableNotifications() {
+  const permission = notifyPermission();
+  if (permission === "unsupported") {
+    showToast("הדפדפן הזה לא תומך בהתראות. אפשר לשחק בלי התראות. האוסף עדיין נשמר.", 6000);
+    return true;
+  }
+  if (permission === "denied") {
+    showToast("התראות חסומות בדפדפן. אפשר לשחק בלי התראות. האוסף עדיין נשמר. באייפון: הוסיפו למסך הבית ואז הפעילו התראות.", 6000);
+    return true;
+  }
+  return false;
+}
+
 async function requestIdleNotifications() {
-  if (notifyPermission() === "unsupported") {
+  if (explainUnavailableNotifications()) {
     renderNotifyControl();
     return;
   }
@@ -3163,6 +3239,69 @@ function copyMyBinderLink() {
   });
 }
 
+function packBinderBadges() {
+  const list = elements.earnedBadgeList;
+  const host = list?.querySelector(".binder-badge-medals");
+  if (!list || !host) return;
+  const medals = [...host.querySelectorAll(".badge-medallion")];
+  const overflow = host.querySelector(".badge-overflow");
+  medals.forEach((medal) => { medal.hidden = false; });
+  if (overflow) {
+    overflow.hidden = true;
+    overflow.textContent = "+";
+  }
+  if (!medals.length || host.clientWidth < 8) return;
+
+  const gap = Number.parseFloat(getComputedStyle(host).columnGap || getComputedStyle(host).gap) || 8;
+  const available = host.clientWidth;
+  const medalWidth = (index) => medals[index].getBoundingClientRect().width;
+  const widthFor = (count, includeOverflow) => {
+    let width = 0;
+    for (let index = 0; index < count; index += 1) {
+      width += medalWidth(index) + (index ? gap : 0);
+    }
+    if (includeOverflow && overflow) {
+      overflow.hidden = false;
+      overflow.textContent = `+${Math.max(1, medals.length - count)}`;
+      width += (count ? gap : 0) + overflow.getBoundingClientRect().width;
+    }
+    return width;
+  };
+
+  if (widthFor(medals.length, false) <= available + 0.5) {
+    if (overflow) overflow.hidden = true;
+    return;
+  }
+
+  let shown = 0;
+  for (let count = medals.length - 1; count >= 0; count -= 1) {
+    if (widthFor(count, true) <= available + 0.5) {
+      shown = count;
+      break;
+    }
+  }
+  medals.forEach((medal, index) => { medal.hidden = index >= shown; });
+  const rest = medals.length - shown;
+  if (overflow) {
+    overflow.hidden = rest <= 0;
+    overflow.textContent = rest > 0 ? `+${rest}` : "+";
+    if (rest > 0) overflow.setAttribute("aria-label", `עוד ${rest} הישגים`);
+    else overflow.removeAttribute("aria-label");
+  }
+}
+
+const binderBadgeObserver = typeof ResizeObserver === "undefined"
+  ? null
+  : new ResizeObserver(() => packBinderBadges());
+
+function queueBinderBadgePack() {
+  requestAnimationFrame(() => {
+    packBinderBadges();
+    const list = elements.earnedBadgeList;
+    if (list && binderBadgeObserver) binderBadgeObserver.observe(list);
+  });
+}
+
 function renderBinder() {
   const binderView = document.querySelector("#binder-view");
   if (!catalogReady()) {
@@ -3309,15 +3448,13 @@ function renderBinder() {
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
   const starCount = localStarCount();
   const starCounter = `<span class="collection-star-count" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b aria-hidden="true">★</b><strong>${starCount}</strong></span>`;
-  const visibleBadges = earned.slice(0, 3);
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
-  rail.innerHTML = starCounter + visibleBadges.map((badge) => {
+  const medals = earned.map((badge) => {
     const copy = hebrewBadge(badge);
-    return `
-    <span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
-  }).join("") + (earned.length > visibleBadges.length
-    ? `<button class="badge-overflow" type="button" data-open-achievements aria-label="עוד ${earned.length - visibleBadges.length} הישגים">+${earned.length - visibleBadges.length}</button>`
-    : "");
+    return `<span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
+  }).join("");
+  rail.innerHTML = `<div class="binder-badge-medals">${medals}<button class="badge-overflow" type="button" hidden data-open-achievements>+</button></div>${starCounter}`;
+  queueBinderBadgePack();
   queueCardTextFit(elements.binderGrid);
   const nextStrip = elements.binderFilters?.querySelector(".filter-sets");
   if (nextStrip) nextStrip.scrollLeft = filterX;
@@ -5290,11 +5427,11 @@ async function submitBugReport(event) {
   }
 }
 
-function showToast(message) {
+function showToast(message, ms = 2200) {
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
   clearTimeout(showToast.timeout);
-  showToast.timeout = setTimeout(() => elements.toast.classList.remove("show"), 2200);
+  showToast.timeout = setTimeout(() => elements.toast.classList.remove("show"), ms);
 }
 
 function wrapCanvasText(context, text, x, y, maxWidth, lineHeight, maxLines = 4) {
@@ -6467,15 +6604,22 @@ function showCollectionTooltip(target) {
   showToast(tooltip.dataset.tooltip);
 }
 
-elements.earnedBadgeRail.addEventListener("click", (event) => {
+function onBinderBadgeActivate(event) {
   if (event.target.closest("[data-open-achievements]")) {
     renderAchievements();
     showView("achievements");
     return;
   }
   showCollectionTooltip(event.target);
-});
+}
+elements.earnedBadgeRail.addEventListener("click", onBinderBadgeActivate);
+elements.earnedBadgeList?.addEventListener("click", onBinderBadgeActivate);
 elements.earnedBadgeRail.addEventListener("keydown", (event) => {
+  if (!["Enter", " "].includes(event.key)) return;
+  event.preventDefault();
+  showCollectionTooltip(event.target);
+});
+elements.earnedBadgeList?.addEventListener("keydown", (event) => {
   if (!["Enter", " "].includes(event.key)) return;
   event.preventDefault();
   showCollectionTooltip(event.target);

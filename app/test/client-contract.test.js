@@ -8,17 +8,18 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
 
 test("client selectors match the HTML and preserve Alpha UX constraints", async () => {
-  const [html, appJs, idleCountdownJs, tipsJs, warmup, baseCss, themeCss, binderShare] = await Promise.all([
+  const [html, appJs, idleCountdownJs, avatarBallotJs, tipsJs, warmup, baseCss, themeCss, binderShare] = await Promise.all([
     readFile(path.join(publicDir, "index.html"), "utf8"),
     readFile(path.join(publicDir, "app.js"), "utf8"),
     readFile(path.join(publicDir, "idle-countdown.js"), "utf8"),
+    readFile(path.join(publicDir, "avatar-ballot.js"), "utf8"),
     readFile(path.join(publicDir, "tips.js"), "utf8"),
     readFile(path.join(publicDir, "boot-warmup.js"), "utf8"),
     readFile(path.join(publicDir, "styles.css"), "utf8"),
     readFile(path.join(publicDir, "theme-pack-v2.css"), "utf8"),
     readFile(path.join(publicDir, "share/binder.html"), "utf8"),
   ]);
-  const javascript = `${appJs}\n${idleCountdownJs}`;
+  const javascript = `${appJs}\n${idleCountdownJs}\n${avatarBallotJs}`;
   const css = `${baseCss}\n${themeCss}`;
 
   const selectorIds = [...`${javascript}\n${tipsJs}`.matchAll(/querySelector\("#([^"]+)"\)/g)].map((match) => match[1]);
@@ -547,7 +548,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-62/);
+  assert.match(html, /card-surface-72/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -637,7 +638,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-62/);
+  assert.match(html, /card-surface-72/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -690,9 +691,45 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="replay-tips"/);
   assert.doesNotMatch(html, /data-replay-tips/);
   assert.match(html, /class="binder-stats-row"/);
-  assert.match(css, /padding-inline-end:\s*50vw/);
+  assert.match(html, /class="home-grid"[\s\S]*id="today-specials-row"[\s\S]*class="pack-plinth"/);
+  assert.match(css, /#home-view \.home-grid > \.today-specials-line/);
+  assert.match(css, /grid-column:\s*1\s*\/\s*-1/);
+  assert.match(css, /\.level-letter,\s*\.collector-letter \{[^}]*object-fit:\s*contain/);
+  assert.match(css, /\.level-letter-text,\s*\.collector-letter-text \{[^}]*flex-direction:\s*column/);
+  assert.match(javascript, /glyph\.textContent = mark/);
+  assert.match(javascript, /className = "letter-fit"/);
+  assert.match(javascript, /function fitBallotLetterText/);
+  assert.match(javascript, /transformOrigin = "center center"/);
+  assert.match(css, /\.letter-fit/);
+  assert.match(css, /\.level-identity > span/);
+  assert.doesNotMatch(css, /#app\[data-density="airy-v2"\] \.level-identity span \{/);
+  assert.match(javascript, /function queueBallotLetterFit/);
+  assert.match(html, /id="earned-badge-list"[^>]*binder-badge-row/);
+  assert.match(html, /id="earned-badge-rail"[\s\S]*binder-stats-row[\s\S]*<\/div>\s*<\/div>\s*<div id="earned-badge-list"/);
+  assert.match(html, /id="earned-badge-list"[\s\S]*id="binder-filters"/);
+  assert.match(css, /#binder-view \.earned-badge-list/);
+  assert.match(css, /#binder-view \.binder-badge-row/);
+  assert.match(css, /#binder-view \.binder-badge-medals/);
+  assert.match(css, /#binder-view \.earned-badge-list,\s*#binder-view \.binder-badge-row \{[^}]*direction:\s*ltr/);
+  assert.match(javascript, /function packBinderBadges/);
+  assert.match(javascript, /binder-badge-medals/);
+  assert.doesNotMatch(javascript, /const visibleBadges = earned\.slice\(0, 3\)/);
+  assert.match(css, /#binder-view \.filter-party,\s*#binder-view \.filter-owned/);
+  assert.match(css, /min-height:\s*32px/);
+  assert.match(css, /#binder-view \.filter-strip/);
+  assert.match(css, /#binder-view\.view\.active \{[^}]*flex-direction:\s*column/);
+  assert.doesNotMatch(css, /#home-view \.pack-plinth \.pack-wrapper,\s*#home-view \.pack-plinth \.today-specials-line/);
+  assert.match(css, /padding-inline-end:\s*100%/);
   assert.match(css, /animation: specials-marquee 7s linear infinite/);
+  assert.match(javascript, /function explainUnavailableNotifications/);
+  assert.match(javascript, /function avatarBallotState/);
+  assert.match(javascript, /ballot-letter-lik\.png/);
+  assert.match(css, /\.app-shell\.home-active \.level-letter/);
+  assert.match(css, /width:\s*26px/);
   assert.match(css, /\.filter-strip button \{[^}]*border-radius:\s*8px/);
+  assert.match(css, /\.filter-sets \{[^}]*flex-wrap:\s*nowrap/);
+  assert.match(css, /\.filter-sets \{[^}]*overflow-x:\s*auto/);
+  assert.doesNotMatch(css, /\.filter-sets \{[^}]*flex-wrap:\s*wrap/);
   assert.match(css, /#home-view\.view\.active/);
   assert.match(javascript, /data-binder-owned/);
   assert.match(javascript, /binderOwnedOnly/);

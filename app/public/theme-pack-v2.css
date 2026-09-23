@@ -723,17 +723,17 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] .filter-strip {
-  gap: 8px;
-  margin: 8px 0 14px;
+  gap: 6px;
+  margin: 4px 0 8px;
 }
 
 #app[data-density="airy-v2"] .filter-strip button,
 #app[data-density="airy-v2"] .filter-party,
 #app[data-density="airy-v2"] .filter-owned {
   min-height: 0;
-  padding: 4px 8px;
+  padding: 2px 6px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 #app[data-density="airy-v2"] .binder-grid {
@@ -1000,6 +1000,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
 .level-avatar-button {
   position: relative;
+  isolation: isolate;
   flex: 0 0 auto;
   width: 42px;
   height: 42px;
@@ -1012,6 +1013,8 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 .level-avatar {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -1034,7 +1037,7 @@ body:has(#app[data-theme="pack-v2"]) {
   gap: 4px;
 }
 
-#app[data-density="airy-v2"] .level-identity span {
+#app[data-density="airy-v2"] .level-identity > span {
   margin-top: 0;
   font-size: 13px;
   font-weight: 700;
@@ -1118,7 +1121,100 @@ body:has(#app[data-theme="pack-v2"]) {
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
+  width: 100%;
   min-width: 0;
+}
+
+#binder-view.view.active {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+#binder-view .earned-badge-rail,
+#binder-view .earned-badge-list,
+#binder-view .binder-badge-row,
+#binder-view .filter-strip {
+  display: flex;
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+#binder-view .earned-badge-rail {
+  flex-direction: column;
+  margin-bottom: 0;
+  padding-bottom: 4px;
+  border-bottom: 0;
+}
+
+#binder-view .earned-badge-list,
+#binder-view .binder-badge-row {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  direction: ltr;
+  min-height: 40px;
+  margin: 0 0 10px;
+  padding: 4px 0 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 38%, transparent);
+  overflow: hidden;
+}
+
+#binder-view .binder-badge-medals {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+  direction: ltr;
+}
+
+#binder-view .filter-strip {
+  flex-direction: row;
+  margin-top: 0;
+}
+
+#binder-view .filter-strip button,
+#binder-view .filter-party,
+#binder-view .filter-owned,
+#app[data-density="airy-v2"] #binder-view .filter-strip button,
+#app[data-density="airy-v2"] #binder-view .filter-party,
+#app[data-density="airy-v2"] #binder-view .filter-owned {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+#binder-view .filter-owned input {
+  width: 14px;
+  height: 14px;
+}
+
+#binder-view .filter-party select {
+  height: auto;
+  min-height: 1.25em;
+}
+
+#binder-view .badge-medallion {
+  width: 36px;
+  height: 42px;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+#binder-view .collection-star-count {
+  flex: 0 0 auto;
+  min-width: 48px;
+  height: 28px;
+  margin-inline-start: 8px;
 }
 
 #app[data-density="airy-v2"] .trade-desk,

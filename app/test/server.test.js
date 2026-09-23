@@ -677,6 +677,8 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   });
   assert.equal(faction.status, 200);
   assert.equal(faction.body.factionId, "LIK");
+  const homeAfterFaction = await api(running.base, "/api/home", { token });
+  assert.equal(homeAfterFaction.body.state.factionId, "LIK");
 
   const pull = await api(running.base, "/api/packs/daily", {
     token,
