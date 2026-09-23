@@ -1,5 +1,5 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
-import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
+import { avatarBallotState, factionLetterArt, factionLetters, letterChipFiles, letterChipUrl } from "./avatar-ballot.js";
 import { applyIdleCountdown, formatCountdown, idleCountdownCopy, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
@@ -615,6 +615,7 @@ async function loadShell() {
     model.gameConfig.releaseSets = model.gameConfig.releaseSets.filter((set) => isLiveReleaseSet(set.id));
   }
   model.editorial = shell.editorial || model.editorial;
+  prefetchLetterChips();
   if (!model.serverState && shell.totals) {
     model.serverState = {
       ownedUnique: 0,
@@ -644,6 +645,7 @@ function applyCatalog(cards) {
   const visible = cards.filter((card) => isLiveReleaseSet(card.releaseSetId));
   model.catalog = visible;
   model.byId = new Map(visible.map((card) => [card.id, card]));
+  prefetchLetterChips();
 }
 
 function mergeLiveCatalogFields(liveCards = []) {
@@ -1076,6 +1078,7 @@ async function bootstrap() {
     return bootstrapShowcase();
   }
   applyCachedHome();
+  prefetchLetterChips();
   if (notifyPermission() === "granted") {
     ensureServiceWorker().then(() => scheduleIdleNotification()).catch(() => {});
   }
@@ -1269,7 +1272,7 @@ function fitVisibleCardText(root = document) {
 }
 
 function fitBallotLetterText(node) {
-  if (!node || node.hidden || node.clientWidth < 2 || node.clientHeight < 2) return;
+  if (!node || node.offsetWidth < 2 || node.offsetHeight < 2) return;
   const stack = node.querySelector(".letter-fit") || node;
   if (!stack.textContent.trim()) {
     stack.style.fontSize = "";
@@ -1293,12 +1296,16 @@ function fitBallotLetterText(node) {
   const widen = Math.min(1.38, scaleX / Math.max(scale, 0.01));
   stack.style.transformOrigin = "center center";
   stack.style.transform = `scale(${Math.max(0.45, scale * widen)}, ${Math.max(0.45, scale)})`;
+  node.dataset.fitted = `${node.offsetWidth}x${node.offsetHeight}`;
 }
 
 const ballotLetterObserver = typeof ResizeObserver === "undefined"
   ? null
   : new ResizeObserver((entries) => {
-    for (const entry of entries) fitBallotLetterText(entry.target);
+    for (const entry of entries) {
+      fitBallotLetterText(entry.target);
+      if (entry.target.dataset.fitted) revealBallotNode(entry.target, true);
+    }
   });
 
 function queueBallotLetterFit(root = document) {
@@ -1414,7 +1421,26 @@ function avatarUrl(avatar) {
   return avatar?.art ? `/design-assets/${avatar.art}` : "";
 }
 
+const letterChipCache = new Map();
+
+function prefetchLetterChips(parties = partyRegister()) {
+  for (const file of letterChipFiles(parties)) {
+    const url = letterChipUrl(file);
+    if (letterChipCache.has(url)) continue;
+    const image = new Image();
+    image.decoding = "async";
+    image.src = url;
+    letterChipCache.set(url, image);
+  }
+}
+
+function letterChipImageReady(file) {
+  const image = letterChipCache.get(letterChipUrl(file));
+  return Boolean(image?.complete && image.naturalWidth);
+}
+
 function prefetchAvatars(avatars = model.serverState?.avatars || model.gameConfig?.avatars || []) {
+  prefetchLetterChips();
   for (const avatar of avatars) {
     const url = avatarUrl(avatar);
     if (!url) continue;
@@ -1495,54 +1521,88 @@ function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
   return `<b class="${className}" data-letters="${marks.length}">${inner}</b>`;
 }
 
+function revealBallotNode(node, ready) {
+  if (!node) return;
+  node.classList.toggle("is-ready", Boolean(ready));
+}
+
 function paintLetterChip(image, text, party) {
   const letters = factionLetters(party);
   const art = factionLetterArt(party);
+  const key = `${art}|${letters}`;
+  if ((image?.dataset.ballotKey || text?.dataset.ballotKey) === key) return;
+  const finishLetterText = (node) => {
+    if (!node) return;
+    const reveal = () => {
+      fitBallotLetterText(node);
+      ballotLetterObserver?.observe(node);
+      if (node.offsetWidth >= 2) revealBallotNode(node, true);
+    };
+    requestAnimationFrame(() => requestAnimationFrame(reveal));
+  };
   const paintText = (visible) => {
     if (!text) return;
-    text.hidden = !visible;
-    text.replaceChildren();
-    if (visible && letters) {
-      const marks = [...letters];
-      text.dataset.letters = String(marks.length);
-      const stack = document.createElement("i");
-      stack.className = "letter-fit";
-      if (marks.length > 1) {
-        for (const mark of marks) {
-          const glyph = document.createElement("span");
-          glyph.textContent = mark;
-          stack.append(glyph);
-        }
-      } else {
-        stack.textContent = letters;
-      }
-      text.append(stack);
-      queueBallotLetterFit(text);
-    } else {
+    if (!visible || !letters) {
+      text.hidden = true;
+      text.classList.remove("is-ready");
+      text.replaceChildren();
       delete text.dataset.letters;
+      delete text.dataset.ballotKey;
+      delete text.dataset.fitted;
       text.style.fontSize = "";
       text.style.transform = "";
+      return;
     }
+    text.hidden = false;
+    text.classList.remove("is-ready");
+    text.replaceChildren();
+    const marks = [...letters];
+    text.dataset.letters = String(marks.length);
+    text.dataset.ballotKey = key;
+    delete text.dataset.fitted;
+    const stack = document.createElement("i");
+    stack.className = "letter-fit";
+    if (marks.length > 1) {
+      for (const mark of marks) {
+        const glyph = document.createElement("span");
+        glyph.textContent = mark;
+        stack.append(glyph);
+      }
+    } else {
+      stack.textContent = letters;
+    }
+    text.append(stack);
+    finishLetterText(text);
   };
   if (image) {
     image.onload = null;
     image.onerror = null;
     if (art) {
-      image.hidden = false;
+      prefetchLetterChips([{ id: party?.id, letterChip: art }]);
       image.alt = letters;
-      image.onload = () => paintText(false);
+      image.dataset.ballotKey = key;
+      image.classList.remove("is-ready");
+      image.hidden = false;
+      const showImage = () => {
+        revealBallotNode(image, true);
+        paintText(false);
+      };
+      image.onload = showImage;
       image.onerror = () => {
         image.hidden = true;
+        image.classList.remove("is-ready");
         image.removeAttribute("src");
+        delete image.dataset.ballotKey;
         paintText(Boolean(letters));
       };
-      image.src = `/design-assets/${encodeURIComponent(art)}`;
-      if (image.complete && image.naturalWidth) paintText(false);
-      else paintText(Boolean(letters));
+      image.src = letterChipUrl(art);
+      if ((image.complete && image.naturalWidth) || letterChipImageReady(art)) showImage();
     } else {
       image.hidden = true;
+      image.classList.remove("is-ready");
       image.removeAttribute("src");
       image.alt = "";
+      delete image.dataset.ballotKey;
       paintText(Boolean(letters));
     }
   } else {
@@ -2267,8 +2327,11 @@ function renderTodaySpecials() {
 
 function layoutTodaySpecials() {
   const row = elements.todaySpecialsRow;
-  if (!row || row.hidden) return;
+  if (!row) return;
+  row.hidden = false;
   row.classList.add("is-marquee", "is-ready");
+  const track = row.querySelector(".today-specials-track");
+  if (track) track.style.animationPlayState = "running";
 }
 
 function layoutAdvocacyDock() {
@@ -6319,6 +6382,10 @@ for (const preview of [elements.tradeOfferedPreview, elements.tradeWantedPreview
     if (card) openCardDialog(card.dataset.tradeChoiceCard);
   });
 }
+elements.todaySpecialsRow?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  claimTodaySpecial().catch(() => showToast("לא הצלחנו לאסוף את הקלף המיוחד."));
+});
 document.querySelector(".today-docket").addEventListener("click", (event) => {
   const hook = event.target.closest("[data-today-nav]");
   if (!hook) return;
