@@ -2801,6 +2801,11 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   text-align: center;
   cursor: pointer;
 }
+@media (max-width: 520px) {
+  .trade-compose .trade-thumb { display: none; }
+  .trade-desk > h2 { font-size: 18px; }
+  .trade-desk .work-note { font-size: 11px; line-height: 1.35; }
+}
 .trade-thumb-frame {
   position: relative;
   width: 72px;

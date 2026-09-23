@@ -2683,10 +2683,12 @@ const FILTER_SET_SHORT = {
 
 function openBinderReleaseIds() {
   const catalog = model.catalog || [];
+  const hidden = new Set(["decisions", "records"]);
   return (model.gameConfig?.releaseSets || [])
-    .map(({ id }) => id)
-    .filter((id) => isLiveReleaseSet(id))
-    .filter((id) => catalog.some((card) => card.releaseSetId === id && card.idleEligible && !card.eventOnly));
+    .map(({ id, runtimeState }) => ({ id, runtimeState }))
+    .filter(({ id }) => isLiveReleaseSet(id) && !hidden.has(id))
+    .filter(({ id }) => catalog.some((card) => card.releaseSetId === id && !card.eventOnly))
+    .map(({ id }) => id);
 }
 
 function filterSetChip(set, label, count, active) {
