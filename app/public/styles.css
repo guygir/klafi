@@ -3851,24 +3851,30 @@ body {
   font: 700 13px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
 }
 
-.leaderboard-list > .faction-hist {
-  display: grid;
-  gap: 8px;
-  padding: 4px 0 8px;
-  border: 0;
+.faction-member-board,
+.faction-member-board .faction-hist,
+.faction-member-board .faction-hist-plot,
+.faction-member-board .challenge-hist-axis {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-.faction-hist {
+.faction-member-board .faction-hist {
+  display: grid;
+  gap: 8px;
   margin: 0;
+  padding: 4px 0 8px;
   overflow: hidden;
 }
 
 .faction-hist-plot,
 .faction-hist .challenge-hist-axis {
+  display: flex;
   width: 100%;
-  justify-content: center;
+  justify-content: space-between;
   overflow: hidden;
-  gap: clamp(2px, 1.4vw, 10px);
+  gap: clamp(2px, 1.2vw, 8px);
 }
 
 .faction-hist .challenge-hist-col,
@@ -3876,11 +3882,11 @@ body {
   flex: 1 1 0;
   width: auto;
   min-width: 0;
-  max-width: 44px;
+  max-width: none;
 }
 
 .faction-hist .challenge-hist-col b {
-  width: min(28px, 86%);
+  width: min(28px, 100%);
 }
 
 .faction-hist .challenge-hist-axis span {
