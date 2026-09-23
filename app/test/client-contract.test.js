@@ -36,8 +36,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /דילוג לתוכן/);
   assert.match(html, /class="advocacy-dock"/);
   assert.match(html, /class="top-nav-row"[\s\S]*id="open-advocacy"/);
-  assert.match(css, /\.advocacy-dock \{[^}]*left:\s*max\(4px/);
-  assert.match(css, /\.advocacy-dock \{[^}]*bottom:\s*max\(2px/);
+  assert.match(css, /\.advocacy-dock \{[^}]*left:\s*max\(8px/);
+  assert.match(css, /\.advocacy-dock \{[^}]*padding:\s*2px 0/);
   assert.match(css, /\.advocacy-dock \{[^}]*width:\s*max-content/);
   assert.match(css, /\.top-nav-row \{[^}]*padding:\s*0 10px calc\(13px \+ env\(safe-area-inset-bottom\)\)/);
   assert.match(html, /id="dialog-trust"/);
@@ -358,8 +358,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function renderTodaySpecials/);
   assert.match(javascript, /function layoutTodaySpecials/);
   assert.match(javascript, /is-marquee/);
+  assert.match(javascript, /idlePullCount \?\? previous\.idlePullCount/);
+  assert.match(javascript, /achievements \?\? previous\.achievements/);
   assert.match(css, /specials-marquee/);
-  assert.match(css, /\.today-specials-line\.is-ready:not\(\.is-fit\)/);
+  assert.doesNotMatch(css, /\.today-specials-line\.is-ready:not\(\.is-fit\)/);
   assert.match(javascript, /function claimTodaySpecial/);
   assert.match(javascript, /model\.specialWindow/);
   assert.match(javascript, /הקלף מוכן לאיסוף/);

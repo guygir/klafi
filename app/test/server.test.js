@@ -228,6 +228,9 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   );
   assert.equal(first.body.state.instances, undefined);
   assert.equal(first.body.state.achievements, undefined);
+  assert.equal(first.body.state.idlePullCount, 1);
+  const afterGrant = await api(running.base, "/api/state", { token });
+  assert.equal(afterGrant.body.achievements.find(({ id }) => id === "first-rip")?.earned, true);
 
   const replay = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(replay.body.newlySettledCount, 0);
@@ -247,6 +250,7 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
     body: { instanceIds: capped.body.cards.map(({ instanceId }) => instanceId) },
   });
   assert.equal(seen.body.unseenCount, 0);
+  assert.equal(seen.body.achievements.find(({ id }) => id === "first-rip")?.earned, true);
 
   const pendingRanks = [...seen.body.progression.pendingRewards];
   const rewardInstances = [];

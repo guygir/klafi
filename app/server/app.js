@@ -646,6 +646,7 @@ function publicIdleState(session, now, cards, config = {}) {
     idleCapacity: IDLE_BACKLOG_CAP,
     unseenCount: session.unseenPulls?.length ?? 0,
     preparedPulls: session.preparedPulls ?? [],
+    idlePullCount: session.idlePullCount ?? 0,
     progression,
     avatars: publicAvatars(session, config.avatars, progression.level),
     loginStreak: session.loginStreak || 0,

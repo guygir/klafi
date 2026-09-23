@@ -524,30 +524,39 @@ function applyHomePayload(home) {
     localStorage.setItem(SESSION_KEY, home.token);
   }
   if (home.state) {
-    model.serverState = { ...model.serverState, ...home.state };
+    const previous = model.serverState || {};
+    const incoming = home.state;
+    model.serverState = {
+      ...previous,
+      ...incoming,
+      inventory: incoming.inventory ?? previous.inventory ?? {},
+      idlePullCount: incoming.idlePullCount ?? previous.idlePullCount ?? 0,
+      achievements: incoming.achievements ?? previous.achievements ?? [],
+      loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
+    };
     if (home.cards) model.idleQueue = home.cards;
     localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
       token: model.token,
       cards: model.idleQueue,
       state: {
-        displayName: home.state.displayName,
-        avatarId: home.state.avatarId,
-        ownedUnique: home.state.ownedUnique,
-        totalCards: home.state.totalCards,
-        unseenCount: home.state.unseenCount,
-        nextIdleAt: home.state.nextIdleAt,
-        preparedPulls: home.state.preparedPulls || [],
-        idleCapacity: home.state.idleCapacity,
-        progression: home.state.progression,
-        avatars: home.state.avatars,
-        inventory: home.state.inventory || {},
-        favorites: home.state.favorites || [],
-        starCount: home.state.starCount,
-        loginStreak: home.state.loginStreak || 0,
-        factionId: home.state.factionId || null,
-        numberedCopies: home.state.numberedCopies || [],
-        idlePullCount: home.state.idlePullCount || 0,
-        achievements: home.state.achievements || [],
+        displayName: model.serverState.displayName,
+        avatarId: model.serverState.avatarId,
+        ownedUnique: model.serverState.ownedUnique,
+        totalCards: model.serverState.totalCards,
+        unseenCount: model.serverState.unseenCount,
+        nextIdleAt: model.serverState.nextIdleAt,
+        preparedPulls: model.serverState.preparedPulls || [],
+        idleCapacity: model.serverState.idleCapacity,
+        progression: model.serverState.progression,
+        avatars: model.serverState.avatars,
+        inventory: model.serverState.inventory || {},
+        favorites: model.serverState.favorites || [],
+        starCount: model.serverState.starCount,
+        loginStreak: model.serverState.loginStreak || 0,
+        factionId: model.serverState.factionId || null,
+        numberedCopies: model.serverState.numberedCopies || [],
+        idlePullCount: model.serverState.idlePullCount ?? 0,
+        achievements: model.serverState.achievements || [],
       },
     }));
     prefetchAvatars(home.state.avatars);
@@ -845,6 +854,7 @@ function flushPendingIdleSeen() {
     applyHomePayload({ state });
     renderHome();
     renderBinder();
+    renderAchievements();
     scheduleIdleRefill({ priority: "buffered" });
     return state;
   }).catch((error) => {
@@ -2078,7 +2088,7 @@ function renderTodaySpecials() {
   elements.todaySpecialsRow.hidden = !windowOpen;
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
   if (!windowOpen) {
-    elements.todaySpecialsRow.classList.remove("is-marquee", "is-fit", "is-ready");
+    elements.todaySpecialsRow.classList.remove("is-marquee", "is-ready");
     return;
   }
   const closes = new Date(windowOpen.closesAt);
@@ -2098,14 +2108,8 @@ function renderTodaySpecials() {
 
 function layoutTodaySpecials() {
   const row = elements.todaySpecialsRow;
-  const track = row?.querySelector(".today-specials-track");
-  if (!row || row.hidden || !track) return;
-  const mobile = window.innerWidth <= 760;
-  row.classList.remove("is-ready");
-  row.classList.toggle("is-marquee", mobile);
-  const fits = track.scrollWidth <= row.clientWidth + 1;
-  row.classList.toggle("is-fit", !mobile && fits);
-  row.classList.add("is-ready");
+  if (!row || row.hidden) return;
+  row.classList.add("is-marquee", "is-ready");
 }
 
 function renderActivity() {

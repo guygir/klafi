@@ -164,14 +164,14 @@ button:focus-visible {
 .advocacy-dock {
   position: absolute;
   z-index: 16;
-  left: max(4px, env(safe-area-inset-left));
+  left: max(8px, env(safe-area-inset-left));
   right: auto;
-  bottom: max(2px, env(safe-area-inset-bottom));
+  bottom: max(0px, env(safe-area-inset-bottom));
   width: max-content;
   max-width: max-content;
   min-height: 0;
   margin: 0;
-  padding: 0;
+  padding: 2px 0;
   border: 0;
   background: transparent;
   color: var(--danger-mute);
@@ -3242,15 +3242,8 @@ body {
 }
 .today-specials-copy[aria-hidden="true"] { display: none; }
 .today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: inline; }
-@media (max-width: 760px) {
-  .today-specials-line.is-marquee .today-specials-track {
-    animation: specials-marquee 16s linear infinite;
-  }
-}
-@media (min-width: 761px) {
-  .today-specials-line.is-ready:not(.is-fit) {
-    display: none;
-  }
+.today-specials-line.is-marquee .today-specials-track {
+  animation: specials-marquee 16s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .today-specials-line.is-marquee .today-specials-track { animation: none; }
