@@ -8,17 +8,18 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
 
 test("client selectors match the HTML and preserve Alpha UX constraints", async () => {
-  const [html, appJs, idleCountdownJs, tipsJs, warmup, baseCss, themeCss, binderShare] = await Promise.all([
+  const [html, appJs, idleCountdownJs, avatarBallotJs, tipsJs, warmup, baseCss, themeCss, binderShare] = await Promise.all([
     readFile(path.join(publicDir, "index.html"), "utf8"),
     readFile(path.join(publicDir, "app.js"), "utf8"),
     readFile(path.join(publicDir, "idle-countdown.js"), "utf8"),
+    readFile(path.join(publicDir, "avatar-ballot.js"), "utf8"),
     readFile(path.join(publicDir, "tips.js"), "utf8"),
     readFile(path.join(publicDir, "boot-warmup.js"), "utf8"),
     readFile(path.join(publicDir, "styles.css"), "utf8"),
     readFile(path.join(publicDir, "theme-pack-v2.css"), "utf8"),
     readFile(path.join(publicDir, "share/binder.html"), "utf8"),
   ]);
-  const javascript = `${appJs}\n${idleCountdownJs}`;
+  const javascript = `${appJs}\n${idleCountdownJs}\n${avatarBallotJs}`;
   const css = `${baseCss}\n${themeCss}`;
 
   const selectorIds = [...`${javascript}\n${tipsJs}`.matchAll(/querySelector\("#([^"]+)"\)/g)].map((match) => match[1]);
@@ -690,8 +691,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="replay-tips"/);
   assert.doesNotMatch(html, /data-replay-tips/);
   assert.match(html, /class="binder-stats-row"/);
-  assert.match(css, /padding-inline-end:\s*50vw/);
+  assert.match(html, /class="pack-plinth"[\s\S]*id="today-specials-row"/);
+  assert.match(css, /#home-view \.pack-plinth \.today-specials-line/);
+  assert.match(css, /padding-inline-end:\s*100%/);
   assert.match(css, /animation: specials-marquee 7s linear infinite/);
+  assert.match(javascript, /function explainUnavailableNotifications/);
+  assert.match(javascript, /function avatarBallotState/);
   assert.match(css, /\.filter-strip button \{[^}]*border-radius:\s*8px/);
   assert.match(css, /#home-view\.view\.active/);
   assert.match(javascript, /data-binder-owned/);

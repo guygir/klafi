@@ -103,20 +103,7 @@ async function ensureReady(db) {
   await ready;
 }
 
-async function loadSession(db, token) {
-  const sessionResult = await db.query(
-    `SELECT
-       session.*,
-       COALESCE((
-         SELECT jsonb_object_agg(inventory.card_id, inventory.copies)
-         FROM kalpi_inventory AS inventory
-         WHERE inventory.session_token = session.token
-       ), '{}'::jsonb) AS inventory_state
-     FROM kalpi_sessions AS session
-     WHERE session.token = $1`,
-    [token],
-  );
-  const row = sessionResult.rows[0];
+export function sessionFromHomeRow(row) {
   if (!row) return null;
   const extras = row.extras || {};
   return {
@@ -132,7 +119,25 @@ async function loadSession(db, token) {
     pendingRankRewards: extras.pendingRankRewards || [],
     favorites: extras.favorites || [],
     publicBinderSlug: extras.publicBinderSlug || null,
+    factionId: row.faction_id || null,
+    loginStreak: extras.loginStreak || 0,
   };
+}
+
+async function loadSession(db, token) {
+  const sessionResult = await db.query(
+    `SELECT
+       session.*,
+       COALESCE((
+         SELECT jsonb_object_agg(inventory.card_id, inventory.copies)
+         FROM kalpi_inventory AS inventory
+         WHERE inventory.session_token = session.token
+       ), '{}'::jsonb) AS inventory_state
+     FROM kalpi_sessions AS session
+     WHERE session.token = $1`,
+    [token],
+  );
+  return sessionFromHomeRow(sessionResult.rows[0]);
 }
 
 async function createSession(db, now) {
@@ -159,6 +164,8 @@ async function createSession(db, now) {
       pendingRankRewards: [],
       favorites: [],
       publicBinderSlug,
+      factionId: null,
+      loginStreak: 0,
     },
   };
 }

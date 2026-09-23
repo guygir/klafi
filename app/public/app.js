@@ -1,4 +1,5 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
+import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
 import { applyIdleCountdown, formatCountdown, idleCountdownCopy, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
@@ -1414,15 +1415,6 @@ function factionParty(factionId = model.serverState?.factionId) {
   };
 }
 
-function factionLetters(party) {
-  return (party?.finalLetters || party?.requestedLetters || [])[0] || "";
-}
-
-function factionLetterArt(party) {
-  if (party?.letterArt) return party.letterArt;
-  if (party?.id === "LIK") return "hero-art-memchetlammed.png";
-  return party?.letterChip || "";
-}
 
 function streakFireMarkup() {
   return `<i class="streak-fire" aria-hidden="true"><svg viewBox="0 0 12 16" width="16" height="18"><path class="flame-outer" d="M6 16C2.6 16 .6 13.6.6 10.6.6 7.2 3.4 5.1 4.3 2.4c.4 1.7 1.5 2.8 2.6 2.8 1.7 0 2.3-2 1.6-4.8C11 3.2 12.4 6.4 12.4 9.6 12.4 13.2 9.8 16 6 16z"/><path class="flame-inner" d="M6 14.1c-1.8 0-2.9-1.2-2.9-2.9 0-1.6 1.3-2.7 1.8-4.1.3 1 .9 1.7 1.6 1.7.9 0 1.3-1.1 1-2.5 1 1.3 1.7 2.8 1.7 4.4 0 1.9-1.3 3.4-3.2 3.4z"/></svg></i>`;
@@ -1487,15 +1479,13 @@ function paintLetterChip(image, text, party) {
 
 function renderAvatarSeal() {
   const party = factionParty();
-  const letters = factionLetters(party);
-  const art = factionLetterArt(party);
-  const hasFaction = Boolean(party);
+  const view = avatarBallotState(party);
   paintLetterChip(elements.levelLetter, elements.levelLetterText, party);
   paintLetterChip(elements.playerLetter, elements.playerLetterText, party);
-  if (elements.avatarSeal) elements.avatarSeal.hidden = Boolean(art || letters) || !hasFaction;
-  elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(art || letters));
-  elements.playerName?.classList.toggle("has-faction-letter", Boolean(art || letters));
-  elements.levelAvatarButton?.classList.toggle("has-faction-seal", hasFaction && !art && !letters);
+  if (elements.avatarSeal) elements.avatarSeal.hidden = !view.showBlankSeal;
+  elements.levelAvatarButton?.classList.toggle("has-faction-letter", view.showLetterArt || view.showLetterText);
+  elements.playerName?.classList.toggle("has-faction-letter", view.showLetterArt || view.showLetterText);
+  elements.levelAvatarButton?.classList.toggle("has-faction-seal", view.showBlankSeal);
 }
 
 function renderAvatarPicker() {
@@ -1577,7 +1567,7 @@ function renderNotifyControl() {
       : unsupported
         ? "התראות לא זמינות כאן"
         : "להפעיל התראות";
-    home.disabled = denied || unsupported;
+    home.disabled = false;
   }
   if (elements.notifyStatus) {
     elements.notifyStatus.textContent = unsupported
@@ -1597,8 +1587,21 @@ async function ensureServiceWorker() {
   }
 }
 
+function explainUnavailableNotifications() {
+  const permission = notifyPermission();
+  if (permission === "unsupported") {
+    showToast("הדפדפן הזה לא תומך בהתראות. אפשר לשחק בלי התראות. האוסף עדיין נשמר.", 6000);
+    return true;
+  }
+  if (permission === "denied") {
+    showToast("התראות חסומות בדפדפן. אפשר לשחק בלי התראות. האוסף עדיין נשמר. באייפון: הוסיפו למסך הבית ואז הפעילו התראות.", 6000);
+    return true;
+  }
+  return false;
+}
+
 async function requestIdleNotifications() {
-  if (notifyPermission() === "unsupported") {
+  if (explainUnavailableNotifications()) {
     renderNotifyControl();
     return;
   }
@@ -5290,11 +5293,11 @@ async function submitBugReport(event) {
   }
 }
 
-function showToast(message) {
+function showToast(message, ms = 2200) {
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
   clearTimeout(showToast.timeout);
-  showToast.timeout = setTimeout(() => elements.toast.classList.remove("show"), 2200);
+  showToast.timeout = setTimeout(() => elements.toast.classList.remove("show"), ms);
 }
 
 function wrapCanvasText(context, text, x, y, maxWidth, lineHeight, maxLines = 4) {
