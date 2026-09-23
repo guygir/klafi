@@ -31,7 +31,7 @@ export const TIPS_STEPS = Object.freeze([
 export const PAGE_GUIDES = Object.freeze({
   home: Object.freeze([
     {
-      ring: "#today-open-cue",
+      ring: "#today-open-copy, #home-title",
       title: "היום",
       body: "מסך היום. האיסוף רץ גם בלי לגעת. השעון מתחת לכותרת מראה מתי הקלף הבא מגיע.",
     },
@@ -567,7 +567,7 @@ export function attachKlafiTips(env = globalThis) {
 
   function seedMute(kind) {
     if (!mute) return;
-    mute.checked = kind === "pull";
+    mute.checked = true;
     mute.dataset.seeded = kind;
   }
 
@@ -578,7 +578,7 @@ export function attachKlafiTips(env = globalThis) {
   function finish({ forceOff = false } = {}) {
     if (state.mode === "page" && state.page) {
       markPageSeen(state.page, env);
-      if (forceOff || mute?.checked) mutePageGuides(env);
+      if (forceOff || mute?.checked !== false) mutePageGuides(env);
     } else if (state.mode === "pull") {
       markPullPages();
       if (forceOff || !mute || mute.checked) persistOff();
@@ -614,7 +614,7 @@ export function attachKlafiTips(env = globalThis) {
       stepLabel.textContent = `${state.step}/${steps.length}`;
     }
     nextBtn.textContent = state.step === steps.length ? "הבנתי" : "הבא";
-    skipBtn.hidden = state.step !== 1;
+    skipBtn.hidden = false;
     backBtn.hidden = state.step === 1;
     if (mute && mute.dataset.seeded !== state.mode) seedMute(state.mode);
     const view = viewportBox();
@@ -794,7 +794,12 @@ export function attachKlafiTips(env = globalThis) {
       finish();
       return;
     }
-    state.step += 1;
+    const next = state.step + 1;
+    if (state.mode === "pull" && !stepViewReady(next, flags())) {
+      finish({ forceOff: true });
+      return;
+    }
+    state.step = next;
     sync();
   }
 
@@ -805,7 +810,8 @@ export function attachKlafiTips(env = globalThis) {
 
   nextBtn?.addEventListener("click", goNext);
   backBtn?.addEventListener("click", goBack);
-  skipBtn?.addEventListener("click", () => finish({ forceOff: state.mode === "pull" }));
+  skipBtn?.addEventListener("click", () => finish({ forceOff: true }));
+  dim?.addEventListener("click", () => finish({ forceOff: true }));
   replay?.addEventListener("click", replayTour);
   pageReplays.forEach((button) => button.addEventListener("click", replayCurrentPage));
   window.addEventListener("resize", () => { if (state.started && !state.parked) schedulePaint(); });

@@ -2067,6 +2067,15 @@ img.mini-art {
 }
 
 .policy-dialog::backdrop { background: rgba(26, 31, 28, 0.72); backdrop-filter: blur(5px); }
+.wait-dialog {
+  width: min(280px, calc(100% - 48px));
+  padding: 22px 20px;
+  text-align: center;
+}
+.wait-dialog p {
+  margin: 0;
+  font: 600 16px/1.4 "IBM Plex Sans Hebrew", sans-serif;
+}
 .policy-dialog h2 { margin-bottom: 10px; font-size: 30px; }
 .policy-dialog h3 { margin: 24px 0 8px; font-size: 18px; }
 .policy-dialog p, .policy-dialog li { font-size: 13px; line-height: 1.5; }
@@ -2653,6 +2662,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .progressive-card.stage-portrait .card-rarity-zone,
 .progressive-card.stage-identity .card-name-zone,
 .progressive-card.stage-portrait .card-name-zone,
+.progressive-card.stage-identity .card-image-zone,
 .progressive-card.stage-portrait .card-image-zone,
 .progressive-card.stage-portrait .card-pip,
 .progressive-card.stage-portrait .new-stamp,
@@ -2793,8 +2803,8 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .trade-thumb-frame {
   position: relative;
-  width: 128px;
-  height: calc(128px * 96 / 63);
+  width: 72px;
+  height: calc(72px * 96 / 63);
   overflow: hidden;
   border-radius: 8px;
 }
@@ -3218,11 +3228,21 @@ body {
 #home-view .home-grid {
   flex: 1 1 auto;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 190px);
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) minmax(92px, 120px);
+  gap: 12px;
+  align-items: start;
 }
 #home-view .pack-plinth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: start;
+  gap: 6px;
   min-height: 0;
+  overflow: visible;
+}
+#home-view .pack-plinth > .trust-info {
+  margin-top: 0;
 }
 #home-view.has-specials .today-docket-row {
   min-height: 44px;
@@ -3250,6 +3270,10 @@ body {
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
 }
+#home-view #cooldown-copy.is-full {
+  font-size: clamp(15px, 4.2cqw, 20px);
+  line-height: 1.25;
+}
 .trust-info {
   flex: 0 0 auto;
   width: 28px;
@@ -3275,7 +3299,8 @@ body {
 
 #home-view .home-copy .lede { margin-bottom: 8px; }
 .pack-plinth { min-height: 0; }
-.pack-wrapper { width: min(118px, 16dvh, 28vw); }
+.pack-wrapper { width: min(96px, 22vw); height: auto; overflow: visible; }
+#home-view .pack-wrapper img { height: auto; object-fit: contain; }
 #home-view .action-dock,
 #home-view .today-docket { flex: 0 0 auto; }
 .action-dock { margin-top: 4px; }
@@ -3488,8 +3513,9 @@ body {
   .top-nav-row { min-height: 0; padding-inline: 8px; padding-bottom: 17px; }
   .top-nav-row .bottom-nav { height: 46px; }
   #home-view .home-grid {
-    grid-template-columns: minmax(0, 1fr) 88px;
+    grid-template-columns: minmax(0, 1fr) 92px;
     gap: 8px;
+    align-items: start;
   }
   #home-view .home-copy h1 { font-size: clamp(20px, 6.4vw, 28px); }
   .next-pack-clock,
@@ -3623,18 +3649,19 @@ body {
 
 .trade-desk #trade-create,
 .trade-desk #trade-demo {
-  width: calc(50% - 3px);
+  width: 100%;
   min-height: 36px;
   display: inline-block;
   padding: 6px 8px;
   vertical-align: top;
-  font-size: 10px;
+  font-size: 13px;
 }
+.trade-desk #trade-demo[hidden] { display: none; }
 
 .trade-form {
   flex: 1;
   min-height: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   align-items: stretch;
   margin: 3px 0 6px;
 }
@@ -3660,12 +3687,9 @@ body {
 
 .trade-form select {
   width: 100%;
-  min-height: 30px !important;
-  overflow: hidden;
-  padding: 3px 5px !important;
-  font-size: 10px !important;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-height: 38px !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
 }
 
 .trade-form select:focus {
@@ -4015,11 +4039,12 @@ body {
     overflow: hidden !important;
   }
   .trade-form {
-    flex: 0 0 auto;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    flex: 1 1 auto;
+    grid-template-columns: minmax(0, 1fr) !important;
+    overflow-y: auto;
   }
   .trade-form fieldset {
-    min-height: 148px;
+    min-height: 0;
   }
 }
 

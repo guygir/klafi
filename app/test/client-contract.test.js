@@ -63,7 +63,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /גלה עוד \$\{progression\.remaining\}/);
   assert.doesNotMatch(html, /id="advocacy-short"[^>]*visually-hidden/);
   assert.match(javascript, /"blank", "quote", "party", "identity", "portrait"/);
-  assert.match(javascript, /const delays = \[configured\.quote, configured\.party, configured\.name, configured\.portrait\]/);
+  assert.match(javascript, /const delays = \[configured\.quote, configured\.party, configured\.name\]/);
+  assert.match(javascript, /WALKOUT_STAGES\.length - 1/);
   assert.doesNotMatch(javascript, /Flip for full context/);
   assert.match(javascript, /card-quote-zone/);
   assert.match(javascript, /data-fit-card-text="quote"/);
@@ -267,6 +268,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="level-streak-count"/);
   assert.match(javascript, /const showStreak = streak >= 3/);
   assert.match(javascript, /elements\.cooldownCopy\.hidden = false/);
+  assert.match(javascript, /המחסן מלא\. פתחו קלף כדי שהאיסוף יתחיל שוב/);
+  assert.match(javascript, /function openBinderReleaseIds/);
+  assert.match(javascript, /achievementList\(\)\.filter\(\(\{ earned \}\) => earned\)/);
+  assert.match(javascript, /"party-slot-2": "משנה"/);
+  assert.match(html, /id="wait-dialog"/);
+  assert.match(javascript, /showWait\("מפרסמים את ההחלפה/);
+  assert.match(javascript, /showWait\("שומרים את הסיעה/);
   assert.match(html, /id="today-open-cue"/);
   assert.match(html, /id="cooldown-copy"/);
   assert.doesNotMatch(javascript, /function isApproachingBadge/);
@@ -505,7 +513,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-46/);
+  assert.match(html, /card-surface-47/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -573,7 +581,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-46/);
+  assert.match(html, /card-surface-47/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
