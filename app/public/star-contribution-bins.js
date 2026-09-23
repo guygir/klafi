@@ -10,7 +10,7 @@ export function starContributionBins(scores = []) {
   const current = scores.find((row) => row.current);
   const you = current == null ? null : Math.max(0, Math.round(Number(current.stars) || 0));
   if (!values.length) return [];
-  const min = Math.min(...values, you ?? Infinity);
+  const min = 0;
   const max = Math.max(...values, you ?? 0);
   const span = max - min;
   const step = span > 10 ? Math.ceil(span / 10) : 1;
