@@ -266,7 +266,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="level-streak"/);
   assert.match(html, /id="level-streak-count"/);
   assert.match(javascript, /const showStreak = streak >= 3/);
-  assert.match(javascript, /elements\.cooldownCopy\.hidden = true/);
+  assert.match(javascript, /elements\.cooldownCopy\.hidden = false/);
+  assert.match(html, /id="today-open-cue"/);
+  assert.match(html, /id="cooldown-copy"/);
+  assert.match(javascript, /function isApproachingBadge/);
+  assert.match(javascript, /achievement-track/);
+  assert.match(css, /#advocacy-dialog \.dialog-close/);
+  assert.match(css, /#advocacy-dialog \.dialog-close \{[^}]*width:\s*22px/);
   assert.match(css, /\.masthead \.presentation-link/);
   assert.match(html, /id="rank-names"/);
   assert.match(html, /id="numbered-sets"/);
@@ -289,8 +295,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /slotLabel \|\| card\.subtitleHe/);
   assert.match(javascript, /membershipNote/);
   assert.match(javascript, /if \(live\.membershipNote\) card\.membershipNote = live\.membershipNote/);
-  assert.match(css, /width:\s*11px/);
-  assert.match(css, /height:\s*16\.5px/);
+  assert.match(css, /width:\s*18px/);
+  assert.match(css, /height:\s*27px/);
   assert.match(javascript, /numberedCopies/);
   assert.match(javascript, /numberedEvery/);
   assert.match(javascript, /#numbered-every/);
@@ -495,7 +501,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-40/);
+  assert.match(html, /card-surface-41/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -563,7 +569,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-40/);
+  assert.match(html, /card-surface-41/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

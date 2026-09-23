@@ -80,10 +80,16 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGE_GUIDES.home.length, 3);
   assert.equal(PAGE_GUIDES.binder.length, 2);
   assert.equal(PAGE_GUIDES.achievements.length, 1);
-  assert.equal(PAGE_GUIDES.growth.length, 1);
+  assert.equal(PAGE_GUIDES.growth.length, 3);
   assert.match(PAGE_GUIDES.home[0].body, /היום/);
+  assert.match(PAGE_GUIDES.home[0].ring, /today-open-cue/);
+  assert.match(PAGE_GUIDES.home[0].body, /השעון/);
+  assert.match(PAGE_GUIDES.binder[0].body, /תמונה/);
   assert.match(PAGE_GUIDES.binder[1].body, /סדרה/);
   assert.match(PAGE_GUIDES.growth[0].body, /החלפות/);
+  assert.match(PAGE_GUIDES.growth[1].body, /מפרסמים/);
+  assert.match(PAGE_GUIDES.growth[2].body, /הצעות/);
+  assert.match(PAGE_GUIDES.achievements[0].body, /פס התקדמות/);
   assert.equal(PAGE_GUIDES.achievements[0].place, "above");
   assert.equal(PAGE_GUIDES.achievements[0].ringUnion, true);
   assert.equal(PAGE_GUIDES.growth[0].ringUnion, true);

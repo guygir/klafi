@@ -1,4 +1,5 @@
 import { collectionStarCount } from "./visible-sets.js";
+import { levelThresholds } from "./progression.js";
 
 const IDLE_CAPACITY = 8;
 
@@ -12,9 +13,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
   const totalLevels = Math.max(2, Math.min(ranks.length, configuredLevels || ranks.length));
   const exponent = Math.max(0.5, Math.min(3, Number(shell.gameConfig?.progression?.thresholdExponent) || 1.2));
   const idleTotal = idleIds.size || shell.totals?.idleEligible || 1;
-  const thresholds = Array.from({ length: totalLevels }, (_, index) => (
-    index === 0 ? 0 : Math.ceil(idleTotal * (index === totalLevels - 1 ? 1 : (index / (totalLevels - 1)) ** exponent))
-  ));
+  const thresholds = levelThresholds(idleTotal, totalLevels, exponent);
   const computedLevel = thresholds.reduce((result, threshold, index) => unique >= threshold ? index + 1 : result, 1);
   const level = Math.max(computedLevel, Math.min(ranks.length, session.highestRank || 1));
   const capped = Math.min(level, totalLevels);

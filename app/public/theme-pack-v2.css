@@ -546,8 +546,8 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] #home-view .home-grid {
-  grid-template-columns: minmax(0, 1fr) minmax(150px, 220px);
-  gap: clamp(24px, 6vw, 64px);
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 150px);
+  gap: clamp(16px, 4vw, 40px);
 }
 
 #app[data-density="airy-v2"] #home-view .home-copy .eyebrow,
@@ -567,10 +567,10 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] #home-view .home-copy h1 {
-  max-width: 15ch;
-  margin-bottom: 18px;
+  max-width: 16ch;
+  margin-bottom: 2px;
   overflow-wrap: anywhere;
-  font-size: clamp(28px, 5vw, 44px);
+  font-size: clamp(24px, 4.6vw, 36px);
   line-height: 1.12;
 }
 
@@ -812,8 +812,8 @@ body:has(#app[data-theme="pack-v2"]) {
 
 @media (max-width: 760px) {
   #app[data-density="airy-v2"] #home-view .home-grid {
-    grid-template-columns: minmax(0, 1fr) 126px;
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr) 88px;
+    gap: 10px;
   }
 
   #app[data-density="airy-v2"] .site-card-peeks {
@@ -837,13 +837,13 @@ body:has(#app[data-theme="pack-v2"]) {
   }
 
   #app[data-density="airy-v2"] #home-view .home-grid {
-    grid-template-columns: minmax(0, 1fr) 112px;
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) 78px;
+    gap: 8px;
   }
 
   #app[data-density="airy-v2"] #home-view .home-copy h1 {
-    margin-bottom: 12px;
-    font-size: clamp(24px, 7.2vw, 31px);
+    margin-bottom: 2px;
+    font-size: clamp(20px, 6.4vw, 28px);
   }
 
   #app[data-density="airy-v2"] .today-docket-list {

@@ -30,6 +30,7 @@ import { publicLeague } from "./leagues.js";
 import { qrSvg } from "./qr-svg.js";
 import { openSpecialWindow } from "./special-window.js";
 import { requestOrigin, serveBinderShareLanding, serveShareLanding } from "./share-landing.js";
+import { levelThresholds } from "./progression.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -544,8 +545,8 @@ function progressionState(session, cards, config = {}, current = Date.now()) {
   const eligibleIds = new Set(eligible.map(({ id }) => id));
   const unique = Object.keys(session.inventory).filter((id) => eligibleIds.has(id)).length;
   const activeReleaseIds = [...new Set(eligible.map(({ releaseSetId }) => releaseSetId).filter(Boolean))];
-  const { ratios, ranks, totalLevels, campaignLevels, reward } = progressionConfig(config, activeReleaseIds);
-  const thresholds = ratios.map((ratio, index) => index === 0 ? 0 : Math.ceil(eligible.length * ratio));
+  const { ranks, totalLevels, campaignLevels, reward, thresholdExponent } = progressionConfig(config, activeReleaseIds);
+  const thresholds = levelThresholds(eligible.length, totalLevels, thresholdExponent);
   const computedLevel = eligible.length
     ? thresholds.reduce((result, threshold, index) => unique >= threshold ? index + 1 : result, 1)
     : 1;

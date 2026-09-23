@@ -1404,18 +1404,32 @@ function renderAvatarSeal() {
   if (elements.levelLetter) {
     if (art) {
       elements.levelLetter.hidden = false;
-      elements.levelLetter.src = `/design-assets/${encodeURIComponent(art)}`;
       elements.levelLetter.alt = letters;
+      elements.levelLetter.onerror = () => {
+        elements.levelLetter.hidden = true;
+        elements.levelLetter.removeAttribute("src");
+        if (elements.levelLetterText && letters) {
+          elements.levelLetterText.hidden = false;
+          elements.levelLetterText.textContent = letters;
+          elements.levelLetterText.dataset.letters = String([...letters].length);
+        } else {
+          elements.levelAvatarButton?.classList.remove("has-faction-letter");
+        }
+      };
+      elements.levelLetter.src = `/design-assets/${encodeURIComponent(art)}`;
     } else {
+      elements.levelLetter.onerror = null;
       elements.levelLetter.hidden = true;
       elements.levelLetter.removeAttribute("src");
       elements.levelLetter.alt = "";
     }
   }
   if (elements.levelLetterText) {
-    elements.levelLetterText.hidden = Boolean(art) || !letters;
-    elements.levelLetterText.textContent = letters;
-    elements.levelLetterText.dataset.letters = String([...letters].length);
+    const showText = Boolean(letters) && !art;
+    elements.levelLetterText.hidden = !showText;
+    elements.levelLetterText.textContent = showText ? letters : "";
+    if (showText) elements.levelLetterText.dataset.letters = String([...letters].length);
+    else delete elements.levelLetterText.dataset.letters;
   }
   elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(art || letters));
   elements.levelAvatarButton?.classList.toggle("has-faction-seal", false);
@@ -2228,20 +2242,16 @@ function updateCountdown() {
   renderTodayDocket();
   scheduleIdleNotification();
   const remaining = timeUntil(model.serverState?.nextIdleAt);
-  const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
-  if (!remaining) {
-    if (elements.cooldownCopy) {
-      elements.cooldownCopy.textContent = unseen ? "פותחים אחד-אחד" : "קלף חדש מוכן לאיסוף";
-      elements.cooldownCopy.hidden = true;
-    }
-    elements.headerStatus.textContent = "אוספים עכשיו";
-    if (elements.debugClock) elements.debugClock.textContent = "Idle pull · ready";
-    return;
-  }
-  const clock = formatCountdown(remaining);
+  const interval = model.serverState?.idleIntervalMs || 3 * 60 * 60 * 1000;
+  const clock = formatCountdown(remaining || interval);
   if (elements.cooldownCopy) {
     elements.cooldownCopy.textContent = `הבא בעוד ${clock}`;
     elements.cooldownCopy.hidden = false;
+  }
+  if (!remaining) {
+    elements.headerStatus.textContent = "אוספים עכשיו";
+    if (elements.debugClock) elements.debugClock.textContent = "Idle pull · ready";
+    return;
   }
   elements.headerStatus.textContent = `הקלף הבא · ${clock}`;
   if (elements.debugClock) elements.debugClock.textContent = `Next idle pull · ${clock}`;
@@ -3421,6 +3431,15 @@ function isHeartedAchievement(badge) {
   return badge?.id === "favorite-first" || badge?.rule === "favorites";
 }
 
+function isApproachingBadge(badge) {
+  if (!badge || badge.earned) return false;
+  const target = Math.max(1, Number(badge.target) || 1);
+  const progress = Math.max(0, Number(badge.progress) || 0);
+  if (progress <= 0) return false;
+  const left = target - progress;
+  return left <= 3 || progress / target >= 0.4;
+}
+
 function achievementList() {
   const local = localAchievementList().filter((badge) => !isHeartedAchievement(badge));
   const server = (model.serverState?.achievements || []).filter((badge) => !isHeartedAchievement(badge));
@@ -3435,7 +3454,13 @@ function achievementList() {
 function renderAchievements() {
   setEmptyNote(elements.achievementsEmpty, "", { hidden: true });
   if (!elements.achievementGrid) return;
-  const badges = achievementList();
+  const all = achievementList();
+  const badges = all
+    .filter((badge) => badge.earned || isApproachingBadge(badge))
+    .sort((left, right) => Number(right.earned) - Number(left.earned) || (right.progress / right.target) - (left.progress / left.target));
+  if (!badges.length) {
+    setEmptyNote(elements.achievementsEmpty, "התגים יופיעו כשמתקרבים אליהם.", { hidden: false });
+  }
   const pageSize = 4;
   const pages = Math.max(1, Math.ceil(badges.length / pageSize));
   model.achievementPage = Math.min(model.achievementPage, pages - 1);
@@ -3443,10 +3468,14 @@ function renderAchievements() {
     .slice(model.achievementPage * pageSize, (model.achievementPage + 1) * pageSize)
     .map((badge) => {
     const copy = hebrewBadge(badge);
+    const percent = badge.earned ? 100 : Math.max(0, Math.min(100, Math.round((badge.progress / Math.max(1, badge.target)) * 100)));
+    const track = badge.earned
+      ? ""
+      : `<div class="achievement-track" aria-hidden="true"><span style="width:${percent}%"></span></div><small>${badge.progress}/${badge.target}</small>`;
     return `
-    <article class="achievement-badge ${badge.earned ? "earned" : ""}">
+    <article class="achievement-badge ${badge.earned ? "earned" : "approaching"}">
       <span class="achievement-seal" tabindex="0" title="${escapeHtml(copy.description)}">${badgeArtwork(badge.id)}${badge.earned ? "" : `<i>${badge.progress}/${badge.target}</i>`}</span>
-      <div><strong>${escapeHtml(copy.name)}</strong><p>${escapeHtml(copy.description)}</p></div>
+      <div><strong>${escapeHtml(copy.name)}</strong><p>${escapeHtml(copy.description)}</p>${track}</div>
     </article>`;
   }).join("");
   elements.achievementPager.innerHTML = pagerMarkup(model.achievementPage, pages, "achievements");

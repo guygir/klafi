@@ -31,15 +31,15 @@ export const TIPS_STEPS = Object.freeze([
 export const PAGE_GUIDES = Object.freeze({
   home: Object.freeze([
     {
-      ring: "#home-title",
+      ring: "#today-open-cue",
       title: "היום",
-      body: "מסך היום. האיסוף רץ גם בלי לגעת — פתיחה, שעון והמרוץ כאן.",
+      body: "מסך היום. האיסוף רץ גם בלי לגעת. השעון מתחת לכותרת מראה מתי הקלף הבא מגיע.",
     },
     {
       ring: "#open-pack",
       arrowTo: "#cooldown-copy",
       title: "פתיחה",
-      body: "כשיש קלף מוכן — פתיחת קלף. אחרת השעון כאן.",
+      body: "כשיש קלף מוכן — פתיחת קלף. מה שנפתח נכנס לאלבום. שיתוף שולח רק תמונה.",
     },
     {
       ring: ".today-docket",
@@ -59,7 +59,7 @@ export const PAGE_GUIDES = Object.freeze({
     {
       ring: "#earned-badge-rail, .binder-head",
       title: "האלבום",
-      body: "כל הקלפים שנאספו. למעלה האחוז והתגים.",
+      body: "כל הקלפים שנאספו. למעלה האחוז והתגים. שיתוף שולח תמונה בלבד — הקלף נשאר אצל מי שפתח.",
     },
     {
       ring: "#binder-filters",
@@ -75,7 +75,7 @@ export const PAGE_GUIDES = Object.freeze({
       ringUnion: true,
       place: "above",
       title: "הישגים",
-      body: "תגים שנפתחים באיסוף ובמשחק. כאן מה כבר הושג.",
+      body: "רק תגים שהושגו או שקרובים. לכל תג יש פס התקדמות — כדי לדעת במה להשקיע.",
     },
   ]),
   growth: Object.freeze([
@@ -85,7 +85,17 @@ export const PAGE_GUIDES = Object.freeze({
       pad: 3,
       radius: 8,
       title: "קהילה",
-      body: "החלפות, סיעות, טבלת אספנים והאתגר היומי. כל לשונית היא לוח.",
+      body: "החלפות — אתם מפרסמים עסקה. הצעות פתוחות — עסקאות של אחרים שמחכות לאישור.",
+    },
+    {
+      ring: "#community-panel-trade, #community-tab-trade",
+      title: "החלפות",
+      body: "כאן מפרסמים: קלף שאתם נותנים תמורת קלף שאתם רוצים. רק אחרי אישור הקלפים מתחלפים. שיתוף בוואטסאפ הוא תמונה — זה לא מעביר קלף.",
+    },
+    {
+      ring: "#community-tab-open-trades",
+      title: "הצעות פתוחות",
+      body: "לוח של הצעות שאחרים פרסמו. בוחרים ומאשרים. בלי אישור אף קלף לא זז, וקלף ששותף איתכם לא נכנס לאוסף.",
     },
   ]),
   dialog: Object.freeze([
@@ -293,6 +303,28 @@ export function unionBoxes(nodes, clipNode) {
 
 function specFromBox(box, pad = 8, radius = 14) {
   return { kind: "round", box: inflate(box, pad), radius };
+}
+
+function clampSpecToView(spec, view) {
+  if (!spec?.box || !view) return spec;
+  const pad = 8;
+  const clip = {
+    left: pad,
+    top: pad,
+    right: view.width - pad,
+    bottom: view.height - pad,
+    width: view.width - pad * 2,
+    height: view.height - pad * 2,
+  };
+  const boxed = intersectBox(spec.box, clip);
+  if (!boxed) return spec;
+  const next = { ...spec, box: boxed };
+  if (spec.kind === "circle") {
+    next.cx = boxed.left + boxed.width / 2;
+    next.cy = boxed.top + boxed.height / 2;
+    next.radius = Math.min(spec.radius || 0, boxed.width / 2, boxed.height / 2);
+  }
+  return next;
 }
 
 function inflate(box, pad) {
@@ -618,11 +650,11 @@ export function attachKlafiTips(env = globalThis) {
     const preferredRing = state.mode === "pull" && state.step === 3 && flags().dialogOpen
       ? firstVisible("#dialog-card", doc)
       : null;
-    const fromSpec = specToFrame(united
+    const fromSpec = clampSpecToView(specToFrame(united
       ? specFromBox(united, step.pad ?? 4, step.radius ?? 10)
-      : highlightSpec(preferredRing || ringNode, 8), frame);
+      : highlightSpec(preferredRing || ringNode, 8), frame), { width: vw, height: vh });
     const toNode = step.arrowTo ? firstPaintTarget(step.arrowTo) : null;
-    const toSpec = specToFrame(toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null, frame);
+    const toSpec = clampSpecToView(specToFrame(toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null, frame), { width: vw, height: vh });
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     dim.setAttribute("width", String(vw));
     dim.setAttribute("height", String(vh));

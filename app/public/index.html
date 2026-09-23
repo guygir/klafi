@@ -17,12 +17,12 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-40"></script>
+  <script src="/boot-warmup.js?v=card-surface-41"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-40" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-40" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-41" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-41" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -85,8 +85,11 @@
         <div class="home-grid">
           <div class="home-copy">
             <p class="eyebrow" id="today-label">האיסוף האוטומטי</p>
-            <div class="home-title-row">
-              <h1 id="home-title">הקלפים נאספים גם כשאתם לא כאן.</h1>
+            <div class="home-title-row" id="today-open-cue">
+              <div class="today-open-copy">
+                <h1 id="home-title">הקלפים נאספים גם כשאתם לא כאן.</h1>
+                <p id="cooldown-copy" class="next-pack-clock">הבא בעוד 03:00:00</p>
+              </div>
               <button id="open-trust-legend" class="trust-info" type="button" aria-haspopup="dialog" aria-label="מה מסמנת הכוכבית בקלפים?" title="מה מסמנת הכוכבית?">?</button>
             </div>
             <p class="lede" id="home-copy">קלף אחד בכל שלוש שעות.</p>
@@ -111,7 +114,6 @@
           <button id="open-pack-fancy" class="secondary-action" type="button" hidden>פתיחת וידאו</button>
           <button id="open-bibi-pack" class="debug-pack-action" type="button" hidden>פתיחת חבילת ביבי</button>
           <button id="open-pending-level" class="secondary-action" type="button" hidden>פרס רמה מחכה</button>
-          <p id="cooldown-copy" class="action-note">הקלף הבא בעוד 03:00:00</p>
           <div class="home-utility-row">
             <button id="replay-tips" class="tips-replay" type="button">איך משחקים</button>
             <button id="home-enable-notify" class="tips-replay" type="button" hidden>להפעיל התראות</button>
@@ -234,7 +236,7 @@
         <div class="growth-grid">
           <article id="community-panel-trade" class="work-card trade-desk" role="tabpanel" aria-labelledby="community-tab-trade" tabindex="0">
             <p class="work-kicker">החלפות</p>
-            <h2>הצעה אחת פתוחה.</h2>
+            <h2>מפרסמים עסקה שלכם.</h2>
             <div id="trade-preview" class="trade-preview" hidden></div>
             <div id="trade-active" class="trade-active" hidden></div>
             <div id="trade-compose" class="trade-compose">
@@ -242,7 +244,7 @@
                 <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
                 <button id="trade-demo" class="secondary-action" type="button">קישור לדוגמה</button>
               </div>
-              <p id="trade-board-hint" class="work-note">פרסום מעלה הצעה ללוח. קישור לדוגמה רק מעתיק קישור.</p>
+              <p id="trade-board-hint" class="work-note">כאן מפרסמים החלפה: קלף שיש לכם תמורת קלף שאתם רוצים. רק אחרי שאישרו את העסקה הקלפים מתחלפים. שיתוף בוואטסאפ הוא תמונה בלבד — זה לא מעביר קלף לאלבום.</p>
               <div class="trade-form">
                 <fieldset>
                   <legend>אני נותן</legend>
@@ -265,7 +267,8 @@
           </article>
           <article id="community-panel-open-trades" class="work-card open-trades-desk" role="tabpanel" aria-labelledby="community-tab-open-trades" tabindex="0" hidden>
             <p class="work-kicker">הצעות פתוחות</p>
-            <h2>עסקאות שמחכות לכם.</h2>
+            <h2>עסקאות שאחרים פרסמו.</h2>
+            <p class="work-note">זה הלוח הציבורי. בוחרים הצעה ומאשרים — רק אז הקלפים מתחלפים. בלי אישור אף קלף לא זז, וקלף ששותף איתכם לא נכנס לאוסף.</p>
             <div id="trade-board-toolbar" class="trade-board-toolbar" hidden>
               <label>מקבלים
                 <select id="trade-board-offered" aria-label="סינון לפי הקלף שאתם מקבלים">
@@ -679,6 +682,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-40"></script>
+  <script type="module" src="/app.js?v=card-surface-41"></script>
 </body>
 </html>
