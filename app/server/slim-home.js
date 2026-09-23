@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { slimPublicState } from "./slim-state.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
+import { newPublicBinderSlug } from "./public-binder.js";
 
 const { Pool } = pg;
 const SECURITY_HEADERS = Object.freeze({
@@ -130,16 +131,18 @@ async function loadSession(db, token) {
     preparedPulls: extras.preparedPulls || [],
     pendingRankRewards: extras.pendingRankRewards || [],
     favorites: extras.favorites || [],
+    publicBinderSlug: extras.publicBinderSlug || null,
   };
 }
 
 async function createSession(db, now) {
   const token = randomUUID();
   const createdAt = new Date(now).toISOString();
+  const publicBinderSlug = newPublicBinderSlug();
   await db.query(
     `INSERT INTO kalpi_sessions (token, display_name, created_at, idle_anchor_at, extras)
-     VALUES ($1,$2,$3,$3,'{}'::jsonb)`,
-    [token, `שחקן ${token.slice(0, 4)}`, createdAt],
+     VALUES ($1,$2,$3,$3,$4::jsonb)`,
+    [token, `שחקן ${token.slice(0, 4)}`, createdAt, JSON.stringify({ publicBinderSlug })],
   );
   return {
     token,
@@ -155,6 +158,7 @@ async function createSession(db, now) {
       preparedPulls: [],
       pendingRankRewards: [],
       favorites: [],
+      publicBinderSlug,
     },
   };
 }
@@ -171,6 +175,12 @@ export async function handleSlimHome(request, response) {
     let session = token ? await loadSession(db, token) : null;
     if (!session) {
       ({ token, session } = await createSession(db, Date.now()));
+    } else if (!session.publicBinderSlug) {
+      session.publicBinderSlug = newPublicBinderSlug();
+      await db.query(
+        `UPDATE kalpi_sessions SET extras = COALESCE(extras, '{}'::jsonb) || $2::jsonb WHERE token = $1`,
+        [token, JSON.stringify({ publicBinderSlug: session.publicBinderSlug })],
+      );
     }
     json(response, 200, { token, state: slimPublicState(session, config) });
   } catch (error) {

@@ -59,9 +59,10 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-theme="pack-v2"] .player-name {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   color: var(--pack-seal);
   border-bottom-color: color-mix(in srgb, var(--pack-gold) 65%, transparent);
+  font-size: 17px;
+  font-weight: 700;
 }
 
 #app[data-theme="pack-v2"] #home-view h1 {

@@ -6,6 +6,7 @@
   "buildCommand": "node scripts/prepare-vercel-static.mjs",
   "rewrites": [
     { "source": "/share/binder", "destination": "/share/binder.html" },
+    { "source": "/share/u/:slug", "destination": "/api?__kalpi_path=/share/u/:slug" },
     { "source": "/share/:id", "destination": "/api/share?__kalpi_path=/share/:id" },
     { "source": "/api/:path*", "destination": "/api?__kalpi_path=/api/:path*" }
   ],

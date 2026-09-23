@@ -39,6 +39,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     highestRank: session.highestRank || 1,
     loginStreak: session.loginStreak || 0,
     factionId: session.factionId || null,
+    binderSlug: session.publicBinderSlug || null,
     numberedCopies: (session.instances || []).filter((item) => Number(item?.numberedIndex) > 0),
     progression: {
       level,

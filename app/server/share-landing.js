@@ -70,6 +70,42 @@ export function serveBinderShareLanding(request, response) {
 </html>`);
 }
 
+export function servePlayerBinderShareLanding(request, response, binder) {
+  const origin = requestOrigin(request);
+  const play = new URL("/", origin);
+  play.searchParams.set("binder", binder.slug);
+  const name = binder.displayName || "שחקן קְלָפִי";
+  const title = `קְלָפִי · האלבום של ${name}`;
+  const description = `${binder.ownedUnique || 0} קלפים שנאספו. תצוגה בלבד — בלי קוד שחזור.`;
+  const shareUrl = `${origin}/share/u/${encodeURIComponent(binder.slug)}`;
+  const image = `${origin}/design-assets/hero-art-kalpi.png`;
+  const playHref = `${play.pathname}${play.search}`;
+  writeShareHtml(request, response, `<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeShareHtml(title)}</title>
+  <meta name="description" content="${escapeShareHtml(description)}" />
+  <meta property="og:title" content="${escapeShareHtml(title)}" />
+  <meta property="og:description" content="${escapeShareHtml(description)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${escapeShareHtml(shareUrl)}" />
+  <meta property="og:image" content="${escapeShareHtml(image)}" />
+  <meta property="og:image:alt" content="${escapeShareHtml(title)}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${escapeShareHtml(title)}" />
+  <meta name="twitter:description" content="${escapeShareHtml(description)}" />
+  <meta name="twitter:image" content="${escapeShareHtml(image)}" />
+  <link rel="canonical" href="${escapeShareHtml(play.toString())}" />
+  <meta http-equiv="refresh" content="0;url=${escapeShareHtml(playHref)}" />
+</head>
+<body>
+  <p><a href="${escapeShareHtml(playHref)}">פתחו את האלבום של ${escapeShareHtml(name)}</a></p>
+</body>
+</html>`);
+}
+
 export function serveShareLanding(request, response, card, extras = {}) {
   const origin = requestOrigin(request);
   const play = new URL("/", origin);

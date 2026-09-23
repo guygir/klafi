@@ -135,6 +135,36 @@ test("share binder is look-only and does not create a player session", async (t)
   assert.ok(after.body.collectors.length >= 1);
 });
 
+test("public binder is a shareable album without the session token", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-public-binder-test-"));
+  const clock = { value: Date.parse("2026-09-22T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const created = await api(running.base, "/api/home");
+  const token = created.body.token;
+  const slug = created.body.state.binderSlug;
+  assert.match(String(slug), /^[a-f0-9]{8,32}$/);
+  const missing = await api(running.base, "/api/public-binder/not-a-slug");
+  assert.equal(missing.status, 404);
+  const view = await api(running.base, `/api/public-binder/${slug}`);
+  assert.equal(view.status, 200);
+  assert.equal(view.body.slug, slug);
+  assert.equal(view.body.displayName, created.body.state.displayName);
+  assert.equal(view.body.token, undefined);
+  assert.ok(view.body.inventory);
+  const landing = await fetch(`${running.base}/share/u/${slug}`);
+  assert.equal(landing.status, 200);
+  const html = await landing.text();
+  assert.match(html, /האלבום של/);
+  assert.match(html, new RegExp(`binder=${slug}`));
+  const boards = await api(running.base, "/api/leaderboards", { token });
+  assert.equal(boards.body.collectors[0].binderSlug, slug);
+});
+
 test("card holder counts are real session inventories, not fixtures", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-card-holders-test-"));
   const clock = { value: Date.parse("2026-09-22T12:00:00.000Z") };

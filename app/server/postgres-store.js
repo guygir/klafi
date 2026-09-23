@@ -7,6 +7,7 @@ import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
 import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
+import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
 
 const { Pool } = pg;
 
@@ -60,6 +61,7 @@ function emptySession(token, createdAt) {
     currentQuiz: null,
     loginDay: null,
     loginStreak: 0,
+    publicBinderSlug: ensurePublicBinderSlug({}),
   };
 }
 
@@ -75,6 +77,7 @@ function extrasFromSession(session) {
     currentQuiz: session.currentQuiz || null,
     loginDay: session.loginDay || null,
     loginStreak: session.loginStreak || 0,
+    publicBinderSlug: session.publicBinderSlug || null,
   };
 }
 
@@ -482,6 +485,7 @@ export class PostgresStore {
       currentQuiz: extras.currentQuiz || null,
       loginDay: extras.loginDay || null,
       loginStreak: extras.loginStreak || 0,
+      publicBinderSlug: extras.publicBinderSlug || null,
     };
   }
 
@@ -649,6 +653,27 @@ export class PostgresStore {
       this.remember(token, session);
       return token;
     });
+  }
+
+  async getPublicBinder(slug) {
+    const normalized = normalizePublicBinderSlug(slug);
+    if (!normalized) return null;
+    const found = await this.executor().query(
+      `SELECT token FROM kalpi_sessions WHERE extras->>'publicBinderSlug' = $1 LIMIT 1`,
+      [normalized],
+    );
+    const token = found.rows[0]?.token;
+    return token ? this.loadSession(token) : null;
+  }
+
+  async ensureBinderSlug(token) {
+    const session = await this.loadSession(token);
+    if (!session) return null;
+    if (normalizePublicBinderSlug(session.publicBinderSlug)) return session;
+    await this.withSession(token, (current) => {
+      ensurePublicBinderSlug(current);
+    });
+    return this.loadSession(token);
   }
 
   async withSession(token, mutator) {
@@ -1037,6 +1062,7 @@ export class PostgresStore {
       `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
               s.avatar_id, s.faction_id, s.highest_rank,
               COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+              s.extras->>'publicBinderSlug' AS binder_slug,
               COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
        FROM kalpi_sessions s
        LEFT JOIN kalpi_inventory i ON i.session_token = s.token
@@ -1055,6 +1081,7 @@ export class PostgresStore {
           factionId: row.faction_id || null,
           loginStreak: row.login_streak || 0,
           rankLevel: row.highest_rank || 1,
+          binderSlug: row.binder_slug || null,
         };
       })
       .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
@@ -1071,7 +1098,8 @@ export class PostgresStore {
     const packRows = await this.pool.query(
       `SELECT p.session_token, s.display_name, p.cards,
               s.avatar_id, s.faction_id, s.highest_rank,
-              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak
+              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+              s.extras->>'publicBinderSlug' AS binder_slug
        FROM kalpi_packs p
        JOIN kalpi_sessions s ON s.token = p.session_token
        WHERE (p.pulled_at AT TIME ZONE 'Asia/Jerusalem')::date = $1::date`,
@@ -1086,6 +1114,7 @@ export class PostgresStore {
         factionId: row.faction_id || null,
         loginStreak: row.login_streak || 0,
         rankLevel: row.highest_rank || 1,
+        binderSlug: row.binder_slug || null,
         cards: 0,
       };
       existing.cards += (row.cards || []).filter((instance) => cardsById.get(instance.cardId)?.set === targetPartyId).length;
@@ -1100,6 +1129,7 @@ export class PostgresStore {
         factionId: current?.faction_id || null,
         loginStreak: current?.login_streak || 0,
         rankLevel: current?.highest_rank || 1,
+        binderSlug: current?.binder_slug || null,
         cards: 0,
       });
     }

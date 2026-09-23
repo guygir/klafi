@@ -78,6 +78,7 @@ const model = {
   reportSubject: null,
   levelRewardReady: null,
   levelRewardGrant: null,
+  guestBinder: null,
   watchedTrade: null,
   tradeBoardPage: 0,
   tradeBoardOffered: "",
@@ -93,7 +94,6 @@ const elements = {
   headerStatus: document.querySelector("#header-status"),
   playerName: document.querySelector("#player-name"),
   playerNameLabel: document.querySelector("#player-name-label"),
-  playerAvatar: document.querySelector("#player-avatar"),
   levelAvatar: document.querySelector("#level-avatar"),
   levelAvatarButton: document.querySelector("#level-avatar-button"),
   avatarPicker: document.querySelector("#avatar-picker"),
@@ -149,7 +149,6 @@ const elements = {
   openPack: document.querySelector("#open-pack"),
   openPackFancy: document.querySelector("#open-pack-fancy"),
   openBibiPack: document.querySelector("#open-bibi-pack"),
-  openPendingLevel: document.querySelector("#open-pending-level"),
   cooldownCopy: document.querySelector("#cooldown-copy"),
   packStep: document.querySelector("#pack-step"),
   packHeading: document.querySelector("#pack-heading"),
@@ -175,6 +174,12 @@ const elements = {
   dialogHolders: document.querySelector("#dialog-holders"),
   binderPercent: document.querySelector("#binder-percent"),
   binderCount: document.querySelector("#binder-count"),
+  binderEyebrow: document.querySelector("#binder-eyebrow"),
+  binderTitle: document.querySelector("#binder-title"),
+  shareMyBinder: document.querySelector("#share-my-binder"),
+  closeGuestBinder: document.querySelector("#close-guest-binder"),
+  binderShareUrl: document.querySelector("#binder-share-url"),
+  copyBinderShare: document.querySelector("#copy-binder-share"),
   binderFilters: document.querySelector("#binder-filters"),
   binderGrid: document.querySelector("#binder-grid"),
   binderPager: document.querySelector("#binder-pager"),
@@ -1150,6 +1155,11 @@ function handleInboundLink() {
     sessionStorage.setItem(`kalpi-ref-${referralCode}`, "1");
     recordEvent("referral_opened", { referralCode, cardId });
   }
+  const binderSlug = inboundBinderSlug();
+  if (binderSlug) {
+    openPublicBinder(binderSlug).catch(() => showToast("לא מצאנו את האלבום הזה."));
+    return;
+  }
   if (cardId && model.byId.has(cardId)) {
     showSharedCard(cardId, params.has("gift"));
     return;
@@ -1380,10 +1390,8 @@ function renderProfile() {
   if (elements.playerNameLabel) elements.playerNameLabel.textContent = model.serverState.displayName;
   else elements.playerName.textContent = model.serverState.displayName;
   const avatar = selectedAvatar();
-  if (elements.playerAvatar && avatar) {
-    elements.playerAvatar.hidden = false;
-    elements.playerAvatar.src = avatarUrl(avatar);
-    elements.playerAvatar.alt = avatar.nameHe || "";
+  if (elements.binderShareUrl) {
+    elements.binderShareUrl.value = publicBinderShareUrl(model.serverState.binderSlug);
   }
   if (elements.levelAvatar && avatar) {
     elements.levelAvatar.src = avatarUrl(avatar);
@@ -1418,6 +1426,12 @@ function collectorFaceMarkup(entry = {}) {
   const party = factionParty(entry.factionId);
   const streak = Number(entry.loginStreak) >= 3 ? Number(entry.loginStreak) : 0;
   return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
+}
+
+function binderNameMarkup(entry = {}) {
+  const name = escapeHtml(entry.label || "שחקן קְלָפִי");
+  if (!entry.binderSlug) return name;
+  return `<button type="button" class="player-binder-link" data-binder-slug="${escapeHtml(entry.binderSlug)}">${name}</button>`;
 }
 
 function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
@@ -2214,7 +2228,7 @@ function fillLevelDialog(progression, fromLevel) {
     elements.levelUnlocks.hidden = !items.length;
     elements.levelUnlocks.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   }
-  elements.levelDialogReward.textContent = items.length ? "אפשר לקבל את קלף הבונוס עכשיו." : (progression.reward || "");
+  elements.levelDialogReward.textContent = items.length ? "קלף הבונוס כבר נכנס לאוסף." : (progression.reward || "");
 }
 
 function prefetchLevelReward(cards = []) {
@@ -2252,8 +2266,7 @@ function startLevelRewardGrant() {
 }
 
 function renderPendingLevelCue() {
-  const pending = model.serverState?.progression?.pendingRewards || [];
-  if (elements.openPendingLevel) elements.openPendingLevel.hidden = pending.length === 0;
+  /* Packs are granted when the level dialog opens. No waiting button. */
 }
 
 function openPendingLevelDialog() {
@@ -2261,8 +2274,14 @@ function openPendingLevelDialog() {
   const pending = progression?.pendingRewards || [];
   if (!progression || !pending.length) return;
   fillLevelDialog(progression, Math.min(...pending) - 1);
-  elements.levelDialog.showModal();
+  if (!elements.levelDialog.open) elements.levelDialog.showModal();
   startLevelRewardGrant().catch(() => {});
+}
+
+function dismissLevelDialog() {
+  if (elements.levelDialog.open) elements.levelDialog.close();
+  const pending = model.serverState?.progression?.pendingRewards || [];
+  if (pending.length) queueMicrotask(() => openPendingLevelDialog());
 }
 
 function renderProgression({ announce = false } = {}) {
@@ -2304,9 +2323,9 @@ function renderProgression({ announce = false } = {}) {
     markLevelSeen(progression.level);
   } else if (announce && progression.level > seen) {
     fillLevelDialog(progression, seen);
-    elements.levelDialog.showModal();
+    if (!elements.levelDialog.open) elements.levelDialog.showModal();
     startLevelRewardGrant().catch(() => {});
-    markLevelSeen(progression.level);
+    markLevelSeen(seen + 1);
   } else {
     model.renderedLevel = Math.max(seen, progression.level);
   }
@@ -3099,6 +3118,47 @@ function renderPendingWells(count = 6) {
   ).join("");
 }
 
+async function openPublicBinder(slug) {
+  const payload = await request(`/api/public-binder/${encodeURIComponent(slug)}`);
+  model.guestBinder = payload;
+  model.binderOwnedOnly = true;
+  if (elements.binderEyebrow) elements.binderEyebrow.textContent = `האוסף של ${payload.displayName}`;
+  if (elements.binderTitle) elements.binderTitle.textContent = "האלבום.";
+  if (elements.closeGuestBinder) elements.closeGuestBinder.hidden = false;
+  if (elements.shareMyBinder) elements.shareMyBinder.hidden = true;
+  showView("binder");
+  renderBinder();
+}
+
+function closePublicBinder() {
+  model.guestBinder = null;
+  if (elements.binderEyebrow) elements.binderEyebrow.textContent = "האוסף שלי";
+  if (elements.binderTitle) elements.binderTitle.textContent = "האלבום.";
+  if (elements.closeGuestBinder) elements.closeGuestBinder.hidden = true;
+  if (elements.shareMyBinder) elements.shareMyBinder.hidden = false;
+  const url = new URL(location.href);
+  url.searchParams.delete("binder");
+  if (/^\/share\/u\//.test(url.pathname)) url.pathname = "/";
+  history.replaceState({}, "", url);
+  renderBinder();
+}
+
+function binderInventory() {
+  return model.guestBinder?.inventory || model.serverState?.inventory || {};
+}
+
+function copyMyBinderLink() {
+  const slug = model.serverState?.binderSlug;
+  const link = publicBinderShareUrl(slug);
+  if (!link) {
+    showToast("הקישור לאלבום עדיין לא מוכן.");
+    return;
+  }
+  copyText(link).then((copied) => {
+    showToast(copied ? "קישור האלבום הועתק." : "העתיקו את הקישור מהשדה.");
+  });
+}
+
 function renderBinder() {
   const binderView = document.querySelector("#binder-view");
   if (!catalogReady()) {
@@ -3124,8 +3184,24 @@ function renderBinder() {
   const gridY = elements.binderGrid?.scrollTop || 0;
   const waitingOwnership = !ownershipReady();
   binderView?.setAttribute("aria-busy", waitingOwnership ? "true" : "false");
-  const inventory = model.serverState?.inventory || {};
-  const { owned, total, percent } = completion();
+  const inventory = binderInventory();
+  const guest = Boolean(model.guestBinder);
+  if (elements.binderEyebrow) {
+    elements.binderEyebrow.textContent = guest ? `האוסף של ${model.guestBinder.displayName}` : "האוסף שלי";
+  }
+  if (elements.closeGuestBinder) elements.closeGuestBinder.hidden = !guest;
+  if (elements.shareMyBinder) elements.shareMyBinder.hidden = guest;
+  const { owned, total, percent } = guest
+    ? (() => {
+      const guestOwned = Object.keys(inventory).length;
+      const guestTotal = playerCatalog().length || guestOwned;
+      return {
+        owned: guestOwned,
+        total: guestTotal,
+        percent: guestTotal ? Math.round((guestOwned / guestTotal) * 100) : 0,
+      };
+    })()
+    : completion();
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = `${owned} קלפים שונים מתוך ${total} בסדרה הפעילה כרגע`;
   elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
@@ -3137,7 +3213,10 @@ function renderBinder() {
 
   const playerCards = playerCatalog();
   const releaseOrder = openBinderReleaseIds();
-  const numberedIds = new Set((model.serverState?.numberedCopies || model.serverState?.instances || [])
+  const numberedIds = new Set(((guest ? model.guestBinder?.numberedCopies : null)
+    || model.serverState?.numberedCopies
+    || model.serverState?.instances
+    || [])
     .filter((item) => item.numberedIndex)
     .map((item) => item.cardId));
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
@@ -3172,8 +3251,8 @@ function renderBinder() {
         }).join("")}
       </select>
     </label>`,
-    `<label class="filter-owned${model.binderOwnedOnly ? " active" : ""}">
-      <input type="checkbox" data-binder-owned ${model.binderOwnedOnly ? "checked" : ""} />
+    `<label class="filter-owned${(guest || model.binderOwnedOnly) ? " active" : ""}">
+      <input type="checkbox" data-binder-owned ${guest || model.binderOwnedOnly ? "checked" : ""} ${guest ? "disabled" : ""} />
       באוסף
     </label>`,
     `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
@@ -3195,16 +3274,16 @@ function renderBinder() {
         : model.binderFilter === "NUMBERED" ? numberedIds.has(card.id)
         : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
     const partyOk = !model.binderParty || card.set === model.binderParty;
-    const ownedOk = !model.binderOwnedOnly || Boolean(inventory[card.id]);
+    const ownedOk = !(guest || model.binderOwnedOnly) || Boolean(inventory[card.id]);
     return releaseOk && partyOk && ownedOk;
   });
   elements.binderGrid.innerHTML = visible.map((card) => {
     const count = inventory[card.id] ?? 0;
     if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
-      if (model.binderFilter === "NUMBERED") return "";
+      if (guest || model.binderFilter === "NUMBERED") return "";
       return `<div class="binder-slot" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · חסר באוסף`)}">
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
-        ${model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
+        ${!guest && model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
       </div>`;
     }
     return `
@@ -3900,7 +3979,7 @@ function renderGrowth() {
         const rankName = ranks[(entry.rankLevel || 1) - 1] || "";
         return `<div class="collector-row${entry.current ? " current-player" : ""}">
           ${collectorFaceMarkup(entry)}
-          <span>${entry.rank}. ${escapeHtml(entry.label)}${rankName ? ` · ${escapeHtml(rankName)}` : ""}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
+          <span>${entry.rank}. ${binderNameMarkup(entry)}${rankName ? ` · ${escapeHtml(rankName)}` : ""}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
           <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
         </div>`;
       }).join("")
@@ -3915,7 +3994,7 @@ function renderGrowth() {
   elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
   renderChallengeRecap();
   elements.dailyChallengeBoard.innerHTML = challenge?.leaders?.length
-    ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${index + 1}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
+    ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${index + 1}. ${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
     : '<p class="work-note">עוד אין משיכות מהסיעה היומית.</p>';
 
   const specialDescriptions = {
@@ -5907,6 +5986,19 @@ function makeDeepLink(kind, cardId) {
   return url.toString();
 }
 
+function publicBinderShareUrl(slug) {
+  if (!slug) return "";
+  return new URL(`/share/u/${encodeURIComponent(slug)}`, location.origin).toString();
+}
+
+function inboundBinderSlug() {
+  const params = new URLSearchParams(location.search);
+  const fromQuery = params.get("binder");
+  if (fromQuery) return fromQuery;
+  const fromPath = location.pathname.match(/^\/share\/u\/([^/]+)$/);
+  return fromPath ? decodeURIComponent(fromPath[1]) : "";
+}
+
 async function copyText(text) {
   try {
     if (navigator.clipboard) {
@@ -6036,30 +6128,19 @@ elements.openBugReport?.addEventListener("click", openBugDialog);
 elements.closeBug?.addEventListener("click", () => elements.bugDialog?.close());
 elements.bugForm?.addEventListener("submit", submitBugReport);
 elements.bugDetails?.addEventListener("input", updateBugCount);
-elements.closeLevel.addEventListener("click", () => elements.levelDialog.close());
-elements.openPendingLevel?.addEventListener("click", openPendingLevelDialog);
+elements.closeLevel.addEventListener("click", dismissLevelDialog);
 elements.claimLevel.addEventListener("click", async () => {
   elements.claimLevel.disabled = true;
   try {
-    const reward = await startLevelRewardGrant();
-    model.currentPack = {
-      packId: `rank-${reward.rank}`,
-      mode: "level-reward",
-      pulledAt: new Date().toISOString(),
-      cards: reward.cards,
-    };
-    model.currentCardIndex = 0;
-    model.levelRewardReady = null;
-    elements.levelDialog.close();
-    showView("pack");
-    startWalkout();
-    refreshDailyChallenge();
-  } catch (error) {
-    showToast(error.status === 409 ? "אין כרגע פרס שמחכה." : "לא הצלחנו לקבל את הפרס.");
+    await startLevelRewardGrant().catch(() => {});
+    dismissLevelDialog();
   } finally {
     elements.claimLevel.disabled = false;
   }
 });
+elements.shareMyBinder?.addEventListener("click", copyMyBinderLink);
+elements.copyBinderShare?.addEventListener("click", copyMyBinderLink);
+elements.closeGuestBinder?.addEventListener("click", closePublicBinder);
 elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);
 elements.dialogInstagram.addEventListener("click", shareToInstagram);
 elements.closeShareSheet?.addEventListener("click", closeShareSheet);
@@ -6130,6 +6211,12 @@ function handleTradeBoardClick(event) {
 }
 elements.tradeBoard.addEventListener("click", handleTradeBoardClick);
 function handlePublicNameReport(event) {
+  const binder = event.target.closest("[data-binder-slug]");
+  if (binder) {
+    event.preventDefault();
+    openPublicBinder(binder.dataset.binderSlug).catch(() => showToast("לא מצאנו את האלבום הזה."));
+    return;
+  }
   const button = event.target.closest("[data-report-name]");
   if (!button) return;
   openNameReport(button.dataset.reportName);

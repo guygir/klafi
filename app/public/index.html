@@ -17,12 +17,12 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-60"></script>
+  <script src="/boot-warmup.js?v=card-surface-61"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-60" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-60" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-61" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-61" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -36,7 +36,6 @@
       </button>
       <div class="masthead-meta">
         <button id="player-name" class="player-name" type="button" aria-haspopup="dialog">
-          <img id="player-avatar" class="player-avatar" alt="" hidden />
           <span id="player-name-label">השם שלי</span>
         </button>
         <span class="live-mark" aria-hidden="true"></span>
@@ -113,7 +112,6 @@
           <button id="open-pack" class="primary-action" type="button">פתיחת קלף</button>
           <button id="open-pack-fancy" class="secondary-action" type="button" hidden>פתיחת וידאו</button>
           <button id="open-bibi-pack" class="debug-pack-action" type="button" hidden>פתיחת חבילת ביבי</button>
-          <button id="open-pending-level" class="secondary-action" type="button" hidden>פרס רמה מחכה</button>
           <div class="home-utility-row">
             <button id="replay-tips" class="tips-replay" type="button">איך משחקים</button>
             <button id="home-enable-notify" class="tips-replay" type="button" hidden>להפעיל התראות</button>
@@ -197,10 +195,14 @@
         </div>
         <div class="binder-head">
           <div>
-            <p class="eyebrow">האוסף שלי</p>
-            <h1>האלבום.</h1>
+            <p class="eyebrow" id="binder-eyebrow">האוסף שלי</p>
+            <h1 id="binder-title">האלבום.</h1>
           </div>
-          <button type="button" class="tips-replay" data-replay-tips>איך זה עובד</button>
+          <div class="binder-head-actions">
+            <button type="button" id="share-my-binder" class="tips-replay">שיתוף האלבום</button>
+            <button type="button" id="close-guest-binder" class="tips-replay" hidden>חזרה לאוסף שלי</button>
+            <button type="button" class="tips-replay" data-replay-tips>איך זה עובד</button>
+          </div>
         </div>
         <div id="binder-filters" class="filter-strip" aria-label="סינון האוסף לפי סדרה או מפלגה"></div>
         <div id="binder-grid" class="binder-grid" role="list"></div>
@@ -595,7 +597,7 @@
     <img class="level-reward-pack" src="/design-assets/pack-wrapper-klafi.png" alt="קלף בונוס" />
     <ul id="level-unlocks" class="level-unlocks"></ul>
     <p id="level-dialog-reward"></p>
-    <button id="claim-level" class="primary-action" type="button">קבלת הפרס</button>
+    <button id="claim-level" class="primary-action" type="button">הבנתי</button>
   </dialog>
 
   <dialog id="profile-dialog" class="policy-dialog" aria-labelledby="profile-dialog-title">
@@ -610,6 +612,15 @@
       <p id="profile-error" class="profile-error" role="alert"></p>
       <button class="primary-action" type="submit">שמירת הפרופיל</button>
     </form>
+    <section class="profile-binder-share" aria-labelledby="profile-binder-share-title">
+      <h3 id="profile-binder-share-title">האלבום הציבורי</h3>
+      <p>קישור לאלבום שלכם. מי שיש לו אותו רואה את הקלפים שנאספו, בלי קוד השחזור.</p>
+      <label class="profile-name-label" for="binder-share-url">קישור לאלבום</label>
+      <div class="copy-field profile-recovery-row">
+        <input id="binder-share-url" dir="ltr" readonly spellcheck="false" autocomplete="off" />
+        <button id="copy-binder-share" type="button">העתקה</button>
+      </div>
+    </section>
     <section class="profile-recovery" aria-labelledby="profile-recovery-title">
       <h3 id="profile-recovery-title">קוד שחזור</h3>
       <p>האוסף שייך לקוד הזה, לא למייל. מי שיש לו את הקוד יכול לפתוח את אותו אוסף במכשיר אחר.</p>
@@ -684,8 +695,8 @@
       <p class="klafi-tips-kicker" id="klafi-tips-step" dir="ltr">1/3</p>
       <h2 id="klafi-tips-title">המשחק</h2>
       <p id="klafi-tips-body">קלף אחד באיסוף. פתחו את החבילה.</p>
-      <label class="klafi-tips-mute" for="klafi-tips-mute">
-        <input id="klafi-tips-mute" type="checkbox" checked />
+      <label class="klafi-tips-mute" for="klafi-tips-mute" hidden>
+        <input id="klafi-tips-mute" type="checkbox" />
         אל תציגו שוב
       </label>
       <div class="klafi-tips-actions">
@@ -709,6 +720,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-60"></script>
+  <script type="module" src="/app.js?v=card-surface-61"></script>
 </body>
 </html>
