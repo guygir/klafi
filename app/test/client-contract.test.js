@@ -548,7 +548,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-64/);
+  assert.match(html, /card-surface-65/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +638,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-64/);
+  assert.match(html, /card-surface-65/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -691,9 +691,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="replay-tips"/);
   assert.doesNotMatch(html, /data-replay-tips/);
   assert.match(html, /class="binder-stats-row"/);
-  assert.match(html, /class="pack-plinth"[\s\S]*id="today-specials-row"/);
-  assert.match(css, /#home-view \.pack-plinth \.today-specials-line/);
-  assert.match(css, /#home-view \.pack-plinth \.pack-wrapper,\s*#home-view \.pack-plinth \.today-specials-line/);
+  assert.match(html, /class="home-grid"[\s\S]*id="today-specials-row"[\s\S]*class="pack-plinth"/);
+  assert.match(css, /#home-view \.home-grid > \.today-specials-line/);
+  assert.match(css, /grid-column:\s*1\s*\/\s*-1/);
+  assert.match(css, /\.level-letter,\s*\.collector-letter \{[^}]*object-fit:\s*contain/);
+  assert.doesNotMatch(css, /#home-view \.pack-plinth \.pack-wrapper,\s*#home-view \.pack-plinth \.today-specials-line/);
   assert.match(css, /padding-inline-end:\s*100%/);
   assert.match(css, /animation: specials-marquee 7s linear infinite/);
   assert.match(javascript, /function explainUnavailableNotifications/);

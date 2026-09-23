@@ -3337,11 +3337,22 @@ body {
 #home-view .collection-line {
   display: none;
 }
+#home-view .home-grid > .today-specials-line {
+  grid-column: 1 / -1;
+  align-self: start;
+  z-index: 4;
+  width: 100%;
+  min-height: 16px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
 #home-view .pack-plinth {
   position: relative;
-  display: grid;
-  justify-items: stretch;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   align-self: stretch;
   width: 100%;
   min-height: calc(var(--today-pack-w) * 1390 / 769 * 1.5);
@@ -3351,20 +3362,6 @@ body {
   gap: 0;
   min-height: 0;
   overflow: visible;
-}
-#home-view .pack-plinth .pack-wrapper,
-#home-view .pack-plinth .today-specials-line {
-  grid-area: 1 / 1;
-}
-#home-view .pack-plinth .today-specials-line {
-  position: relative;
-  align-self: start;
-  z-index: 4;
-  width: 100%;
-  min-height: 16px;
-  margin: 0;
-  padding-block: 4px;
-  background: color-mix(in srgb, var(--paper, #f4efe4) 78%, transparent);
 }
 #home-view .pack-plinth > .trust-info {
   position: absolute;
@@ -3482,7 +3479,8 @@ body {
   font: 600 11px/1.3 "IBM Plex Sans Hebrew", sans-serif;
   direction: rtl;
 }
-#home-view .pack-plinth .today-specials-copy {
+#home-view .home-grid > .today-specials-copy,
+#home-view .today-specials-copy {
   font-size: 10px;
 }
 .today-specials-copy[aria-hidden="true"] { display: none; }
@@ -4682,6 +4680,7 @@ body {
   background-position: center;
   box-shadow: 0 1px 2px rgba(17, 17, 17, 0.28);
   pointer-events: none;
+  overflow: hidden;
 }
 .level-letter:not([src]),
 .level-letter[src=""],
@@ -4692,7 +4691,8 @@ body {
 .level-letter,
 .collector-letter {
   display: block;
-  object-fit: cover;
+  padding: 2px 1px;
+  object-fit: contain;
   object-position: center;
 }
 
@@ -4705,6 +4705,10 @@ body {
   height: 39px;
 }
 
+.app-shell.home-active .level-letter-text[data-letters="1"] { font-size: 14px; }
+.app-shell.home-active .level-letter-text[data-letters="2"] { font-size: 11px; }
+.app-shell.home-active .level-letter-text[data-letters="3"] { font-size: 8px; }
+
 .app-shell.home-active .level-identity {
   padding-top: 12px;
 }
@@ -4713,9 +4717,10 @@ body {
 .collector-letter-text {
   display: grid;
   place-items: center;
-  padding: 2px 1px;
+  padding: 3px 2px;
+  overflow: hidden;
   color: #1a2540;
-  font: 700 8px/0.95 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
+  font: 700 8px/0.9 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
   text-align: center;
 }
 
