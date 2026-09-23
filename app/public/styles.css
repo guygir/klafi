@@ -2276,7 +2276,7 @@ img.mini-art {
   .app-shell { padding: 0 16px 100px; }
   .masthead { min-height: 58px; }
   .masthead-meta { max-width: 70%; gap: 5px; font-size: 10px; }
-  .player-name { max-width: 96px; }
+  .player-name { max-width: 168px; }
   .advocacy-bar { align-items: flex-start; }
   .advocacy-bar span { max-width: 60%; }
   .view { min-height: calc(100dvh - 150px); padding-top: 28px; }
@@ -3247,7 +3247,7 @@ body {
 #binder-view.view.active {
   overflow-x: hidden;
   overflow-y: auto;
-  padding-bottom: 12px;
+  padding-bottom: calc(72px + var(--safe-bottom, 0px));
 }
 
 .view.active {
@@ -3644,7 +3644,7 @@ body {
 @media (max-width: 420px) {
   .wordmark { font-size: 18px; }
   .wordmark b { font-size: 19px; }
-  .player-name { max-width: 92px; }
+  .player-name { max-width: 160px; }
   .presentation-link,
   .presentation-studio-link { display: none !important; }
   .level-identity small { max-width: 112px; }
