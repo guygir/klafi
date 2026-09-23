@@ -5,6 +5,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
+import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
 
 export const CARD_HOLDER_SYNC_MS = 60 * 60 * 1000;
 
@@ -164,6 +165,7 @@ export class JsonStore {
         pendingRankRewards: [],
         loginDay: null,
         loginStreak: 0,
+        publicBinderSlug: ensurePublicBinderSlug({}),
       };
       await this.persist();
       return token;
@@ -172,6 +174,21 @@ export class JsonStore {
 
   getSession(token) {
     return token ? this.state.sessions[token] ?? null : null;
+  }
+
+  async getPublicBinder(slug) {
+    const normalized = normalizePublicBinderSlug(slug);
+    if (!normalized) return null;
+    return Object.values(this.state.sessions).find((session) => session.publicBinderSlug === normalized) || null;
+  }
+
+  async ensureBinderSlug(token) {
+    const session = this.getSession(token);
+    if (!session) return null;
+    if (normalizePublicBinderSlug(session.publicBinderSlug)) return session;
+    return this.withSession(token, (current) => {
+      ensurePublicBinderSlug(current);
+    }).then(() => this.getSession(token));
   }
 
   async withSession(token, mutator) {
@@ -461,6 +478,7 @@ export class JsonStore {
         factionId: session.factionId || null,
         loginStreak: session.loginStreak || 0,
         rankLevel: session.highestRank || 1,
+        binderSlug: session.publicBinderSlug || null,
       }))
       .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
@@ -480,6 +498,7 @@ export class JsonStore {
         factionId: session.factionId || null,
         loginStreak: session.loginStreak || 0,
         rankLevel: session.highestRank || 1,
+        binderSlug: session.publicBinderSlug || null,
         cards: session.packs
           .filter((pack) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(pack.pulledAt)) === day)
           .flatMap((pack) => pack.cards)

@@ -29,8 +29,10 @@ import {
 import { publicLeague } from "./leagues.js";
 import { qrSvg } from "./qr-svg.js";
 import { openSpecialWindow } from "./special-window.js";
-import { requestOrigin, serveBinderShareLanding, serveShareLanding } from "./share-landing.js";
+import { requestOrigin, serveBinderShareLanding, servePlayerBinderShareLanding, serveShareLanding } from "./share-landing.js";
 import { levelThresholds } from "./progression.js";
+import { createGithubBugFromBody } from "./github-bugs.js";
+import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -100,7 +102,7 @@ const SECURITY_HEADERS = Object.freeze({
   "cross-origin-opener-policy": "same-origin",
 });
 
-function json(response, status, value) {
+function json(response, status, value, extraHeaders = {}) {
   const requestId = response.getHeader("x-request-id");
   const payload = status >= 500 && value && typeof value === "object"
     ? { ...value, requestId: value.requestId || requestId || undefined }
@@ -109,6 +111,7 @@ function json(response, status, value) {
     ...SECURITY_HEADERS,
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
+    ...extraHeaders,
   });
   response.end(JSON.stringify(payload));
 }
@@ -123,6 +126,7 @@ const STATELESS_API_PATHS = new Set([
   "/api/game-config",
   "/api/presentation/content",
   "/api/card-holders",
+  "/api/bugs",
 ]);
 
 function secretsMatch(provided, expected) {
@@ -613,6 +617,7 @@ function publicState(session, now, cards, config = {}) {
     preparedPulls: session.preparedPulls ?? [],
     idlePullCount: session.idlePullCount ?? 0,
     factionId: session.factionId,
+    binderSlug: session.publicBinderSlug || null,
     tradeCount: session.tradeCount,
     achievements: achievementState(session, cards, config.achievements),
     avatars: publicAvatars(session, config.avatars, progressionState(session, cards, config, now).level),
@@ -1173,7 +1178,7 @@ export async function createKalpiApp({
           "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
         );
       }
-      if (databaseUrl && url.pathname.startsWith("/api/") && !STATELESS_API_PATHS.has(url.pathname)) {
+      if (databaseUrl && url.pathname.startsWith("/api/") && !STATELESS_API_PATHS.has(url.pathname) && !url.pathname.startsWith("/api/public-binder/")) {
         await store.refresh();
       }
 
@@ -1193,6 +1198,28 @@ export async function createKalpiApp({
         const createdAt = new Date(now()).toISOString();
         const token = await store.createSession(createdAt);
         json(response, 201, { token });
+        return;
+      }
+
+      if (request.method === "GET" && url.pathname.startsWith("/api/public-binder/")) {
+        const slug = normalizePublicBinderSlug(decodeURIComponent(url.pathname.slice("/api/public-binder/".length)));
+        const owner = slug ? await store.getPublicBinder(slug) : null;
+        if (!owner) {
+          json(response, 404, { error: "NOT_FOUND" });
+          return;
+        }
+        json(response, 200, publicBinderView(owner));
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/bugs") {
+        const input = await readJson(request);
+        const result = await createGithubBugFromBody(process.env, input, request.headers);
+        if (!result.ok) {
+          json(response, result.status, { error: result.error });
+          return;
+        }
+        json(response, 200, { success: true, issueUrl: result.issueUrl }, result.headers || {});
         return;
       }
 
@@ -1268,6 +1295,7 @@ export async function createKalpiApp({
         if (!store.getSession(token)) {
           token = await store.createSession(new Date(now()).toISOString());
         }
+        await store.ensureBinderSlug(token);
         json(response, 200, { token, state: stateFor(store.getSession(token)) });
         return;
       }
@@ -1343,6 +1371,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "GET" && url.pathname === "/api/state") {
+          await store.ensureBinderSlug(token);
           json(response, 200, stateFor(store.getSession(token)));
           return;
         }
@@ -2234,6 +2263,16 @@ export async function createKalpiApp({
         const shareSlug = decodeURIComponent(url.pathname.slice("/share/".length).replace(/\.html$/, ""));
         if (shareSlug === "binder") {
           serveBinderShareLanding(request, response);
+          return;
+        }
+        if (shareSlug.startsWith("u/")) {
+          const slug = normalizePublicBinderSlug(shareSlug.slice(2));
+          const owner = slug ? await store.getPublicBinder(slug) : null;
+          if (!owner) {
+            json(response, 404, { error: "NOT_FOUND" });
+            return;
+          }
+          servePlayerBinderShareLanding(request, response, publicBinderView(owner));
           return;
         }
         const cardId = shareSlug;

@@ -182,6 +182,10 @@ export function mutePageGuides(env = globalThis) {
   return writeSeenPages(seen, env);
 }
 
+export function resetAllPageGuides(env = globalThis) {
+  return writeSeenPages({}, env);
+}
+
 export function shouldAutoOpenPage(seen, page) {
   return Boolean(page && PAGE_GUIDES[page] && !seen?.["*"] && !seen?.[page]);
 }
@@ -578,7 +582,6 @@ export function attachKlafiTips(env = globalThis) {
   function finish({ forceOff = false } = {}) {
     if (state.mode === "page" && state.page) {
       markPageSeen(state.page, env);
-      if (forceOff || mute?.checked) mutePageGuides(env);
     } else if (state.mode === "pull") {
       markPullPages();
       if (forceOff || mute?.checked) persistOff();
@@ -746,17 +749,8 @@ export function attachKlafiTips(env = globalThis) {
       return;
     }
     if (state.mode === "page") {
-      const page = activeGuidePage(flags());
-      if (page === state.page) {
-        if (pageGuideReady(state.page, flags())) schedulePaint();
-        else park();
-        return;
-      }
-      park();
-      state.mode = null;
-      state.started = false;
-      state.page = null;
-      maybeStartPage();
+      if (pageGuideReady(state.page, flags())) schedulePaint();
+      else park();
       return;
     }
     maybeStartPage();
@@ -769,13 +763,13 @@ export function attachKlafiTips(env = globalThis) {
 
   function replayTour() {
     persistOn();
-    state.mode = "pull";
-    state.started = true;
-    state.step = 1;
-    state.page = null;
-    state.parked = false;
-    seedMute("pull");
-    sync();
+    resetAllPageGuides(env);
+    const page = activeGuidePage(flags()) || "home";
+    if (PAGE_GUIDES[page]) {
+      startPage(page);
+      return;
+    }
+    startPage("home");
   }
 
   function replayCurrentPage() {
@@ -810,8 +804,10 @@ export function attachKlafiTips(env = globalThis) {
   nextBtn?.addEventListener("click", goNext);
   backBtn?.addEventListener("click", goBack);
   skipBtn?.addEventListener("click", () => finish({ forceOff: true }));
-  dim?.addEventListener("click", () => finish({ forceOff: true }));
-  replay?.addEventListener("click", replayCurrentPage);
+  dim?.addEventListener("click", () => {
+    if (state.mode === "page") goNext();
+  });
+  replay?.addEventListener("click", replayTour);
   pageReplays.forEach((button) => button.addEventListener("click", replayCurrentPage));
   window.addEventListener("resize", () => { if (state.started && !state.parked) schedulePaint(); });
   doc.addEventListener("scroll", () => { if (state.started && !state.parked) schedulePaint(); }, true);

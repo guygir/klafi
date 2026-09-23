@@ -16,6 +16,7 @@ import {
   leftoverPackHint,
   markPageSeen,
   mutePageGuides,
+  resetAllPageGuides,
   unmarkPageSeen,
   pageGuideReady,
   parseTipsCookie,
@@ -153,4 +154,8 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   markPageSeen("home", env);
   mutePageGuides(env);
   assert.equal(shouldAutoOpenPage(readSeenPages(env), "binder"), false);
+  resetAllPageGuides(env);
+  assert.deepEqual(readSeenPages(env), {});
+  assert.equal(shouldAutoOpenPage(readSeenPages(env), "home"), true);
+  assert.equal(shouldAutoOpenPage(readSeenPages(env), "binder"), true);
 });

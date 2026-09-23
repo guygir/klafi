@@ -178,6 +178,7 @@ async function collectorBoards(db, config, now, token) {
     `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
             s.avatar_id, s.faction_id, s.highest_rank,
             COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+            s.extras->>'publicBinderSlug' AS binder_slug,
             COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
      FROM kalpi_sessions s
      LEFT JOIN kalpi_inventory i ON i.session_token = s.token
@@ -196,6 +197,7 @@ async function collectorBoards(db, config, now, token) {
         factionId: row.faction_id || null,
         loginStreak: row.login_streak || 0,
         rankLevel: row.highest_rank || 1,
+        binderSlug: row.binder_slug || null,
       };
     })
     .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
