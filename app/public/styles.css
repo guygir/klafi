@@ -983,10 +983,10 @@ img.mini-art {
 .filter-strip button.active { border-color: var(--civic); background: var(--civic); color: var(--paper); }
 .filter-sets {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   flex: 1 1 auto;
   min-width: 0;
-  overflow-x: auto;
 }
 .filter-party {
   display: flex;
