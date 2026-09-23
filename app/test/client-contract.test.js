@@ -548,7 +548,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-71/);
+  assert.match(html, /card-surface-72/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +638,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-71/);
+  assert.match(html, /card-surface-72/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -709,6 +709,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="earned-badge-list"[\s\S]*id="binder-filters"/);
   assert.match(css, /#binder-view \.earned-badge-list/);
   assert.match(css, /#binder-view \.binder-badge-row/);
+  assert.match(css, /#binder-view \.binder-badge-medals/);
+  assert.match(css, /#binder-view \.earned-badge-list,\s*#binder-view \.binder-badge-row \{[^}]*direction:\s*ltr/);
+  assert.match(javascript, /function packBinderBadges/);
+  assert.match(javascript, /binder-badge-medals/);
+  assert.doesNotMatch(javascript, /const visibleBadges = earned\.slice\(0, 3\)/);
+  assert.match(css, /#binder-view \.filter-party,\s*#binder-view \.filter-owned/);
+  assert.match(css, /min-height:\s*32px/);
   assert.match(css, /#binder-view \.filter-strip/);
   assert.match(css, /#binder-view\.view\.active \{[^}]*flex-direction:\s*column/);
   assert.doesNotMatch(css, /#home-view \.pack-plinth \.pack-wrapper,\s*#home-view \.pack-plinth \.today-specials-line/);

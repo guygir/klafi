@@ -3239,6 +3239,69 @@ function copyMyBinderLink() {
   });
 }
 
+function packBinderBadges() {
+  const list = elements.earnedBadgeList;
+  const host = list?.querySelector(".binder-badge-medals");
+  if (!list || !host) return;
+  const medals = [...host.querySelectorAll(".badge-medallion")];
+  const overflow = host.querySelector(".badge-overflow");
+  medals.forEach((medal) => { medal.hidden = false; });
+  if (overflow) {
+    overflow.hidden = true;
+    overflow.textContent = "+";
+  }
+  if (!medals.length || host.clientWidth < 8) return;
+
+  const gap = Number.parseFloat(getComputedStyle(host).columnGap || getComputedStyle(host).gap) || 8;
+  const available = host.clientWidth;
+  const medalWidth = (index) => medals[index].getBoundingClientRect().width;
+  const widthFor = (count, includeOverflow) => {
+    let width = 0;
+    for (let index = 0; index < count; index += 1) {
+      width += medalWidth(index) + (index ? gap : 0);
+    }
+    if (includeOverflow && overflow) {
+      overflow.hidden = false;
+      overflow.textContent = `+${Math.max(1, medals.length - count)}`;
+      width += (count ? gap : 0) + overflow.getBoundingClientRect().width;
+    }
+    return width;
+  };
+
+  if (widthFor(medals.length, false) <= available + 0.5) {
+    if (overflow) overflow.hidden = true;
+    return;
+  }
+
+  let shown = 0;
+  for (let count = medals.length - 1; count >= 0; count -= 1) {
+    if (widthFor(count, true) <= available + 0.5) {
+      shown = count;
+      break;
+    }
+  }
+  medals.forEach((medal, index) => { medal.hidden = index >= shown; });
+  const rest = medals.length - shown;
+  if (overflow) {
+    overflow.hidden = rest <= 0;
+    overflow.textContent = rest > 0 ? `+${rest}` : "+";
+    if (rest > 0) overflow.setAttribute("aria-label", `עוד ${rest} הישגים`);
+    else overflow.removeAttribute("aria-label");
+  }
+}
+
+const binderBadgeObserver = typeof ResizeObserver === "undefined"
+  ? null
+  : new ResizeObserver(() => packBinderBadges());
+
+function queueBinderBadgePack() {
+  requestAnimationFrame(() => {
+    packBinderBadges();
+    const list = elements.earnedBadgeList;
+    if (list && binderBadgeObserver) binderBadgeObserver.observe(list);
+  });
+}
+
 function renderBinder() {
   const binderView = document.querySelector("#binder-view");
   if (!catalogReady()) {
@@ -3385,15 +3448,13 @@ function renderBinder() {
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
   const starCount = localStarCount();
   const starCounter = `<span class="collection-star-count" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b aria-hidden="true">★</b><strong>${starCount}</strong></span>`;
-  const visibleBadges = earned.slice(0, 3);
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
-  rail.innerHTML = starCounter + visibleBadges.map((badge) => {
+  const medals = earned.map((badge) => {
     const copy = hebrewBadge(badge);
-    return `
-    <span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
-  }).join("") + (earned.length > visibleBadges.length
-    ? `<button class="badge-overflow" type="button" data-open-achievements aria-label="עוד ${earned.length - visibleBadges.length} הישגים">+${earned.length - visibleBadges.length}</button>`
-    : "");
+    return `<span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
+  }).join("");
+  rail.innerHTML = `<div class="binder-badge-medals">${medals}<button class="badge-overflow" type="button" hidden data-open-achievements>+</button></div>${starCounter}`;
+  queueBinderBadgePack();
   queueCardTextFit(elements.binderGrid);
   const nextStrip = elements.binderFilters?.querySelector(".filter-sets");
   if (nextStrip) nextStrip.scrollLeft = filterX;
@@ -6543,15 +6604,22 @@ function showCollectionTooltip(target) {
   showToast(tooltip.dataset.tooltip);
 }
 
-elements.earnedBadgeRail.addEventListener("click", (event) => {
+function onBinderBadgeActivate(event) {
   if (event.target.closest("[data-open-achievements]")) {
     renderAchievements();
     showView("achievements");
     return;
   }
   showCollectionTooltip(event.target);
-});
+}
+elements.earnedBadgeRail.addEventListener("click", onBinderBadgeActivate);
+elements.earnedBadgeList?.addEventListener("click", onBinderBadgeActivate);
 elements.earnedBadgeRail.addEventListener("keydown", (event) => {
+  if (!["Enter", " "].includes(event.key)) return;
+  event.preventDefault();
+  showCollectionTooltip(event.target);
+});
+elements.earnedBadgeList?.addEventListener("keydown", (event) => {
   if (!["Enter", " "].includes(event.key)) return;
   event.preventDefault();
   showCollectionTooltip(event.target);

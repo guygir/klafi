@@ -1156,17 +1156,51 @@ body:has(#app[data-theme="pack-v2"]) {
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
+  justify-content: space-between;
+  direction: ltr;
   min-height: 40px;
   margin: 0 0 10px;
   padding: 4px 0 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 38%, transparent);
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
+}
+
+#binder-view .binder-badge-medals {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+  direction: ltr;
 }
 
 #binder-view .filter-strip {
   flex-direction: row;
   margin-top: 0;
+}
+
+#binder-view .filter-strip button,
+#binder-view .filter-party,
+#binder-view .filter-owned,
+#app[data-density="airy-v2"] #binder-view .filter-strip button,
+#app[data-density="airy-v2"] #binder-view .filter-party,
+#app[data-density="airy-v2"] #binder-view .filter-owned {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+#binder-view .filter-owned input {
+  width: 14px;
+  height: 14px;
+}
+
+#binder-view .filter-party select {
+  height: auto;
+  min-height: 1.25em;
 }
 
 #binder-view .badge-medallion {
@@ -1177,8 +1211,10 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #binder-view .collection-star-count {
+  flex: 0 0 auto;
   min-width: 48px;
   height: 28px;
+  margin-inline-start: 8px;
 }
 
 #app[data-density="airy-v2"] .trade-desk,
