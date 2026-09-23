@@ -4731,7 +4731,7 @@ body {
   container-type: size;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
   gap: 0;
   padding: 1px 1px 2px;
@@ -4746,11 +4746,25 @@ body {
   line-height: inherit;
 }
 
+.level-letter-text .letter-fit,
+.collector-letter-text .letter-fit {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  font: inherit;
+  font-style: normal;
+  line-height: inherit;
+  transform-origin: center center;
+}
+
 .level-letter-text span,
 .collector-letter-text span {
   display: block;
   flex: 0 0 auto;
   font-size: 1em;
+  font-style: normal;
   line-height: 0.68;
 }
 

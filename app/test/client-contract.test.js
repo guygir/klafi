@@ -548,7 +548,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-69/);
+  assert.match(html, /card-surface-71/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +638,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-69/);
+  assert.match(html, /card-surface-71/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -697,8 +697,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.level-letter,\s*\.collector-letter \{[^}]*object-fit:\s*contain/);
   assert.match(css, /\.level-letter-text,\s*\.collector-letter-text \{[^}]*flex-direction:\s*column/);
   assert.match(javascript, /glyph\.textContent = mark/);
+  assert.match(javascript, /className = "letter-fit"/);
   assert.match(javascript, /function fitBallotLetterText/);
   assert.match(javascript, /transformOrigin = "center center"/);
+  assert.match(css, /\.letter-fit/);
   assert.match(css, /\.level-identity > span/);
   assert.doesNotMatch(css, /#app\[data-density="airy-v2"\] \.level-identity span \{/);
   assert.match(javascript, /function queueBallotLetterFit/);

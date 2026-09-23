@@ -1270,26 +1270,29 @@ function fitVisibleCardText(root = document) {
 
 function fitBallotLetterText(node) {
   if (!node || node.hidden || node.clientWidth < 2 || node.clientHeight < 2) return;
-  if (!node.textContent.trim()) {
-    node.style.fontSize = "";
-    node.style.transform = "";
+  const stack = node.querySelector(".letter-fit") || node;
+  if (!stack.textContent.trim()) {
+    stack.style.fontSize = "";
+    stack.style.transform = "";
     return;
   }
-  node.style.transform = "none";
-  node.querySelectorAll("span").forEach((glyph) => {
+  stack.style.transform = "none";
+  stack.querySelectorAll("span").forEach((glyph) => {
     glyph.style.fontSize = "1em";
     glyph.style.lineHeight = "inherit";
   });
   const count = Math.max(
     1,
-    Number(node.dataset.letters) || node.querySelectorAll("span").length || [...node.textContent].length,
+    Number(node.dataset.letters) || stack.querySelectorAll("span").length || [...stack.textContent].length,
   );
-  node.style.fontSize = `${count === 1 ? 22 : 18}px`;
-  const scaleX = node.clientWidth / Math.max(1, node.scrollWidth);
-  const scaleY = node.clientHeight / Math.max(1, node.scrollHeight);
-  const scale = Math.min(scaleX, scaleY) * 0.92;
-  node.style.transformOrigin = "center center";
-  node.style.transform = `scale(${Math.max(0.4, scale)})`;
+  stack.style.fontSize = `${count === 1 ? 24 : 20}px`;
+  const inset = 3;
+  const scaleX = Math.max(0, node.clientWidth - inset) / Math.max(1, stack.scrollWidth);
+  const scaleY = Math.max(0, node.clientHeight - inset) / Math.max(1, stack.scrollHeight);
+  const scale = Math.min(scaleX, scaleY);
+  const widen = Math.min(1.38, scaleX / Math.max(scale, 0.01));
+  stack.style.transformOrigin = "center center";
+  stack.style.transform = `scale(${Math.max(0.45, scale * widen)}, ${Math.max(0.45, scale)})`;
 }
 
 const ballotLetterObserver = typeof ResizeObserver === "undefined"
@@ -1487,8 +1490,8 @@ function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
   if (!letters) return "";
   const marks = [...letters];
   const inner = marks.length > 1
-    ? marks.map((mark) => `<span>${escapeHtml(mark)}</span>`).join("")
-    : escapeHtml(letters);
+    ? `<i class="letter-fit">${marks.map((mark) => `<span>${escapeHtml(mark)}</span>`).join("")}</i>`
+    : `<i class="letter-fit">${escapeHtml(letters)}</i>`;
   return `<b class="${className}" data-letters="${marks.length}">${inner}</b>`;
 }
 
@@ -1502,15 +1505,18 @@ function paintLetterChip(image, text, party) {
     if (visible && letters) {
       const marks = [...letters];
       text.dataset.letters = String(marks.length);
+      const stack = document.createElement("i");
+      stack.className = "letter-fit";
       if (marks.length > 1) {
         for (const mark of marks) {
           const glyph = document.createElement("span");
           glyph.textContent = mark;
-          text.append(glyph);
+          stack.append(glyph);
         }
       } else {
-        text.textContent = letters;
+        stack.textContent = letters;
       }
+      text.append(stack);
       queueBallotLetterFit(text);
     } else {
       delete text.dataset.letters;
