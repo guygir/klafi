@@ -2,7 +2,7 @@ export function starTickLabel(start, end = start) {
   const from = Math.max(0, Math.round(Number(start) || 0));
   const to = Math.max(from, Math.round(Number(end) || 0));
   if (from === to) return `${from}★`;
-  return `${from} כוכבים – ${to} כוכבים`;
+  return `${from}★ – ${to}★`;
 }
 
 export function starContributionBins(scores = []) {
