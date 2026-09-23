@@ -2322,7 +2322,7 @@ function renderProgression({ announce = false } = {}) {
   }
   const seen = seenLevel();
   const pending = progression.pendingRewards || [];
-  if (announce && pending.length && !elements.levelDialog.open) {
+  if (pending.length && !elements.levelDialog.open) {
     openPendingLevelDialog();
     markLevelSeen(Math.min(...pending));
   } else if (!seen && !pending.length) {

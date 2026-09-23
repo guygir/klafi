@@ -603,7 +603,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="share-my-binder"/);
   assert.match(html, /id="guest-binder-banner"/);
   assert.match(html, /id="binder-share-url"/);
-  assert.match(javascript, /announce && pending.length/);
+  assert.match(javascript, /pending.length && !elements.levelDialog.open/);
   assert.match(javascript, /klafi-seen-level-dialog/);
   assert.match(javascript, /function openPublicBinder/);
   assert.match(javascript, /function dismissLevelDialog/);
