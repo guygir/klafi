@@ -462,6 +462,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /שחקנים נוספים מחזיקים/);
   assert.match(javascript, /תצוגת שיתוף בלבד/);
   assert.match(javascript, /הקלף לא נוסף לאוסף שלכם/);
+  assert.match(javascript, /גלו עוד קלף אחד חדש כדי להתקדם לרמה הבאה/);
   assert.match(javascript, /גלו עוד \$\{progression\.remaining\} קלפים חדשים כדי להתקדם לרמה הבאה/);
   assert.match(html, /data-today-nav="growth"/);
   assert.doesNotMatch(html, /data-today-nav="events"/);

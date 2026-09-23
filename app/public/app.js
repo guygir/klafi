@@ -2219,7 +2219,9 @@ function renderProgression({ announce = false } = {}) {
   elements.levelProgress.style.width = `${progression.percent}%`;
   elements.levelProgressCount.textContent = `${progression.unique - progression.start}/${progression.target - progression.start}`;
   if (progression.remaining) {
-    elements.levelNext.textContent = `גלו עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
+    elements.levelNext.textContent = progression.remaining === 1
+      ? "גלו עוד קלף אחד חדש כדי להתקדם לרמה הבאה"
+      : `גלו עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
   } else {
     elements.levelNext.textContent = progression.nextReleaseRank
       ? `הרמה מוכנה · ${progression.nextReleaseRank} תיפתח בסדרה הבאה`
@@ -3847,10 +3849,10 @@ function renderGrowth() {
   if (openTab) openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";
   const boardHint = document.querySelector("#trade-board-hint");
   if (boardHint) {
-    boardHint.hidden = openCount === 0;
+    boardHint.hidden = false;
     boardHint.textContent = openCount
-      ? `${openCount} הצעות ממתינות בלוח. פרסום מעלה הצעה. קישור לדוגמה רק מעתיק קישור.`
-      : "";
+      ? `${openCount} הצעות ממתינות בלוח. מפרסמים כאן החלפה של קלף שיש לכם בקלף שאתם רוצים. רק אחרי אישור הקלפים מתחלפים. שיתוף הוא תמונה בלבד.`
+      : "כאן מפרסמים החלפה: קלף שיש לכם תמורת קלף שאתם רוצים. רק אחרי שאישרו את העסקה הקלפים מתחלפים. שיתוף בוואטסאפ הוא תמונה בלבד — זה לא מעביר קלף לאלבום.";
   }
 }
 
