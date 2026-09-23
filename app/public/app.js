@@ -1268,6 +1268,58 @@ function fitVisibleCardText(root = document) {
   root.querySelectorAll("[data-fit-card-text]").forEach(fitCardText);
 }
 
+function fitBallotLetterText(node) {
+  if (!node || node.hidden || node.clientWidth < 2 || node.clientHeight < 2) return;
+  if (!node.textContent.trim()) {
+    node.style.fontSize = "";
+    return;
+  }
+  node.style.fontSize = "";
+  const count = Math.max(
+    1,
+    Number(node.dataset.letters) || node.querySelectorAll("span").length || [...node.textContent].length,
+  );
+  const hardMin = 8;
+  const ceiling = count === 1
+    ? Math.min(node.clientWidth * 0.9, node.clientHeight * 0.82)
+    : Math.min(node.clientWidth * 0.96, (node.clientHeight / count) * 1.62);
+  const fitsAt = (size) => {
+    node.style.fontSize = `${size}px`;
+    return node.scrollHeight <= node.clientHeight + 0.6
+      && node.scrollWidth <= node.clientWidth + 0.6;
+  };
+  let low = hardMin;
+  let high = Math.max(hardMin, ceiling);
+  if (fitsAt(high)) {
+    node.style.fontSize = `${high}px`;
+    return;
+  }
+  for (let index = 0; index < 18; index += 1) {
+    const mid = (low + high) / 2;
+    if (fitsAt(mid)) low = mid;
+    else high = mid;
+  }
+  node.style.fontSize = `${fitsAt(low) ? low : hardMin}px`;
+}
+
+const ballotLetterObserver = typeof ResizeObserver === "undefined"
+  ? null
+  : new ResizeObserver((entries) => {
+    for (const entry of entries) fitBallotLetterText(entry.target);
+  });
+
+function queueBallotLetterFit(root = document) {
+  const nodes = root.matches?.(".level-letter-text, .collector-letter-text")
+    ? [root]
+    : [...root.querySelectorAll(".level-letter-text, .collector-letter-text")];
+  requestAnimationFrame(() => {
+    nodes.forEach((node) => {
+      fitBallotLetterText(node);
+      ballotLetterObserver?.observe(node);
+    });
+  });
+}
+
 const observedCardFrames = new WeakSet();
 const cardResizeObserver = typeof ResizeObserver === "undefined"
   ? null
@@ -1278,6 +1330,7 @@ const cardResizeObserver = typeof ResizeObserver === "undefined"
 function queueCardTextFit(root = document) {
   requestAnimationFrame(() => {
     fitVisibleCardText(root);
+    queueBallotLetterFit(root);
     if (!cardResizeObserver) return;
     root.querySelectorAll(".kalpi-card").forEach((frame) => {
       if (observedCardFrames.has(frame)) return;
@@ -1307,6 +1360,7 @@ function showView(name) {
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
     fitVisibleCardText(elements.main);
+    queueBallotLetterFit(elements.main);
   });
 }
 
@@ -1467,8 +1521,10 @@ function paintLetterChip(image, text, party) {
       } else {
         text.textContent = letters;
       }
+      queueBallotLetterFit(text);
     } else {
       delete text.dataset.letters;
+      text.style.fontSize = "";
     }
   };
   if (image) {

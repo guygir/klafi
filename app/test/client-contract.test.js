@@ -548,7 +548,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-66/);
+  assert.match(html, /card-surface-67/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +638,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-66/);
+  assert.match(html, /card-surface-67/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -697,8 +697,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.level-letter,\s*\.collector-letter \{[^}]*object-fit:\s*contain/);
   assert.match(css, /\.level-letter-text,\s*\.collector-letter-text \{[^}]*flex-direction:\s*column/);
   assert.match(javascript, /glyph\.textContent = mark/);
+  assert.match(javascript, /function fitBallotLetterText/);
+  assert.match(javascript, /function queueBallotLetterFit/);
+  assert.match(html, /id="earned-badge-list"[^>]*binder-badge-row/);
+  assert.match(html, /id="earned-badge-rail"[\s\S]*binder-stats-row[\s\S]*<\/div>\s*<\/div>\s*<div id="earned-badge-list"/);
+  assert.match(html, /id="earned-badge-list"[\s\S]*id="binder-filters"/);
   assert.match(css, /#binder-view \.earned-badge-list/);
+  assert.match(css, /#binder-view \.binder-badge-row/);
   assert.match(css, /#binder-view \.filter-strip/);
+  assert.match(css, /#binder-view\.view\.active \{[^}]*flex-direction:\s*column/);
   assert.doesNotMatch(css, /#home-view \.pack-plinth \.pack-wrapper,\s*#home-view \.pack-plinth \.today-specials-line/);
   assert.match(css, /padding-inline-end:\s*100%/);
   assert.match(css, /animation: specials-marquee 7s linear infinite/);

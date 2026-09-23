@@ -1125,23 +1125,56 @@ body:has(#app[data-theme="pack-v2"]) {
   min-width: 0;
 }
 
-#binder-view .earned-badge-rail,
-#binder-view .earned-badge-list,
-#binder-view .filter-strip {
-  flex: 0 0 auto;
-  width: 100%;
-  max-width: 100%;
+#binder-view.view.active {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
 }
 
-#binder-view .earned-badge-list {
-  min-height: 32px;
-  padding-block: 2px 6px;
+#binder-view .earned-badge-rail,
+#binder-view .earned-badge-list,
+#binder-view .binder-badge-row,
+#binder-view .filter-strip {
+  display: flex;
+  flex: 0 0 auto;
+  flex-basis: 100%;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+#binder-view .earned-badge-rail {
+  flex-direction: column;
+  margin-bottom: 0;
+  padding-bottom: 4px;
+  border-bottom: 0;
+}
+
+#binder-view .earned-badge-list,
+#binder-view .binder-badge-row {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-height: 40px;
+  margin: 0 0 10px;
+  padding: 4px 0 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 38%, transparent);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+#binder-view .filter-strip {
+  flex-direction: row;
+  margin-top: 0;
 }
 
 #binder-view .badge-medallion {
-  width: 28px;
-  height: 32px;
+  width: 36px;
+  height: 42px;
   flex: 0 0 auto;
+  overflow: hidden;
 }
 
 #binder-view .collection-star-count {
