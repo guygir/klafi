@@ -600,7 +600,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(stateAfterDemo.body.packCount, 0);
   assert.deepEqual(stateAfterDemo.body.inventory, {});
   assert.equal(stateAfterDemo.body.progression.level, 1);
-  assert.equal(stateAfterDemo.body.progression.totalLevels, 2);
+  assert.equal(stateAfterDemo.body.progression.totalLevels, 14);
   assert.equal(stateAfterDemo.body.progression.rank, "אזרח סקרן");
   assert.equal(stateAfterDemo.body.progression.nextRank, "קורא כותרות");
 

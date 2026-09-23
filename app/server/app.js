@@ -515,11 +515,7 @@ function progressionConfig(config = {}, activeReleaseIds = null) {
   const increments = config.releaseLevelIncrements && typeof config.releaseLevelIncrements === "object"
     ? config.releaseLevelIncrements
     : {};
-  const releaseIds = activeReleaseIds === null ? Object.keys(increments) : activeReleaseIds;
-  const configuredLevels = releaseIds.reduce((sum, id) => sum + Math.max(0, Math.round(Number(increments[id]) || 0)), 0);
-  const firstSetLevels = Math.max(0, Math.round(Number(increments["party-leaders"]) || 0));
-  const legacyLevels = Array.isArray(config.thresholdRatios) ? config.thresholdRatios.length : LEVEL_RATIOS.length;
-  const totalLevels = Math.max(2, Math.min(ranks.length, configuredLevels || firstSetLevels || legacyLevels));
+  const totalLevels = Math.max(2, ranks.length);
   const exponent = Math.max(0.5, Math.min(3, Number(config.thresholdExponent) || 1.2));
   const ratios = Array.isArray(config.thresholdRatios) && config.thresholdRatios.length === totalLevels
     ? config.thresholdRatios

@@ -3463,12 +3463,14 @@ function renderAchievements() {
     const percent = badge.earned ? 100 : Math.max(0, Math.min(100, Math.round((progress / target) * 100)));
     return `
     <article class="achievement-badge ${badge.earned ? "earned" : ""}">
-      <span class="achievement-seal" tabindex="0" title="${escapeHtml(copy.description)}">${badgeArtwork(badge.id)}</span>
+      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id)}</span>
       <div>
         <strong>${escapeHtml(copy.name)}</strong>
         <p>${escapeHtml(copy.description)}</p>
-        <div class="achievement-track" aria-hidden="true"><span style="width:${percent}%"></span></div>
-        <small>${badge.earned ? target : progress}/${target}</small>
+        <div class="achievement-track" role="img" aria-label="${progress} מתוך ${target}">
+          <span style="width:${percent}%"></span>
+          <b>${badge.earned ? target : progress}/${target}</b>
+        </div>
       </div>
     </article>`;
   }).join("");
