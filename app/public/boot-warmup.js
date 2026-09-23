@@ -31,6 +31,16 @@ window.__kalpiWarmup = {
   home,
   holders: fetch("/api/card-holders").then(json).catch(() => null),
 };
+const letterChipFiles = ["ballot-letter-lik.png", "ballot-paper.png"];
+const letterChipUrls = letterChipFiles.map((file) => `/design-assets/${encodeURIComponent(file)}`);
+for (const url of letterChipUrls) {
+  const image = new Image();
+  image.decoding = "async";
+  image.src = url;
+}
+if (globalThis.caches) {
+  caches.open("klafi-letter-chips-v1").then((cache) => cache.addAll(letterChipUrls)).catch(() => {});
+}
 window.__kalpiWarmup.catalog.then((catalog) => {
   for (const card of (catalog?.cards || []).slice(0, 12)) {
     if (!card?.artKey) continue;

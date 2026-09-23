@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { avatarBallotState, factionLetterArt, factionLetters } from "../public/avatar-ballot.js";
+import { avatarBallotState, factionLetterArt, factionLetters, letterChipFiles } from "../public/avatar-ballot.js";
 import { sessionFromHomeRow } from "../server/slim-home.js";
 
 test("avatar ballot is hidden without a faction and visible for every party", () => {
@@ -31,7 +31,17 @@ test("avatar ballot is hidden without a faction and visible for every party", ()
 
   const bare = avatarBallotState({ id: "YSR" });
   assert.equal(bare.visible, true);
-  assert.equal(bare.showBlankSeal, true);
+  assert.equal(bare.showBlankSeal, false);
+  assert.equal(bare.showLetterText, true);
+  assert.equal(bare.letters, "דרך");
+
+  const democratsBare = avatarBallotState({ id: "DEM" });
+  assert.equal(democratsBare.letters, "אמת");
+  assert.equal(democratsBare.showBlankSeal, false);
+  assert.equal(democratsBare.showLetterText, true);
+
+  assert.ok(letterChipFiles().includes("ballot-letter-lik.png"));
+  assert.ok(letterChipFiles().includes("ballot-paper.png"));
 });
 
 test("slim home session mapping keeps the player faction", () => {

@@ -548,7 +548,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-72/);
+  assert.match(html, /card-surface-73/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +638,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-72/);
+  assert.match(html, /card-surface-73/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -686,6 +686,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(html, /id="binder-flip-frame"/);
   assert.doesNotMatch(javascript, /function toggleBinderCardFrame/);
   assert.match(javascript, /function prefetchAvatars/);
+  assert.match(javascript, /function prefetchLetterChips/);
+  assert.match(javascript, /KNOWN_PARTY_LETTERS/);
+  assert.match(javascript, /letterChipCache/);
+  assert.match(warmup, /klafi-letter-chips-v1/);
+  assert.match(html, /rel="preload"[^>]*ballot-paper\.png/);
+  assert.match(html, /rel="preload"[^>]*ballot-letter-lik\.png/);
+  assert.match(css, /\.level-letter:not\(\.is-ready\)/);
   assert.match(javascript, /function localAchievementMeasures/);
   assert.match(html, /id="home-enable-notify"/);
   assert.match(html, /id="replay-tips"/);
@@ -693,6 +700,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /class="binder-stats-row"/);
   assert.match(html, /class="home-grid"[\s\S]*id="today-specials-row"[\s\S]*class="pack-plinth"/);
   assert.match(css, /#home-view \.home-grid > \.today-specials-line/);
+  assert.match(css, /#home-view \.pack-wrapper:hover \{ transform: rotate\(0\.5deg\); \}/);
   assert.match(css, /grid-column:\s*1\s*\/\s*-1/);
   assert.match(css, /\.level-letter,\s*\.collector-letter \{[^}]*object-fit:\s*contain/);
   assert.match(css, /\.level-letter-text,\s*\.collector-letter-text \{[^}]*flex-direction:\s*column/);
