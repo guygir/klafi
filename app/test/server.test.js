@@ -21,6 +21,7 @@ async function start(dataDir, clock, {
   cardsPath = path.join(appRoot, "data/cards.json"),
   specialsPath = path.join(appRoot, "data/specials-content.json"),
   presentationContentPath = path.join(appRoot, "data/presentation-content.json"),
+  eventsPath = path.join(appRoot, "data/events.json"),
 } = {}) {
   const handler = await createKalpiApp({
     dataDir,
@@ -34,7 +35,7 @@ async function start(dataDir, clock, {
     studioContentPath,
     specialsPath,
     presentationContentPath,
-    eventsPath: path.join(appRoot, "data/events.json"),
+    eventsPath,
     achievementsPath: path.join(appRoot, "data/achievements.json"),
     avatarsPath: path.join(appRoot, "data/avatars.json"),
     assetsDir: path.join(projectRoot, "docs/design/assets"),
@@ -227,6 +228,9 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   );
   assert.equal(first.body.state.instances, undefined);
   assert.equal(first.body.state.achievements, undefined);
+  assert.equal(first.body.state.idlePullCount, 1);
+  const afterGrant = await api(running.base, "/api/state", { token });
+  assert.equal(afterGrant.body.achievements.find(({ id }) => id === "first-rip")?.earned, true);
 
   const replay = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(replay.body.newlySettledCount, 0);
@@ -246,6 +250,7 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
     body: { instanceIds: capped.body.cards.map(({ instanceId }) => instanceId) },
   });
   assert.equal(seen.body.unseenCount, 0);
+  assert.equal(seen.body.achievements.find(({ id }) => id === "first-rip")?.earned, true);
 
   const pendingRanks = [...seen.body.progression.pendingRewards];
   const rewardInstances = [];
@@ -595,7 +600,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(stateAfterDemo.body.packCount, 0);
   assert.deepEqual(stateAfterDemo.body.inventory, {});
   assert.equal(stateAfterDemo.body.progression.level, 1);
-  assert.equal(stateAfterDemo.body.progression.totalLevels, 2);
+  assert.equal(stateAfterDemo.body.progression.totalLevels, 14);
   assert.equal(stateAfterDemo.body.progression.rank, "אזרח סקרן");
   assert.equal(stateAfterDemo.body.progression.nextRank, "קורא כותרות");
 
@@ -752,8 +757,16 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
 
 test("active event grants one persistent Special card per day", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-event-test-"));
+  const shipped = JSON.parse(await readFile(path.join(appRoot, "data/events.json"), "utf8"));
+  const eventsPath = path.join(dataDir, "events-active.json");
+  await writeFile(eventsPath, JSON.stringify({
+    ...shipped,
+    events: shipped.events.map((event) => (
+      event.id === "aces-launch-2026" ? { ...event, status: "active" } : event
+    )),
+  }));
   const clock = { value: Date.parse("2026-09-10T09:00:00.000Z") };
-  const running = await start(dataDir, clock);
+  const running = await start(dataDir, clock, { eventsPath });
   t.after(async () => {
     await running.close();
     await rm(dataDir, { recursive: true, force: true });
@@ -1033,7 +1046,8 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
 
 test("home route creates a guest session without the full catalog", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-home-route-"));
-  const running = await start(dataDir, { value: Date.parse("2026-09-15T12:00:00.000Z") }, { debugEnabled: false });
+  const clock = { value: Date.parse("2026-09-15T12:00:00.000Z") };
+  const running = await start(dataDir, clock, { debugEnabled: false });
   t.after(async () => {
     await running.close();
     await rm(dataDir, { recursive: true, force: true });
@@ -1042,11 +1056,16 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(home.status, 200);
   assert.match(home.body.token, /^[0-9a-f-]{36}$/i);
   assert.ok(home.body.state.displayName);
+  assert.equal(home.body.state.loginStreak, 0);
   assert.equal(home.body.state.progression.rank, "אזרח סקרן");
   assert.equal(home.body.catalog, undefined);
   assert.equal(typeof home.body.state.inventory, "object");
   const again = await api(running.base, "/api/home", { token: home.body.token });
   assert.equal(again.body.token, home.body.token);
+  assert.equal(again.body.state.loginStreak, 0);
+  clock.value = Date.parse("2026-09-16T12:00:00.000Z");
+  const nextDay = await api(running.base, "/api/home", { token: home.body.token });
+  assert.equal(nextDay.body.state.loginStreak, 0);
   const warm = await api(running.base, "/api/warm");
   assert.deepEqual(warm, { status: 200, body: { status: "ready" } });
   const holders = await api(running.base, "/api/card-holders");
@@ -1405,16 +1424,29 @@ test("numbered stamps are idle-only set-5 holos by list slot and streaks count J
   assert.ok(!String(leaderCopy.cardId).startsWith("SET5-"));
   assert.equal(leaderCopy.numberedIndex, undefined);
 
-  const dayOne = await api(running.base, "/api/state", { token: first.body.token });
+  async function openSettled(token) {
+    const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+    const ids = [...(settled.body.cards || []), ...(settled.body.queue || [])]
+      .map((card) => card.instanceId)
+      .filter(Boolean);
+    return api(running.base, "/api/idle/seen", {
+      token,
+      method: "POST",
+      body: { instanceIds: ids },
+    });
+  }
+  const visit = await api(running.base, "/api/state", { token: first.body.token });
+  assert.equal(visit.body.loginStreak, 0);
+  const dayOne = await openSettled(first.body.token);
   assert.equal(dayOne.body.loginStreak, 1);
   clock.value = Date.parse("2026-09-22T10:00:00+03:00");
-  const dayTwo = await api(running.base, "/api/state", { token: first.body.token });
+  const dayTwo = await openSettled(first.body.token);
   assert.equal(dayTwo.body.loginStreak, 2);
   clock.value = Date.parse("2026-09-23T10:00:00+03:00");
-  const dayThree = await api(running.base, "/api/state", { token: first.body.token });
+  const dayThree = await openSettled(first.body.token);
   assert.equal(dayThree.body.loginStreak, 3);
   clock.value = Date.parse("2026-09-25T10:00:00+03:00");
-  const reset = await api(running.base, "/api/state", { token: first.body.token });
+  const reset = await openSettled(first.body.token);
   assert.equal(reset.body.loginStreak, 1);
 });
 

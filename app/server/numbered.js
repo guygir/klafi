@@ -9,6 +9,7 @@ export function previousJerusalemDay(ms) {
 }
 
 export function applyLoginStreak(session, nowMs) {
+  // Pack-open days only. Callers stamp this when a player opens a granted pack.
   const today = jerusalemDay(nowMs);
   if (session.loginDay === today) return false;
   session.loginStreak = session.loginDay === previousJerusalemDay(nowMs)

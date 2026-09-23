@@ -118,10 +118,8 @@ const elements = {
   leagueStatus: document.querySelector("#league-status"),
   leagueRooms: document.querySelector("#league-rooms"),
   todaySpecialsRow: document.querySelector("#today-specials-row"),
-  todaySpecialsVisual: document.querySelector("#today-specials-visual"),
-  todaySpecialsHook: document.querySelector("#today-specials-hook"),
-  todaySpecialsMeta: document.querySelector("#today-specials-meta"),
-  todaySpecialsGo: document.querySelector("#today-specials-go"),
+  todaySpecialsCopy: document.querySelector("#today-specials-copy"),
+  todaySpecialsCopyRepeat: document.querySelector("#today-specials-copy-repeat"),
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
   homeCopy: document.querySelector("#home-copy"),
@@ -526,30 +524,39 @@ function applyHomePayload(home) {
     localStorage.setItem(SESSION_KEY, home.token);
   }
   if (home.state) {
-    model.serverState = { ...model.serverState, ...home.state };
+    const previous = model.serverState || {};
+    const incoming = home.state;
+    model.serverState = {
+      ...previous,
+      ...incoming,
+      inventory: incoming.inventory ?? previous.inventory ?? {},
+      idlePullCount: incoming.idlePullCount ?? previous.idlePullCount ?? 0,
+      achievements: incoming.achievements ?? previous.achievements ?? [],
+      loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
+    };
     if (home.cards) model.idleQueue = home.cards;
     localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
       token: model.token,
       cards: model.idleQueue,
       state: {
-        displayName: home.state.displayName,
-        avatarId: home.state.avatarId,
-        ownedUnique: home.state.ownedUnique,
-        totalCards: home.state.totalCards,
-        unseenCount: home.state.unseenCount,
-        nextIdleAt: home.state.nextIdleAt,
-        preparedPulls: home.state.preparedPulls || [],
-        idleCapacity: home.state.idleCapacity,
-        progression: home.state.progression,
-        avatars: home.state.avatars,
-        inventory: home.state.inventory || {},
-        favorites: home.state.favorites || [],
-        starCount: home.state.starCount,
-        loginStreak: home.state.loginStreak || 0,
-        factionId: home.state.factionId || null,
-        numberedCopies: home.state.numberedCopies || [],
-        idlePullCount: home.state.idlePullCount || 0,
-        achievements: home.state.achievements || [],
+        displayName: model.serverState.displayName,
+        avatarId: model.serverState.avatarId,
+        ownedUnique: model.serverState.ownedUnique,
+        totalCards: model.serverState.totalCards,
+        unseenCount: model.serverState.unseenCount,
+        nextIdleAt: model.serverState.nextIdleAt,
+        preparedPulls: model.serverState.preparedPulls || [],
+        idleCapacity: model.serverState.idleCapacity,
+        progression: model.serverState.progression,
+        avatars: model.serverState.avatars,
+        inventory: model.serverState.inventory || {},
+        favorites: model.serverState.favorites || [],
+        starCount: model.serverState.starCount,
+        loginStreak: model.serverState.loginStreak || 0,
+        factionId: model.serverState.factionId || null,
+        numberedCopies: model.serverState.numberedCopies || [],
+        idlePullCount: model.serverState.idlePullCount ?? 0,
+        achievements: model.serverState.achievements || [],
       },
     }));
     prefetchAvatars(home.state.avatars);
@@ -771,6 +778,7 @@ async function hydrateHome() {
       renderProfile();
       renderHome();
       renderBinder();
+      renderAchievements();
       return home;
     }).finally(() => {
       homeHydrate = null;
@@ -847,6 +855,7 @@ function flushPendingIdleSeen() {
     applyHomePayload({ state });
     renderHome();
     renderBinder();
+    renderAchievements();
     scheduleIdleRefill({ priority: "buffered" });
     return state;
   }).catch((error) => {
@@ -1079,6 +1088,7 @@ async function bootstrap() {
 }
 
 function renderAdvocacy() {
+  requestAnimationFrame(layoutAdvocacyDock);
   const profile = model.editorial?.advocacy;
   if (!profile) return;
   if (elements.advocacyShort) elements.advocacyShort.textContent = "";
@@ -1394,18 +1404,32 @@ function renderAvatarSeal() {
   if (elements.levelLetter) {
     if (art) {
       elements.levelLetter.hidden = false;
-      elements.levelLetter.src = `/design-assets/${encodeURIComponent(art)}`;
       elements.levelLetter.alt = letters;
+      elements.levelLetter.onerror = () => {
+        elements.levelLetter.hidden = true;
+        elements.levelLetter.removeAttribute("src");
+        if (elements.levelLetterText && letters) {
+          elements.levelLetterText.hidden = false;
+          elements.levelLetterText.textContent = letters;
+          elements.levelLetterText.dataset.letters = String([...letters].length);
+        } else {
+          elements.levelAvatarButton?.classList.remove("has-faction-letter");
+        }
+      };
+      elements.levelLetter.src = `/design-assets/${encodeURIComponent(art)}`;
     } else {
+      elements.levelLetter.onerror = null;
       elements.levelLetter.hidden = true;
       elements.levelLetter.removeAttribute("src");
       elements.levelLetter.alt = "";
     }
   }
   if (elements.levelLetterText) {
-    elements.levelLetterText.hidden = Boolean(art) || !letters;
-    elements.levelLetterText.textContent = letters;
-    elements.levelLetterText.dataset.letters = String([...letters].length);
+    const showText = Boolean(letters) && !art;
+    elements.levelLetterText.hidden = !showText;
+    elements.levelLetterText.textContent = showText ? letters : "";
+    if (showText) elements.levelLetterText.dataset.letters = String([...letters].length);
+    else delete elements.levelLetterText.dataset.letters;
   }
   elements.levelAvatarButton?.classList.toggle("has-faction-letter", Boolean(art || letters));
   elements.levelAvatarButton?.classList.toggle("has-faction-seal", false);
@@ -1910,6 +1934,7 @@ function renderHome() {
   renderTodayDocket();
   updateCountdown();
   if (elements.openQuiz) elements.openQuiz.hidden = true;
+  layoutAdvocacyDock();
 }
 
 function renderSiteCardPeeks() {
@@ -2079,24 +2104,37 @@ function renderTodaySpecials() {
   const windowOpen = model.specialWindow;
   elements.todaySpecialsRow.hidden = !windowOpen;
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
-  if (!windowOpen) return;
-  elements.todaySpecialsHook.textContent = windowOpen.nameHe;
+  if (!windowOpen) {
+    elements.todaySpecialsRow.classList.remove("is-marquee", "is-ready");
+    return;
+  }
   const closes = new Date(windowOpen.closesAt);
   const until = Number.isNaN(closes.getTime())
     ? ""
     : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
-  elements.todaySpecialsMeta.textContent = windowOpen.claimedToday
+  const detail = windowOpen.claimedToday
     ? "הקלף היומי כבר באוסף. הוא נשאר באלבום."
     : until
       ? `פתוח עד ${until}. קלף אחד היום.`
       : "קלף אחד היום. הוא נשאר באלבום.";
-  if (elements.todaySpecialsGo) {
-    elements.todaySpecialsGo.textContent = windowOpen.claimedToday ? "לאלבום" : "לאיסוף";
-  }
-  if (elements.todaySpecialsVisual && elements.todaySpecialsVisual.dataset.event !== windowOpen.id) {
-    elements.todaySpecialsVisual.dataset.event = windowOpen.id;
-    elements.todaySpecialsVisual.innerHTML = `<img src="/design-assets/hero-art-kalpi.png" alt="" loading="lazy" />`;
-  }
+  const line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
+  if (elements.todaySpecialsCopy) elements.todaySpecialsCopy.textContent = line;
+  if (elements.todaySpecialsCopyRepeat) elements.todaySpecialsCopyRepeat.textContent = line;
+  requestAnimationFrame(layoutTodaySpecials);
+}
+
+function layoutTodaySpecials() {
+  const row = elements.todaySpecialsRow;
+  if (!row || row.hidden) return;
+  row.classList.add("is-marquee", "is-ready");
+}
+
+function layoutAdvocacyDock() {
+  const dock = elements.openAdvocacy;
+  const nav = document.querySelector(".top-nav-row .bottom-nav");
+  if (!dock || !nav) return;
+  dock.style.left = `${Math.round(nav.getBoundingClientRect().left + 8)}px`;
+  dock.style.bottom = "8px";
 }
 
 function renderActivity() {
@@ -2181,7 +2219,9 @@ function renderProgression({ announce = false } = {}) {
   elements.levelProgress.style.width = `${progression.percent}%`;
   elements.levelProgressCount.textContent = `${progression.unique - progression.start}/${progression.target - progression.start}`;
   if (progression.remaining) {
-    elements.levelNext.textContent = `גלו עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
+    elements.levelNext.textContent = progression.remaining === 1
+      ? "גלו עוד קלף אחד חדש כדי להתקדם לרמה הבאה"
+      : `גלו עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
   } else {
     elements.levelNext.textContent = progression.nextReleaseRank
       ? `הרמה מוכנה · ${progression.nextReleaseRank} תיפתח בסדרה הבאה`
@@ -2204,15 +2244,17 @@ function updateCountdown() {
   renderTodayDocket();
   scheduleIdleNotification();
   const remaining = timeUntil(model.serverState?.nextIdleAt);
-  const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
+  const interval = model.serverState?.idleIntervalMs || 3 * 60 * 60 * 1000;
+  const clock = formatCountdown(remaining || interval);
+  if (elements.cooldownCopy) {
+    elements.cooldownCopy.textContent = `הבא בעוד ${clock}`;
+    elements.cooldownCopy.hidden = false;
+  }
   if (!remaining) {
-    elements.cooldownCopy.textContent = unseen ? "פותחים אחד-אחד" : "קלף חדש מוכן לאיסוף";
     elements.headerStatus.textContent = "אוספים עכשיו";
     if (elements.debugClock) elements.debugClock.textContent = "Idle pull · ready";
     return;
   }
-  const clock = formatCountdown(remaining);
-  elements.cooldownCopy.textContent = `הבא בעוד ${clock}`;
   elements.headerStatus.textContent = `הקלף הבא · ${clock}`;
   if (elements.debugClock) elements.debugClock.textContent = `Next idle pull · ${clock}`;
 }
@@ -3406,17 +3448,30 @@ function renderAchievements() {
   setEmptyNote(elements.achievementsEmpty, "", { hidden: true });
   if (!elements.achievementGrid) return;
   const badges = achievementList();
-  const pageSize = 4;
+  if (!badges.length) {
+    setEmptyNote(elements.achievementsEmpty, "טוענים את התגים…", { hidden: false });
+  }
+  const pageSize = 6;
   const pages = Math.max(1, Math.ceil(badges.length / pageSize));
   model.achievementPage = Math.min(model.achievementPage, pages - 1);
   elements.achievementGrid.innerHTML = badges
     .slice(model.achievementPage * pageSize, (model.achievementPage + 1) * pageSize)
     .map((badge) => {
     const copy = hebrewBadge(badge);
+    const target = Math.max(1, Number(badge.target) || 1);
+    const progress = Math.max(0, Math.min(target, Number(badge.progress) || 0));
+    const percent = badge.earned ? 100 : Math.max(0, Math.min(100, Math.round((progress / target) * 100)));
     return `
     <article class="achievement-badge ${badge.earned ? "earned" : ""}">
-      <span class="achievement-seal" tabindex="0" title="${escapeHtml(copy.description)}">${badgeArtwork(badge.id)}${badge.earned ? "" : `<i>${badge.progress}/${badge.target}</i>`}</span>
-      <div><strong>${escapeHtml(copy.name)}</strong><p>${escapeHtml(copy.description)}</p></div>
+      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id)}</span>
+      <div>
+        <strong>${escapeHtml(copy.name)}</strong>
+        <p>${escapeHtml(copy.description)}</p>
+        <div class="achievement-track" role="img" aria-label="${progress} מתוך ${target}">
+          <span style="width:${percent}%"></span>
+          <b>${badge.earned ? target : progress}/${target}</b>
+        </div>
+      </div>
     </article>`;
   }).join("");
   elements.achievementPager.innerHTML = pagerMarkup(model.achievementPage, pages, "achievements");
@@ -3788,10 +3843,10 @@ function renderGrowth() {
   if (openTab) openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";
   const boardHint = document.querySelector("#trade-board-hint");
   if (boardHint) {
-    boardHint.hidden = openCount === 0;
+    boardHint.hidden = false;
     boardHint.textContent = openCount
-      ? `${openCount} הצעות ממתינות בלוח. פרסום מעלה הצעה. קישור לדוגמה רק מעתיק קישור.`
-      : "";
+      ? `${openCount} הצעות ממתינות בלוח. מפרסמים כאן החלפה של קלף שיש לכם בקלף שאתם רוצים. רק אחרי אישור הקלפים מתחלפים. שיתוף הוא תמונה בלבד.`
+      : "כאן מפרסמים החלפה: קלף שיש לכם תמורת קלף שאתם רוצים. רק אחרי שאישרו את העסקה הקלפים מתחלפים. שיתוף בוואטסאפ הוא תמונה בלבד — זה לא מעביר קלף לאלבום.";
   }
 }
 
@@ -6206,6 +6261,8 @@ window.addEventListener("resize", () => {
   renderBinder();
   renderAchievements();
   queueCardTextFit(elements.main);
+  layoutTodaySpecials();
+  layoutAdvocacyDock();
 });
 document.addEventListener("click", (event) => {
   const sourceLink = event.target.closest("[data-source-card]");

@@ -30,6 +30,7 @@ import { publicLeague } from "./leagues.js";
 import { qrSvg } from "./qr-svg.js";
 import { openSpecialWindow } from "./special-window.js";
 import { requestOrigin, serveBinderShareLanding, serveShareLanding } from "./share-landing.js";
+import { levelThresholds } from "./progression.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -514,11 +515,7 @@ function progressionConfig(config = {}, activeReleaseIds = null) {
   const increments = config.releaseLevelIncrements && typeof config.releaseLevelIncrements === "object"
     ? config.releaseLevelIncrements
     : {};
-  const releaseIds = activeReleaseIds === null ? Object.keys(increments) : activeReleaseIds;
-  const configuredLevels = releaseIds.reduce((sum, id) => sum + Math.max(0, Math.round(Number(increments[id]) || 0)), 0);
-  const firstSetLevels = Math.max(0, Math.round(Number(increments["party-leaders"]) || 0));
-  const legacyLevels = Array.isArray(config.thresholdRatios) ? config.thresholdRatios.length : LEVEL_RATIOS.length;
-  const totalLevels = Math.max(2, Math.min(ranks.length, configuredLevels || firstSetLevels || legacyLevels));
+  const totalLevels = Math.max(2, ranks.length);
   const exponent = Math.max(0.5, Math.min(3, Number(config.thresholdExponent) || 1.2));
   const ratios = Array.isArray(config.thresholdRatios) && config.thresholdRatios.length === totalLevels
     ? config.thresholdRatios
@@ -544,8 +541,8 @@ function progressionState(session, cards, config = {}, current = Date.now()) {
   const eligibleIds = new Set(eligible.map(({ id }) => id));
   const unique = Object.keys(session.inventory).filter((id) => eligibleIds.has(id)).length;
   const activeReleaseIds = [...new Set(eligible.map(({ releaseSetId }) => releaseSetId).filter(Boolean))];
-  const { ratios, ranks, totalLevels, campaignLevels, reward } = progressionConfig(config, activeReleaseIds);
-  const thresholds = ratios.map((ratio, index) => index === 0 ? 0 : Math.ceil(eligible.length * ratio));
+  const { ranks, totalLevels, campaignLevels, reward, thresholdExponent } = progressionConfig(config, activeReleaseIds);
+  const thresholds = levelThresholds(eligible.length, totalLevels, thresholdExponent);
   const computedLevel = eligible.length
     ? thresholds.reduce((result, threshold, index) => unique >= threshold ? index + 1 : result, 1)
     : 1;
@@ -646,6 +643,7 @@ function publicIdleState(session, now, cards, config = {}) {
     idleCapacity: IDLE_BACKLOG_CAP,
     unseenCount: session.unseenPulls?.length ?? 0,
     preparedPulls: session.preparedPulls ?? [],
+    idlePullCount: session.idlePullCount ?? 0,
     progression,
     avatars: publicAvatars(session, config.avatars, progression.level),
     loginStreak: session.loginStreak || 0,
@@ -1059,7 +1057,6 @@ export async function createKalpiApp({
         scheduleAt = currentMs + IDLE_INTERVAL_MS;
       }
       fillPreparedQueue();
-      applyLoginStreak(current, currentMs);
       current.nextIdleAt = current.preparedPulls[0]?.availableAt ?? new Date(scheduleAt).toISOString();
       current.idleAnchorAt ??= new Date(anchorAt).toISOString();
       current.packs = current.packs.slice(-100);
@@ -1346,9 +1343,6 @@ export async function createKalpiApp({
         }
 
         if (request.method === "GET" && url.pathname === "/api/state") {
-          await store.withSession(token, (current) => {
-            applyLoginStreak(current, now());
-          });
           json(response, 200, stateFor(store.getSession(token)));
           return;
         }
@@ -1444,6 +1438,7 @@ export async function createKalpiApp({
               if (accepted.has(instance.instanceId)) instance.seenAt = seenAt;
             });
             current.unseenPulls = [...unseen].filter((id) => !accepted.has(id));
+            if (accepted.size) applyLoginStreak(current, now());
           });
           json(response, 200, stateFor(store.getSession(token)));
           return;
