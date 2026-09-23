@@ -3688,23 +3688,46 @@ async function refreshDailyChallenge() {
   }
 }
 
-function factionHistMarkup(entries) {
-  const maximum = Math.max(1, ...entries.map(({ score }) => score || 0));
-  const cols = entries.map((entry, index) => {
-    const height = entry.score ? Math.max(4, Math.round((entry.score / maximum) * 100)) : 0;
-    return `<div class="challenge-hist-col${entry.current ? " you" : ""}">
+const FACTION_HIST_MAX_BARS = 10;
+
+function starContributionBins(scores = []) {
+  const values = scores.map((row) => Math.max(0, Math.round(Number(row.stars) || 0)));
+  const current = scores.find((row) => row.current);
+  const you = current == null ? null : Math.max(0, Math.round(Number(current.stars) || 0));
+  if (!values.length) return [];
+  const peak = Math.max(...values, you ?? 0);
+  if (peak <= FACTION_HIST_MAX_BARS) {
+    return Array.from({ length: peak + 1 }, (_, stars) => ({
+      label: String(stars),
+      count: values.filter((value) => value === stars).length,
+      you: you === stars,
+    }));
+  }
+  const step = Math.ceil((peak + 1) / FACTION_HIST_MAX_BARS);
+  const bins = [];
+  for (let start = 0; start <= peak; start += step) {
+    const end = Math.min(peak, start + step - 1);
+    bins.push({
+      label: start === end ? String(start) : `${start}–${end}`,
+      count: values.filter((value) => value >= start && value <= end).length,
+      you: you != null && you >= start && you <= end,
+    });
+  }
+  return bins;
+}
+
+function factionHistMarkup(bins) {
+  const field = Math.max(1, ...bins.map(({ count }) => count));
+  const cols = bins.map((bin, index) => {
+    const height = bin.count ? Math.max(8, Math.round((bin.count / field) * 100)) : 0;
+    return `<div class="challenge-hist-col${bin.you ? " you" : ""}">
       <b style="height:${height}%; animation-delay:${index * 40}ms"></b>
     </div>`;
   }).join("");
-  const axis = entries.map((entry) => {
-    const you = entry.current ? " · אתם" : "";
-    return `<span>${entry.label}${you}<small>★${entry.score}</small></span>`;
-  }).join("");
+  const axis = bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("");
   return `<div class="faction-hist challenge-hist">
-    <div class="faction-hist-scroll">
-      <div class="challenge-hist-plot faction-hist-plot" dir="ltr" aria-hidden="true">${cols}</div>
-      <div class="challenge-hist-axis" dir="ltr">${axis}</div>
-    </div>
+    <div class="challenge-hist-plot faction-hist-plot" dir="ltr" aria-hidden="true">${cols}</div>
+    <div class="challenge-hist-axis" dir="ltr">${axis}</div>
   </div>`;
 }
 
@@ -3712,18 +3735,18 @@ function renderFactionMembers() {
   if (!elements.factionMembers) return;
   const partyId = elements.factionSelect?.value || "";
   const entry = (model.leaderboards?.factions || []).find((faction) => faction.partyId === partyId);
-  const members = entry?.members || [];
+  const scores = entry?.scores || (entry?.members || []).map((member) => ({
+    stars: member.stars || 0,
+    current: Boolean(member.current),
+  }));
   if (!partyId) {
-    elements.factionMembers.innerHTML = '<p class="work-note">בחרו סיעה כדי לראות איפה אתם עומדים.</p>';
+    elements.factionMembers.innerHTML = '<p class="work-note">בחרו מפלגה כדי לראות איפה אתם עומדים.</p>';
     return;
   }
-  elements.factionMembers.innerHTML = members.length
-    ? factionHistMarkup(members.map((member) => ({
-      label: escapeHtml(member.label),
-      score: member.stars || 0,
-      current: Boolean(member.current),
-    })))
-    : '<p class="work-note">עדיין אין מי שבחר בסיעה הזו.</p>';
+  const bins = starContributionBins(scores);
+  elements.factionMembers.innerHTML = bins.length
+    ? factionHistMarkup(bins)
+    : '<p class="work-note">עדיין אין מי שבחר במפלגה הזו.</p>';
 }
 
 function renderGrowth() {
@@ -3835,7 +3858,7 @@ function renderGrowth() {
   const selectedFaction = model.serverState.factionId;
   const parties = partyRegister();
   elements.factionSelect.innerHTML = [
-    '<option value="">ללא סיעה</option>',
+    '<option value="">ללא מפלגה</option>',
     ...parties.map((party) => {
       const letters = (party.finalLetters || party.requestedLetters || []).join(" / ");
       return `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml([
@@ -3844,13 +3867,7 @@ function renderGrowth() {
       ].filter(Boolean).join(" · "))}</option>`;
     }),
   ].join("");
-  const factionEntries = model.leaderboards?.factions?.slice(0, 8) || [];
-  elements.factionBoard.innerHTML = factionEntries.length
-    ? factionHistMarkup(factionEntries.map((entry) => ({
-      label: escapeHtml(partyDisplayName(entry.partyId, entry.partyId)),
-      score: entry.stars ?? entry.packs ?? 0,
-    })))
-    : '<p class="work-note">עדיין אין סיעות עם אוספים.</p>';
+  if (elements.factionBoard) elements.factionBoard.innerHTML = "";
   renderFactionMembers();
   const collectorEntries = model.leaderboards?.collectors || [];
   const collectorPreview = collectorEntries.slice(0, 3);
@@ -4959,7 +4976,7 @@ async function cancelTradeOffer(tradeId) {
 }
 
 async function saveFaction() {
-  showWait("שומרים את הסיעה…");
+  showWait("שומרים את המפלגה…");
   try {
     model.serverState = await request("/api/faction", {
       method: "POST",
@@ -4969,9 +4986,9 @@ async function saveFaction() {
     renderProfile();
     renderBinder();
     renderGrowth();
-    showToast(model.serverState.factionId ? "הסיעה נשמרה. כוכבי האוסף נספרים לסיעה." : "בחירת הסיעה בוטלה.");
+    showToast(model.serverState.factionId ? "המפלגה נשמרה. כוכבי האוסף נספרים למפלגה." : "בחירת המפלגה בוטלה.");
   } catch {
-    showToast("לא הצלחנו לשמור את הסיעה.");
+    showToast("לא הצלחנו לשמור את המפלגה.");
   } finally {
     hideWait();
   }

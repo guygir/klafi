@@ -46,6 +46,10 @@ export function factionStandingsFromCollectors(collectors = []) {
         stars,
         packs: stars,
         members: trimMembers(ranked),
+        scores: ranked.map((member) => ({
+          stars: member.stars || 0,
+          current: Boolean(member.current),
+        })),
       };
     })
     .sort((left, right) => right.stars - left.stars || left.partyId.localeCompare(right.partyId));

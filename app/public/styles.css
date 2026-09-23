@@ -3860,37 +3860,34 @@ body {
 
 .faction-hist {
   margin: 0;
-}
-
-.faction-hist-scroll {
-  overflow-x: auto;
-  scrollbar-width: thin;
+  overflow: hidden;
 }
 
 .faction-hist-plot,
 .faction-hist .challenge-hist-axis {
-  justify-content: flex-start;
-  min-width: min-content;
+  width: 100%;
+  justify-content: center;
+  overflow: hidden;
+  gap: clamp(2px, 1.4vw, 10px);
 }
 
 .faction-hist .challenge-hist-col,
 .faction-hist .challenge-hist-axis span {
-  width: 44px;
-  flex: 0 0 44px;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: 44px;
+}
+
+.faction-hist .challenge-hist-col b {
+  width: min(28px, 86%);
 }
 
 .faction-hist .challenge-hist-axis span {
-  display: grid;
-  gap: 2px;
-  overflow-wrap: anywhere;
+  overflow: hidden;
   font-size: 9px;
   line-height: 1.15;
-}
-
-.faction-hist .challenge-hist-axis small {
-  color: var(--civic);
-  font-size: 10px;
-  font-weight: 700;
+  text-overflow: ellipsis;
 }
 
 .faction-chart-row {

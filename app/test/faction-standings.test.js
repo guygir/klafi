@@ -17,6 +17,8 @@ test("faction standings sum member stars and keep the current player visible", (
   assert.equal(standings[0].members[0].label, "נועה");
   assert.equal(standings[0].members[1].label, "גיא");
   assert.equal(standings[0].members[1].current, true);
+  assert.equal(standings[0].scores.length, 2);
+  assert.deepEqual(standings[0].scores.map(({ stars }) => stars), [12, 6]);
   assert.equal(standings[1].partyId, "YSH");
   assert.equal(standings[1].stars, 3);
 });

@@ -28,7 +28,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(html, /\benergy\b/i);
   assert.doesNotMatch(html, /פתחו חבילה כדי להתחיל|חבילת בונוס/);
   assert.match(javascript, /קלף בונוס/);
-  assert.match(javascript, /כוכבי האוסף נספרים לסיעה/);
+  assert.match(javascript, /כוכבי האוסף נספרים למפלגה/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /--pip/);
   assert.match(html, /aria-live/);
@@ -52,15 +52,16 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /aria-labelledby="advocacy-sponsor"/);
   assert.match(html, /id="faction-cec-note"/);
   assert.match(html, /id="faction-members"/);
-  assert.match(html, /כוכבי האוסף של מי שבחרו בסיעה/);
+  assert.match(html, /כוכבי האוסף של מי שבחרו במפלגה/);
   assert.match(javascript, /function renderFactionMembers/);
   assert.match(javascript, /function factionHistMarkup/);
+  assert.match(javascript, /function starContributionBins/);
   assert.match(html, /id="faction-members-title"/);
-  assert.match(html, /הטבלה בסיעה/);
-  assert.match(html, /id="faction-board-title"/);
+  assert.match(html, /מי אסף הכי הרבה כוכבים עבור המפלגה\?/);
+  assert.match(html, />מפלגות</);
+  assert.doesNotMatch(html, />סיעות</);
   assert.match(css, /\.faction-hist-plot/);
-  assert.match(css, /\.faction-hist-scroll/);
-  assert.match(javascript, /faction-hist-scroll/);
+  assert.doesNotMatch(css, /\.faction-hist-scroll/);
   assert.match(html, /role="list"/);
   assert.match(javascript, /function cardTrustLine/);
   assert.match(javascript, /function prefersReducedMotion/);
@@ -262,7 +263,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function displayCardMarkup/);
   assert.match(javascript, /card-copies-tag/);
   assert.match(html, /החלפות/);
-  assert.match(html, /מלחמת הסיעות/);
+  assert.match(html, /מלחמת המפלגות/);
   assert.doesNotMatch(html, /כל סדרות המיוחדים/);
   assert.match(html, /id="level-progress"/);
   assert.match(javascript, /\/api\/events\/.*\/pull/);
@@ -285,7 +286,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /"party-slot-2": "משנה"/);
   assert.match(html, /id="wait-dialog"/);
   assert.match(javascript, /showWait\("מפרסמים את ההחלפה/);
-  assert.match(javascript, /showWait\("שומרים את הסיעה/);
+  assert.match(javascript, /showWait\("שומרים את המפלגה/);
   assert.match(html, /id="today-open-cue"/);
   assert.match(html, /id="cooldown-copy"/);
   assert.doesNotMatch(javascript, /function isApproachingBadge/);
@@ -533,7 +534,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-51/);
+  assert.match(html, /card-surface-52/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -601,7 +602,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-51/);
+  assert.match(html, /card-surface-52/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
