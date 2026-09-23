@@ -535,7 +535,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-58/);
+  assert.match(html, /card-surface-60/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -603,8 +603,17 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-58/);
+  assert.match(html, /card-surface-60/);
   assert.match(html, /id="report-dialog"/);
+  assert.match(html, /id="open-bug-report"/);
+  assert.match(html, /id="bug-dialog"/);
+  assert.match(javascript, /\/api\/bugs/);
+  assert.match(javascript, /function startLevelRewardGrant/);
+  assert.match(javascript, /const toLevel = fromLevel \+ 1/);
+  assert.doesNotMatch(javascript, /toLevel = Math\.max\(progression\.level/);
+  assert.match(css, /\.challenge-hist-col\.you b::before/);
+  assert.doesNotMatch(css, /\.challenge-hist-col\.you::before \{/);
+  assert.match(css, /\.bug-dock \{/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
   assert.match(javascript, /function hydrateStudioReports/);

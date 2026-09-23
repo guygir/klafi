@@ -17,12 +17,12 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-58"></script>
+  <script src="/boot-warmup.js?v=card-surface-60"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-58" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-58" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-60" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-60" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -515,6 +515,7 @@
     </main>
     <div class="top-nav-row">
       <button id="open-advocacy" class="advocacy-dock" type="button" aria-haspopup="dialog" aria-label="גילוי נאות">גילוי נאות</button>
+      <button id="open-bug-report" class="bug-dock" type="button" aria-haspopup="dialog" aria-label="דיווח באג">דיווח באג</button>
       <nav class="bottom-nav" aria-label="ניווט ראשי">
         <button type="button" data-nav="home" class="active" aria-current="page"><span aria-hidden="true">◫</span>היום</button>
         <button type="button" data-nav="binder"><span aria-hidden="true">▦</span>אוסף</button>
@@ -567,6 +568,23 @@
       <textarea id="report-details" name="details" minlength="5" maxlength="2000" rows="5" required></textarea>
       <p id="report-status" class="profile-error" role="status"></p>
       <button id="submit-report" class="primary-action" type="submit">שליחת הדיווח</button>
+    </form>
+  </dialog>
+
+  <dialog id="bug-dialog" class="policy-dialog report-dialog" aria-labelledby="bug-dialog-title">
+    <button id="close-bug" class="dialog-close" type="button" aria-label="סגירת הדיווח">×</button>
+    <p class="eyebrow">תיקון פתוח</p>
+    <h2 id="bug-dialog-title">דיווח באג</h2>
+    <p class="lede">כתבו מה לא עבד. זה נפתח כפנייה בגיטהאב.</p>
+    <form id="bug-form">
+      <label for="bug-nickname">שם (לא חובה)</label>
+      <input id="bug-nickname" name="nickname" maxlength="80" autocomplete="nickname" placeholder="אלמוני" />
+      <label for="bug-details">מה קרה?</label>
+      <textarea id="bug-details" name="details" maxlength="500" rows="5" required placeholder="מה ראיתם, ומה ציפיתם שיהיה."></textarea>
+      <input id="bug-website" name="website" tabindex="-1" autocomplete="off" class="visually-hidden" aria-hidden="true" />
+      <p id="bug-count" class="profile-error" aria-live="polite">0/500</p>
+      <p id="bug-status" class="profile-error" role="status"></p>
+      <button id="submit-bug" class="primary-action" type="submit">שליחת הדיווח</button>
     </form>
   </dialog>
 
@@ -691,6 +709,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-58"></script>
+  <script type="module" src="/app.js?v=card-surface-60"></script>
 </body>
 </html>

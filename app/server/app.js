@@ -31,6 +31,7 @@ import { qrSvg } from "./qr-svg.js";
 import { openSpecialWindow } from "./special-window.js";
 import { requestOrigin, serveBinderShareLanding, serveShareLanding } from "./share-landing.js";
 import { levelThresholds } from "./progression.js";
+import { createGithubBugFromBody } from "./github-bugs.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -100,7 +101,7 @@ const SECURITY_HEADERS = Object.freeze({
   "cross-origin-opener-policy": "same-origin",
 });
 
-function json(response, status, value) {
+function json(response, status, value, extraHeaders = {}) {
   const requestId = response.getHeader("x-request-id");
   const payload = status >= 500 && value && typeof value === "object"
     ? { ...value, requestId: value.requestId || requestId || undefined }
@@ -109,6 +110,7 @@ function json(response, status, value) {
     ...SECURITY_HEADERS,
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
+    ...extraHeaders,
   });
   response.end(JSON.stringify(payload));
 }
@@ -123,6 +125,7 @@ const STATELESS_API_PATHS = new Set([
   "/api/game-config",
   "/api/presentation/content",
   "/api/card-holders",
+  "/api/bugs",
 ]);
 
 function secretsMatch(provided, expected) {
@@ -1193,6 +1196,17 @@ export async function createKalpiApp({
         const createdAt = new Date(now()).toISOString();
         const token = await store.createSession(createdAt);
         json(response, 201, { token });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/bugs") {
+        const input = await readJson(request);
+        const result = await createGithubBugFromBody(process.env, input, request.headers);
+        if (!result.ok) {
+          json(response, result.status, { error: result.error });
+          return;
+        }
+        json(response, 200, { success: true, issueUrl: result.issueUrl }, result.headers || {});
         return;
       }
 

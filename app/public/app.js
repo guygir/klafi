@@ -76,6 +76,8 @@ const model = {
   dialogNumbered: false,
   reports: [],
   reportSubject: null,
+  levelRewardReady: null,
+  levelRewardGrant: null,
   watchedTrade: null,
   tradeBoardPage: 0,
   tradeBoardOffered: "",
@@ -307,6 +309,16 @@ const elements = {
   reportStatus: document.querySelector("#report-status"),
   submitReport: document.querySelector("#submit-report"),
   closeReport: document.querySelector("#close-report"),
+  openBugReport: document.querySelector("#open-bug-report"),
+  bugDialog: document.querySelector("#bug-dialog"),
+  bugForm: document.querySelector("#bug-form"),
+  bugNickname: document.querySelector("#bug-nickname"),
+  bugDetails: document.querySelector("#bug-details"),
+  bugWebsite: document.querySelector("#bug-website"),
+  bugCount: document.querySelector("#bug-count"),
+  bugStatus: document.querySelector("#bug-status"),
+  submitBug: document.querySelector("#submit-bug"),
+  closeBug: document.querySelector("#close-bug"),
   toast: document.querySelector("#toast"),
   waitDialog: document.querySelector("#wait-dialog"),
   waitDialogCopy: document.querySelector("#wait-dialog-copy"),
@@ -2195,14 +2207,48 @@ function levelUnlockItems(fromLevel, toLevel) {
 }
 
 function fillLevelDialog(progression, fromLevel) {
-  const toLevel = Math.max(progression.level, ...(progression.pendingRewards || []), fromLevel + 1);
-  elements.levelDialogTitle.textContent = `הגעתם לרמה ${progression.level}`;
+  const toLevel = fromLevel + 1;
+  elements.levelDialogTitle.textContent = `הגעתם לרמה ${toLevel}`;
   const items = levelUnlockItems(fromLevel, toLevel);
   if (elements.levelUnlocks) {
     elements.levelUnlocks.hidden = !items.length;
     elements.levelUnlocks.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   }
   elements.levelDialogReward.textContent = items.length ? "אפשר לקבל את קלף הבונוס עכשיו." : (progression.reward || "");
+}
+
+function prefetchLevelReward(cards = []) {
+  prefetchCardArt((cards || []).map(({ cardId }) => model.byId.get(cardId)).filter(Boolean));
+}
+
+function startLevelRewardGrant() {
+  if (model.levelRewardGrant) return model.levelRewardGrant;
+  const pending = model.serverState?.progression?.pendingRewards || [];
+  if (!pending.length) {
+    if (model.levelRewardReady?.cards?.length) {
+      prefetchLevelReward(model.levelRewardReady.cards);
+      return Promise.resolve(model.levelRewardReady);
+    }
+    return Promise.reject(Object.assign(new Error("NO_LEVEL_REWARD"), { status: 409 }));
+  }
+  const mutationScope = `level-reward-${pending[0]}`;
+  model.levelRewardGrant = request("/api/rewards/level", {
+    method: "POST",
+    headers: { "x-idempotency-key": pendingMutationKey(mutationScope) },
+  }).then((reward) => {
+    clearPendingMutation(mutationScope);
+    model.levelRewardReady = reward;
+    model.levelRewardGrant = null;
+    if (reward.state) model.serverState = reward.state;
+    prefetchLevelReward(reward.cards);
+    renderHome();
+    renderPendingLevelCue();
+    return reward;
+  }).catch((error) => {
+    model.levelRewardGrant = null;
+    throw error;
+  });
+  return model.levelRewardGrant;
 }
 
 function renderPendingLevelCue() {
@@ -2216,6 +2262,7 @@ function openPendingLevelDialog() {
   if (!progression || !pending.length) return;
   fillLevelDialog(progression, Math.min(...pending) - 1);
   elements.levelDialog.showModal();
+  startLevelRewardGrant().catch(() => {});
 }
 
 function renderProgression({ announce = false } = {}) {
@@ -2258,6 +2305,7 @@ function renderProgression({ announce = false } = {}) {
   } else if (announce && progression.level > seen) {
     fillLevelDialog(progression, seen);
     elements.levelDialog.showModal();
+    startLevelRewardGrant().catch(() => {});
     markLevelSeen(progression.level);
   } else {
     model.renderedLevel = Math.max(seen, progression.level);
@@ -5101,6 +5149,60 @@ async function submitCorrectionReport(event) {
   }
 }
 
+function updateBugCount() {
+  if (elements.bugCount) elements.bugCount.textContent = `${(elements.bugDetails?.value || "").length}/500`;
+}
+
+function openBugDialog() {
+  if (!elements.bugDialog) return;
+  elements.bugForm?.reset();
+  if (elements.bugStatus) elements.bugStatus.textContent = "";
+  updateBugCount();
+  elements.bugDialog.showModal();
+  elements.bugDetails?.focus();
+}
+
+async function submitBugReport(event) {
+  event.preventDefault();
+  const text = (elements.bugDetails?.value || "").trim();
+  if (!text) {
+    if (elements.bugStatus) elements.bugStatus.textContent = "כתבו מה לא עבד.";
+    elements.bugDetails?.focus();
+    return;
+  }
+  if (elements.submitBug) elements.submitBug.disabled = true;
+  if (elements.bugStatus) elements.bugStatus.textContent = "שולחים…";
+  try {
+    const result = await request("/api/bugs", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        text,
+        nickname: (elements.bugNickname?.value || "").trim() || null,
+        pageUrl: location.href,
+        website: elements.bugWebsite?.value || "",
+      }),
+    });
+    if (elements.bugStatus) {
+      elements.bugStatus.textContent = result.issueUrl
+        ? "תודה. הדיווח נפתח בגיטהאב."
+        : "תודה, הדיווח נשלח.";
+    }
+    showToast("הדיווח נשלח.");
+    elements.bugDialog?.close();
+  } catch (error) {
+    if (elements.bugStatus) {
+      elements.bugStatus.textContent = error.status === 429
+        ? "נסו שוב מחר. יש מגבלה של שלושה דיווחים ביום."
+        : error.status === 503
+          ? "דיווח הבאגים עדיין לא מוכן."
+          : "לא הצלחנו לשלוח. נסו שוב.";
+    }
+  } finally {
+    if (elements.submitBug) elements.submitBug.disabled = false;
+  }
+}
+
 function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
@@ -5930,18 +6032,16 @@ elements.closeDialog.addEventListener("click", () => elements.dialog.close());
 elements.dialogReport.addEventListener("click", openReportDialog);
 elements.closeReport.addEventListener("click", () => elements.reportDialog.close());
 elements.reportForm.addEventListener("submit", submitCorrectionReport);
+elements.openBugReport?.addEventListener("click", openBugDialog);
+elements.closeBug?.addEventListener("click", () => elements.bugDialog?.close());
+elements.bugForm?.addEventListener("submit", submitBugReport);
+elements.bugDetails?.addEventListener("input", updateBugCount);
 elements.closeLevel.addEventListener("click", () => elements.levelDialog.close());
 elements.openPendingLevel?.addEventListener("click", openPendingLevelDialog);
 elements.claimLevel.addEventListener("click", async () => {
   elements.claimLevel.disabled = true;
-  const mutationScope = "level-reward";
   try {
-    const reward = await request("/api/rewards/level", {
-      method: "POST",
-      headers: { "x-idempotency-key": pendingMutationKey(mutationScope) },
-    });
-    clearPendingMutation(mutationScope);
-    model.serverState = reward.state;
+    const reward = await startLevelRewardGrant();
     model.currentPack = {
       packId: `rank-${reward.rank}`,
       mode: "level-reward",
@@ -5949,6 +6049,7 @@ elements.claimLevel.addEventListener("click", async () => {
       cards: reward.cards,
     };
     model.currentCardIndex = 0;
+    model.levelRewardReady = null;
     elements.levelDialog.close();
     showView("pack");
     startWalkout();

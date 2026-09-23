@@ -305,6 +305,21 @@ test("prepared idle pulls ignore client card choices", async (t) => {
   assert.notEqual(settled.body.cards.at(-1).instanceId, "client-chosen-instance");
 });
 
+test("bug reports stay public and fail closed without GitHub", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-bugs-"));
+  const clock = { value: Date.parse("2026-09-17T12:00:00.000Z") };
+  const running = await start(dataDir, clock, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const missing = await api(running.base, "/api/bugs", { method: "POST", body: { text: "הכפתור לא עובד" } });
+  assert.equal(missing.status, 503);
+  assert.equal(missing.body.error, "BUG_REPORT_UNCONFIGURED");
+  const empty = await api(running.base, "/api/bugs", { method: "POST", body: { text: "" } });
+  assert.ok([400, 503].includes(empty.status));
+});
+
 test("correction reports persist once and remain reviewable", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-report-test-"));
   const clock = { value: Date.parse("2026-09-17T12:00:00.000Z") };
