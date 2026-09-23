@@ -34,7 +34,7 @@ const model = {
   editorial: null,
   studioContent: null,
   gameConfig: {
-    revealTiming: { quote: 400, party: 2200, name: 1400, portrait: 2000 },
+    revealTiming: { quote: 400, party: 1800, name: 1800, portrait: 2000 },
     visual: { theme: "pack-v2", cardFrame: "tall-v2", density: "airy-v2", quoteReveal: "ink-v2" },
   },
   activity: null,
@@ -4174,7 +4174,7 @@ function revealDelayInputs() {
 
 function readRevealDelays() {
   const configured = model.gameConfig.revealTiming || {};
-  const defaults = { quote: 400, party: 2200, name: 1400, portrait: 2000 };
+  const defaults = { quote: 400, party: 1800, name: 1800, portrait: 2000 };
   const stale = !configured.quote || configured.quote < 200 || (configured.party ?? 0) < 400;
   return stale ? { ...defaults } : { ...defaults, ...configured };
 }

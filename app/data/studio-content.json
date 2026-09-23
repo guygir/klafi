@@ -5,8 +5,8 @@
   "gameConfig": {
     "revealTiming": {
       "quote": 400,
-      "party": 2200,
-      "name": 1400,
+      "party": 1800,
+      "name": 1800,
       "portrait": 2000
     },
     "visual": {
