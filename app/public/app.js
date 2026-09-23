@@ -2118,11 +2118,9 @@ function layoutTodaySpecials() {
 function layoutAdvocacyDock() {
   const dock = elements.openAdvocacy;
   const nav = document.querySelector(".top-nav-row .bottom-nav");
-  const row = dock?.parentElement;
-  if (!dock || !nav || !row) return;
-  const inset = 8;
-  const left = Math.round(nav.getBoundingClientRect().left - row.getBoundingClientRect().left + inset);
-  dock.style.left = `${Math.max(inset, left)}px`;
+  if (!dock || !nav) return;
+  dock.style.left = `${Math.round(nav.getBoundingClientRect().left + 8)}px`;
+  dock.style.bottom = "8px";
 }
 
 function renderActivity() {

@@ -36,7 +36,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /דילוג לתוכן/);
   assert.match(html, /class="advocacy-dock"/);
   assert.match(html, /class="top-nav-row"[\s\S]*id="open-advocacy"/);
-  assert.match(css, /\.advocacy-dock \{[^}]*left:\s*max\(8px/);
+  assert.match(css, /\.advocacy-dock \{[^}]*position:\s*fixed/);
+  assert.match(css, /\.advocacy-dock \{[^}]*left:\s*8px/);
   assert.match(css, /\.advocacy-dock \{[^}]*bottom:\s*8px/);
   assert.match(css, /\.advocacy-dock \{[^}]*padding:\s*0;/);
   assert.match(css, /\.advocacy-dock \{[^}]*width:\s*max-content/);
