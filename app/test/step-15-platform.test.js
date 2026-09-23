@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "os";
 import path from "node:path";
@@ -14,7 +14,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
 const projectRoot = path.resolve(appRoot, "..");
 
-async function start(dataDir, clock) {
+async function start(dataDir, clock, { eventsPath = path.join(appRoot, "data/events.json") } = {}) {
   const handler = await createKalpiApp({
     dataDir,
     publicDir: path.join(appRoot, "public"),
@@ -27,7 +27,7 @@ async function start(dataDir, clock) {
     studioContentPath: path.join(appRoot, "data/studio-content.json"),
     specialsPath: path.join(appRoot, "data/specials-content.json"),
     presentationContentPath: path.join(appRoot, "data/presentation-content.json"),
-    eventsPath: path.join(appRoot, "data/events.json"),
+    eventsPath,
     achievementsPath: path.join(appRoot, "data/achievements.json"),
     avatarsPath: path.join(appRoot, "data/avatars.json"),
     assetsDir: path.join(projectRoot, "docs/design/assets"),
@@ -157,10 +157,25 @@ test("rooms use a short code, paper QR, shared stars, and stop at 32", async (t)
   assert.equal(full.body.error, "LEAGUE_FULL");
 });
 
+test("shipped events stay closed until Studio opens one", async () => {
+  const events = JSON.parse(await readFile(path.join(appRoot, "data/events.json"), "utf8"));
+  assert.ok(events.events.length > 0);
+  assert.ok(events.events.every((event) => event.status === "blocked"));
+  assert.equal(openSpecialWindow(events.events, Date.parse("2026-09-22T12:00:00.000Z")), null);
+});
+
 test("community exposes the open Specials window and PWA files stay static", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-specials-window-"));
+  const shipped = JSON.parse(await readFile(path.join(appRoot, "data/events.json"), "utf8"));
+  const eventsPath = path.join(dataDir, "events-active.json");
+  await writeFile(eventsPath, JSON.stringify({
+    ...shipped,
+    events: shipped.events.map((event) => (
+      event.id === "aces-launch-2026" ? { ...event, status: "active" } : event
+    )),
+  }));
   const clock = { value: Date.parse("2026-09-22T12:00:00.000Z") };
-  const running = await start(dataDir, clock);
+  const running = await start(dataDir, clock, { eventsPath });
   t.after(async () => {
     await running.close();
     await rm(dataDir, { recursive: true, force: true });

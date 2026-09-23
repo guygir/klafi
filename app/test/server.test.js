@@ -21,6 +21,7 @@ async function start(dataDir, clock, {
   cardsPath = path.join(appRoot, "data/cards.json"),
   specialsPath = path.join(appRoot, "data/specials-content.json"),
   presentationContentPath = path.join(appRoot, "data/presentation-content.json"),
+  eventsPath = path.join(appRoot, "data/events.json"),
 } = {}) {
   const handler = await createKalpiApp({
     dataDir,
@@ -34,7 +35,7 @@ async function start(dataDir, clock, {
     studioContentPath,
     specialsPath,
     presentationContentPath,
-    eventsPath: path.join(appRoot, "data/events.json"),
+    eventsPath,
     achievementsPath: path.join(appRoot, "data/achievements.json"),
     avatarsPath: path.join(appRoot, "data/avatars.json"),
     assetsDir: path.join(projectRoot, "docs/design/assets"),
@@ -752,8 +753,16 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
 
 test("active event grants one persistent Special card per day", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-event-test-"));
+  const shipped = JSON.parse(await readFile(path.join(appRoot, "data/events.json"), "utf8"));
+  const eventsPath = path.join(dataDir, "events-active.json");
+  await writeFile(eventsPath, JSON.stringify({
+    ...shipped,
+    events: shipped.events.map((event) => (
+      event.id === "aces-launch-2026" ? { ...event, status: "active" } : event
+    )),
+  }));
   const clock = { value: Date.parse("2026-09-10T09:00:00.000Z") };
-  const running = await start(dataDir, clock);
+  const running = await start(dataDir, clock, { eventsPath });
   t.after(async () => {
     await running.close();
     await rm(dataDir, { recursive: true, force: true });

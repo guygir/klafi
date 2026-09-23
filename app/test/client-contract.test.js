@@ -35,6 +35,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="skip-to-main"/);
   assert.match(html, /דילוג לתוכן/);
   assert.match(html, /class="advocacy-dock"/);
+  assert.match(css, /\.advocacy-dock \{[^}]*left:\s*max\(4px/);
+  assert.match(css, /\.advocacy-dock \{[^}]*bottom:\s*max\(2px/);
+  assert.match(css, /\.top-nav-row \{[^}]*padding:\s*0 10px calc\(13px/);
   assert.match(html, /id="dialog-trust"/);
   assert.match(html, /aria-labelledby="card-dialog-title"/);
   assert.match(html, /aria-labelledby="report-dialog-title"/);
@@ -344,11 +347,17 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="today-leader-hook"/);
   assert.match(html, /id="today-specials-row"/);
   assert.match(html, /class="today-specials-line"/);
-  assert.match(html, /id="today-specials-hook"/);
+  assert.match(html, /id="today-specials-copy"/);
+  assert.match(html, /id="today-specials-copy-repeat"/);
   assert.match(html, /data-today-nav="specials"/);
   assert.match(html, /id="today-specials-row"[^>]*hidden/);
   assert.doesNotMatch(html, /id="today-specials-visual"/);
+  assert.doesNotMatch(html, /id="today-specials-hook"/);
   assert.match(javascript, /function renderTodaySpecials/);
+  assert.match(javascript, /function layoutTodaySpecials/);
+  assert.match(javascript, /is-marquee/);
+  assert.match(css, /specials-marquee/);
+  assert.match(css, /\.today-specials-line\.is-ready:not\(\.is-fit\)/);
   assert.match(javascript, /function claimTodaySpecial/);
   assert.match(javascript, /model\.specialWindow/);
   assert.match(javascript, /הקלף מוכן לאיסוף/);

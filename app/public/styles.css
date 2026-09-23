@@ -164,17 +164,17 @@ button:focus-visible {
 .advocacy-dock {
   position: fixed;
   z-index: 16;
-  left: max(10px, env(safe-area-inset-left));
-  bottom: max(4px, env(safe-area-inset-bottom));
-  min-height: 18px;
+  left: max(4px, env(safe-area-inset-left));
+  bottom: max(2px, env(safe-area-inset-bottom));
+  min-height: 0;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--danger-mute);
-  font: 600 10px/1.2 "IBM Plex Sans Hebrew", sans-serif;
-  letter-spacing: 0.02em;
+  font: 600 9px/1 "IBM Plex Sans Hebrew", sans-serif;
+  letter-spacing: 0.01em;
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 1px;
   cursor: pointer;
 }
 .advocacy-dock:focus-visible { outline: 2px solid var(--civic); outline-offset: 3px; }
@@ -3083,7 +3083,7 @@ body {
 #main {
   min-height: 0;
   overflow: hidden;
-  padding-bottom: calc(72px + var(--safe-bottom));
+  padding-bottom: calc(60px + var(--safe-bottom));
 }
 
 .view,
@@ -3107,11 +3107,11 @@ body {
   position: fixed;
   z-index: 15;
   inset: auto 0 0;
-  min-height: calc(64px + var(--safe-bottom));
+  min-height: 0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 10px calc(20px + var(--safe-bottom));
+  padding: 0 10px calc(13px + var(--safe-bottom));
   border: 0;
   pointer-events: none;
 }
@@ -3211,30 +3211,51 @@ body {
 }
 
 .today-specials-line {
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-start;
-  gap: 8px;
+  display: block;
+  overflow: hidden;
   width: 100%;
-  margin-top: 6px;
+  margin-top: 4px;
   padding: 0;
   border: 0;
   background: transparent;
   color: var(--civic);
-  font: 600 12px/1.3 "IBM Plex Sans Hebrew", sans-serif;
   text-align: start;
   cursor: pointer;
 }
 .today-specials-line[hidden] { display: none; }
-.today-specials-kicker {
-  color: rgba(26, 31, 28, 0.58);
-  font-size: 10px;
+.today-specials-track {
+  display: inline-flex;
+  gap: 2.5em;
+  align-items: baseline;
+  white-space: nowrap;
+  direction: ltr;
 }
-.today-specials-line > strong { font-size: 12px; }
-.today-specials-line > small {
-  color: rgba(26, 31, 28, 0.55);
-  font-size: 10px;
-  font-weight: 500;
+.today-specials-copy {
+  font: 600 11px/1.3 "IBM Plex Sans Hebrew", sans-serif;
+  direction: rtl;
+}
+.today-specials-copy[aria-hidden="true"] { display: none; }
+.today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: inline; }
+@media (max-width: 760px) {
+  .today-specials-line.is-marquee .today-specials-track {
+    animation: specials-marquee 16s linear infinite;
+  }
+}
+@media (min-width: 761px) {
+  .today-specials-line.is-ready:not(.is-fit) {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .today-specials-line.is-marquee .today-specials-track { animation: none; }
+  .today-specials-line {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+@keyframes specials-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 .today-docket > header { display: none; }
@@ -3384,8 +3405,8 @@ body {
     min-height: 70px;
     grid-template-columns: minmax(102px, 124px) minmax(0, 1fr);
   }
-  #main { padding-bottom: calc(72px + var(--safe-bottom)); }
-  .top-nav-row { min-height: calc(64px + var(--safe-bottom)); padding-inline: 8px; padding-bottom: calc(20px + var(--safe-bottom)); }
+  #main { padding-bottom: calc(60px + var(--safe-bottom)); }
+  .top-nav-row { min-height: 0; padding-inline: 8px; padding-bottom: calc(13px + var(--safe-bottom)); }
   .top-nav-row .bottom-nav { height: 46px; }
   #home-view .home-grid {
     grid-template-columns: minmax(0, 1fr) 116px;

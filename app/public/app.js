@@ -118,8 +118,8 @@ const elements = {
   leagueStatus: document.querySelector("#league-status"),
   leagueRooms: document.querySelector("#league-rooms"),
   todaySpecialsRow: document.querySelector("#today-specials-row"),
-  todaySpecialsHook: document.querySelector("#today-specials-hook"),
-  todaySpecialsMeta: document.querySelector("#today-specials-meta"),
+  todaySpecialsCopy: document.querySelector("#today-specials-copy"),
+  todaySpecialsCopyRepeat: document.querySelector("#today-specials-copy-repeat"),
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
   homeCopy: document.querySelector("#home-copy"),
@@ -2077,17 +2077,35 @@ function renderTodaySpecials() {
   const windowOpen = model.specialWindow;
   elements.todaySpecialsRow.hidden = !windowOpen;
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
-  if (!windowOpen) return;
-  elements.todaySpecialsHook.textContent = windowOpen.nameHe;
+  if (!windowOpen) {
+    elements.todaySpecialsRow.classList.remove("is-marquee", "is-fit", "is-ready");
+    return;
+  }
   const closes = new Date(windowOpen.closesAt);
   const until = Number.isNaN(closes.getTime())
     ? ""
     : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
-  elements.todaySpecialsMeta.textContent = windowOpen.claimedToday
+  const detail = windowOpen.claimedToday
     ? "הקלף היומי כבר באוסף. הוא נשאר באלבום."
     : until
       ? `פתוח עד ${until}. קלף אחד היום.`
       : "קלף אחד היום. הוא נשאר באלבום.";
+  const line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
+  if (elements.todaySpecialsCopy) elements.todaySpecialsCopy.textContent = line;
+  if (elements.todaySpecialsCopyRepeat) elements.todaySpecialsCopyRepeat.textContent = line;
+  requestAnimationFrame(layoutTodaySpecials);
+}
+
+function layoutTodaySpecials() {
+  const row = elements.todaySpecialsRow;
+  const track = row?.querySelector(".today-specials-track");
+  if (!row || row.hidden || !track) return;
+  const mobile = window.innerWidth <= 760;
+  row.classList.remove("is-ready");
+  row.classList.toggle("is-marquee", mobile);
+  const fits = track.scrollWidth <= row.clientWidth + 1;
+  row.classList.toggle("is-fit", !mobile && fits);
+  row.classList.add("is-ready");
 }
 
 function renderActivity() {
@@ -6203,6 +6221,7 @@ window.addEventListener("resize", () => {
   renderBinder();
   renderAchievements();
   queueCardTextFit(elements.main);
+  layoutTodaySpecials();
 });
 document.addEventListener("click", (event) => {
   const sourceLink = event.target.closest("[data-source-card]");
