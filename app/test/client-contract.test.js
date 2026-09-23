@@ -57,6 +57,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function factionHistMarkup/);
   assert.match(javascript, /star-contribution-bins\.js/);
   assert.match(javascript, /\$\{escapeHtml\(bin\.label\)\}/);
+  assert.match(html, /id="player-letter"/);
+  assert.match(html, /id="header-status" hidden/);
+  assert.match(javascript, /מבטלים את ההחלפה/);
+  assert.match(javascript, /level-unlock-faces/);
+  assert.match(tipsJs, /replay\?\.addEventListener\("click", replayCurrentPage\)/);
+  assert.doesNotMatch(html, /כאן מפרסמים החלפה: קלף שיש לכם/);
   assert.match(html, /id="faction-members-title"/);
   assert.match(html, /מי אסף הכי הרבה כוכבים עבור המפלגה\?/);
   assert.match(html, />מפלגות</);
@@ -354,7 +360,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.challenge-hist-col b[\s\S]{0,80}?width:\s*32px/);
   assert.match(css, /\.challenge-hist-plot[\s\S]{0,160}?direction:\s*ltr/);
   assert.match(css, /\.challenge-hist-axis[\s\S]{0,160}?direction:\s*ltr/);
-  assert.match(css, /\.challenge-hist-plot[\s\S]{0,160}?height:\s*188px/);
+  assert.match(css, /\.challenge-hist-plot[\s\S]{0,220}?height:\s*min\(148px,\s*24dvh\)/);
   assert.match(javascript, /TRADE_BOARD_PAGE_SIZE = 3/);
   assert.match(javascript, /function renderTradeBoard/);
   assert.match(javascript, /function tradeHasCards/);
@@ -368,7 +374,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,80}?width:\s*100%/);
   assert.match(css, /\.trade-choice-row[\s\S]{0,180}?grid-template-columns:\s*auto minmax\(0,\s*1fr\)/);
   assert.match(html, /class="trade-choice-row"/);
-  assert.match(css, /\.trade-compose \.trade-thumb-frame[\s\S]{0,80}?width:\s*64px/);
+  assert.match(css, /\.trade-compose \.trade-thumb-frame[\s\S]{0,80}?width:\s*48px/);
   assert.doesNotMatch(css, /\.trade-compose \.trade-thumb \{ display: none/);
   assert.match(css, /--today-pack-w/);
   assert.match(css, /1390 \/ 769 \* 1\.5/);
@@ -535,7 +541,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-58/);
+  assert.match(html, /card-surface-59/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -603,7 +609,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-58/);
+  assert.match(html, /card-surface-59/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

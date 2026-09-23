@@ -1120,6 +1120,35 @@ body:has(#app[data-theme="pack-v2"]) {
   font: 600 15px/1.4 "IBM Plex Sans Hebrew", sans-serif;
 }
 
+.level-unlock-faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.level-unlock-faces figure {
+  margin: 0;
+  width: 64px;
+  text-align: center;
+}
+
+.level-unlock-faces img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent);
+}
+
+.level-unlock-faces figcaption {
+  margin-top: 4px;
+  font: 600 11px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+}
+
 .quiz-card {
   width: min(168px, 42vw);
   margin: 0 auto 14px;
