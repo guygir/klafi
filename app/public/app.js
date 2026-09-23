@@ -3433,15 +3433,6 @@ function isHeartedAchievement(badge) {
   return badge?.id === "favorite-first" || badge?.rule === "favorites";
 }
 
-function isApproachingBadge(badge) {
-  if (!badge || badge.earned) return false;
-  const target = Math.max(1, Number(badge.target) || 1);
-  const progress = Math.max(0, Number(badge.progress) || 0);
-  if (progress <= 0) return false;
-  const left = target - progress;
-  return left <= 3 || progress / target >= 0.4;
-}
-
 function achievementList() {
   const local = localAchievementList().filter((badge) => !isHeartedAchievement(badge));
   const server = (model.serverState?.achievements || []).filter((badge) => !isHeartedAchievement(badge));
@@ -3456,28 +3447,29 @@ function achievementList() {
 function renderAchievements() {
   setEmptyNote(elements.achievementsEmpty, "", { hidden: true });
   if (!elements.achievementGrid) return;
-  const all = achievementList();
-  const badges = all
-    .filter((badge) => badge.earned || isApproachingBadge(badge))
-    .sort((left, right) => Number(right.earned) - Number(left.earned) || (right.progress / right.target) - (left.progress / left.target));
+  const badges = achievementList();
   if (!badges.length) {
-    setEmptyNote(elements.achievementsEmpty, "התגים יופיעו כשמתקרבים אליהם.", { hidden: false });
+    setEmptyNote(elements.achievementsEmpty, "טוענים את התגים…", { hidden: false });
   }
-  const pageSize = 4;
+  const pageSize = 6;
   const pages = Math.max(1, Math.ceil(badges.length / pageSize));
   model.achievementPage = Math.min(model.achievementPage, pages - 1);
   elements.achievementGrid.innerHTML = badges
     .slice(model.achievementPage * pageSize, (model.achievementPage + 1) * pageSize)
     .map((badge) => {
     const copy = hebrewBadge(badge);
-    const percent = badge.earned ? 100 : Math.max(0, Math.min(100, Math.round((badge.progress / Math.max(1, badge.target)) * 100)));
-    const track = badge.earned
-      ? ""
-      : `<div class="achievement-track" aria-hidden="true"><span style="width:${percent}%"></span></div><small>${badge.progress}/${badge.target}</small>`;
+    const target = Math.max(1, Number(badge.target) || 1);
+    const progress = Math.max(0, Math.min(target, Number(badge.progress) || 0));
+    const percent = badge.earned ? 100 : Math.max(0, Math.min(100, Math.round((progress / target) * 100)));
     return `
-    <article class="achievement-badge ${badge.earned ? "earned" : "approaching"}">
-      <span class="achievement-seal" tabindex="0" title="${escapeHtml(copy.description)}">${badgeArtwork(badge.id)}${badge.earned ? "" : `<i>${badge.progress}/${badge.target}</i>`}</span>
-      <div><strong>${escapeHtml(copy.name)}</strong><p>${escapeHtml(copy.description)}</p>${track}</div>
+    <article class="achievement-badge ${badge.earned ? "earned" : ""}">
+      <span class="achievement-seal" tabindex="0" title="${escapeHtml(copy.description)}">${badgeArtwork(badge.id)}</span>
+      <div>
+        <strong>${escapeHtml(copy.name)}</strong>
+        <p>${escapeHtml(copy.description)}</p>
+        <div class="achievement-track" aria-hidden="true"><span style="width:${percent}%"></span></div>
+        <small>${badge.earned ? target : progress}/${target}</small>
+      </div>
     </article>`;
   }).join("");
   elements.achievementPager.innerHTML = pagerMarkup(model.achievementPage, pages, "achievements");

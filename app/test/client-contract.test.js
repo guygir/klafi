@@ -269,10 +269,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /elements\.cooldownCopy\.hidden = false/);
   assert.match(html, /id="today-open-cue"/);
   assert.match(html, /id="cooldown-copy"/);
-  assert.match(javascript, /function isApproachingBadge/);
+  assert.doesNotMatch(javascript, /function isApproachingBadge/);
   assert.match(javascript, /achievement-track/);
+  assert.match(javascript, /\$\{badge\.earned \? target : progress\}\/\$\{target\}/);
   assert.match(css, /#advocacy-dialog \.dialog-close/);
-  assert.match(css, /#advocacy-dialog \.dialog-close \{[^}]*width:\s*22px/);
+  assert.match(css, /#advocacy-dialog \.dialog-close[^}]*background:\s*transparent/);
+  assert.doesNotMatch(css, /#advocacy-dialog \.dialog-close[^}]*#c45c2a/);
   assert.match(css, /\.masthead \.presentation-link/);
   assert.match(html, /id="rank-names"/);
   assert.match(html, /id="numbered-sets"/);
@@ -502,7 +504,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-41/);
+  assert.match(html, /card-surface-42/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -570,7 +572,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-41/);
+  assert.match(html, /card-surface-42/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

@@ -89,6 +89,7 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.growth[0].body, /החלפות/);
   assert.match(PAGE_GUIDES.growth[1].body, /מפרסמים/);
   assert.match(PAGE_GUIDES.growth[2].body, /הצעות/);
+  assert.match(PAGE_GUIDES.achievements[0].body, /כל התגים/);
   assert.match(PAGE_GUIDES.achievements[0].body, /פס התקדמות/);
   assert.equal(PAGE_GUIDES.achievements[0].place, "above");
   assert.equal(PAGE_GUIDES.achievements[0].ringUnion, true);

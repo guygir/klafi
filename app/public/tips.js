@@ -75,7 +75,7 @@ export const PAGE_GUIDES = Object.freeze({
       ringUnion: true,
       place: "above",
       title: "הישגים",
-      body: "רק תגים שהושגו או שקרובים. לכל תג יש פס התקדמות — כדי לדעת במה להשקיע.",
+      body: "כל התגים כאן. לכל אחד פס התקדמות כמו ברמה — כמה כבר יש מול היעד.",
     },
   ]),
   growth: Object.freeze([

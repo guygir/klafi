@@ -1937,27 +1937,26 @@ img.mini-art {
   font-size: 28px;
   cursor: pointer;
 }
-#advocacy-dialog {
-  padding-top: 36px;
-}
 #advocacy-dialog .eyebrow {
-  padding-inline-end: 28px;
+  padding-inline-end: 36px;
 }
-#advocacy-dialog .dialog-close {
-  top: 8px;
+#advocacy-dialog .dialog-close,
+.policy-dialog .dialog-close {
+  top: 4px;
   right: 8px;
   left: auto;
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  min-height: 22px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   padding: 0;
   border: 0;
-  border-radius: 3px;
-  background: #c45c2a;
-  color: #fff8f2;
-  font-size: 15px;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 24px;
   line-height: 1;
+  color: var(--ink);
 }
 
 .dialog-card-stage,
@@ -2898,11 +2897,13 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   min-height: 44px;
 }
 .dialog-close { width: 44px; height: 44px; }
-#advocacy-dialog .dialog-close {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  min-height: 22px;
+#advocacy-dialog .dialog-close,
+.policy-dialog .dialog-close {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  background: transparent;
 }
 #card-dialog .dialog-close {
   top: 4px;
