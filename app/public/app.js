@@ -221,6 +221,7 @@ const elements = {
   growthMetrics: document.querySelector("#growth-metrics"),
   factionSelect: document.querySelector("#faction-select"),
   saveFaction: document.querySelector("#save-faction"),
+  factionMembers: document.querySelector("#faction-members"),
   factionBoard: document.querySelector("#faction-board"),
   collectorBoard: document.querySelector("#collector-board"),
   dailyChallengeTitle: document.querySelector("#daily-challenge-title"),
@@ -3680,6 +3681,36 @@ async function refreshDailyChallenge() {
   }
 }
 
+function factionFermiRow(label, score, maximum, index, current = false) {
+  const width = Math.max(4, Math.round((score / Math.max(1, maximum)) * 100));
+  return `<div class="faction-chart-row${current ? " current-player" : ""}">
+    <span>${index + 1}. ${label}${current ? " · אתם" : ""}</span>
+    <i aria-hidden="true"><b style="width:${width}%; animation-delay:${index * 40}ms"></b></i>
+    <strong>★${score}</strong>
+  </div>`;
+}
+
+function renderFactionMembers() {
+  if (!elements.factionMembers) return;
+  const partyId = elements.factionSelect?.value || "";
+  const entry = (model.leaderboards?.factions || []).find((faction) => faction.partyId === partyId);
+  const members = entry?.members || [];
+  const maximum = Math.max(1, ...members.map(({ stars }) => stars || 0));
+  if (!partyId) {
+    elements.factionMembers.innerHTML = '<p class="work-note">בחרו סיעה כדי לראות איפה אתם עומדים.</p>';
+    return;
+  }
+  elements.factionMembers.innerHTML = members.length
+    ? members.map((member, index) => factionFermiRow(
+      escapeHtml(member.label),
+      member.stars || 0,
+      maximum,
+      index,
+      Boolean(member.current),
+    )).join("")
+    : '<p class="work-note">עדיין אין מי שבחר בסיעה הזו.</p>';
+}
+
 function renderGrowth() {
   const communityTabs = elements.communityTabs;
   const growthGrid = document.querySelector(".growth-grid");
@@ -3799,16 +3830,16 @@ function renderGrowth() {
     }),
   ].join("");
   const factionEntries = model.leaderboards?.factions?.slice(0, 6) || [];
-  const factionMaximum = Math.max(1, ...factionEntries.map(({ packs }) => packs));
+  const factionMaximum = Math.max(1, ...factionEntries.map(({ stars, packs }) => stars ?? packs));
   elements.factionBoard.innerHTML = factionEntries.length
-    ? factionEntries.map((entry, index) => {
-        return `<div class="faction-chart-row">
-        <span>${index + 1}. ${escapeHtml(partyDisplayName(entry.partyId, entry.partyId))}</span>
-        <i aria-hidden="true"><b style="width:${Math.max(4, Math.round((entry.packs / factionMaximum) * 100))}%; animation-delay:${index * 40}ms"></b></i>
-        <strong>${entry.packs}</strong>
-      </div>`;
-      }).join("")
-    : '<p class="work-note">עדיין אין קלפים שנספרו אחרי בחירת סיעה.</p>';
+    ? factionEntries.map((entry, index) => factionFermiRow(
+      escapeHtml(partyDisplayName(entry.partyId, entry.partyId)),
+      entry.stars ?? entry.packs ?? 0,
+      factionMaximum,
+      index,
+    )).join("")
+    : '<p class="work-note">עדיין אין סיעות עם אוספים.</p>';
+  renderFactionMembers();
   const collectorEntries = model.leaderboards?.collectors || [];
   const collectorPreview = collectorEntries.slice(0, 3);
   const currentCollector = collectorEntries.find(({ current }) => current);
@@ -4926,7 +4957,7 @@ async function saveFaction() {
     renderProfile();
     renderBinder();
     renderGrowth();
-    showToast(model.serverState.factionId ? "הסיעה נשמרה. הקלף הבא ייספר." : "בחירת הסיעה בוטלה.");
+    showToast(model.serverState.factionId ? "הסיעה נשמרה. כוכבי האוסף נספרים לסיעה." : "בחירת הסיעה בוטלה.");
   } catch {
     showToast("לא הצלחנו לשמור את הסיעה.");
   } finally {
@@ -6019,6 +6050,7 @@ elements.tradeBoardPager?.addEventListener("click", (event) => {
   model.tradeBoardPage = Number(button.dataset.page);
   renderTradeBoard();
 });
+elements.factionSelect.addEventListener("change", renderFactionMembers);
 elements.saveFaction.addEventListener("click", saveFaction);
 elements.creatorCode.addEventListener("input", () => {
   elements.creatorLinkPreview.textContent = creatorLink();

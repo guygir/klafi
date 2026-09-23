@@ -28,7 +28,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(html, /\benergy\b/i);
   assert.doesNotMatch(html, /פתחו חבילה כדי להתחיל|חבילת בונוס/);
   assert.match(javascript, /קלף בונוס/);
-  assert.match(javascript, /הקלף הבא ייספר/);
+  assert.match(javascript, /כוכבי האוסף נספרים לסיעה/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /--pip/);
   assert.match(html, /aria-live/);
@@ -51,6 +51,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /aria-labelledby="trust-dialog-title"/);
   assert.match(html, /aria-labelledby="advocacy-sponsor"/);
   assert.match(html, /id="faction-cec-note"/);
+  assert.match(html, /id="faction-members"/);
+  assert.match(html, /כוכבי האוסף של מי שבחרו בסיעה/);
+  assert.match(javascript, /function renderFactionMembers/);
+  assert.match(javascript, /function factionFermiRow/);
   assert.match(html, /role="list"/);
   assert.match(javascript, /function cardTrustLine/);
   assert.match(javascript, /function prefersReducedMotion/);
@@ -354,6 +358,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-board-wanted"/);
   assert.match(html, /id="trade-board-pager"/);
   assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,80}?width:\s*100%/);
+  assert.match(css, /\.trade-form fieldset[\s\S]{0,180}?grid-template-columns:\s*auto minmax\(0,\s*1fr\)/);
+  assert.match(css, /\.trade-compose \.trade-thumb-frame[\s\S]{0,80}?width:\s*64px/);
+  assert.doesNotMatch(css, /\.trade-compose \.trade-thumb \{ display: none/);
+  assert.match(css, /--today-pack-w/);
+  assert.match(css, /1390 \/ 769 \* 1\.5/);
   assert.match(css, /\.trade-offer \{[^}]*width:\s*min\(100%,\s*460px\)/);
   assert.match(javascript, /function partyDisplayName/);
   assert.match(javascript, /function partyRegister/);
@@ -514,7 +523,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-49/);
+  assert.match(html, /card-surface-50/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -582,7 +591,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-49/);
+  assert.match(html, /card-surface-50/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);

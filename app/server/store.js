@@ -3,6 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
+import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
 
 export const CARD_HOLDER_SYNC_MS = 60 * 60 * 1000;
@@ -466,9 +467,7 @@ export class JsonStore {
     const collectors = allCollectors.slice(0, 8);
     const currentCollector = allCollectors.find(({ current }) => current);
     if (currentCollector && !collectors.some(({ current }) => current)) collectors.splice(7, 1, currentCollector);
-    const factions = Object.entries(this.state.factions)
-      .map(([partyId, packs]) => ({ partyId, packs }))
-      .sort((a, b) => b.packs - a.packs);
+    const factions = factionStandingsFromCollectors(allCollectors);
     const partyIds = [...new Set(cards.filter(({ set }) => set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set))].sort();
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
     const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);

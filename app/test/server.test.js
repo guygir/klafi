@@ -710,7 +710,11 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(community.body.leaderboards.dailyChallenge.day, leaderboards.body.dailyChallenge.day);
   assert.ok(Array.isArray(community.body.trades.trades));
   assert.equal(community.body.activity.counts.pack_opened, 1);
-  assert.equal(leaderboards.body.factions.find(({ partyId }) => partyId === "LIK").packs, 1);
+  const likFaction = leaderboards.body.factions.find(({ partyId }) => partyId === "LIK");
+  assert.ok(likFaction);
+  assert.equal(likFaction.stars, currentCollector.stars);
+  assert.equal(likFaction.packs, currentCollector.stars);
+  assert.ok(likFaction.members.some(({ current }) => current));
   assert.equal(leaderboards.body.dailyChallenge.day, "2026-09-03");
   assert.equal(leaderboards.body.dailyChallenge.targetPartyNameHe, catalog.body.cards.find(({ set }) => set === leaderboards.body.dailyChallenge.targetPartyId)?.setNameHe);
   assert.match(leaderboards.body.dailyChallenge.targetPartyNameHe, /[א-ת]/);

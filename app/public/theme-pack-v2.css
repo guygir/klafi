@@ -546,9 +546,10 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] #home-view .home-grid {
-  grid-template-columns: minmax(0, 1fr) minmax(92px, 120px);
+  --today-pack-w: 96px;
+  grid-template-columns: minmax(0, 1fr) var(--today-pack-w);
   gap: clamp(12px, 3vw, 24px);
-  align-items: start;
+  align-items: stretch;
 }
 
 #app[data-density="airy-v2"] #home-view .home-copy .eyebrow,
@@ -813,9 +814,10 @@ body:has(#app[data-theme="pack-v2"]) {
 
 @media (max-width: 760px) {
   #app[data-density="airy-v2"] #home-view .home-grid {
-    grid-template-columns: minmax(0, 1fr) 96px;
+    --today-pack-w: 96px;
+    grid-template-columns: minmax(0, 1fr) var(--today-pack-w);
     gap: 10px;
-    align-items: start;
+    align-items: stretch;
   }
 
   #app[data-density="airy-v2"] .site-card-peeks {
@@ -839,9 +841,10 @@ body:has(#app[data-theme="pack-v2"]) {
   }
 
   #app[data-density="airy-v2"] #home-view .home-grid {
-    grid-template-columns: minmax(0, 1fr) 92px;
+    --today-pack-w: 92px;
+    grid-template-columns: minmax(0, 1fr) var(--today-pack-w);
     gap: 8px;
-    align-items: start;
+    align-items: stretch;
   }
 
   #app[data-density="airy-v2"] #home-view .home-copy h1 {
