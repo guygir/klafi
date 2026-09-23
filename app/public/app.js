@@ -1272,9 +1272,10 @@ function fitBallotLetterText(node) {
   if (!node || node.hidden || node.clientWidth < 2 || node.clientHeight < 2) return;
   if (!node.textContent.trim()) {
     node.style.fontSize = "";
+    node.style.transform = "";
     return;
   }
-  node.style.fontSize = "";
+  node.style.transform = "none";
   node.querySelectorAll("span").forEach((glyph) => {
     glyph.style.fontSize = "1em";
     glyph.style.lineHeight = "inherit";
@@ -1283,27 +1284,12 @@ function fitBallotLetterText(node) {
     1,
     Number(node.dataset.letters) || node.querySelectorAll("span").length || [...node.textContent].length,
   );
-  const hardMin = 8;
-  const ceiling = count === 1
-    ? Math.min(node.clientWidth * 0.9, node.clientHeight * 0.82)
-    : Math.min(node.clientWidth * 0.96, (node.clientHeight / count) * 1.62);
-  const fitsAt = (size) => {
-    node.style.fontSize = `${size}px`;
-    return node.scrollHeight <= node.clientHeight + 0.6
-      && node.scrollWidth <= node.clientWidth + 0.6;
-  };
-  let low = hardMin;
-  let high = Math.max(hardMin, ceiling);
-  if (fitsAt(high)) {
-    node.style.fontSize = `${high}px`;
-    return;
-  }
-  for (let index = 0; index < 18; index += 1) {
-    const mid = (low + high) / 2;
-    if (fitsAt(mid)) low = mid;
-    else high = mid;
-  }
-  node.style.fontSize = `${fitsAt(low) ? low : hardMin}px`;
+  node.style.fontSize = `${count === 1 ? 22 : 18}px`;
+  const scaleX = node.clientWidth / Math.max(1, node.scrollWidth);
+  const scaleY = node.clientHeight / Math.max(1, node.scrollHeight);
+  const scale = Math.min(scaleX, scaleY) * 0.92;
+  node.style.transformOrigin = "center center";
+  node.style.transform = `scale(${Math.max(0.4, scale)})`;
 }
 
 const ballotLetterObserver = typeof ResizeObserver === "undefined"
@@ -1529,6 +1515,7 @@ function paintLetterChip(image, text, party) {
     } else {
       delete text.dataset.letters;
       text.style.fontSize = "";
+      text.style.transform = "";
     }
   };
   if (image) {

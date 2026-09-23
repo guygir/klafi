@@ -4737,7 +4737,7 @@ body {
   padding: 1px 1px 2px;
   overflow: hidden;
   color: #1a2540;
-  font: 700 70cqh/0.78 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
+  font: 700 70cqh/0.68 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
   text-align: center;
 }
 
@@ -4751,7 +4751,7 @@ body {
   display: block;
   flex: 0 0 auto;
   font-size: 1em;
-  line-height: 0.78;
+  line-height: 0.68;
 }
 
 .level-letter-text[data-letters="1"],
