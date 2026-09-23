@@ -1,4 +1,5 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
+import { starContributionBins } from "./star-contribution-bins.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
@@ -3688,34 +3689,6 @@ async function refreshDailyChallenge() {
   }
 }
 
-const FACTION_HIST_MAX_BARS = 10;
-
-function starContributionBins(scores = []) {
-  const values = scores.map((row) => Math.max(0, Math.round(Number(row.stars) || 0)));
-  const current = scores.find((row) => row.current);
-  const you = current == null ? null : Math.max(0, Math.round(Number(current.stars) || 0));
-  if (!values.length) return [];
-  const peak = Math.max(...values, you ?? 0);
-  if (peak <= FACTION_HIST_MAX_BARS) {
-    return Array.from({ length: peak + 1 }, (_, stars) => ({
-      label: String(stars),
-      count: values.filter((value) => value === stars).length,
-      you: you === stars,
-    }));
-  }
-  const step = Math.ceil((peak + 1) / FACTION_HIST_MAX_BARS);
-  const bins = [];
-  for (let start = 0; start <= peak; start += step) {
-    const end = Math.min(peak, start + step - 1);
-    bins.push({
-      label: start === end ? String(start) : `${start}–${end}`,
-      count: values.filter((value) => value >= start && value <= end).length,
-      you: you != null && you >= start && you <= end,
-    });
-  }
-  return bins;
-}
-
 function factionHistMarkup(bins) {
   const field = Math.max(1, ...bins.map(({ count }) => count));
   const cols = bins.map((bin, index) => {
@@ -3724,7 +3697,7 @@ function factionHistMarkup(bins) {
       <b style="height:${height}%; animation-delay:${index * 40}ms"></b>
     </div>`;
   }).join("");
-  const axis = bins.map((bin) => `<span>${escapeHtml(bin.label)}★</span>`).join("");
+  const axis = bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("");
   return `<div class="faction-hist challenge-hist">
     <div class="challenge-hist-plot faction-hist-plot" dir="ltr" aria-hidden="true">${cols}</div>
     <div class="challenge-hist-axis" dir="ltr">${axis}</div>

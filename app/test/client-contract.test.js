@@ -55,8 +55,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /כוכבי האוסף של מי שבחרו במפלגה/);
   assert.match(javascript, /function renderFactionMembers/);
   assert.match(javascript, /function factionHistMarkup/);
-  assert.match(javascript, /\$\{escapeHtml\(bin\.label\)\}★/);
-  assert.match(javascript, /function starContributionBins/);
+  assert.match(javascript, /star-contribution-bins\.js/);
+  assert.match(javascript, /\$\{escapeHtml\(bin\.label\)\}/);
   assert.match(html, /id="faction-members-title"/);
   assert.match(html, /מי אסף הכי הרבה כוכבים עבור המפלגה\?/);
   assert.match(html, />מפלגות</);
@@ -535,7 +535,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-54/);
+  assert.match(html, /card-surface-55/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -603,7 +603,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-54/);
+  assert.match(html, /card-surface-55/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /דיווח על טעות בקלף/);
   assert.match(html, /id="studio-report-list"/);
