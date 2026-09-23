@@ -40,7 +40,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.advocacy-dock \{[^}]*padding:\s*2px 0 4px/);
   assert.match(css, /\.advocacy-dock \{[^}]*width:\s*max-content/);
   assert.match(javascript, /function layoutAdvocacyDock/);
-  assert.match(css, /\.top-nav-row \{[^}]*padding:\s*0 10px calc\(13px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(css, /\.top-nav-row \{[^}]*padding:\s*0 10px calc\(15px \+ env\(safe-area-inset-bottom\)\)/);
   assert.match(html, /id="dialog-trust"/);
   assert.match(html, /aria-labelledby="card-dialog-title"/);
   assert.match(html, /aria-labelledby="report-dialog-title"/);
