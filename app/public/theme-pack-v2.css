@@ -731,11 +731,11 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] .achievement-grid {
-  gap: 14px;
+  gap: 8px;
 }
 
 #app[data-density="airy-v2"] .achievement-badge {
-  padding: 14px;
+  padding: 10px 12px;
   border-color: color-mix(in srgb, var(--pack-umber, #3c3026) 18%, transparent);
 }
 
