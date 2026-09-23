@@ -601,12 +601,14 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(html, /id="open-pending-level"/);
   assert.match(html, />הבנתי</);
   assert.match(html, /id="share-my-binder"/);
+  assert.match(html, /id="guest-binder-banner"/);
   assert.match(html, /id="binder-share-url"/);
+  assert.match(javascript, /announce && pending.length/);
   assert.match(javascript, /klafi-seen-level-dialog/);
   assert.match(javascript, /function openPublicBinder/);
   assert.match(javascript, /function dismissLevelDialog/);
   assert.match(javascript, /קלף הבונוס כבר נכנס לאוסף/);
-  assert.match(javascript, /markLevelSeen\(seen \+ 1\)/);
+  assert.match(javascript, /markLevelSeen\(Math\.min\(\.\.\.pending\)\)/);
   assert.doesNotMatch(javascript, /elements\.playerAvatar/);
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);

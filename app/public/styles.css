@@ -966,6 +966,29 @@ img.mini-art {
 
 @keyframes hold { to { width: 100%; } }
 
+.guest-binder-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--civic) 28%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--civic) 8%, #fff);
+  font: 600 13px/1.3 "IBM Plex Sans Hebrew", sans-serif;
+}
+.guest-binder-banner[hidden] { display: none; }
+.guest-binder-banner button {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--civic);
+  color: #eee5d4;
+  font: inherit;
+  cursor: pointer;
+}
 .binder-head { margin-bottom: 26px; }
 .binder-head-actions {
   display: flex;

@@ -177,6 +177,8 @@ const elements = {
   binderEyebrow: document.querySelector("#binder-eyebrow"),
   binderTitle: document.querySelector("#binder-title"),
   shareMyBinder: document.querySelector("#share-my-binder"),
+  guestBinderBanner: document.querySelector("#guest-binder-banner"),
+  guestBinderLabel: document.querySelector("#guest-binder-label"),
   closeGuestBinder: document.querySelector("#close-guest-binder"),
   binderShareUrl: document.querySelector("#binder-share-url"),
   copyBinderShare: document.querySelector("#copy-binder-share"),
@@ -2319,13 +2321,12 @@ function renderProgression({ announce = false } = {}) {
       : "הגעתם לדרגת ראש הממשלה";
   }
   const seen = seenLevel();
-  if (!seen) {
+  const pending = progression.pendingRewards || [];
+  if (announce && pending.length && !elements.levelDialog.open) {
+    openPendingLevelDialog();
+    markLevelSeen(Math.min(...pending));
+  } else if (!seen && !pending.length) {
     markLevelSeen(progression.level);
-  } else if (announce && progression.level > seen) {
-    fillLevelDialog(progression, seen);
-    if (!elements.levelDialog.open) elements.levelDialog.showModal();
-    startLevelRewardGrant().catch(() => {});
-    markLevelSeen(seen + 1);
   } else {
     model.renderedLevel = Math.max(seen, progression.level);
   }
@@ -3122,20 +3123,12 @@ async function openPublicBinder(slug) {
   const payload = await request(`/api/public-binder/${encodeURIComponent(slug)}`);
   model.guestBinder = payload;
   model.binderOwnedOnly = true;
-  if (elements.binderEyebrow) elements.binderEyebrow.textContent = `האוסף של ${payload.displayName}`;
-  if (elements.binderTitle) elements.binderTitle.textContent = "האלבום.";
-  if (elements.closeGuestBinder) elements.closeGuestBinder.hidden = false;
-  if (elements.shareMyBinder) elements.shareMyBinder.hidden = true;
   showView("binder");
   renderBinder();
 }
 
 function closePublicBinder() {
   model.guestBinder = null;
-  if (elements.binderEyebrow) elements.binderEyebrow.textContent = "האוסף שלי";
-  if (elements.binderTitle) elements.binderTitle.textContent = "האלבום.";
-  if (elements.closeGuestBinder) elements.closeGuestBinder.hidden = true;
-  if (elements.shareMyBinder) elements.shareMyBinder.hidden = false;
   const url = new URL(location.href);
   url.searchParams.delete("binder");
   if (/^\/share\/u\//.test(url.pathname)) url.pathname = "/";
@@ -3189,7 +3182,10 @@ function renderBinder() {
   if (elements.binderEyebrow) {
     elements.binderEyebrow.textContent = guest ? `האוסף של ${model.guestBinder.displayName}` : "האוסף שלי";
   }
-  if (elements.closeGuestBinder) elements.closeGuestBinder.hidden = !guest;
+  if (elements.guestBinderBanner) elements.guestBinderBanner.hidden = !guest;
+  if (elements.guestBinderLabel) {
+    elements.guestBinderLabel.textContent = guest ? `האלבום של ${model.guestBinder.displayName}` : "";
+  }
   if (elements.shareMyBinder) elements.shareMyBinder.hidden = guest;
   const { owned, total, percent } = guest
     ? (() => {
