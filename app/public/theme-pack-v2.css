@@ -1121,7 +1121,32 @@ body:has(#app[data-theme="pack-v2"]) {
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
+  width: 100%;
   min-width: 0;
+}
+
+#binder-view .earned-badge-rail,
+#binder-view .earned-badge-list,
+#binder-view .filter-strip {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+#binder-view .earned-badge-list {
+  min-height: 32px;
+  padding-block: 2px 6px;
+}
+
+#binder-view .badge-medallion {
+  width: 28px;
+  height: 32px;
+  flex: 0 0 auto;
+}
+
+#binder-view .collection-star-count {
+  min-width: 48px;
+  height: 28px;
 }
 
 #app[data-density="airy-v2"] .trade-desk,

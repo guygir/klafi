@@ -2747,7 +2747,15 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   direction: rtl;
 }
 .binder-stats-row .tips-replay { margin: 0; flex: 0 0 auto; }
-.earned-badge-list { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.earned-badge-list {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
 .earned-badge-rail:empty::after { content: "התגים שיושגו יופיעו כאן"; color: rgba(26, 31, 28, 0.48); font-size: 11px; }
 .badge-medallion { position: relative; width: 46px; height: 54px; display: grid; place-items: center; outline: none; cursor: pointer; }
 .collection-star-count {
@@ -3536,9 +3544,13 @@ body {
 }
 
 .earned-badge-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
   min-height: 38px;
-  margin-bottom: 6px;
-  padding-bottom: 5px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
 }
 
 .badge-medallion { width: 34px; height: 40px; }
@@ -4705,9 +4717,10 @@ body {
   height: 39px;
 }
 
-.app-shell.home-active .level-letter-text[data-letters="1"] { font-size: 14px; }
-.app-shell.home-active .level-letter-text[data-letters="2"] { font-size: 11px; }
-.app-shell.home-active .level-letter-text[data-letters="3"] { font-size: 8px; }
+.app-shell.home-active .level-letter-text[data-letters="1"] { font-size: 18px; }
+.app-shell.home-active .level-letter-text[data-letters="2"] { font-size: 14px; }
+.app-shell.home-active .level-letter-text[data-letters="3"] { font-size: 12px; }
+.app-shell.home-active .level-letter-text[data-letters="4"] { font-size: 9px; }
 
 .app-shell.home-active .level-identity {
   padding-top: 12px;
@@ -4715,28 +4728,37 @@ body {
 
 .level-letter-text,
 .collector-letter-text {
-  display: grid;
-  place-items: center;
-  padding: 3px 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  padding: 2px 1px;
   overflow: hidden;
   color: #1a2540;
-  font: 700 8px/0.9 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
+  font: 700 9px/0.92 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
   text-align: center;
+}
+
+.level-letter-text span,
+.collector-letter-text span {
+  display: block;
+  line-height: 0.92;
 }
 
 .level-letter-text[data-letters="1"],
 .collector-letter-text[data-letters="1"] {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .level-letter-text[data-letters="2"],
 .collector-letter-text[data-letters="2"] {
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .level-letter-text[data-letters="3"],
 .collector-letter-text[data-letters="3"] {
-  font-size: 8px;
+  font-size: 9px;
 }
 
 #avatar-seal {

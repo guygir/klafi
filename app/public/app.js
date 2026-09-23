@@ -1441,7 +1441,11 @@ function letterChipMarkup(party, { className = "collector-letter-text" } = {}) {
     return `<img class="${imageClass}" src="/design-assets/${encodeURIComponent(art)}" alt="${escapeHtml(letters)}">`;
   }
   if (!letters) return "";
-  return `<b class="${className}" data-letters="${[...letters].length}">${escapeHtml(letters)}</b>`;
+  const marks = [...letters];
+  const inner = marks.length > 1
+    ? marks.map((mark) => `<span>${escapeHtml(mark)}</span>`).join("")
+    : escapeHtml(letters);
+  return `<b class="${className}" data-letters="${marks.length}">${inner}</b>`;
 }
 
 function paintLetterChip(image, text, party) {
@@ -1450,9 +1454,22 @@ function paintLetterChip(image, text, party) {
   const paintText = (visible) => {
     if (!text) return;
     text.hidden = !visible;
-    text.textContent = visible && letters ? letters : "";
-    if (visible && letters) text.dataset.letters = String([...letters].length);
-    else delete text.dataset.letters;
+    text.replaceChildren();
+    if (visible && letters) {
+      const marks = [...letters];
+      text.dataset.letters = String(marks.length);
+      if (marks.length > 1) {
+        for (const mark of marks) {
+          const glyph = document.createElement("span");
+          glyph.textContent = mark;
+          text.append(glyph);
+        }
+      } else {
+        text.textContent = letters;
+      }
+    } else {
+      delete text.dataset.letters;
+    }
   };
   if (image) {
     image.onload = null;
