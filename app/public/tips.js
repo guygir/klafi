@@ -186,7 +186,8 @@ export function resetAllPageGuides(env = globalThis) {
   return writeSeenPages({}, env);
 }
 
-export function shouldAutoOpenPage(seen, page) {
+export function shouldAutoOpenPage(seen, page, flags = {}) {
+  if (page === "binder" && flags.guestBinder) return false;
   return Boolean(page && PAGE_GUIDES[page] && !seen?.["*"] && !seen?.[page]);
 }
 
@@ -494,6 +495,7 @@ function readFlags(doc) {
     achievementsActive: Boolean(doc.querySelector("#achievements-view")?.classList.contains("active")),
     growthActive: Boolean(doc.querySelector("#growth-view")?.classList.contains("active")),
     dialogOpen: Boolean(doc.querySelector("#card-dialog")?.open),
+    guestBinder: Boolean(doc.querySelector("#guest-binder-banner") && !doc.querySelector("#guest-binder-banner").hidden),
   };
 }
 
@@ -734,8 +736,9 @@ export function attachKlafiTips(env = globalThis) {
 
   function maybeStartPage() {
     if (state.mode === "pull") return;
-    const page = activeGuidePage(flags());
-    if (!shouldAutoOpenPage(readSeenPages(env), page)) return;
+    const pageFlags = flags();
+    const page = activeGuidePage(pageFlags);
+    if (!shouldAutoOpenPage(readSeenPages(env), page, pageFlags)) return;
     startPage(page);
   }
 
