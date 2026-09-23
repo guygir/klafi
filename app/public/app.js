@@ -3724,7 +3724,7 @@ function factionHistMarkup(bins) {
       <b style="height:${height}%; animation-delay:${index * 40}ms"></b>
     </div>`;
   }).join("");
-  const axis = bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("");
+  const axis = bins.map((bin) => `<span>${escapeHtml(bin.label)}★</span>`).join("");
   return `<div class="faction-hist challenge-hist">
     <div class="challenge-hist-plot faction-hist-plot" dir="ltr" aria-hidden="true">${cols}</div>
     <div class="challenge-hist-axis" dir="ltr">${axis}</div>
