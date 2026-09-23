@@ -360,6 +360,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /is-marquee/);
   assert.match(javascript, /idlePullCount \?\? previous\.idlePullCount/);
   assert.match(javascript, /achievements \?\? previous\.achievements/);
+  assert.match(javascript, /function hydrateHome[\s\S]*renderAchievements/);
   assert.match(css, /specials-marquee/);
   assert.doesNotMatch(css, /\.today-specials-line\.is-ready:not\(\.is-fit\)/);
   assert.match(javascript, /function claimTodaySpecial/);

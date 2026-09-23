@@ -778,6 +778,7 @@ async function hydrateHome() {
       renderProfile();
       renderHome();
       renderBinder();
+      renderAchievements();
       return home;
     }).finally(() => {
       homeHydrate = null;
