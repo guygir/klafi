@@ -1,14 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  IDLE_BACKLOG_CAP,
   IDLE_FULL_COPY,
   IDLE_INTERVAL_MS,
   formatCountdown,
   idleCountdownCopy,
 } from "../public/idle-countdown.js";
+import { applyIdleStarterReady, isIdleColdStart } from "../server/idle-config.js";
 
 const NOW = Date.parse("2026-09-24T12:00:00.000Z");
-const CAP = 8;
+const CAP = IDLE_BACKLOG_CAP;
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
 function iso(ms) {
@@ -27,6 +29,12 @@ function projectedSettleNextIdleAt(state, now = NOW) {
   const fallbackAnchor = Date.parse(state.nextIdleAt || state.idleAnchorAt || state.createdAt);
   const anchorAt = Number.isFinite(fallbackAnchor) ? fallbackAnchor : now;
   let scheduleAt = prepared.length ? prepared.at(-1) + interval : anchorAt;
+  const coldStart = isIdleColdStart({
+    idlePullCount: state.idlePullCount ?? 0,
+    unseenPulls: Array.from({ length: unseen }),
+    preparedPulls: prepared.map((availableAt) => ({ availableAt: iso(availableAt) })),
+    nextIdleAt: state.nextIdleAt,
+  });
 
   const fillPreparedQueue = () => {
     const preparedCapacity = Math.max(0, cap - unseen);
@@ -37,6 +45,11 @@ function projectedSettleNextIdleAt(state, now = NOW) {
   };
 
   fillPreparedQueue();
+  if (coldStart) {
+    const pulls = prepared.map((availableAt) => ({ availableAt: iso(availableAt) }));
+    scheduleAt = applyIdleStarterReady(pulls, now, scheduleAt);
+    prepared.splice(0, prepared.length, ...pulls.map((pull) => Date.parse(pull.availableAt)));
+  }
   while (unseen < cap && prepared[0] != null && prepared[0] <= now) {
     prepared.shift();
     unseen += 1;

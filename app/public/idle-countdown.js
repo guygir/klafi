@@ -1,4 +1,5 @@
 export const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
+export const IDLE_BACKLOG_CAP = 8;
 export const IDLE_FULL_COPY = "המחסן מלא. פתחו קלף כדי שהאיסוף יחזור לרוץ.";
 
 export function timeUntil(iso, now = Date.now()) {
@@ -64,7 +65,7 @@ export function idleCountdownCopy({ serverState, idleQueueLength = 0, now = Date
   const intervalMs = idleIntervalMs(serverState);
   const remaining = nextCollectionRemaining(serverState, now, intervalMs);
   const unseen = serverState?.unseenCount ?? idleQueueLength;
-  const cap = serverState?.idleCapacity ?? 8;
+  const cap = serverState?.idleCapacity ?? IDLE_BACKLOG_CAP;
   const full = unseen >= cap;
   const needsSettle = !full && idleScheduleIsDue(serverState, now);
   if (full) {
@@ -91,6 +92,16 @@ export function idleCountdownCopy({ serverState, idleQueueLength = 0, now = Date
     isClock: true,
     isFull: false,
     needsSettle,
+  };
+}
+
+export function homeIdleReadyCopy({ unseenCount = 0, available = unseenCount > 0 } = {}) {
+  return {
+    title: unseenCount > 0
+      ? unseenCount === 1 ? "יש לכם קלף שמחכה." : `יש לכם ${unseenCount} קלפים שמחכים.`
+      : "הקלף הבא בדרך.",
+    lede: available ? "כל פעם פותחים קלף אחד." : "כל שלוש שעות נאסף קלף אחד לבד.",
+    action: available ? "פתיחת קלף" : "ממשיכים לאסוף",
   };
 }
 

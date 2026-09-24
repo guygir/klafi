@@ -35,11 +35,16 @@ import { createGithubBugFromBody } from "./github-bugs.js";
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
+import {
+  IDLE_BACKLOG_CAP,
+  IDLE_INTERVAL_MS,
+  IDLE_STARTER_READY,
+  applyIdleStarterReady,
+  isIdleColdStart,
+  publicIdleConfig,
+} from "./idle-config.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
-const IDLE_BACKLOG_CAP = 8;
-const IDLE_STARTER_READY = 3;
 const TRADE_TTL_MS = 24 * 60 * 60 * 1000;
 const RANK_TITLES = [
   "אזרח סקרן",
@@ -498,28 +503,6 @@ function publicAvatars(session, catalog = [], level = 1) {
   }));
 }
 
-function isIdleColdStart(session) {
-  return (session.idlePullCount || 0) === 0
-    && !(session.unseenPulls || []).length
-    && !(session.preparedPulls || []).length
-    && !session.nextIdleAt;
-}
-
-function applyIdleStarterReady(preparedPulls, currentMs, scheduleAt) {
-  const dueCount = preparedPulls.filter((pull) => Date.parse(pull.availableAt) <= currentMs).length;
-  if (dueCount >= IDLE_STARTER_READY) return scheduleAt;
-  const ready = Math.min(IDLE_STARTER_READY, preparedPulls.length);
-  for (let i = 0; i < ready; i += 1) {
-    preparedPulls[i].availableAt = new Date(currentMs).toISOString();
-  }
-  let nextAt = currentMs + IDLE_INTERVAL_MS;
-  for (let i = ready; i < preparedPulls.length; i += 1) {
-    preparedPulls[i].availableAt = new Date(nextAt).toISOString();
-    nextAt += IDLE_INTERVAL_MS;
-  }
-  return nextAt;
-}
-
 function activeIdleCards(cards, current = Date.now()) {
   return cards.filter((card) =>
     !card.eventOnly
@@ -639,6 +622,7 @@ function publicState(session, now, cards, config = {}) {
     nextIdleAt: session.nextIdleAt,
     idleIntervalMs: IDLE_INTERVAL_MS,
     idleCapacity: IDLE_BACKLOG_CAP,
+    idleStarterReady: IDLE_STARTER_READY,
     unseenCount: session.unseenPulls?.length ?? 0,
     preparedPulls: session.preparedPulls ?? [],
     idlePullCount: session.idlePullCount ?? 0,
@@ -671,7 +655,9 @@ function publicIdleState(session, now, cards, config = {}) {
     ownedUnique: Object.keys(session.inventory).filter((id) => eligibleIds.has(id)).length,
     totalCards: eligibleCards.length,
     nextIdleAt: session.nextIdleAt,
+    idleIntervalMs: IDLE_INTERVAL_MS,
     idleCapacity: IDLE_BACKLOG_CAP,
+    idleStarterReady: IDLE_STARTER_READY,
     unseenCount: session.unseenPulls?.length ?? 0,
     preparedPulls: session.preparedPulls ?? [],
     idlePullCount: session.idlePullCount ?? 0,
@@ -956,6 +942,7 @@ export async function createKalpiApp({
       revealTiming: normalizeRevealTiming(studioContent?.gameConfig?.revealTiming),
       visual: normalizeVisualConfig(studioContent?.gameConfig?.visual),
       progression: progressionConfig(studioContent?.gameConfig?.progression),
+      idle: publicIdleConfig(),
       releaseSets,
       pack: {
         ...pack,

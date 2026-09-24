@@ -88,7 +88,8 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[0].ring, /today-open-copy|#home-title/);
   assert.match(PAGE_GUIDES.home[0].body, /המחסן/);
   assert.match(PAGE_GUIDES.home[0].body, /השעון/);
-  assert.match(PAGE_GUIDES.home[1].body, /רואים אותו/);
+  assert.match(PAGE_GUIDES.home[1].body, /יש קלפים במחסן/);
+  assert.match(PAGE_GUIDES.home[1].body, /רואים אותם/);
   assert.match(PAGE_GUIDES.home[2].ring, /level-avatar-button/);
   assert.match(PAGE_GUIDES.home[2].body, /אווטאר/);
   assert.match(PAGE_GUIDES.home[3].body, /האתגר/);
@@ -113,6 +114,7 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGE_GUIDES.achievements[0].place, "above");
   assert.equal(PAGE_GUIDES.achievements[0].ringUnion, true);
   assert.equal(PAGE_GUIDES.growth[0].ringUnion, true);
+  assert.match(TIPS_STEPS[0].body, /כשיש קלפים/);
   assert.match(TIPS_STEPS[0].body, /מחסן/);
   assert.match(TIPS_STEPS[1].body, /רואים את הקלף/);
   assert.match(PAGE_GUIDES.pack[0].body, /מחסן/);

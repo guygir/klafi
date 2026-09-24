@@ -63,7 +63,7 @@ Local defaults live in [`.env.example`](../../.env.example) (`kalpi` / `change-m
   - `STUDIO_SECRET` only if you want production Studio (unlock cards, flip release sets)
 3. Deploy from `main`. First function boot runs the Postgres migrations, including the normalized writer tables.
 4. Confirm `https://<project>.vercel.app/api/health` returns `{"status":"ok","backend":"postgres"}`.
-5. Confirm a new session can settle one idle card and reload it.
+5. Confirm a new session can settle three starter idle cards and reload them.
 6. Confirm Studio and `/api/quiz` stay closed. Confirm `KALPI_DEBUG` routes stay 404.
 7. Open the same URL on a phone.
 
@@ -71,7 +71,7 @@ Local defaults live in [`.env.example`](../../.env.example) (`kalpi` / `change-m
 
 1. Run `npm run verify:release -- https://current-production-url` and retain its output with the incident.
 2. On Vercel Hobby, route traffic to the immediately previous production deployment with `vercel rollback <previous-production-url>`, then confirm with `vercel rollback status`. The routing change reuses the immutable deployment; it does not rebuild.
-3. Run `npm run verify:release -- https://public-host` after the rollback and manually settle one card with a test session.
+3. Run `npm run verify:release -- https://public-host` after the rollback and manually settle a test session (three starter cards on a new session).
 4. Do not roll the database backward blindly. Migrations must remain additive and backward-compatible with the immediately previous deployment.
 5. If data restoration is required, restore the pre-deploy dump to an isolated database first with `ALLOW_RESTORE_DRILL=1 BACKUP_FILE=... RESTORE_DATABASE_URL=... npm run restore:drill`; inspect the reported integrity counts before any production decision.
 6. For visual regressions, switch Studio flags independently to `classic-v1`, `classic-v1`, `compact-v1`, and/or `fade-v1`.
