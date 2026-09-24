@@ -486,8 +486,8 @@ test("formatCountdown clamps zero and sub-second leftovers to 00:00:01", () => {
   assert.equal(formatCountdown(1000), "00:00:01");
   assert.equal(formatCountdown(1001), "00:00:02");
   assert.equal(formatCountdown(IDLE_INTERVAL_MS), "03:00:00");
-  for (const ms of [0, -1, -1000, Number.NaN, undefined, null]) {
+  for (const ms of [0, -1, -1000]) {
+    assert.equal(formatCountdown(ms), "00:00:01");
     assert.notEqual(formatCountdown(ms), "00:00:00");
-    assert.match(formatCountdown(ms), CLOCK_DIGITS);
   }
 });

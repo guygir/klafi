@@ -47,8 +47,9 @@ export function nextCollectionRemaining(serverState, now = Date.now(), intervalM
 }
 
 export function idleScheduleIsDue(serverState, now = Date.now()) {
-  if (!serverState?.nextIdleAt && !(serverState?.preparedPulls || []).length) return true;
-  return knownIdleTimes(serverState).some((at) => at <= now);
+  const times = knownIdleTimes(serverState);
+  if (!times.length) return true;
+  return times.some((at) => at <= now);
 }
 
 export function formatCountdown(milliseconds) {
