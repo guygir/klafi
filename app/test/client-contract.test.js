@@ -431,9 +431,16 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="create-league"/);
   assert.match(html, /id="join-league"/);
   assert.match(html, /id="league-rooms"/);
-  assert.match(html, /id="profile-leagues-title">ליגות/);
+  assert.match(html, /id="community-tab-leagues"/);
+  assert.match(html, /id="community-panel-leagues"/);
+  assert.match(html, /id="community-leagues-title"/);
   assert.match(html, /שם הליגה/);
-  assert.doesNotMatch(html, /id="profile-leagues-title">חדרים/);
+  assert.doesNotMatch(html, /id="profile-leagues-title"/);
+  assert.doesNotMatch(html, /class="profile-leagues"/);
+  assert.match(javascript, /function showLeaguesCommunity/);
+  assert.match(javascript, /function syncCommunityPage/);
+  assert.match(javascript, /communityPage = "leagues"/);
+  assert.match(css, /#community-tabs \{[^}]*overflow-x:\s*auto/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(css, /\.pack-shadow \{\s*display: none;/);
   assert.match(css, /\.site-card-peeks \{\s*display: none;/);
@@ -548,7 +555,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-72/);
+  assert.match(html, /card-surface-73/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +645,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-72/);
+  assert.match(html, /card-surface-73/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);

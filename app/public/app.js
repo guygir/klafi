@@ -1184,7 +1184,7 @@ function handleInboundLink() {
     return;
   }
   if (params.get("league")) {
-    openProfileDialog();
+    showLeaguesCommunity();
     return;
   }
   const requestedView = params.get("view");
@@ -1589,8 +1589,6 @@ function openProfileDialog() {
   renderNotifyControl();
   prefetchAvatars();
   renderAvatarPicker();
-  hydrateLeagues().catch(() => {});
-  consumeInboundLeague().catch(() => {});
   elements.profileDialog.showModal();
   elements.profileNameInput.focus();
   elements.profileNameInput.select();
@@ -1734,6 +1732,11 @@ function scheduleIdleNotification() {
   idleNotifyTimer = setTimeout(() => notifyIdleReady(nextIdleAt), Math.min(when - Date.now(), 2_000_000_000));
 }
 
+function showLeaguesCommunity() {
+  model.communityPage = "leagues";
+  showView("growth");
+}
+
 function inboundLeagueCode() {
   return new URLSearchParams(location.search).get("league") || "";
 }
@@ -1748,6 +1751,7 @@ function clearInboundLeague() {
 async function consumeInboundLeague() {
   const code = inboundLeagueCode();
   if (!code || !model.token) return;
+  showLeaguesCommunity();
   if (elements.leagueJoinInput) elements.leagueJoinInput.value = code;
   await joinLeagueFromInput(code);
   clearInboundLeague();
@@ -1762,6 +1766,10 @@ function leagueFaceMarkup(entry = {}) {
 function renderLeagues() {
   if (!elements.leagueRooms) return;
   const rooms = model.leagues || [];
+  if (!rooms.length) {
+    elements.leagueRooms.innerHTML = '<p class="work-note">עדיין אין ליגה. פתחו אחת, או הזינו קוד הזמנה.</p>';
+    return;
+  }
   elements.leagueRooms.innerHTML = rooms.map((league) => `
     <article class="league-room" data-league-code="${escapeHtml(league.code)}">
       <span class="league-season">${escapeHtml(league.seasonLabel || "")}</span>
@@ -1789,7 +1797,7 @@ async function hydrateLeagues() {
     model.leagues = payload.leagues || [];
     renderLeagues();
   } catch {
-    /* Profile still opens without a league list. */
+    /* Community still opens without a league list. */
   }
 }
 
@@ -3993,11 +4001,33 @@ function renderFactionMembers() {
     : '<p class="work-note">עדיין אין מי שבחר במפלגה הזו.</p>';
 }
 
+function syncCommunityPage() {
+  const communityClasses = {
+    trade: ".trade-desk",
+    "open-trades": ".open-trades-desk",
+    faction: ".faction-desk",
+    collectors: ".leaderboard-desk",
+    leagues: ".league-desk",
+    challenge: ".daily-challenge-desk",
+  };
+  for (const [page, selector] of Object.entries(communityClasses)) {
+    document.querySelector(selector)?.toggleAttribute("hidden", page !== model.communityPage);
+  }
+  elements.communityTabs?.querySelectorAll("[data-community-page]").forEach((button) => {
+    const active = button.dataset.communityPage === model.communityPage;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
+  });
+}
+
 function renderGrowth() {
   const communityTabs = elements.communityTabs;
   const growthGrid = document.querySelector(".growth-grid");
   communityTabs?.removeAttribute("hidden");
   growthGrid?.removeAttribute("hidden");
+  syncCommunityPage();
+  if (model.communityPage === "leagues") hydrateLeagues().catch(() => {});
   if (!model.catalog.length || !model.serverState || !elements.tradePreview) {
     setEmptyNote(elements.growthEmpty, pendingCopy("טוענים את הקהילה…", "לא הצלחנו לטעון את הקהילה."), {
       pending: !catalogFailed,
@@ -4160,22 +4190,7 @@ function renderGrowth() {
         <a href="${escapeHtml(special.sourceUrl)}" target="_blank" rel="noopener">למקור ↗</a>
       </article>`).join("")}</div>
     </section>`).join("");
-  const communityClasses = {
-    trade: ".trade-desk",
-    "open-trades": ".open-trades-desk",
-    faction: ".faction-desk",
-    collectors: ".leaderboard-desk",
-    challenge: ".daily-challenge-desk",
-  };
-  for (const [page, selector] of Object.entries(communityClasses)) {
-    document.querySelector(selector)?.toggleAttribute("hidden", page !== model.communityPage);
-  }
-  elements.communityTabs?.querySelectorAll("[data-community-page]").forEach((button) => {
-    const active = button.dataset.communityPage === model.communityPage;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-selected", String(active));
-    button.tabIndex = active ? 0 : -1;
-  });
+  syncCommunityPage();
   const openCount = model.trades.filter((trade) => trade.status === "open" && !trade.ownedByCurrent).length;
   const openTab = document.querySelector("#community-tab-open-trades");
   if (openTab) openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";

@@ -85,7 +85,7 @@ export const PAGE_GUIDES = Object.freeze({
       pad: 3,
       radius: 8,
       title: "קהילה",
-      body: "החלפות — אתם מפרסמים עסקה. הצעות פתוחות — עסקאות של אחרים שמחכות לאישור.",
+      body: "החלפות — אתם מפרסמים עסקה. הצעות פתוחות — עסקאות של אחרים. ליגות — אותה טבלת כוכבים בחדר קטן.",
     },
     {
       ring: "#community-panel-trade, #community-tab-trade",
