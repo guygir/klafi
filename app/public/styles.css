@@ -4464,17 +4464,63 @@ body {
   padding: 8px 0 7px;
 }
 
-@media (max-width: 360px) and (max-height: 600px) {
+@media (max-width: 412px) and (max-height: 680px) {
+  :root { --nav-clearance: calc(52px + var(--safe-bottom)); }
+  .masthead { min-height: 42px; }
+  .masthead-row { min-height: 36px; }
+  .level-strip {
+    min-height: 52px;
+    padding: 2px 0;
+  }
   .app-shell.home-active .level-strip {
-    min-height: 78px;
-    padding: 4px 0 4px;
+    min-height: 58px;
+    padding: 2px 0;
   }
   .app-shell.home-active .level-teaser {
-    font-size: clamp(14px, 4.2cqw, 18px);
+    font-size: 12px;
+    line-height: 1.1;
   }
-  #home-view.view.active { padding-top: 4px; }
-  .today-docket { margin-top: 4px; }
-  .today-docket-row { min-height: 40px; padding: 4px; }
+  .app-shell.home-active .level-progress-block small,
+  .level-progress-block small { display: none; }
+  #home-view.view.active {
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-top: 2px;
+    padding-bottom: 4px;
+  }
+  #home-view .home-grid {
+    flex: 0 0 auto;
+    min-height: 0;
+    --today-pack-w: 56px;
+    gap: 6px;
+    align-items: start;
+  }
+  #home-view .pack-plinth { overflow: hidden; min-height: 0; max-height: 72px; }
+  #home-view .pack-wrapper,
+  #home-view .pack-wrapper img {
+    max-height: 72px;
+  }
+  #home-view .home-copy h1 { font-size: 17px; }
+  #home-view #cooldown-copy.is-clock,
+  .next-pack-clock.is-clock { font-size: 16px; }
+  #home-view .action-dock { margin-top: 6px; }
+  #home-view .primary-action { min-height: 36px; }
+  #home-view .home-utility-row { display: none; }
+  #home-view .today-docket { margin-top: 4px; }
+  #home-view .today-docket-row { min-height: 36px; padding: 3px 4px; }
+  #growth-view .workspace-head { display: none; }
+  .community-nav { margin: 0 0 2px; gap: 2px; }
+  .contained-tabs { margin: 0 0 2px; }
+  .contained-tabs button { min-height: 26px; }
+  .daily-challenge-desk { padding: 8px !important; }
+  .daily-challenge-leader-art { width: 44px; margin: 0 0 6px; }
+  #daily-challenge-title { font-size: 15px; line-height: 1.2; margin: 0 0 4px; }
+  .challenge-recap { margin: 4px 0 6px; gap: 4px; }
+  .challenge-recap-score strong { font-size: 28px !important; }
+  .challenge-hist-plot { height: 72px; padding-top: 16px; }
+  .challenge-hist-col { width: 22px; flex-basis: 22px; }
+  .challenge-hist-col b { width: 16px; }
+  .leaderboard-list > div { padding: 6px 0; }
 }
 
 .app-shell.home-active .level-teaser {
