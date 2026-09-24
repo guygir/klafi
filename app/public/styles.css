@@ -2915,7 +2915,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .growth-grid .work-card p { font-size: 13px; line-height: 1.45; }
 .growth-grid .trade-preview h3 { font-size: 19px; line-height: 1.2; }
 .growth-grid .trade-preview p { font-size: 12px; }
-.trade-compose { display: grid; gap: 10px; }
+.trade-compose { display: flex; flex-direction: column; gap: 10px; }
 .trade-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 520px) {
   .trade-offer .trade-thumb-frame {
@@ -3152,7 +3152,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   .today-docket-visual { width: 40px; }
   .trade-preview { grid-template-columns: 112px minmax(0, 1fr); gap: 12px; }
   .achievement-grid { grid-template-columns: 1fr; }
-  .trade-form { grid-template-columns: 1fr; }
+  .trade-form { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 420px) {
@@ -3681,6 +3681,12 @@ body {
   overflow: hidden;
 }
 
+.growth-grid > .work-card.trade-desk {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 .growth-grid > .work-card.leaderboard-desk,
 .growth-grid > .work-card.daily-challenge-desk {
   overflow: visible;
@@ -3836,13 +3842,21 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.trade-compose {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 8px;
 }
 
 .trade-desk .trade-form {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow-y: auto;
 }
 
 .trade-desk .trade-actions {
@@ -3870,9 +3884,9 @@ body {
 .trade-desk #trade-demo[hidden] { display: none; }
 
 .trade-form {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
   align-items: stretch;
   margin: 3px 0 6px;
 }
@@ -4337,12 +4351,18 @@ body {
   .today-docket-row > small { font-size: 9px; }
   .contained-tabs button { padding-inline: 2px; font-size: 8px; }
   .trade-desk {
-    overflow: hidden !important;
+    overflow-y: auto !important;
   }
+  .trade-desk > .work-kicker { display: none; }
+  .trade-desk > h2 { font-size: 16px; margin-bottom: 6px; }
   .trade-form {
-    flex: 1 1 auto;
-    grid-template-columns: minmax(0, 1fr) !important;
-    overflow-y: auto;
+    flex: 0 0 auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    overflow: visible;
+    gap: 8px;
+  }
+  .trade-choice-row {
+    grid-template-columns: minmax(0, 1fr);
   }
   .trade-form fieldset {
     min-height: 0;

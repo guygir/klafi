@@ -785,7 +785,7 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] .trade-form {
-  gap: 16px;
+  gap: 8px;
 }
 
 #app[data-density="airy-v2"] .trade-form fieldset {
@@ -932,7 +932,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
   #app[data-density="airy-v2"] .trade-desk .trade-form {
     min-height: 0;
-    overflow-y: auto;
+    overflow: visible;
   }
 
   #app[data-card-frame="tall-v2"] #pack-view .walkout .kalpi-card {
