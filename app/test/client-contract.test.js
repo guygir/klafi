@@ -44,7 +44,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*border-radius:\s*10px/);
   assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*width:\s*max-content/);
   assert.match(javascript, /function layoutAdvocacyDock/);
-  assert.match(css, /\.top-nav-row \{[^}]*padding:\s*0 10px 17px/);
+  assert.match(css, /\.top-nav-row \{[^}]*padding:\s*0 10px 6px/);
   assert.match(html, /id="dialog-trust"/);
   assert.match(html, /aria-labelledby="card-dialog-title"/);
   assert.match(html, /aria-labelledby="report-dialog-title"/);
@@ -384,7 +384,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.trade-compose \.trade-thumb-frame[\s\S]{0,80}?width:\s*48px/);
   assert.doesNotMatch(css, /\.trade-compose \.trade-thumb \{ display: none/);
   assert.match(css, /--today-pack-w/);
-  assert.match(css, /1390 \/ 769 \* 1\.5/);
+  assert.match(css, /#home-view \.pack-plinth \{[\s\S]*padding-block: 0;/);
   assert.match(css, /\.trade-offer \{[^}]*width:\s*min\(100%,\s*460px\)/);
   assert.match(javascript, /function partyDisplayName/);
   assert.match(javascript, /function partyRegister/);
@@ -453,6 +453,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /class="league-setup"/);
   assert.match(css, /\.league-desk\.has-rooms #league-rooms \{ order: -1; \}/);
   assert.match(css, /\.growth-grid > \.work-card\.trade-desk/);
+  assert.match(html, /class="faction-pick-row"/);
+  assert.match(html, /class="faction-pick-row"[\s\S]*id="faction-select"[\s\S]*id="save-faction"/);
+  assert.match(css, /\.faction-pick-row/);
+  assert.match(css, /\.growth-grid > \.work-card\.faction-desk/);
+  assert.match(css, /\.growth-grid > \.work-card\.daily-challenge-desk/);
+  assert.match(css, /#binder-pager\.binder-scroll-dock/);
+  assert.match(css, /\.community-nav \{[^}]*gap: 4px/);
   assert.match(css, /\.trade-desk \{\s*display: flex;[\s\S]*?overflow-y: auto;/);
   assert.match(css, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) !important/);
   assert.doesNotMatch(css, /\.trade-desk \{\s*overflow: hidden !important;/);
@@ -575,7 +582,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-78/);
+  assert.match(html, /card-surface-79/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -633,8 +640,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /PENDING_REPORTS_KEY/);
   assert.match(javascript, /x-idempotency-key/);
   assert.match(javascript, /cachedDueCount\(\) > 1 \? "backlog"/);
-  assert.match(javascript, /cachedBufferSize < \(model\.serverState\?\.idleCapacity \|\| 8\)/);
-  assert.match(javascript, /const hasMaterializedCard = model\.idleQueue\.length > 0/);
+  assert.match(javascript, /cachedBufferSize < cap/);
+  assert.match(javascript, /clock\.needsSettle/);
+  assert.match(javascript, /if \(view\.needsSettle && !idleHydrate\) scheduleIdleRefill/);
   assert.match(javascript, /playHomePackRip\(\{ holdAtEnd: !cached \}\)/);
   assert.match(javascript, /await rip\.finished/);
   assert.match(javascript, /if \(!model\.token\) await hydrateHome\(\)/);
@@ -665,7 +673,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-78/);
+  assert.match(html, /card-surface-79/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);

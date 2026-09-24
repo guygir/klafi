@@ -574,6 +574,7 @@ function applyHomePayload(home) {
         nextIdleAt: model.serverState.nextIdleAt,
         preparedPulls: model.serverState.preparedPulls || [],
         idleCapacity: model.serverState.idleCapacity,
+        idleIntervalMs: model.serverState.idleIntervalMs,
         progression: model.serverState.progression,
         avatars: model.serverState.avatars,
         inventory: model.serverState.inventory || {},
@@ -1101,16 +1102,17 @@ async function bootstrap() {
       prefetchIdleAssets();
       if (pendingIdleSeen().length) flushPendingIdleSeen().catch(() => {});
       if (pendingReports().length) flushPendingReports().catch(() => {});
-      const hasPreparedBuffer = model.idleQueue.length || (model.serverState?.preparedPulls || []).length;
-      const missingDueCard = !nextCachedIdleCard()
-        && Boolean(model.serverState?.nextIdleAt)
-        && Date.parse(model.serverState.nextIdleAt) <= Date.now();
-      const priority = !hasPreparedBuffer || missingDueCard
+      const clock = idleCountdownCopy({
+        serverState: model.serverState,
+        idleQueueLength: model.idleQueue.length,
+      });
+      const cap = model.serverState?.idleCapacity || 8;
+      const cachedBufferSize = model.idleQueue.length + (model.serverState?.preparedPulls || []).length;
+      const missingDueCard = clock.needsSettle || cachedDueCount() > 0;
+      const priority = clock.needsSettle || !cachedBufferSize
         ? "urgent"
         : cachedDueCount() > 1 ? "backlog" : "buffered";
-      const cachedBufferSize = model.idleQueue.length + (model.serverState?.preparedPulls || []).length;
-      const hasMaterializedCard = model.idleQueue.length > 0;
-      if (!hasMaterializedCard && (priority !== "buffered" || cachedBufferSize < (model.serverState?.idleCapacity || 8))) {
+      if (clock.needsSettle || missingDueCard || cachedBufferSize < cap) {
         scheduleIdleRefill({ priority });
       }
       hydrateExtras().catch(() => {});
@@ -2477,12 +2479,9 @@ function updateCountdown() {
   });
   applyIdleCountdown(elements.cooldownCopy, view);
   if (elements.headerStatus) elements.headerStatus.hidden = true;
+  if (view.needsSettle && !idleHydrate) scheduleIdleRefill({ priority: "urgent" });
   if (view.full) {
     if (elements.debugClock) elements.debugClock.textContent = "Idle pull · full";
-    return;
-  }
-  if (!view.remaining) {
-    if (elements.debugClock) elements.debugClock.textContent = "Idle pull · ready";
     return;
   }
   if (elements.debugClock) elements.debugClock.textContent = `Next idle pull · ${formatCountdown(view.remaining)}`;
