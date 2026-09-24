@@ -80,12 +80,13 @@ export function idleCountdownCopy({ serverState, idleQueueLength = 0, now = Date
       needsSettle: false,
     };
   }
+  const clockRemaining = remaining > 0 ? remaining : intervalMs;
   return {
-    remaining,
+    remaining: clockRemaining,
     unseen,
     cap,
     full: false,
-    text: `הבא בעוד ${formatCountdown(remaining)}`,
+    text: `הבא בעוד ${formatCountdown(clockRemaining)}`,
     hidden: false,
     isClock: true,
     isFull: false,
