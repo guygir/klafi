@@ -11,6 +11,7 @@
   --shadow: 0 20px 48px rgba(26, 31, 28, 0.2);
   --card-width: min(330px, calc(100vw - 42px));
   --safe-bottom: max(8px, env(safe-area-inset-bottom));
+  --nav-clearance: calc(58px + var(--safe-bottom));
   color: var(--ink);
   background: var(--paper);
   font-family: "IBM Plex Sans", "IBM Plex Sans Hebrew", sans-serif;
@@ -1007,7 +1008,9 @@ img.mini-art {
   max-width: 100%;
   margin: 0 0 12px;
   padding: 2px 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
 }
 
 .filter-strip button {
@@ -1045,8 +1048,13 @@ img.mini-art {
   flex: 1 1 auto;
   min-width: 0;
   overflow-x: auto;
+  scroll-snap-type: x proximity;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.filter-sets button {
+  scroll-snap-align: start;
 }
 .filter-party {
   display: flex;
@@ -3311,7 +3319,7 @@ body {
 #main {
   min-height: 0;
   overflow: hidden;
-  padding-bottom: calc(60px + var(--safe-bottom));
+  padding-bottom: var(--nav-clearance);
 }
 
 .view,
@@ -3329,7 +3337,8 @@ body {
 #pack-view.view.active {
   overflow-x: hidden;
   overflow-y: auto;
-  padding-bottom: calc(56px + var(--safe-bottom, 0px));
+  padding-bottom: 8px;
+  scroll-padding-bottom: 8px;
 }
 #home-view.view.active {
   padding-top: 8px;
@@ -3719,6 +3728,7 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  scroll-padding-bottom: 8px;
 }
 
 .growth-grid > .work-card.trade-desk,
@@ -3762,7 +3772,7 @@ body {
     min-height: 70px;
     grid-template-columns: minmax(102px, 124px) minmax(0, 1fr);
   }
-  #main { padding-bottom: calc(52px + var(--safe-bottom)); }
+  #main { padding-bottom: var(--nav-clearance); }
   .top-nav-row { min-height: 0; padding-inline: 8px; padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)); }
   .top-nav-row .bottom-nav { height: 46px; }
   #home-view .home-grid {
@@ -3795,6 +3805,25 @@ body {
   .achievement-grid { grid-template-columns: 1fr; }
   .today-docket-row { min-height: 44px; }
   .contained-tabs button { font-size: 9px; }
+  .filter-strip,
+  #binder-view .filter-strip {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    row-gap: 6px;
+  }
+  .filter-sets,
+  #binder-view .filter-sets {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+  .filter-strip button,
+  #binder-view .filter-strip button {
+    max-width: none;
+  }
+  .filter-party select {
+    max-width: 6.5rem;
+  }
 }
 
 @media (max-height: 700px) {
@@ -4417,7 +4446,7 @@ body {
 }
 
 #main {
-  padding-bottom: 4px;
+  padding-bottom: var(--nav-clearance);
 }
 
 .level-teaser {
@@ -4433,6 +4462,19 @@ body {
     "identity progress pack";
   grid-template-rows: auto 1fr;
   padding: 8px 0 7px;
+}
+
+@media (max-width: 360px) and (max-height: 600px) {
+  .app-shell.home-active .level-strip {
+    min-height: 78px;
+    padding: 4px 0 4px;
+  }
+  .app-shell.home-active .level-teaser {
+    font-size: clamp(14px, 4.2vw, 18px);
+  }
+  #home-view.view.active { padding-top: 4px; }
+  .today-docket { margin-top: 4px; }
+  .today-docket-row { min-height: 40px; padding: 4px; }
 }
 
 .app-shell.home-active .level-teaser {

@@ -416,20 +416,45 @@ function drawRing(svg, spec) {
   }));
 }
 
-function placeCard(card, ring, to, prefer = "", view = viewportBox()) {
+export function navReserve(doc, viewHeight) {
+  const nav = doc?.querySelector?.(".top-nav-row") || doc?.querySelector?.(".bottom-nav");
+  if (nav && !nav.hidden) {
+    const box = nav.getBoundingClientRect?.();
+    if (box && box.height > 0) {
+      const vh = viewHeight || (typeof globalThis.innerHeight === "number" ? globalThis.innerHeight : 0);
+      if (vh) return Math.max(52, Math.round(vh - box.top + 8));
+    }
+  }
+  return 56;
+}
+
+export function placeCard(card, ring, to, prefer = "", view = viewportBox(), doc = globalThis.document) {
   const pad = 16;
   const width = card.offsetWidth || 280;
   const height = card.offsetHeight || 190;
   const vw = view.width;
   const vh = view.height;
+  const floor = navReserve(doc, vh);
   const forbidden = [inflate(ring, 14)];
   if (to) {
     forbidden.push(inflate(to, 12));
     forbidden.push(arrowBand(ring, to, 26));
   }
+  const nav = doc?.querySelector?.(".top-nav-row") || doc?.querySelector?.(".bottom-nav");
+  const navBox = nav && !nav.hidden ? nav.getBoundingClientRect?.() : null;
+  if (navBox && navBox.height > 0) {
+    forbidden.push({
+      left: navBox.left,
+      top: navBox.top,
+      right: navBox.right,
+      bottom: navBox.bottom,
+      width: navBox.width,
+      height: navBox.height,
+    });
+  }
   const clamp = (left, top) => ({
     left: Math.max(pad, Math.min(left, vw - width - pad)),
-    top: Math.max(pad, Math.min(top, vh - height - pad)),
+    top: Math.max(pad, Math.min(top, vh - height - floor)),
   });
   const above = clamp(ring.left + (ring.width - width) / 2, ring.top - height - 12);
   const spots = [
@@ -442,10 +467,11 @@ function placeCard(card, ring, to, prefer = "", view = viewportBox()) {
     { left: Math.max(pad, (vw - width) / 2), top: vh - height - pad },
   ];
   const sitsAbove = ({ left, top }) => top + height <= ring.top + 2;
-  const fit = (prefer === "above" ? spots.find((spot) => sitsAbove(spot) && !overlaps(spot.left, spot.top, width, height, forbidden[0])) : null)
+  const raw = (prefer === "above" ? spots.find((spot) => sitsAbove(spot) && !overlaps(spot.left, spot.top, width, height, forbidden[0])) : null)
     || spots.find(({ left, top }) => !forbidden.some((box) => overlaps(left, top, width, height, box)))
     || spots.find(({ left, top }) => !overlaps(left, top, width, height, forbidden[0]))
     || (prefer === "above" ? above : spots[0]);
+  const fit = clamp(raw.left, raw.top);
   card.style.left = `${fit.left}px`;
   card.style.top = `${fit.top}px`;
 }
