@@ -9,14 +9,14 @@ export const TIPS_STEPS = Object.freeze([
     ring: "#open-pack",
     arrowTo: "",
     title: "המשחק",
-    body: "קלף אחד באיסוף. פתחו את החבילה.",
+    body: "המחסן אוסף לבד כל שלוש שעות. כשיש קלף — פתחו. הוא נרשם לאוסף רק אחרי שרואים אותו.",
   },
   {
     id: 2,
     ring: "#pack-action",
     arrowTo: "#rip-stage",
     title: "קריעה",
-    body: "קרעו. הקלף כבר שמור בשרת.",
+    body: "קרעו. האוסף, הרמה והמפלגה מתעדכנים כשאתם רואים את הקלף — לא כשהוא מחכה במחסן.",
   },
   {
     id: 3,
@@ -24,7 +24,7 @@ export const TIPS_STEPS = Object.freeze([
     emptyRing: 'button[data-nav="binder"]',
     arrowTo: "#dialog-whatsapp, #dialog-source",
     title: "האלבום",
-    body: "הקלף באוסף. פתחו אותו — מקור ושיתוף למטה.",
+    body: "עכשיו הוא באלבום. פתחו קלף — מקור אמיתי למטה. שיתוף שולח תמונה, לא את הקלף.",
   },
 ]);
 
@@ -33,18 +33,32 @@ export const PAGE_GUIDES = Object.freeze({
     {
       ring: "#today-open-copy, #home-title",
       title: "היום",
-      body: "מסך היום. האיסוף רץ גם בלי לגעת. השעון מתחת לכותרת מראה מתי הקלף הבא מגיע.",
+      body: "מסך היום. המחסן אוסף קלף כל שלוש שעות גם בלי לגעת. השעון מתחת לכותרת מראה מתי הבא מגיע. שורת האירוע למעלה רצה כשיש חלון מיוחד.",
     },
     {
       ring: "#open-pack",
       arrowTo: "#cooldown-copy",
       title: "פתיחה",
-      body: "כשיש קלף מוכן — פתיחת קלף. מה שנפתח נכנס לאלבום. שיתוף שולח רק תמונה.",
+      body: "כשיש קלף במחסן — פתיחת קלף. האוסף, הרמה והמפלגה מתעדכנים רק אחרי שרואים אותו. שיתוף שולח תמונה בלבד.",
+    },
+    {
+      ring: "#level-avatar-button",
+      title: "האווטאר",
+      body: "הפנים, אות המפלגה, והאש של רצף הכניסות. לחיצה פותחת פרופיל ואווטארים.",
     },
     {
       ring: ".today-docket",
       title: "המרוץ",
-      body: "האתגר היומי וטבלת האספנים. מי אסף היום.",
+      body: "האתגר היומי וטבלת האספנים. מי אסף היום — אחרי שפתחו ורואים את הקלף.",
+    },
+    {
+      ring: ".bottom-nav, #open-advocacy, #open-bug-report",
+      ringUnion: true,
+      pad: 4,
+      radius: 14,
+      place: "above",
+      title: "הניווט",
+      body: "היום, אוסף, הישגים, קהילה. מתחת לסרגל: גילוי נאות ודיווח באג.",
     },
   ]),
   pack: Object.freeze([
@@ -52,21 +66,21 @@ export const PAGE_GUIDES = Object.freeze({
       ring: "#pack-action",
       arrowTo: "#rip-stage",
       title: "קריעה",
-      body: "קרעו. הקלף כבר שמור בשרת.",
+      body: "קרעו. הקלף נרשם לאוסף כשאתם רואים אותו — לא כשהוא מחכה במחסן.",
     },
   ]),
   binder: Object.freeze([
     {
-      ring: "#earned-badge-rail, .binder-head",
+      ring: "#earned-badge-rail, #earned-badge-list, .binder-head",
       title: "האלבום",
-      body: "כל הקלפים שנאספו. למעלה האחוז והתגים. שיתוף שולח תמונה בלבד — הקלף נשאר אצל מי שפתח.",
+      body: "כל הקלפים שראיתם. למעלה האחוז, התגים וכוכבי האוסף. שיתוף האלבום שולח תמונה — הקלף נשאר אצל מי שפתח.",
     },
     {
       ring: "#binder-filters",
       emptyRing: "#binder-grid, #binder-empty",
       arrowTo: "#binder-grid .binder-shared-card, #binder-grid button",
       title: "הסדרות",
-      body: "סינון לפי סדרה, או בחירת מפלגה. לחצו על קלף — מקור ושיתוף.",
+      body: "סינון לפי סדרה או מפלגה. לחצו על קלף — מקור ושיתוף. אם יש עוד למטה, הרמז יושב מעל הניווט.",
     },
   ]),
   achievements: Object.freeze([
@@ -75,12 +89,12 @@ export const PAGE_GUIDES = Object.freeze({
       ringUnion: true,
       place: "above",
       title: "הישגים",
-      body: "כל התגים כאן. לכל אחד פס התקדמות כמו ברמה — כמה כבר יש מול היעד.",
+      body: "כל התגים כאן. חלק מופיעים גם מעל האלבום. לכל אחד פס התקדמות כמו ברמה — כמה כבר יש מול היעד.",
     },
   ]),
   growth: Object.freeze([
     {
-      ring: "#community-tabs",
+      ring: "#community-sections, #community-tabs",
       ringUnion: true,
       pad: 3,
       radius: 8,
@@ -97,13 +111,18 @@ export const PAGE_GUIDES = Object.freeze({
       title: "הצעות פתוחות",
       body: "לוח של הצעות שאחרים פרסמו. בוחרים ומאשרים. בלי אישור אף קלף לא זז, וקלף ששותף איתכם לא נכנס לאוסף.",
     },
+    {
+      ring: "#community-section-race",
+      title: "המרוץ",
+      body: "ליגות, אספנים, האתגר ומפלגות. הכוכבים נספרים אחרי שפותחים ורואים את הקלף — לא כשהוא במחסן.",
+    },
   ]),
   dialog: Object.freeze([
     {
       ring: "#dialog-card",
       arrowTo: "#dialog-whatsapp, #dialog-source",
       title: "הקלף",
-      body: "הציטוט והאמנות. למטה המקור, וואטסאפ ושיתוף לסטורי.",
+      body: "הציטוט והאמנות. למטה המקור האמיתי, וואטסאפ ושיתוף לסטורי — תמונה בלבד.",
     },
   ]),
 });
@@ -370,9 +389,9 @@ function highlightSpec(node, pad = 8) {
   const style = typeof getComputedStyle === "function" ? getComputedStyle(node) : null;
   const computed = Number.parseFloat(style?.borderTopLeftRadius || "0") || 0;
   const compact = Math.max(box.width, box.height) <= 72 && box.width / box.height < 1.35 && box.height / box.width < 1.35;
-  const pillish = node.matches?.("#open-pack, #pack-action, .primary-action, .share-icon-button, .contained-tabs button, .filter-strip button")
+  const pillish = node.matches?.("#open-pack, #pack-action, .primary-action, .share-icon-button, .contained-tabs button, .filter-strip button, #open-advocacy, #open-bug-report")
     || computed >= Math.min(box.width, box.height) / 2 - 1;
-  const cardish = node.matches?.("#dialog-card, .binder-shared-card, .kalpi-card, .today-docket, #earned-badge-rail, #community-tabs, .work-card");
+  const cardish = node.matches?.("#dialog-card, .binder-shared-card, .kalpi-card, .today-docket, #earned-badge-rail, #earned-badge-list, #community-tabs, #community-sections, .bottom-nav, .work-card");
   if (compact || node.matches?.("button[data-nav]")) {
     const radius = Math.max(box.width, box.height) / 2 + 7;
     return { kind: "circle", box, cx: box.left + box.width / 2, cy: box.top + box.height / 2, radius };

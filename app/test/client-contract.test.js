@@ -45,6 +45,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*width:\s*max-content/);
   assert.match(javascript, /function layoutAdvocacyDock/);
   assert.match(css, /\.top-nav-row \{[^}]*padding:\s*0 10px 6px/);
+  assert.match(css, /padding-bottom:\s*calc\(var\(--footer-pill-height\) \+ var\(--footer-pill-gap\) \+ max\(8px, env\(safe-area-inset-bottom, 0px\)\)\)/);
   assert.match(html, /id="dialog-trust"/);
   assert.match(html, /aria-labelledby="card-dialog-title"/);
   assert.match(html, /aria-labelledby="report-dialog-title"/);
@@ -587,7 +588,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-80/);
+  assert.match(html, /card-surface-81/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -678,7 +679,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-80/);
+  assert.match(html, /card-surface-81/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -760,7 +761,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /#binder-view\.view\.active \{[^}]*flex-direction:\s*column/);
   assert.doesNotMatch(css, /#home-view \.pack-plinth \.pack-wrapper,\s*#home-view \.pack-plinth \.today-specials-line/);
   assert.match(css, /padding-inline-end:\s*100%/);
-  assert.match(css, /animation: specials-marquee 7s linear infinite/);
+  assert.match(css, /animation: specials-marquee var\(--specials-marquee-duration\) linear infinite/);
   assert.match(javascript, /function explainUnavailableNotifications/);
   assert.match(javascript, /function avatarBallotState/);
   assert.match(javascript, /ballot-letter-lik\.png/);
@@ -797,7 +798,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /pack-quote-ink/);
   assert.doesNotMatch(javascript, /floor: 4\.5/);
   assert.doesNotMatch(html, /id="dialog-flip"/);
-  assert.match(css, /--nav-clearance:\s*calc\(58px \+ var\(--safe-bottom\)\)/);
+  assert.match(css, /--footer-pill-gap:\s*8px/);
+  assert.match(css, /--footer-pill-height:\s*24px/);
+  assert.match(css, /--specials-marquee-duration:\s*2\.33s/);
+  assert.match(css, /--nav-clearance:\s*calc\(46px \+ var\(--footer-pill-height\) \+ var\(--footer-pill-gap\) \+ var\(--safe-bottom\)\)/);
   assert.match(css, /#main \{[^}]*padding-bottom:\s*var\(--nav-clearance\)/);
   assert.doesNotMatch(css, /#main \{\s*padding-bottom:\s*4px/);
   assert.match(css, /\.filter-sets \{[^}]*scroll-snap-type:\s*x proximity/);
