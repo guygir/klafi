@@ -2727,19 +2727,52 @@ function finishWalkoutCard() {
   maybeShowNumberedTip();
 }
 
+function numberedTipTargets() {
+  const nodes = [];
+  const packActive = document.querySelector("#pack-view")?.classList.contains("active");
+  const walkoutTag = packActive
+    ? elements.ripStage?.querySelector(".walkout .card-numbered-tag")
+    : null;
+  if (walkoutTag) nodes.push(walkoutTag);
+  if (elements.dialog?.open) {
+    const dialogTag = elements.dialogCard?.querySelector(".card-numbered-tag");
+    if (dialogTag) nodes.push(dialogTag);
+    if (elements.dialogWhatsapp) nodes.push(elements.dialogWhatsapp);
+    if (elements.dialogInstagram) nodes.push(elements.dialogInstagram);
+  }
+  return nodes;
+}
+
+function setNumberedTipTargets(on) {
+  document.querySelectorAll(".numbered-tip-target").forEach((node) => {
+    node.classList.remove("numbered-tip-target");
+  });
+  if (!on) return;
+  for (const node of numberedTipTargets()) node.classList.add("numbered-tip-target");
+}
+
+function hideNumberedTip() {
+  if (elements.numberedTip) elements.numberedTip.hidden = true;
+  setNumberedTipTargets(false);
+}
+
 function maybeShowNumberedTip() {
   const tip = elements.numberedTip;
-  if (!tip || model.showcase) return;
+  if (!tip || model.showcase) {
+    hideNumberedTip();
+    return;
+  }
   const instance = model.currentPack?.cards?.[model.currentCardIndex] || stampForCard(model.byId.get(model.dialogCardId));
   if (!instance?.numberedIndex) {
-    tip.hidden = true;
+    hideNumberedTip();
     return;
   }
   if (readTipsPref() === "off" || readSeenPages().numbered) {
-    tip.hidden = true;
+    hideNumberedTip();
     return;
   }
   tip.hidden = false;
+  setNumberedTipTargets(true);
 }
 
 function startWalkout() {
@@ -6486,7 +6519,7 @@ elements.numberedSets?.addEventListener("change", saveLevelIncrements);
 elements.numberedEvery?.addEventListener("change", saveLevelIncrements);
 elements.numberedTipDismiss?.addEventListener("click", () => {
   markPageSeen("numbered");
-  if (elements.numberedTip) elements.numberedTip.hidden = true;
+  hideNumberedTip();
 });
 elements.saveReleaseSets?.addEventListener("click", saveReleaseSets);
 elements.studioPartyTabs.addEventListener("click", (event) => {
