@@ -3665,11 +3665,24 @@ body {
   direction: rtl;
   font-size: 11px;
 }
+#binder-view.view.active {
+  padding-bottom: 0;
+}
+
 #binder-pager.binder-scroll-dock {
-  flex: 0 0 auto;
-  margin-top: auto;
-  min-height: 28px;
-  padding: 2px 0 4px;
+  position: fixed;
+  z-index: 12;
+  left: 50%;
+  right: auto;
+  bottom: calc(46px + 8px + var(--safe-bottom));
+  width: min(620px, calc(100% - 24px));
+  transform: translateX(-50%);
+  flex: none;
+  margin: 0;
+  min-height: 0;
+  padding: 6px 12px 0;
+  background: linear-gradient(to top, var(--paper) 42%, color-mix(in srgb, var(--paper) 62%, transparent) 78%, transparent);
+  pointer-events: none;
 }
 
 .view-pager:empty { display: none; }
@@ -3857,9 +3870,12 @@ body {
 }
 
 .binder-scroll-hint {
+  display: block;
   color: rgba(26, 31, 28, 0.62);
   font-size: 10px;
   font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .binder-grid > .binder-slot {
@@ -4733,8 +4749,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .klafi-tips-card { transition: none; }
-  .streak-fire,
-  .streak-fire .flame-inner { animation: none; }
+  .streak-fire { animation: none; }
 }
 
 .card-numbered-tag {
@@ -4778,7 +4793,7 @@ body {
 }
 
 .streak-fire .flame-outer { fill: #ff6a00; }
-.streak-fire .flame-inner { fill: #ffd24a; animation: flame-inner 180ms steps(1) infinite; }
+.streak-fire .flame-inner { fill: #ffd24a; }
 
 .kalpi-card.holo.numbered::before {
   inset: 0;
@@ -4859,12 +4874,13 @@ body {
   align-items: center;
   font-style: normal;
   line-height: 1;
+  transform-origin: center bottom;
+  animation: streak-fire-stretch 1.15s ease-in-out infinite;
 }
 
-@keyframes flame-inner {
-  0%, 100% { opacity: 1; transform: translateY(0) scaleY(1); }
-  33% { opacity: 0.72; transform: translateY(0.4px) scaleY(0.9); }
-  66% { opacity: 1; transform: translateY(-0.5px) scaleY(1.08); }
+@keyframes streak-fire-stretch {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.1); }
 }
 
 .level-avatar-button.has-week-streak {
@@ -4895,6 +4911,15 @@ body {
   pointer-events: none;
   overflow: hidden;
 }
+
+.level-letter,
+.level-letter-text,
+.avatar-seal {
+  top: -6px;
+  left: -10px;
+  width: 14px;
+  height: 22px;
+}
 .level-letter:not([src]),
 .level-letter[src=""],
 .level-letter-text:empty {
@@ -4912,10 +4937,10 @@ body {
 .app-shell.home-active .level-letter,
 .app-shell.home-active .level-letter-text,
 .app-shell.home-active .avatar-seal {
-  top: -8px;
-  left: -7px;
-  width: 26px;
-  height: 39px;
+  top: -7px;
+  left: -12px;
+  width: 21px;
+  height: 31px;
 }
 
 .app-shell.home-active .level-letter-text[data-letters="1"] { font-size: 72cqh; }
