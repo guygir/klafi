@@ -1793,7 +1793,16 @@ export async function createKalpiApp({
             return;
           }
           await store.withSession(token, async (current) => {
-            if (current.inventory[card.id] || grantedCopyCounts(current)[card.id]) return;
+            if (current.inventory[card.id]) return;
+            const unseenId = (current.unseenPulls || []).find((id) =>
+              current.instances.some((item) => item.instanceId === id && item.cardId === card.id));
+            if (unseenId) {
+              const credited = creditSeenInstances(current, [unseenId], new Date(now()).toISOString());
+              if (credited.credited) {
+                syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
+              }
+              return;
+            }
             await grantCard(current, { cardId: card.id, finish: card.rarity }, {
               acquiredBy: "debug-unlock",
               pulledAt: new Date(now()).toISOString(),
