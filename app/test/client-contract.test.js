@@ -458,9 +458,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.faction-pick-row/);
   assert.match(css, /\.growth-grid > \.work-card\.faction-desk/);
   assert.match(css, /\.growth-grid > \.work-card\.daily-challenge-desk/);
-  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*position:\s*fixed/);
-  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*bottom:\s*calc\(46px \+ 8px \+ var\(--safe-bottom\)\)/);
+  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*position:\s*absolute/);
+  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*bottom:\s*6px/);
+  assert.match(css, /#app:has\(#binder-view\.active\) #main \{[^}]*padding-bottom:\s*8px/);
   assert.match(css, /#binder-view\.view\.active \{[^}]*padding-bottom:\s*0/);
+  assert.match(css, /#main \{[^}]*display:\s*flex/);
+  assert.match(css, /#main \{[^}]*position:\s*relative/);
   assert.match(css, /\.community-nav \{[^}]*gap: 4px/);
   assert.match(css, /\.trade-desk \{\s*display: flex;[\s\S]*?overflow-y: auto;/);
   assert.match(css, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) !important/);
