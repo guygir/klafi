@@ -9,6 +9,7 @@ import { LIVE_RELEASE_SET_IDS, visiblePlayerCards } from "../server/visible-sets
 import { emptyCommunity, slimDailyChallenge } from "../server/slim-community.js";
 import { liveDeployAssetNames } from "../../scripts/live-deploy-assets.mjs";
 import { cardPullOdds, rarityOrderReport } from "../server/pack-config.js";
+import { IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY } from "../server/idle-config.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
@@ -75,6 +76,8 @@ test("slim home state includes inventory for binder reads", () => {
   assert.equal(state.inventory["LIK-M01-Q01"], 2);
   assert.deepEqual(state.favorites, ["LIK-M01-Q01"]);
   assert.equal(state.ownedUnique, 1);
+  assert.equal(state.idleStarterReady, IDLE_STARTER_READY);
+  assert.equal(state.idleCapacity, IDLE_BACKLOG_CAP);
   assert.equal(state.starCount, 0);
   assert.equal(state.factionId, null);
 });
@@ -127,6 +130,9 @@ test("player shell only publishes the live release sets", async () => {
   assert.deepEqual((shell.gameConfig.releaseSets || []).map(({ id }) => id), [...LIVE_RELEASE_SET_IDS]);
   assert.deepEqual((shell.gameConfig.pack?.sets || []).map(({ id }) => id), [...LIVE_RELEASE_SET_IDS]);
   assert.ok(shell.gameConfig.pack?.current);
+  assert.equal(shell.gameConfig.idle.starterReady, IDLE_STARTER_READY);
+  assert.equal(shell.gameConfig.idle.capacity, IDLE_BACKLOG_CAP);
+  assert.equal(shell.gameConfig.idle.intervalMs, IDLE_INTERVAL_MS);
   assert.ok(shell.cardIndex?.length);
   assert.ok(shell.cardIndex.every(({ releaseSetId }) => LIVE_RELEASE_SET_IDS.includes(releaseSetId)));
   assert.equal(shell.totals.collectible, shell.cardIndex.length);

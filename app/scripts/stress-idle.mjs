@@ -1,4 +1,5 @@
 import { performance } from "node:perf_hooks";
+import { IDLE_STARTER_READY } from "../server/idle-config.js";
 
 const baseUrl = process.env.BASE_URL || "http://127.0.0.1:3000";
 const players = Math.max(1, Number(process.env.PLAYERS || 1000));
@@ -42,7 +43,7 @@ async function worker() {
         headers: { authorization: `Bearer ${home.body.token}` },
       });
       settleLatency.push(settled.durationMs);
-      if (settled.status !== 200 || settled.body.newlySettledCount !== 1) {
+      if (settled.status !== 200 || settled.body.newlySettledCount !== IDLE_STARTER_READY) {
         errors.push({
           player,
           phase: "settle",

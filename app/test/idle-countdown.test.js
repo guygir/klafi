@@ -1,14 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  IDLE_BACKLOG_CAP,
   IDLE_FULL_COPY,
   IDLE_INTERVAL_MS,
   applyIdleCountdown,
   formatCountdown,
+  homeIdleReadyCopy,
   idleCountdownCopy,
   idleScheduleIsDue,
   nextCollectionRemaining,
 } from "../public/idle-countdown.js";
+import { IDLE_STARTER_READY } from "../server/idle-config.js";
 
 const CLOCK_DIGITS = /\d{2}:\d{2}:\d{2}/;
 const NOW = Date.parse("2026-09-23T12:00:00.000Z");
@@ -478,6 +481,60 @@ test("applyIdleCountdown toggles is-clock and is-full and never hides the line",
 
   const skipped = applyIdleCountdown(null, clockView);
   assert.equal(skipped, clockView);
+});
+
+test("home clock and ready copy after three starter pulls and after opening them", () => {
+  const nextIdleAt = new Date(NOW + IDLE_INTERVAL_MS).toISOString();
+  const prepared = Array.from({ length: IDLE_BACKLOG_CAP - IDLE_STARTER_READY }, (_, index) => ({
+    availableAt: new Date(NOW + ((index + 1) * IDLE_INTERVAL_MS)).toISOString(),
+  }));
+  const afterGrant = idleCountdownCopy({
+    serverState: {
+      unseenCount: IDLE_STARTER_READY,
+      idleCapacity: IDLE_BACKLOG_CAP,
+      nextIdleAt,
+      preparedPulls: prepared,
+    },
+    now: NOW,
+  });
+  assert.equal(afterGrant.unseen, IDLE_STARTER_READY);
+  assert.equal(afterGrant.full, false);
+  assert.equal(afterGrant.isClock, true);
+  assert.equal(afterGrant.remaining, IDLE_INTERVAL_MS);
+  assert.equal(afterGrant.text, `הבא בעוד ${formatCountdown(IDLE_INTERVAL_MS)}`);
+  const ready = homeIdleReadyCopy({ unseenCount: IDLE_STARTER_READY, available: true });
+  assert.equal(ready.title, `יש לכם ${IDLE_STARTER_READY} קלפים שמחכים.`);
+  assert.equal(ready.action, "פתיחת קלף");
+
+  const afterOpen = idleCountdownCopy({
+    serverState: {
+      unseenCount: 0,
+      idleCapacity: IDLE_BACKLOG_CAP,
+      nextIdleAt,
+      preparedPulls: prepared,
+    },
+    now: NOW,
+  });
+  assert.equal(afterOpen.unseen, 0);
+  assert.equal(afterOpen.full, false);
+  assert.equal(afterOpen.isClock, true);
+  assert.equal(afterOpen.remaining, IDLE_INTERVAL_MS);
+  assert.equal(afterOpen.text, `הבא בעוד ${formatCountdown(IDLE_INTERVAL_MS)}`);
+  const waiting = homeIdleReadyCopy({ unseenCount: 0, available: false });
+  assert.equal(waiting.title, "הקלף הבא בדרך.");
+  assert.equal(waiting.action, "ממשיכים לאסוף");
+
+  const atCap = idleCountdownCopy({
+    serverState: {
+      unseenCount: IDLE_BACKLOG_CAP,
+      idleCapacity: IDLE_BACKLOG_CAP,
+      nextIdleAt,
+      preparedPulls: [],
+    },
+    now: NOW,
+  });
+  assert.equal(atCap.full, true);
+  assert.equal(atCap.text, IDLE_FULL_COPY);
 });
 
 test("formatCountdown clamps zero and sub-second leftovers to 00:00:01", () => {

@@ -1,7 +1,6 @@
 import { collectionStarCount } from "./visible-sets.js";
 import { levelThresholds } from "./progression.js";
-
-const IDLE_CAPACITY = 8;
+import { IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY } from "./idle-config.js";
 
 export function slimPublicState(session, shell, now = Date.now()) {
   const idleIds = new Set(shell.idleCardIds || []);
@@ -32,7 +31,9 @@ export function slimPublicState(session, shell, now = Date.now()) {
     totalCards: idleTotal,
     unseenCount: session.unseenPulls?.length ?? 0,
     preparedPulls: session.preparedPulls || [],
-    idleCapacity: IDLE_CAPACITY,
+    idleCapacity: IDLE_BACKLOG_CAP,
+    idleIntervalMs: IDLE_INTERVAL_MS,
+    idleStarterReady: IDLE_STARTER_READY,
     nextIdleAt: session.nextIdleAt,
     idlePullCount: session.idlePullCount ?? 0,
     packAvailable: Boolean((session.unseenPulls || []).length),

@@ -1,6 +1,6 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
-import { applyIdleCountdown, formatCountdown, idleCountdownCopy, timeUntil } from "./idle-countdown.js";
+import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, idleCountdownCopy, IDLE_BACKLOG_CAP, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import {
@@ -585,6 +585,7 @@ function applyHomePayload(home) {
         preparedPulls: model.serverState.preparedPulls || [],
         idleCapacity: model.serverState.idleCapacity,
         idleIntervalMs: model.serverState.idleIntervalMs,
+        idleStarterReady: model.serverState.idleStarterReady,
         progression: model.serverState.progression,
         avatars: model.serverState.avatars,
         inventory: model.serverState.inventory || {},
@@ -633,7 +634,9 @@ async function loadShell() {
       ownedUnique: 0,
       totalCards: shell.totals.idleEligible,
       unseenCount: 0,
-      idleCapacity: 8,
+      idleCapacity: shell.gameConfig?.idle?.capacity,
+      idleIntervalMs: shell.gameConfig?.idle?.intervalMs,
+      idleStarterReady: shell.gameConfig?.idle?.starterReady,
       progression: {
         level: 1,
         totalLevels: Math.max(2, shell.gameConfig?.progression?.rankNames?.length || 5),
@@ -1122,7 +1125,7 @@ async function bootstrap() {
         serverState: model.serverState,
         idleQueueLength: model.idleQueue.length,
       });
-      const cap = model.serverState?.idleCapacity || 8;
+      const cap = model.serverState?.idleCapacity || model.gameConfig?.idle?.capacity || IDLE_BACKLOG_CAP;
       const cachedBufferSize = model.idleQueue.length + (model.serverState?.preparedPulls || []).length;
       const missingDueCard = clock.needsSettle || cachedDueCount() > 0;
       const priority = clock.needsSettle || !cachedBufferSize
@@ -2112,25 +2115,23 @@ function renderHome() {
   const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
   const due = Boolean(model.serverState?.nextIdleAt) && !timeUntil(model.serverState.nextIdleAt);
   const available = unseen > 0 || due;
+  const readyCopy = homeIdleReadyCopy({ unseenCount: unseen, available });
+  const idleCapacity = model.serverState?.idleCapacity ?? model.gameConfig?.idle?.capacity ?? IDLE_BACKLOG_CAP;
   elements.collectionCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה · ${percent}%`;
   elements.collectionProgress.style.width = `${percent}%`;
   elements.openPack.disabled = !available;
-  elements.openPack.textContent = available ? "פתיחת קלף" : "ממשיכים לאסוף";
+  elements.openPack.textContent = readyCopy.action;
   if (elements.idleStorage) {
     elements.idleStorage.hidden = true;
-    elements.idleStorage.textContent = `${unseen}/${model.serverState?.idleCapacity ?? 8}`;
+    elements.idleStorage.textContent = `${unseen}/${idleCapacity}`;
   }
   const activeReleaseIds = [...new Set(model.catalog.filter(({ idleEligible }) => idleEligible).map(({ releaseSetId }) => releaseSetId))];
   const releaseNames = activeReleaseIds
     .map((id) => model.gameConfig?.releaseSets?.find((release) => release.id === id)?.nameHe)
     .filter(Boolean);
   if (elements.activeRelease) elements.activeRelease.textContent = releaseNames.join(" + ");
-  elements.homeTitle.textContent = unseen > 0
-    ? unseen === 1 ? "יש לכם קלף שמחכה." : `יש לכם ${unseen} קלפים שמחכים.`
-    : "הקלף הבא בדרך.";
-  elements.homeCopy.textContent = available
-    ? "כל פעם פותחים קלף אחד."
-    : "כל שלוש שעות נאסף קלף אחד לבד.";
+  elements.homeTitle.textContent = readyCopy.title;
+  elements.homeCopy.textContent = readyCopy.lede;
   renderSiteCardPeeks();
   renderProgression();
   renderActivity();

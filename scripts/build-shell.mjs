@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { catalogExtrasFromStudio, expandPublicCatalog } from "../app/server/public-catalog.js";
+import { publicIdleConfig } from "../app/server/idle-config.js";
 import { cardPullOdds, normalizePackConfig, packCardAllowed, rarityBucket, rarityOrderReport, resolvePackTable } from "../app/server/pack-config.js";
 import { cardIndexFromCatalog, isLiveReleaseSet, visiblePlayerCards, visibleReleaseSets } from "../app/server/visible-sets.js";
 
@@ -64,6 +65,7 @@ const shell = {
       teaser: studio.gameConfig?.progression?.teaser || "האם תגיעו לדרגת ראש הממשלה?",
       reward: studio.gameConfig?.progression?.reward || "קלף בונוס מיידי",
     },
+    idle: publicIdleConfig(),
     releaseSets: visibleReleaseSets(studio.gameConfig?.releaseSets || []),
     pack: (() => {
       const pack = {

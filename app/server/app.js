@@ -35,10 +35,16 @@ import { createGithubBugFromBody } from "./github-bugs.js";
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
+import {
+  IDLE_BACKLOG_CAP,
+  IDLE_INTERVAL_MS,
+  IDLE_STARTER_READY,
+  applyIdleStarterReady,
+  isIdleColdStart,
+  publicIdleConfig,
+} from "./idle-config.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
-const IDLE_BACKLOG_CAP = 8;
 const TRADE_TTL_MS = 24 * 60 * 60 * 1000;
 const RANK_TITLES = [
   "אזרח סקרן",
@@ -616,6 +622,7 @@ function publicState(session, now, cards, config = {}) {
     nextIdleAt: session.nextIdleAt,
     idleIntervalMs: IDLE_INTERVAL_MS,
     idleCapacity: IDLE_BACKLOG_CAP,
+    idleStarterReady: IDLE_STARTER_READY,
     unseenCount: session.unseenPulls?.length ?? 0,
     preparedPulls: session.preparedPulls ?? [],
     idlePullCount: session.idlePullCount ?? 0,
@@ -648,7 +655,9 @@ function publicIdleState(session, now, cards, config = {}) {
     ownedUnique: Object.keys(session.inventory).filter((id) => eligibleIds.has(id)).length,
     totalCards: eligibleCards.length,
     nextIdleAt: session.nextIdleAt,
+    idleIntervalMs: IDLE_INTERVAL_MS,
     idleCapacity: IDLE_BACKLOG_CAP,
+    idleStarterReady: IDLE_STARTER_READY,
     unseenCount: session.unseenPulls?.length ?? 0,
     preparedPulls: session.preparedPulls ?? [],
     idlePullCount: session.idlePullCount ?? 0,
@@ -933,6 +942,7 @@ export async function createKalpiApp({
       revealTiming: normalizeRevealTiming(studioContent?.gameConfig?.revealTiming),
       visual: normalizeVisualConfig(studioContent?.gameConfig?.visual),
       progression: progressionConfig(studioContent?.gameConfig?.progression),
+      idle: publicIdleConfig(),
       releaseSets,
       pack: {
         ...pack,
@@ -1005,6 +1015,7 @@ export async function createKalpiApp({
         .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));
       current.idleDuplicateStreak ??= 0;
       current.idlePullCount ??= 0;
+      const coldStart = isIdleColdStart(current);
       const fallbackAnchor = Date.parse(current.nextIdleAt || current.idleAnchorAt || current.createdAt);
       const anchorAt = Number.isFinite(fallbackAnchor) ? fallbackAnchor : currentMs;
       let scheduleAt = current.preparedPulls.length
@@ -1039,6 +1050,9 @@ export async function createKalpiApp({
       };
 
       fillPreparedQueue();
+      if (coldStart) {
+        scheduleAt = applyIdleStarterReady(current.preparedPulls, currentMs, scheduleAt);
+      }
       const granted = [];
       while (
         current.unseenPulls.length < IDLE_BACKLOG_CAP
@@ -2343,4 +2357,4 @@ export async function createKalpiApp({
     : handleRequest;
 }
 
-export { CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, LEVEL_RATIOS, RANK_TITLES };
+export { CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY, LEVEL_RATIOS, RANK_TITLES };

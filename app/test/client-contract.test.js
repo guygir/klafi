@@ -627,7 +627,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(warmup, /\/api\/card-holders/);
   assert.match(javascript, /hydrateCardHolders\(\)\.catch/);
   assert.match(javascript, /const due = Boolean\(model\.serverState\?\.nextIdleAt\) && !timeUntil\(model\.serverState\.nextIdleAt\)/);
-  assert.match(javascript, /elements\.homeTitle\.textContent = unseen > 0/);
+  assert.match(javascript, /homeIdleReadyCopy\(\{ unseenCount: unseen, available \}\)/);
+  assert.match(javascript, /idleStarterReady/);
+  assert.match(javascript, /gameConfig\?\.idle\?\.capacity/);
+  assert.match(javascript, /יש לכם \$\{unseenCount\} קלפים שמחכים/);
+  assert.doesNotMatch(javascript, /newlySettledCount !== 1/);
+  assert.doesNotMatch(tipsJs, /מתחילים עם קלף אחד|חבילה אחת מוכנה|יש קלף במחסן\?/);
   assert.match(javascript, /home\.hidden = granted/);
   assert.doesNotMatch(javascript, /home\.hidden = unsupported \|\| granted \|\| denied/);
   assert.match(javascript, /קלף הבונוס כבר נכנס לאוסף/);
