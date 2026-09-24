@@ -34,6 +34,7 @@ import { levelThresholds } from "./progression.js";
 import { createGithubBugFromBody } from "./github-bugs.js";
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
+import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -1011,7 +1012,7 @@ export async function createKalpiApp({
         : anchorAt;
 
       const fillPreparedQueue = () => {
-        const simulatedInventory = { ...current.inventory };
+        const simulatedInventory = grantedCopyCounts(current);
         let simulatedDuplicateStreak = current.idleDuplicateStreak;
         for (const prepared of current.preparedPulls) {
           const isNew = !simulatedInventory[prepared.cardId];
@@ -1068,7 +1069,6 @@ export async function createKalpiApp({
       current.idleAnchorAt ??= new Date(anchorAt).toISOString();
       current.packs = current.packs.slice(-100);
       current.instances = current.instances.slice(-500);
-      syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
       const instancesById = new Map(current.instances.map((instance) => [instance.instanceId, instance]));
       return {
         granted,
@@ -1076,9 +1076,6 @@ export async function createKalpiApp({
       };
     });
     if (!result) return { error: "INVALID_SESSION", status: 401 };
-    if (result.granted.length) {
-      await store.incrementFaction(store.getSession(token)?.factionId, result.granted.length);
-    }
     const session = store.getSession(token);
     return {
       mode: "idle-return",
@@ -1087,9 +1084,11 @@ export async function createKalpiApp({
       state: publicIdleState(session, currentMs, allCards, runtimeProgression()),
     };
   }
-  async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID() }) {
-    const isNew = !session.inventory[pull.cardId];
-    session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
+  async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID(), creditNow = false }) {
+    const isNew = !grantedCopyCounts(session)[pull.cardId];
+    if (creditNow) {
+      session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
+    }
     const card = cardsById.get(pull.cardId);
     const sets = normalizeNumberedSets(
       studioContent?.gameConfig?.progression?.numberedSets,
@@ -1109,12 +1108,14 @@ export async function createKalpiApp({
       pulledAt,
       isNew,
       acquiredBy,
-      seenAt: null,
+      seenAt: creditNow ? pulledAt : null,
       ...(stamp ? { numberedIndex: stamp.index, numberedOf: stamp.of } : {}),
     };
     session.instances.push(instance);
-    session.unseenPulls ??= [];
-    session.unseenPulls.push(instance.instanceId);
+    if (!creditNow) {
+      session.unseenPulls ??= [];
+      session.unseenPulls.push(instance.instanceId);
+    }
     return instance;
   }
 
@@ -1460,17 +1461,19 @@ export async function createKalpiApp({
 
         if (request.method === "POST" && url.pathname === "/api/idle/seen") {
           const input = await readJson(request);
-          const requested = new Set(Array.isArray(input.instanceIds) ? input.instanceIds.map(String) : []);
-          await store.withSession(token, (current) => {
-            const unseen = new Set(current.unseenPulls || []);
-            const accepted = new Set([...requested].filter((id) => unseen.has(id)));
-            const seenAt = new Date(now()).toISOString();
-            current.instances.forEach((instance) => {
-              if (accepted.has(instance.instanceId)) instance.seenAt = seenAt;
-            });
-            current.unseenPulls = [...unseen].filter((id) => !accepted.has(id));
-            if (accepted.size) applyLoginStreak(current, now());
+          const requested = Array.isArray(input.instanceIds) ? input.instanceIds : [];
+          const seenMs = now();
+          const credited = await store.withSession(token, (current) => {
+            const result = creditSeenInstances(current, requested, new Date(seenMs).toISOString());
+            if (result.accepted.size) applyLoginStreak(current, seenMs);
+            if (result.credited) {
+              syncProgression(current, allCards, studioContent?.gameConfig?.progression, seenMs);
+            }
+            return result;
           });
+          if (credited?.idleCredited) {
+            await store.incrementFaction(store.getSession(token)?.factionId, credited.idleCredited);
+          }
           json(response, 200, stateFor(store.getSession(token)));
           return;
         }
@@ -1524,7 +1527,7 @@ export async function createKalpiApp({
             if (!correct) {
               return { status: 200, body: { correct: false, wonToday: false, cardId: quiz.cardId } };
             }
-            const pull = generateIdlePull(idlePullOptions(pool, current.inventory, current.idleDuplicateStreak));
+            const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(current), current.idleDuplicateStreak));
             const pulledAt = new Date(currentMs).toISOString();
             const instance = await grantCard(current, pull, { acquiredBy: "quiz", pulledAt });
             current.quizWonDay = day;
@@ -1537,7 +1540,6 @@ export async function createKalpiApp({
               cards: [instance],
             });
             current.packs = current.packs.slice(-100);
-            syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
             return {
               status: 201,
               body: {
@@ -1568,7 +1570,7 @@ export async function createKalpiApp({
                 syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
                 const rank = current.pendingRankRewards?.shift();
                 if (!rank) return null;
-                const pull = generateIdlePull(idlePullOptions(pool, current.inventory, current.idleDuplicateStreak));
+                const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(current), current.idleDuplicateStreak));
                 const pulledAt = new Date(currentMs).toISOString();
                 const instance = await grantCard(current, pull, { acquiredBy: `rank-${rank}`, pulledAt });
                 current.claimedRankRewards ??= [];
@@ -1791,10 +1793,11 @@ export async function createKalpiApp({
             return;
           }
           await store.withSession(token, async (current) => {
-            if (current.inventory[card.id]) return;
+            if (current.inventory[card.id] || grantedCopyCounts(current)[card.id]) return;
             await grantCard(current, { cardId: card.id, finish: card.rarity }, {
               acquiredBy: "debug-unlock",
               pulledAt: new Date(now()).toISOString(),
+              creditNow: true,
             });
           });
           json(response, 200, stateFor(store.getSession(token)));
