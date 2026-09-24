@@ -179,7 +179,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /viewHasEnterOffset/);
   assert.match(tipsJs, /doc\.body/);
   assert.match(tipsJs, /fill-rule/);
-  assert.match(css, /:not\(\.klafi-tips\):not\(\.top-nav-row\) \{ position: relative; z-index: 1; \}/);
+  assert.match(css, /:not\(\.klafi-tips\):not\(\.top-nav-row\):not\(\.numbered-tip\) \{ position: relative; z-index: 1; \}/);
   assert.match(css, /#klafi-tips\.klafi-tips/);
   assert.match(css, /\.klafi-tips-dim \{ pointer-events: auto; z-index: 1; \}/);
   assert.match(css, /\.klafi-tips-marks \{ pointer-events: none; z-index: 2; \}/);
@@ -358,6 +358,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.card-numbered-tag/);
   assert.match(css, /\.numbered-tip/);
   assert.match(css, /\.numbered-tip-target/);
+  assert.match(css, /:not\(\.numbered-tip\) \{ position: relative; z-index: 1/);
+  assert.match(css, /\.numbered-tip \{[^}]*position:\s*fixed/);
+  assert.match(css, /\.numbered-tip \{[^}]*left:\s*50%/);
+  assert.doesNotMatch(css, /\.numbered-tip \{[^}]*inset-inline-start:\s*50%/);
   assert.match(css, /streak-fire/);
   assert.match(css, /holo-orbit/);
   assert.match(css, /ballot-paper\.png/);
