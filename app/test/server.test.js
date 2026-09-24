@@ -261,8 +261,15 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   assert.equal(first.body.state.instances, undefined);
   assert.equal(first.body.state.achievements, undefined);
   assert.equal(first.body.state.idlePullCount, 1);
+  assert.equal(first.body.state.ownedUnique, 0);
+  assert.equal(first.body.state.progression.unique, 0);
+  assert.equal(first.body.state.progression.level, 1);
+  assert.deepEqual(first.body.state.inventory, {});
   const afterGrant = await api(running.base, "/api/state", { token });
   assert.equal(afterGrant.body.achievements.find(({ id }) => id === "first-rip")?.earned, true);
+  assert.equal(afterGrant.body.ownedUnique, 0);
+  assert.equal(afterGrant.body.progression.unique, 0);
+  assert.deepEqual(afterGrant.body.inventory, {});
 
   const replay = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(replay.body.newlySettledCount, 0);
@@ -275,6 +282,9 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   assert.equal(capped.body.newlySettledCount, IDLE_BACKLOG_CAP - 1);
   assert.equal(capped.body.state.preparedPulls.length, 0);
   assert.ok(Date.parse(capped.body.state.nextIdleAt) > clock.value);
+  assert.equal(capped.body.state.ownedUnique, 0);
+  assert.equal(capped.body.state.progression.unique, 0);
+  assert.deepEqual(capped.body.state.progression.pendingRewards, []);
 
   const seen = await api(running.base, "/api/idle/seen", {
     token,
@@ -282,8 +292,12 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
     body: { instanceIds: capped.body.cards.map(({ instanceId }) => instanceId) },
   });
   assert.equal(seen.body.unseenCount, 0);
+  assert.ok(seen.body.ownedUnique > 0);
+  assert.ok(seen.body.progression.unique > 0);
+  assert.ok(Object.keys(seen.body.inventory).length > 0);
   assert.equal(seen.body.achievements.find(({ id }) => id === "first-rip")?.earned, true);
 
+  const uniqueAfterOpen = seen.body.ownedUnique;
   const pendingRanks = [...seen.body.progression.pendingRewards];
   const rewardInstances = [];
   for (const rank of pendingRanks) {
@@ -291,6 +305,7 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
     const reward = await api(running.base, "/api/rewards/level", { token, method: "POST", headers });
     assert.equal(reward.status, 201);
     assert.equal(reward.body.rank, rank);
+    assert.equal(reward.body.state.ownedUnique, uniqueAfterOpen);
     const replay = await api(running.base, "/api/rewards/level", { token, method: "POST", headers });
     assert.equal(replay.status, 201);
     assert.deepEqual(replay.body, reward.body);
@@ -298,16 +313,78 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   }
   const duplicateReward = await api(running.base, "/api/rewards/level", { token, method: "POST" });
   assert.equal(duplicateReward.status, 409);
-  await api(running.base, "/api/idle/seen", {
+  const afterRewards = await api(running.base, "/api/idle/seen", {
     token,
     method: "POST",
     body: { instanceIds: rewardInstances.map(({ instanceId }) => instanceId) },
   });
+  assert.ok(afterRewards.body.ownedUnique >= uniqueAfterOpen);
 
   clock.value += IDLE_INTERVAL_MS;
   const next = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(next.body.newlySettledCount, 1);
   assert.equal(next.body.cards.length, 1);
+});
+
+test("idle settle does not credit unique, level, or faction until the pack is seen", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-idle-seen-credit-"));
+  const clock = { value: Date.parse("2026-09-24T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const created = await api(running.base, "/api/session", { method: "POST" });
+  const token = created.body.token;
+  const faction = await api(running.base, "/api/faction", {
+    token,
+    method: "POST",
+    body: { factionId: "LIK" },
+  });
+  assert.equal(faction.status, 200);
+  const slug = (await api(running.base, "/api/state", { token })).body.binderSlug;
+  const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(settled.status, 200);
+  assert.equal(settled.body.newlySettledCount, 1);
+  assert.equal(settled.body.state.unseenCount, 1);
+  assert.equal(settled.body.state.ownedUnique, 0);
+  assert.equal(settled.body.state.progression.unique, 0);
+  assert.equal(settled.body.state.progression.level, 1);
+  assert.deepEqual(settled.body.state.inventory, {});
+
+  const afterSettle = await api(running.base, "/api/state", { token });
+  assert.equal(afterSettle.body.ownedUnique, 0);
+  assert.equal(afterSettle.body.progression.unique, 0);
+  assert.equal(afterSettle.body.starCount, 0);
+  assert.deepEqual(afterSettle.body.inventory, {});
+  const binder = await api(running.base, `/api/public-binder/${slug}`);
+  assert.equal(binder.body.ownedUnique, 0);
+  const boards = await api(running.base, "/api/leaderboards", { token });
+  const collector = boards.body.collectors.find(({ current }) => current);
+  assert.equal(collector.ownedUnique, 0);
+  assert.equal(collector.stars, 0);
+  const lik = boards.body.factions.find(({ partyId }) => partyId === "LIK");
+  assert.equal(lik?.stars ?? 0, 0);
+
+  const seen = await api(running.base, "/api/idle/seen", {
+    token,
+    method: "POST",
+    body: { instanceIds: settled.body.cards.map(({ instanceId }) => instanceId) },
+  });
+  assert.equal(seen.body.unseenCount, 0);
+  assert.equal(seen.body.ownedUnique, 1);
+  assert.equal(seen.body.progression.unique, 1);
+  assert.ok(seen.body.starCount > 0);
+  assert.equal(Object.values(seen.body.inventory).reduce((sum, count) => sum + count, 0), 1);
+  const opened = await api(running.base, `/api/public-binder/${slug}`);
+  assert.equal(opened.body.ownedUnique, 1);
+  const afterSeen = await api(running.base, "/api/leaderboards", { token });
+  const openedCollector = afterSeen.body.collectors.find(({ current }) => current);
+  assert.equal(openedCollector.ownedUnique, 1);
+  assert.ok(openedCollector.stars > 0);
+  const openedLik = afterSeen.body.factions.find(({ partyId }) => partyId === "LIK");
+  assert.equal(openedLik.stars, openedCollector.stars);
 });
 
 test("prepared idle pulls ignore client card choices", async (t) => {
@@ -444,6 +521,7 @@ test("legacy sessions migrate into the capped idle queue without losing inventor
   assert.equal(settled.status, 200);
   assert.equal(settled.body.cards.length, IDLE_BACKLOG_CAP);
   assert.ok(settled.body.state.inventory["LIK-M01-Q01"] >= 1);
+  assert.deepEqual(Object.keys(settled.body.state.inventory), ["LIK-M01-Q01"]);
   assert.equal(settled.body.state.progression.level, 8, "catalog changes never demote an earned rank");
   assert.ok(Date.parse(settled.body.state.nextIdleAt) > clock.value);
 });
@@ -1255,6 +1333,17 @@ test("owned-card quiz grants one extra pack per Jerusalem day", async (t) => {
   assert.equal(win.body.correct, true);
   assert.equal(win.body.cards.length, 1);
   assert.equal(win.body.state.quizWonToday, true);
+  const quizCardId = win.body.cards[0].cardId;
+  const quizCopiesBeforeSeen = quizCardId === cardId ? 1 : 0;
+  assert.equal(win.body.state.inventory[quizCardId] ?? 0, quizCopiesBeforeSeen);
+  assert.equal(win.body.state.unseenCount, 1);
+  const quizSeen = await api(running.base, "/api/idle/seen", {
+    token,
+    method: "POST",
+    body: { instanceIds: [win.body.cards[0].instanceId] },
+  });
+  assert.equal(quizSeen.body.inventory[quizCardId], quizCopiesBeforeSeen + 1);
+  assert.equal(quizSeen.body.unseenCount, 0);
   const again = await api(running.base, "/api/quiz", { token });
   assert.equal(again.body.available, false);
   assert.equal(again.body.wonToday, true);
