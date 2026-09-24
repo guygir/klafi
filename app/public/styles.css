@@ -2203,8 +2203,8 @@ img.mini-art {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 #community-tabs button[hidden] { display: none; }
-.league-desk .field-label { margin-top: 12px; }
-.league-action-row { margin-bottom: 10px; }
+.league-desk .field-label { margin-top: 8px; }
+.league-action-row { margin-bottom: 8px; }
 #league-name-input {
   text-align: right;
   font: 500 16px/1.2 "IBM Plex Sans Hebrew", sans-serif;
@@ -2257,8 +2257,8 @@ img.mini-art {
   cursor: pointer;
 }
 .league-qr {
-  width: min(168px, 56vw);
-  margin: 0 auto 10px;
+  width: min(120px, 42vw);
+  margin: 12px auto 0;
   padding: 8px;
   background: #f7f2e8;
 }

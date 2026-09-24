@@ -1803,7 +1803,6 @@ function renderLeagues() {
         <b dir="ltr">${escapeHtml(league.code)}</b>
         <button type="button" data-copy-league="${escapeHtml(league.joinUrl || league.code)}">העתקת קישור</button>
       </div>
-      <div class="league-qr">${league.qrSvg || ""}</div>
       <ol class="league-board">
         ${(league.members || []).map((entry) => `
           <li class="${entry.current ? "current-player" : ""}">
@@ -1812,6 +1811,7 @@ function renderLeagues() {
             <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
           </li>`).join("")}
       </ol>
+      <div class="league-qr">${league.qrSvg || ""}</div>
     </article>`).join("");
 }
 
