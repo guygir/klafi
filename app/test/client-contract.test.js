@@ -45,7 +45,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*width:\s*max-content/);
   assert.match(javascript, /function layoutAdvocacyDock/);
   assert.match(css, /\.top-nav-row \{[^}]*padding:\s*0 10px 6px/);
-  assert.match(css, /padding-bottom:\s*calc\(var\(--footer-pill-height\) \+ var\(--footer-pill-gap\) \+ max\(8px, env\(safe-area-inset-bottom, 0px\)\)\)/);
+  assert.match(css, /padding-bottom:\s*calc\(12px \+ var\(--footer-pill-gap\) \+ env\(safe-area-inset-bottom, 0px\)\)/);
   assert.match(html, /id="dialog-trust"/);
   assert.match(html, /aria-labelledby="card-dialog-title"/);
   assert.match(html, /aria-labelledby="report-dialog-title"/);
@@ -799,9 +799,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /floor: 4\.5/);
   assert.doesNotMatch(html, /id="dialog-flip"/);
   assert.match(css, /--footer-pill-gap:\s*8px/);
-  assert.match(css, /--footer-pill-height:\s*24px/);
   assert.match(css, /--specials-marquee-duration:\s*2\.33s/);
-  assert.match(css, /--nav-clearance:\s*calc\(46px \+ var\(--footer-pill-height\) \+ var\(--footer-pill-gap\) \+ var\(--safe-bottom\)\)/);
+  assert.match(css, /--nav-clearance:\s*calc\(64px \+ var\(--footer-pill-gap\) \+ var\(--safe-bottom\)\)/);
   assert.match(css, /#main \{[^}]*padding-bottom:\s*var\(--nav-clearance\)/);
   assert.doesNotMatch(css, /#main \{\s*padding-bottom:\s*4px/);
   assert.match(css, /\.filter-sets \{[^}]*scroll-snap-type:\s*x proximity/);
