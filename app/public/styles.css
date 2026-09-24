@@ -4870,12 +4870,18 @@ body {
   inset-inline-start: 50%;
   inset-block-end: 10%;
   translate: -50% 0;
-  max-width: 16rem;
+  max-width: 20rem;
   padding: 12px 14px;
   border: 1px solid var(--foil, #c4a35a);
   background: var(--paper, #f4efe4);
   color: var(--ink, #1a1f1c);
   box-shadow: 0 12px 28px rgba(60, 48, 38, 0.18);
+}
+
+.numbered-tip-target {
+  outline: 2px solid var(--foil, #c4a35a);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--foil, #c4a35a) 28%, transparent);
 }
 
 .numbered-tip p { margin: 0 0 10px; font: 600 15px/1.4 "IBM Plex Sans Hebrew", sans-serif; }
