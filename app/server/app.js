@@ -39,6 +39,7 @@ import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
 const IDLE_BACKLOG_CAP = 8;
+const IDLE_STARTER_READY = 3;
 const TRADE_TTL_MS = 24 * 60 * 60 * 1000;
 const RANK_TITLES = [
   "אזרח סקרן",
@@ -495,6 +496,28 @@ function publicAvatars(session, catalog = [], level = 1) {
     unlocked: currentLevel >= (avatar.unlockLevel || 1),
     selected: session.avatarId === avatar.id,
   }));
+}
+
+function isIdleColdStart(session) {
+  return (session.idlePullCount || 0) === 0
+    && !(session.unseenPulls || []).length
+    && !(session.preparedPulls || []).length
+    && !session.nextIdleAt;
+}
+
+function applyIdleStarterReady(preparedPulls, currentMs, scheduleAt) {
+  const dueCount = preparedPulls.filter((pull) => Date.parse(pull.availableAt) <= currentMs).length;
+  if (dueCount >= IDLE_STARTER_READY) return scheduleAt;
+  const ready = Math.min(IDLE_STARTER_READY, preparedPulls.length);
+  for (let i = 0; i < ready; i += 1) {
+    preparedPulls[i].availableAt = new Date(currentMs).toISOString();
+  }
+  let nextAt = currentMs + IDLE_INTERVAL_MS;
+  for (let i = ready; i < preparedPulls.length; i += 1) {
+    preparedPulls[i].availableAt = new Date(nextAt).toISOString();
+    nextAt += IDLE_INTERVAL_MS;
+  }
+  return nextAt;
 }
 
 function activeIdleCards(cards, current = Date.now()) {
@@ -1005,6 +1028,7 @@ export async function createKalpiApp({
         .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));
       current.idleDuplicateStreak ??= 0;
       current.idlePullCount ??= 0;
+      const coldStart = isIdleColdStart(current);
       const fallbackAnchor = Date.parse(current.nextIdleAt || current.idleAnchorAt || current.createdAt);
       const anchorAt = Number.isFinite(fallbackAnchor) ? fallbackAnchor : currentMs;
       let scheduleAt = current.preparedPulls.length
@@ -1039,6 +1063,9 @@ export async function createKalpiApp({
       };
 
       fillPreparedQueue();
+      if (coldStart) {
+        scheduleAt = applyIdleStarterReady(current.preparedPulls, currentMs, scheduleAt);
+      }
       const granted = [];
       while (
         current.unseenPulls.length < IDLE_BACKLOG_CAP
@@ -2343,4 +2370,4 @@ export async function createKalpiApp({
     : handleRequest;
 }
 
-export { CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, LEVEL_RATIOS, RANK_TITLES };
+export { CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY, LEVEL_RATIOS, RANK_TITLES };

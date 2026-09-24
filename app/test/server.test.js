@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { createKalpiApp, CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, RANK_TITLES, publicPartyRegister } from "../server/app.js";
+import { createKalpiApp, CARD_HOLDER_SYNC_MS, DAY_MS, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY, RANK_TITLES, publicPartyRegister } from "../server/app.js";
 import { createRuntimeHandler } from "../server/runtime.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -249,18 +249,18 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   const token = created.body.token;
   const first = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(first.status, 200);
-  assert.equal(first.body.newlySettledCount, 1);
-  assert.equal(first.body.cards.length, 1);
-  assert.equal(first.body.state.unseenCount, 1);
+  assert.equal(first.body.newlySettledCount, IDLE_STARTER_READY);
+  assert.equal(first.body.cards.length, IDLE_STARTER_READY);
+  assert.equal(first.body.state.unseenCount, IDLE_STARTER_READY);
   assert.equal(first.body.state.idleCapacity, IDLE_BACKLOG_CAP);
-  assert.equal(first.body.state.preparedPulls.length, IDLE_BACKLOG_CAP - 1);
+  assert.equal(first.body.state.preparedPulls.length, IDLE_BACKLOG_CAP - IDLE_STARTER_READY);
   assert.equal(
     Date.parse(first.body.state.preparedPulls[0].availableAt),
     clock.value + IDLE_INTERVAL_MS,
   );
   assert.equal(first.body.state.instances, undefined);
   assert.equal(first.body.state.achievements, undefined);
-  assert.equal(first.body.state.idlePullCount, 1);
+  assert.equal(first.body.state.idlePullCount, IDLE_STARTER_READY);
   assert.equal(first.body.state.ownedUnique, 0);
   assert.equal(first.body.state.progression.unique, 0);
   assert.equal(first.body.state.progression.level, 1);
@@ -279,7 +279,7 @@ test("idle settlement caps unseen cards and acknowledges reveals safely", async 
   clock.value += 30 * 60 * 60 * 1000;
   const capped = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(capped.body.cards.length, IDLE_BACKLOG_CAP);
-  assert.equal(capped.body.newlySettledCount, IDLE_BACKLOG_CAP - 1);
+  assert.equal(capped.body.newlySettledCount, IDLE_BACKLOG_CAP - IDLE_STARTER_READY);
   assert.equal(capped.body.state.preparedPulls.length, 0);
   assert.ok(Date.parse(capped.body.state.nextIdleAt) > clock.value);
   assert.equal(capped.body.state.ownedUnique, 0);
@@ -346,8 +346,8 @@ test("idle settle does not credit unique, level, or faction until the pack is se
   const slug = (await api(running.base, "/api/state", { token })).body.binderSlug;
   const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(settled.status, 200);
-  assert.equal(settled.body.newlySettledCount, 1);
-  assert.equal(settled.body.state.unseenCount, 1);
+  assert.equal(settled.body.newlySettledCount, IDLE_STARTER_READY);
+  assert.equal(settled.body.state.unseenCount, IDLE_STARTER_READY);
   assert.equal(settled.body.state.ownedUnique, 0);
   assert.equal(settled.body.state.progression.unique, 0);
   assert.equal(settled.body.state.progression.level, 1);
@@ -373,15 +373,15 @@ test("idle settle does not credit unique, level, or faction until the pack is se
     body: { instanceIds: settled.body.cards.map(({ instanceId }) => instanceId) },
   });
   assert.equal(seen.body.unseenCount, 0);
-  assert.equal(seen.body.ownedUnique, 1);
-  assert.equal(seen.body.progression.unique, 1);
+  assert.ok(seen.body.ownedUnique >= 1);
+  assert.ok(seen.body.progression.unique >= 1);
   assert.ok(seen.body.starCount > 0);
-  assert.equal(Object.values(seen.body.inventory).reduce((sum, count) => sum + count, 0), 1);
+  assert.equal(Object.values(seen.body.inventory).reduce((sum, count) => sum + count, 0), IDLE_STARTER_READY);
   const opened = await api(running.base, `/api/public-binder/${slug}`);
-  assert.equal(opened.body.ownedUnique, 1);
+  assert.equal(opened.body.ownedUnique, seen.body.ownedUnique);
   const afterSeen = await api(running.base, "/api/leaderboards", { token });
   const openedCollector = afterSeen.body.collectors.find(({ current }) => current);
-  assert.equal(openedCollector.ownedUnique, 1);
+  assert.equal(openedCollector.ownedUnique, seen.body.ownedUnique);
   assert.ok(openedCollector.stars > 0);
   const openedLik = afterSeen.body.factions.find(({ partyId }) => partyId === "LIK");
   assert.equal(openedLik.stars, openedCollector.stars);
@@ -412,6 +412,102 @@ test("prepared idle pulls ignore client card choices", async (t) => {
   assert.equal(settled.body.cards.at(-1).instanceId, scheduled.instanceId);
   assert.equal(settled.body.cards.at(-1).cardId, scheduled.cardId);
   assert.notEqual(settled.body.cards.at(-1).instanceId, "client-chosen-instance");
+});
+
+test("first bootstrap grants three starter pulls and leaves returning idle progress alone", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-idle-starter-"));
+  const clock = { value: Date.parse("2026-09-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const boot = await api(running.base, "/api/bootstrap");
+  assert.equal(boot.status, 200);
+  assert.equal(boot.body.idleReturn.newlySettledCount, IDLE_STARTER_READY);
+  assert.equal(boot.body.idleReturn.cards.length, IDLE_STARTER_READY);
+  assert.equal(boot.body.idleReturn.state.unseenCount, IDLE_STARTER_READY);
+  assert.equal(boot.body.idleReturn.state.idlePullCount, IDLE_STARTER_READY);
+  assert.equal(boot.body.idleReturn.state.preparedPulls.length, IDLE_BACKLOG_CAP - IDLE_STARTER_READY);
+  assert.equal(
+    Date.parse(boot.body.idleReturn.state.preparedPulls[0].availableAt),
+    clock.value + IDLE_INTERVAL_MS,
+  );
+  const replay = await api(running.base, "/api/bootstrap", { token: boot.body.token });
+  assert.equal(replay.body.idleReturn.newlySettledCount, 0);
+  assert.equal(replay.body.idleReturn.cards.length, IDLE_STARTER_READY);
+  assert.deepEqual(
+    replay.body.idleReturn.cards.map(({ instanceId }) => instanceId),
+    boot.body.idleReturn.cards.map(({ instanceId }) => instanceId),
+  );
+  assert.deepEqual(replay.body.idleReturn.state.preparedPulls, boot.body.idleReturn.state.preparedPulls);
+
+  const returningDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-idle-returning-"));
+  const returningToken = "returning-idle-token";
+  const readyAt = new Date(clock.value).toISOString();
+  const nextAt = new Date(clock.value + IDLE_INTERVAL_MS).toISOString();
+  await writeFile(path.join(returningDir, "state.json"), JSON.stringify({
+    version: 6,
+    sessions: {
+      [returningToken]: {
+        displayName: "שחקן חוזר",
+        createdAt: "2026-09-08T12:00:00.000Z",
+        nextDailyAt: null,
+        dryPacks: 0,
+        packCount: 0,
+        inventory: {},
+        instances: [{
+          instanceId: "already-ready",
+          cardId: "LIK-M01-Q01",
+          finish: "Base",
+          pulledAt: readyAt,
+          isNew: true,
+          acquiredBy: "idle",
+          seenAt: null,
+        }],
+        packs: [],
+        eventCounts: {},
+        factionId: null,
+        tradeCount: 0,
+        eventClaims: {},
+        favorites: [],
+        highestRank: 1,
+        idleAnchorAt: readyAt,
+        nextIdleAt: nextAt,
+        unseenPulls: ["already-ready"],
+        preparedPulls: [{
+          instanceId: "prepared-next",
+          cardId: "LIK-M01-Q01",
+          finish: "Base",
+          isNew: false,
+          acquiredBy: "idle",
+          availableAt: nextAt,
+          preparedAt: readyAt,
+        }],
+        idleDuplicateStreak: 0,
+        idlePullCount: 1,
+      },
+    },
+    analytics: { events: [] },
+    trades: [],
+    factions: {},
+  }));
+  const returning = await start(returningDir, clock);
+  t.after(async () => {
+    await returning.close();
+    await rm(returningDir, { recursive: true, force: true });
+  });
+  const settled = await api(returning.base, "/api/idle/settle", { token: returningToken, method: "POST" });
+  assert.equal(settled.status, 200);
+  assert.equal(settled.body.newlySettledCount, 0);
+  assert.equal(settled.body.cards.length, 1);
+  assert.equal(settled.body.cards[0].instanceId, "already-ready");
+  assert.equal(settled.body.state.unseenCount, 1);
+  assert.equal(settled.body.state.idlePullCount, 1);
+  assert.equal(Date.parse(settled.body.state.nextIdleAt), clock.value + IDLE_INTERVAL_MS);
+  assert.equal(settled.body.state.preparedPulls[0].instanceId, "prepared-next");
+  assert.equal(settled.body.state.preparedPulls.length, IDLE_BACKLOG_CAP - 1);
 });
 
 test("bug reports stay public and fail closed without GitHub", async (t) => {
@@ -1420,7 +1516,7 @@ test("postgres store keeps a session after a second process boots", async (t) =>
     })),
   );
   assert.deepEqual(bulkPulls.map(({ status }) => status), Array(12).fill(200));
-  assert.equal(bulkPulls.reduce((total, { body }) => total + body.newlySettledCount, 0), 12);
+  assert.equal(bulkPulls.reduce((total, { body }) => total + body.newlySettledCount, 0), 12 * IDLE_STARTER_READY);
   await first.close();
   const second = await start(dataDir, clock, { databaseUrl });
   t.after(async () => {

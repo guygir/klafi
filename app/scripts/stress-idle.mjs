@@ -42,7 +42,7 @@ async function worker() {
         headers: { authorization: `Bearer ${home.body.token}` },
       });
       settleLatency.push(settled.durationMs);
-      if (settled.status !== 200 || settled.body.newlySettledCount !== 1) {
+      if (settled.status !== 200 || settled.body.newlySettledCount !== 3) {
         errors.push({
           player,
           phase: "settle",
