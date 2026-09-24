@@ -315,9 +315,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="rank-names"/);
   assert.match(html, /id="numbered-sets"/);
   assert.match(html, /id="numbered-tip"/);
-  assert.match(html, /זה עותק יחיד בעולם/);
-  assert.match(html, /פרסמו אותו בוואטסאפ או בסטורי/);
-  assert.match(html, /id="numbered-tip"[\s\S]*?תמונה בלבד, לא את הקלף עצמו/);
+  assert.match(html, /שלפת קלף ממוספר!/);
+  assert.match(html, /עותק ממוספר הוא יחיד במינו! שווה שיתוף אם אתם שואלים אותי…/);
+  assert.match(html, /id="numbered-tip"[\s\S]*?שלפת קלף ממוספר!<br>עותק ממוספר הוא יחיד במינו!/);
+  assert.doesNotMatch(html, /זה עותק יחיד בעולם/);
+  assert.doesNotMatch(html, /פרסמו אותו בוואטסאפ או בסטורי/);
   assert.doesNotMatch(html, /זה עותק ממוספר\. המספר אומר כמה כאלה יצאו בעולם/);
   assert.match(javascript, /function numberedTipTargets/);
   assert.match(javascript, /function setNumberedTipTargets/);
