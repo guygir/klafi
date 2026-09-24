@@ -12,6 +12,7 @@ export const PARTY_BALLOTS = Object.freeze({
   RAM: { letters: "עם", chip: "ballot-letter-ram.png" },
   AMH: { letters: "ך", chip: "ballot-letter-amh.png" },
   BW: { letters: "כן", chip: "ballot-letter-bw.png" },
+  RSE: { letters: "די", chip: "ballot-letter-rse.png" },
 });
 
 export function partyLetterChipNames() {

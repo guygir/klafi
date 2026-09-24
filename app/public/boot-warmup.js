@@ -53,6 +53,7 @@ for (const chip of [
   "ballot-letter-ram.png",
   "ballot-letter-amh.png",
   "ballot-letter-bw.png",
+  "ballot-letter-rse.png",
 ]) {
   const image = new Image();
   image.decoding = "async";

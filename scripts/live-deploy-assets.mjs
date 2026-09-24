@@ -15,6 +15,7 @@ const CHROME_ASSETS = Object.freeze([
   "ballot-letter-ram.png",
   "ballot-letter-amh.png",
   "ballot-letter-bw.png",
+  "ballot-letter-rse.png",
   "ballot-paper.png",
 ]);
 

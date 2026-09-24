@@ -40,8 +40,9 @@ test("avatar ballot is hidden without a faction and visible for every party", ()
     id: "RSE",
     requestedLetters: ["די"],
   });
-  assert.equal(reservists.showLetterArt, false);
-  assert.equal(reservists.showLetterText, true);
+  assert.equal(reservists.showLetterArt, true);
+  assert.equal(reservists.showLetterText, false);
+  assert.equal(reservists.art, "ballot-letter-rse.png");
   assert.equal(reservists.letters, "די");
 });
 

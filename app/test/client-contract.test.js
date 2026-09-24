@@ -548,7 +548,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-73/);
+  assert.match(html, /card-surface-78/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +638,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-73/);
+  assert.match(html, /card-surface-78/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -727,6 +727,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /PARTY_BALLOTS/);
   assert.match(javascript, /ballot-letter-dem\.png/);
   assert.match(javascript, /ballot-letter-ysr\.png/);
+  assert.match(javascript, /ballot-letter-rse\.png/);
   assert.match(css, /\.app-shell\.home-active \.level-letter/);
   assert.match(css, /width:\s*26px/);
   assert.match(css, /\.filter-strip button \{[^}]*border-radius:\s*8px/);
