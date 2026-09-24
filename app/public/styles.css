@@ -2179,19 +2179,30 @@ img.mini-art {
   margin: 4px 0 8px;
   padding-inline: 16px;
 }
-#community-tabs {
-  display: flex;
-  flex-wrap: nowrap;
+.community-nav {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+.community-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 4px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  margin: 0;
 }
-#community-tabs button {
-  flex: 0 0 auto;
-  min-width: max-content;
-  padding-inline: 10px;
-  white-space: nowrap;
+#community-tabs {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  overflow: visible;
 }
+#community-tabs[data-community-section="market"] {
+  grid-template-columns: 1fr 1fr;
+}
+#community-tabs[data-community-section="race"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+#community-tabs button[hidden] { display: none; }
 .league-desk .field-label { margin-top: 12px; }
 .league-action-row { margin-bottom: 10px; }
 #league-name-input {

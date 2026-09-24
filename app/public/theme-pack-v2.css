@@ -759,11 +759,19 @@ body:has(#app[data-theme="pack-v2"]) {
   margin-bottom: 16px;
   overflow: visible;
 }
+#app[data-density="airy-v2"] .community-nav {
+  gap: 10px;
+  margin-bottom: 16px;
+}
 #app[data-density="airy-v2"] #community-tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  display: grid;
+  overflow: visible;
+}
+#app[data-density="airy-v2"] #community-tabs[data-community-section="market"] {
+  grid-template-columns: 1fr 1fr;
+}
+#app[data-density="airy-v2"] #community-tabs[data-community-section="race"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 #app[data-density="airy-v2"] .contained-tabs button {
@@ -892,8 +900,14 @@ body:has(#app[data-theme="pack-v2"]) {
   }
 
   #app[data-density="airy-v2"] #community-tabs {
-    display: flex;
-    overflow-x: auto;
+    display: grid;
+    overflow: visible;
+  }
+  #app[data-density="airy-v2"] #community-tabs[data-community-section="market"] {
+    grid-template-columns: 1fr 1fr;
+  }
+  #app[data-density="airy-v2"] #community-tabs[data-community-section="race"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   #app[data-density="airy-v2"] .contained-tabs button {
@@ -903,13 +917,6 @@ body:has(#app[data-theme="pack-v2"]) {
     font-size: 10px;
     line-height: 1.15;
     white-space: normal;
-  }
-
-  #app[data-density="airy-v2"] #community-tabs button {
-    flex: 0 0 auto;
-    min-width: max-content;
-    padding-inline: 10px;
-    white-space: nowrap;
   }
 
   .studio-meta-desk,
@@ -986,6 +993,12 @@ body:has(#app[data-theme="pack-v2"]) {
 .avatar-choice.locked {
   opacity: 0.45;
   cursor: not-allowed;
+}
+.avatar-choice small {
+  display: block;
+  color: color-mix(in srgb, var(--pack-umber, #3c3026) 72%, transparent);
+  font: 500 9px/1.15 "IBM Plex Sans Hebrew", sans-serif;
+  white-space: normal;
 }
 
 .studio-meta-desk {

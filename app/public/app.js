@@ -59,6 +59,7 @@ const model = {
   binderPage: 0,
   achievementPage: 0,
   communityPage: "trade",
+  communitySection: "market",
   eventPage: "active",
   reviewFilter: "all",
   selectedStudioPartyId: null,
@@ -192,6 +193,7 @@ const elements = {
   achievementGrid: document.querySelector("#achievement-grid"),
   achievementPager: document.querySelector("#achievement-pager"),
   communityTabs: document.querySelector("#community-tabs"),
+  communitySections: document.querySelector("#community-sections"),
   earnedBadgeRail: document.querySelector("#earned-badge-rail"),
   earnedBadgeList: document.querySelector("#earned-badge-list"),
   levelNumber: document.querySelector("#level-number"),
@@ -1561,6 +1563,12 @@ function renderAvatarSeal() {
   elements.levelAvatarButton?.classList.toggle("has-faction-seal", view.showBlankSeal);
 }
 
+function rankNameAtLevel(level) {
+  const ranks = model.gameConfig?.progression?.rankNames || model.gameConfig?.progression?.ranks || [];
+  const name = ranks[Math.max(0, Number(level) - 1)];
+  return name || "";
+}
+
 function renderAvatarPicker() {
   if (!elements.avatarPicker) return;
   const avatars = model.serverState?.avatars || [];
@@ -1569,7 +1577,7 @@ function renderAvatarPicker() {
     <button type="button" class="avatar-choice${avatar.unlocked ? "" : " locked"}${avatar.id === selected ? " selected" : ""}" data-avatar-id="${avatar.id}" ${avatar.unlocked ? "" : "disabled"} aria-pressed="${avatar.id === selected}">
       <img src="${avatarUrl(avatar)}" alt="" />
       <span>${escapeHtml(avatar.nameHe)}</span>
-      ${avatar.unlocked ? "" : `<small>רמה ${avatar.unlockLevel}</small>`}
+      ${avatar.unlocked ? "" : `<small>${escapeHtml(rankNameAtLevel(avatar.unlockLevel) || `רמה ${avatar.unlockLevel}`)}</small>`}
     </button>`).join("");
 }
 
@@ -1732,8 +1740,25 @@ function scheduleIdleNotification() {
   idleNotifyTimer = setTimeout(() => notifyIdleReady(nextIdleAt), Math.min(when - Date.now(), 2_000_000_000));
 }
 
+const COMMUNITY_SECTIONS = {
+  market: ["trade", "open-trades"],
+  race: ["leagues", "collectors", "challenge", "faction"],
+};
+
+function communitySectionFor(page) {
+  return COMMUNITY_SECTIONS.race.includes(page) ? "race" : "market";
+}
+
+function showCommunitySection(section) {
+  const pages = COMMUNITY_SECTIONS[section] || COMMUNITY_SECTIONS.market;
+  if (!pages.includes(model.communityPage)) model.communityPage = pages[0];
+  model.communitySection = section;
+  renderGrowth();
+}
+
 function showLeaguesCommunity() {
   model.communityPage = "leagues";
+  model.communitySection = "race";
   showView("growth");
 }
 
@@ -4002,6 +4027,8 @@ function renderFactionMembers() {
 }
 
 function syncCommunityPage() {
+  const section = communitySectionFor(model.communityPage);
+  model.communitySection = section;
   const communityClasses = {
     trade: ".trade-desk",
     "open-trades": ".open-trades-desk",
@@ -4013,11 +4040,19 @@ function syncCommunityPage() {
   for (const [page, selector] of Object.entries(communityClasses)) {
     document.querySelector(selector)?.toggleAttribute("hidden", page !== model.communityPage);
   }
-  elements.communityTabs?.querySelectorAll("[data-community-page]").forEach((button) => {
-    const active = button.dataset.communityPage === model.communityPage;
+  elements.communitySections?.querySelectorAll("[data-community-section]").forEach((button) => {
+    const active = button.dataset.communitySection === section;
     button.classList.toggle("active", active);
     button.setAttribute("aria-selected", String(active));
-    button.tabIndex = active ? 0 : -1;
+  });
+  elements.communityTabs?.setAttribute("data-community-section", section);
+  elements.communityTabs?.querySelectorAll("[data-community-page]").forEach((button) => {
+    const inSection = button.dataset.communitySection === section;
+    const active = button.dataset.communityPage === model.communityPage;
+    button.hidden = !inSection;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active && inSection));
+    button.tabIndex = active && inSection ? 0 : -1;
   });
 }
 
@@ -6341,7 +6376,10 @@ document.querySelector(".today-docket").addEventListener("click", (event) => {
     claimTodaySpecial().catch(() => showToast("לא הצלחנו לאסוף את הקלף המיוחד."));
     return;
   }
-  if (hook.dataset.communityPage) model.communityPage = hook.dataset.communityPage;
+  if (hook.dataset.communityPage) {
+    model.communityPage = hook.dataset.communityPage;
+    model.communitySection = communitySectionFor(hook.dataset.communityPage);
+  }
   elements.navButtons.find((button) => button.dataset.nav === hook.dataset.todayNav)?.click();
   if (hook.dataset.communityPage) renderGrowth();
 });
@@ -6561,10 +6599,17 @@ elements.achievementPager.addEventListener("click", (event) => {
   renderAchievements();
 });
 
+elements.communitySections?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-community-section]");
+  if (!button) return;
+  showCommunitySection(button.dataset.communitySection);
+  pollWatchedTrade().catch(() => {});
+});
 elements.communityTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-community-page]");
   if (!button) return;
   model.communityPage = button.dataset.communityPage;
+  model.communitySection = communitySectionFor(button.dataset.communityPage);
   renderGrowth();
   pollWatchedTrade().catch(() => {});
 });

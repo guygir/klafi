@@ -17,12 +17,12 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-73"></script>
+  <script src="/boot-warmup.js?v=card-surface-74"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-73" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-73" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-74" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-74" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -228,13 +228,19 @@
           </div>
         </div>
         <p id="growth-empty" class="empty-note" hidden>טוענים את הקהילה…</p>
-        <div id="community-tabs" class="contained-tabs" role="tablist" aria-label="אזורי הקהילה">
-          <button id="community-tab-trade" type="button" role="tab" aria-selected="true" aria-controls="community-panel-trade" tabindex="0" data-community-page="trade" class="active">החלפות</button>
-          <button id="community-tab-open-trades" type="button" role="tab" aria-selected="false" aria-controls="community-panel-open-trades" tabindex="-1" data-community-page="open-trades">הצעות פתוחות</button>
-          <button id="community-tab-faction" type="button" role="tab" aria-selected="false" aria-controls="community-panel-faction" tabindex="-1" data-community-page="faction">מפלגות</button>
-          <button id="community-tab-collectors" type="button" role="tab" aria-selected="false" aria-controls="community-panel-collectors" tabindex="-1" data-community-page="collectors">אספנים</button>
-          <button id="community-tab-leagues" type="button" role="tab" aria-selected="false" aria-controls="community-panel-leagues" tabindex="-1" data-community-page="leagues">ליגות</button>
-          <button id="community-tab-challenge" type="button" role="tab" aria-selected="false" aria-controls="community-panel-challenge" tabindex="-1" data-community-page="challenge">האתגר היומי</button>
+        <div class="community-nav">
+          <div id="community-sections" class="contained-tabs community-sections" role="tablist" aria-label="אזורי הקהילה">
+            <button id="community-section-market" type="button" role="tab" aria-selected="true" aria-controls="community-tabs" data-community-section="market" class="active">החלפות</button>
+            <button id="community-section-race" type="button" role="tab" aria-selected="false" aria-controls="community-tabs" data-community-section="race">המרוץ</button>
+          </div>
+          <div id="community-tabs" class="contained-tabs" role="tablist" aria-label="מסכי הקהילה" data-community-section="market">
+            <button id="community-tab-trade" type="button" role="tab" aria-selected="true" aria-controls="community-panel-trade" tabindex="0" data-community-page="trade" data-community-section="market" class="active">החלפות</button>
+            <button id="community-tab-open-trades" type="button" role="tab" aria-selected="false" aria-controls="community-panel-open-trades" tabindex="-1" data-community-page="open-trades" data-community-section="market">הצעות פתוחות</button>
+            <button id="community-tab-leagues" type="button" role="tab" aria-selected="false" aria-controls="community-panel-leagues" tabindex="-1" data-community-page="leagues" data-community-section="race">ליגות</button>
+            <button id="community-tab-collectors" type="button" role="tab" aria-selected="false" aria-controls="community-panel-collectors" tabindex="-1" data-community-page="collectors" data-community-section="race">אספנים</button>
+            <button id="community-tab-challenge" type="button" role="tab" aria-selected="false" aria-controls="community-panel-challenge" tabindex="-1" data-community-page="challenge" data-community-section="race">האתגר</button>
+            <button id="community-tab-faction" type="button" role="tab" aria-selected="false" aria-controls="community-panel-faction" tabindex="-1" data-community-page="faction" data-community-section="race">מפלגות</button>
+          </div>
         </div>
         <div class="growth-grid">
           <article id="community-panel-trade" class="work-card trade-desk" role="tabpanel" aria-labelledby="community-tab-trade" tabindex="0">
@@ -722,6 +728,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-73"></script>
+  <script type="module" src="/app.js?v=card-surface-74"></script>
 </body>
 </html>
