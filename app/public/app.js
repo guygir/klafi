@@ -2115,6 +2115,7 @@ function partyRegister() {
       displayNameEn: card.setName || card.set,
       requestedLetters: card.letters ? [card.letters] : [],
       pip: card.pip || null,
+      letterChip: factionLetterArt({ id: card.set }),
     });
   }
   return [...parties.values()];

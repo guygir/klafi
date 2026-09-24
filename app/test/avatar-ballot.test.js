@@ -22,16 +22,27 @@ test("avatar ballot is hidden without a faction and visible for every party", ()
 
   const democrats = avatarBallotState({
     id: "DEM",
-    requestedLetters: ["כן"],
+    requestedLetters: ["אמת"],
   });
   assert.equal(democrats.visible, true);
-  assert.equal(democrats.showLetterArt, false);
-  assert.equal(democrats.showLetterText, true);
-  assert.equal(democrats.letters, "כן");
+  assert.equal(democrats.showLetterArt, true);
+  assert.equal(democrats.showLetterText, false);
+  assert.equal(democrats.art, "ballot-letter-dem.png");
+  assert.equal(democrats.letters, "אמת");
 
-  const bare = avatarBallotState({ id: "YSR" });
-  assert.equal(bare.visible, true);
-  assert.equal(bare.showBlankSeal, true);
+  const yashar = avatarBallotState({ id: "YSR" });
+  assert.equal(yashar.visible, true);
+  assert.equal(yashar.showLetterArt, true);
+  assert.equal(yashar.art, "ballot-letter-ysr.png");
+  assert.equal(yashar.letters, "דרך");
+
+  const reservists = avatarBallotState({
+    id: "RSE",
+    requestedLetters: ["די"],
+  });
+  assert.equal(reservists.showLetterArt, false);
+  assert.equal(reservists.showLetterText, true);
+  assert.equal(reservists.letters, "די");
 });
 
 test("slim home session mapping keeps the player faction", () => {

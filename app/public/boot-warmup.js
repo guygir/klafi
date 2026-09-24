@@ -39,3 +39,22 @@ window.__kalpiWarmup.catalog.then((catalog) => {
     image.src = `/design-assets/${encodeURIComponent(card.artKey)}`;
   }
 }).catch(() => {});
+for (const chip of [
+  "ballot-letter-ysr.png",
+  "ballot-letter-lik.png",
+  "ballot-letter-byd.png",
+  "ballot-letter-yb.png",
+  "ballot-letter-dem.png",
+  "ballot-letter-rz.png",
+  "ballot-letter-otz.png",
+  "ballot-letter-shs.png",
+  "ballot-letter-utj.png",
+  "ballot-letter-jnt.png",
+  "ballot-letter-ram.png",
+  "ballot-letter-amh.png",
+  "ballot-letter-bw.png",
+]) {
+  const image = new Image();
+  image.decoding = "async";
+  image.src = `/design-assets/${encodeURIComponent(chip)}`;
+}

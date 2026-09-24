@@ -142,6 +142,9 @@ test("Vercel copies live card art including Set 5", async () => {
   assert.ok(names.includes("hero-art-gadi-eisenkot-slot1.png"));
   assert.ok(names.includes("pack-wrapper-klafi.png"));
   assert.ok(names.includes("ballot-letter-lik.png"));
+  assert.ok(names.includes("ballot-letter-dem.png"));
+  assert.ok(names.includes("ballot-letter-ysr.png"));
+  assert.ok(names.includes("ballot-letter-bw.png"));
   assert.ok(names.includes("ballot-paper.png"));
   assert.ok(!names.includes("pack-rip-seedance-v01.mp4"));
   let set5Bytes = 0;
