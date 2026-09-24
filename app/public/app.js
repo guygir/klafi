@@ -3,6 +3,12 @@ import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ba
 import { applyIdleCountdown, formatCountdown, idleCountdownCopy, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
+import {
+  exitWalkoutSunburst,
+  resolveSunburstRarity,
+  syncWalkoutSunburst,
+  teardownWalkoutSunburst,
+} from "./walkout-sunburst.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
@@ -2654,6 +2660,7 @@ async function handlePackAction() {
       setTimeout(startWalkout, 550);
     }, 620);
   } else if (model.packPhase === "complete-card") {
+    exitWalkoutSunburst();
     if (model.previewMode) {
       model.previewMode = false;
       renderHome();
@@ -2778,6 +2785,7 @@ function maybeShowNumberedTip() {
 function startWalkout() {
   packTimers.forEach(clearTimeout);
   packTimers = [];
+  teardownWalkoutSunburst({ immediate: true });
   model.packPhase = "walkout";
   if (prefersReducedMotion()) {
     finishWalkoutCard();
@@ -2859,6 +2867,13 @@ function renderWalkoutStage() {
   }
   applyCardStage(walkoutCard, stage);
   elements.ripStage.querySelector(".walkout-receipt").classList.toggle("visible", model.walkoutStage >= 1);
+  syncWalkoutSunburst({
+    walkout: elements.ripStage.querySelector(".walkout"),
+    cardEl: walkoutCard,
+    stage,
+    rarityKey: resolveSunburstRarity(instance, card),
+    pip: card.pip,
+  });
   setPackAction("חושפים…", true, "");
 }
 

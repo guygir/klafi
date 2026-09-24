@@ -1,0 +1,150 @@
+/* Walkout sunburst rays. Overlay only — do not restyle card frames or finish chrome. */
+
+.walkout:has(> .walkout-sunburst) {
+  overflow: visible;
+}
+
+#pack-view .rip-stage,
+#rip-stage.rip-stage {
+  overflow: hidden;
+}
+
+.walkout .walkout-content {
+  position: relative;
+  z-index: 3;
+}
+
+.walkout-sunburst {
+  --ray-opacity: 0.55;
+  --sunburst-pip: var(--walkout-pip, #c43b3b);
+  --ray-frac: 0.44;
+  --sunburst-cx: 50%;
+  --sunburst-cy: 50%;
+  --sunburst-ox: 50%;
+  --sunburst-oy: 50%;
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0);
+  transform-origin: var(--sunburst-ox) var(--sunburst-oy);
+  will-change: transform, opacity;
+}
+
+.walkout-sunburst-rays {
+  --ray-pairs: 10;
+  --spin-duration: 14s;
+  position: absolute;
+  left: var(--sunburst-cx);
+  top: var(--sunburst-cy);
+  width: max(220vmax, 280%);
+  height: max(220vmax, 280%);
+  min-width: 220vmax;
+  min-height: 220vmax;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  -webkit-mask-image: radial-gradient(circle at center, #000 0 62%, transparent 96%);
+          mask-image: radial-gradient(circle at center, #000 0 62%, transparent 96%);
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--sunburst-pip) 78%, #f4efe4) 0deg 8.64deg,
+    transparent 8.64deg 36deg
+  );
+  will-change: transform, filter;
+}
+
+.walkout-sunburst-rays.is-spinning {
+  animation: walkout-sunburst-spin var(--spin-duration) linear infinite;
+}
+
+@keyframes walkout-sunburst-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes walkout-sunburst-holo-shimmer {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  40% { filter: brightness(1.28) saturate(1.15); }
+  70% { filter: brightness(1.08) saturate(1.05); }
+}
+
+.walkout-sunburst[data-rarity="holo"] .walkout-sunburst-rays.is-spinning {
+  animation:
+    walkout-sunburst-spin var(--spin-duration) linear infinite,
+    walkout-sunburst-holo-shimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes walkout-sunburst-v1-pop {
+  0%   { opacity: 0; transform: scale(0); }
+  55%  { opacity: var(--ray-opacity); transform: scale(1.05); }
+  100% { opacity: var(--ray-opacity); transform: scale(1); }
+}
+
+@keyframes walkout-sunburst-v1-exit {
+  0%   { opacity: var(--ray-opacity); transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.15); }
+}
+
+.walkout-sunburst.is-popping {
+  animation: walkout-sunburst-v1-pop 420ms cubic-bezier(0.15, 0.95, 0.35, 1.15) both;
+}
+
+.walkout-sunburst.is-visible {
+  opacity: var(--ray-opacity);
+  transform: scale(1);
+}
+
+.walkout-sunburst.is-exiting {
+  animation: walkout-sunburst-v1-exit 380ms cubic-bezier(0.4, 0, 0.7, 0.2) both;
+}
+
+html[data-walkout-sunburst="v2"] .walkout-sunburst[data-rarity="holo"] .walkout-sunburst-rays.is-spinning {
+  filter: blur(0.55px);
+}
+
+@keyframes walkout-sunburst-v2-pop {
+  0%   { opacity: 0; transform: scale(0); }
+  40%  { opacity: calc(var(--ray-opacity) * 0.85); transform: scale(1.12); }
+  70%  { opacity: var(--ray-opacity); transform: scale(0.96); }
+  100% { opacity: var(--ray-opacity); transform: scale(1); }
+}
+
+@keyframes walkout-sunburst-v2-exit {
+  0%   { opacity: var(--ray-opacity); transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.92); }
+}
+
+html[data-walkout-sunburst="v2"] .walkout-sunburst.is-popping {
+  animation: walkout-sunburst-v2-pop 680ms cubic-bezier(0.22, 1.4, 0.36, 1) both;
+}
+
+html[data-walkout-sunburst="v2"] .walkout-sunburst.is-exiting {
+  animation: walkout-sunburst-v2-exit 260ms ease-out both;
+}
+
+html[data-walkout-sunburst="v2"] .walkout-sunburst-rays {
+  -webkit-mask-image: radial-gradient(circle at center, #000 0 58%, transparent 96%);
+          mask-image: radial-gradient(circle at center, #000 0 58%, transparent 96%);
+  filter: blur(0.6px);
+}
+
+html[data-walkout-sunburst="off"] .walkout-sunburst {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .walkout-sunburst-rays.is-spinning,
+  .walkout-sunburst[data-rarity="holo"] .walkout-sunburst-rays.is-spinning {
+    animation: none;
+  }
+  .walkout-sunburst.is-popping,
+  .walkout-sunburst.is-exiting {
+    animation: none !important;
+  }
+  .walkout-sunburst.is-visible {
+    opacity: calc(var(--ray-opacity) * 0.85);
+    transform: scale(1);
+  }
+}
