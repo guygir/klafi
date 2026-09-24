@@ -33,6 +33,7 @@ import { requestOrigin, serveBinderShareLanding, servePlayerBinderShareLanding, 
 import { levelThresholds } from "./progression.js";
 import { createGithubBugFromBody } from "./github-bugs.js";
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
+import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
@@ -160,7 +161,7 @@ export function publicPartyRegister(studioContent, cards = []) {
       asOfDate: asOfDate || null,
       pip,
       letterArt: symbolCard?.artKey || null,
-      letterChip: id === "LIK" ? "ballot-letter-lik.png" : null,
+      letterChip: PARTY_BALLOTS[id]?.chip || null,
     }));
   }
   const parties = new Map();
@@ -173,6 +174,7 @@ export function publicPartyRegister(studioContent, cards = []) {
       displayNameEn: card.setName || card.set,
       requestedLetters: card.letters ? [card.letters] : [],
       pip: card.pip || null,
+      letterChip: PARTY_BALLOTS[card.set]?.chip || null,
     });
   }
   return [...parties.values()];
