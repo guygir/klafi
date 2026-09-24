@@ -657,7 +657,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.match(page.headers.get("content-type"), /^text\/html/);
   const pageHtml = await page.text();
   assert.match(pageHtml, /פתיחת קלף/);
-  assert.match(pageHtml, /קלף אחד בכל שלוש שעות/);
+  assert.match(pageHtml, /כל שלוש שעות מגיע קלף חדש/);
   const sharePage = await fetch(`${running.base}/share/LIK-M01-Q01`);
   assert.equal(sharePage.status, 200);
   assert.match(sharePage.headers.get("content-type"), /^text\/html/);

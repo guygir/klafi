@@ -1147,8 +1147,8 @@ function renderAdvocacy() {
   if (!profile) return;
   if (elements.advocacyShort) elements.advocacyShort.textContent = "";
   elements.advocacySponsor.textContent = `בחסות ${profile.sponsor}`;
-  elements.advocacyFull.textContent = "קְלָפִי מתחילה בהיכרות עובדתית, ממשיכה לעמדות ולהחלטות, ובהמשך מפרסמת גם סדרות ביקורת לפי קו עריכתי גלוי. בחירת הציטוטים אינה ניטרלית; המקור והסיווג מופיעים בכל קלף.";
-    elements.advocacyPhases.innerHTML = "<li><strong>היכרות.</strong> מנהיגים ומשנים.</li><li><strong>עומק.</strong> עמדות, החלטות ורקורדים.</li><li><strong>ביקורת.</strong> סדרות מסומנות במפורש.</li><li><strong>מקור.</strong> לכל קלף מצורף קישור; ניסוח מחדש מסומן בכוכבית.</li>";
+  elements.advocacyFull.textContent = "קְלָפִי מתחילה בהיכרות עובדתית, ממשיכה לעמדות ולהחלטות, ואחר כך מפרסמת גם סדרות ביקורת לפי קו עריכתי גלוי. בחירת הציטוטים אינה ניטרלית — בכל קלף מופיעים המקור והסיווג.";
+    elements.advocacyPhases.innerHTML = "<li><strong>היכרות —</strong> מנהיגים ומשנים.</li><li><strong>עומק —</strong> עמדות, החלטות ורקורדים.</li><li><strong>ביקורת —</strong> סדרות שמסומנות במפורש.</li><li><strong>מקור —</strong> לכל קלף מצורף קישור; ניסוח מחדש מסומן בכוכבית.</li>";
 }
 
 async function recordEvent(type, details = {}) {
@@ -1216,8 +1216,8 @@ function showSharedCard(cardId, isTradeIntent = false) {
   elements.sharedTitle.textContent = cardTitle(card);
   elements.sharedCard.innerHTML = displayCardMarkup(card);
   elements.sharedNotice.textContent = isTradeIntent
-    ? "זו תצוגה של הצעת החלפה. הבעלות לא השתנתה והקלף לא נוסף לאוסף שלכם."
-    : "זו תצוגת שיתוף בלבד. הקלף לא נוסף לאוסף שלכם.";
+    ? "זו תצוגה של הצעת החלפה. הבעלות לא השתנתה, והקלף לא נכנס לאוסף שלכם."
+    : "זו תצוגת שיתוף בלבד. הקלף לא נכנס לאוסף שלכם.";
   if (elements.sharedTrust) {
     const line = cardTrustLine(card);
     elements.sharedTrust.textContent = line;
@@ -1670,7 +1670,7 @@ function renderNotifyControl() {
       ? "הדפדפן הזה לא תומך בהתראות."
       : granted
         ? "התראה אחת תישלח כשהקלף מוכן."
-        : "אפשר לשחק בלי התראות. האוסף עדיין נשמר. באייפון: הוסיפו למסך הבית ואז הפעילו התראות.";
+        : "אפשר לשחק גם בלי התראות — האוסף עדיין נשמר. באייפון: הוסיפו למסך הבית ואז הפעילו התראות.";
   }
 }
 
@@ -1686,11 +1686,11 @@ async function ensureServiceWorker() {
 function explainUnavailableNotifications() {
   const permission = notifyPermission();
   if (permission === "unsupported") {
-    showToast("הדפדפן הזה לא תומך בהתראות. אפשר לשחק בלי התראות. האוסף עדיין נשמר.", 6000);
+    showToast("הדפדפן הזה לא תומך בהתראות. אפשר לשחק גם בלי התראות — האוסף עדיין נשמר.", 6000);
     return true;
   }
   if (permission === "denied") {
-    showToast("התראות חסומות בדפדפן. אפשר לשחק בלי התראות. האוסף עדיין נשמר. באייפון: הוסיפו למסך הבית ואז הפעילו התראות.", 6000);
+    showToast("התראות חסומות בדפדפן. אפשר לשחק גם בלי התראות — האוסף עדיין נשמר. באייפון: הוסיפו למסך הבית ואז הפעילו התראות.", 6000);
     return true;
   }
   return false;
@@ -1891,7 +1891,7 @@ async function joinLeagueFromInput(rawCode) {
     showToast("נכנסתם לליגה.");
   } catch (error) {
     setLeagueStatus(error.status === 409
-      ? "הליגה מלאה. אפשר עד 32 שחקנים."
+      ? "הליגה מלאה — אפשר עד 32 שחקנים."
       : error.status === 404
         ? "הקוד לא נמצא."
         : "לא הצלחנו להצטרף לליגה.");
@@ -2016,13 +2016,13 @@ async function openQuizDialog(retried = false) {
   try {
     const quiz = await request("/api/quiz");
     if (!quiz.available) {
-      showToast(quiz.wonToday ? "החידון היומי כבר הושלם." : "צריך קלף באוסף כדי להיבחן.");
+      showToast(quiz.wonToday ? "כבר סיימתם את החידון היומי." : "צריך קלף באוסף כדי להיבחן.");
       return;
     }
     model.currentQuiz = quiz;
     Object.keys(quizAnswers).forEach((key) => delete quizAnswers[key]);
     const card = model.byId.get(quiz.cardId);
-    elements.quizTitle.textContent = card ? cardTitle(card) : "שתי שאלות. חמש דקות.";
+    elements.quizTitle.textContent = card ? cardTitle(card) : "שתי שאלות, חמש דקות.";
     elements.quizCard.innerHTML = card ? displayCardMarkup(card) : "";
     elements.quizQuestions.innerHTML = quiz.questions.map((question) => `
       <fieldset data-quiz-question="${escapeHtml(question.id)}">
@@ -2035,7 +2035,7 @@ async function openQuizDialog(retried = false) {
       if (remaining <= 0) {
         stopQuizTimer();
         elements.quizSubmit.disabled = true;
-        elements.quizStatus.textContent = "הזמן נגמר. אפשר לנסות שוב מאוחר יותר.";
+        elements.quizStatus.textContent = "נגמר הזמן. אפשר לנסות שוב אחר כך.";
       }
     };
     stopQuizTimer();
@@ -2089,9 +2089,9 @@ async function submitQuiz() {
     } else {
       if (elements.quizFail) {
         elements.quizFail.hidden = false;
-        elements.quizFail.textContent = "לא הפעם. פתחו את גב הקלף ונסו שוב מאוחר יותר.";
+        elements.quizFail.textContent = "לא הפעם. פתחו את גב הקלף ונסו שוב אחר כך.";
       } else {
-        elements.quizStatus.textContent = "לא הפעם. פתחו את גב הקלף ונסו שוב מאוחר יותר.";
+        elements.quizStatus.textContent = "לא הפעם. פתחו את גב הקלף ונסו שוב אחר כך.";
       }
       if (elements.openQuiz) elements.openQuiz.hidden = true;
     }
@@ -2120,11 +2120,11 @@ function renderHome() {
     .filter(Boolean);
   if (elements.activeRelease) elements.activeRelease.textContent = releaseNames.join(" + ");
   elements.homeTitle.textContent = unseen > 0
-    ? unseen === 1 ? "נאסף עבורך קלף אחד." : `נאספו עבורך ${unseen} קלפים.`
+    ? unseen === 1 ? "יש לכם קלף שמחכה." : `יש לכם ${unseen} קלפים שמחכים.`
     : "הקלף הבא בדרך.";
   elements.homeCopy.textContent = available
-    ? "פותחים קלף אחד בכל פעם."
-    : "קלף אחד נאסף אוטומטית בכל שלוש שעות.";
+    ? "כל פעם פותחים קלף אחד."
+    : "כל שלוש שעות נאסף קלף אחד לבד.";
   renderSiteCardPeeks();
   renderProgression();
   renderActivity();
@@ -2221,8 +2221,8 @@ function challengeRecap() {
   const field = Math.max(1, ...bins.map(({ count }) => count));
   const hasCrowd = leaders.length >= 2;
   const meta = current
-    ? `${current.cards} קלפים · ${hasCrowd ? `מקום ${place}` : "מחכים לשחקנים נוספים"}`
-    : "עוד לא משכתם מהסיעה";
+    ? `${current.cards} קלפים · ${hasCrowd ? `מקום ${place}` : "מחכים לעוד שחקנים"}`
+    : "עוד לא אספתם מהסיעה של היום";
   return { current, place, bins, field, meta, players: leaders.length, hasCrowd };
 }
 
@@ -2233,7 +2233,7 @@ function renderChallengeRecap() {
   elements.dailyChallengeRecap.style.setProperty("--bins", String(recap.bins.length));
   const score = recap.current ? recap.current.cards : 0;
   const place = !recap.hasCrowd
-    ? "מחכים לשחקנים נוספים"
+    ? "מחכים לעוד שחקנים"
     : recap.place
     ? `מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`
     : "עוד לא בטבלה";
@@ -2244,7 +2244,7 @@ function renderChallengeRecap() {
       <b class="challenge-recap-place">${escapeHtml(place)}</b>
     </div>
     ${recap.hasCrowd ? `<div class="challenge-hist">
-      <small>איך כולם משכו היום</small>
+      <small>איך כולם אספו היום</small>
       <div class="challenge-hist-plot" dir="ltr" aria-hidden="true">
         ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
           <b style="height:${bin.count ? Math.max(4, Math.round((bin.count / recap.field) * 100)) : 0}%; animation-delay:${index * 40}ms"></b>
@@ -2287,11 +2287,11 @@ function renderTodayDocket() {
   const currentCollector = model.leaderboards?.collectors?.find(({ current }) => current);
   const collectorCrowd = (model.leaderboards?.collectors?.length || 0) >= 2;
   elements.todayLeaderHook.textContent = !collectorCrowd
-    ? "הטבלה מחכה לשחקנים נוספים"
+    ? "הטבלה מחכה לעוד שחקנים"
     : currentCollector?.rank
-    ? `אתם מקום ${currentCollector.rank}`
+    ? `אתם במקום ${currentCollector.rank}`
     : leader?.current
-      ? "אתם מקום 1"
+      ? "אתם במקום הראשון"
       : "המקום הראשון פנוי";
   elements.todayLeaderMeta.textContent = "";
   renderTodaySpecials();
@@ -2309,10 +2309,10 @@ function renderTodaySpecials() {
       ? ""
       : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
     const detail = windowOpen.claimedToday
-      ? "הקלף היומי כבר באוסף. הוא נשאר באלבום."
+      ? "הקלף היומי כבר באוסף — והוא נשאר באלבום."
       : until
-        ? `פתוח עד ${until}. קלף אחד היום.`
-        : "קלף אחד היום. הוא נשאר באלבום.";
+        ? `פתוח עד ${until}. קלף אחד להיום.`
+        : "קלף אחד להיום — והוא נשאר באלבום.";
     line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
   }
   if (elements.todaySpecialsCopy) elements.todaySpecialsCopy.textContent = line;
@@ -2465,11 +2465,11 @@ function renderProgression({ announce = false } = {}) {
   elements.levelProgressCount.textContent = `${unique}/${target}`;
   if (progression.remaining) {
     elements.levelNext.textContent = progression.remaining === 1
-      ? "גלו עוד קלף אחד חדש כדי להתקדם לרמה הבאה"
-      : `גלו עוד ${progression.remaining} קלפים חדשים כדי להתקדם לרמה הבאה`;
+      ? "חסר לכם עוד קלף חדש אחד כדי לעלות רמה"
+      : `חסרים לכם עוד ${progression.remaining} קלפים חדשים כדי לעלות רמה`;
   } else {
     elements.levelNext.textContent = progression.nextReleaseRank
-      ? `הרמה מוכנה · ${progression.nextReleaseRank} תיפתח בסדרה הבאה`
+      ? `הרמה מוכנה. ${progression.nextReleaseRank} תיפתח בסדרה הבאה`
       : "הגעתם לדרגת ראש הממשלה";
   }
   const seen = seenLevel();
@@ -2623,15 +2623,15 @@ function renderPack() {
 
     if (phase === "sealed") {
     elements.packStep.textContent = isDemo ? "חבילת הדגמה" : "קלף אחד";
-    elements.packHeading.textContent = "פותחים.";
+    elements.packHeading.textContent = "קורעים את החבילה.";
     elements.ripStage.innerHTML = sealedPackMarkup();
-    setPackAction("קריעת החבילה", false, count === 1 ? "הקלף כבר נשמר." : "הקלפים כבר נשמרו.");
+    setPackAction("קרעו את החבילה", false, count === 1 ? "הקלף כבר שמור אצלכם." : "הקלפים כבר שמורים אצלכם.");
   } else if (phase === "tearing") {
     elements.ripStage.innerHTML = sealedPackMarkup("tearing");
     setPackAction("פותחים…", true, "");
   } else if (phase === "fanned") {
     elements.packStep.textContent = `${count} קלפים`;
-    elements.packHeading.textContent = "הנה הם.";
+    elements.packHeading.textContent = "הנה הקלפים.";
     elements.ripStage.innerHTML = `<div class="fan" aria-label="קלפים סגורים">${"<span class=\"fan-card\"></span>".repeat(count)}</div>`;
     setPackAction("חושפים…", true, "");
   }
@@ -2786,7 +2786,7 @@ function startSharedWalkout(cardId, isGift = false) {
   model.previewMode = true;
   showView("pack");
   startWalkout();
-  if (isGift) showToast("תצוגת החלפה בלבד. הבעלות לא השתנתה.");
+  if (isGift) showToast("זו רק תצוגת החלפה. הבעלות לא השתנתה.");
 }
 
 function renderWalkoutStage() {
@@ -2796,7 +2796,7 @@ function renderWalkoutStage() {
   const walkout = card.walkout;
   const sourceName = walkout.sourceLabel ? `: ${walkout.sourceLabel}` : "";
   const sourceLink = walkout.sourceUrl
-    ? `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}" aria-label="${escapeHtml(`פתיחת המקור${sourceName} בכרטיסייה חדשה`)}">למקור המצורף ↗</a>`
+    ? `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}" aria-label="${escapeHtml(`פתיחת המקור${sourceName} בחלון חדש`)}">למקור המצורף ↗</a>`
     : "";
   elements.packStep.textContent = `קלף ${model.currentCardIndex + 1}`;
   elements.packCounter.textContent = `${model.currentCardIndex + 1} / ${model.currentPack.cards.length}`;
@@ -2929,7 +2929,7 @@ function formatTrustDate(value) {
 function quoteTrustLabel(card) {
   return {
     shortened: "* הציטוט קוצר; הנוסח וההקשר המלאים נמצאים במקור.",
-    "attributed-paraphrase": "* ניסוח מיוחס או פרפרזה, לא תמלול מילולי מאומת.",
+    "attributed-paraphrase": "* ניסוח מיוחס או פרפרזה — לא תמלול מילה במילה.",
   }[card.walkout?.quoteStatus] || "";
 }
 
@@ -2947,7 +2947,7 @@ function partyTrustLabel(card) {
     ? "אותיות שאושרו במאגר"
     : party.filingStatus === "submitted-pending-cec-review"
       ? "הרשימה הוגשה; במאגר היא עדיין ממתינה לבדיקת ועדת הבחירות"
-      : "סטטוס הרשימה טרם אומת במאגר";
+      : "סטטוס הרשימה עדיין לא אומת במאגר";
   const asOf = formatTrustDate(party.asOfDate);
   return [filingStatus, letters ? `${letterStatus}: ${letters}` : "", asOf ? `נכון ל־${asOf}` : ""]
     .filter(Boolean)
@@ -2998,7 +2998,7 @@ function configureSourceLink(link, card) {
   link.href = sourceUrl;
   link.textContent = "למקור המצורף ↗";
   const sourceName = card.walkout?.sourceLabel ? `: ${card.walkout.sourceLabel}` : "";
-  link.setAttribute("aria-label", `פתיחת המקור${sourceName} בכרטיסייה חדשה`);
+  link.setAttribute("aria-label", `פתיחת המקור${sourceName} בחלון חדש`);
 }
 
 function cardPresentation(card, instance = {}) {
@@ -3197,7 +3197,7 @@ function renderShowcaseBinder() {
           <div class="binder-shared-card">${catalogCardMarkup(card, "binder", numberedView)}</div>
         </button>
       </div>`).join("");
-  setEmptyNote(elements.showcaseEmpty, "אין קלפים בסינון הזה.", { hidden: visible.length > 0 });
+  setEmptyNote(elements.showcaseEmpty, "אין קלפים שמתאימים לסינון.", { hidden: visible.length > 0 });
   queueCardTextFit(elements.showcaseGrid);
   const nextStrip = elements.showcaseFilters?.querySelector(".filter-sets");
   if (nextStrip) nextStrip.scrollLeft = filterX;
@@ -3493,7 +3493,7 @@ function renderBinder() {
   }).join("");
   const visibleColumns = window.innerWidth <= 520 ? 3 : window.innerWidth <= 760 ? 5 : 6;
   elements.binderPager.innerHTML = visible.length > visibleColumns
-    ? '<span class="binder-scroll-hint">עוד קלפים מחכים למטה ↓</span>'
+    ? '<span class="binder-scroll-hint">יש עוד קלפים למטה ↓</span>'
     : "";
 
   const earned = achievementList().filter(({ earned }) => earned);
@@ -3653,27 +3653,27 @@ async function saveStudioEvents() {
 }
 
 const BADGE_COPY = {
-  "first-rip": ["חשיפה ראשונה", "חשפו קלף שנאסף."],
+  "first-rip": ["חשיפה ראשונה", "חשפו קלף שנאסף במחסן."],
   "register-five": ["חמישה באוסף", "אספו חמישה קלפים שונים."],
-  "source-check": ["בדקתי מקור", "פתחו מקור של קלף."],
-  "share-pull": ["העברתי הלאה", "שתפו קלף."],
+  "source-check": ["בדקתי מקור", "פתחו את המקור של אחד מהקלפים."],
+  "share-pull": ["העברתי הלאה", "שתפו קלף אחד."],
   "commons-complete": ["כל המנהיגים", "אספו את מנהיגי כל המפלגות."],
-  "set-chase": ["סדרה מלאה", "השלימו סדרת מפלגה."],
+  "set-chase": ["סדרה מלאה", "השלימו סדרה של מפלגה."],
   "trade-match": ["החלפה ראשונה", "השלימו החלפה עם שחקן אחר."],
   "collector-ten": ["עשרה שונים", "אספו עשרה קלפים שונים."],
   "event-first": ["מהדורה מוגבלת", "אספו קלף מאירוע."],
-  "source-three": ["קורא מקורות", "פתחו שלושה מקורות של קלפים."],
+  "source-three": ["קורא מקורות", "פתחו מקורות של שלושה קלפים."],
   "trade-three": ["שולחן החלפות", "השלימו שלוש החלפות."],
   "three-parties": ["רוחב המפה", "אספו מנהיגים משלוש מפלגות."],
-  "twenty-stars": ["עשרים כוכבים", "צברו עשרים כוכבי אוסף."],
-  "idle-eight": ["מחסן מלא", "אספו שמונה קלפים מהאיסוף האוטומטי."],
-  "first-double": ["עותק כפול", "השיגו עותק שני של אותו קלף."],
+  "twenty-stars": ["עשרים כוכבים", "הגיעו לעשרים כוכבי אוסף."],
+  "idle-eight": ["מחסן מלא", "אספו שמונה קלפים מהמחסן האוטומטי."],
+  "first-double": ["עותק כפול", "קבלו עותק שני של אותו קלף."],
   "five-leaders": ["חמש סיעות", "אספו מנהיגים מחמש מפלגות."],
   "event-three": ["שלושה אירועים", "אספו שלושה קלפי אירוע."],
   "share-three": ["שלושה שיתופים", "שתפו שלושה קלפים."],
   "rank-three": ["מצביע מעורב", "הגיעו לרמה 3."],
-  "fifty-stars": ["חמישים כוכבים", "צברו חמישים כוכבי אוסף."],
-  "binder-half": ["חצי האלבום", "השלימו מחצית מהסדרה הפעילה."],
+  "fifty-stars": ["חמישים כוכבים", "הגיעו לחמישים כוכבי אוסף."],
+  "binder-half": ["חצי האלבום", "השלימו חצי מהסדרה הפעילה."],
 };
 
 function hebrewBadge(badge) {
@@ -3929,7 +3929,7 @@ function renderTradeBoard() {
   const remaining = Math.max(0, filtered.length - start - page.length);
   elements.tradeBoard.innerHTML = page.length
     ? page.map((trade) => tradeRowMarkup(trade)).join("")
-    : `<p class="work-note">${openOffers.length ? "אין הצעות עם הסינון הזה." : "אין כרגע הצעות פתוחות."}</p>`;
+    : `<p class="work-note">${openOffers.length ? "אין הצעות שמתאימות לסינון." : "אין כרגע הצעות פתוחות."}</p>`;
   if (elements.tradeBoardPager) elements.tradeBoardPager.innerHTML = tradeBoardPagerMarkup(model.tradeBoardPage, pages, remaining);
   queueCardTextFit(elements.tradeBoard);
 }
@@ -4042,7 +4042,7 @@ function renderFactionMembers() {
   const bins = starContributionBins(scores);
   elements.factionMembers.innerHTML = bins.length
     ? factionHistMarkup(bins)
-    : '<p class="work-note">עדיין אין מי שבחר במפלגה הזו.</p>';
+    : '<p class="work-note">עדיין אף אחד לא בחר במפלגה הזו.</p>';
 }
 
 function syncCommunityPage() {
@@ -4143,7 +4143,7 @@ function renderGrowth() {
   const wantedCards = liveCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
   elements.tradeOfferedCard.innerHTML = offeredCards.length
     ? offeredCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("")
-    : '<option value="">אספו קלף קודם</option>';
+    : '<option value="">קודם אספו קלף</option>';
   if (offeredCards.some(({ id }) => id === offeredValue)) elements.tradeOfferedCard.value = offeredValue;
   elements.tradeWantedCard.innerHTML = wantedCards
     .map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("");
@@ -4177,7 +4177,7 @@ function renderGrowth() {
   if (elements.tradeActive && elements.tradeCompose) {
     elements.tradeActive.hidden = !mine;
     elements.tradeCompose.hidden = Boolean(mine);
-    elements.tradeActive.innerHTML = mine ? `${tradeRowMarkup(mine)}<p class="work-note">אפשר הצעה אחת. כשמישהו מקבל, הקלף נכנס לאוסף מיד.</p>` : "";
+    elements.tradeActive.innerHTML = mine ? `${tradeRowMarkup(mine)}<p class="work-note">אפשר הצעה אחת בכל פעם. כשמישהו מקבל, הקלף נכנס לאוסף מיד.</p>` : "";
     if (mine) queueCardTextFit(elements.tradeActive);
   }
   watchOpenTrade();
@@ -4223,15 +4223,15 @@ function renderGrowth() {
   renderChallengeRecap();
   elements.dailyChallengeBoard.innerHTML = challenge?.leaders?.length
     ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${index + 1}. ${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
-    : '<p class="work-note">עוד אין משיכות מהסיעה היומית.</p>';
+    : '<p class="work-note">עוד אף אחד לא אסף מהסיעה של היום.</p>';
 
   const specialDescriptions = {
     "prestige-legacy": "דמויות פוליטיות מתקופות שונות.",
-    mouthpieces: "סיווג עריכתי גלוי של אנשי תקשורת ומסרים.",
-    "satire-imitations": "דמויות סאטיריות, לא ציטוטים של הפוליטיקאים.",
-    "legendary-aces": "קלפי קידום הזמינים רק באירועים.",
-    records: "עובדות מספריות ורקורדים עם יחידת המדידה וההסתייגות על הקלף.",
-    "current-ministers": "תפקיד נוכחי לצד תוצאה שנמדדה בתקופת הכהונה, ללא טענת סיבתיות אוטומטית.",
+    mouthpieces: "סיווג עריכתי גלוי של אנשי תקשורת ושל מסרים.",
+    "satire-imitations": "דמויות סאטיריות — לא ציטוטים של הפוליטיקאים עצמם.",
+    "legendary-aces": "קלפי קידום שזמינים רק באירועים.",
+    records: "עובדות מספריות ורקורדים, עם יחידת המדידה וההסתייגות על הקלף.",
+    "current-ministers": "תפקיד נוכחי לצד תוצאה שנמדדה בכהונה — בלי לטעון שהתפקיד גרם לתוצאה.",
   };
   if (elements.specialsGrid) elements.specialsGrid.innerHTML = (model.specials.sets || []).map((set) => `
     <section class="special-set">
@@ -4395,7 +4395,7 @@ function populateLevelIncrements() {
     <label>${escapeHtml(set.nameHe)}
       <input type="number" min="0" max="20" data-level-increment="${escapeHtml(set.id)}" value="${increments[set.id] ?? 0}" />
     </label>`).join("")}
-    <p class="work-note">תקרת רמה = סכום התוספות של סדרות שפתוחות לאיסוף. ברירת המחדל 1 לכל סדרה — הטקסט «גלו עוד N קלפים» הוא הסף, לא משקל נסתר. סדרה חדשה מוסיפה רמה אחת.</p>`;
+    <p class="work-note">תקרת רמה = סכום התוספות של סדרות שפתוחות לאיסוף. ברירת המחדל 1 לכל סדרה — הטקסט «חסרים לכם עוד N קלפים» הוא הסף, לא משקל נסתר. סדרה חדשה מוסיפה רמה אחת.</p>`;
   if (elements.rankNames) {
     elements.rankNames.value = (model.gameConfig.progression?.rankNames || model.gameConfig.progression?.ranks || []).join("\n");
   }
@@ -5486,7 +5486,7 @@ async function submitBugReport(event) {
   } catch (error) {
     if (elements.bugStatus) {
       elements.bugStatus.textContent = error.status === 429
-        ? "נסו שוב מחר. יש מגבלה של שלושה דיווחים ביום."
+        ? "נסו שוב מחר — יש מגבלה של שלושה דיווחים ביום."
         : error.status === 503
           ? "דיווח הבאגים עדיין לא מוכן."
           : "לא הצלחנו לשלוח. נסו שוב.";
@@ -5607,7 +5607,7 @@ async function makeShareImage(card) {
   context.font = "500 20px 'IBM Plex Sans'";
   context.textAlign = "center";
   context.fillText("מהדורת עמדה גלויה", 270, 1240);
-  context.fillText("פותחים מקור · מכירים את הרשימה", 810, 1240);
+  context.fillText("פותחים את המקור · מכירים את הרשימה", 810, 1240);
 
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }
@@ -6108,7 +6108,7 @@ async function sendPendingShare() {
     }
     await copyText(pendingShare.text);
     openWhatsAppText(pendingShare.text);
-    showToast("וואטסאפ נפתח עם הטקסט והקישור. צרפו את התמונה מהשמירה.");
+    showToast("וואטסאפ נפתח עם הטקסט והקישור. צרפו את התמונה ששמרתם.");
     return;
   }
   if (pendingShare.channel === "instagram") {

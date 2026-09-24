@@ -69,15 +69,15 @@
           <span id="level-progress"></span>
           <b id="level-progress-count">0/2</b>
         </div>
-        <small id="level-next">גלו עוד 2 קלפים חדשים כדי להתקדם לרמה הבאה</small>
+        <small id="level-next">חסרים לכם עוד 2 קלפים חדשים כדי לעלות רמה</small>
       </div>
     </section>
 
     <main id="main" tabindex="-1">
       <section id="loading-view" class="view centered" aria-live="polite">
         <div class="ballot-loader" aria-hidden="true"><span></span></div>
-        <p class="eyebrow">הקלף נשמר בשרת</p>
-        <h1>מכינים את הקלפים.</h1>
+        <p class="eyebrow">האוסף שמור בשרת</p>
+        <h1>מכינים לכם את הקלפים.</h1>
       </section>
 
       <section id="home-view" class="view active">
@@ -92,11 +92,11 @@
             <p class="eyebrow" id="today-label">האיסוף האוטומטי</p>
             <div class="home-title-row" id="today-open-cue">
               <div class="today-open-copy">
-                <h1 id="home-title">הקלפים נאספים גם כשאתם לא כאן.</h1>
+                <h1 id="home-title">גם כשאתם לא פה, הקלפים ממשיכים להיאסף.</h1>
                 <p id="cooldown-copy" class="next-pack-clock is-clock">הבא בעוד 03:00:00</p>
               </div>
             </div>
-            <p class="lede" id="home-copy">קלף אחד בכל שלוש שעות.</p>
+            <p class="lede" id="home-copy">כל שלוש שעות מגיע קלף חדש.</p>
             <div class="collection-line">
               <span id="collection-count">0 / 204 קלפים</span>
               <div class="progress" aria-hidden="true"><span id="collection-progress"></span></div>
@@ -126,20 +126,20 @@
         <section class="today-docket" aria-labelledby="today-docket-title">
           <header>
             <p class="eyebrow">היום בקְלָפִי</p>
-            <h2 id="today-docket-title">המרוץ היומי.</h2>
+            <h2 id="today-docket-title">המרוץ של היום.</h2>
           </header>
           <div class="today-docket-list">
             <button type="button" class="today-docket-row" data-today-nav="growth" data-community-page="challenge">
               <span id="today-challenge-visual" class="today-docket-visual" aria-hidden="true"></span>
               <span class="today-docket-label">היום אוספים:</span>
               <strong id="today-challenge-hook">הסיעה של היום</strong>
-              <small id="today-challenge-meta">הטבלה נפתחת</small>
+              <small id="today-challenge-meta">הטבלה מתמלאת</small>
               <em class="today-docket-go">למירוץ</em>
             </button>
             <button type="button" class="today-docket-row" data-today-nav="growth" data-community-page="collectors">
               <span class="today-docket-visual" aria-hidden="true"><img src="/design-assets/hero-art-knesset.png" alt="" loading="lazy" /></span>
-              <span class="today-docket-label">טבלת מובילים:</span>
-              <strong id="today-leader-hook">המרוץ עוד פתוח</strong>
+              <span class="today-docket-label">טבלת המובילים:</span>
+              <strong id="today-leader-hook">המרוץ עדיין פתוח</strong>
               <small id="today-leader-meta">טבלת האספנים</small>
               <em class="today-docket-go">לטבלה</em>
             </button>
@@ -151,22 +151,22 @@
         <div class="pack-header">
           <div>
             <p class="eyebrow" id="pack-step">קלף אחד</p>
-            <h1 id="pack-heading">פותחים.</h1>
+            <h1 id="pack-heading">קורעים את החבילה.</h1>
           </div>
           <span id="pack-counter" class="pack-counter">0 / 1</span>
         </div>
         <div id="rip-stage" class="rip-stage" aria-live="polite"></div>
         <div class="action-dock">
-          <button id="pack-action" class="primary-action" type="button">קריעת החבילה</button>
-          <p id="pack-hint" class="action-note">הקלף כבר נשמר.</p>
+          <button id="pack-action" class="primary-action" type="button">קרעו את החבילה</button>
+          <p id="pack-hint" class="action-note">הקלף כבר שמור אצלכם.</p>
         </div>
       </section>
 
       <section id="shared-view" class="view shared-showcase">
         <p class="eyebrow">קלף ששותף איתכם</p>
-        <h1 id="shared-title">רק מסתכלים.</h1>
+        <h1 id="shared-title">רק הצצה — בלי האוסף.</h1>
         <div id="shared-card" class="shared-card"></div>
-        <p id="shared-notice" class="shared-notice">הקלף הזה לא נוסף לאוסף שלכם.</p>
+        <p id="shared-notice" class="shared-notice">הקלף הזה לא נכנס לאוסף שלכם.</p>
         <p id="shared-trust" class="card-trust-note" hidden></p>
         <a id="shared-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
         <button id="shared-open-game" class="primary-action narrow" type="button">לאיסוף שלי</button>
@@ -175,8 +175,8 @@
       <section id="showcase-view" class="view showcase-binder">
         <div class="showcase-head">
           <p class="eyebrow">תצוגת האלבום</p>
-          <h1>האלבום המלא.</h1>
-          <p id="showcase-notice" class="shared-notice">זו תצוגה בלבד. אין כאן שחקן במשחק — בלי דירוג. ספירת המחזיקים אמיתית, והממוספרים הם קטגוריה נפרדת.</p>
+          <h1>כל האלבום.</h1>
+          <p id="showcase-notice" class="shared-notice">זו תצוגה בלבד: אין כאן שחקן במשחק, ואין דירוג. ספירת המחזיקים אמיתית, והממוספרים הם קטגוריה נפרדת.</p>
           <p id="showcase-count" class="showcase-count"></p>
           <button id="showcase-open-game" class="primary-action narrow" type="button">לאיסוף שלי</button>
         </div>
@@ -203,7 +203,7 @@
         <div class="binder-head">
           <div>
             <p class="eyebrow" id="binder-eyebrow">האוסף שלי</p>
-            <h1 id="binder-title">האלבום.</h1>
+            <h1 id="binder-title">הקלפים שאספתם.</h1>
           </div>
         </div>
         <div id="binder-filters" class="filter-strip" aria-label="סינון האוסף לפי סדרה או מפלגה"></div>
@@ -214,7 +214,7 @@
 
       <section id="achievements-view" class="view">
         <p class="eyebrow">הישגים</p>
-        <h1>התגים שלי.</h1>
+        <h1>התגים שהרווחתם.</h1>
         <p id="achievements-empty" class="empty-note" hidden>טוענים את התגים…</p>
         <div id="achievement-grid" class="achievement-grid"></div>
         <div id="achievement-pager" class="view-pager" aria-label="עמודי ההישגים"></div>
@@ -224,7 +224,7 @@
         <div class="workspace-head">
           <div>
             <p class="eyebrow">קהילה</p>
-            <h1>משחקים יחד.</h1>
+            <h1>כאן משחקים עם אחרים.</h1>
           </div>
         </div>
         <p id="growth-empty" class="empty-note" hidden>טוענים את הקהילה…</p>
@@ -245,7 +245,7 @@
         <div class="growth-grid">
           <article id="community-panel-trade" class="work-card trade-desk" role="tabpanel" aria-labelledby="community-tab-trade" tabindex="0">
             <p class="work-kicker">החלפות</p>
-            <h2>מפרסמים עסקה שלכם.</h2>
+            <h2>פרסמו הצעת החלפה.</h2>
             <div id="trade-preview" class="trade-preview" hidden></div>
             <div id="trade-active" class="trade-active" hidden></div>
             <div id="trade-compose" class="trade-compose">
@@ -273,15 +273,15 @@
               </div>
               <p id="trade-board-hint" class="work-note" hidden></p>
               <div class="trade-actions">
-                <button id="trade-create" class="primary-action" type="button">פרסום החלפה</button>
+                <button id="trade-create" class="primary-action" type="button">פרסמו החלפה</button>
                 <button id="trade-demo" class="secondary-action" type="button" hidden>קישור לדוגמה</button>
               </div>
             </div>
           </article>
           <article id="community-panel-open-trades" class="work-card open-trades-desk" role="tabpanel" aria-labelledby="community-tab-open-trades" tabindex="0" hidden>
             <p class="work-kicker">הצעות פתוחות</p>
-            <h2>עסקאות שאחרים פרסמו.</h2>
-            <p class="work-note">זה הלוח הציבורי, כולל ההצעה שלכם אם פרסמתם. בוחרים הצעה ומאשרים — רק אז הקלפים מתחלפים. בלי אישור אף קלף לא זז, וקלף ששותף איתכם לא נכנס לאוסף.</p>
+            <h2>הצעות ששחקנים אחרים פרסמו.</h2>
+            <p class="work-note">זה הלוח הציבורי — גם ההצעה שלכם, אם פרסמתם. בוחרים הצעה ומאשרים, ורק אז הקלפים מתחלפים. בלי אישור אף קלף לא זז, וקלף ששותף איתכם לא נכנס לאוסף.</p>
             <div id="trade-board-toolbar" class="trade-board-toolbar" hidden>
               <label>מקבלים
                 <select id="trade-board-offered" aria-label="סינון לפי הקלף שאתם מקבלים">
@@ -312,14 +312,14 @@
           </article>
           <article id="community-panel-faction" class="work-card faction-desk" role="tabpanel" aria-labelledby="community-tab-faction" tabindex="0">
             <p class="work-kicker">מלחמת המפלגות</p>
-            <h2>לאיזו מפלגה ייספרו כוכבי האוסף?</h2>
+            <h2>לאיזו מפלגה ייכנסו כוכבי האוסף?</h2>
             <div class="faction-pick-row">
               <label class="field-label" for="faction-select">בחירה אנונימית</label>
               <select id="faction-select"></select>
               <button id="save-faction" class="primary-action" type="button">בחירה</button>
             </div>
-            <p id="faction-cec-note" class="work-note">נקודות המפלגה הן כוכבי האוסף של מי שבחרו במפלגה.</p>
-            <h3 class="faction-board-title" id="faction-members-title">מי אסף הכי הרבה כוכבים עבור המפלגה?</h3>
+            <p id="faction-cec-note" class="work-note">נקודות המפלגה מגיעות מכוכבי האוסף של מי שבחר בה.</p>
+            <h3 class="faction-board-title" id="faction-members-title">מי הביא הכי הרבה כוכבים למפלגה?</h3>
             <div id="faction-members" class="faction-member-board" aria-live="polite"></div>
             <div id="faction-board" class="leaderboard-list" hidden></div>
           </article>
@@ -329,8 +329,8 @@
           </article>
           <article id="community-panel-leagues" class="work-card league-desk" role="tabpanel" aria-labelledby="community-tab-leagues" tabindex="0" hidden>
             <p class="work-kicker">הליגה שלכם</p>
-            <h2 id="community-leagues-title">אותה טבלה, חדר קטן יותר.</h2>
-            <p class="work-note">הכוכבים כבר נספרו בשרת. פותחים ליגה, או נכנסים עם קוד ו־QR.</p>
+            <h2 id="community-leagues-title">אותה טבלה — רק בחדר קטן יותר.</h2>
+            <p class="work-note">הכוכבים כבר נספרים בשרת. פותחים ליגה, או נכנסים עם קוד ו־QR.</p>
             <details class="league-setup" open>
               <summary>פתיחה או הצטרפות</summary>
               <label class="field-label" for="league-name-input">שם הליגה</label>
@@ -361,7 +361,7 @@
         <article class="studio-share-binder" id="studio-share-binder">
           <p class="work-kicker">שיתוף האלבום המלא</p>
           <h2>קישור לתצוגה בלבד</h2>
-          <p>לא שחקן במשחק. כל הקלפים החיים, כולל ממוספרים אפשריים. בלי דירוג.</p>
+          <p>אין כאן שחקן במשחק. כל הקלפים החיים, כולל ממוספרים אפשריים — בלי דירוג.</p>
           <a id="studio-share-binder-link" class="studio-share-binder-link" href="/share/binder" target="_blank" rel="noopener">/share/binder</a>
           <button id="studio-share-binder-copy" type="button">העתקת הקישור</button>
         </article>
@@ -540,8 +540,8 @@
       <section id="error-view" class="view centered" role="alert">
         <p class="eyebrow">המשחק לא נטען</p>
         <h1 id="error-title">משהו השתבש.</h1>
-        <p id="error-copy" class="lede">האוסף עדיין שמור. נסו שוב.</p>
-        <button id="retry" class="primary-action narrow" type="button">ניסיון נוסף</button>
+        <p id="error-copy" class="lede">האוסף עדיין שמור. אפשר לנסות שוב.</p>
+        <button id="retry" class="primary-action narrow" type="button">נסו שוב</button>
       </section>
     </main>
     <div class="top-nav-row">
@@ -606,12 +606,12 @@
     <button id="close-bug" class="dialog-close" type="button" aria-label="סגירת הדיווח">×</button>
     <p class="eyebrow">תיקון פתוח</p>
     <h2 id="bug-dialog-title">דיווח באג</h2>
-    <p class="lede">כתבו מה לא עבד. זה נפתח כפנייה בגיטהאב.</p>
+    <p class="lede">כתבו מה לא עבד — זה נפתח כפנייה בגיטהאב.</p>
     <form id="bug-form">
       <label for="bug-nickname">שם (לא חובה)</label>
       <input id="bug-nickname" name="nickname" maxlength="80" autocomplete="nickname" placeholder="אלמוני" />
       <label for="bug-details">מה קרה?</label>
-      <textarea id="bug-details" name="details" maxlength="500" rows="5" required placeholder="מה ראיתם, ומה ציפיתם שיהיה."></textarea>
+      <textarea id="bug-details" name="details" maxlength="500" rows="5" required placeholder="מה ראיתם, ומה ציפיתם שיהיה?"></textarea>
       <input id="bug-website" name="website" tabindex="-1" autocomplete="off" class="visually-hidden" aria-hidden="true" />
       <p id="bug-count" class="profile-error" aria-live="polite">0/500</p>
       <p id="bug-status" class="profile-error" role="status"></p>
@@ -639,11 +639,11 @@
       <p class="profile-name-label">הפנים שלכם</p>
       <div id="avatar-picker" class="avatar-picker"></div>
       <p id="profile-error" class="profile-error" role="alert"></p>
-      <button class="primary-action" type="submit">שמירת הפרופיל</button>
+      <button class="primary-action" type="submit">שמרו את הפרופיל</button>
     </form>
     <section class="profile-binder-share" aria-labelledby="profile-binder-share-title">
       <h3 id="profile-binder-share-title">האלבום הציבורי</h3>
-      <p>קישור לאלבום שלכם. מי שיש לו אותו רואה את הקלפים שנאספו, בלי קוד השחזור.</p>
+      <p>קישור לאלבום שלכם. מי שיש לו את הקישור רואה את הקלפים שנאספו — בלי קוד השחזור.</p>
       <label class="profile-name-label" for="binder-share-url">קישור לאלבום</label>
       <div class="copy-field profile-recovery-row">
         <input id="binder-share-url" dir="ltr" readonly spellcheck="false" autocomplete="off" />
@@ -668,8 +668,8 @@
     </section>
     <section class="profile-notify" aria-labelledby="profile-notify-title">
       <h3 id="profile-notify-title">התראות</h3>
-      <p>הודעה אחת כשהקלף מוכן לאיסוף. אפשר לשחק בלי התראות. האוסף עדיין נשמר.</p>
-      <p class="profile-recovery-note">באייפון צריך קודם להוסיף למסך הבית כדי לקבל התראות כשהדף סגור.</p>
+      <p>הודעה אחת כשהקלף מוכן לאיסוף. אפשר לשחק גם בלי התראות — האוסף עדיין נשמר.</p>
+      <p class="profile-recovery-note">באייפון צריך קודם להוסיף למסך הבית, כדי לקבל התראות כשהדף סגור.</p>
       <button id="enable-idle-notify" class="secondary-action" type="button">להפעיל התראות</button>
       <p id="notify-status" class="profile-recovery-note" role="status"></p>
     </section>
@@ -679,9 +679,9 @@
     <button id="close-trust" class="dialog-close" type="button" aria-label="סגירת ההסבר">×</button>
     <p class="eyebrow">איך לקרוא את הקלף</p>
     <h2 id="trust-dialog-title">מה מסמנת הכוכבית?</h2>
-    <p>כוכבית על ציטוט אומרת שהנוסח קוצר, או שהוא ניסוח מיוחס ולא תמלול מילולי מאומת.</p>
-    <p>ההקשר המלא, התאריך והמקור המצורף נפתחים מקישור המקור שעל הקלף.</p>
-    <p>כשסטטוס האותיות של הרשימה רלוונטי, הוא נלקח ממאגר ועדת הבחירות ולא מומצא במשחק.</p>
+    <p>כוכבית על ציטוט אומרת שהנוסח קוצר, או שזה ניסוח מיוחס — לא תמלול מילה במילה.</p>
+    <p>ההקשר המלא, התאריך והמקור נפתחים מקישור המקור שעל הקלף.</p>
+    <p>כשסטטוס האותיות של הרשימה רלוונטי, הוא מגיע ממאגר ועדת הבחירות — לא מומצא במשחק.</p>
   </dialog>
 
   <dialog id="advocacy-dialog" class="policy-dialog" aria-labelledby="advocacy-sponsor" aria-describedby="advocacy-full">
@@ -691,7 +691,7 @@
     <p id="advocacy-full"></p>
     <h3>איך התוכן נבחר?</h3>
     <ol id="advocacy-phases"></ol>
-    <p class="policy-lock">אותם כללי משחק ואותו תוכן לכל השחקנים. הפעילות המוצגת נמדדת בפועל.</p>
+    <p class="policy-lock">אותם כללי משחק ואותו תוכן לכולם. הפעילות שמוצגת נמדדת בפועל.</p>
   </dialog>
 
   <dialog id="wait-dialog" class="policy-dialog wait-dialog" aria-live="assertive" aria-busy="true">
@@ -699,7 +699,7 @@
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <aside id="numbered-tip" class="numbered-tip" hidden>
-    <p>עותק ממוספר. המספר אומר כמה כאלה יצאו בעולם.</p>
+    <p>זה עותק ממוספר. המספר אומר כמה כאלה יצאו בעולם.</p>
     <button type="button" id="numbered-tip-dismiss">הבנתי</button>
   </aside>
   <div id="klafi-tips" class="klafi-tips" hidden aria-hidden="true">
@@ -707,7 +707,7 @@
     <aside id="klafi-tips-card" class="klafi-tips-card" role="dialog" aria-modal="false" aria-labelledby="klafi-tips-title" aria-describedby="klafi-tips-body">
       <p class="klafi-tips-kicker" id="klafi-tips-step" dir="ltr">1/3</p>
       <h2 id="klafi-tips-title">היום</h2>
-      <p id="klafi-tips-body">מסך היום. המחסן אוסף קלף כל שלוש שעות גם בלי לגעת. השעון מתחת לכותרת מראה מתי הבא מגיע.</p>
+      <p id="klafi-tips-body">זה מסך היום. המחסן ממשיך לאסוף קלף כל שלוש שעות, גם בלי שתיגעו. השעון שמתחת לכותרת מראה מתי מגיע הבא.</p>
       <label class="klafi-tips-mute" for="klafi-tips-mute" hidden>
         <input id="klafi-tips-mute" type="checkbox" />
         אל תציגו שוב
