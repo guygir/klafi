@@ -66,10 +66,14 @@ test("V1 gradient keeps transparent gaps between colored wedges", () => {
 
 test("alignSunburstToCard writes card-midpoint custom properties", () => {
   const props = {};
+  const parent = {
+    getBoundingClientRect: () => ({ left: 10, top: 20, width: 200, height: 400 }),
+  };
   const wrap = {
     isConnected: true,
+    parentElement: parent,
     style: { setProperty(name, value) { props[name] = value; } },
-    getBoundingClientRect: () => ({ left: 10, top: 20, width: 200, height: 400 }),
+    getBoundingClientRect: () => ({ left: 50, top: 80, width: 80, height: 160 }),
   };
   const card = {
     isConnected: true,

@@ -103,7 +103,12 @@ export function buildSunburstGradient(pip, { rayPairs, rayFrac, soft = false } =
 export function alignSunburstToCard(wrap, cardEl) {
   if (!wrap || !cardEl) return false;
   if (wrap.isConnected === false || cardEl.isConnected === false) return false;
-  const wrapRect = wrap.getBoundingClientRect();
+  // Measure against the walkout box, not the overlay's transformed border-box
+  // (pop/exit scale would otherwise drag the disc off the card midpoint).
+  const basis = wrap.parentElement && typeof wrap.parentElement.getBoundingClientRect === "function"
+    ? wrap.parentElement
+    : wrap;
+  const wrapRect = basis.getBoundingClientRect();
   const cardRect = cardEl.getBoundingClientRect();
   if (wrapRect.width < 1 || wrapRect.height < 1 || cardRect.width < 1) return false;
   const cx = cardRect.left + cardRect.width / 2 - wrapRect.left;
