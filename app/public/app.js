@@ -543,6 +543,10 @@ function applyStudioAccess(studioContent = model.studioContent) {
   document.querySelectorAll("[data-studio-only]").forEach((element) => {
     element.hidden = !studioContent?.studioEnabled;
   });
+  if (document.querySelector("#studio-view")?.classList.contains("active") && !studioViewAllowed()) {
+    renderHome();
+    showView("home");
+  }
 }
 
 function applyHomePayload(home) {
@@ -696,6 +700,10 @@ let idleSeenRetryTimer = null;
 let catalogFailed = false;
 const PLAYER_VIEWS = ["home", "binder", "achievements", "growth", "studio"];
 
+function studioViewAllowed() {
+  return Boolean(model.studioContent?.studioEnabled || studioSecret());
+}
+
 function catalogReady() {
   return Boolean(model.catalog.length);
 }
@@ -708,6 +716,7 @@ function requestedPlayerView() {
   const params = new URLSearchParams(location.search);
   if (params.get("gift") || params.get("card")) return "";
   const view = params.get("view");
+  if (view === "studio" && !studioViewAllowed()) return "";
   return PLAYER_VIEWS.includes(view) ? view : "";
 }
 
@@ -728,6 +737,7 @@ function persistPlayerView(name) {
 }
 
 function paintPlayerView(name) {
+  if (name === "studio" && !studioViewAllowed()) name = "home";
   if (name === "home") renderHome();
   else if (name === "binder") renderBinder();
   else if (name === "achievements") renderAchievements();
@@ -1192,6 +1202,10 @@ function handleInboundLink() {
     return;
   }
   const requestedView = params.get("view");
+  if (requestedView === "studio" && !studioViewAllowed()) {
+    persistPlayerView("home");
+    return;
+  }
   if (PLAYER_VIEWS.includes(requestedView)) {
     elements.navButtons.find((button) => button.dataset.nav === requestedView)?.click();
   }
@@ -1338,6 +1352,7 @@ function queueCardTextFit(root = document) {
 }
 
 function showView(name) {
+  if (name === "studio" && !studioViewAllowed()) name = "home";
   model.holdGeneration += 1;
   persistPlayerView(name);
   document.querySelector("#app").classList.toggle("home-active", name === "home");
@@ -6561,6 +6576,11 @@ elements.navButtons.forEach((button) => {
       renderGrowth();
       showView("growth");
     } else if (button.dataset.nav === "studio") {
+      if (!studioViewAllowed()) {
+        renderHome();
+        showView("home");
+        return;
+      }
       renderStudio();
       showView("studio");
     }

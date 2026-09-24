@@ -14,6 +14,8 @@ import {
   advanceStepFromView,
   firstVisible,
   leftoverPackHint,
+  navReserve,
+  placeCard,
   markPageSeen,
   mutePageGuides,
   resetAllPageGuides,
@@ -160,4 +162,20 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.deepEqual(readSeenPages(env), {});
   assert.equal(shouldAutoOpenPage(readSeenPages(env), "home"), true);
   assert.equal(shouldAutoOpenPage(readSeenPages(env), "binder"), true);
+});
+
+test("coachmark card stays clear of the measured bottom nav", () => {
+  assert.equal(navReserve({ querySelector: () => null }, 915), 56);
+  const nav = {
+    hidden: false,
+    getBoundingClientRect: () => ({ left: 0, top: 853, right: 412, bottom: 915, width: 412, height: 62 }),
+  };
+  const doc = { querySelector: (sel) => (sel === ".top-nav-row" || sel === ".bottom-nav" ? nav : null) };
+  assert.equal(navReserve(doc, 915), 70);
+  const card = { offsetWidth: 280, offsetHeight: 190, style: {} };
+  const ring = { left: 12, top: 210, width: 388, height: 44, right: 400, bottom: 254 };
+  placeCard(card, ring, null, "", { width: 412, height: 915 }, doc);
+  const top = Number.parseFloat(card.style.top);
+  assert.ok(Number.isFinite(top));
+  assert.ok(top + 190 <= 853, `card bottom ${top + 190} overlaps nav at 853`);
 });

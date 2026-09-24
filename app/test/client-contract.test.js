@@ -786,6 +786,19 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /pack-quote-ink/);
   assert.doesNotMatch(javascript, /floor: 4\.5/);
   assert.doesNotMatch(html, /id="dialog-flip"/);
+  assert.match(css, /--nav-clearance:\s*calc\(58px \+ var\(--safe-bottom\)\)/);
+  assert.match(css, /#main \{[^}]*padding-bottom:\s*var\(--nav-clearance\)/);
+  assert.doesNotMatch(css, /#main \{\s*padding-bottom:\s*4px/);
+  assert.match(css, /\.filter-sets \{[^}]*scroll-snap-type:\s*x proximity/);
+  assert.match(css, /\.filter-sets button \{[^}]*scroll-snap-align:\s*start/);
+  assert.match(css, /#binder-view \.filter-sets \{[^}]*flex:\s*1 1 100%/);
+  assert.match(javascript, /function studioViewAllowed/);
+  assert.match(javascript, /view === "studio" && !studioViewAllowed\(\)/);
+  assert.match(javascript, /if \(name === "studio" && !studioViewAllowed\(\)\) name = "home"/);
+  assert.match(javascript, /persistPlayerView\("home"\)/);
+  assert.match(tipsJs, /export function navReserve/);
+  assert.match(tipsJs, /export function placeCard/);
+  assert.match(tipsJs, /vh - height - floor/);
 
   const studioStart = html.indexOf('<section id="studio-view"');
   const errorStart = html.indexOf('<section id="error-view"');
