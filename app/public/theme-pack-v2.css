@@ -759,6 +759,20 @@ body:has(#app[data-theme="pack-v2"]) {
   margin-bottom: 16px;
   overflow: visible;
 }
+#app[data-density="airy-v2"] .community-nav {
+  gap: 10px;
+  margin-bottom: 16px;
+}
+#app[data-density="airy-v2"] #community-tabs {
+  display: grid;
+  overflow: visible;
+}
+#app[data-density="airy-v2"] #community-tabs[data-community-section="market"] {
+  grid-template-columns: 1fr 1fr;
+}
+#app[data-density="airy-v2"] #community-tabs[data-community-section="race"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
 
 #app[data-density="airy-v2"] .contained-tabs button {
   min-height: 42px;
@@ -771,7 +785,7 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] .trade-form {
-  gap: 16px;
+  gap: 8px;
 }
 
 #app[data-density="airy-v2"] .trade-form fieldset {
@@ -885,6 +899,17 @@ body:has(#app[data-theme="pack-v2"]) {
     overflow: visible;
   }
 
+  #app[data-density="airy-v2"] #community-tabs {
+    display: grid;
+    overflow: visible;
+  }
+  #app[data-density="airy-v2"] #community-tabs[data-community-section="market"] {
+    grid-template-columns: 1fr 1fr;
+  }
+  #app[data-density="airy-v2"] #community-tabs[data-community-section="race"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   #app[data-density="airy-v2"] .contained-tabs button {
     flex: unset;
     min-width: 0;
@@ -907,7 +932,7 @@ body:has(#app[data-theme="pack-v2"]) {
 
   #app[data-density="airy-v2"] .trade-desk .trade-form {
     min-height: 0;
-    overflow-y: auto;
+    overflow: visible;
   }
 
   #app[data-card-frame="tall-v2"] #pack-view .walkout .kalpi-card {
@@ -968,6 +993,12 @@ body:has(#app[data-theme="pack-v2"]) {
 .avatar-choice.locked {
   opacity: 0.45;
   cursor: not-allowed;
+}
+.avatar-choice small {
+  display: block;
+  color: color-mix(in srgb, var(--pack-umber, #3c3026) 72%, transparent);
+  font: 500 9px/1.15 "IBM Plex Sans Hebrew", sans-serif;
+  white-space: normal;
 }
 
 .studio-meta-desk {

@@ -217,6 +217,7 @@ test("public party register keeps Hebrew names without opening Studio", () => {
   assert.equal(fromStudio[0].displayNameHe, "הציונות הדתית וזהות");
   assert.equal(fromStudio[0].filingStatus, "submitted-pending-cec-review");
   assert.equal(fromStudio[0].letterStatus, "protected");
+  assert.equal(fromStudio[0].letterChip, "ballot-letter-rz.png");
   const fromCatalog = publicPartyRegister(null, [
     { set: "SYS", setNameHe: "יסודות" },
     { set: "RZ", setNameHe: "הציונות הדתית וזהות", setName: "Religious Zionism–Zehut", letters: "ט", pip: "#6B4A8B" },
@@ -227,6 +228,7 @@ test("public party register keeps Hebrew names without opening Studio", () => {
     displayNameEn: "Religious Zionism–Zehut",
     requestedLetters: ["ט"],
     pip: "#6B4A8B",
+    letterChip: "ballot-letter-rz.png",
   }]);
 });
 

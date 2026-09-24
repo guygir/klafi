@@ -280,7 +280,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-wanted-set"/);
   assert.match(html, /id="trade-active"/);
   assert.match(html, /id="trade-compose"/);
-  assert.match(html, /id="trade-create"[\s\S]*id="trade-offered-set"/);
+  assert.match(html, /id="trade-offered-set"[\s\S]*id="trade-wanted-set"[\s\S]*id="trade-create"/);
   assert.match(html, /id="avatar-seal"/);
   assert.match(html, /id="level-letter"/);
   assert.match(html, /id="level-letter-text"/);
@@ -431,9 +431,36 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="create-league"/);
   assert.match(html, /id="join-league"/);
   assert.match(html, /id="league-rooms"/);
-  assert.match(html, /id="profile-leagues-title">ליגות/);
+  assert.match(html, /id="community-tab-leagues"/);
+  assert.match(html, /id="community-panel-leagues"/);
+  assert.match(html, /id="community-leagues-title"/);
+  assert.match(html, /id="community-sections"/);
+  assert.match(html, /id="community-section-market"/);
+  assert.match(html, /id="community-section-race"/);
   assert.match(html, /שם הליגה/);
-  assert.doesNotMatch(html, /id="profile-leagues-title">חדרים/);
+  assert.doesNotMatch(html, /id="profile-leagues-title"/);
+  assert.doesNotMatch(html, /class="profile-leagues"/);
+  assert.match(javascript, /function showLeaguesCommunity/);
+  assert.match(javascript, /function syncCommunityPage/);
+  assert.match(javascript, /function showCommunitySection/);
+  assert.match(javascript, /function rankNameAtLevel/);
+  assert.match(javascript, /communityPage = "leagues"/);
+  assert.match(javascript, /COMMUNITY_SECTIONS/);
+  assert.match(css, /#community-tabs\[data-community-section="race"\]/);
+  assert.match(javascript, /rankNameAtLevel\(avatar\.unlockLevel\)/);
+  assert.doesNotMatch(javascript, /\$\{avatar\.unlocked \? "" : `<small>רמה \$\{avatar\.unlockLevel\}<\/small>`\}/);
+  assert.match(javascript, /classList\.toggle\("has-rooms"/);
+  assert.match(html, /class="league-setup"/);
+  assert.match(css, /\.league-desk\.has-rooms #league-rooms \{ order: -1; \}/);
+  assert.match(css, /\.growth-grid > \.work-card\.trade-desk/);
+  assert.match(css, /\.trade-desk \{\s*display: flex;[\s\S]*?overflow-y: auto;/);
+  assert.match(css, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) !important/);
+  assert.doesNotMatch(css, /\.trade-desk \{\s*overflow: hidden !important;/);
+  assert.match(html, /id="trade-wanted-set"/);
+  assert.ok(
+    html.indexOf("trade-form") < html.indexOf("trade-actions"),
+    "compose give/get before the publish button so both sides stay on one phone page",
+  );
   assert.match(html, /id="site-card-peeks"/);
   assert.match(css, /\.pack-shadow \{\s*display: none;/);
   assert.match(css, /\.site-card-peeks \{\s*display: none;/);
@@ -540,7 +567,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /aria-controls="community-panel-trade"/);
   assert.match(html, /aria-current="page"/);
   assert.match(javascript, /function moveTabFocus/);
-  assert.match(javascript, /button\.tabIndex = active \? 0 : -1/);
+  assert.match(javascript, /button\.tabIndex = active && inSection \? 0 : -1/);
   assert.doesNotMatch(javascript, /collection-star-count" role="button"/);
   assert.doesNotMatch(javascript, /badge-medallion" role="button"/);
   assert.doesNotMatch(javascript, /textAlign = "left"/);
@@ -548,7 +575,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-72/);
+  assert.match(html, /card-surface-78/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -638,7 +665,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-72/);
+  assert.match(html, /card-surface-78/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -724,6 +751,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function explainUnavailableNotifications/);
   assert.match(javascript, /function avatarBallotState/);
   assert.match(javascript, /ballot-letter-lik\.png/);
+  assert.match(javascript, /PARTY_BALLOTS/);
+  assert.match(javascript, /ballot-letter-dem\.png/);
+  assert.match(javascript, /ballot-letter-ysr\.png/);
+  assert.match(javascript, /ballot-letter-rse\.png/);
   assert.match(css, /\.app-shell\.home-active \.level-letter/);
   assert.match(css, /width:\s*26px/);
   assert.match(css, /\.filter-strip button \{[^}]*border-radius:\s*8px/);

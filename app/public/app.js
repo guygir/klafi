@@ -59,6 +59,7 @@ const model = {
   binderPage: 0,
   achievementPage: 0,
   communityPage: "trade",
+  communitySection: "market",
   eventPage: "active",
   reviewFilter: "all",
   selectedStudioPartyId: null,
@@ -192,6 +193,7 @@ const elements = {
   achievementGrid: document.querySelector("#achievement-grid"),
   achievementPager: document.querySelector("#achievement-pager"),
   communityTabs: document.querySelector("#community-tabs"),
+  communitySections: document.querySelector("#community-sections"),
   earnedBadgeRail: document.querySelector("#earned-badge-rail"),
   earnedBadgeList: document.querySelector("#earned-badge-list"),
   levelNumber: document.querySelector("#level-number"),
@@ -1184,7 +1186,7 @@ function handleInboundLink() {
     return;
   }
   if (params.get("league")) {
-    openProfileDialog();
+    showLeaguesCommunity();
     return;
   }
   const requestedView = params.get("view");
@@ -1561,6 +1563,12 @@ function renderAvatarSeal() {
   elements.levelAvatarButton?.classList.toggle("has-faction-seal", view.showBlankSeal);
 }
 
+function rankNameAtLevel(level) {
+  const ranks = model.gameConfig?.progression?.rankNames || model.gameConfig?.progression?.ranks || [];
+  const name = ranks[Math.max(0, Number(level) - 1)];
+  return name || "";
+}
+
 function renderAvatarPicker() {
   if (!elements.avatarPicker) return;
   const avatars = model.serverState?.avatars || [];
@@ -1569,7 +1577,7 @@ function renderAvatarPicker() {
     <button type="button" class="avatar-choice${avatar.unlocked ? "" : " locked"}${avatar.id === selected ? " selected" : ""}" data-avatar-id="${avatar.id}" ${avatar.unlocked ? "" : "disabled"} aria-pressed="${avatar.id === selected}">
       <img src="${avatarUrl(avatar)}" alt="" />
       <span>${escapeHtml(avatar.nameHe)}</span>
-      ${avatar.unlocked ? "" : `<small>רמה ${avatar.unlockLevel}</small>`}
+      ${avatar.unlocked ? "" : `<small>${escapeHtml(rankNameAtLevel(avatar.unlockLevel) || `רמה ${avatar.unlockLevel}`)}</small>`}
     </button>`).join("");
 }
 
@@ -1589,8 +1597,6 @@ function openProfileDialog() {
   renderNotifyControl();
   prefetchAvatars();
   renderAvatarPicker();
-  hydrateLeagues().catch(() => {});
-  consumeInboundLeague().catch(() => {});
   elements.profileDialog.showModal();
   elements.profileNameInput.focus();
   elements.profileNameInput.select();
@@ -1734,6 +1740,28 @@ function scheduleIdleNotification() {
   idleNotifyTimer = setTimeout(() => notifyIdleReady(nextIdleAt), Math.min(when - Date.now(), 2_000_000_000));
 }
 
+const COMMUNITY_SECTIONS = {
+  market: ["trade", "open-trades"],
+  race: ["leagues", "collectors", "challenge", "faction"],
+};
+
+function communitySectionFor(page) {
+  return COMMUNITY_SECTIONS.race.includes(page) ? "race" : "market";
+}
+
+function showCommunitySection(section) {
+  const pages = COMMUNITY_SECTIONS[section] || COMMUNITY_SECTIONS.market;
+  if (!pages.includes(model.communityPage)) model.communityPage = pages[0];
+  model.communitySection = section;
+  renderGrowth();
+}
+
+function showLeaguesCommunity() {
+  model.communityPage = "leagues";
+  model.communitySection = "race";
+  showView("growth");
+}
+
 function inboundLeagueCode() {
   return new URLSearchParams(location.search).get("league") || "";
 }
@@ -1748,6 +1776,7 @@ function clearInboundLeague() {
 async function consumeInboundLeague() {
   const code = inboundLeagueCode();
   if (!code || !model.token) return;
+  showLeaguesCommunity();
   if (elements.leagueJoinInput) elements.leagueJoinInput.value = code;
   await joinLeagueFromInput(code);
   clearInboundLeague();
@@ -1762,6 +1791,14 @@ function leagueFaceMarkup(entry = {}) {
 function renderLeagues() {
   if (!elements.leagueRooms) return;
   const rooms = model.leagues || [];
+  const desk = elements.leagueRooms.closest(".league-desk");
+  desk?.classList.toggle("has-rooms", rooms.length > 0);
+  const setup = desk?.querySelector(".league-setup");
+  if (setup) setup.open = rooms.length === 0;
+  if (!rooms.length) {
+    elements.leagueRooms.innerHTML = '<p class="work-note">עדיין אין ליגה. פתחו אחת, או הזינו קוד הזמנה.</p>';
+    return;
+  }
   elements.leagueRooms.innerHTML = rooms.map((league) => `
     <article class="league-room" data-league-code="${escapeHtml(league.code)}">
       <span class="league-season">${escapeHtml(league.seasonLabel || "")}</span>
@@ -1770,7 +1807,6 @@ function renderLeagues() {
         <b dir="ltr">${escapeHtml(league.code)}</b>
         <button type="button" data-copy-league="${escapeHtml(league.joinUrl || league.code)}">העתקת קישור</button>
       </div>
-      <div class="league-qr">${league.qrSvg || ""}</div>
       <ol class="league-board">
         ${(league.members || []).map((entry) => `
           <li class="${entry.current ? "current-player" : ""}">
@@ -1779,6 +1815,7 @@ function renderLeagues() {
             <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
           </li>`).join("")}
       </ol>
+      <div class="league-qr">${league.qrSvg || ""}</div>
     </article>`).join("");
 }
 
@@ -1789,7 +1826,7 @@ async function hydrateLeagues() {
     model.leagues = payload.leagues || [];
     renderLeagues();
   } catch {
-    /* Profile still opens without a league list. */
+    /* Community still opens without a league list. */
   }
 }
 
@@ -2115,6 +2152,7 @@ function partyRegister() {
       displayNameEn: card.setName || card.set,
       requestedLetters: card.letters ? [card.letters] : [],
       pip: card.pip || null,
+      letterChip: factionLetterArt({ id: card.set }),
     });
   }
   return [...parties.values()];
@@ -3993,11 +4031,43 @@ function renderFactionMembers() {
     : '<p class="work-note">עדיין אין מי שבחר במפלגה הזו.</p>';
 }
 
+function syncCommunityPage() {
+  const section = communitySectionFor(model.communityPage);
+  model.communitySection = section;
+  const communityClasses = {
+    trade: ".trade-desk",
+    "open-trades": ".open-trades-desk",
+    faction: ".faction-desk",
+    collectors: ".leaderboard-desk",
+    leagues: ".league-desk",
+    challenge: ".daily-challenge-desk",
+  };
+  for (const [page, selector] of Object.entries(communityClasses)) {
+    document.querySelector(selector)?.toggleAttribute("hidden", page !== model.communityPage);
+  }
+  elements.communitySections?.querySelectorAll("[data-community-section]").forEach((button) => {
+    const active = button.dataset.communitySection === section;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  elements.communityTabs?.setAttribute("data-community-section", section);
+  elements.communityTabs?.querySelectorAll("[data-community-page]").forEach((button) => {
+    const inSection = button.dataset.communitySection === section;
+    const active = button.dataset.communityPage === model.communityPage;
+    button.hidden = !inSection;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active && inSection));
+    button.tabIndex = active && inSection ? 0 : -1;
+  });
+}
+
 function renderGrowth() {
   const communityTabs = elements.communityTabs;
   const growthGrid = document.querySelector(".growth-grid");
   communityTabs?.removeAttribute("hidden");
   growthGrid?.removeAttribute("hidden");
+  syncCommunityPage();
+  if (model.communityPage === "leagues") hydrateLeagues().catch(() => {});
   if (!model.catalog.length || !model.serverState || !elements.tradePreview) {
     setEmptyNote(elements.growthEmpty, pendingCopy("טוענים את הקהילה…", "לא הצלחנו לטעון את הקהילה."), {
       pending: !catalogFailed,
@@ -4160,22 +4230,7 @@ function renderGrowth() {
         <a href="${escapeHtml(special.sourceUrl)}" target="_blank" rel="noopener">למקור ↗</a>
       </article>`).join("")}</div>
     </section>`).join("");
-  const communityClasses = {
-    trade: ".trade-desk",
-    "open-trades": ".open-trades-desk",
-    faction: ".faction-desk",
-    collectors: ".leaderboard-desk",
-    challenge: ".daily-challenge-desk",
-  };
-  for (const [page, selector] of Object.entries(communityClasses)) {
-    document.querySelector(selector)?.toggleAttribute("hidden", page !== model.communityPage);
-  }
-  elements.communityTabs?.querySelectorAll("[data-community-page]").forEach((button) => {
-    const active = button.dataset.communityPage === model.communityPage;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-selected", String(active));
-    button.tabIndex = active ? 0 : -1;
-  });
+  syncCommunityPage();
   const openCount = model.trades.filter((trade) => trade.status === "open" && !trade.ownedByCurrent).length;
   const openTab = document.querySelector("#community-tab-open-trades");
   if (openTab) openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";
@@ -6326,7 +6381,10 @@ document.querySelector(".today-docket").addEventListener("click", (event) => {
     claimTodaySpecial().catch(() => showToast("לא הצלחנו לאסוף את הקלף המיוחד."));
     return;
   }
-  if (hook.dataset.communityPage) model.communityPage = hook.dataset.communityPage;
+  if (hook.dataset.communityPage) {
+    model.communityPage = hook.dataset.communityPage;
+    model.communitySection = communitySectionFor(hook.dataset.communityPage);
+  }
   elements.navButtons.find((button) => button.dataset.nav === hook.dataset.todayNav)?.click();
   if (hook.dataset.communityPage) renderGrowth();
 });
@@ -6546,10 +6604,17 @@ elements.achievementPager.addEventListener("click", (event) => {
   renderAchievements();
 });
 
+elements.communitySections?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-community-section]");
+  if (!button) return;
+  showCommunitySection(button.dataset.communitySection);
+  pollWatchedTrade().catch(() => {});
+});
 elements.communityTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-community-page]");
   if (!button) return;
   model.communityPage = button.dataset.communityPage;
+  model.communitySection = communitySectionFor(button.dataset.communityPage);
   renderGrowth();
   pollWatchedTrade().catch(() => {});
 });
