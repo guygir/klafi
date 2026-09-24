@@ -760,8 +760,8 @@ body:has(#app[data-theme="pack-v2"]) {
   overflow: visible;
 }
 #app[data-density="airy-v2"] .community-nav {
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 4px;
+  margin-bottom: 6px;
 }
 #app[data-density="airy-v2"] #community-tabs {
   display: grid;
@@ -775,9 +775,9 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-density="airy-v2"] .contained-tabs button {
-  min-height: 42px;
-  padding: 8px 10px;
-  font-size: 11px;
+  min-height: 30px;
+  padding: 4px 6px;
+  font-size: 10px;
 }
 
 #app[data-density="airy-v2"] .work-card {

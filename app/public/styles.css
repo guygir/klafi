@@ -1363,6 +1363,17 @@ img.mini-art {
 .trade-form label { font-size: 8px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
 .trade-form select,
 .faction-desk select { width: 100%; margin-top: 4px; padding: 8px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); font-size: 10px; }
+.faction-pick-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "label label" "select button";
+  gap: 6px 8px;
+  align-items: center;
+  margin: 4px 0 8px;
+}
+.faction-pick-row .field-label { grid-area: label; margin: 0; }
+.faction-pick-row select { grid-area: select; width: 100%; min-width: 0; margin: 0; }
+.faction-pick-row > button { grid-area: button; width: auto; min-width: 88px; margin: 0; padding-inline: 14px; }
 .trade-desk > button { margin-top: 7px; }
 .trade-board { display: grid; gap: 7px; margin-top: 12px; }
 .trade-offer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 7px; padding: 9px; border: 1px solid var(--rule); }
@@ -1374,6 +1385,7 @@ img.mini-art {
 .trade-offer > button { width: auto; min-height: 30px; padding: 6px 8px; font-size: 8px; }
 .trade-offer.matched-demo { opacity: 0.7; }
 .faction-desk > button { margin: 8px 0 12px; }
+.faction-desk .faction-pick-row > button { margin: 0; }
 .leaderboard-list { border-top: 1px solid var(--rule); }
 .leaderboard-list > div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(44, 51, 48, 0.2); font-size: 10px; }
 .leaderboard-list strong { color: var(--civic); font-size: 9px; }
@@ -2181,13 +2193,13 @@ img.mini-art {
 }
 .community-nav {
   display: grid;
-  gap: 8px;
-  margin: 4px 0 10px;
+  gap: 4px;
+  margin: 2px 0 6px;
 }
 .community-sections {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  gap: 3px;
   margin: 0;
 }
 #community-tabs {
@@ -2406,7 +2418,7 @@ h1, h2, h3 { font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.035em; }
 .wordmark b { color: var(--ink); font-size: 24px; }
 .view { padding-top: 28px; }
-.home-grid { min-height: 510px; grid-template-columns: minmax(0, 1fr) 260px; gap: 48px; }
+.home-grid { min-height: 0; grid-template-columns: minmax(0, 1fr) 260px; gap: 48px; }
 .home-copy .lede { max-width: 24em; }
 .pack-plinth { min-height: 430px; }
 .pack-wrapper { width: 230px; box-shadow: none; }
@@ -2955,7 +2967,9 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-active { display: grid; gap: 8px; }
 .trade-offer.mine { border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent); }
 .trade-form select,
-.faction-desk select { width: 100%; min-height: 44px; padding: 9px 10px; font: 500 14px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
+.faction-desk select { width: 100%; min-height: 40px; padding: 8px 10px; font: 500 14px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
+.faction-pick-row select { min-height: 40px; }
+.faction-pick-row > button { min-height: 40px; }
 .trade-board { gap: 10px; margin-top: 16px; }
 .trade-offer { display: grid; width: min(100%, 460px); margin-inline: auto; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 10px; padding: 13px; border: 1px solid rgba(44, 51, 48, 0.32); border-radius: 8px; background: #eee5d4; }
 .trade-offer > .trade-side {
@@ -3311,10 +3325,19 @@ body {
 #home-view.view.active,
 #growth-view.view.active,
 #achievements-view.view.active,
-#binder-view.view.active {
+#binder-view.view.active,
+#pack-view.view.active {
   overflow-x: hidden;
   overflow-y: auto;
-  padding-bottom: calc(78px + var(--safe-bottom, 0px));
+  padding-bottom: calc(56px + var(--safe-bottom, 0px));
+}
+#home-view.view.active {
+  padding-top: 8px;
+}
+#growth-view.view.active,
+#binder-view.view.active,
+#pack-view.view.active {
+  overflow: hidden;
 }
 
 .view.active {
@@ -3340,7 +3363,8 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 10px 17px;
+  padding: 0 10px 6px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
   border: 0;
   pointer-events: none;
 }
@@ -3388,8 +3412,8 @@ body {
 #home-view .home-copy {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-self: stretch;
+  justify-content: flex-start;
+  align-self: start;
   text-align: start;
 }
 #home-view .home-copy .eyebrow,
@@ -3412,13 +3436,12 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  align-self: stretch;
+  justify-content: flex-start;
+  align-self: start;
   width: 100%;
-  min-height: calc(var(--today-pack-w) * 1390 / 769 * 1.5);
   height: auto;
   box-sizing: border-box;
-  padding-block: calc(var(--today-pack-w) * 1390 / 769 * 0.25);
+  padding-block: 0;
   gap: 0;
   min-height: 0;
   overflow: visible;
@@ -3586,6 +3609,14 @@ body {
   flex: 0 0 auto;
   align-items: center;
 }
+#growth-view .workspace-head {
+  margin-bottom: 0;
+}
+#growth-view .workspace-head .eyebrow { margin-bottom: 0; font-size: 10px; }
+#growth-view .workspace-head h1 {
+  margin: 0;
+  font-size: clamp(20px, 4.6vw, 28px);
+}
 
 .binder-head h1,
 #achievements-view h1,
@@ -3611,7 +3642,7 @@ body {
 .binder-grid {
   flex: 1 1 auto;
   min-height: 0;
-  align-content: center;
+  align-content: start;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
@@ -3624,6 +3655,12 @@ body {
   gap: 14px;
   direction: rtl;
   font-size: 11px;
+}
+#binder-pager.binder-scroll-dock {
+  flex: 0 0 auto;
+  margin-top: auto;
+  min-height: 28px;
+  padding: 2px 0 4px;
 }
 
 .view-pager:empty { display: none; }
@@ -3650,17 +3687,17 @@ body {
   flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
-  margin: 4px 0 10px;
+  gap: 3px;
+  margin: 2px 0 6px;
 }
 
 #event-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 .contained-tabs button {
-  min-height: 38px;
-  padding: 4px;
+  min-height: 30px;
+  padding: 3px 4px;
   border: 1px solid rgba(44, 51, 48, 0.22);
-  border-radius: 8px;
+  border-radius: 7px;
   background: transparent;
   font-size: 10px;
 }
@@ -3678,22 +3715,26 @@ body {
 
 .growth-grid > .work-card:not([hidden]) {
   height: 100%;
-  overflow: hidden;
-}
-
-.growth-grid > .work-card.trade-desk {
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
 
+.growth-grid > .work-card.trade-desk,
+.growth-grid > .work-card.faction-desk,
+.growth-grid > .work-card.daily-challenge-desk,
 .growth-grid > .work-card.leaderboard-desk,
-.growth-grid > .work-card.daily-challenge-desk {
-  overflow: visible;
+.growth-grid > .work-card.open-trades-desk,
+.growth-grid > .work-card.league-desk {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 #collector-board,
-#daily-challenge-board {
+#daily-challenge-board,
+#faction-members {
   overflow: visible;
   padding-inline: 10px;
 }
@@ -3721,8 +3762,8 @@ body {
     min-height: 70px;
     grid-template-columns: minmax(102px, 124px) minmax(0, 1fr);
   }
-  #main { padding-bottom: calc(60px + var(--safe-bottom)); }
-  .top-nav-row { min-height: 0; padding-inline: 8px; padding-bottom: 17px; }
+  #main { padding-bottom: calc(52px + var(--safe-bottom)); }
+  .top-nav-row { min-height: 0; padding-inline: 8px; padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)); }
   .top-nav-row .bottom-nav { height: 46px; }
   #home-view .home-grid {
     --today-pack-w: 92px;
@@ -3752,7 +3793,7 @@ body {
   .level-progress-block small { white-space: normal; }
   .binder-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .achievement-grid { grid-template-columns: 1fr; }
-  .today-docket-row { min-height: 52px; }
+  .today-docket-row { min-height: 44px; }
   .contained-tabs button { font-size: 9px; }
 }
 
@@ -3773,7 +3814,7 @@ body {
 .binder-grid {
   flex: 1 1 auto;
   height: auto;
-  min-height: clamp(218px, 34dvh, 292px);
+  min-height: 0;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
   grid-auto-rows: max-content;
   align-content: start;
@@ -3807,9 +3848,9 @@ body {
 }
 
 .today-docket-row {
-  min-height: 74px;
+  min-height: 48px;
   grid-template-areas: "visual label arrow" "visual title arrow";
-  padding: 8px;
+  padding: 6px 8px;
 }
 
 .today-docket-label {
@@ -4336,7 +4377,7 @@ body {
     font-size: 13px;
   }
   .binder-grid {
-    min-height: clamp(210px, 33dvh, 246px);
+    min-height: 0;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
   .today-docket-list {
