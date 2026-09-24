@@ -1,5 +1,5 @@
 export const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
-export const IDLE_FULL_COPY = "המחסן מלא. פתחו קלף כדי שהאיסוף יתחיל שוב.";
+export const IDLE_FULL_COPY = "המחסן מלא. פתחו קלף כדי שהאיסוף יחזור לרוץ.";
 
 export function timeUntil(iso, now = Date.now()) {
   if (!iso) return 0;

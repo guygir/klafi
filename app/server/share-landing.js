@@ -40,7 +40,7 @@ export function serveBinderShareLanding(request, response) {
   const play = new URL("/", origin);
   play.searchParams.set("showcase", "1");
   const title = "קְלָפִי · האלבום המלא";
-  const description = "תצוגת האלבום כולו, כולל ממוספרים אפשריים. אין כאן שחקן במשחק — בלי דירוג. ספירת המחזיקים אמיתית.";
+  const description = "תצוגה של כל האלבום, כולל ממוספרים אפשריים. אין כאן שחקן במשחק — בלי דירוג. ספירת המחזיקים אמיתית.";
   const shareUrl = `${origin}/share/binder`;
   const image = `${origin}/design-assets/hero-art-kalpi.png`;
   const playHref = `${play.pathname}${play.search}`;

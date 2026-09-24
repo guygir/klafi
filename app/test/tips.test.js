@@ -74,7 +74,7 @@ test("firstVisible falls back when boxes are 0x0 and leftover pack hint is recog
   assert.equal(firstVisible("#open-pack", root), real);
   const happy = { querySelectorAll: () => [zero] };
   assert.equal(firstVisible("#open-pack", happy), zero);
-  assert.equal(leftoverPackHint("הקלף כבר נשמר."), true);
+  assert.equal(leftoverPackHint("הקלף כבר שמור אצלכם."), true);
   assert.equal(leftoverPackHint("הקלף הבא בעוד 03:00:00"), false);
 });
 

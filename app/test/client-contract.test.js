@@ -55,7 +55,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /aria-labelledby="advocacy-sponsor"/);
   assert.match(html, /id="faction-cec-note"/);
   assert.match(html, /id="faction-members"/);
-  assert.match(html, /כוכבי האוסף של מי שבחרו במפלגה/);
+  assert.match(html, /כוכבי האוסף של מי שבחר בה/);
   assert.match(javascript, /function renderFactionMembers/);
   assert.match(javascript, /function factionHistMarkup/);
   assert.match(javascript, /star-contribution-bins\.js/);
@@ -67,7 +67,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /replay\?\.addEventListener\("click", replayTour\)/);
   assert.doesNotMatch(html, /כאן מפרסמים החלפה: קלף שיש לכם/);
   assert.match(html, /id="faction-members-title"/);
-  assert.match(html, /מי אסף הכי הרבה כוכבים עבור המפלגה\?/);
+  assert.match(html, /מי הביא הכי הרבה כוכבים למפלגה\?/);
   assert.match(html, />מפלגות</);
   assert.doesNotMatch(html, />סיעות</);
   assert.match(css, /\.faction-hist-plot/);
@@ -290,7 +290,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /const showStreak = streak >= 3/);
   assert.match(javascript, /applyIdleCountdown\(elements\.cooldownCopy, view\)/);
   assert.match(javascript, /function idleCountdownCopy/);
-  assert.match(javascript, /המחסן מלא\. פתחו קלף כדי שהאיסוף יתחיל שוב/);
+  assert.match(javascript, /המחסן מלא\. פתחו קלף כדי שהאיסוף יחזור לרוץ/);
   assert.doesNotMatch(javascript, /הבא בעוד \$\{clock\}/);
   assert.match(html, /id="cooldown-copy"[^>]*class="next-pack-clock is-clock"/);
   assert.match(css, /#home-view #cooldown-copy\.is-clock/);
@@ -544,9 +544,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(warmup, /\/share\/binder/);
   assert.doesNotMatch(javascript, /שחקנים נוספים מחזיקים/);
   assert.match(javascript, /תצוגת שיתוף בלבד/);
-  assert.match(javascript, /הקלף לא נוסף לאוסף שלכם/);
-  assert.match(javascript, /גלו עוד קלף אחד חדש כדי להתקדם לרמה הבאה/);
-  assert.match(javascript, /גלו עוד \$\{progression\.remaining\} קלפים חדשים כדי להתקדם לרמה הבאה/);
+  assert.match(javascript, /הקלף לא נכנס לאוסף שלכם/);
+  assert.match(javascript, /חסר לכם עוד קלף חדש אחד כדי לעלות רמה/);
+  assert.match(javascript, /חסרים לכם עוד \$\{progression\.remaining\} קלפים חדשים כדי לעלות רמה/);
   assert.match(javascript, /\$\{unique\}\/\$\{target\}/);
   assert.match(javascript, /function nextCollectionRemaining/);
   assert.match(javascript, /אין אירוע כרגע/);
