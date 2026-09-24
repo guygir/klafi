@@ -458,7 +458,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.faction-pick-row/);
   assert.match(css, /\.growth-grid > \.work-card\.faction-desk/);
   assert.match(css, /\.growth-grid > \.work-card\.daily-challenge-desk/);
-  assert.match(css, /#binder-pager\.binder-scroll-dock/);
+  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*position:\s*absolute/);
+  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*bottom:\s*6px/);
+  assert.match(css, /#app:has\(#binder-view\.active\) #main \{[^}]*padding-bottom:\s*8px/);
+  assert.match(css, /#binder-view\.view\.active \{[^}]*padding-bottom:\s*0/);
+  assert.match(css, /#main \{[^}]*display:\s*flex/);
+  assert.match(css, /#main \{[^}]*position:\s*relative/);
   assert.match(css, /\.community-nav \{[^}]*gap: 4px/);
   assert.match(css, /\.trade-desk \{\s*display: flex;[\s\S]*?overflow-y: auto;/);
   assert.match(css, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) !important/);
@@ -582,7 +587,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-79/);
+  assert.match(html, /card-surface-80/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -673,7 +678,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-79/);
+  assert.match(html, /card-surface-80/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -764,6 +769,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /ballot-letter-ysr\.png/);
   assert.match(javascript, /ballot-letter-rse\.png/);
   assert.match(css, /\.app-shell\.home-active \.level-letter/);
+  assert.match(css, /\.level-letter,\s*\.level-letter-text,\s*\.avatar-seal \{[^}]*width:\s*14px/);
+  assert.match(css, /\.level-letter,\s*\.level-letter-text,\s*\.avatar-seal \{[^}]*left:\s*-10px/);
+  assert.match(css, /\.app-shell\.home-active \.level-letter[\s\S]*?width:\s*21px/);
+  assert.match(css, /streak-fire-stretch/);
+  assert.match(css, /50% \{ transform: scaleY\(1\.1\); \}/);
+  assert.doesNotMatch(css, /animation:\s*flame-inner/);
   assert.match(css, /width:\s*26px/);
   assert.match(css, /\.filter-strip button \{[^}]*border-radius:\s*8px/);
   assert.match(css, /\.filter-sets \{[^}]*flex-wrap:\s*nowrap/);
