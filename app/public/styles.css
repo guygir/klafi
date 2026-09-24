@@ -4470,7 +4470,7 @@ body {
     padding: 4px 0 4px;
   }
   .app-shell.home-active .level-teaser {
-    font-size: clamp(14px, 4.2vw, 18px);
+    font-size: clamp(14px, 4.2cqw, 18px);
   }
   #home-view.view.active { padding-top: 4px; }
   .today-docket { margin-top: 4px; }
