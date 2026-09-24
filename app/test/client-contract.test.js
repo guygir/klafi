@@ -8,7 +8,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
 
 test("client selectors match the HTML and preserve Alpha UX constraints", async () => {
-  const [html, appJs, idleCountdownJs, avatarBallotJs, tipsJs, warmup, baseCss, themeCss, binderShare] = await Promise.all([
+  const [html, appJs, idleCountdownJs, avatarBallotJs, tipsJs, warmup, baseCss, themeCss, sunburstJs, sunburstCss, binderShare] = await Promise.all([
     readFile(path.join(publicDir, "index.html"), "utf8"),
     readFile(path.join(publicDir, "app.js"), "utf8"),
     readFile(path.join(publicDir, "idle-countdown.js"), "utf8"),
@@ -17,6 +17,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
     readFile(path.join(publicDir, "boot-warmup.js"), "utf8"),
     readFile(path.join(publicDir, "styles.css"), "utf8"),
     readFile(path.join(publicDir, "theme-pack-v2.css"), "utf8"),
+    readFile(path.join(publicDir, "walkout-sunburst.js"), "utf8"),
+    readFile(path.join(publicDir, "walkout-sunburst.css"), "utf8"),
     readFile(path.join(publicDir, "share/binder.html"), "utf8"),
   ]);
   const javascript = `${appJs}\n${idleCountdownJs}\n${avatarBallotJs}`;
@@ -608,7 +610,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-83/);
+  assert.match(html, /card-surface-84/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -699,7 +701,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-83/);
+  assert.match(html, /card-surface-84/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -833,6 +835,23 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /export function navReserve/);
   assert.match(tipsJs, /export function placeCard/);
   assert.match(tipsJs, /vh - height - floor/);
+  assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
+  assert.match(javascript, /syncWalkoutSunburst/);
+  assert.match(javascript, /exitWalkoutSunburst/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-84/);
+  assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
+  assert.match(sunburstJs, /common: \{ rayPairs: 4/);
+  assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
+  assert.doesNotMatch(sunburstJs, /promotion:/);
+  assert.doesNotMatch(sunburstJs, /rarityReel/);
+  assert.doesNotMatch(sunburstJs, /RESEARCH-ONLY/);
+  assert.doesNotMatch(sunburstJs, /klafi-sunburst-research-toggle/);
+  assert.doesNotMatch(sunburstCss, /klafi-sunburst-research-toggle/);
+  assert.doesNotMatch(sunburstCss, /RESEARCH-ONLY/);
+  assert.doesNotMatch(sunburstCss, /\.kalpi-card\.(common|uncommon|rare|holo|numbered)/);
+  assert.match(sunburstCss, /max\(220vmax, 280%\)/);
+  assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
+  assert.match(sunburstCss, /prefers-reduced-motion/);
 
   const studioStart = html.indexOf('<section id="studio-view"');
   const errorStart = html.indexOf('<section id="error-view"');
