@@ -1791,6 +1791,10 @@ function leagueFaceMarkup(entry = {}) {
 function renderLeagues() {
   if (!elements.leagueRooms) return;
   const rooms = model.leagues || [];
+  const desk = elements.leagueRooms.closest(".league-desk");
+  desk?.classList.toggle("has-rooms", rooms.length > 0);
+  const setup = desk?.querySelector(".league-setup");
+  if (setup) setup.open = rooms.length === 0;
   if (!rooms.length) {
     elements.leagueRooms.innerHTML = '<p class="work-note">עדיין אין ליגה. פתחו אחת, או הזינו קוד הזמנה.</p>';
     return;

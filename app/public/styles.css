@@ -2217,6 +2217,27 @@ img.mini-art {
 .growth-grid > .work-card.league-desk {
   overflow: auto;
 }
+.league-desk.has-rooms {
+  display: flex;
+  flex-direction: column;
+}
+.league-desk.has-rooms #league-rooms { order: -1; }
+.league-desk.has-rooms > .work-kicker,
+.league-desk.has-rooms > h2,
+.league-desk.has-rooms > .work-note { display: none; }
+.league-setup { display: grid; gap: 0; }
+.league-setup summary {
+  cursor: pointer;
+  font: 600 13px/1.3 "IBM Plex Sans Hebrew", sans-serif;
+  list-style: none;
+}
+.league-setup summary::-webkit-details-marker { display: none; }
+.league-desk:not(.has-rooms) .league-setup summary { display: none; }
+.league-desk.has-rooms .league-setup {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(44, 51, 48, 0.16);
+}
 .league-rooms { display: grid; gap: 14px; margin-top: 8px; }
 .league-room {
   padding: 12px 12px 14px;

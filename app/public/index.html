@@ -17,12 +17,12 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-75"></script>
+  <script src="/boot-warmup.js?v=card-surface-76"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-75" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-75" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-76" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-76" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -329,17 +329,20 @@
             <p class="work-kicker">הליגה שלכם</p>
             <h2 id="community-leagues-title">אותה טבלה, חדר קטן יותר.</h2>
             <p class="work-note">הכוכבים כבר נספרו בשרת. פותחים ליגה, או נכנסים עם קוד ו־QR.</p>
-            <label class="field-label" for="league-name-input">שם הליגה</label>
-            <div class="copy-field league-action-row">
-              <input id="league-name-input" maxlength="24" autocomplete="off" placeholder="ליגת תשרי" />
-              <button id="create-league" type="button">פתיחה</button>
-            </div>
-            <label class="field-label" for="league-join-input">קוד הזמנה</label>
-            <div class="copy-field league-action-row">
-              <input id="league-join-input" dir="ltr" spellcheck="false" autocomplete="off" placeholder="K7T3M2" />
-              <button id="join-league" type="button">הצטרפות</button>
-            </div>
-            <p id="league-status" class="profile-error" role="status"></p>
+            <details class="league-setup" open>
+              <summary>פתיחה או הצטרפות</summary>
+              <label class="field-label" for="league-name-input">שם הליגה</label>
+              <div class="copy-field league-action-row">
+                <input id="league-name-input" maxlength="24" autocomplete="off" placeholder="ליגת תשרי" />
+                <button id="create-league" type="button">פתיחה</button>
+              </div>
+              <label class="field-label" for="league-join-input">קוד הזמנה</label>
+              <div class="copy-field league-action-row">
+                <input id="league-join-input" dir="ltr" spellcheck="false" autocomplete="off" placeholder="K7T3M2" />
+                <button id="join-league" type="button">הצטרפות</button>
+              </div>
+              <p id="league-status" class="profile-error" role="status"></p>
+            </details>
             <div id="league-rooms" class="league-rooms"></div>
           </article>
           <article id="community-panel-challenge" class="work-card daily-challenge-desk" role="tabpanel" aria-labelledby="community-tab-challenge" tabindex="0">
@@ -728,6 +731,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-75"></script>
+  <script type="module" src="/app.js?v=card-surface-76"></script>
 </body>
 </html>
