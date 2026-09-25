@@ -7,6 +7,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { createKalpiApp, IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY } from "../server/app.js";
 import { eventClaimKey, isEventClaimed, openSpecialWindow } from "../server/special-window.js";
+import { JsonStore } from "../server/store.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
@@ -221,4 +222,37 @@ test("launch pull on the Postgres store: grant, cap decline, and claim persist a
   t.after(() => second.close());
   assert.equal((await api(second.base, "/api/community", { token })).body.specialWindow, null);
   assert.equal((await claim(second, token)).body.error, "EVENT_ALREADY_CLAIMED");
+});
+
+test("launch pull settles and claims in ONE session transaction; a repeat claim takes none", async (t) => {
+  const { running, clock, token } = await boot(t);
+  const original = JsonStore.prototype.withSession;
+  let transactions = 0;
+  JsonStore.prototype.withSession = function counted(...args) {
+    transactions += 1;
+    return original.apply(this, args);
+  };
+  t.after(() => { JsonStore.prototype.withSession = original; });
+  clock.value += IDLE_INTERVAL_MS; // one idle pull is due: the claim must settle it in the same transaction
+  const granted = await claim(running, token);
+  assert.equal(granted.status, 201);
+  assert.equal(granted.body.readyCount, IDLE_STARTER_READY + 2, "due pull settled + event pull");
+  assert.equal(transactions, 1);
+  transactions = 0;
+  const again = await claim(running, token);
+  assert.equal(again.body.error, "EVENT_ALREADY_CLAIMED");
+  assert.equal(transactions, 0);
+});
+
+test("launch pull: a pull that became due since the client last looked counts toward the cap", async (t) => {
+  const { running, clock, token } = await boot(t);
+  clock.value += (IDLE_BACKLOG_CAP - IDLE_STARTER_READY - 1) * IDLE_INTERVAL_MS;
+  const seven = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(seven.body.state.unseenCount, IDLE_BACKLOG_CAP - 1);
+  clock.value += IDLE_INTERVAL_MS; // the client still thinks 7; the server settles to 8 first
+  const capped = await claim(running, token);
+  assert.equal(capped.status, 409);
+  assert.equal(capped.body.error, "PULL_CAP_REACHED");
+  assert.equal(capped.body.readyCount, IDLE_BACKLOG_CAP);
+  assert.equal(capped.body.specialWindow.id, LAUNCH_ID);
 });
