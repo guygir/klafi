@@ -16,6 +16,10 @@ import { createSfx, revealClipForStage, sfxRarityKey } from "./sfx.js";
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
+// When the server state last arrived (0 = only the localStorage cache so far).
+let stateFreshAt = 0;
+let eventPredictionRefreshAt = 0;
+const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
@@ -575,6 +579,7 @@ function applyHomePayload(home) {
     localStorage.setItem(SESSION_KEY, home.token);
   }
   if (home.state) {
+    stateFreshAt = Date.now();
     const previous = model.serverState || {};
     const incoming = home.state;
     model.serverState = {
@@ -2329,6 +2334,7 @@ function renderTodaySpecials() {
   const row = elements.todaySpecialsRow;
   if (!row) return;
   const windowOpen = model.specialWindow;
+  if (windowOpen?.reward === "pull" && !windowOpen.claimedToday) refreshEventPredictionIfStale();
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
   let line = "אין אירוע כרגע";
   if (windowOpen?.reward === "pull") {
@@ -4606,6 +4612,19 @@ function applyEventPullPayload(payload) {
 }
 
 let eventPullInFlight = null;
+
+// The pop-up outcome is predicted from cached state, so while a pull event is on the line keep
+// that state reasonably fresh: one cheap settle when it is over a minute old or an idle pull is
+// due (nextIdleAt passed). Throttled to once a minute; never on the tap itself.
+function refreshEventPredictionIfStale(nowMs = Date.now()) {
+  if (model.showcase || !model.token || eventPullInFlight) return;
+  if (nowMs - eventPredictionRefreshAt < EVENT_PREDICTION_STALE_MS) return;
+  const nextIdle = Date.parse(model.serverState?.nextIdleAt || "");
+  const stale = nowMs - stateFreshAt > EVENT_PREDICTION_STALE_MS || (Number.isFinite(nextIdle) && nextIdle <= nowMs);
+  if (!stale) return;
+  eventPredictionRefreshAt = nowMs;
+  hydrateIdleQueue().catch(() => {});
+}
 
 // Pull-reward event (launch week). The pop-up opens on the tap itself with the outcome predicted
 // from cached state (success with count + 1, or the cap message), then the POST reconciles: the

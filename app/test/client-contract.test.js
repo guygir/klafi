@@ -469,6 +469,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(claimBody, /readyCount \+ 1|unseenCount \+=|idleQueue\.push/);
   assert.doesNotMatch(claimBody, /בודקים|todaySpecialsRow\.disabled/);
   assert.match(javascript, /function predictedReadyPulls[\s\S]*?preparedPulls[\s\S]*?availableAt\) <= nowMs/);
+  // Stale cached state is refreshed while the event line shows (throttled), never on the tap.
+  assert.match(javascript, /function renderTodaySpecials[\s\S]*?refreshEventPredictionIfStale\(\)/);
+  assert.match(javascript, /function refreshEventPredictionIfStale[\s\S]*?EVENT_PREDICTION_STALE_MS[\s\S]*?nextIdle <= nowMs[\s\S]*?hydrateIdleQueue\(\)/);
+  assert.match(javascript, /function applyHomePayload[\s\S]*?stateFreshAt = Date\.now\(\)/);
+  assert.doesNotMatch(claimBody, /hydrateIdleQueue|refreshEventPrediction/);
   assert.match(javascript, /retry: \(\) => \(\{[\s\S]*?action: "לנסות שוב"/);
   assert.match(javascript, /החבילה כבר אצלכם/);
   assert.match(javascript, /האירוע נסגר/);
