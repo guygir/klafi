@@ -457,7 +457,22 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /חבילה נוספת נכנסה למחסן/);
   assert.match(javascript, /elements\.eventDialog,\n\s*elements\.shareSheet/);
   assert.match(javascript, /function claimEventPull[\s\S]*?applyEventPullPayload\(result\)[\s\S]*?finally/);
-  assert.doesNotMatch(javascript.match(/async function claimEventPull[\s\S]*?\n}\n/)[0], /showView\(/);
+  // Instant pop-up: claimEventPull is synchronous up to the dialog; the outcome is predicted from
+  // cached state and the POST only reconciles (no pending state, no optimistic count changes).
+  const claimBody = javascript.match(/\nfunction claimEventPull[\s\S]*?\n}\n/)[0];
+  assert.doesNotMatch(claimBody, /showView\(/);
+  assert.match(claimBody, /predictedReadyPulls\(\)[\s\S]*?showEventOutcome\(kicker, predicted\)[\s\S]*?await request\(/);
+  assert.match(claimBody, /ready >= cap \? EVENT_PULL_COPY\.cap\(cap\) : EVENT_PULL_COPY\.success\(ready \+ 1\)/);
+  assert.match(claimBody, /if \(eventPullInFlight\)/);
+  assert.match(claimBody, /AbortSignal\?\.timeout\?\.\(10_000\)/);
+  assert.match(claimBody, /if \(disagrees\) showEventOutcome\(kicker, view\)/);
+  assert.doesNotMatch(claimBody, /readyCount \+ 1|unseenCount \+=|idleQueue\.push/);
+  assert.doesNotMatch(claimBody, /בודקים|todaySpecialsRow\.disabled/);
+  assert.match(javascript, /function predictedReadyPulls[\s\S]*?preparedPulls[\s\S]*?availableAt\) <= nowMs/);
+  assert.match(javascript, /retry: \(\) => \(\{[\s\S]*?action: "לנסות שוב"/);
+  assert.match(javascript, /החבילה כבר אצלכם/);
+  assert.match(javascript, /האירוע נסגר/);
+  assert.match(javascript, /dataset\.outcome === "retry"/);
   assert.match(css, /@media \(any-pointer: coarse\) \{\s*input:not/);
   assert.match(javascript, /model\.specialWindow/);
   assert.match(javascript, /הקלף מוכן לאיסוף/);

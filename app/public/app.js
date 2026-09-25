@@ -4547,11 +4547,55 @@ function pullCountCopy(count) {
   return count === 1 ? "חבילה אחת" : `${count} חבילות`;
 }
 
-function openEventDialog({ kicker, title, copy }) {
+// Event pop-up copy, one entry per outcome. The same strings serve the instant (predicted) pop-up
+// and the server-confirmed one, so a confirmation that agrees changes nothing on screen.
+const EVENT_PULL_COPY = {
+  success: (count) => ({
+    outcome: "success",
+    title: "חבילה נוספת נכנסה למחסן",
+    copy: `תודה שאתם כאן מההתחלה. החבילה כבר מחכה לכם, ויש לכם עכשיו ${pullCountCopy(count)} לפתיחה.`,
+  }),
+  cap: (cap) => ({
+    outcome: "cap",
+    title: "המחסן מלא",
+    copy: `יש לכם כבר ${cap} חבילות שמחכות, וזה המקסימום. פתחו חבילה אחת וחזרו ללחוץ על השורה, והחבילה הנוספת תחכה לכם.`,
+  }),
+  claimed: () => ({
+    outcome: "claimed",
+    title: "החבילה כבר אצלכם",
+    copy: "כבר אספתם את החבילה הנוספת של האירוע. היא מחכה לכם במחסן.",
+  }),
+  closed: () => ({
+    outcome: "closed",
+    title: "האירוע נסגר",
+    copy: "חלון האיסוף סגור עכשיו.",
+  }),
+  retry: () => ({
+    outcome: "retry",
+    title: "לא הצלחנו לאשר",
+    copy: "החיבור נקטע והחבילה עוד לא נוספה. נסו שוב בעוד רגע.",
+    action: "לנסות שוב",
+  }),
+};
+
+function showEventOutcome(kicker, view) {
+  elements.eventDialog.dataset.outcome = view.outcome;
   elements.eventDialogKicker.textContent = kicker;
-  elements.eventDialogTitle.textContent = title;
-  elements.eventDialogCopy.textContent = copy;
+  elements.eventDialogTitle.textContent = view.title;
+  elements.eventDialogCopy.textContent = view.copy;
+  elements.eventDialogOk.textContent = view.action || "הבנתי";
   if (!elements.eventDialog.open) elements.eventDialog.showModal();
+}
+
+/**
+ * Ready pulls the server will see when it settles: the ready (unseen) queue plus prepared pulls
+ * whose time has come, capped. Both come from the last home/settle/state payload.
+ */
+function predictedReadyPulls(state = model.serverState || {}, nowMs = Date.now()) {
+  const cap = state.idleCapacity || model.gameConfig?.idle?.capacity || IDLE_BACKLOG_CAP;
+  const unseen = state.unseenCount ?? model.idleQueue.length;
+  const due = (state.preparedPulls || []).filter(({ availableAt }) => Date.parse(availableAt) <= nowMs).length;
+  return { ready: Math.min(cap, unseen + due), cap };
 }
 
 function applyEventPullPayload(payload) {
@@ -4561,39 +4605,49 @@ function applyEventPullPayload(payload) {
   renderHome();
 }
 
-// Pull-reward event (launch week): the server checks the window, the once-per-player claim and the
-// ready-pull cap, then adds one pull to the warehouse. The pop-up is the feedback; we stay on Today.
-async function claimEventPull(windowOpen) {
-  const row = elements.todaySpecialsRow;
-  if (row.disabled) return;
-  row.disabled = true;
+let eventPullInFlight = null;
+
+// Pull-reward event (launch week). The pop-up opens on the tap itself with the outcome predicted
+// from cached state (success with count + 1, or the cap message), then the POST reconciles: the
+// server checks the window, the once-per-player claim and the cap, and only its answer changes the
+// count or the line. If it disagrees, or the request fails, the pop-up copy is swapped.
+function claimEventPull(windowOpen) {
   const kicker = windowOpen.nameHe || "אירוע";
-  try {
-    const result = await request(`/api/events/${encodeURIComponent(windowOpen.id)}/pull`, { method: "POST" });
-    applyEventPullPayload(result);
-    openEventDialog({
-      kicker,
-      title: "חבילה נוספת נכנסה למחסן",
-      copy: `תודה שאתם כאן מההתחלה. החבילה כבר מחכה לכם, ויש לכם עכשיו ${pullCountCopy(result.readyCount)} לפתיחה.`,
-    });
-  } catch (error) {
-    const body = error.body || {};
-    applyEventPullPayload(body);
-    if (body.error === "PULL_CAP_REACHED") {
-      const cap = body.capacity || IDLE_BACKLOG_CAP;
-      openEventDialog({
-        kicker,
-        title: "המחסן מלא",
-        copy: `יש לכם כבר ${cap} חבילות שמחכות, וזה המקסימום. פתחו חבילה אחת וחזרו ללחוץ על השורה, והחבילה הנוספת תחכה לכם.`,
-      });
-    } else if (body.error === "EVENT_ALREADY_CLAIMED") {
-      showToast("החבילה הנוספת כבר אצלכם.");
-    } else {
-      showToast("חלון האיסוף סגור עכשיו.");
-    }
-  } finally {
-    row.disabled = false;
+  if (eventPullInFlight) {
+    if (!elements.eventDialog.open) elements.eventDialog.showModal();
+    return eventPullInFlight;
   }
+  const { ready, cap } = predictedReadyPulls();
+  const predicted = ready >= cap ? EVENT_PULL_COPY.cap(cap) : EVENT_PULL_COPY.success(ready + 1);
+  showEventOutcome(kicker, predicted);
+  eventPullInFlight = (async () => {
+    let view;
+    try {
+      const result = await request(`/api/events/${encodeURIComponent(windowOpen.id)}/pull`, {
+        method: "POST",
+        signal: globalThis.AbortSignal?.timeout?.(10_000),
+      });
+      applyEventPullPayload(result);
+      view = EVENT_PULL_COPY.success(result.readyCount);
+    } catch (error) {
+      const body = error.body || {};
+      applyEventPullPayload(body);
+      view = body.error === "PULL_CAP_REACHED"
+        ? EVENT_PULL_COPY.cap(body.capacity || cap)
+        : body.error === "EVENT_ALREADY_CLAIMED"
+          ? EVENT_PULL_COPY.claimed()
+          : error.status === 404
+            ? EVENT_PULL_COPY.closed()
+            : EVENT_PULL_COPY.retry();
+    }
+    const disagrees = view.outcome !== predicted.outcome || view.copy !== predicted.copy;
+    // Agreeing answers leave the pop-up alone (open or already dismissed); a disagreement is shown.
+    if (disagrees) showEventOutcome(kicker, view);
+    return view;
+  })().finally(() => {
+    eventPullInFlight = null;
+  });
+  return eventPullInFlight;
 }
 
 async function pullEventCard() {
@@ -7013,7 +7067,11 @@ elements.dialog.addEventListener("click", (event) => {
   if (event.target === elements.dialog) elements.dialog.close();
 });
 elements.closeEventDialog.addEventListener("click", () => elements.eventDialog.close());
-elements.eventDialogOk.addEventListener("click", () => elements.eventDialog.close());
+elements.eventDialogOk.addEventListener("click", () => {
+  const retry = elements.eventDialog.dataset.outcome === "retry";
+  elements.eventDialog.close();
+  if (retry && model.specialWindow?.reward === "pull") claimEventPull(model.specialWindow);
+});
 elements.eventDialog.addEventListener("click", (event) => {
   if (event.target === elements.eventDialog) elements.eventDialog.close();
 });
