@@ -183,7 +183,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /fill-rule/);
   assert.match(css, /:not\(\.klafi-tips\):not\(\.top-nav-row\):not\(\.numbered-tip\) \{ position: relative; z-index: 1; \}/);
   assert.match(css, /#klafi-tips\.klafi-tips/);
-  assert.match(css, /\.klafi-tips-dim \{ pointer-events: auto; z-index: 1; \}/);
+  assert.match(css, /\.klafi-tips-dim \{ pointer-events: none; z-index: 1; \}/);
+  assert.match(css, /\.klafi-tips-veil \{ pointer-events: visiblePainted; \}/);
+  assert.match(css, /\.klafi-tips-block \{ fill: transparent; pointer-events: all; \}/);
   assert.match(css, /\.klafi-tips-marks \{ pointer-events: none; z-index: 2; \}/);
   assert.match(css, /\.klafi-tips-card \{ z-index: 4; \}/);
   assert.match(css, /\.klafi-tips-card \{[\s\S]*?background: #eee5d4/);

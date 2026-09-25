@@ -1,6 +1,6 @@
 # Set 5 - רגעים
 
-The accepted 22-card pool is live in the binder, pack table, and Vercel catalog as release set `set-5`. Cards use the same Quote full-art layout as sets 1–2, with party pips and display codes `רגע-01`–`רגע-22`.
+The accepted 23-card pool is live in the binder, pack table, and Vercel catalog as release set `set-5`. Cards use the same Quote full-art layout as sets 1–2, with party pips and display codes `רגע-01`–`רגע-23`.
 
 ## Accepted initial pool
 
@@ -44,6 +44,12 @@ The accepted 22-card pool is live in the binder, pack table, and Vercel catalog 
     - First sentence is interviewer framing; second is Rothman's answer. Metadata must not present the full combined line as one verbatim Rothman quote.
 22. Ahmad Tibi - `מי גנב לנו את הפלאפל והזעתר והחומוס?`
 
+## Later additions
+
+23. Aryeh Deri - `כשנכנסתי למעשיהו וסגרו עליי את השערים... פתאום הרגשתי שיצאתי לחירות*`
+    - Shortened marker (the omitted middle is his aside to God: `אה, שחררת אותי עכשיו, אני כבר לא חייב`). Channel 14 `שיחה` interview with Oded Harosh, reported 7.6.2026. He served in Ma'asiyahu 3.9.2000–15.7.2002 after a bribery conviction.
+    - Sources: https://www.kikar.co.il/israel-news/deri-rabbi-ovadia-yosef-din-torah, Srugim (srugim.co.il/1306258), https://www.babli.co.il/ultra-orthodox/tg8zu0
+
 ## Explicitly excluded / passed
 
 - Amichai Eliyahu: `אין דבר כזה בלתי מעורבים בעזה.`
@@ -53,7 +59,7 @@ The accepted 22-card pool is live in the binder, pack table, and Vercel catalog 
 - Mansour Abbas dentist fact: identified, but Guy never selected it as a Set 5 card. Do not add it.
 - Polygonal Miri Regev / Ahmad Tibi / May Golan art experiments are not the approved Set 5 visual direction. Guy reverted to the old Klafi style.
 
-## Approved art (all 22 candidates, 2026-09-20)
+## Approved art (all 23 candidates; 1–22 on 2026-09-20)
 
 Approved masters stay 1086x1448 PNG under `docs/design/assets/`. Live catalog `artKey`s are 864x1152 JPEG derivatives (same frame size as sets 1–4) so the Vercel Hobby copy stays under the 100 MB ceiling. SHA-256 per live file is recorded in `set5-wip-pool.json`.
 
@@ -79,6 +85,7 @@ Approved masters stay 1086x1448 PNG under `docs/design/assets/`. Live catalog `a
 20. M. Golan (hen) - `hero-art-may-golan-hen.png`
 21. Rothman (hotel) - `hero-art-simcha-rothman-hotel.png`
 22. Tibi (falafel) - `hero-art-ahmad-tibi-falafel.png`
+23. Deri (prison) - `hero-art-aryeh-deri-prison.png`
 
 ## Assigned pull rarities (2026-09-20)
 
@@ -108,4 +115,5 @@ Crisp / unique-image cards sit rarer. Within the set, specific R : UC : C is abo
 | 20 | R | מאי גולן | קוקוריקו, זה מה שאת, תרנגולת קרקרנית. |
 | 21 | U | שמחה רוטמן | בעל מלון דתי יוכל לסרב לארח הומואים? אם זה פוגע ברגשותיו הדתיים - כן. |
 | 22 | R | אחמד טיבי | מי גנב לנו את הפלאפל והזעתר והחומוס? |
+| 23 | U | אריה דרעי | כשנכנסתי למעשיהו וסגרו עליי את השערים... פתאום הרגשתי שיצאתי לחירות* |
 

@@ -269,9 +269,9 @@ test("Set 5 ships as live Quote cards with party pips and pull rarities", async 
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
   ]);
   const live = catalog.cards.filter(({ releaseSetId }) => releaseSetId === "set-5");
-  assert.equal(live.length, 22);
+  assert.equal(live.length, 23);
   assert.deepEqual(live.map(({ displayCode }) => displayCode),
-    Array.from({ length: 22 }, (_, index) => `רגע-${String(index + 1).padStart(2, "0")}`));
+    Array.from({ length: 23 }, (_, index) => `רגע-${String(index + 1).padStart(2, "0")}`));
   assert.ok(live.every(({ type, typeHe, walkout, pip }) =>
     type === "Quote" && typeHe === "ציטוט" && walkout?.kind === "quote" && pip && pip !== "#c4a35a"));
   assert.ok(live.every(({ eventOnly, packEligible }) => eventOnly !== true && packEligible !== false));
@@ -282,13 +282,13 @@ test("Set 5 ships as live Quote cards with party pips and pull rarities", async 
     assert.equal(card.rarity, candidate.rarity);
     counts[candidate.rarity] += 1;
   }
-  assert.deepEqual(counts, { Common: 12, Uncommon: 6, Rare: 4 });
+  assert.deepEqual(counts, { Common: 12, Uncommon: 7, Rare: 4 });
   assert.equal(live.find(({ id }) => id === "SET5-22").rarity, "Rare");
   assert.equal(live.find(({ id }) => id === "SET5-20").set, "LIK");
   const netanyahu = expandPublicCatalog(cards, specials, extras).find(({ id }) => id === "SET5-01");
   assert.equal(netanyahu?.listSlot, 1);
   assert.equal(netanyahu?.subtitleHe, "מקום 1");
-  assert.equal(extras.set5.candidates.length, 22);
+  assert.equal(extras.set5.candidates.length, 23);
   await Promise.all(live.map(({ artKey }) =>
     readFile(path.resolve(here, "../../docs/design/assets", artKey))));
 });

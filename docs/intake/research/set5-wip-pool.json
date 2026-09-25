@@ -2,7 +2,7 @@
   "id": "set5-wip-pool",
   "status": "live-release",
   "asOfDate": "2026-09-20",
-  "note": "Set 5 is wired into the live catalog, binder, pack table, and Vercel as release set `set-5` (רגעים). Cards expand as Quote full-art with party pips, display codes רגע-01–22, and the assigned pull rarities below. One quote per person was not enforced; the accepted pool shipped as-is.",
+  "note": "Set 5 is wired into the live catalog, binder, pack table, and Vercel as release set `set-5` (רגעים). Cards expand as Quote full-art with party pips, display codes רגע-01–23, and the assigned pull rarities below. One quote per person was not enforced; the accepted pool shipped as-is.",
   "sourceDocument": "docs/intake/research/set5-wip-roster.md",
   "candidates": [
     {
@@ -429,6 +429,28 @@
         "masterArtKey": "hero-art-ahmad-tibi-falafel.png"
       },
       "rarity": "Rare"
+    },
+    {
+      "n": 23,
+      "nameHe": "אריה דרעי",
+      "nameEn": "Aryeh Deri",
+      "displayText": "כשנכנסתי למעשיהו וסגרו עליי את השערים... פתאום הרגשתי שיצאתי לחירות*",
+      "quoteStatus": "shortened",
+      "sources": [
+        "https://www.kikar.co.il/israel-news/deri-rabbi-ovadia-yosef-din-torah",
+        "https://www.srugim.co.il/1306258-%D7%93%D7%A8%D7%A2%D7%99-%D7%95%D7%95%D7%99%D7%93%D7%95%D7%99-%D7%9E%D7%A4%D7%AA%D7%99%D7%A2-%D7%94%D7%AA%D7%A7%D7%95%D7%A4%D7%94-%D7%91%D7%9B%D7%9C%D7%90-%D7%9E%D7%94%D7%98%D7%95%D7%91%D7%95%D7%AA-%D7%91%D7%97%D7%99%D7%99%D7%95",
+        "https://www.babli.co.il/ultra-orthodox/tg8zu0"
+      ],
+      "existingStudioRef": null,
+      "notes": "ראיון לעודד הרוש בתוכנית ״שיחה״, ערוץ 14, 7.6.2026. דרעי ישב בכלא מעשיהו 2000–2002 לאחר הרשעה בשוחד.",
+      "art": {
+        "artKey": "hero-art-aryeh-deri-prison.jpg",
+        "status": "approved",
+        "sha256": "c3ed6d52fca3e71c2cba4112ef0dde714b4bbb390d89fd312caf89e7f57b151b",
+        "note": "864x1152 JPEG (same art as the approved 1086x1448 PNG master). Sepia etching: Deri in dark jacket and open collar inside a Ma'asiyahu-style cell - bars, bunk bed, barred window, riveted lock, no baked-in text.",
+        "masterArtKey": "hero-art-aryeh-deri-prison.png"
+      },
+      "rarity": "Uncommon"
     }
   ],
   "exclusions": [

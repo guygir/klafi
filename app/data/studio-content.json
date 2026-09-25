@@ -100,9 +100,9 @@
           "weight": 30,
           "includeEventCards": false,
           "rarities": {
-            "Common": 65,
-            "Uncommon": 24,
-            "Rare": 11
+            "Common": 62,
+            "Uncommon": 27,
+            "Rare": 10
           }
         }
       ]

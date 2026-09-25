@@ -380,6 +380,10 @@ function roundedHole(box, radius) {
   return `M${x + r} ${y}h${w - r * 2}a${r} ${r} 0 0 1 ${r} ${r}v${h - r * 2}a${r} ${r} 0 0 1 ${-r} ${r}h${-(w - r * 2)}a${r} ${r} 0 0 1 ${-r} ${-r}v${-(h - r * 2)}a${r} ${r} 0 0 1 ${r} ${-r}z`;
 }
 
+function boxesOverlap(a, b) {
+  return a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
+}
+
 function circleHole(cx, cy, radius) {
   return `M${cx - radius} ${cy}a${radius} ${radius} 0 1 0 ${radius * 2} 0a${radius} ${radius} 0 1 0 ${-radius * 2} 0`;
 }
@@ -708,11 +712,23 @@ export function attachKlafiTips(env = globalThis) {
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     dim.setAttribute("width", String(vw));
     dim.setAttribute("height", String(vh));
+    // Keep the bug-report pill reachable during guides: cut it out of the veil
+    // and let clicks pass through there; the ring hole itself stays inert.
+    const bugNode = overlay.parentElement === doc.body ? doc.querySelector("#open-bug-report") : null;
+    const bugSpec = bugNode && boxOf(bugNode).width > 0
+      ? clampSpecToView(specToFrame(highlightSpec(bugNode, 3), frame), { width: vw, height: vh })
+      : null;
+    const bugInRing = Boolean(bugSpec && boxesOverlap(bugSpec.box, fromSpec.box));
     dim.replaceChildren();
     dim.append(svgEl("path", {
       "fill-rule": "evenodd",
       class: "klafi-tips-veil",
-      d: `M0 0H${vw}V${vh}H0Z${holePath(fromSpec)}`,
+      d: `M0 0H${vw}V${vh}H0Z${holePath(fromSpec)}${bugSpec && !bugInRing ? holePath(bugSpec) : ""}`,
+    }));
+    dim.append(svgEl("path", {
+      "fill-rule": "evenodd",
+      class: "klafi-tips-block",
+      d: `${holePath(fromSpec)}${bugSpec && bugInRing ? holePath(bugSpec) : ""}`,
     }));
     marks.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     marks.setAttribute("width", String(vw));
