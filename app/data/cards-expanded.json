@@ -2051,6 +2051,7 @@
     "whyItMatters": "A compact, affirmative statement linking institutional competence, service and social solidarity.",
     "source": "איזנקוט במסיבת עיתונאים ראשונה מאז הפרישה מהכנסת: \"יכול למלא כל תפקיד במדינה\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-gadi-eisenkot-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -2097,6 +2098,7 @@
     "whyItMatters": "The strongest concise expression of Eisenkot's solidarity-centered political offer.",
     "source": "איזנקוט: \"כל מי שכיהן בשבעה באוקטובר צריך ללכת הביתה\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2143,6 +2145,7 @@
     "whyItMatters": "Preserves disagreement while framing connection as an active democratic practice.",
     "source": "איזנקוט: \"כל מי שכיהן בשבעה באוקטובר צריך ללכת הביתה\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2171,9 +2174,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "YSR-M02-Q01",
@@ -2189,6 +2192,7 @@
     "whyItMatters": "Turns a security requirement into a universal civic compact with military and civilian paths.",
     "source": "יורם כהן בוועידת מקור ראשון: \"רעיון 'שתי מדינות לשני עמים' מסוכן ביטחונית ואסטרטגית\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-yoram-cohen-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -2235,6 +2239,7 @@
     "whyItMatters": "A notably specific pro-professionalism statement from a former security-service chief.",
     "source": "יורם כהן בוועידת מקור ראשון: \"רעיון 'שתי מדינות לשני עמים' מסוכן ביטחונית ואסטרטגית\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2281,6 +2286,7 @@
     "whyItMatters": "Constructive rather than merely accusatory: it names the discourse to build and the slide to resist.",
     "source": "יורם כהן בוועידת מקור ראשון: \"רעיון 'שתי מדינות לשני עמים' מסוכן ביטחונית ואסטרטגית\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2327,6 +2333,7 @@
     "whyItMatters": "A crisp, future-facing policy priority with a clear national outcome.",
     "source": "\"הממשלה צריכה להעלות את ה-AI לראש סדר העדיפויות הלאומי\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2373,6 +2380,7 @@
     "whyItMatters": "Balances technological ambition with ethics and practical governance.",
     "source": "\"הממשלה חייבת להחליף דיסקט לגבי ה-AI\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2419,6 +2427,7 @@
     "whyItMatters": "Connects technology policy to a tangible promise of opportunity for every child.",
     "source": "\"ניקח את השגשוג של ההייטק ונהפוך אותו למנוף חברתי אמיתי\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2465,6 +2474,7 @@
     "whyItMatters": "Her best-known direct statement of universal belonging and aspiration.",
     "source": "יום העצמאות ה-72: טקס המשואות נפתח ללא קהל ודגלנים",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2511,6 +2521,7 @@
     "whyItMatters": "Current, affirmative and directly tied to the portfolio she seeks.",
     "source": "היזמית החברתית עדי אלטשולר מצטרפת לאיזנקוט: \"המועמדת לשרת החינוך\"",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2557,6 +2568,7 @@
     "whyItMatters": "A memorable, humane credo grounded in her record of social entrepreneurship.",
     "source": "\"אל תבקשו רשות, מקסימום תבקשו סליחה\": עדי אלטשולר עם טיפים על יזמות חברתית",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2603,6 +2615,7 @@
     "whyItMatters": "The clearest statement of Tropper's long-standing public ethic.",
     "source": "טיפות במדבר - תקווה בארץ פצועה",
     "listSlot": 6,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2649,6 +2662,7 @@
     "whyItMatters": "Distinctively expresses cumulative civic repair without misattributing De Luca's preceding line.",
     "source": "טיפות במדבר - תקווה בארץ פצועה",
     "listSlot": 6,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2695,6 +2709,7 @@
     "whyItMatters": "A concrete, positive definition of the political culture he wants to model.",
     "source": "הנדל וטרופר סיכמו על ריצה משותפת בבחירות",
     "listSlot": 6,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2741,6 +2756,7 @@
     "whyItMatters": "Highly recognizable, consequential, and meme-worthy; the shortened display preserves the exact core wording while the full original remains recorded here.",
     "source": "נתניהו לפני חקירתו: \"חכו עם החגיגות, לא יהיה כלום\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-benjamin-netanyahu-01.png",
     "walkout": {
       "kind": "quote",
@@ -2787,6 +2803,7 @@
     "whyItMatters": "A widely recognized direct recording; the card retains the later apology and full context.",
     "source": "שלטון הימין בסכנה - חייבים לצאת ולהצביע מחל",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-benjamin-netanyahu-02.png",
     "walkout": {
       "kind": "quote",
@@ -2833,6 +2850,7 @@
     "whyItMatters": "Consequential wording retained with an explicit asterisk and provenance disclosure because it is not a verified verbatim transcript.",
     "source": "I reported on Netanyahu green-lighting Qatari cash for Hamas. Here's what the record shows",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-benjamin-netanyahu-03.png",
     "walkout": {
       "kind": "quote",
@@ -2879,6 +2897,7 @@
     "whyItMatters": "Short, exact, and consequential in the constitutional confrontation over judicial review of Basic Laws.",
     "source": "יו\"ר הכנסת לא מתחייב לציית להכרעת בג\"ץ אם יפסול חוקי יסוד: \"הכנסת לא תקבל את רמיסתה\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2925,6 +2944,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "אוחנה כינה את עמית \"שופט עליון\", נתניהו הכיר בו - והרצוג נזף בקואליציה",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -2971,6 +2991,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "יו״ר הכנסת אמיר אוחנה הסיר את סיכת החטופים - ועורר סערה",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3017,6 +3038,7 @@
     "whyItMatters": "A precise, foundational sentence from the formal launch of the judicial overhaul.",
     "source": "הצהרת לוין – הרפורמה המתוכננת במערכת המשפט",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3063,6 +3085,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "יריב לוין: \"אם לא נגיע להסכמה על מינויים, בית המשפט העליון ילך וייכחד\"",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3109,6 +3132,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "יריב לוין בריאיון ל-i24NEWS: \"אי אפשר לציית לבג״ץ בעניין המבקר\"",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3155,6 +3179,7 @@
     "whyItMatters": "The contrast is sourced, consequential, and darkly meme-worthy without adding any allegation beyond the recorded interview and contemporaneous conditions.",
     "source": "מירי רגב מתגאה בתפקוד הממשלה: \"כל כך הרבה אנשים במלונות, תודה לאל\"",
     "listSlot": 5,
+    "membershipNote": "",
     "artKey": "hero-art-miri-regev-01.jpg",
     "walkout": {
       "kind": "quote",
@@ -3201,6 +3226,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "רגב בסרטון מקומם: \"אני דוגמה טובה לכך שיש טיסות\"",
     "listSlot": 5,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3247,6 +3273,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "השרה מירי רגב על סערת ההשתתפות בקבינט: \"אני רק בן אדם\"",
     "listSlot": 5,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3293,6 +3320,7 @@
     "whyItMatters": "Exact, unusually meme-worthy, and safely framed so the comparison is not broadened beyond ports.",
     "source": "ישראל כץ ממשיך בשלו: \"אני גדול יותר מהורדוס בעניין הנמלים\"",
     "listSlot": 6,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3339,6 +3367,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "אחרי שהרגיז את האמריקנים והתקפל, כ״ץ אומר שוב כי נקים גרעיני נח״ל",
     "listSlot": 6,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3385,6 +3414,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "שר הביטחון כ״ץ באמירה חריגה: \"דגל ישראל יתנוסס בתימן\"",
     "listSlot": 6,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3431,6 +3461,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "המיקרופון של יעקב ברדוגו נשאר בטעות פתוח בזמן האזעקה",
     "listSlot": 11,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3477,6 +3508,7 @@
     "whyItMatters": "Consequential and sharply attributable to a named broadcast; retained with a secondary-transcript quality label because the accessible source is a media-monitoring archive rather than Channel 14's original clip.",
     "source": "\"טיפחנו את החמאס בעזה בהחלטה של הרצי הלוי\"",
     "listSlot": 11,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3523,6 +3555,7 @@
     "whyItMatters": "The line is highly consequential and rhetorically memorable; full context and Channel 14's limiting response are included to avoid broadening Bardugo's allegation.",
     "source": "מקורבו של נתניהו בערוץ 14: צה\"ל ושב\"כ מנסים לבצע הפיכה",
     "listSlot": 11,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3569,6 +3602,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "\"7 באוקטובר הוא היום הקשה ביותר בתולדות ישראל. לכל מנהיג יש ימים פחות טובים\"",
     "listSlot": 12,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3615,6 +3649,7 @@
     "whyItMatters": "Wording and context are preserved; no meme caption is substituted for the speaker’s words.",
     "source": "\"את מתעסקת בשטויות\": מיקי זוהר סיים את הריאיון באמצע",
     "listSlot": 12,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3661,6 +3696,7 @@
     "whyItMatters": "The archive contains only two Miki Zohar records. Following the fewer-than-three rule, this is the sole Rare selection because it is more consequential and better supported by an original full interview than the alternative remark about Netanyahu's trial.",
     "source": "\"7 באוקטובר נרקם במשמרת של ממשלת בנט־לפיד\"",
     "listSlot": 12,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3707,6 +3743,7 @@
     "whyItMatters": "The alliance's signature constructive line, grounded in acknowledged differences rather than false unanimity.",
     "source": "בנט ולפיד בהצהרה מיוחדת: \"תם עידן הפילוג, הגיע עידן התיקון\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-naftali-bennett-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -3753,6 +3790,7 @@
     "whyItMatters": "A specific, constructive rights commitment that broadens the favorable portrait beyond campaign process.",
     "source": "בנט ולפיד בהצהרה מיוחדת: \"תם עידן הפילוג, הגיע עידן התיקון\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3799,6 +3837,7 @@
     "whyItMatters": "Short, hopeful and action-oriented, with both social and institutional resonance.",
     "source": "בנט לתומכיו בכנס \"ביחד\": \"בבחירות הקרובות עם ישראל יחולל מהפך שלא היה כמותו מאז 1977\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3827,9 +3866,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "BYD-M02-Q01",
@@ -3845,6 +3884,7 @@
     "whyItMatters": "Frames coalition compromise as accountable leadership for children and national repair.",
     "source": "בנט ולפיד מתאחדים: מפלגת \"ביחד\" יוצאת לדרך",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-yair-lapid-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -3891,6 +3931,7 @@
     "whyItMatters": "A vivid promise of hope tied to the concrete problem of families considering emigration.",
     "source": "בנט לתומכיו בכנס \"ביחד\": \"בבחירות הקרובות עם ישראל יחולל מהפך שלא היה כמותו מאז 1977\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3937,6 +3978,7 @@
     "whyItMatters": "An accessible governing promise centered on daily work and named constituencies.",
     "source": "אדוני ראש הממשלה, למה אתה עדיין ראש הממשלה?",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -3983,6 +4025,7 @@
     "whyItMatters": "A concise competence frame that supports self-defense while insisting on safeguards.",
     "source": "עימות במליאה: ח\"כ מירב בן ארי תוקפת: \"מה זה הבדיחה הזאת?\"",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4029,6 +4072,7 @@
     "whyItMatters": "Shows policy balance and implementation focus rather than a one-sided slogan.",
     "source": "ח\"כ מירב בן ארי לערוץ 7: חצי שנה אנשים מחכים לקבלת רישיון נשק",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4075,6 +4119,7 @@
     "whyItMatters": "Constructive because it treats femicide as preventable and pairs diagnosis with commitment.",
     "source": "היום בכנסת: דיון על הקלות נשק והסכנה לחיי נשים",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4121,6 +4166,7 @@
     "whyItMatters": "A direct governing standard based on preparation and execution.",
     "source": "איתן גינזבורג שעזב את גנץ מצטרף ל\"ביחד\" של בנט: \"לא יהיו רגעי חסד\"",
     "listSlot": 8,
+    "membershipNote": "המחנה הממלכתי לשעבר",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4167,6 +4213,7 @@
     "whyItMatters": "Short and card-ready, while its source context ties 'together' to an experienced team and operational plans.",
     "source": "אחרי שעזב את גנץ: איתן גינזבורג מצטרף לבנט",
     "listSlot": 8,
+    "membershipNote": "המחנה הממלכתי לשעבר",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4213,6 +4260,7 @@
     "whyItMatters": "Shows a principle-led preference for comprehensive agreement over symbolic unilateralism.",
     "source": "רה\"מ לא מתכוון לקדם הקמה של מדינה פלסטינית",
     "listSlot": 8,
+    "membershipNote": "המחנה הממלכתי לשעבר",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4259,6 +4307,7 @@
     "whyItMatters": "Humanizes a benefits proposal by connecting national service to reciprocal care for families.",
     "source": "יונתן שלו בריאיון: \"החיילים בראש הפירמידה, משתמטים לא יקבלו שקל\"",
     "listSlot": 10,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4305,6 +4354,7 @@
     "whyItMatters": "A rare constructive self-description that explains his claimed capacity to connect social worlds.",
     "source": "יונתן שלו בריאיון: \"החיילים בראש הפירמידה, משתמטים לא יקבלו שקל\"",
     "listSlot": 10,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4351,6 +4401,7 @@
     "whyItMatters": "Optimistic without denying crisis; it grounds ambition in lived contrast and collective experience.",
     "source": "יונתן שלו בריאיון: \"החיילים בראש הפירמידה, משתמטים לא יקבלו שקל\"",
     "listSlot": 10,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4397,6 +4448,7 @@
     "whyItMatters": "A maximal, unambiguous conscription red line stated as a condition for any government; selected by Guy as option 1A.",
     "source": "ליברמן מצהיר: \"בממשלה שלנו לא יהיה רבע פטור מגיוס ללומדי תורה, אני מתחייב\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-avigdor-lieberman-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -4443,6 +4495,7 @@
     "whyItMatters": "Shows forward planning and a willingness to reprioritize government around a stated security assessment.",
     "source": "ליברמן: \"עד המערכה הבאה מול איראן יש מקסימום 3 שנים\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4489,6 +4542,7 @@
     "whyItMatters": "The strongest affirmative expression of national economic possibility, retained with its leadership condition.",
     "source": "ליברמן: אנחנו יכולים לעבור את רמת החיים של שווייץ",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4517,9 +4571,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "YB-M02-Q01",
@@ -4535,6 +4589,7 @@
     "whyItMatters": "Plainly states the personal and civic origin of his public campaign without exploiting the surrounding bereavement.",
     "source": "מהליכוד לישראל ביתנו: רפי בן שטרית ששכל את בנו ב-7/10 ירוץ לכנסת",
     "listSlot": 2,
+    "membershipNote": "ליכוד לשעבר",
     "artKey": "hero-art-rafi-ben-shitrit-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -4581,6 +4636,7 @@
     "whyItMatters": "A specific and testable public-purpose commitment.",
     "source": "מהליכוד לישראל ביתנו: רפי בן שטרית ששכל את בנו ב-7/10 ירוץ לכנסת",
     "listSlot": 2,
+    "membershipNote": "ליכוד לשעבר",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4627,6 +4683,7 @@
     "whyItMatters": "Memorable but accurately contextualized expression of moving from protest to parliamentary participation.",
     "source": "רפי בן שטרית רץ לכנסת: \"המחנה הלאומי זה אני\"",
     "listSlot": 2,
+    "membershipNote": "ליכוד לשעבר",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4673,6 +4730,7 @@
     "whyItMatters": "A direct explanation of why she moved from professional expertise into electoral politics.",
     "source": "אל\"מ במיל' טליה לנקרי, בכירה לשעבר במל\"ל מצטרפת לישראל ביתנו",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4719,6 +4777,7 @@
     "whyItMatters": "Constructive, biography-linked claim centered on implementation.",
     "source": "אל\"מ במיל' טליה לנקרי, בכירה לשעבר במל\"ל מצטרפת לישראל ביתנו",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4765,6 +4824,7 @@
     "whyItMatters": "The clearest positive statement of the leadership qualities she seeks to represent.",
     "source": "אל\"מ במיל' טליה לנקרי, בכירה לשעבר במל\"ל מצטרפת לישראל ביתנו",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4811,6 +4871,7 @@
     "whyItMatters": "Frames personal safety as a universal obligation across sectors and communities.",
     "source": "יאיר גולן: \"ללא משילות, ללא ביטחון. אף אזרח אינו בטוח\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-yair-golan-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -4857,6 +4918,7 @@
     "whyItMatters": "Defines his security position as outcome-driven rather than camp-driven; context prevents it from being read as pacifist.",
     "source": "יאיר גולן: \"לנתניהו אין אסטרטגיה\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4903,6 +4965,7 @@
     "whyItMatters": "A concise statement of his signature synthesis of military capability and political settlement.",
     "source": "יאיר גולן: \"לנתניהו אין אסטרטגיה\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -4931,9 +4994,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "DEM-M02-Q01",
@@ -4949,6 +5012,7 @@
     "whyItMatters": "A broad positive objective stated in her own authored text.",
     "source": "\"יש דור צעיר שלא יודע מה זאת מדינה שלוקחת אחריות\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-naama-lazimi.jpg",
     "walkout": {
       "kind": "quote",
@@ -4995,6 +5059,7 @@
     "whyItMatters": "Connects an abstract value to resource access and opportunity.",
     "source": "\"יש דור צעיר שלא יודע מה זאת מדינה שלוקחת אחריות\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5041,6 +5106,7 @@
     "whyItMatters": "Her strongest constructive language about governing for non-supporters as well as supporters.",
     "source": "\"יש דור צעיר שלא יודע מה זאת מדינה שלוקחת אחריות\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5087,6 +5153,7 @@
     "whyItMatters": "Combines his rabbinic identity with a clear humanitarian priority.",
     "source": "גלעד קריב: \"נתניהו הוא בובה מתנפחת של מנהיגות\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5133,6 +5200,7 @@
     "whyItMatters": "A compact constructive formulation that explicitly places diplomacy alongside military strength.",
     "source": "גלעד קריב: \"נתניהו הוא בובה מתנפחת של מנהיגות\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5179,6 +5247,7 @@
     "whyItMatters": "A concise inclusive religious message that does not claim moderation for one movement alone.",
     "source": "גלעד קריב: \"נתניהו הוא בובה מתנפחת של מנהיגות\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5225,6 +5294,7 @@
     "whyItMatters": "States the remedial purpose of a concrete legislative initiative.",
     "source": "\"חוק הקופאיות\" אושר בטרומית: \"מתקנים את העוול\"",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5271,6 +5341,7 @@
     "whyItMatters": "Shows policy mechanics rather than a generic promise.",
     "source": "בעקבות תחקיר ynet: \"חוק הקופאיות\" אושר בקריאה ראשונה",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5317,6 +5388,7 @@
     "whyItMatters": "Elevates a specific worker-protection bill into a clear standard for social strength.",
     "source": "בעקבות תחקיר ynet: \"חוק הקופאיות\" אושר בקריאה ראשונה",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5363,6 +5435,7 @@
     "whyItMatters": "A compact, non-naïve articulation of his central political theme.",
     "source": "הודעה שמרגש אותי לשלוח",
     "listSlot": 5,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5409,6 +5482,7 @@
     "whyItMatters": "Turns optimism into an obligation to act and ties it to intergenerational responsibility.",
     "source": "הודעה שמרגש אותי לשלוח",
     "listSlot": 5,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5455,6 +5529,7 @@
     "whyItMatters": "The most specific and inclusive positive vision in his candidacy announcement.",
     "source": "הודעה שמרגש אותי לשלוח",
     "listSlot": 5,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5501,6 +5576,7 @@
     "whyItMatters": "The most recognizable visual/audio meme attached to Smotrich's English speech and the requested one-star treatment.",
     "source": "נתניהו התבלבל בשם של סמוטריץ׳ — ועקץ: כמו הגרנדמייזר",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-bezalel-smotrich-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -5547,6 +5623,7 @@
     "whyItMatters": "A durable meme phrase whose omitted qualifier materially changes its meaning; useful precisely when shipped with the full international-arena context.",
     "source": "האם סמוטריץ׳ אמר כי \"חמאס הוא נכס\"?",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5593,6 +5670,7 @@
     "whyItMatters": "A high-consequence statement condemned internationally and directly relevant to civilian-protection policy.",
     "source": "Smotrich: It may be ‘justified’ to starve 2 million Gazans, but world won’t let us",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5621,9 +5699,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "RZ-M02-Q01",
@@ -5639,6 +5717,7 @@
     "whyItMatters": "The exact wording from his feet-interview response; keeps the feet flavor with a verified quote. Selected by Guy as feet option 1.",
     "source": "פייגלין על סערת הריאיון: \"השתדלתי ליהנות מזה והחטפתי לו\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-moshe-feiglin-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -5685,6 +5764,7 @@
     "whyItMatters": "Concise statement of a consequential territorial program, with direct video and necessary personal context.",
     "source": "משה פייגלין: עזה היא עיר עברית, חייבים לכבוש כדי לנצח",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5731,6 +5811,7 @@
     "whyItMatters": "The strongest explicit formulation of the population-transfer and settlement policy he ties to victory.",
     "source": "משה פייגלין: \"ללא כיבוש וגירוש – ישראל לא יכולה לנצח בעזה\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5777,6 +5858,7 @@
     "whyItMatters": "Directly consequential for equal access to medical services; clarification prevents an overbroad reading.",
     "source": "רופא לא יעניק טיפול ללהט״ב? סטרוק לכאן רשת ב: אסור לכפות",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5823,6 +5905,7 @@
     "whyItMatters": "Memorable comparison directed at security chiefs; the same-day apology is essential editorial context.",
     "source": "\"מי אתם, כוח וגנר?\": אורית סטרוק בתגובה חריפה",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5869,6 +5952,7 @@
     "whyItMatters": "A consequential numerical framing of hostages versus war aims, preserved with her argument about those potentially left behind.",
     "source": "סטרוק נגד עסקה: לממשלה אין זכות קיום אם תוותר על מטרות המלחמה כדי להחזיר 22 או 33 חטופים",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5915,6 +5999,7 @@
     "whyItMatters": "Short answer with concrete civil-rights consequences; question and later explanation must accompany it.",
     "source": "רופא לא יעניק טיפול ללהט״ב? סטרוק: אסור לכפות",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -5961,6 +6046,7 @@
     "whyItMatters": "Compact and meme-ready, but meaningful only with the intellectual-ability setup and disability-rights response.",
     "source": "רוטמן כינה את המפגינים נגדו \"מוגבלים\", ועורר סערה",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6007,6 +6093,7 @@
     "whyItMatters": "Exceptionally consequential because the attribution was litigated and judicially sustained; denial, judgment and reported immediate retraction all remain attached.",
     "source": "בית המשפט קבע: ניצחון לחדשות 12 בתביעת הדיבה שהגיש שמחה רוטמן",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6053,6 +6140,7 @@
     "whyItMatters": "Clear statement connecting victory, territorial conquest, settlement and rejection of Palestinian statehood.",
     "source": "ח״כ סוכות: תמונת ניצחון? \"להתיישב ברצועה\"",
     "listSlot": 7,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6099,6 +6187,7 @@
     "whyItMatters": "Consequential threat of parliamentary exclusion directed at named elected representatives.",
     "source": "מהומה בדיון: הח״כ מהציונות הדתית מאיים על הח״כים: \"אתם הבאים בתור\"",
     "listSlot": 7,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6145,6 +6234,7 @@
     "whyItMatters": "A current, visually documented act followed by a blame-shifting defense and criticism from the military and his own party.",
     "source": "צבי סוכות על ניתוץ האנדרטה: \"גדעון סער ודובר צה״ל גרמו את הנזק בעולם\"",
     "listSlot": 7,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6191,6 +6281,7 @@
     "whyItMatters": "A direct hierarchy of rights with international and domestic policy consequences.",
     "source": "לשכת רה״מ: \"מאפשרים חופש תנועה לישראלים ולפלסטינים ביו״ש\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-itamar-ben-gvir-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -6237,6 +6328,7 @@
     "whyItMatters": "This is the actual alligator/crocodile institution proposal the user recalled: a recent, sourced, highly visual policy spectacle.",
     "source": "בית המשפט עצר את תוכנית התנינים של סילמן ובן גביר",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6283,6 +6375,7 @@
     "whyItMatters": "An inspectable primary interview addressing a defining and controversial visual artifact, with his explicit repudiation of the massacre preserved.",
     "source": "ברוך גולדשטיין רוצח? התשובה של איתמר בן גביר",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6311,9 +6404,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "OTZ-M02-Q01",
@@ -6329,6 +6422,7 @@
     "whyItMatters": "Her clearest filmed command to hostage relatives; maximally compact but must retain the causal sentence.",
     "source": "טלי גוטליב למשפחות חטופים - \"תשתקו\"",
     "listSlot": 2,
+    "membershipNote": "ליכוד לשעבר",
     "artKey": "hero-art-tally-gotliv-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -6375,6 +6469,7 @@
     "whyItMatters": "A recorded, self-contradictory and widely criticized line about survivors of captivity.",
     "source": "טלי גוטליב: \"כל חטוף הוא שטוף מוח מחמאס\"",
     "listSlot": 2,
+    "membershipNote": "ליכוד לשעבר",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6421,6 +6516,7 @@
     "whyItMatters": "Her most intrinsically meme-able verified sound, embedded in a hearing with direct legal and security consequences.",
     "source": "גוטליב \"נבחה\" וצרחה. היועמ\"שית: היא סיכנה לוחם שב\"כ",
     "listSlot": 2,
+    "membershipNote": "ליכוד לשעבר",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6467,6 +6563,7 @@
     "whyItMatters": "The best-known consequential quote, but unusable without the exact interviewer question and later metaphor clarification.",
     "source": "אטום על עזה? השר אליהו אמר כי \"זו דרך אחת\", והושעה מישיבות הממשלה",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6513,6 +6610,7 @@
     "whyItMatters": "Explicit rejection of civilian distinction by a serving minister during war.",
     "source": "השר עמיחי אליהו: פצצת אטום על עזה — \"זו דרך אחת\"",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6559,6 +6657,7 @@
     "whyItMatters": "A later, more explicit statement combining erasure rhetoric with exclusive territorial aspiration, sourced to the broadcaster.",
     "source": "השר אליהו: \"הממשלה דוהרת לזה שעזה נמחקת — היא תהיה יהודית\"",
     "listSlot": 4,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6605,6 +6704,7 @@
     "whyItMatters": "The short recorded line is unusually memorable and directly consequential to the wartime debate over military service; the card must retain the surrounding prayer for soldiers, wounded people and hostages.",
     "source": "חשיפת i24NEWS: המסר המקומם של דרעי נגד הגיוס לצה\"ל | צפו",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-aryeh-deri-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -6633,9 +6733,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "SHS-M02-Q03",
@@ -6651,6 +6751,7 @@
     "whyItMatters": "The official committee quotation compresses a central enforcement dispute into a consequential, meme-ready line without requiring an inference about Azoulay's motives.",
     "source": "שר הביטחון הציג בפני ועדת החוץ והביטחון את העקרונות להשגת היעד של גידול משמעותי מקרב הציבור החרדי",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-yinon-azoulay-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -6697,6 +6798,7 @@
     "whyItMatters": "The impossible hypothetical and grievance logic make this the most compact, recognizable entry point to Asher's wartime enlistment position.",
     "source": "ח\"כ יעקב אשר בריאיון סוער: גם אם מחר כל החרדים יתגייסו לצבא, יימצאו משהו אחר",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-yaakov-asher-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -6743,6 +6845,7 @@
     "whyItMatters": "The idiom is visually immediate and captures Asher's claim that contradictory promises helped produce a coalition rupture.",
     "source": "אשר במתקפה על אדלשטיין: \"רקד על כל החתונות\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6789,6 +6892,7 @@
     "whyItMatters": "This is the clearest sourced statement tying Asher's service-law demand to the survival of the government, making the electoral consequence explicit.",
     "source": "ח\"כ יעקב אשר: אם חוק הגיוס לא יוסדר עד אמצע כנס הקיץ, תהיה בעיה לשבת בממשלה הזו",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6817,9 +6921,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "UTJ-M02-Q01",
@@ -6835,6 +6939,7 @@
     "whyItMatters": "Promoted from Studio Q03 to the released card per Guy's 4A selection; shortened marker preserved. The prior released quote moves to the Q03 backlog slot so no sourced content is lost.",
     "source": "גולדקנופף בכנס: \"שמחים על החטופים — אבל לא שוכחים את אחינו הנמקים בכלא\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-yitzhak-goldknopf-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -6881,6 +6986,7 @@
     "whyItMatters": "The language used to characterize lawful military enforcement is politically consequential and highly distinctive; the card must not erase the letter's explicit distinction between hostages and detainees.",
     "source": "לשחרר את החטופים — ואת העריקים החרדים: המכתב המקומם של גולדקנופף",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6927,6 +7033,7 @@
     "whyItMatters": "The recorded juxtaposition is the strongest consequential and meme-ready Goldknopf quote, and the longer text prevents the card from relying only on a headline fragment.",
     "source": "השר גולדקנופף: אנחנו זכינו בבחירות, גיוס לצבא? אתם לא רוצים",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -6973,6 +7080,7 @@
     "whyItMatters": "The line states a concrete condition Pindrus places on Haredi military participation and is best read against the wartime manpower debate, without claiming the condition is either sufficient or impossible.",
     "source": "\"אם הצבא ישכיל — זה יצליח\": פינדרוס התייחס לגיוס חרדים — ועורר סערה",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7019,6 +7127,7 @@
     "whyItMatters": "This is a direct, recorded statement about LGBT people and state policy from a governing-coalition legislator; its explicit comparison and proposed prevention of a movement make it highly consequential.",
     "source": "חבר הכנסת פינדרוס: \"הפלורליסט פה זה אני, אי אפשר לחיות בהפקרות\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7065,6 +7174,7 @@
     "whyItMatters": "The two-word clip circulated widely because it sounded dismissive in a uniquely charged parliamentary moment; preserving Avigdori's preceding statement and Pindrus's later explanation is essential.",
     "source": "פגרת הכנסת תתקיים כרגיל, ח\"כ פינדרוס למשפחות חטופים שמחו: \"יאללה יאללה\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7111,6 +7221,7 @@
     "whyItMatters": "A concise affirmative statement of democratic equality and peace that names both Arab and Jewish citizens.",
     "source": "יוסף ג'בארין: הכי רחוקה מנתניהו – חד\"ש היא האלטרנטיבה למדיניות הימין",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-yousef-jabareen-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -7157,6 +7268,7 @@
     "whyItMatters": "Constructive and policy-specific: peace, security, equality and a defined two-state framework.",
     "source": "יוסף ג'בארין: הכי רחוקה מנתניהו – חד\"ש היא האלטרנטיבה למדיניות הימין",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7203,6 +7315,7 @@
     "whyItMatters": "The strongest compact expression of his constructive Jewish-Arab partnership pitch.",
     "source": "יוסף ג'בארין: הכי רחוקה מנתניהו – חד\"ש היא האלטרנטיבה למדיניות הימין",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7231,9 +7344,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "JNT-M02-Q01",
@@ -7249,6 +7362,7 @@
     "whyItMatters": "Exceptionally concise, memorable and tied to a concrete equal-employment initiative.",
     "source": "יום עיון בנושא שילוב ערבים: ממס שפתיים לפרקטיקה מחייבת",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-ahmad-tibi-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -7295,6 +7409,7 @@
     "whyItMatters": "A historically recognized appeal to empathy that crossed political and national boundaries.",
     "source": "האם נאומו של אחמד טיבי הוא הטוב ביותר שנשמע במליאת הכנסת?",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7341,6 +7456,7 @@
     "whyItMatters": "A current, affirmative statement of his central objective, published one day before the research cutoff.",
     "source": "ומה חושב טיבי על החלפת גפני ומקלב? שאלנו אותו - וזה מה שהוא ענה",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7387,6 +7503,7 @@
     "whyItMatters": "A constructive, rights-based platform sentence covering citizenship, peace, equality, justice and freedom.",
     "source": "Fear of Netanyahu victory may drive big surge in Palestinian voter turnout",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7433,6 +7550,7 @@
     "whyItMatters": "Shows pragmatic discrimination among potential counterparts rather than flattening all opponents into one category.",
     "source": "Fear of Netanyahu victory may drive big surge in Palestinian voter turnout",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7479,6 +7597,7 @@
     "whyItMatters": "A concrete, optimistic claim about democratic participation and Arab political agency.",
     "source": "Fear of Netanyahu victory may drive big surge in Palestinian voter turnout",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7525,6 +7644,7 @@
     "whyItMatters": "The stated price of support, in Abbas's own words; favorable-transactional treatment per the settled editorial line. Selected by Guy as option 2.",
     "source": "מנסור עבאס נשא נאום מיוחד: צפוי להכשיר את הקרקע לחבירה לנתניהו",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-mansour-abbas-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -7571,6 +7691,7 @@
     "whyItMatters": "His most compact and reusable constructive line.",
     "source": "מנסור עבאס בקריאה לפיוס: \"זה הזמן לשינוי\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7617,6 +7738,7 @@
     "whyItMatters": "A vivid, concrete argument that public services bind Arab and Jewish citizens together.",
     "source": "מנסור עבאס נשא נאום מיוחד: צפוי להכשיר את הקרקע לחבירה לנתניהו",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7645,9 +7767,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "RAM-M02-Q01",
@@ -7663,6 +7785,7 @@
     "whyItMatters": "Directly explains the unusual cross-community candidacy in a compact, constructive line.",
     "source": "יואב סגלוביץ׳ מסביר מה עמד מאחורי הצטרפותו למפלגה הערבית",
     "listSlot": 2,
+    "membershipNote": "יש עתיד לשעבר",
     "artKey": "hero-art-yoav-segalovitz-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -7709,6 +7832,7 @@
     "whyItMatters": "Defines partnership without pretending agreement or assimilation.",
     "source": "יואב סגלוביץ׳ מסביר מה עמד מאחורי הצטרפותו למפלגה הערבית",
     "listSlot": 2,
+    "membershipNote": "יש עתיד לשעבר",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7755,6 +7879,7 @@
     "whyItMatters": "The clearest metaphor and most distinctive statement of the candidacy's constructive intent.",
     "source": "יואב סגלוביץ׳ מסביר מה עמד מאחורי הצטרפותו למפלגה הערבית",
     "listSlot": 2,
+    "membershipNote": "יש עתיד לשעבר",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7801,6 +7926,7 @@
     "whyItMatters": "Explains the structural planning problem his legislation sought to address.",
     "source": "Bill approved in preliminary reading for connecting houses built without a permit to the electric grid",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7847,6 +7973,7 @@
     "whyItMatters": "Constructive and administratively specific: solve the permitting deficit through planning.",
     "source": "Bill approved in preliminary reading for connecting houses built without a permit to the electric grid",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7893,6 +8020,7 @@
     "whyItMatters": "A compact defense of Arabic's legitimate place in Israel's parliament.",
     "source": "The plenary is stormy: Amsalem to Taha: 'When we return, we will cut off your electricity'",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -7939,6 +8067,7 @@
     "whyItMatters": "A concise, consequential statement of policy on Palestinian statehood and Gaza that is central to Winter's campaign launch and likely to drive scrutiny.",
     "source": "וינטר חשף את הרשימה לבחירות: \"רוצים ממשלת ימין רחבה. הפתרון בעזה - הגירה\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-ofer-winter-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -7985,6 +8114,7 @@
     "whyItMatters": "The categorical comparison between soldiers and enemy civilians is morally and legally consequential, highly quotable, and distinct from the Gaza-emigration policy line.",
     "source": "יוסף חדאד וללי דרעי בפנים: עופר וינטר חשף את רשימתו לכנסת",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8031,6 +8161,7 @@
     "whyItMatters": "An unusually aggressive and meme-ready formulation from a former senior officer, consequential to evaluating temperament and views of civilian control.",
     "source": "וינטר חשף: רה\"מ רצה למנות אותו למזכ\"צ, הלוי ביקש ממנו לפרוש",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8059,9 +8190,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "AMH-M02-Q01",
@@ -8077,6 +8208,7 @@
     "whyItMatters": "A provocative, compact, widely understandable line that fuses media criticism, identity, and terrorism in a highly meme-worthy formulation.",
     "source": "יוסף חדאד: \"אם הייתי צופה רק באל-ג'זירה - כנראה שהייתי מחבל נגד המדינה\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-yoseph-haddad-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -8123,6 +8255,7 @@
     "whyItMatters": "A concrete promise to create a large ministry with a \"huge budget,\" consequential for spending, bureaucracy, and the state's communications strategy.",
     "source": "וינטר חשף את הרשימה לבחירות: \"רוצים ממשלת ימין רחבה. הפתרון בעזה - הגירה\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8169,6 +8302,7 @@
     "whyItMatters": "A consequential identity-based argument for cabinet power that also reveals the ticket's intended defense leadership and doctrine of military decision.",
     "source": "וינטר חשף את הרשימה לבחירות: \"רוצים ממשלת ימין רחבה. הפתרון בעזה - הגירה\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8215,6 +8349,7 @@
     "whyItMatters": "A crisp claim of independence from Netanyahu that sits in visible tension with her continued preference for him as prime minister.",
     "source": "נטעלי שם טוב: \"מי שתוקף אותנו יודע שאנו לא עובדים אצלו\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8261,6 +8396,7 @@
     "whyItMatters": "A stark binary that is controversial and memorable, while revealing how Shem Tov frames ideological exclusion and ethnic discrimination.",
     "source": "נטעלי שם טוב: \"קראו לי ביביסטית. כל מה שלא מסכים איתם הוא כזה\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8307,6 +8443,7 @@
     "whyItMatters": "The compressed chain of loaded Israeli political and ethnic terms is highly meme-worthy and exposes the grievance vocabulary Shem Tov carried from media into politics.",
     "source": "נטעלי שם טוב: \"קראו לי ביביסטית. כל מה שלא מסכים איתם הוא כזה\"",
     "listSlot": 3,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8353,6 +8490,7 @@
     "whyItMatters": "A self-described kamikaze mission for a real draft law; the strongest stated-position option. Selected by Guy as option 2A.",
     "source": "\"אני קמיקזה שמטרתו לוודא שיש חוק גיוס אמיתי\" | יועז הנדל שב למקום שהוא מתעב",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-yoaz-hendel-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -8399,6 +8537,7 @@
     "whyItMatters": "A vivid constructive contrast centered on unity and repairing social division.",
     "source": "יועז הנדל: דווקא אנשי הציונות הדתית יהיו חלק בשינוי הגדול",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8445,6 +8584,7 @@
     "whyItMatters": "The strongest visual expression of his unity-through-service thesis.",
     "source": "יועז הנדל: דווקא אנשי הציונות הדתית יהיו חלק בשינוי הגדול",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8473,9 +8613,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "RSE-M02-Q01",
@@ -8491,6 +8631,7 @@
     "whyItMatters": "A specific, actionable summary of his central economic program.",
     "source": "גזירות התקציב 2025. ראיון עם פרופ' ירון זליכה: \"אנשים יישארו פה ויסבלו\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-yaron-zelekha-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -8537,6 +8678,7 @@
     "whyItMatters": "Constructive and comparatively moderate: growth plus efficiency, with household protection.",
     "source": "גזירות התקציב 2025. ראיון עם פרופ' ירון זליכה: \"אנשים יישארו פה ויסבלו\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8583,6 +8725,7 @@
     "whyItMatters": "A very compact, affirmative expression of his housing-price case.",
     "source": "אסור לפחד מהורדת מחירי הדיור - וכך נעשה את זה",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8629,6 +8772,7 @@
     "whyItMatters": "A self-inclusive accountability demand; selected by Guy as option 3A.",
     "source": "בני גנץ: \"צריך להקים ועדת חקירה ממלכתית, שתבדוק גם אותי\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": "hero-art-benny-gantz-slot1.png",
     "walkout": {
       "kind": "quote",
@@ -8675,6 +8819,7 @@
     "whyItMatters": "The affirmative core of his 2026 campaign proposition, with exclusions disclosed in context.",
     "source": "בני גנץ: \"חייבת לקום ממשלת אחדות ציונית - אין לנו שום פתרון אחר\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8721,6 +8866,7 @@
     "whyItMatters": "An aspirational unity message grounded in the public mobilization after October 7.",
     "source": "בני גנץ מזהיר: \"אם לא נתאחד - יהיה שוב 7 באוקטובר\"",
     "listSlot": 1,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8749,9 +8895,9 @@
     "releaseSetId": "party-slot-2",
     "releaseOrder": 2,
     "releaseTier": "objective",
-    "releaseState": "held",
-    "availableFrom": null,
-    "idleEligible": false,
+    "releaseState": "active",
+    "availableFrom": "2026-09-10T00:00:00+03:00",
+    "idleEligible": true,
     "binderGroup": "slot-2",
     "subjectSet": null,
     "id": "BW-M02-Q01",
@@ -8767,6 +8913,7 @@
     "whyItMatters": "An empowering direct address that moves from equality language to implementation.",
     "source": "\"תעתוע לחשוב שאישה ישראלית יכולה לעשות כל מה שהיא רוצה\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": "hero-art-pnina-tamano-shata-slot2.jpg",
     "walkout": {
       "kind": "quote",
@@ -8813,6 +8960,7 @@
     "whyItMatters": "Her clearest formulation that equality is an institutional choice, not an automatic outcome.",
     "source": "\"תעתוע לחשוב שאישה ישראלית יכולה לעשות כל מה שהיא רוצה\"",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",
@@ -8859,6 +9007,7 @@
     "whyItMatters": "A memorable rights-based appeal tied to a specific support-period demand.",
     "source": "לא צדקה אלא צדק: הגיע הזמן לתת לנשים השכולות את שמגיע להן",
     "listSlot": 2,
+    "membershipNote": "",
     "artKey": null,
     "walkout": {
       "kind": "quote",

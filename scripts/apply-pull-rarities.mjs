@@ -75,6 +75,7 @@ const SET5_RARITY = {
   20: "Rare",
   21: "Uncommon",
   22: "Rare",
+  23: "Uncommon",
 };
 
 const studioPath = path.join(root, "app/data/studio-content.json");
@@ -102,7 +103,7 @@ studio.gameConfig.pack = {
     { id: "party-slot-2", weight: 20, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 7, Uncommon: 4, Rare: 2 }) },
     { id: "decisions", weight: 8, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 4, Uncommon: 3, Rare: 2 }) },
     { id: "records", weight: 2, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 2, Uncommon: 2, Rare: 1 }) },
-    { id: "set-5", weight: 10, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 12, Uncommon: 6, Rare: 4 }) },
+    { id: "set-5", weight: 10, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 12, Uncommon: 7, Rare: 4 }) },
   ],
 };
 
@@ -124,7 +125,7 @@ for (const candidate of set5.candidates) {
 }
 const set5Counts = { Common: 0, Uncommon: 0, Rare: 0 };
 for (const candidate of set5.candidates) set5Counts[candidate.rarity] += 1;
-if (set5Counts.Common !== 12 || set5Counts.Uncommon !== 6 || set5Counts.Rare !== 4) {
+if (set5Counts.Common !== 12 || set5Counts.Uncommon !== 7 || set5Counts.Rare !== 4) {
   throw new Error(`Set 5 rarity mix ${JSON.stringify(set5Counts)}`);
 }
 
