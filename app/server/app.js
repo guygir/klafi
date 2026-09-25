@@ -1031,33 +1031,38 @@ export async function createKalpiApp({
    * every pull that is already due. At the cap nothing is granted and nothing is marked claimed.
    */
   async function claimEventPull(token, event) {
-    const settled = await settleIdle(token);
-    if (settled.error) return { status: settled.status || 409, body: { error: settled.error } };
     const currentMs = now();
     const pool = activeIdleCards(allCards, currentMs);
-    const outcome = await store.withSession(token, async (current) => {
-      current.eventClaims ??= {};
-      current.unseenPulls ??= [];
-      const key = eventClaimKey(event, currentMs);
-      if (current.eventClaims[event.id]?.[key]) return { status: 409, error: "EVENT_ALREADY_CLAIMED" };
-      if (current.unseenPulls.length >= IDLE_BACKLOG_CAP) return { status: 409, error: "PULL_CAP_REACHED" };
-      if (!pool.length) return { status: 409, error: "NO_ACTIVE_RELEASE" };
-      const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(current), current.idleDuplicateStreak || 0));
-      const pulledAt = new Date(currentMs).toISOString();
-      const instance = await grantCard(current, pull, { acquiredBy: "event-pull", pulledAt });
-      current.packs ??= [];
-      current.packs.push({
-        packId: `event-${event.id}-${instance.instanceId}`,
-        mode: "event-pull",
-        pulledAt,
-        nextDailyAt: null,
-        cards: [instance],
+    if (!pool.length) return { status: 409, body: { error: "NO_ACTIVE_RELEASE" } };
+    // One transaction (one row lock) for settle + claim: on Postgres each withSession is its own
+    // BEGIN / SELECT … FOR UPDATE / UPDATE / COMMIT, and the DB round trips dominate this route.
+    // Already claimed: answer from the session this request already loaded (auth gate), no lock needed.
+    const outcome = isEventClaimed(event, store.getSession(token)?.eventClaims, currentMs)
+      ? { status: 409, error: "EVENT_ALREADY_CLAIMED" }
+      : await store.withSession(token, async (current) => {
+        current.eventClaims ??= {};
+        current.unseenPulls ??= [];
+        const key = eventClaimKey(event, currentMs);
+        if (current.eventClaims[event.id]?.[key]) return { status: 409, error: "EVENT_ALREADY_CLAIMED" };
+        // Settle first so the cap sees every pull that is already due.
+        await settleIdleSession(current, currentMs, pool);
+        if (current.unseenPulls.length >= IDLE_BACKLOG_CAP) return { status: 409, error: "PULL_CAP_REACHED" };
+        const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(current), current.idleDuplicateStreak || 0));
+        const pulledAt = new Date(currentMs).toISOString();
+        const instance = await grantCard(current, pull, { acquiredBy: "event-pull", pulledAt });
+        current.packs ??= [];
+        current.packs.push({
+          packId: `event-${event.id}-${instance.instanceId}`,
+          mode: "event-pull",
+          pulledAt,
+          nextDailyAt: null,
+          cards: [instance],
+        });
+        current.packs = current.packs.slice(-100);
+        current.eventClaims[event.id] ??= {};
+        current.eventClaims[event.id][key] = { instanceId: instance.instanceId, claimedAt: pulledAt };
+        return { status: 201, grantedId: instance.instanceId };
       });
-      current.packs = current.packs.slice(-100);
-      current.eventClaims[event.id] ??= {};
-      current.eventClaims[event.id][key] = { instanceId: instance.instanceId, claimedAt: pulledAt };
-      return { status: 201, grantedId: instance.instanceId };
-    });
     if (!outcome) return { status: 401, body: { error: "INVALID_SESSION" } };
     const session = store.getSession(token);
     const instancesById = new Map(session.instances.map((instance) => [instance.instanceId, instance]));
@@ -1085,91 +1090,98 @@ export async function createKalpiApp({
     return presented;
   }
 
+  /**
+   * The idle warehouse settle, as a session mutator: due prepared pulls become ready (unseen) pulls,
+   * up to the cap, and the prepared queue is refilled. Shared by /api/idle/settle and the event pull
+   * so the pull can settle and claim inside ONE transaction.
+   */
+  async function settleIdleSession(current, currentMs, pool) {
+    current.unseenPulls ??= [];
+    current.preparedPulls = (current.preparedPulls || [])
+      .filter((pull) => pull?.instanceId && pull?.cardId && Number.isFinite(Date.parse(pull.availableAt)))
+      .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));
+    current.idleDuplicateStreak ??= 0;
+    current.idlePullCount ??= 0;
+    const coldStart = isIdleColdStart(current);
+    const fallbackAnchor = Date.parse(current.nextIdleAt || current.idleAnchorAt || current.createdAt);
+    const anchorAt = Number.isFinite(fallbackAnchor) ? fallbackAnchor : currentMs;
+    let scheduleAt = current.preparedPulls.length
+      ? Date.parse(current.preparedPulls.at(-1).availableAt) + IDLE_INTERVAL_MS
+      : anchorAt;
+
+    const fillPreparedQueue = () => {
+      const simulatedInventory = grantedCopyCounts(current);
+      let simulatedDuplicateStreak = current.idleDuplicateStreak;
+      for (const prepared of current.preparedPulls) {
+        const isNew = !simulatedInventory[prepared.cardId];
+        simulatedInventory[prepared.cardId] = (simulatedInventory[prepared.cardId] ?? 0) + 1;
+        simulatedDuplicateStreak = isNew ? 0 : simulatedDuplicateStreak + 1;
+      }
+      const preparedCapacity = Math.max(0, IDLE_BACKLOG_CAP - current.unseenPulls.length);
+      while (current.preparedPulls.length < preparedCapacity) {
+        const pull = generateIdlePull(idlePullOptions(pool, simulatedInventory, simulatedDuplicateStreak));
+        const isNew = !simulatedInventory[pull.cardId];
+        current.preparedPulls.push({
+          instanceId: randomUUID(),
+          cardId: pull.cardId,
+          finish: pull.finish,
+          isNew,
+          acquiredBy: "idle",
+          availableAt: new Date(scheduleAt).toISOString(),
+          preparedAt: new Date(currentMs).toISOString(),
+        });
+        simulatedInventory[pull.cardId] = (simulatedInventory[pull.cardId] ?? 0) + 1;
+        simulatedDuplicateStreak = isNew ? 0 : simulatedDuplicateStreak + 1;
+        scheduleAt += IDLE_INTERVAL_MS;
+      }
+    };
+
+    fillPreparedQueue();
+    if (coldStart) {
+      scheduleAt = applyIdleStarterReady(current.preparedPulls, currentMs, scheduleAt);
+    }
+    const granted = [];
+    while (
+      current.unseenPulls.length < IDLE_BACKLOG_CAP
+      && Date.parse(current.preparedPulls[0]?.availableAt) <= currentMs
+    ) {
+      const prepared = current.preparedPulls.shift();
+      const instance = await grantCard(current, prepared, {
+        acquiredBy: "idle",
+        pulledAt: prepared.availableAt,
+        instanceId: prepared.instanceId,
+      });
+      current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
+      current.idlePullCount += 1;
+      current.packs.push({
+        packId: `idle-${instance.instanceId}`,
+        mode: "idle",
+        pulledAt: prepared.availableAt,
+        nextDailyAt: null,
+        cards: [instance],
+      });
+      granted.push(instance);
+    }
+    if (current.unseenPulls.length >= IDLE_BACKLOG_CAP && scheduleAt <= currentMs) {
+      scheduleAt = currentMs + IDLE_INTERVAL_MS;
+    }
+    fillPreparedQueue();
+    current.nextIdleAt = current.preparedPulls[0]?.availableAt ?? new Date(scheduleAt).toISOString();
+    current.idleAnchorAt ??= new Date(anchorAt).toISOString();
+    current.packs = current.packs.slice(-100);
+    current.instances = current.instances.slice(-500);
+    const instancesById = new Map(current.instances.map((instance) => [instance.instanceId, instance]));
+    return {
+      granted,
+      queue: current.unseenPulls.map((instanceId) => instancesById.get(instanceId)).filter(Boolean),
+    };
+  }
+
   async function settleIdle(token) {
     const currentMs = now();
     const pool = activeIdleCards(allCards, currentMs);
     if (!pool.length) return { error: "NO_ACTIVE_RELEASE" };
-    const result = await store.withSession(token, async (current) => {
-      current.unseenPulls ??= [];
-      current.preparedPulls = (current.preparedPulls || [])
-        .filter((pull) => pull?.instanceId && pull?.cardId && Number.isFinite(Date.parse(pull.availableAt)))
-        .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));
-      current.idleDuplicateStreak ??= 0;
-      current.idlePullCount ??= 0;
-      const coldStart = isIdleColdStart(current);
-      const fallbackAnchor = Date.parse(current.nextIdleAt || current.idleAnchorAt || current.createdAt);
-      const anchorAt = Number.isFinite(fallbackAnchor) ? fallbackAnchor : currentMs;
-      let scheduleAt = current.preparedPulls.length
-        ? Date.parse(current.preparedPulls.at(-1).availableAt) + IDLE_INTERVAL_MS
-        : anchorAt;
-
-      const fillPreparedQueue = () => {
-        const simulatedInventory = grantedCopyCounts(current);
-        let simulatedDuplicateStreak = current.idleDuplicateStreak;
-        for (const prepared of current.preparedPulls) {
-          const isNew = !simulatedInventory[prepared.cardId];
-          simulatedInventory[prepared.cardId] = (simulatedInventory[prepared.cardId] ?? 0) + 1;
-          simulatedDuplicateStreak = isNew ? 0 : simulatedDuplicateStreak + 1;
-        }
-        const preparedCapacity = Math.max(0, IDLE_BACKLOG_CAP - current.unseenPulls.length);
-        while (current.preparedPulls.length < preparedCapacity) {
-          const pull = generateIdlePull(idlePullOptions(pool, simulatedInventory, simulatedDuplicateStreak));
-          const isNew = !simulatedInventory[pull.cardId];
-          current.preparedPulls.push({
-            instanceId: randomUUID(),
-            cardId: pull.cardId,
-            finish: pull.finish,
-            isNew,
-            acquiredBy: "idle",
-            availableAt: new Date(scheduleAt).toISOString(),
-            preparedAt: new Date(currentMs).toISOString(),
-          });
-          simulatedInventory[pull.cardId] = (simulatedInventory[pull.cardId] ?? 0) + 1;
-          simulatedDuplicateStreak = isNew ? 0 : simulatedDuplicateStreak + 1;
-          scheduleAt += IDLE_INTERVAL_MS;
-        }
-      };
-
-      fillPreparedQueue();
-      if (coldStart) {
-        scheduleAt = applyIdleStarterReady(current.preparedPulls, currentMs, scheduleAt);
-      }
-      const granted = [];
-      while (
-        current.unseenPulls.length < IDLE_BACKLOG_CAP
-        && Date.parse(current.preparedPulls[0]?.availableAt) <= currentMs
-      ) {
-        const prepared = current.preparedPulls.shift();
-        const instance = await grantCard(current, prepared, {
-          acquiredBy: "idle",
-          pulledAt: prepared.availableAt,
-          instanceId: prepared.instanceId,
-        });
-        current.idleDuplicateStreak = instance.isNew ? 0 : current.idleDuplicateStreak + 1;
-        current.idlePullCount += 1;
-        current.packs.push({
-          packId: `idle-${instance.instanceId}`,
-          mode: "idle",
-          pulledAt: prepared.availableAt,
-          nextDailyAt: null,
-          cards: [instance],
-        });
-        granted.push(instance);
-      }
-      if (current.unseenPulls.length >= IDLE_BACKLOG_CAP && scheduleAt <= currentMs) {
-        scheduleAt = currentMs + IDLE_INTERVAL_MS;
-      }
-      fillPreparedQueue();
-      current.nextIdleAt = current.preparedPulls[0]?.availableAt ?? new Date(scheduleAt).toISOString();
-      current.idleAnchorAt ??= new Date(anchorAt).toISOString();
-      current.packs = current.packs.slice(-100);
-      current.instances = current.instances.slice(-500);
-      const instancesById = new Map(current.instances.map((instance) => [instance.instanceId, instance]));
-      return {
-        granted,
-        queue: current.unseenPulls.map((instanceId) => instancesById.get(instanceId)).filter(Boolean),
-      };
-    });
+    const result = await store.withSession(token, (current) => settleIdleSession(current, currentMs, pool));
     if (!result) return { error: "INVALID_SESSION", status: 401 };
     const session = store.getSession(token);
     return {
