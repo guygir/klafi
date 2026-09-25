@@ -610,7 +610,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-84/);
+  assert.match(html, /card-surface-86/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -706,7 +706,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-84/);
+  assert.match(html, /card-surface-86/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -843,7 +843,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-84/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-86/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -857,6 +857,41 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /max\(220vmax, 280%\)/);
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
+  assert.match(javascript, /from "\.\/packrip\.js"/);
+  assert.match(html, /packrip\.css\?v=card-surface-86/);
+  assert.match(javascript, /addEventListener\("packrip:done"/);
+  assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
+  assert.doesNotMatch(javascript, /\}, 620\)/);
+  assert.doesNotMatch(javascript, /sealedPackMarkup/);
+  assert.match(javascript, /packrip:rip/);
+  assert.match(html, /id="home-pack"[^>]*>\s*<img src="\/packrip\/pack-closed\.webp"/);
+  assert.match(html, /class="level-reward-pack" src="\/packrip\/pack-closed\.webp"/);
+  assert.match(javascript, /from "\.\/sfx\.js"/);
+  assert.match(javascript, /addEventListener\("packrip:start"[\s\S]{0,80}sfx\.scheduleRip\(event\.detail\.ripAt\)/);
+  assert.match(html, /class="masthead-brand">\s*<button class="wordmark"[\s\S]{0,200}<button id="sound-toggle" class="sound-toggle"[^>]*aria-label="השתקת צלילים"/);
+  assert.match(html, /sound-icon-on[\s\S]{0,600}sound-icon-off/);
+  assert.doesNotMatch(html, /profile-sound|להשתיק צלילים/);
+  assert.match(javascript, /sfx\.soundOn \? "השתקת צלילים" : "הפעלת צלילים"/);
+  assert.match(javascript, /classList\.toggle\("muted", !sfx\.soundOn\)/);
+  assert.match(css, /\.sound-toggle\.muted \.sound-icon-off \{ display: block; \}/);
+  assert.match(javascript, /sfx\.stopReveals\(\)/);
+  assert.match(javascript, /revealClipForStage\(stage, readSunburstRarityOverride\(\) \|\| sfxRarityKey\(instance, card\)\)/);
+  assert.doesNotMatch(css, /tear-pack|\.rip-pack/);
+  assert.doesNotMatch(html, /packrip\/[a-z-]+\.png/);
+  assert.match(javascript, /schedulePackRipPrefetch\(\);\s+bootstrap\(\)/);
+  // Studio debug pull: editor-only, server-picked, and never saves or marks seen.
+  assert.match(html, /id="studio-debug-pull"[\s\S]{0,200}משיכת בדיקה/);
+  for (const rarity of ["1", "2", "3", "4"]) assert.match(html, new RegExp(`name="studio-debug-rarity" value="${rarity}"`));
+  assert.match(javascript, /request\("\/api\/studio\/debug-pull"/);
+  const debugPull = javascript.slice(javascript.indexOf("async function runStudioDebugPull"), javascript.indexOf("async function runGuidedDemo"));
+  assert.match(debugPull, /playHomePackRip\(\)/);
+  assert.match(debugPull, /startWalkout\(\)/);
+  assert.match(debugPull, /mode: "studio-debug"/);
+  assert.doesNotMatch(debugPull, /idle\/seen|rememberPendingIdleSeen|flushPendingIdleSeen|\/api\/state|recordEvent/);
+  const debugDone = javascript.slice(javascript.indexOf('mode === "studio-debug") {'), javascript.indexOf('mode === "demo") {'));
+  assert.match(debugDone, /showView\("studio"\)/);
+  assert.doesNotMatch(debugDone, /request\(|rememberPendingIdleSeen|flushPendingIdleSeen/);
+  assert.match(javascript, /studioDebugPull\?\.addEventListener\("click", runStudioDebugPull\)/);
 
   const studioStart = html.indexOf('<section id="studio-view"');
   const errorStart = html.indexOf('<section id="error-view"');

@@ -17,13 +17,14 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-84"></script>
+  <script src="/boot-warmup.js?v=card-surface-86"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-84" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-84" />
-  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-84" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-86" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-86" />
+  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-86" />
+  <link rel="stylesheet" href="/packrip.css?v=card-surface-86" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -32,9 +33,15 @@
     <div id="site-card-peeks" class="site-card-peeks" aria-hidden="true"></div>
     <header class="masthead">
       <div class="masthead-row">
-      <button class="wordmark" type="button" data-nav="home" aria-label="לעמוד הבית">
-        <b>קְלָפִי</b>
-      </button>
+      <div class="masthead-brand">
+        <button class="wordmark" type="button" data-nav="home" aria-label="לעמוד הבית">
+          <b>קְלָפִי</b>
+        </button>
+        <button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="false" aria-label="השתקת צלילים" title="השתקת צלילים">
+          <svg class="sound-icon sound-icon-on" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4 9.5h3.2L12 5.6v12.8l-4.8-3.9H4z" fill="currentColor"/><path d="M15.2 9.1a4 4 0 0 1 0 5.8M17.6 6.7a7.4 7.4 0 0 1 0 10.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <svg class="sound-icon sound-icon-off" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4 9.5h3.2L12 5.6v12.8l-4.8-3.9H4z" fill="currentColor"/><path d="M15.6 9.4l5 5.2M20.6 9.4l-5 5.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
       <div class="masthead-meta">
         <button id="player-name" class="player-name" type="button" aria-haspopup="dialog">
           <span id="player-name-label">השם שלי</span>
@@ -110,7 +117,7 @@
           <div class="pack-plinth">
             <div class="pack-shadow" aria-hidden="true"></div>
             <div class="pack-wrapper" id="home-pack" aria-hidden="true">
-              <img src="/design-assets/pack-wrapper-klafi.png" alt="" />
+              <img src="/packrip/pack-closed.webp" alt="" />
             </div>
             <button id="open-trust-legend" class="trust-info" type="button" aria-haspopup="dialog" aria-label="מה מסמנת הכוכבית בקלפים?" title="מה מסמנת הכוכבית?">?</button>
           </div>
@@ -393,6 +400,21 @@
             <button id="debug-reset-pack" class="secondary-action" type="button">Reset daily pack now</button>
             <p class="work-note">The demo preserves 3C/2U/1R and never changes inventory or cooldown. Set <code>KALPI_DEBUG=0</code> for a release-like run.</p>
           </article>
+          <article class="work-card studio-debug-pull" id="studio-debug-pull" aria-labelledby="studio-debug-pull-title">
+            <p class="work-kicker">Debug · לא נשמר</p>
+            <h2 id="studio-debug-pull-title">משיכת בדיקה</h2>
+            <p class="work-note">חוויית משיכה מלאה: קריעת חבילה, חשיפה, הילה וצלילים. השרת בוחר קלף בדרגה שנבחרה. שום דבר לא נשמר: בלי אוסף, בלי התקדמות, בלי ממוספר.</p>
+            <fieldset class="studio-debug-rarity">
+              <legend>דרגה</legend>
+              <label><input type="radio" name="studio-debug-rarity" value="" checked /> לפי טבלת החבילה</label>
+              <label><input type="radio" name="studio-debug-rarity" value="1" /> 1 · נפוץ ★</label>
+              <label><input type="radio" name="studio-debug-rarity" value="2" /> 2 · לא נפוץ ★★</label>
+              <label><input type="radio" name="studio-debug-rarity" value="3" /> 3 · נדיר ★★★</label>
+              <label><input type="radio" name="studio-debug-rarity" value="4" /> 4 · ממוספר ★★★★</label>
+            </fieldset>
+            <button id="studio-debug-pull-button" class="primary-action" type="button">משיכת בדיקה</button>
+            <p id="studio-debug-pull-status" class="work-note" role="status"></p>
+          </article>
           <article class="work-card editorial-sample">
             <p class="work-kicker">Critical-contrast sample</p>
             <div id="editorial-sample"></div>
@@ -624,7 +646,7 @@
     <button id="close-level" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">עליתם רמה</p>
     <h2 id="level-dialog-title">רמה חדשה</h2>
-    <img class="level-reward-pack" src="/design-assets/pack-wrapper-klafi.png" alt="קלף בונוס" />
+    <img class="level-reward-pack" src="/packrip/pack-closed.webp" alt="קלף בונוס" />
     <ul id="level-unlocks" class="level-unlocks"></ul>
     <p id="level-dialog-reward"></p>
     <button id="claim-level" class="primary-action" type="button">הבנתי</button>
@@ -734,6 +756,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-84"></script>
+  <script type="module" src="/app.js?v=card-surface-86"></script>
 </body>
 </html>

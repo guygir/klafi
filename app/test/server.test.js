@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -1803,4 +1803,72 @@ test("studio publishes rank names, unlocks, bonus flag, and numbered sets", asyn
   assert.equal(saved.body.progression.grantLevelReward, false);
   assert.deepEqual(saved.body.progression.numberedSets, ["party-leaders"]);
   assert.equal(saved.body.avatars.find(({ id }) => id === "grown-man").unlockLevel, 2);
+});
+
+test("studio debug pull is editor-gated, rarity-filtered, and writes nothing", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-debug-pull-test-"));
+  const clock = { value: Date.parse("2026-09-25T12:00:00.000Z") };
+  const running = await start(dataDir, clock, { debugEnabled: false, studioSecret: "debug-pull-secret" });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const created = await api(running.base, "/api/session", { method: "POST" });
+  const token = created.body.token;
+  await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  const catalog = await api(running.base, "/api/catalog");
+  const byId = new Map(catalog.body.cards.map((card) => [card.id, card]));
+  const snapshot = async () => {
+    const files = (await readdir(dataDir)).sort();
+    return Promise.all(files.map(async (name) => [name, await readFile(path.join(dataDir, name), "utf8")]));
+  };
+  const stateBefore = await api(running.base, "/api/state", { token });
+  const filesBefore = await snapshot();
+
+  const anonymous = await api(running.base, "/api/studio/debug-pull", { method: "POST", body: { rarity: 1 } });
+  assert.equal(anonymous.status, 404);
+  const wrong = await api(running.base, "/api/studio/debug-pull", { method: "POST", body: { rarity: 1 }, studio: "nope", token });
+  assert.equal(wrong.status, 404);
+  const invalid = await api(running.base, "/api/studio/debug-pull", { method: "POST", body: { rarity: 7 }, studio: "debug-pull-secret" });
+  assert.equal(invalid.status, 400);
+
+  const tiers = { 1: "Common", 2: "Uncommon", 3: "Rare" };
+  for (const rarity of [1, 2, 3, 4]) {
+    const pulled = await api(running.base, "/api/studio/debug-pull", {
+      method: "POST",
+      body: { rarity },
+      studio: "debug-pull-secret",
+      token,
+    });
+    assert.equal(pulled.status, 200, `rarity ${rarity}`);
+    assert.equal(pulled.body.mode, "studio-debug");
+    assert.equal(pulled.body.debug, true);
+    assert.equal(pulled.body.rarity, rarity);
+    assert.equal(pulled.body.cards.length, 1);
+    const [instance] = pulled.body.cards;
+    const card = byId.get(instance.cardId);
+    assert.ok(card, "server picked a catalog card");
+    assert.notEqual(card.eventOnly, true, "never an event-only card");
+    assert.equal(instance.acquiredBy, "studio-debug");
+    assert.match(instance.instanceId, /^studio-debug-/);
+    if (rarity === 4) {
+      assert.equal(instance.finish, "Holo");
+      assert.equal(instance.numberedIndex, 1);
+      assert.ok(instance.numberedOf > 0);
+      assert.equal(card.releaseSetId, "set-5");
+    } else {
+      assert.equal(instance.finish, tiers[rarity]);
+      assert.ok(card.rarity.startsWith(tiers[rarity]));
+      assert.equal(instance.numberedIndex, undefined);
+    }
+  }
+  const anyRarity = await api(running.base, "/api/studio/debug-pull", { method: "POST", body: {}, studio: "debug-pull-secret" });
+  assert.equal(anyRarity.status, 200, "works without a player session");
+  assert.equal(anyRarity.body.rarity, null);
+
+  assert.deepEqual(await snapshot(), filesBefore, "no store file changed");
+  const stateAfter = await api(running.base, "/api/state", { token });
+  assert.deepEqual(stateAfter.body, stateBefore.body, "player state untouched");
+  assert.ok(!stateAfter.body.instances?.some(({ acquiredBy }) => acquiredBy === "studio-debug"));
 });
