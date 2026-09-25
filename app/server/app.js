@@ -22,6 +22,7 @@ import {
   normalizeNumberedEvery,
   normalizeNumberedSets,
   numberedCopies,
+  stampEligible,
   stampFromGrant,
   stampKey,
   stampMax,
@@ -97,7 +98,9 @@ const MIME = {
   ".md": "text/markdown; charset=utf-8",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
+  ".m4a": "audio/mp4",
   ".mp4": "video/mp4",
+  ".ogg": "audio/ogg",
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
@@ -135,6 +138,7 @@ const STATELESS_API_PATHS = new Set([
   "/api/presentation/content",
   "/api/card-holders",
   "/api/bugs",
+  "/api/studio/debug-pull",
 ]);
 
 function secretsMatch(provided, expected) {
@@ -508,6 +512,29 @@ function activeIdleCards(cards, current = Date.now()) {
     !card.eventOnly
     && card.idleEligible === true
     && (!card.availableFrom || Date.parse(card.availableFrom) <= current));
+}
+
+/** Player-facing pull instance, shared by real grants and the Studio debug pull. Pure. */
+export function pullInstance(pull, { instanceId, pulledAt, isNew, acquiredBy, seenAt = null, stamp = null }) {
+  return {
+    instanceId,
+    cardId: pull.cardId,
+    finish: stamp ? "Holo" : pull.finish,
+    pulledAt,
+    isNew,
+    acquiredBy,
+    seenAt,
+    ...(stamp ? { numberedIndex: stamp.index, numberedOf: stamp.of } : {}),
+  };
+}
+
+/** Studio debug pull rarity: 1 Common, 2 Uncommon, 3 Rare, 4 numbered (Holo). null = pack odds. */
+export const DEBUG_PULL_TIERS = Object.freeze({ 1: "Common", 2: "Uncommon", 3: "Rare", 4: "Holo" });
+
+export function normalizeDebugRarity(value) {
+  if (value === undefined || value === null || value === "") return null;
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 && n <= 4 ? n : undefined;
 }
 
 function collectionStarCount(session, cards) {
@@ -1098,33 +1125,62 @@ export async function createKalpiApp({
       state: publicIdleState(session, currentMs, allCards, runtimeProgression()),
     };
   }
+  function numberedSetIds() {
+    return normalizeNumberedSets(
+      studioContent?.gameConfig?.progression?.numberedSets,
+      (studioContent?.gameConfig?.releaseSets || []).map(({ id }) => id),
+    );
+  }
+
+  /**
+   * Studio debug pull: the idle pull pipeline (live pack table, set weights, active pool) filtered
+   * to one rarity, serialized like a real grant. Read-only: no store call, no stamp claim, no
+   * inventory/credit/progress/pity change. Rarity 4 previews a numbered copy without claiming one.
+   */
+  function studioDebugPull(rarity) {
+    const currentMs = now();
+    const sets = numberedSetIds();
+    const active = activeIdleCards(allCards, currentMs);
+    const eligible = allCards.filter((card) => !card.eventOnly && card.idleEligible === true);
+    const matches = (card) => (rarity === 4
+      ? stampEligible(card, sets)
+      : rarity ? rarityTier(card) === DEBUG_PULL_TIERS[rarity] : true);
+    const pool = [active, eligible].map((cardsIn) => cardsIn.filter(matches)).find((list) => list.length);
+    if (!pool) return null;
+    const pull = generateIdlePull(idlePullOptions(pool, {}, 0));
+    const card = cardsById.get(pull.cardId);
+    const pulledAt = new Date(currentMs).toISOString();
+    const stamp = rarity === 4 ? { index: 1, of: stampMax(card) } : null;
+    return pullInstance(pull, {
+      instanceId: `studio-debug-${randomUUID()}`,
+      pulledAt,
+      isNew: false,
+      acquiredBy: "studio-debug",
+      stamp,
+    });
+  }
+
   async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID(), creditNow = false }) {
     const isNew = !grantedCopyCounts(session)[pull.cardId];
     if (creditNow) {
       session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
     }
     const card = cardsById.get(pull.cardId);
-    const sets = normalizeNumberedSets(
-      studioContent?.gameConfig?.progression?.numberedSets,
-      (studioContent?.gameConfig?.releaseSets || []).map(({ id }) => id),
-    );
-    const stamp = stampFromGrant(card, sets, acquiredBy)
+    const stamp = stampFromGrant(card, numberedSetIds(), acquiredBy)
       ? await store.claimNumberedStamp(
         stampKey(card),
         stampMax(card),
         normalizeNumberedEvery(studioContent?.gameConfig?.progression?.numberedEvery),
       )
       : null;
-    const instance = {
+    const instance = pullInstance(pull, {
       instanceId,
-      cardId: pull.cardId,
-      finish: stamp ? "Holo" : pull.finish,
       pulledAt,
       isNew,
       acquiredBy,
       seenAt: creditNow ? pulledAt : null,
-      ...(stamp ? { numberedIndex: stamp.index, numberedOf: stamp.of } : {}),
-    };
+      stamp,
+    });
     session.instances.push(instance);
     if (!creditNow) {
       session.unseenPulls ??= [];
@@ -1261,6 +1317,33 @@ export async function createKalpiApp({
           return;
         }
         json(response, 200, { ...studioContent, debugEnabled, studioEnabled: true });
+        return;
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/studio/debug-pull") {
+        if (!studioRequest) {
+          json(response, 404, { error: "NOT_FOUND" });
+          return;
+        }
+        const input = await readJson(request);
+        const rarity = normalizeDebugRarity(input?.rarity);
+        if (rarity === undefined) {
+          json(response, 400, { error: "INVALID_RARITY" });
+          return;
+        }
+        const instance = studioDebugPull(rarity);
+        if (!instance) {
+          json(response, 409, { error: "NO_CARD_FOR_RARITY" });
+          return;
+        }
+        json(response, 200, {
+          packId: `studio-debug-${Date.now()}`,
+          mode: "studio-debug",
+          debug: true,
+          rarity,
+          pulledAt: instance.pulledAt,
+          cards: [instance],
+        });
         return;
       }
 

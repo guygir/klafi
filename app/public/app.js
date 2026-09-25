@@ -5,10 +5,13 @@ import { starContributionBins } from "./star-contribution-bins.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import {
   exitWalkoutSunburst,
+  readSunburstRarityOverride,
   resolveSunburstRarity,
   syncWalkoutSunburst,
   teardownWalkoutSunburst,
 } from "./walkout-sunburst.js";
+import { destroyPackRip, mountPackRip, packRipMarkup, preloadPackRipAssets, schedulePackRipPrefetch } from "./packrip.js";
+import { createSfx, revealClipForStage, sfxRarityKey } from "./sfx.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
@@ -95,6 +98,11 @@ const model = {
 };
 let showcaseTimers = [];
 let packTimers = [];
+// One pack-rip at a time: the live player and an AbortController for its packrip:* listeners.
+let packRip = null;
+let packRipListeners = null;
+let homePackRipBusy = false;
+const sfx = createSfx();
 const klafiTips = attachKlafiTips();
 
 const elements = {
@@ -121,6 +129,7 @@ const elements = {
   restoreButton: document.querySelector("#restore-recovery-code"),
   restoreStatus: document.querySelector("#profile-restore-status"),
   enableIdleNotify: document.querySelector("#enable-idle-notify"),
+  soundToggle: document.querySelector("#sound-toggle"),
   homeEnableNotify: document.querySelector("#home-enable-notify"),
   notifyStatus: document.querySelector("#notify-status"),
   leagueNameInput: document.querySelector("#league-name-input"),
@@ -257,6 +266,8 @@ const elements = {
   debugClock: document.querySelector("#debug-clock"),
   headerDebugReset: document.querySelector("#header-debug-reset"),
   runGuidedDemo: document.querySelector("#run-guided-demo"),
+  studioDebugPull: document.querySelector("#studio-debug-pull-button"),
+  studioDebugPullStatus: document.querySelector("#studio-debug-pull-status"),
   debugResetPack: document.querySelector("#debug-reset-pack"),
   studioContentSummary: document.querySelector("#studio-content-summary"),
   studioPartyTabs: document.querySelector("#studio-party-tabs"),
@@ -2121,6 +2132,10 @@ function renderHome() {
   elements.collectionProgress.style.width = `${percent}%`;
   elements.openPack.disabled = !available;
   elements.openPack.textContent = readyCopy.action;
+  if (available) {
+    preloadPackRipAssets();
+    sfx.preload();
+  }
   if (elements.idleStorage) {
     elements.idleStorage.hidden = true;
     elements.idleStorage.textContent = `${unseen}/${idleCapacity}`;
@@ -2511,18 +2526,80 @@ function updateCountdown() {
 
 setInterval(updateCountdown, 1000);
 
-function sealedPackMarkup(extraClass = "") {
-  return `
-    <div class="pack-wrapper rip-pack ${extraClass}" aria-label="חבילת קְלָפִי סגורה">
-      <img src="/design-assets/pack-wrapper-klafi.png" alt="" />
-    </div>`;
+function resetPackRip() {
+  packRipListeners?.abort();
+  packRipListeners = null;
+  destroyPackRip();
+  packRip = null;
+}
+
+// Renders the sealed pack (idle, t = 0) into #rip-stage and returns a fresh listener signal.
+// Display only: the pull is already settled on the server before the rip plays.
+function renderSealedPackRip() {
+  resetPackRip();
+  elements.ripStage.innerHTML = packRipMarkup();
+  packRip = mountPackRip(elements.ripStage);
+  packRip?.seek(0);
+  packRipListeners = new AbortController();
+  // Rip SFX rides the animation clock: packrip:start carries ripAt (t0 + 1000 ms) and the clip is
+  // scheduled on the AudioContext so its attack lands there. packrip:rip stays the visual beat.
+  elements.ripStage.addEventListener("packrip:start", (event) => {
+    sfx.scheduleRip(event.detail.ripAt);
+  }, { signal: packRipListeners.signal });
+  return packRipListeners.signal;
 }
 
 function playHomePackRip() {
-  return { finished: Promise.resolve(), release() {} };
+  if (!elements.ripStage) return { finished: Promise.resolve(), release() {} };
+  packTimers.forEach(clearTimeout);
+  packTimers = [];
+  teardownWalkoutSunburst({ immediate: true });
+  sfx.stopReveals();
+  model.packPhase = "tearing";
+  elements.packStep.textContent = "קלף אחד";
+  elements.packHeading.textContent = "קורעים את החבילה.";
+  elements.packCounter.textContent = "0 / 1";
+  const signal = renderSealedPackRip();
+  const player = packRip;
+  setPackAction("פותחים…", true, "");
+  showView("pack");
+  let released = false;
+  const finished = new Promise((resolve) => {
+    if (!player) {
+      resolve();
+      return;
+    }
+    elements.ripStage.addEventListener("packrip:done", () => resolve(), { once: true, signal });
+    // play() also settles if the player is torn down early, so the caller never hangs.
+    player.play().then(resolve);
+  });
+  return {
+    finished,
+    release({ revealing = false } = {}) {
+      if (released) return;
+      released = true;
+      if (player && packRip === player) resetPackRip();
+      // Aborted before the reveal (settle failed / nothing ready): leave the pack view.
+      if (!revealing && model.packPhase === "tearing") {
+        model.packPhase = "sealed";
+        showView("home");
+      }
+    },
+  };
 }
 
 async function openIdleReturn(opening = "regular") {
+  sfx.unlock();
+  if (homePackRipBusy) return;
+  homePackRipBusy = true;
+  try {
+    await openIdleReturnOnce(opening);
+  } finally {
+    homePackRipBusy = false;
+  }
+}
+
+async function openIdleReturnOnce(opening) {
   if (!model.catalog.length) loadStaticCatalog().catch(() => {});
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
@@ -2571,13 +2648,58 @@ async function openIdleReturn(opening = "regular") {
     };
     model.currentCardIndex = 0;
     model.previewMode = false;
-    rip.release();
+    rip.release({ revealing: true });
     showView("pack");
     startWalkout();
   } catch (error) {
     rip.release();
     renderHome();
     showToast("לא הצלחנו לטעון את הקלפים שנאספו.");
+  }
+}
+
+const STUDIO_DEBUG_LABEL = "משיכת בדיקה · לא נשמר";
+
+// Studio debug pull: the server picks a card of the chosen rarity without saving anything; the
+// client plays the normal rip -> walkout -> sunburst -> sounds path and never calls save/seen.
+async function runStudioDebugPull() {
+  sfx.unlock();
+  if (homePackRipBusy) return;
+  homePackRipBusy = true;
+  const button = elements.studioDebugPull;
+  const checked = document.querySelector('input[name="studio-debug-rarity"]:checked');
+  const rarity = checked?.value ? Number(checked.value) : null;
+  if (button) button.disabled = true;
+  if (elements.studioDebugPullStatus) elements.studioDebugPullStatus.textContent = "";
+  let rip = null;
+  try {
+    if (!model.catalog.length) await loadStaticCatalog();
+    rip = playHomePackRip();
+    elements.packStep.textContent = STUDIO_DEBUG_LABEL;
+    const pulled = await request("/api/studio/debug-pull", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ rarity }),
+    });
+    if (!pulled.cards?.every(({ cardId }) => model.byId.has(cardId))) throw new Error("CARD_NOT_IN_CATALOG");
+    await rip.finished;
+    model.currentPack = { ...pulled, mode: "studio-debug", debug: true };
+    model.currentCardIndex = 0;
+    model.previewMode = false;
+    rip.release({ revealing: true });
+    showView("pack");
+    startWalkout();
+  } catch (error) {
+    rip?.release();
+    showView("studio");
+    const message = error.status === 404 ? "משיכת בדיקה זמינה רק לעורכי Studio."
+      : error.status === 409 ? "אין קלף זמין בדרגה הזאת."
+        : "משיכת הבדיקה נכשלה.";
+    if (elements.studioDebugPullStatus) elements.studioDebugPullStatus.textContent = message;
+    showToast(message);
+  } finally {
+    homePackRipBusy = false;
+    if (button) button.disabled = false;
   }
 }
 
@@ -2611,7 +2733,7 @@ async function openBibiDebugPack() {
     model.currentPack.cards = model.currentPack.cards.slice(0, 1);
     const rip = playHomePackRip();
     await rip.finished;
-    rip.release();
+    rip.release({ revealing: true });
     showView("pack");
     startWalkout();
   } catch (error) {
@@ -2631,14 +2753,16 @@ function renderPack() {
     if (phase === "sealed") {
     elements.packStep.textContent = isDemo ? "חבילת הדגמה" : "קלף אחד";
     elements.packHeading.textContent = "קורעים את החבילה.";
-    elements.ripStage.innerHTML = sealedPackMarkup();
+    renderSealedPackRip();
     setPackAction("קרעו את החבילה", false, count === 1 ? "הקלף כבר שמור אצלכם." : "הקלפים כבר שמורים אצלכם.");
   } else if (phase === "tearing") {
-    elements.ripStage.innerHTML = sealedPackMarkup("tearing");
+    // The rip plays on the sealed markup already in the stage; only re-render if it is missing.
+    if (!packRip || !elements.ripStage.querySelector(".pr-stage")) renderSealedPackRip();
     setPackAction("פותחים…", true, "");
   } else if (phase === "fanned") {
     elements.packStep.textContent = `${count} קלפים`;
     elements.packHeading.textContent = "הנה הקלפים.";
+    resetPackRip();
     elements.ripStage.innerHTML = `<div class="fan" aria-label="קלפים סגורים">${"<span class=\"fan-card\"></span>".repeat(count)}</div>`;
     setPackAction("חושפים…", true, "");
   }
@@ -2652,14 +2776,26 @@ function setPackAction(label, disabled, hint) {
 
 async function handlePackAction() {
   if (model.packPhase === "sealed") {
+    sfx.unlock();
+    sfx.stopReveals();
     model.packPhase = "tearing";
     renderPack();
-    setTimeout(() => {
-      if (model.packPhase !== "tearing") return;
+    const player = packRip;
+    const signal = packRipListeners?.signal;
+    if (!player || !signal) {
       model.packPhase = "fanned";
       renderPack();
-      setTimeout(startWalkout, 550);
-    }, 620);
+      packTimers.push(setTimeout(startWalkout, 550));
+      return;
+    }
+    // Advance on the VFX's own settle beat (packrip:done at 2600 ms, prompt under reduced motion).
+    elements.ripStage.addEventListener("packrip:done", () => {
+      if (model.packPhase !== "tearing" || packRip !== player) return;
+      model.packPhase = "fanned";
+      renderPack();
+      packTimers.push(setTimeout(startWalkout, 550));
+    }, { once: true, signal });
+    player.play();
   } else if (model.packPhase === "complete-card") {
     exitWalkoutSunburst();
     if (model.previewMode) {
@@ -2677,6 +2813,10 @@ async function handlePackAction() {
       showView("events");
       renderProgression({ announce: true });
       showToast("קלף האירוע נוסף לאוסף.");
+    } else if (model.currentPack.mode === "studio-debug") {
+      // Debug pull: nothing was granted, so there is nothing to mark seen or refresh.
+      showView("studio");
+      if (elements.studioDebugPullStatus) elements.studioDebugPullStatus.textContent = "משיכת הבדיקה הסתיימה. שום דבר לא נשמר.";
     } else if (model.currentPack.mode === "demo") {
       renderStudio();
       showView("studio");
@@ -2726,12 +2866,24 @@ async function handlePackAction() {
   }
 }
 
+function playRevealSound(stage) {
+  if (model.previewMode) return;
+  const instance = model.currentPack?.cards?.[model.currentCardIndex];
+  const card = instance ? model.byId.get(instance.cardId) : null;
+  if (!instance) return;
+  // Strict tier 1-4 from the pull; the ?rarity= QA override keeps sound in step with the sunburst.
+  const clip = revealClipForStage(stage, readSunburstRarityOverride() || sfxRarityKey(instance, card));
+  if (clip) sfx.play(clip, { reveal: true });
+}
+
 function finishWalkoutCard() {
   model.walkoutStage = WALKOUT_STAGES.length - 1;
   renderWalkoutStage();
+  playRevealSound(WALKOUT_STAGES[model.walkoutStage]);
   model.packPhase = "complete-card";
   const isLast = model.currentCardIndex === model.currentPack.cards.length - 1;
-  setPackAction(isLast ? "לאוסף" : "הקלף הבא", false, "");
+  const doneLabel = model.currentPack.mode === "studio-debug" ? "חזרה לסטודיו" : "לאוסף";
+  setPackAction(isLast ? doneLabel : "הקלף הבא", false, "");
   maybeShowNumberedTip();
 }
 
@@ -2786,7 +2938,9 @@ function maybeShowNumberedTip() {
 function startWalkout() {
   packTimers.forEach(clearTimeout);
   packTimers = [];
+  resetPackRip();
   teardownWalkoutSunburst({ immediate: true });
+  sfx.stopReveals();
   model.packPhase = "walkout";
   if (prefersReducedMotion()) {
     finishWalkoutCard();
@@ -2805,6 +2959,7 @@ function startWalkout() {
       model.walkoutStage = nextStage[index];
       renderWalkoutStage();
       if (model.walkoutStage === WALKOUT_STAGES.length - 1) finishWalkoutCard();
+      else playRevealSound(WALKOUT_STAGES[model.walkoutStage]);
     }, elapsed));
   });
 }
@@ -2835,12 +2990,9 @@ function renderWalkoutStage() {
   const instance = model.currentPack.cards[model.currentCardIndex];
   const card = model.byId.get(instance.cardId);
   const stage = WALKOUT_STAGES[model.walkoutStage];
-  const walkout = card.walkout;
-  const sourceName = walkout.sourceLabel ? `: ${walkout.sourceLabel}` : "";
-  const sourceLink = walkout.sourceUrl
-    ? `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}" aria-label="${escapeHtml(`פתיחת המקור${sourceName} בחלון חדש`)}">למקור המצורף ↗</a>`
-    : "";
-  elements.packStep.textContent = `קלף ${model.currentCardIndex + 1}`;
+  elements.packStep.textContent = model.currentPack.mode === "studio-debug"
+    ? STUDIO_DEBUG_LABEL
+    : `קלף ${model.currentCardIndex + 1}`;
   elements.packCounter.textContent = `${model.currentCardIndex + 1} / ${model.currentPack.cards.length}`;
   elements.packHeading.textContent = {
     blank: "",
@@ -2857,17 +3009,12 @@ function renderWalkoutStage() {
       <div class="walkout" style="--walkout-pip:${card.pip}">
         <div class="walkout-content">
           ${cardMarkup(card, instance, { progressiveStage: "blank", surface: "walkout" })}
-          <div class="walkout-receipt">
-            <span>${escapeHtml(cardTrustLine(card))}</span>
-            ${sourceLink}
-          </div>
         </div>
       </div>`;
     walkoutCard = elements.ripStage.querySelector(".walkout .kalpi-card");
     fitVisibleCardText(elements.ripStage);
   }
   applyCardStage(walkoutCard, stage);
-  elements.ripStage.querySelector(".walkout-receipt").classList.toggle("visible", model.walkoutStage >= 1);
   syncWalkoutSunburst({
     walkout: elements.ripStage.querySelector(".walkout"),
     cardEl: walkoutCard,
@@ -6342,6 +6489,34 @@ elements.copyRecovery?.addEventListener("click", copyRecoveryCode);
 elements.enableIdleNotify?.addEventListener("click", () => {
   requestIdleNotifications().catch(() => {});
 });
+// Header speaker: aria-pressed = muted. Label names the action the next tap performs.
+function renderSoundToggle() {
+  if (!elements.soundToggle) return;
+  const label = sfx.soundOn ? "השתקת צלילים" : "הפעלת צלילים";
+  elements.soundToggle.setAttribute("aria-label", label);
+  elements.soundToggle.title = label;
+  elements.soundToggle.setAttribute("aria-pressed", String(!sfx.soundOn));
+  elements.soundToggle.classList.toggle("muted", !sfx.soundOn);
+}
+renderSoundToggle();
+elements.soundToggle?.addEventListener("click", () => {
+  sfx.setSoundOn(!sfx.soundOn);
+  if (sfx.soundOn) {
+    sfx.unlock();
+    sfx.play("click");
+  }
+  renderSoundToggle();
+});
+// Audio needs a gesture on iOS: unlock (and decode the kit) on the first touch anywhere.
+document.addEventListener("pointerdown", () => sfx.unlock(), { once: true, capture: true });
+document.addEventListener("keydown", () => sfx.unlock(), { once: true, capture: true });
+// Button click sound on primary buttons only, not on every tap.
+document.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest(".primary-action") : null;
+  if (!button || button.disabled) return;
+  sfx.unlock();
+  sfx.play("click");
+}, { capture: true }); // capture: runs before handlers that disable the button
 elements.homeEnableNotify?.addEventListener("click", () => {
   requestIdleNotifications().catch(() => {});
 });
@@ -6516,6 +6691,7 @@ elements.copyCreatorLink.addEventListener("click", async () => {
   showToast(copied ? "קישור השיתוף הועתק." : "קישור השיתוף מוכן.");
 });
 elements.runGuidedDemo.addEventListener("click", runGuidedDemo);
+elements.studioDebugPull?.addEventListener("click", runStudioDebugPull);
 elements.debugResetPack.addEventListener("click", resetDailyPack);
 elements.headerDebugReset.addEventListener("click", resetDailyPack);
 elements.playStudioReveal.addEventListener("click", playStudioReveal);
@@ -6824,6 +7000,8 @@ if (!window.__klafiTradeWatch) {
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") pollWatchedTrade().catch(() => {});
 });
+// Warm the rip layers on the first idle moment so the first pack tap starts the rip at once.
+schedulePackRipPrefetch();
 bootstrap().then(() => {
   if (!model.showcase) klafiTips.maybeStart();
 });
