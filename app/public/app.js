@@ -2315,10 +2315,13 @@ function renderTodayDocket() {
   renderTodaySpecials();
 }
 
+// The Today event ticker. Always visible; CSS owns the motion (see .today-specials-line).
+// updateCountdown calls this every second, so it only writes to the DOM when something changed:
+// re-setting the copy's text each tick is what used to re-trigger layout (and restart the line).
 function renderTodaySpecials() {
-  if (!elements.todaySpecialsRow) return;
+  const row = elements.todaySpecialsRow;
+  if (!row) return;
   const windowOpen = model.specialWindow;
-  elements.todaySpecialsRow.hidden = false;
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
   let line = "אין אירוע כרגע";
   if (windowOpen) {
@@ -2333,15 +2336,12 @@ function renderTodaySpecials() {
         : "קלף אחד להיום — והוא נשאר באלבום.";
     line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
   }
-  if (elements.todaySpecialsCopy) elements.todaySpecialsCopy.textContent = line;
-  if (elements.todaySpecialsCopyRepeat) elements.todaySpecialsCopyRepeat.textContent = line;
-  requestAnimationFrame(layoutTodaySpecials);
-}
-
-function layoutTodaySpecials() {
-  const row = elements.todaySpecialsRow;
-  if (!row || row.hidden) return;
-  row.classList.add("is-marquee", "is-ready");
+  const state = !windowOpen ? "idle" : windowOpen.claimedToday ? "claimed" : "live";
+  if (row.dataset.state !== state) row.dataset.state = state;
+  row.classList.toggle("is-marquee", Boolean(windowOpen));
+  for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
+    if (copy && copy.textContent !== line) copy.textContent = line;
+  }
 }
 
 function layoutAdvocacyDock() {
@@ -6978,7 +6978,6 @@ window.addEventListener("resize", () => {
   renderBinder();
   renderAchievements();
   queueCardTextFit(elements.main);
-  layoutTodaySpecials();
   layoutAdvocacyDock();
 });
 document.addEventListener("click", (event) => {
