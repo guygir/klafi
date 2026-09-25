@@ -12,7 +12,7 @@
   --card-width: min(330px, calc(100vw - 42px));
   --safe-bottom: max(8px, env(safe-area-inset-bottom));
   --footer-pill-gap: 8px;
-  --specials-marquee-duration: 2.33s;
+  --specials-marquee-duration: 6s;
   --nav-clearance: calc(70px + var(--footer-pill-gap) + var(--safe-bottom));
   color: var(--ink);
   background: var(--paper);
@@ -3572,6 +3572,10 @@ body {
   display: none !important;
 }
 
+/* Today event ticker. One line, always in layout. The track holds two identical copies in an RTL
+   flex row; each copy is at least one row wide (100cqi is a fixed length, never a % of the track:
+   a % padding here resolved against the track itself and WebKit grew it without bound). Moving
+   the track right by one copy (50%) loops seamlessly, and the head of the Hebrew line leads. */
 .today-specials-line {
   display: block;
   overflow: hidden;
@@ -3585,39 +3589,43 @@ body {
   color: var(--civic);
   text-align: start;
   cursor: pointer;
+  container-type: inline-size;
 }
-.today-specials-line[hidden] { display: none; }
+.today-specials-line[data-state="idle"] { cursor: default; }
 .today-specials-track {
-  display: inline-flex;
-  gap: 0;
-  align-items: baseline;
+  display: flex;
+  width: max-content;
+  direction: rtl;
   white-space: nowrap;
-  direction: ltr;
 }
 .today-specials-copy {
-  padding-inline-end: 100%;
-  font: 600 11px/1.3 "IBM Plex Sans Hebrew", sans-serif;
-  direction: rtl;
-}
-#home-view .home-grid > .today-specials-copy,
-#home-view .today-specials-copy {
-  font-size: 10px;
+  flex: none;
+  box-sizing: border-box;
+  min-inline-size: 100cqi;
+  padding-inline-end: 2.5em;
+  font: 600 12px/1.3 "IBM Plex Sans Hebrew", sans-serif;
 }
 .today-specials-copy[aria-hidden="true"] { display: none; }
-.today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: inline; }
+.today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: block; }
 .today-specials-line.is-marquee .today-specials-track {
   animation: specials-marquee var(--specials-marquee-duration) linear infinite;
 }
+.today-specials-line.is-marquee:hover .today-specials-track,
+.today-specials-line.is-marquee:focus-visible .today-specials-track {
+  animation-play-state: paused;
+}
 @media (prefers-reduced-motion: reduce) {
   .today-specials-line.is-marquee .today-specials-track { animation: none; }
-  .today-specials-line {
+  .today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: none; }
+  .today-specials-copy {
+    max-inline-size: 100cqi;
+    overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
 }
 @keyframes specials-marquee {
   from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  to { transform: translateX(50%); }
 }
 
 .today-docket > header { display: none; }

@@ -36,6 +36,7 @@ function playerDialogOpen() {
     elements.profileDialog,
     elements.reportDialog,
     elements.levelDialog,
+    elements.eventDialog,
     elements.shareSheet,
   ].some((dialog) => dialog?.open);
 }
@@ -222,6 +223,12 @@ const elements = {
   levelDialogReward: document.querySelector("#level-dialog-reward"),
   closeLevel: document.querySelector("#close-level"),
   claimLevel: document.querySelector("#claim-level"),
+  eventDialog: document.querySelector("#event-dialog"),
+  eventDialogKicker: document.querySelector("#event-dialog-kicker"),
+  eventDialogTitle: document.querySelector("#event-dialog-title"),
+  eventDialogCopy: document.querySelector("#event-dialog-copy"),
+  eventDialogOk: document.querySelector("#event-dialog-ok"),
+  closeEventDialog: document.querySelector("#close-event-dialog"),
   avatarSeal: document.querySelector("#avatar-seal"),
   levelLetter: document.querySelector("#level-letter"),
   levelLetterText: document.querySelector("#level-letter-text"),
@@ -2315,13 +2322,18 @@ function renderTodayDocket() {
   renderTodaySpecials();
 }
 
+// The Today event ticker. Always visible; CSS owns the motion (see .today-specials-line).
+// updateCountdown calls this every second, so it only writes to the DOM when something changed:
+// re-setting the copy's text each tick is what used to re-trigger layout (and restart the line).
 function renderTodaySpecials() {
-  if (!elements.todaySpecialsRow) return;
+  const row = elements.todaySpecialsRow;
+  if (!row) return;
   const windowOpen = model.specialWindow;
-  elements.todaySpecialsRow.hidden = false;
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
   let line = "אין אירוע כרגע";
-  if (windowOpen) {
+  if (windowOpen?.reward === "pull") {
+    line = windowOpen.tickerHe || `${windowOpen.nameHe} · חבילה נוספת לכל שחקן`;
+  } else if (windowOpen) {
     const closes = new Date(windowOpen.closesAt);
     const until = Number.isNaN(closes.getTime())
       ? ""
@@ -2333,15 +2345,12 @@ function renderTodaySpecials() {
         : "קלף אחד להיום — והוא נשאר באלבום.";
     line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
   }
-  if (elements.todaySpecialsCopy) elements.todaySpecialsCopy.textContent = line;
-  if (elements.todaySpecialsCopyRepeat) elements.todaySpecialsCopyRepeat.textContent = line;
-  requestAnimationFrame(layoutTodaySpecials);
-}
-
-function layoutTodaySpecials() {
-  const row = elements.todaySpecialsRow;
-  if (!row || row.hidden) return;
-  row.classList.add("is-marquee", "is-ready");
+  const state = !windowOpen ? "idle" : windowOpen.claimedToday ? "claimed" : "live";
+  if (row.dataset.state !== state) row.dataset.state = state;
+  row.classList.toggle("is-marquee", Boolean(windowOpen));
+  for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
+    if (copy && copy.textContent !== line) copy.textContent = line;
+  }
 }
 
 function layoutAdvocacyDock() {
@@ -4467,7 +4476,9 @@ function renderEvents() {
     elements.eventPull.hidden = false;
     elements.eventPull.disabled = active.claimedToday;
     elements.eventPull.dataset.eventId = active.id;
-    elements.eventPull.textContent = active.claimedToday ? "הקלף היומי כבר נאסף" : "פתיחת קלף האירוע";
+    elements.eventPull.textContent = active.reward === "pull"
+      ? (active.claimedToday ? "החבילה הנוספת כבר אצלכם" : "איסוף החבילה הנוספת")
+      : (active.claimedToday ? "הקלף היומי כבר נאסף" : "פתיחת קלף האירוע");
     elements.eventCards.innerHTML = active.cards.map((card) => `
       <article class="event-card">${displayCardMarkup(card, "event")}</article>`).join("");
   }
@@ -4500,6 +4511,10 @@ function renderEvents() {
 async function claimTodaySpecial() {
   const windowOpen = model.specialWindow;
   if (!windowOpen) return;
+  if (windowOpen.reward === "pull") {
+    await claimEventPull(windowOpen);
+    return;
+  }
   if (windowOpen.claimedToday) {
     elements.navButtons.find((button) => button.dataset.nav === "binder")?.click();
     return;
@@ -4528,9 +4543,70 @@ async function claimTodaySpecial() {
   }
 }
 
+function pullCountCopy(count) {
+  return count === 1 ? "חבילה אחת" : `${count} חבילות`;
+}
+
+function openEventDialog({ kicker, title, copy }) {
+  elements.eventDialogKicker.textContent = kicker;
+  elements.eventDialogTitle.textContent = title;
+  elements.eventDialogCopy.textContent = copy;
+  if (!elements.eventDialog.open) elements.eventDialog.showModal();
+}
+
+function applyEventPullPayload(payload) {
+  if (!payload?.state) return;
+  applyHomePayload({ state: payload.state, cards: payload.cards });
+  if (payload.specialWindow !== undefined) model.specialWindow = payload.specialWindow;
+  renderHome();
+}
+
+// Pull-reward event (launch week): the server checks the window, the once-per-player claim and the
+// ready-pull cap, then adds one pull to the warehouse. The pop-up is the feedback; we stay on Today.
+async function claimEventPull(windowOpen) {
+  const row = elements.todaySpecialsRow;
+  if (row.disabled) return;
+  row.disabled = true;
+  const kicker = windowOpen.nameHe || "אירוע";
+  try {
+    const result = await request(`/api/events/${encodeURIComponent(windowOpen.id)}/pull`, { method: "POST" });
+    applyEventPullPayload(result);
+    openEventDialog({
+      kicker,
+      title: "חבילה נוספת נכנסה למחסן",
+      copy: `תודה שאתם כאן מההתחלה. החבילה כבר מחכה לכם, ויש לכם עכשיו ${pullCountCopy(result.readyCount)} לפתיחה.`,
+    });
+  } catch (error) {
+    const body = error.body || {};
+    applyEventPullPayload(body);
+    if (body.error === "PULL_CAP_REACHED") {
+      const cap = body.capacity || IDLE_BACKLOG_CAP;
+      openEventDialog({
+        kicker,
+        title: "המחסן מלא",
+        copy: `יש לכם כבר ${cap} חבילות שמחכות, וזה המקסימום. פתחו חבילה אחת וחזרו ללחוץ על השורה, והחבילה הנוספת תחכה לכם.`,
+      });
+    } else if (body.error === "EVENT_ALREADY_CLAIMED") {
+      showToast("החבילה הנוספת כבר אצלכם.");
+    } else {
+      showToast("חלון האיסוף סגור עכשיו.");
+    }
+  } finally {
+    row.disabled = false;
+  }
+}
+
 async function pullEventCard() {
   const eventId = elements.eventPull.dataset.eventId;
   if (!eventId) return;
+  const activeEvent = model.events.find(({ id }) => id === eventId);
+  if (activeEvent?.reward === "pull") {
+    elements.eventPull.disabled = true;
+    await claimEventPull(activeEvent);
+    model.events = (await request("/api/events").catch(() => ({ events: model.events }))).events;
+    renderEvents();
+    return;
+  }
   elements.eventPull.disabled = true;
   try {
     model.currentPack = await request(`/api/events/${encodeURIComponent(eventId)}/pull`, { method: "POST" });
@@ -6610,13 +6686,14 @@ for (const preview of [elements.tradeOfferedPreview, elements.tradeWantedPreview
     if (card) openCardDialog(card.dataset.tradeChoiceCard);
   });
 }
+// The event ticker sits in .home-grid, outside .today-docket, so it needs its own listener
+// (the docket delegate below never saw its clicks).
+elements.todaySpecialsRow?.addEventListener("click", () => {
+  claimTodaySpecial().catch(() => showToast("לא הצלחנו לאסוף את הקלף המיוחד."));
+});
 document.querySelector(".today-docket").addEventListener("click", (event) => {
   const hook = event.target.closest("[data-today-nav]");
   if (!hook) return;
-  if (hook.dataset.todayNav === "specials") {
-    claimTodaySpecial().catch(() => showToast("לא הצלחנו לאסוף את הקלף המיוחד."));
-    return;
-  }
   if (hook.dataset.communityPage) {
     model.communityPage = hook.dataset.communityPage;
     model.communitySection = communitySectionFor(hook.dataset.communityPage);
@@ -6935,6 +7012,11 @@ elements.earnedBadgeList?.addEventListener("keydown", (event) => {
 elements.dialog.addEventListener("click", (event) => {
   if (event.target === elements.dialog) elements.dialog.close();
 });
+elements.closeEventDialog.addEventListener("click", () => elements.eventDialog.close());
+elements.eventDialogOk.addEventListener("click", () => elements.eventDialog.close());
+elements.eventDialog.addEventListener("click", (event) => {
+  if (event.target === elements.eventDialog) elements.eventDialog.close();
+});
 elements.advocacyDialog.addEventListener("click", (event) => {
   if (event.target === elements.advocacyDialog) elements.advocacyDialog.close();
 });
@@ -6978,7 +7060,6 @@ window.addEventListener("resize", () => {
   renderBinder();
   renderAchievements();
   queueCardTextFit(elements.main);
-  layoutTodaySpecials();
   layoutAdvocacyDock();
 });
 document.addEventListener("click", (event) => {

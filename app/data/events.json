@@ -2,6 +2,19 @@
   "schemaVersion": 1,
   "events": [
     {
+      "id": "launch-week-2026",
+      "nameHe": "שבוע השקה",
+      "descriptionHe": "מפרגנים לשחקנים הראשונים: חבילה נוספת אחת לכל שחקן, עד סוף יום ראשון.",
+      "tickerHe": "שבוע השקה! מפרגנים לשחקנים הראשונים - בחבילה נוספת. לחצו כאן!",
+      "status": "active",
+      "reward": "pull",
+      "claim": "once",
+      "opensAt": "2026-09-25T00:00:00+03:00",
+      "closesAt": "2026-10-05T00:00:00+03:00",
+      "timezone": "Asia/Jerusalem",
+      "cardIds": []
+    },
+    {
       "id": "aces-launch-2026",
       "nameHe": "אירוע האסים",
       "descriptionHe": "כל עוד האירוע פתוח, מקבלים קלף אס אחד בחינם בכל יום.",
