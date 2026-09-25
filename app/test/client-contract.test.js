@@ -445,6 +445,20 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /specials-marquee/);
   assert.doesNotMatch(css, /\.today-specials-line\.is-ready:not\(\.is-fit\)/);
   assert.match(javascript, /function claimTodaySpecial/);
+  assert.match(html, /<dialog id="event-dialog" class="policy-dialog event-dialog"/);
+  assert.match(html, /id="event-dialog-title"/);
+  assert.match(html, /id="event-dialog-ok" class="primary-action"/);
+  assert.match(javascript, /function claimEventPull/);
+  assert.match(javascript, /elements\.todaySpecialsRow\?\.addEventListener\("click", \(\) => \{\s*claimTodaySpecial\(\)/);
+  assert.match(javascript, /windowOpen\.reward === "pull"/);
+  assert.match(javascript, /windowOpen\.tickerHe/);
+  assert.match(javascript, /PULL_CAP_REACHED/);
+  assert.match(javascript, /המחסן מלא/);
+  assert.match(javascript, /חבילה נוספת נכנסה למחסן/);
+  assert.match(javascript, /elements\.eventDialog,\n\s*elements\.shareSheet/);
+  assert.match(javascript, /function claimEventPull[\s\S]*?applyEventPullPayload\(result\)[\s\S]*?finally/);
+  assert.doesNotMatch(javascript.match(/async function claimEventPull[\s\S]*?\n}\n/)[0], /showView\(/);
+  assert.match(css, /@media \(any-pointer: coarse\) \{\s*input:not/);
   assert.match(javascript, /model\.specialWindow/);
   assert.match(javascript, /הקלף מוכן לאיסוף/);
   assert.match(javascript, /serviceWorker\.register\("\/sw\.js"\)/);
@@ -623,7 +637,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-90/);
+  assert.match(html, /card-surface-91/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -719,7 +733,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-90/);
+  assert.match(html, /card-surface-91/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -863,7 +877,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-90/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-91/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -878,7 +892,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-90/);
+  assert.match(html, /packrip\.css\?v=card-surface-91/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);

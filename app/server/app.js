@@ -29,7 +29,7 @@ import {
 } from "./numbered.js";
 import { publicLeague } from "./leagues.js";
 import { qrSvg } from "./qr-svg.js";
-import { openSpecialWindow } from "./special-window.js";
+import { eventClaimKey, eventClaimMode, eventReward, isEventClaimed, openSpecialWindow } from "./special-window.js";
 import { requestOrigin, serveBinderShareLanding, servePlayerBinderShareLanding, serveShareLanding } from "./share-landing.js";
 import { levelThresholds } from "./progression.js";
 import { createGithubBugFromBody } from "./github-bugs.js";
@@ -1012,15 +1012,69 @@ export async function createKalpiApp({
   }
 
   function publicEvents(session, current = now()) {
-    const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(current));
     return events.events.map((event) => ({
       ...event,
+      reward: eventReward(event),
+      claim: eventClaimMode(event),
       active: event.status !== "blocked"
         && Date.parse(event.opensAt) <= current
         && current <= Date.parse(event.closesAt),
-      claimedToday: Boolean(session.eventClaims?.[event.id]?.[dayKey]),
-      cards: event.cardIds.map((id) => cardsById.get(id)).filter(Boolean),
+      claimedToday: isEventClaimed(event, session.eventClaims, current),
+      cards: (event.cardIds || []).map((id) => cardsById.get(id)).filter(Boolean),
     }));
+  }
+
+  /**
+   * Pull-reward event (e.g. launch week): one ready pull added to the player's warehouse queue.
+   * Server-authoritative: window checked by the caller; here the claim, the ready-pull cap and the
+   * grant happen inside one withSession (row-locked on Postgres). Settles idle first so the cap sees
+   * every pull that is already due. At the cap nothing is granted and nothing is marked claimed.
+   */
+  async function claimEventPull(token, event) {
+    const settled = await settleIdle(token);
+    if (settled.error) return { status: settled.status || 409, body: { error: settled.error } };
+    const currentMs = now();
+    const pool = activeIdleCards(allCards, currentMs);
+    const outcome = await store.withSession(token, async (current) => {
+      current.eventClaims ??= {};
+      current.unseenPulls ??= [];
+      const key = eventClaimKey(event, currentMs);
+      if (current.eventClaims[event.id]?.[key]) return { status: 409, error: "EVENT_ALREADY_CLAIMED" };
+      if (current.unseenPulls.length >= IDLE_BACKLOG_CAP) return { status: 409, error: "PULL_CAP_REACHED" };
+      if (!pool.length) return { status: 409, error: "NO_ACTIVE_RELEASE" };
+      const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(current), current.idleDuplicateStreak || 0));
+      const pulledAt = new Date(currentMs).toISOString();
+      const instance = await grantCard(current, pull, { acquiredBy: "event-pull", pulledAt });
+      current.packs ??= [];
+      current.packs.push({
+        packId: `event-${event.id}-${instance.instanceId}`,
+        mode: "event-pull",
+        pulledAt,
+        nextDailyAt: null,
+        cards: [instance],
+      });
+      current.packs = current.packs.slice(-100);
+      current.eventClaims[event.id] ??= {};
+      current.eventClaims[event.id][key] = { instanceId: instance.instanceId, claimedAt: pulledAt };
+      return { status: 201, grantedId: instance.instanceId };
+    });
+    if (!outcome) return { status: 401, body: { error: "INVALID_SESSION" } };
+    const session = store.getSession(token);
+    const instancesById = new Map(session.instances.map((instance) => [instance.instanceId, instance]));
+    return {
+      status: outcome.status,
+      body: {
+        ...(outcome.error ? { error: outcome.error } : { granted: instancesById.get(outcome.grantedId) || null }),
+        eventId: event.id,
+        reward: "pull",
+        capacity: IDLE_BACKLOG_CAP,
+        readyCount: session.unseenPulls?.length ?? 0,
+        mode: "idle-return",
+        cards: (session.unseenPulls || []).map((id) => instancesById.get(id)).filter(Boolean),
+        state: publicIdleState(session, now(), allCards, runtimeProgression()),
+        specialWindow: openSpecialWindow(events.events, now(), session),
+      },
+    };
   }
 
   async function presentLeague(league, token, request) {
@@ -1918,14 +1972,19 @@ export async function createKalpiApp({
             json(response, 404, { error: "EVENT_NOT_ACTIVE" });
             return;
           }
-          const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: event.timezone || "Asia/Jerusalem" }).format(new Date(current));
+          if (eventReward(event) === "pull") {
+            const claimed = await claimEventPull(token, event);
+            json(response, claimed.status, claimed.body);
+            return;
+          }
+          const dayKey = eventClaimKey(event, current);
           const result = await store.withSession(token, (currentSession) => {
             currentSession.eventClaims ??= {};
             currentSession.eventClaims[event.id] ??= {};
             if (currentSession.eventClaims[event.id][dayKey]) {
               return { status: 409, body: { error: "EVENT_ALREADY_CLAIMED" } };
             }
-            const pool = event.cardIds.map((id) => cardsById.get(id)).filter(Boolean);
+            const pool = (event.cardIds || []).map((id) => cardsById.get(id)).filter(Boolean);
             if (!pool.length) return { status: 500, body: { error: "EMPTY_EVENT" } };
             const unowned = pool.filter((card) => !currentSession.inventory[card.id]);
             const card = (unowned.length ? unowned : pool)[rng((unowned.length ? unowned : pool).length)];
@@ -2177,6 +2236,9 @@ export async function createKalpiApp({
             closesAt: String(item.closesAt),
             timezone: item.timezone || "Asia/Jerusalem",
             cardIds: Array.isArray(item.cardIds) ? item.cardIds.map(String) : [],
+            ...(item.reward === "pull" ? { reward: "pull" } : {}),
+            ...(item.claim === "once" ? { claim: "once" } : {}),
+            ...(item.tickerHe ? { tickerHe: String(item.tickerHe).slice(0, 160) } : {}),
           }));
           await writeJsonAtomic(eventsPath, events);
           json(response, 200, events);

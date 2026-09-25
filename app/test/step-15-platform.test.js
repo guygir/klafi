@@ -157,10 +157,13 @@ test("rooms use a short code, paper QR, shared stars, and stop at 32", async (t)
   assert.equal(full.body.error, "LEAGUE_FULL");
 });
 
-test("shipped events stay closed until Studio opens one", async () => {
+test("shipped card events stay closed until Studio opens one; only the launch-week pull is live", async () => {
   const events = JSON.parse(await readFile(path.join(appRoot, "data/events.json"), "utf8"));
   assert.ok(events.events.length > 0);
-  assert.ok(events.events.every((event) => event.status === "blocked"));
+  const active = events.events.filter((event) => event.status !== "blocked");
+  assert.deepEqual(active.map(({ id }) => id), ["launch-week-2026"]);
+  assert.equal(active[0].reward, "pull");
+  assert.ok(events.events.filter(({ reward }) => reward !== "pull").every((event) => event.status === "blocked"));
   assert.equal(openSpecialWindow(events.events, Date.parse("2026-09-22T12:00:00.000Z")), null);
 });
 
