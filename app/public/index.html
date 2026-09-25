@@ -119,7 +119,6 @@
             <div class="pack-wrapper" id="home-pack" aria-hidden="true">
               <img src="/packrip/pack-closed.webp" alt="" />
             </div>
-            <button id="open-trust-legend" class="trust-info" type="button" aria-haspopup="dialog" aria-label="מה מסמנת הכוכבית בקלפים?" title="מה מסמנת הכוכבית?">?</button>
           </div>
         </div>
         <div class="action-dock">
@@ -698,15 +697,6 @@
     </section>
   </dialog>
 
-  <dialog id="trust-dialog" class="policy-dialog" aria-labelledby="trust-dialog-title">
-    <button id="close-trust" class="dialog-close" type="button" aria-label="סגירת ההסבר">×</button>
-    <p class="eyebrow">איך לקרוא את הקלף</p>
-    <h2 id="trust-dialog-title">מה מסמנת הכוכבית?</h2>
-    <p>כוכבית על ציטוט אומרת שהנוסח קוצר, או שזה ניסוח מיוחס — לא תמלול מילה במילה.</p>
-    <p>ההקשר המלא, התאריך והמקור נפתחים מקישור המקור שעל הקלף.</p>
-    <p>כשסטטוס האותיות של הרשימה רלוונטי, הוא מגיע ממאגר ועדת הבחירות — לא מומצא במשחק.</p>
-  </dialog>
-
   <dialog id="advocacy-dialog" class="policy-dialog" aria-labelledby="advocacy-sponsor" aria-describedby="advocacy-full">
     <button id="close-advocacy" class="dialog-close" type="button" aria-label="סגירת הגילוי הנאות">×</button>
     <p class="eyebrow">גילוי נאות</p>
@@ -714,6 +704,13 @@
     <p id="advocacy-full"></p>
     <h3>איך התוכן נבחר?</h3>
     <ol id="advocacy-phases"></ol>
+    <section id="advocacy-trust" class="advocacy-trust" aria-labelledby="advocacy-trust-title">
+      <p class="eyebrow">איך לקרוא את הקלף</p>
+      <h3 id="advocacy-trust-title">מה מסמנת הכוכבית?</h3>
+      <p>כוכבית על ציטוט אומרת שהנוסח קוצר, או שזה ניסוח מיוחס — לא תמלול מילה במילה.</p>
+      <p>ההקשר המלא, התאריך והמקור נפתחים מקישור המקור שעל הקלף.</p>
+      <p>כשסטטוס האותיות של הרשימה רלוונטי, הוא מגיע ממאגר ועדת הבחירות — לא מומצא במשחק.</p>
+    </section>
     <p class="policy-lock">אותם כללי משחק ואותו תוכן לכולם. הפעילות שמוצגת נמדדת בפועל.</p>
   </dialog>
 

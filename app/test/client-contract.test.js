@@ -53,7 +53,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /aria-labelledby="report-dialog-title"/);
   assert.match(html, /aria-labelledby="level-dialog-title"/);
   assert.match(html, /aria-labelledby="profile-dialog-title"/);
-  assert.match(html, /aria-labelledby="trust-dialog-title"/);
+  assert.match(html, /aria-labelledby="advocacy-trust-title"/);
   assert.match(html, /aria-labelledby="advocacy-sponsor"/);
   assert.match(html, /id="faction-cec-note"/);
   assert.match(html, /id="faction-members"/);
@@ -530,9 +530,16 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /\/api\/profile/);
   assert.match(html, /id="shared-view"/);
   assert.match(html, /id="shared-trust"/);
-  assert.match(html, /id="open-trust-legend"/);
+  assert.doesNotMatch(html, /id="open-trust-legend"|class="trust-info"/);
+  assert.doesNotMatch(css, /\.trust-info/);
+  assert.doesNotMatch(javascript, /openTrustLegend|trustDialog/);
+  assert.match(html, /<dialog id="advocacy-dialog"[\s\S]*?<section id="advocacy-trust"[\s\S]*?<h3 id="advocacy-trust-title">מה מסמנת הכוכבית\?<\/h3>[\s\S]*?כוכבית על ציטוט אומרת שהנוסח קוצר[\s\S]*?ממאגר ועדת הבחירות — לא מומצא במשחק\.<\/p>[\s\S]*?<\/dialog>/);
   assert.match(html, /home-title-row/);
-  assert.match(html, /id="trust-dialog"/);
+  assert.doesNotMatch(html, /id="trust-dialog"/);
+  // iOS zooms into focused fields under 16px (bug/report pop-ups focus a field on open).
+  assert.match(css, /@media \(any-pointer: coarse\) \{[\s\S]*?select,\s*textarea,\s*\.trade-form select \{\s*font-size: 16px !important;/);
+  assert.match(html, /name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/);
+  assert.doesNotMatch(html, /maximum-scale|user-scalable/);
   assert.match(html, /id="dialog-trust"/);
   assert.match(javascript, /function showSharedCard/);
   assert.match(javascript, /function isLookOnlyShowcase/);

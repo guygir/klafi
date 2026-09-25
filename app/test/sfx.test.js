@@ -19,6 +19,9 @@ import {
   revealClipForStage,
   ripStartTime,
   writeSoundOn,
+  audioExtensions,
+  createSfx,
+  isAppleWebKit,
 } from "../public/sfx.js";
 import { PACKRIP_TIMELINE } from "../public/packrip.js";
 
@@ -143,4 +146,76 @@ test("reveal rarity maps strictly to tiers 1-4 from the pulled finish", () => {
   for (const key of ["common", "uncommon", "rare", "holo"]) {
     assert.match(revealClipForStage("portrait", sfxRarityKey({ finish: key === "holo" ? "Holo" : key })), /^rarity-[1-4]$/);
   }
+});
+
+const IPHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1";
+const IOS_CHROME_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0 Mobile/15E148 Safari/604.1";
+const ANDROID_UA = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36";
+
+test("Apple WebKit gets AAC first; others keep Ogg first when supported", () => {
+  const oggYes = function Audio() { return { canPlayType: () => "maybe" }; };
+  const oggNo = function Audio() { return { canPlayType: () => "" }; };
+  assert.equal(isAppleWebKit({ userAgent: IPHONE_UA }), true);
+  assert.equal(isAppleWebKit({ userAgent: IOS_CHROME_UA }), true);
+  assert.equal(isAppleWebKit({ userAgent: ANDROID_UA }), false);
+  assert.deepEqual(audioExtensions({ nav: { userAgent: IPHONE_UA }, AudioImpl: oggYes }), ["m4a", "ogg"]);
+  assert.deepEqual(audioExtensions({ nav: { userAgent: ANDROID_UA }, AudioImpl: oggYes }), ["ogg", "m4a"]);
+  assert.deepEqual(audioExtensions({ nav: { userAgent: ANDROID_UA }, AudioImpl: oggNo }), ["m4a", "ogg"]);
+});
+
+function fakeAudioContext(log) {
+  return class FakeContext {
+    constructor() { this.state = "suspended"; this.sampleRate = 48000; this.currentTime = 0; this.destination = {}; log.push("new"); FakeContext.last = this; }
+    createGain() { return { gain: { value: 1 }, connect: (n) => n }; }
+    createBuffer() { return {}; }
+    createBufferSource() { return { connect: (n) => n, start: () => log.push("primer") }; }
+    resume() { log.push("resume"); this.state = "running"; return Promise.resolve(); }
+    suspend() { log.push("suspend"); this.state = "suspended"; return Promise.resolve(); }
+  };
+}
+
+test("unlock resumes suspended and iOS 'interrupted' contexts, and is a no-op when running or muted", () => {
+  const log = [];
+  const Impl = fakeAudioContext(log);
+  const sfx = createSfx({ storage: memoryStorage(), AudioContextImpl: Impl, OfflineContextImpl: null });
+  assert.equal(sfx.unlock(), true);
+  const lastContext = Impl.last;
+  assert.deepEqual(log, ["new", "primer", "resume"]);
+  log.length = 0;
+  sfx.unlock();
+  assert.deepEqual(log, [], "running: nothing to do");
+  // iOS drops the context to "interrupted" after a phone call / lock / app switch.
+  lastContext.state = "interrupted";
+  assert.equal(sfx.unlock(), true);
+  assert.deepEqual(log, ["primer", "resume"]);
+  log.length = 0;
+  sfx.setSoundOn(false);
+  assert.deepEqual(log, ["suspend"]);
+  log.length = 0;
+  assert.equal(sfx.unlock(), false, "muted: stays silent");
+  assert.deepEqual(log, []);
+  sfx.setSoundOn(true);
+  assert.equal(sfx.unlock(), true);
+  assert.deepEqual(log, ["primer", "resume"]);
+});
+
+test("unlock uses the ambient audio session: mixes with music, obeys the silent switch", () => {
+  const nav = globalThis.navigator;
+  const session = { type: "auto" };
+  Object.defineProperty(globalThis, "navigator", { value: { audioSession: session }, configurable: true });
+  try {
+    const sfx = createSfx({ storage: memoryStorage(), AudioContextImpl: fakeAudioContext([]), OfflineContextImpl: null });
+    sfx.unlock();
+    assert.equal(session.type, "ambient");
+    sfx.setSoundOn(false);
+    assert.equal(session.type, "ambient", "mute never switches to a music-pausing session");
+  } finally {
+    Object.defineProperty(globalThis, "navigator", { value: nav, configurable: true });
+  }
+});
+
+test("sfx never requests the playback audio session", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(path.join(publicDir, "sfx.js"), "utf8");
+  assert.doesNotMatch(source, /setAudioSessionType\("playback"\)|type\s*=\s*"playback"/);
 });

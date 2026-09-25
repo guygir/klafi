@@ -809,6 +809,10 @@ body:has(#app[data-theme="pack-v2"]) {
   min-height: 42px !important;
   font-size: 13px !important;
 }
+/* Touch: 16px so iOS doesn't zoom into the field (see the matching rule at the end of styles.css). */
+@media (any-pointer: coarse) {
+  #app[data-density="airy-v2"] .trade-form select { font-size: 16px !important; }
+}
 
 #app[data-density="airy-v2"] .site-card-peeks {
   display: none;
