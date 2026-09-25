@@ -3835,8 +3835,30 @@ body {
 
 @media (max-width: 760px) {
   .app-shell { padding-inline: 12px; }
-  .masthead { min-height: 48px; }
+  .masthead { min-height: 48px; overflow-x: hidden; }
+  .masthead-row { gap: 8px; min-width: 0; }
+  .masthead-brand { min-width: 0; }
+  .masthead-meta {
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+  .player-name { min-width: 0; }
   .header-debug-reset { display: none; }
+  .header-debug-reset[data-nav="studio"][data-studio-only]:not([hidden]) {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 2px 5px;
+    font-size: 8px;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .masthead-meta:has([data-nav="studio"][data-studio-only]:not([hidden])) .player-name {
+    max-width: min(112px, 32vw);
+  }
   .presentation-link,
   .presentation-studio-link { display: none !important; }
   .level-strip,
@@ -3868,7 +3890,11 @@ body {
 @media (max-width: 420px) {
   .wordmark { font-size: 18px; }
   .wordmark b { font-size: 19px; }
-  .player-name { max-width: 160px; }
+  .masthead-row { gap: 6px; }
+  .player-name { max-width: 132px; }
+  .masthead-meta:has([data-nav="studio"][data-studio-only]:not([hidden])) .player-name {
+    max-width: min(88px, 28vw);
+  }
   .presentation-link,
   .presentation-studio-link { display: none !important; }
   .level-identity small { max-width: 112px; }

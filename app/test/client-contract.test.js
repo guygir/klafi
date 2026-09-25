@@ -871,6 +871,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /class="masthead-brand">\s*<button class="wordmark"[\s\S]{0,200}<button id="sound-toggle" class="sound-toggle"[^>]*aria-label="השתקת צלילים"/);
   assert.match(html, /sound-icon-on[\s\S]{0,600}sound-icon-off/);
   assert.doesNotMatch(html, /profile-sound|להשתיק צלילים/);
+  assert.match(html, /class="header-debug-reset"[^>]*data-nav="studio"[^>]*data-studio-only[^>]*hidden/);
+  assert.match(css, /@media \(max-width: 760px\) \{[\s\S]*?\.header-debug-reset \{ display: none; \}[\s\S]*?\.header-debug-reset\[data-nav="studio"\]\[data-studio-only\]:not\(\[hidden\]\) \{/);
+  assert.match(css, /\.header-debug-reset\[data-nav="studio"\]\[data-studio-only\]:not\(\[hidden\]\) \{[\s\S]*?display: inline-flex;/);
+  assert.match(css, /@media \(max-width: 760px\) \{[\s\S]*?\.presentation-link,[\s\S]*?\.presentation-studio-link \{ display: none !important; \}/);
   assert.match(javascript, /sfx\.soundOn \? "השתקת צלילים" : "הפעלת צלילים"/);
   assert.match(javascript, /classList\.toggle\("muted", !sfx\.soundOn\)/);
   assert.match(css, /\.sound-toggle\.muted \.sound-icon-off \{ display: block; \}/);
