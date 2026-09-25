@@ -34,7 +34,6 @@ function playerDialogOpen() {
     elements.dialog,
     elements.advocacyDialog,
     elements.profileDialog,
-    elements.trustDialog,
     elements.reportDialog,
     elements.levelDialog,
     elements.shareSheet,
@@ -326,9 +325,6 @@ const elements = {
   closeShareSheet: document.querySelector("#close-share-sheet"),
   dialogReport: document.querySelector("#dialog-report"),
   closeDialog: document.querySelector("#close-dialog"),
-  trustDialog: document.querySelector("#trust-dialog"),
-  openTrustLegend: document.querySelector("#open-trust-legend"),
-  closeTrust: document.querySelector("#close-trust"),
   reportDialog: document.querySelector("#report-dialog"),
   reportForm: document.querySelector("#report-form"),
   reportCardLabel: document.querySelector("#report-card-label"),
@@ -6420,6 +6416,7 @@ async function copyText(text) {
     field.setAttribute("readonly", "");
     field.style.position = "fixed";
     field.style.opacity = "0";
+    field.style.fontSize = "16px"; // iOS zooms into focused fields under 16px
     document.body.append(field);
     field.select();
     const copied = document.execCommand("copy");
@@ -6507,9 +6504,12 @@ elements.soundToggle?.addEventListener("click", () => {
   }
   renderSoundToggle();
 });
-// Audio needs a gesture on iOS: unlock (and decode the kit) on the first touch anywhere.
-document.addEventListener("pointerdown", () => sfx.unlock(), { once: true, capture: true });
-document.addEventListener("keydown", () => sfx.unlock(), { once: true, capture: true });
+// Audio needs a gesture on iOS: unlock (and decode the kit) on touches anywhere. Not `once`: a
+// touch pointerdown/touchstart isn't a user activation on iOS (touchend/pointerup/click are), and
+// the context can fall to "interrupted" after a call or app switch. unlock() is a no-op once running.
+for (const type of ["pointerdown", "pointerup", "touchend", "click", "keydown"]) {
+  document.addEventListener(type, () => sfx.unlock(), { capture: true, passive: true });
+}
 // Button click sound on primary buttons only, not on every tap.
 document.addEventListener("click", (event) => {
   const button = event.target instanceof Element ? event.target.closest(".primary-action") : null;
@@ -6597,8 +6597,6 @@ elements.skipToMain?.addEventListener("click", (event) => {
   event.preventDefault();
   document.querySelector("#main")?.focus();
 });
-elements.openTrustLegend.addEventListener("click", () => elements.trustDialog.showModal());
-elements.closeTrust.addEventListener("click", () => elements.trustDialog.close());
 elements.openAdvocacy.addEventListener("click", () => elements.advocacyDialog.showModal());
 elements.closeAdvocacy.addEventListener("click", () => elements.advocacyDialog.close());
 elements.tradeDemo.addEventListener("click", createTradePreview);
@@ -6939,9 +6937,6 @@ elements.dialog.addEventListener("click", (event) => {
 });
 elements.advocacyDialog.addEventListener("click", (event) => {
   if (event.target === elements.advocacyDialog) elements.advocacyDialog.close();
-});
-elements.trustDialog.addEventListener("click", (event) => {
-  if (event.target === elements.trustDialog) elements.trustDialog.close();
 });
 elements.profileDialog.addEventListener("click", (event) => {
   if (event.target === elements.profileDialog) elements.profileDialog.close();

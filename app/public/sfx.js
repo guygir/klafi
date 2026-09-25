@@ -6,6 +6,13 @@
  * ripAt = t0 + 1000. scheduleRip() maps ripAt onto AudioContext time and starts the clip at
  * ripAt - lead, so the tear's attack lands on the visual rip frame for every clip, with no
  * setTimeout in the audio path.
+ *
+ * iOS Safari: the context is only allowed to run if resume() (plus a sound start) happens inside
+ * an activation-triggering event (touchend / pointerup / click / keydown; a touch pointerdown or
+ * touchstart does not count), it can drop to "interrupted" after a call, lock or app switch, and
+ * the ring/silent switch mutes Web Audio. That last one is intended: unlock() sets
+ * navigator.audioSession.type = "ambient" (iOS 17+), so Klafi mixes with the user's music, never
+ * pauses it, and stays quiet on silent. unlock() is safe to call from every gesture.
  */
 
 export const SFX_BASE = "/sfx/";
@@ -128,14 +135,34 @@ export function revealClipForStage(stage, rarityKey) {
   return null;
 }
 
-function preferredExtension() {
+/** Apple WebKit (Safari, every iOS browser): canPlayType can say "maybe" for Ogg while
+ * decodeAudioData still rejects it, so AAC goes first there. */
+export function isAppleWebKit(nav = globalThis.navigator) {
+  const ua = String(nav?.userAgent ?? "");
+  if (!/AppleWebKit/.test(ua) || /Chrome|Chromium|Android/.test(ua)) return false;
+  return /iPhone|iPad|iPod|Macintosh/.test(ua) || String(nav?.vendor ?? "").startsWith("Apple");
+}
+
+/** Extensions to try, best first. Every clip ships as both; decode failure falls through. */
+export function audioExtensions({ nav = globalThis.navigator, AudioImpl = globalThis.Audio } = {}) {
+  let ogg = false;
   try {
-    const probe = typeof Audio === "function" ? new Audio() : null;
-    if (probe?.canPlayType?.('audio/ogg; codecs="vorbis"')) return "ogg";
+    const probe = typeof AudioImpl === "function" ? new AudioImpl() : null;
+    ogg = Boolean(probe?.canPlayType?.('audio/ogg; codecs="vorbis"'));
   } catch {
     /* ignore */
   }
-  return "m4a";
+  if (isAppleWebKit(nav)) return ["m4a", "ogg"];
+  return ogg ? ["ogg", "m4a"] : ["m4a", "ogg"];
+}
+
+/** iOS 17+: "ambient" = mix with other audio (never pause the user's music), obey the silent switch. */
+export function setAudioSessionType(type, nav = globalThis.navigator) {
+  try {
+    if (nav?.audioSession && nav.audioSession.type !== type) nav.audioSession.type = type;
+  } catch {
+    /* unsupported */
+  }
 }
 
 export function createSfx({
@@ -150,7 +177,7 @@ export function createSfx({
   const buffers = new Map();
   const leads = new Map();
   const reveals = new Set();
-  let ext = null;
+  let exts = null;
   let prefetching = null;
   let decoding = null;
 
@@ -162,12 +189,23 @@ export function createSfx({
 
   function prefetch() {
     if (prefetching || typeof fetch !== "function") return prefetching;
-    ext = ext || preferredExtension();
-    prefetching = Promise.all(SFX_CLIPS.map((name) => fetch(`${SFX_BASE}${name}.${ext}`)
-      .then((response) => (response.ok ? response.arrayBuffer() : null))
-      .then((data) => { if (data) raw.set(name, data); })
-      .catch(() => {})));
+    exts = exts || audioExtensions();
+    prefetching = Promise.all(SFX_CLIPS.map((name) => fetchClip(name, exts[0])
+      .then((data) => { if (data) raw.set(name, data); })));
     return prefetching;
+  }
+
+  function fetchClip(name, extension) {
+    return fetch(`${SFX_BASE}${name}.${extension}`)
+      .then((response) => (response.ok ? response.arrayBuffer() : null))
+      .catch(() => null);
+  }
+
+  function decodeWith(target, data) {
+    return new Promise((resolve, reject) => {
+      const pending = target.decodeAudioData(data.slice(0), resolve, reject);
+      pending?.catch?.(reject);
+    });
   }
 
   // Decode ahead of the first gesture with an OfflineAudioContext (no autoplay warning, no
@@ -190,40 +228,63 @@ export function createSfx({
     const target = getDecoder();
     if (!target) return null;
     decoding = (prefetch() || Promise.resolve()).then(() => Promise.all(SFX_CLIPS.map(async (name) => {
-      const data = raw.get(name);
-      if (!data || buffers.has(name)) return;
-      try {
-        const buffer = await new Promise((resolve, reject) => {
-          const pending = target.decodeAudioData(data.slice(0), resolve, reject);
-          pending?.catch?.(reject);
-        });
-        buffers.set(name, buffer);
-        if (RIP_CYCLE.includes(name)) {
-          const measured = detectTransientLead(buffer.getChannelData(0), buffer.sampleRate);
-          leads.set(name, measured > 0 ? measured : RIP_LEAD_MS[name]);
+      if (buffers.has(name)) return;
+      // Preferred format first (already prefetched), then the other one if this engine can't
+      // decode it (e.g. Ogg on iOS Safari).
+      for (const [i, extension] of (exts || audioExtensions()).entries()) {
+        const data = i === 0 ? raw.get(name) : await fetchClip(name, extension);
+        if (!data) continue;
+        try {
+          const buffer = await decodeWith(target, data);
+          buffers.set(name, buffer);
+          if (RIP_CYCLE.includes(name)) {
+            const measured = detectTransientLead(buffer.getChannelData(0), buffer.sampleRate);
+            leads.set(name, measured > 0 ? measured : RIP_LEAD_MS[name]);
+          }
+          return;
+        } catch {
+          /* undecodable in this format: try the next one */
         }
-      } catch {
-        /* undecodable: that clip stays silent */
       }
     })));
     return decoding;
   }
 
-  /** Call from a user gesture (pack tap, first pointerdown) so iOS lets the context run. */
+  /**
+   * Call from every user gesture (pack tap, touchend/click anywhere) so iOS lets the context run.
+   * Cheap no-op once running. Resumes "suspended" and iOS "interrupted" alike, and starts a
+   * one-sample silent buffer inside the gesture, which older iOS needs before the context plays.
+   * Muted: does nothing (no context is created).
+   */
   function unlock() {
-    if (!AudioContextImpl) return;
+    if (!AudioContextImpl || !soundOn) return false;
+    if (ctx && ctx.state === "running") return true;
+    setAudioSessionType("ambient");
     if (!ctx) {
       try {
         ctx = new AudioContextImpl({ latencyHint: "interactive" });
       } catch {
-        return;
+        try {
+          ctx = new AudioContextImpl();
+        } catch {
+          return false;
+        }
       }
       master = ctx.createGain();
       master.gain.value = 1;
       master.connect(ctx.destination);
     }
-    if (ctx.state === "suspended") ctx.resume().catch(() => {});
+    try {
+      const primer = ctx.createBufferSource();
+      primer.buffer = ctx.createBuffer(1, 1, ctx.sampleRate || 44100);
+      primer.connect(ctx.destination);
+      primer.start(0);
+    } catch {
+      /* ignore */
+    }
+    if (ctx.state !== "running") ctx.resume?.()?.catch?.(() => {});
     decodeAll();
+    return ctx.state === "running";
   }
 
   function outputStamp() {
@@ -305,7 +366,15 @@ export function createSfx({
   function setSoundOn(on) {
     soundOn = Boolean(on);
     writeSoundOn(soundOn, storage);
-    if (!soundOn) stopReveals(60);
+    if (!soundOn) {
+      stopReveals(60);
+      // Idle the audio hardware while muted; unlock() resumes on the unmute tap.
+      try {
+        ctx?.suspend?.()?.catch?.(() => {});
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   return {
@@ -317,5 +386,6 @@ export function createSfx({
     stopReveals,
     setSoundOn,
     get soundOn() { return soundOn; },
+    get state() { return ctx?.state ?? "none"; },
   };
 }
