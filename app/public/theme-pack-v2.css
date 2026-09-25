@@ -384,7 +384,7 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-card-frame="tall-v2"] #pack-view .walkout .kalpi-card {
   width: auto;
   max-width: 100%;
-  height: auto;
+  height: 100%;
   max-height: calc(100% - 38px);
   aspect-ratio: 63 / 96;
 }
@@ -943,7 +943,7 @@ body:has(#app[data-theme="pack-v2"]) {
   }
 
   #app[data-card-frame="tall-v2"] #pack-view .walkout .kalpi-card {
-    height: auto;
+    height: 100%;
     max-height: calc(100% - 38px);
   }
 }
