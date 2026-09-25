@@ -56,6 +56,12 @@ body:has(#app[data-theme="pack-v2"]) {
   font-weight: 700;
 }
 
+#app[data-theme="pack-v2"] .sound-toggle,
+#app[data-theme="pack-v2"] .sound-toggle:hover,
+#app[data-theme="pack-v2"] .sound-toggle.muted {
+  color: var(--pack-seal);
+}
+
 #app[data-theme="pack-v2"] .player-name {
   display: inline-flex;
   align-items: center;
@@ -370,7 +376,6 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] #pack-view .walkout-content {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
   place-items: center;
 }
 

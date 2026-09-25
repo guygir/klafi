@@ -2990,11 +2990,6 @@ function renderWalkoutStage() {
   const instance = model.currentPack.cards[model.currentCardIndex];
   const card = model.byId.get(instance.cardId);
   const stage = WALKOUT_STAGES[model.walkoutStage];
-  const walkout = card.walkout;
-  const sourceName = walkout.sourceLabel ? `: ${walkout.sourceLabel}` : "";
-  const sourceLink = walkout.sourceUrl
-    ? `<a href="${escapeHtml(walkout.sourceUrl)}" target="_blank" rel="noopener" data-source-card="${card.id}" aria-label="${escapeHtml(`פתיחת המקור${sourceName} בחלון חדש`)}">למקור המצורף ↗</a>`
-    : "";
   elements.packStep.textContent = model.currentPack.mode === "studio-debug"
     ? STUDIO_DEBUG_LABEL
     : `קלף ${model.currentCardIndex + 1}`;
@@ -3014,17 +3009,12 @@ function renderWalkoutStage() {
       <div class="walkout" style="--walkout-pip:${card.pip}">
         <div class="walkout-content">
           ${cardMarkup(card, instance, { progressiveStage: "blank", surface: "walkout" })}
-          <div class="walkout-receipt">
-            <span>${escapeHtml(cardTrustLine(card))}</span>
-            ${sourceLink}
-          </div>
         </div>
       </div>`;
     walkoutCard = elements.ripStage.querySelector(".walkout .kalpi-card");
     fitVisibleCardText(elements.ripStage);
   }
   applyCardStage(walkoutCard, stage);
-  elements.ripStage.querySelector(".walkout-receipt").classList.toggle("visible", model.walkoutStage >= 1);
   syncWalkoutSunburst({
     walkout: elements.ripStage.querySelector(".walkout"),
     cardEl: walkoutCard,

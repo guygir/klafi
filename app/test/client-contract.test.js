@@ -610,7 +610,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-86/);
+  assert.match(html, /card-surface-87/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -706,7 +706,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-86/);
+  assert.match(html, /card-surface-87/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -728,7 +728,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /walkout \.kalpi-card \{ width: min\(270px/);
   assert.doesNotMatch(css, /walkout \.kalpi-card \{ width: min\(235px/);
   assert.match(themeCss, /\.new-stamp[^}]*top:\s*50%[^}]*translateY\(-50%\)/s);
-  assert.doesNotMatch(themeCss, /#pack-view \.walkout-receipt\s*\{\s*display:\s*none/);
+  const walkoutRender = javascript.slice(javascript.indexOf("function renderWalkoutStage"), javascript.indexOf("function placeholderMark"));
+  assert.doesNotMatch(walkoutRender, /walkout-receipt|cardTrustLine|למקור המצורף/);
+  assert.match(javascript, /function cardTrustLine/);
   assert.match(javascript, /הציטוט קוצר/);
   assert.match(javascript, /ממתינה לבדיקת ועדת הבחירות/);
   assert.match(html, /data-theme="pack-v2"/);
@@ -843,7 +845,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-86/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-87/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -858,7 +860,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-86/);
+  assert.match(html, /packrip\.css\?v=card-surface-87/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);
@@ -878,6 +880,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /sfx\.soundOn \? "השתקת צלילים" : "הפעלת צלילים"/);
   assert.match(javascript, /classList\.toggle\("muted", !sfx\.soundOn\)/);
   assert.match(css, /\.sound-toggle\.muted \.sound-icon-off \{ display: block; \}/);
+  assert.match(css, /\.sound-toggle \{[\s\S]*?color: var\(--civic\);/);
+  assert.match(css, /\.sound-toggle\.muted \{ color: var\(--civic\); \}/);
+  assert.match(themeCss, /#app\[data-theme="pack-v2"\] \.wordmark b \{[\s\S]*?color: var\(--pack-seal\);/);
+  assert.match(themeCss, /#app\[data-theme="pack-v2"\] \.sound-toggle,[\s\S]*?\.sound-toggle\.muted \{[\s\S]*?color: var\(--pack-seal\);/);
+  assert.doesNotMatch(css, /\.sound-toggle\.muted \{ color: color-mix/);
   assert.match(javascript, /sfx\.stopReveals\(\)/);
   assert.match(javascript, /revealClipForStage\(stage, readSunburstRarityOverride\(\) \|\| sfxRarityKey\(instance, card\)\)/);
   assert.doesNotMatch(css, /tear-pack|\.rip-pack/);

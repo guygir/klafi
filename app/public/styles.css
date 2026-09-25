@@ -129,17 +129,17 @@ button:focus-visible {
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: color-mix(in srgb, var(--ink, #2c3330) 72%, transparent);
+  color: var(--civic);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.sound-toggle:hover { color: var(--ink, #2c3330); }
+.sound-toggle:hover { color: var(--civic); }
 .sound-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 .sound-toggle .sound-icon-off,
 .sound-toggle.muted .sound-icon-on { display: none; }
 .sound-toggle.muted .sound-icon-off { display: block; }
-.sound-toggle.muted { color: color-mix(in srgb, var(--ink, #2c3330) 48%, transparent); }
+.sound-toggle.muted { color: var(--civic); }
 
 .masthead-meta {
   display: flex;
@@ -3830,7 +3830,7 @@ body {
 .walkout-content { height: 100%; min-height: 0; }
 .walkout .kalpi-card {
   width: min(var(--card-width), 100%);
-  max-height: calc(100% - 52px);
+  max-height: 100%;
 }
 
 @media (max-width: 760px) {
