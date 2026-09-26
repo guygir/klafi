@@ -11,7 +11,7 @@ The accepted 23-card pool is live in the binder, pack table, and Vercel catalog 
 3. Miri Regev - `דברים מדהימים! כל כך הרבה תושבים במלונות במימון המדינה.`
 4. Israel Katz - `הורדוס לא הצליח להפוך את ישראל למרכז הסחר הבין־לאומי של האימפריה הרומית כפי שתכנן. אני הצלחתי.*`
    - Guy called this a "Banger". Use the existing Studio Herod/port concept. Shortened marker.
-5. Orit Strock - `אנחנו בחיים בתקופה של נס*`
+5. Orit Strock - `אנחנו חיים בתקופה של נס*`
    - Accepted opening only. Beep-beep remainder dropped; art has no baked-in beep. Metadata must retain that it is edited/shortened from her settlement-construction remarks.
 6. Simcha Rothman - `הדם של האחים הלל ויגל יניב ז״ל, שנרצחו בחווארה, אדום יותר מדם הנרצחים ב־7 באוקטובר.`
    - Reported from a closed Constitution Committee prep meeting, reported 2023-11-01. He retracted in the room and denied it later; in July 2026 his libel suit was dismissed and the court found N12 proved truth. Preserve all of this in metadata.
@@ -97,7 +97,7 @@ Crisp / unique-image cards sit rarer. Within the set, specific R : UC : C is abo
 | 2 | U | בנימין נתניהו | מי שרוצה לסכל הקמה של מדינה פלסטינית צריך לתמוך בחיזוק החמאס ובהעברת כסף לחמאס.* |
 | 3 | C | מירי רגב | דברים מדהימים! כל כך הרבה תושבים במלונות במימון המדינה. |
 | 4 | C | ישראל כץ | הורדוס לא הצליח להפוך את ישראל למרכז הסחר הבין־לאומי של האימפריה הרומית כפי שתכנן. אני הצלחתי.* |
-| 5 | U | אורית סטרוק | אנחנו בחיים בתקופה של נס* |
+| 5 | U | אורית סטרוק | אנחנו חיים בתקופה של נס* |
 | 6 | R | שמחה רוטמן | הדם של האחים הלל ויגל יניב ז״ל, שנרצחו בחווארה, אדום יותר מדם הנרצחים ב־7 באוקטובר. |
 | 7 | U | טלי גוטליב | כל חטוף הוא שטוף מוח מחמאס. כל חטוף מדבר את מה שחמאס משמיע להם. |
 | 8 | U | עמיחי אליהו | הממשלה דוהרת לזה שעזה נמחקת, תודה להשם שאנחנו מוחקים את הרוע הזה. כל עזה תהיה יהודית. |

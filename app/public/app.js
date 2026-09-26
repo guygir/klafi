@@ -25,7 +25,7 @@ const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
-const STATIC_DATA_VERSION = "visible-sets-2";
+const STATIC_DATA_VERSION = "visible-sets-3";
 const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TRADE_BOARD_PAGE_SIZE = 3;
@@ -4215,7 +4215,7 @@ const BADGE_COPY = {
   "streak-thirty": ["חודש רצוף", "פתחו קלפים שלושים ימים ברצף."],
 };
 
-const ACHIEVEMENT_TIER_LABELS = Object.freeze({ simple: "פשוט", medium: "בינוני", hard: "קשה" });
+const ACHIEVEMENT_TIER_LABELS = Object.freeze({ simple: "הקלים", medium: "הבינוניים", hard: "הקשים" });
 const ACHIEVEMENT_TIER_ORDER = Object.freeze(["simple", "medium", "hard"]);
 
 function achievementTier(badge) {
