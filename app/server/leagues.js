@@ -1,4 +1,6 @@
 export const LEAGUE_MAX = 32;
+/** League names are capped (in code points) so the room header stays one or two lines. */
+export const LEAGUE_NAME_MAX = 20;
 export const LEAGUE_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 export function newLeagueCode(random = Math.random) {

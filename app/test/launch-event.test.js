@@ -14,6 +14,7 @@ const appRoot = path.resolve(here, "..");
 const projectRoot = path.resolve(appRoot, "..");
 const LAUNCH_ID = "launch-week-2026";
 const LAUNCH_TICKER = "שבוע השקה! מפרגנים לשחקנים הראשונים - בחבילה נוספת. לחצו כאן!";
+const LAUNCH_CLAIMED_TICKER = "שבוע השקה! מפרגנים לשחקנים הראשונים - בחבילה נוספת. החבילה כבר אצלכם";
 const INSIDE = Date.parse("2026-09-26T12:00:00+03:00");
 const CLOSES = Date.parse("2026-10-05T00:00:00+03:00");
 
@@ -74,6 +75,14 @@ async function boot(t, clockValue = INSIDE) {
   return { running, clock, token, settled, dataDir };
 }
 
+// After a claim the same event stays on the line with its claimed copy (non-interactive client-side).
+function assertClaimedLine(specialWindow) {
+  assert.equal(specialWindow?.id, LAUNCH_ID);
+  assert.equal(specialWindow.claimedToday, true);
+  assert.equal(specialWindow.claimedTickerHe, LAUNCH_CLAIMED_TICKER);
+  assert.equal(specialWindow.tickerHe, LAUNCH_TICKER);
+}
+
 const claim = (running, token) => api(running.base, `/api/events/${LAUNCH_ID}/pull`, { token, method: "POST" });
 
 test("launch week is configured server-side: once-per-player pull reward until the end of Sunday Oct 4 (Israel)", async () => {
@@ -83,6 +92,7 @@ test("launch week is configured server-side: once-per-player pull reward until t
   assert.equal(launch.reward, "pull");
   assert.equal(launch.claim, "once");
   assert.equal(launch.tickerHe, LAUNCH_TICKER);
+  assert.equal(launch.claimedTickerHe, LAUNCH_CLAIMED_TICKER);
   assert.equal(launch.timezone, "Asia/Jerusalem");
   assert.equal(Date.parse(launch.closesAt), Date.parse("2026-10-04T21:00:00.000Z"));
   assert.ok(Date.parse(launch.opensAt) <= Date.parse("2026-09-25T18:00:00+03:00"));
@@ -91,10 +101,25 @@ test("launch week is configured server-side: once-per-player pull reward until t
   const claimed = { eventClaims: { [LAUNCH_ID]: { once: { instanceId: "x" } } } };
   assert.equal(eventClaimKey(launch, INSIDE), "once");
   assert.equal(isEventClaimed(launch, claimed.eventClaims, INSIDE + 3 * 86_400_000), true);
-  assert.equal(openSpecialWindow(shipped.events, INSIDE, claimed), null);
+  assertClaimedLine(openSpecialWindow(shipped.events, INSIDE, claimed));
+  assert.equal(openSpecialWindow(shipped.events, CLOSES + 1, claimed), null, "closesAt still ends it");
 });
 
-test("launch pull grants one ready pull, persists the claim, and hides the window for that player", async (t) => {
+test("a claimed once-event keeps the line only with claimedTickerHe, and never over another open event", () => {
+  const base = { status: "active", reward: "pull", claim: "once", opensAt: "2026-09-25T00:00:00+03:00", closesAt: "2026-10-05T00:00:00+03:00" };
+  const withCopy = { ...base, id: "a", nameHe: "א", tickerHe: "לחצו", claimedTickerHe: "כבר אצלכם" };
+  const withoutCopy = { ...base, id: "b", nameHe: "ב", tickerHe: "לחצו" };
+  const claims = (id) => ({ eventClaims: { [id]: { once: { instanceId: "x" } } } });
+  assert.equal(openSpecialWindow([withoutCopy], INSIDE, claims("b")), null);
+  const kept = openSpecialWindow([withCopy], INSIDE, claims("a"));
+  assert.equal(kept.id, "a");
+  assert.equal(kept.claimedToday, true);
+  assert.equal(kept.claimedTickerHe, "כבר אצלכם");
+  assert.equal(openSpecialWindow([withCopy, withoutCopy], INSIDE, claims("a")).id, "b", "an unclaimed open event wins");
+  assert.equal(openSpecialWindow([withCopy], INSIDE).claimedToday, false);
+});
+
+test("launch pull grants one ready pull, persists the claim, and switches that player to the claimed line", async (t) => {
   const { running, clock, token, settled, dataDir } = await boot(t);
   assert.equal(settled.body.state.unseenCount, IDLE_STARTER_READY);
   const community = await api(running.base, "/api/community", { token });
@@ -110,11 +135,11 @@ test("launch pull grants one ready pull, persists the claim, and hides the windo
   assert.equal(granted.body.cards.length, IDLE_STARTER_READY + 1);
   assert.equal(granted.body.granted.acquiredBy, "event-pull");
   assert.equal(granted.body.cards.at(-1).instanceId, granted.body.granted.instanceId);
-  assert.equal(granted.body.specialWindow, null);
+  assertClaimedLine(granted.body.specialWindow);
   assert.equal(granted.body.capacity, IDLE_BACKLOG_CAP);
 
   const after = await api(running.base, "/api/community", { token });
-  assert.equal(after.body.specialWindow, null);
+  assertClaimedLine(after.body.specialWindow);
   const events = await api(running.base, "/api/events", { token });
   assert.equal(events.body.events.find(({ id }) => id === LAUNCH_ID).claimedToday, true);
   const state = await api(running.base, "/api/state", { token });
@@ -123,7 +148,7 @@ test("launch pull grants one ready pull, persists the claim, and hides the windo
   // Survives a process restart on the same store.
   const restarted = await start(dataDir, clock);
   t.after(() => restarted.close());
-  assert.equal((await api(restarted.base, "/api/community", { token })).body.specialWindow, null);
+  assertClaimedLine((await api(restarted.base, "/api/community", { token })).body.specialWindow);
   assert.equal((await claim(restarted, token)).body.error, "EVENT_ALREADY_CLAIMED");
 
   // Another player still sees it: the claim is per player.
@@ -172,7 +197,7 @@ test("launch pull at the ready-pull cap is declined without marking it claimed, 
   const granted = await claim(running, token);
   assert.equal(granted.status, 201);
   assert.equal(granted.body.readyCount, IDLE_BACKLOG_CAP);
-  assert.equal(granted.body.specialWindow, null);
+  assertClaimedLine(granted.body.specialWindow);
 });
 
 test("launch pull outside the window is rejected and not offered", async (t) => {
@@ -220,7 +245,7 @@ test("launch pull on the Postgres store: grant, cap decline, and claim persist a
   assert.equal((await claim(first, token)).status, 201);
   const second = await start(dataDir, clock, { databaseUrl });
   t.after(() => second.close());
-  assert.equal((await api(second.base, "/api/community", { token })).body.specialWindow, null);
+  assertClaimedLine((await api(second.base, "/api/community", { token })).body.specialWindow);
   assert.equal((await claim(second, token)).body.error, "EVENT_ALREADY_CLAIMED");
 });
 

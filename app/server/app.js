@@ -27,7 +27,7 @@ import {
   stampKey,
   stampMax,
 } from "./numbered.js";
-import { publicLeague } from "./leagues.js";
+import { LEAGUE_NAME_MAX, publicLeague } from "./leagues.js";
 import { qrSvg } from "./qr-svg.js";
 import { eventClaimKey, eventClaimMode, eventReward, isEventClaimed, openSpecialWindow } from "./special-window.js";
 import { requestOrigin, serveBinderShareLanding, servePlayerBinderShareLanding, serveShareLanding } from "./share-landing.js";
@@ -324,6 +324,13 @@ function normalizeDisplayName(value) {
   if (normalized.length < 2 || normalized.length > 24) return null;
   if (!/^[\p{L}\p{N} ._'״׳-]+$/u.test(normalized)) return null;
   return normalized;
+}
+
+/** League name: normalized like a display name, truncated to LEAGUE_NAME_MAX code points. */
+function normalizeLeagueName(value) {
+  if (typeof value !== "string") return null;
+  const collapsed = value.normalize("NFKC").trim().replace(/\s+/g, " ");
+  return normalizeDisplayName(Array.from(collapsed).slice(0, LEAGUE_NAME_MAX).join("").trim());
 }
 
 function quoteDisplayNumber(member, card) {
@@ -1775,7 +1782,7 @@ export async function createKalpiApp({
 
         if (request.method === "POST" && url.pathname === "/api/leagues") {
           const input = await readJson(request);
-          const name = normalizeDisplayName(input.name) || "ליגה";
+          const name = normalizeLeagueName(input.name) || "ליגה";
           const created = await store.createLeague(token, name, now());
           if (created.error) {
             json(response, created.error === "UNAUTHORIZED" ? 401 : 400, { error: created.error });
@@ -2261,6 +2268,7 @@ export async function createKalpiApp({
             ...(item.reward === "pull" ? { reward: "pull" } : {}),
             ...(item.claim === "once" ? { claim: "once" } : {}),
             ...(item.tickerHe ? { tickerHe: String(item.tickerHe).slice(0, 160) } : {}),
+            ...(item.claimedTickerHe ? { claimedTickerHe: String(item.claimedTickerHe).slice(0, 160) } : {}),
           }));
           await writeJsonAtomic(eventsPath, events);
           json(response, 200, events);

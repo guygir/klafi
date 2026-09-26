@@ -31,15 +31,20 @@ export function isEventClaimed(event, eventClaims, now) {
 export function openSpecialWindow(events = [], now = Date.now(), session = null) {
   const current = Number(now);
   const claims = session?.eventClaims;
-  // A once-per-player event the player already claimed is over for them: skip it entirely.
-  const active = (events || []).find((event) => isSpecialsWindowOpen(event, current)
-    && !(eventClaimMode(event) === "once" && isEventClaimed(event, claims, current)));
+  const open = (events || []).filter((event) => isSpecialsWindowOpen(event, current));
+  const onceClaimed = (event) => eventClaimMode(event) === "once" && isEventClaimed(event, claims, current);
+  // A once-per-player event the player already claimed is over for them. Another open event takes
+  // the line; failing that, a claimed event that has a claimed line (claimedTickerHe) keeps showing
+  // it until closesAt, as a non-interactive "already yours" line. Without one it is skipped.
+  const active = open.find((event) => !onceClaimed(event))
+    || open.find((event) => onceClaimed(event) && event.claimedTickerHe);
   if (!active) return null;
   return {
     id: active.id,
     nameHe: active.nameHe,
     descriptionHe: active.descriptionHe || "",
     tickerHe: active.tickerHe || "",
+    ...(active.claimedTickerHe ? { claimedTickerHe: active.claimedTickerHe } : {}),
     reward: eventReward(active),
     claim: eventClaimMode(active),
     opensAt: active.opensAt,

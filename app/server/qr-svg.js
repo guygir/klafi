@@ -95,9 +95,14 @@ function reservedMap(size, version) {
       }
     }
   }
+  // Format information: 9 cells around the top-left finder, and 8 + 8 beside the other two
+  // (the last of those is the dark module). Reserving a 9th cell there stole a data module and
+  // shifted every bit after it, so no scanner could read the code.
   for (let index = 0; index < 9; index += 1) {
     mark(8, index);
     mark(index, 8);
+  }
+  for (let index = 0; index < 8; index += 1) {
     mark(8, size - 1 - index);
     mark(size - 1 - index, 8);
   }

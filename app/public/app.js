@@ -1877,8 +1877,13 @@ function renderLeagues() {
   }
   elements.leagueRooms.innerHTML = rooms.map((league) => `
     <article class="league-room" data-league-code="${escapeHtml(league.code)}">
-      <span class="league-season">${escapeHtml(league.seasonLabel || "")}</span>
-      <h4>${escapeHtml(league.name)}</h4>
+      <header class="league-room-head">
+        <div class="league-room-title">
+          <span class="league-season">${escapeHtml(league.seasonLabel || "")}</span>
+          <h4 title="${escapeHtml(league.name)}">${escapeHtml(league.name)}</h4>
+        </div>
+        <div class="league-qr">${league.qrSvg || ""}</div>
+      </header>
       <div class="league-room-code">
         <b dir="ltr">${escapeHtml(league.code)}</b>
         <button type="button" data-copy-league="${escapeHtml(league.joinUrl || league.code)}">העתקת קישור</button>
@@ -1891,7 +1896,6 @@ function renderLeagues() {
             <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
           </li>`).join("")}
       </ol>
-      <div class="league-qr">${league.qrSvg || ""}</div>
     </article>`).join("");
 }
 
@@ -2370,7 +2374,9 @@ function renderTodaySpecials() {
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
   let line = "אין אירוע כרגע";
   if (windowOpen?.reward === "pull") {
-    line = windowOpen.tickerHe || `${windowOpen.nameHe} · חבילה נוספת לכל שחקן`;
+    line = windowOpen.claimedToday
+      ? windowOpen.claimedTickerHe || `${windowOpen.nameHe} · החבילה כבר אצלכם`
+      : windowOpen.tickerHe || `${windowOpen.nameHe} · חבילה נוספת לכל שחקן`;
   } else if (windowOpen) {
     const closes = new Date(windowOpen.closesAt);
     const until = Number.isNaN(closes.getTime())
@@ -2386,6 +2392,13 @@ function renderTodaySpecials() {
   const state = !windowOpen ? "idle" : windowOpen.claimedToday ? "claimed" : "live";
   if (row.dataset.state !== state) row.dataset.state = state;
   row.classList.toggle("is-marquee", Boolean(windowOpen));
+  // A claimed pull event keeps scrolling its "already yours" line but is no longer a control:
+  // disabled = no click, no focus, no pop-up, no POST. (Card events manage .disabled themselves.)
+  const inert = windowOpen?.reward === "pull" && Boolean(windowOpen.claimedToday);
+  if (inert !== (row.dataset.inert === "true")) {
+    row.dataset.inert = String(inert);
+    row.disabled = inert;
+  }
   for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
     if (copy && copy.textContent !== line) copy.textContent = line;
   }
@@ -4578,6 +4591,7 @@ async function claimTodaySpecial() {
   const windowOpen = model.specialWindow;
   if (!windowOpen) return;
   if (windowOpen.reward === "pull") {
+    if (windowOpen.claimedToday) return;
     await claimEventPull(windowOpen);
     return;
   }
