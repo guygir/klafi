@@ -46,3 +46,18 @@ export function keepDailyRaceLeaders(previous, incoming) {
   if (!before?.leaders?.length || next?.leaders?.length || (next?.day && next.day !== before.day)) return incoming;
   return { ...incoming, dailyChallenge: { ...next, ...before, leaders: before.leaders } };
 }
+
+// The race board hides other players on 0 (the server already does); the player's own row stays.
+// Applied on every board write so cached/merged leaders never bring zeros back.
+export function hideZeroRaceEntries(boards) {
+  const leaders = boards?.dailyChallenge?.leaders;
+  if (!Array.isArray(leaders)) return boards;
+  const visible = leaders.filter((entry) => entry?.current || Number(entry?.cards) > 0);
+  if (visible.length === leaders.length) return boards;
+  return { ...boards, dailyChallenge: { ...boards.dailyChallenge, leaders: visible } };
+}
+
+export function mergeLeaderboards(previous, incoming) {
+  if (!incoming) return incoming ?? null;
+  return hideZeroRaceEntries(keepDailyRaceLeaders(previous, incoming));
+}

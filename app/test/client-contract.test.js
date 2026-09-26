@@ -198,7 +198,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /viewHasEnterOffset/);
   assert.match(tipsJs, /doc\.body/);
   assert.match(tipsJs, /fill-rule/);
-  assert.match(css, /:not\(\.klafi-tips\):not\(\.top-nav-row\):not\(\.numbered-tip\) \{ position: relative; z-index: 1; \}/);
+  assert.match(css, /:not\(\.klafi-tips\):not\(\.top-nav-row\):not\(\.numbered-tip\):not\(\.toast\) \{ position: relative; z-index: 1; \}/);
   assert.match(css, /#klafi-tips\.klafi-tips/);
   assert.match(css, /\.klafi-tips-dim \{ pointer-events: none; z-index: 1; \}/);
   assert.match(css, /\.klafi-tips-veil \{ pointer-events: visiblePainted; \}/);
@@ -303,7 +303,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-wanted-set"/);
   assert.match(html, /id="trade-active"/);
   assert.match(html, /id="trade-compose"/);
-  assert.match(html, /id="trade-offered-set"[\s\S]*id="trade-wanted-set"[\s\S]*id="trade-create"/);
+  assert.match(html, /class="trade-desk-head">\s*<h2>[^<]+<\/h2>\s*<button id="trade-create"/, "publish sits in the title row, after the title (RTL: left of it)");
+  assert.match(html, /id="trade-offered-set"[\s\S]*id="trade-wanted-set"/);
   assert.match(html, /id="avatar-seal"/);
   assert.match(html, /id="level-letter"/);
   assert.match(html, /id="level-letter-text"/);
@@ -382,7 +383,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.card-numbered-tag/);
   assert.match(css, /\.numbered-tip/);
   assert.match(css, /\.numbered-tip-target/);
-  assert.match(css, /:not\(\.numbered-tip\) \{ position: relative; z-index: 1/);
+  assert.match(css, /:not\(\.numbered-tip\):not\(\.toast\) \{ position: relative; z-index: 1/);
   assert.match(css, /\.numbered-tip \{[^}]*position:\s*fixed/);
   assert.match(css, /\.numbered-tip \{[^}]*left:\s*50%/);
   assert.doesNotMatch(css, /\.numbered-tip \{[^}]*inset-inline-start:\s*50%/);
@@ -554,8 +555,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.faction-pick-row/);
   assert.match(css, /\.growth-grid > \.work-card\.faction-desk/);
   assert.match(css, /\.growth-grid > \.work-card\.daily-challenge-desk/);
-  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*position:\s*absolute/);
-  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*bottom:\s*6px/);
+  // The "more cards" cue has its own 16px row under the grid (no overlay on card names) and hides
+  // at the end of the grid; the grid does not row-snap (short phones could not reach the last row).
+  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*position:\s*static/);
+  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*flex:\s*0 0 16px/);
+  assert.match(css, /#binder-view\.binder-at-end #binder-pager \.binder-scroll-hint \{[^}]*visibility:\s*hidden/);
+  assert.match(css, /#binder-view\.view\.active \.binder-grid \{[^}]*scroll-snap-type:\s*none/);
+  assert.match(javascript, /function syncBinderScrollCue/);
   // The Binder reserves the fixed nav row too (8px let the grid's last row and the cue sit under the nav).
   assert.match(css, /#app:has\(#binder-view\.active\) #main \{[^}]*padding-bottom:\s*var\(--nav-clearance\)/);
   assert.match(css, /#binder-view\.view\.active \{[^}]*padding-bottom:\s*0/);
@@ -567,9 +573,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /\.trade-desk \{\s*overflow: hidden !important;/);
   assert.match(html, /id="trade-wanted-set"/);
   assert.ok(
-    html.indexOf("trade-form") < html.indexOf("trade-actions"),
-    "compose give/get before the publish button so both sides stay on one phone page",
+    html.indexOf("trade-desk-head") < html.indexOf("trade-form"),
+    "the publish button rides in the title row, so both big card slots stay on one phone page",
   );
+  assert.match(css, /\.trade-compose \.trade-thumb-frame \{\s*width: var\(--trade-thumb-w\);/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(css, /\.pack-shadow \{\s*display: none;/);
   assert.match(css, /\.site-card-peeks \{\s*display: none;/);
@@ -691,7 +698,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-94/);
+  assert.match(html, /card-surface-95/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -787,7 +794,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-94/);
+  assert.match(html, /card-surface-95/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -937,7 +944,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-94/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-95/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -952,7 +959,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-94/);
+  assert.match(html, /packrip\.css\?v=card-surface-95/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);
@@ -1005,4 +1012,23 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   for (const staleCopy of ["Why it matters", "Open today’s pack", "Share this pull", "Trade preview"]) {
     assert.doesNotMatch(javascript, new RegExp(staleCopy, "i"));
   }
+});
+
+test("leagues: one room with a confirmed leave, cached first paint, never a pending empty state", async () => {
+  const [html, javascript, tips] = await Promise.all([
+    readFile(path.join(publicDir, "index.html"), "utf8"),
+    readFile(path.join(publicDir, "app.js"), "utf8"),
+    readFile(path.join(publicDir, "tips.js"), "utf8"),
+  ]);
+  assert.match(html, /<details class="league-setup" open hidden>/, "setup stays hidden until the league list is known");
+  assert.match(javascript, /data-leave-league="/);
+  assert.match(javascript, /data-leave-league-confirm="/, "leaving needs a second, explicit tap");
+  assert.match(javascript, /request\("\/api\/leagues\/leave"/);
+  assert.match(javascript, /class="league-skeleton"/);
+  assert.match(javascript, /const LEAGUE_CACHE_KEY = "klafi:leagues"/);
+  assert.match(javascript, /jobs\.push\(\["leagues", \(\) => hydrateLeagues\(\)\]\)/, "the room is prefetched with the community extras");
+  assert.match(javascript, /if \(cached\?\.length\)/, "a cached empty list never paints the no-league setup");
+  // Footer: the bug link also takes feature requests, and the Home tutorial names it the same way.
+  assert.match(html, /id="open-bug-report"[^>]*aria-label="דיווח באג \/ בקשת פיצ׳ר"[\s\S]*?<\/svg>דיווח באג \/ בקשת פיצ׳ר<\/button>/);
+  assert.match(tips, /«דיווח באג \/ בקשת פיצ׳ר»/);
 });

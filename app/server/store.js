@@ -4,9 +4,16 @@ import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
-import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
+import {
+  LEAGUE_MAX,
+  hebrewSeasonLabel,
+  leagueMemberScore,
+  leaveLeagueMembership,
+  newLeagueCode,
+  normalizeLeagueCode,
+} from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
-import { dailyRaceScore } from "./daily-race.js";
+import { dailyRaceScore, visibleDailyRaceLeaders } from "./daily-race.js";
 
 /**
  * Per-session write counter. Every state payload carries it as `revision`, so a client can drop a
@@ -513,9 +520,7 @@ export class JsonStore {
         cards: dailyRaceScore(session.instances, day, targetPartyId, cardsById),
       }))
       .sort((a, b) => b.cards - a.cards);
-    const dailyParty = allDailyParty.slice(0, 8);
-    const currentDaily = allDailyParty.find(({ current }) => current);
-    if (currentDaily && !dailyParty.some(({ current }) => current)) dailyParty.splice(7, 1, currentDaily);
+    const dailyParty = visibleDailyRaceLeaders(allDailyParty);
     const targetPartyNameHe = cards.find((card) => card.set === targetPartyId)?.setNameHe || targetPartyId;
     return {
       collectors,
@@ -581,6 +586,7 @@ export class JsonStore {
     return this.exclusive(async () => {
       if (!this.getSession(ownerToken)) return { error: "UNAUTHORIZED" };
       this.state.leagues ??= {};
+      if (this.memberLeagues(ownerToken).length) return { error: "ALREADY_IN_LEAGUE" };
       let code = newLeagueCode();
       while (this.state.leagues[code]) code = newLeagueCode();
       const league = {
@@ -604,6 +610,7 @@ export class JsonStore {
       const league = code ? this.state.leagues?.[code] : null;
       if (!league) return { error: "LEAGUE_NOT_FOUND" };
       if (!league.memberTokens.includes(token)) {
+        if (this.memberLeagues(token).length) return { error: "ALREADY_IN_LEAGUE" };
         if (league.memberTokens.length >= LEAGUE_MAX) return { error: "LEAGUE_FULL" };
         league.memberTokens.push(token);
         await this.persist();
@@ -612,9 +619,25 @@ export class JsonStore {
     });
   }
 
+  async leaveLeague(token, rawCode) {
+    return this.exclusive(async () => {
+      if (!this.getSession(token)) return { error: "UNAUTHORIZED" };
+      const code = normalizeLeagueCode(rawCode);
+      const left = leaveLeagueMembership(code ? this.state.leagues?.[code] : null, token);
+      if (left.error) return left;
+      if (left.deleted) delete this.state.leagues[code];
+      else this.state.leagues[code] = left.league;
+      await this.persist();
+      return { left: true, deleted: Boolean(left.deleted) };
+    });
+  }
+
+  memberLeagues(token) {
+    return Object.values(this.state.leagues || {}).filter((league) => league.memberTokens.includes(token));
+  }
+
   async listLeagues(token) {
-    return Object.values(this.state.leagues || {})
-      .filter((league) => league.memberTokens.includes(token))
+    return this.memberLeagues(token)
       .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
   }
 

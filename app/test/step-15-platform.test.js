@@ -138,18 +138,20 @@ test("rooms use a short code, paper QR, shared stars, and stop at 32", async (t)
   assert.equal(listed.body.leagues[0].code, created.body.league.code);
 
   // Names are capped at 20 characters (truncated, not rejected); whitespace is collapsed first.
+  // One league per player, so each name case opens its room from a fresh session.
+  const fresh = async () => (await api(running.base, "/api/session", { method: "POST" })).body.token;
   const long = await api(running.base, "/api/leagues", {
-    token: guest.body.token,
+    token: await fresh(),
     method: "POST",
     body: { name: "  ליגת   החברים של הרחוב הארוך מאוד  " },
   });
   assert.equal(long.status, 201);
   assert.equal(long.body.league.name, "ליגת החברים של הרחוב");
   assert.equal(Array.from(long.body.league.name).length, 20);
-  const exact = await api(running.base, "/api/leagues", { token: guest.body.token, method: "POST", body: { name: "12345678901234567890" } });
+  const exact = await api(running.base, "/api/leagues", { token: await fresh(), method: "POST", body: { name: "12345678901234567890" } });
   assert.equal(exact.body.league.name, "12345678901234567890");
   // A cut that lands on a space does not leave a trailing space.
-  const spaced = await api(running.base, "/api/leagues", { token: guest.body.token, method: "POST", body: { name: "אבגדהוזחטיקלמנסעפצק שלום" } });
+  const spaced = await api(running.base, "/api/leagues", { token: await fresh(), method: "POST", body: { name: "אבגדהוזחטיקלמנסעפצק שלום" } });
   assert.equal(spaced.body.league.name, "אבגדהוזחטיקלמנסעפצק");
 
   const extras = [];

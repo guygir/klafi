@@ -130,3 +130,40 @@ test("serverless Supabase traffic uses transaction pooling", () => {
   );
   assert.equal(runtimeConnectionString(sessionUrl, { serverless: false }), sessionUrl);
 });
+
+test("postgres leagues: one per player under an advisory lock; leave passes the host or deletes the room", async () => {
+  const { PostgresStore } = await import("../server/postgres-store.js");
+  const store = new PostgresStore("postgres://qa@127.0.0.1:1/none");
+  store.leaguesTableReady = true;
+  store.exclusive = (operation) => operation();
+  store.loadSession = async (token) => ({ token });
+  const leagues = new Map([["ROOMA1", { code: "ROOMA1", name: "א", season_label: "תשרי", owner_token: "host", created_at: "2026-09-26T10:00:00Z", member_tokens: ["host", "friend"] }]]);
+  const queries = [];
+  store.executor = () => ({
+    query: async (sql, params = []) => {
+      queries.push(sql.replace(/\s+/g, " ").trim());
+      if (/pg_advisory_xact_lock/.test(sql)) return { rows: [] };
+      if (/SELECT count\(\*\)/.test(sql)) {
+        const token = JSON.parse(params[0])[0];
+        return { rows: [{ count: [...leagues.values()].filter((row) => row.member_tokens.includes(token)).length }] };
+      }
+      if (/SELECT \* FROM kalpi_leagues WHERE code = \$1 FOR UPDATE/.test(sql)) return { rows: leagues.has(params[0]) ? [structuredClone(leagues.get(params[0]))] : [] };
+      if (/^DELETE FROM kalpi_leagues/.test(sql)) { leagues.delete(params[0]); return { rows: [] }; }
+      if (/^UPDATE kalpi_leagues SET member_tokens = \$2::jsonb, owner_token = \$3/.test(sql)) {
+        leagues.set(params[0], { ...leagues.get(params[0]), member_tokens: JSON.parse(params[1]), owner_token: params[2] });
+        return { rows: [] };
+      }
+      if (/^INSERT INTO kalpi_leagues/.test(sql)) throw new Error("must not create a second league");
+      return { rows: [] };
+    },
+  });
+  assert.deepEqual(await store.createLeague("friend", "ב"), { error: "ALREADY_IN_LEAGUE" });
+  assert.ok(queries.findIndex((sql) => /pg_advisory_xact_lock/.test(sql)) < queries.findIndex((sql) => /SELECT count/.test(sql)));
+  assert.deepEqual(await store.leaveLeague("host", "rooma1"), { left: true, deleted: false });
+  assert.equal(leagues.get("ROOMA1").owner_token, "friend", "the oldest remaining member hosts");
+  assert.deepEqual(leagues.get("ROOMA1").member_tokens, ["friend"]);
+  assert.deepEqual(await store.leaveLeague("host", "ROOMA1"), { error: "NOT_IN_LEAGUE" });
+  assert.deepEqual(await store.leaveLeague("friend", "ROOMA1"), { left: true, deleted: true });
+  assert.equal(leagues.has("ROOMA1"), false, "an empty league is deleted");
+  await store.pool.end().catch(() => {});
+});

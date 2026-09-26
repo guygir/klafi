@@ -1998,3 +1998,116 @@ test("Studio-set cards (set-5) count in league stars and the owned-card quiz, no
   assert.equal(member.ownedUnique, 1);
   assert.equal(member.stars, 3, "a set-5 Rare is worth 3 league stars, like everywhere else");
 });
+
+test("one league per player: second create/join is rejected, leave frees the player, host passes on", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-one-league-"));
+  const clock = { value: Date.parse("2026-09-26T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const session = async () => (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const host = await session();
+  const friend = await session();
+  const other = await session();
+  const room = (await api(running.base, "/api/leagues", { token: host, method: "POST", body: { name: "ליגה א" } })).body.league;
+  const otherRoom = (await api(running.base, "/api/leagues", { token: other, method: "POST", body: { name: "ליגה ב" } })).body.league;
+
+  const secondCreate = await api(running.base, "/api/leagues", { token: host, method: "POST", body: { name: "עוד ליגה" } });
+  assert.equal(secondCreate.status, 409);
+  assert.equal(secondCreate.body.error, "ALREADY_IN_LEAGUE");
+  assert.match(secondCreate.body.message, /רק בליגה אחת/);
+
+  assert.equal((await api(running.base, "/api/leagues/join", { token: friend, method: "POST", body: { code: room.code } })).status, 200);
+  const rejoinSame = await api(running.base, "/api/leagues/join", { token: friend, method: "POST", body: { code: room.code } });
+  assert.equal(rejoinSame.status, 200, "joining your own league again is a no-op, not an error");
+  const secondJoin = await api(running.base, "/api/leagues/join", { token: friend, method: "POST", body: { code: otherRoom.code } });
+  assert.equal(secondJoin.status, 409);
+  assert.equal(secondJoin.body.error, "ALREADY_IN_LEAGUE");
+  assert.equal((await api(running.base, `/api/leagues/${otherRoom.code}`, { token: friend })).status, 404, "the rejected join added nothing");
+
+  // The host leaves: the oldest remaining member (the friend) becomes host; the host is free again.
+  const hostLeft = await api(running.base, "/api/leagues/leave", { token: host, method: "POST", body: { code: room.code } });
+  assert.equal(hostLeft.status, 200);
+  assert.deepEqual(hostLeft.body.leagues, []);
+  assert.deepEqual((await api(running.base, "/api/leagues", { token: host })).body.leagues, []);
+  let stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  assert.equal(stored.leagues[room.code].ownerToken, friend);
+  assert.deepEqual(stored.leagues[room.code].memberTokens, [friend]);
+  const friendView = (await api(running.base, "/api/leagues", { token: friend })).body.leagues;
+  assert.equal(friendView.length, 1);
+  assert.equal(friendView[0].memberCount, 1);
+  assert.equal((await api(running.base, "/api/leagues/leave", { token: host, method: "POST", body: { code: room.code } })).status, 404, "leaving twice is NOT_IN_LEAGUE");
+  assert.equal((await api(running.base, "/api/leagues/join", { token: host, method: "POST", body: { code: otherRoom.code } })).status, 200, "after leaving, joining another league works");
+
+  // The last member leaves: the empty league is deleted.
+  assert.equal((await api(running.base, "/api/leagues/leave", { token: friend, method: "POST", body: { code: room.code } })).status, 200);
+  stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  assert.equal(stored.leagues[room.code], undefined);
+  assert.equal((await api(running.base, "/api/leagues/join", { token: other, method: "POST", body: { code: room.code } })).status, 404);
+});
+
+test("legacy players in several leagues see the most recent one and can leave down to none", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-legacy-leagues-"));
+  const clock = { value: Date.parse("2026-09-26T12:00:00.000Z") };
+  let running = await start(dataDir, clock);
+  const token = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const older = (await api(running.base, "/api/leagues", { token, method: "POST", body: { name: "ישנה" } })).body.league;
+  await running.close();
+  // Before the one-league rule a player could hold several rooms: plant a newer second one.
+  const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  stored.leagues.NEWER2 = { ...stored.leagues[older.code], code: "NEWER2", name: "חדשה", createdAt: "2026-09-26T13:00:00.000Z" };
+  await writeFile(path.join(dataDir, "state.json"), JSON.stringify(stored));
+  running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const listed = (await api(running.base, "/api/leagues", { token })).body.leagues;
+  assert.deepEqual(listed.map(({ code }) => code), ["NEWER2"], "one room: the most recent");
+  assert.equal((await api(running.base, `/api/leagues/${older.code}`, { token })).status, 200, "the older room still opens by code");
+  const firstLeave = await api(running.base, "/api/leagues/leave", { token, method: "POST", body: { code: "NEWER2" } });
+  assert.deepEqual(firstLeave.body.leagues.map(({ code }) => code), [older.code], "leaving reveals the next one");
+  const secondLeave = await api(running.base, "/api/leagues/leave", { token, method: "POST", body: { code: older.code } });
+  assert.deepEqual(secondLeave.body.leagues, []);
+  assert.equal((await api(running.base, "/api/leagues", { token, method: "POST", body: { name: "נקייה" } })).status, 201);
+});
+
+test("daily race hides players on 0 except the requesting player", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-race-zeros-"));
+  const clock = { value: Date.parse("2026-09-26T20:00:00+03:00") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const catalog = (await api(running.base, "/api/catalog")).body.cards;
+  const session = async () => (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const scorer = await session();
+  const idle = await session();
+  const viewer = await session();
+  const { targetPartyId } = (await api(running.base, "/api/leaderboards", { token: scorer })).body.dailyChallenge;
+  // Give the scorer one opened, race-eligible card of today's party (not a debug grant).
+  const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  assert.ok(stored.sessions[scorer], "sessions persist to state.json");
+  await running.close();
+  const card = catalog.find(({ set }) => set === targetPartyId);
+  stored.sessions[scorer].instances.push({ instanceId: "race-1", cardId: card.id, acquiredBy: "idle", pulledAt: new Date(clock.value).toISOString(), seenAt: new Date(clock.value).toISOString() });
+  stored.sessions[scorer].inventory[card.id] = (stored.sessions[scorer].inventory[card.id] || 0) + 1;
+  await writeFile(path.join(dataDir, "state.json"), JSON.stringify(stored));
+  const again = await start(dataDir, clock);
+  t.after(() => again.close());
+
+  const forViewer = (await api(again.base, "/api/leaderboards", { token: viewer })).body.dailyChallenge.leaders;
+  assert.ok(forViewer.some((entry) => !entry.current && entry.cards === 1), "the scorer shows");
+  assert.deepEqual(forViewer.filter((entry) => !entry.current && entry.cards === 0), [], "other players on 0 are hidden");
+  const self = forViewer.find(({ current }) => current);
+  assert.equal(self?.cards, 0, "the requesting player always sees their own row, even at 0");
+  assert.equal(forViewer.length, 2);
+  const community = (await api(again.base, "/api/community", { token: idle })).body.leaderboards.dailyChallenge.leaders;
+  assert.deepEqual(community.filter((entry) => !entry.current && entry.cards === 0), [], "/api/community hides zeros too");
+  assert.equal(community.filter(({ current }) => current).length, 1);
+  const guest = (await api(again.base, "/api/leaderboards")).body.dailyChallenge.leaders;
+  assert.deepEqual(guest.map(({ cards }) => cards), [1], "without a session only scorers show");
+});
