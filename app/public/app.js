@@ -2445,23 +2445,20 @@ function challengeRecap() {
   return { current, place, bins, field, meta, players: leaders.length, hasCrowd, othersScored };
 }
 
+function challengePlaceLine(recap) {
+  const score = recap.current ? recap.current.cards : 0;
+  if (!recap.current) return "עוד לא בטבלה";
+  if (!score) return recap.othersScored ? "עוד לא אספתם" : "עוד אין דירוג";
+  return `אתם ${recap.place}/${Math.max(recap.players, recap.place)}`;
+}
+
 function renderChallengeRecap() {
   const recap = challengeRecap();
-  const score = recap.current ? recap.current.cards : 0;
   // Players on 0 are hidden (except you), so "alone" means nobody else scored yet, not an empty game.
-  const place = !recap.current
-    ? "עוד לא בטבלה"
-    : !score
-      ? recap.othersScored ? "עוד לא אספתם היום" : "עוד אף אחד לא אסף היום"
-      : !recap.othersScored
-        ? "מקום 1 · רק אתם אספתם היום"
-        : `מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`;
+  const place = challengePlaceLine(recap);
   if (elements.dailyChallengeScore) {
-    const ranked = place.startsWith("מקום");
-    elements.dailyChallengeScore.innerHTML = `
-      <strong>${score}<span>קלפים</span></strong>
-      <b class="challenge-recap-place${ranked ? "" : " is-status"}">${escapeHtml(place)}</b>
-    `;
+    const ranked = place.startsWith("אתם ");
+    elements.dailyChallengeScore.innerHTML = `<b class="challenge-recap-place${ranked ? "" : " is-status"}">${escapeHtml(place)}</b>`;
   }
   if (!elements.dailyChallengeRecap) return;
   elements.dailyChallengeRecap.style.setProperty("--bins", String(recap.bins.length));
