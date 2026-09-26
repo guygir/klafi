@@ -86,13 +86,12 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-theme="pack-v2"] .top-nav-row .bottom-nav {
   border-color: color-mix(in srgb, var(--pack-gold) 55%, var(--pack-umber));
-  background: color-mix(in srgb, var(--pack-paper) 94%, transparent);
-  box-shadow: 0 12px 34px rgba(60, 48, 38, 0.2);
+  background: color-mix(in srgb, var(--pack-paper) 96%, white);
 }
 
 #app[data-theme="pack-v2"] .top-nav-row .bottom-nav button.active {
-  background: var(--pack-seal);
-  color: var(--pack-paper);
+  background: color-mix(in srgb, var(--pack-seal) 9%, transparent);
+  color: var(--pack-seal);
 }
 
 #app[data-theme="pack-v2"] .primary-action {

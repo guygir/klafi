@@ -137,6 +137,21 @@ test("rooms use a short code, paper QR, shared stars, and stop at 32", async (t)
   const listed = await api(running.base, "/api/leagues", { token: guest.body.token });
   assert.equal(listed.body.leagues[0].code, created.body.league.code);
 
+  // Names are capped at 20 characters (truncated, not rejected); whitespace is collapsed first.
+  const long = await api(running.base, "/api/leagues", {
+    token: guest.body.token,
+    method: "POST",
+    body: { name: "  ליגת   החברים של הרחוב הארוך מאוד  " },
+  });
+  assert.equal(long.status, 201);
+  assert.equal(long.body.league.name, "ליגת החברים של הרחוב");
+  assert.equal(Array.from(long.body.league.name).length, 20);
+  const exact = await api(running.base, "/api/leagues", { token: guest.body.token, method: "POST", body: { name: "12345678901234567890" } });
+  assert.equal(exact.body.league.name, "12345678901234567890");
+  // A cut that lands on a space does not leave a trailing space.
+  const spaced = await api(running.base, "/api/leagues", { token: guest.body.token, method: "POST", body: { name: "אבגדהוזחטיקלמנסעפצק שלום" } });
+  assert.equal(spaced.body.league.name, "אבגדהוזחטיקלמנסעפצק");
+
   const extras = [];
   for (let index = 0; index < LEAGUE_MAX - 2; index += 1) {
     extras.push(api(running.base, "/api/session", { method: "POST" }));

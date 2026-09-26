@@ -42,9 +42,26 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /class="advocacy-dock"/);
   assert.match(html, /class="top-nav-row"[\s\S]*id="open-advocacy"/);
   assert.match(css, /\.advocacy-dock \{[^}]*left:\s*8px/);
-  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*padding:\s*6px 10px/);
-  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*border-radius:\s*10px/);
+  // Footer links: quiet text links with an icon, a 44px tap box, no pill chrome.
+  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*min-height:\s*var\(--dock-height\)/);
+  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*min-width:\s*44px/);
+  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*background:\s*transparent/);
+  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*text-decoration:\s*underline dotted/);
   assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*width:\s*max-content/);
+  assert.match(css, /--dock-height:\s*44px/);
+  assert.match(html, /id="open-advocacy"[^>]*><svg class="dock-icon"[^>]*aria-hidden="true"/);
+  assert.match(html, /id="open-bug-report"[^>]*><svg class="dock-icon"[^>]*aria-hidden="true"/);
+  // Nav: drawn civic icons (inline SVG), icon over label; active = seal ink + gold slot bar, not a filled block.
+  for (const nav of ["home", "binder", "achievements", "growth"]) {
+    assert.match(html, new RegExp(`data-nav="${nav}"[^>]*><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"`));
+  }
+  assert.doesNotMatch(html, /[◫▦◇▣]/);
+  assert.match(css, /--nav-height:\s*62px/);
+  assert.match(css, /\.top-nav-row \.bottom-nav \{[^}]*height:\s*var\(--nav-height\)/);
+  assert.match(css, /\.top-nav-row \.bottom-nav button \{[^}]*min-height:\s*44px/);
+  assert.match(css, /\.top-nav-row \.bottom-nav button\.active::before \{[^}]*background:\s*var\(--foil\)/);
+  assert.doesNotMatch(css, /\.bottom-nav button span/);
+  assert.match(themeCss, /\.top-nav-row \.bottom-nav button\.active \{[^}]*color:\s*var\(--pack-seal\)/);
   assert.match(javascript, /function layoutAdvocacyDock/);
   assert.match(css, /\.top-nav-row \{[^}]*padding:\s*0 10px 6px/);
   assert.match(css, /row-gap:\s*var\(--footer-pill-gap\)/);
@@ -200,14 +217,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function openIdleReturn/);
   assert.match(javascript, /model\.packPhase = "sealed";\s+renderPack\(\);\s+showView\("pack"\)/);
   assert.match(html, /data-nav="growth"/);
-  assert.match(html, /data-nav="growth"><span aria-hidden="true">▣<\/span>/);
+  assert.match(html, /data-nav="growth"><svg class="nav-icon"[^>]*>[\s\S]*?<\/svg>קהילה<\/button>/);
   assert.doesNotMatch(html, /data-nav="growth"><span aria-hidden="true">↗/);
   assert.match(javascript, /function localAchievementList/);
   assert.match(javascript, /function achievementList/);
   assert.match(javascript, /if \(model\.token\) hydrateExtras/);
   assert.match(javascript, /model\.extrasReady = true/);
   assert.doesNotMatch(javascript, /results\.every\(\(\{ status \}\) => status === "fulfilled"\)/);
-  assert.match(css, /font-variant-emoji:\s*text/);
+  // Nav icons are drawn SVGs now (no text glyphs that iOS could render as emoji).
+  assert.doesNotMatch(html, /data-nav="[a-z]+"[^>]*><span aria-hidden="true">/);
   assert.match(html, /data-nav="achievements"/);
   assert.doesNotMatch(html, /data-nav="events"/);
   assert.match(html, /data-nav="studio"/);
@@ -502,6 +520,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="create-league"/);
   assert.match(html, /id="join-league"/);
   assert.match(html, /id="league-rooms"/);
+  // League room: QR in the header row (end side), 20-character names, clamped header.
+  assert.match(html, /id="league-name-input" maxlength="20"/);
+  assert.match(javascript, /<header class="league-room-head">[\s\S]*?<h4[\s\S]*?<div class="league-qr">[\s\S]*?<\/header>/);
+  assert.doesNotMatch(javascript, /<\/ol>\s*<div class="league-qr">/);
+  assert.match(css, /\.league-room-head \{[^}]*grid-template-columns: minmax\(0, 1fr\) auto/);
+  assert.match(css, /\.league-room h4 \{[^}]*-webkit-line-clamp: 2/);
+  assert.match(css, /\.league-qr \{[^}]*width: 80px/);
   assert.match(html, /id="community-tab-leagues"/);
   assert.match(html, /id="community-panel-leagues"/);
   assert.match(html, /id="community-leagues-title"/);
@@ -531,7 +556,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.growth-grid > \.work-card\.daily-challenge-desk/);
   assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*position:\s*absolute/);
   assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*bottom:\s*6px/);
-  assert.match(css, /#app:has\(#binder-view\.active\) #main \{[^}]*padding-bottom:\s*8px/);
+  // The Binder reserves the fixed nav row too (8px let the grid's last row and the cue sit under the nav).
+  assert.match(css, /#app:has\(#binder-view\.active\) #main \{[^}]*padding-bottom:\s*var\(--nav-clearance\)/);
   assert.match(css, /#binder-view\.view\.active \{[^}]*padding-bottom:\s*0/);
   assert.match(css, /#main \{[^}]*display:\s*flex/);
   assert.match(css, /#main \{[^}]*position:\s*relative/);
@@ -665,7 +691,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-92/);
+  assert.match(html, /card-surface-94/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -761,7 +787,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-92/);
+  assert.match(html, /card-surface-94/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -891,9 +917,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /pack-quote-ink/);
   assert.doesNotMatch(javascript, /floor: 4\.5/);
   assert.doesNotMatch(html, /id="dialog-flip"/);
-  assert.match(css, /--footer-pill-gap:\s*8px/);
+  assert.match(css, /--footer-pill-gap:\s*0px/);
   assert.match(css, /--specials-marquee-duration:\s*9s/);
-  assert.match(css, /--nav-clearance:\s*calc\(70px \+ var\(--footer-pill-gap\) \+ var\(--safe-bottom\)\)/);
+  // The clearance reserved under the content is exactly the fixed row: nav + footer links + safe area.
+  assert.match(css, /--nav-clearance:\s*calc\(var\(--nav-height\) \+ var\(--dock-height\) \+ var\(--footer-pill-gap\) \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(css, /@media \(max-width: 412px\) and \(max-height: 680px\) \{\s*\/\*[^*]*\*\/\s*:root \{ --nav-height: 54px; \}/);
   assert.match(css, /#main \{[^}]*padding-bottom:\s*var\(--nav-clearance\)/);
   assert.doesNotMatch(css, /#main \{\s*padding-bottom:\s*4px/);
   assert.match(css, /\.filter-sets \{[^}]*scroll-snap-type:\s*x proximity/);
@@ -909,7 +937,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-92/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-94/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -924,7 +952,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-92/);
+  assert.match(html, /packrip\.css\?v=card-surface-94/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);

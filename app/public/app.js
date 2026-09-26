@@ -1877,8 +1877,13 @@ function renderLeagues() {
   }
   elements.leagueRooms.innerHTML = rooms.map((league) => `
     <article class="league-room" data-league-code="${escapeHtml(league.code)}">
-      <span class="league-season">${escapeHtml(league.seasonLabel || "")}</span>
-      <h4>${escapeHtml(league.name)}</h4>
+      <header class="league-room-head">
+        <div class="league-room-title">
+          <span class="league-season">${escapeHtml(league.seasonLabel || "")}</span>
+          <h4 title="${escapeHtml(league.name)}">${escapeHtml(league.name)}</h4>
+        </div>
+        <div class="league-qr">${league.qrSvg || ""}</div>
+      </header>
       <div class="league-room-code">
         <b dir="ltr">${escapeHtml(league.code)}</b>
         <button type="button" data-copy-league="${escapeHtml(league.joinUrl || league.code)}">העתקת קישור</button>
@@ -1891,7 +1896,6 @@ function renderLeagues() {
             <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
           </li>`).join("")}
       </ol>
-      <div class="league-qr">${league.qrSvg || ""}</div>
     </article>`).join("");
 }
 
