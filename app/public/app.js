@@ -2602,7 +2602,7 @@ function fillLevelDialog(progression, fromLevel) {
   const toLevel = fromLevel + 1;
   const fromRank = rankNameAtLevel(fromLevel) || progression.rank;
   const toRank = rankNameAtLevel(toLevel) || progression.nextRank || progression.rank;
-  elements.levelDialogTitle.textContent = `התקדם מ-${fromRank} ל-${toRank}`;
+  elements.levelDialogTitle.innerHTML = `התקדם מ-<span class="level-rank-name">${escapeHtml(fromRank)}</span> ל-<span class="level-rank-name">${escapeHtml(toRank)}</span>`;
   const items = levelUnlockItems(fromLevel, toLevel);
   if (elements.levelUnlocks) {
     elements.levelUnlocks.hidden = !items.length;

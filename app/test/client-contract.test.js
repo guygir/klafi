@@ -724,7 +724,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /home\.hidden = granted/);
   assert.doesNotMatch(javascript, /home\.hidden = unsupported \|\| granted \|\| denied/);
   assert.match(javascript, /קלף הבונוס כבר נכנס לאוסף/);
-  assert.match(javascript, /התקדם מ-\$\{fromRank\} ל-\$\{toRank\}/);
+  assert.match(javascript, /התקדם מ-<span class="level-rank-name">\$\{escapeHtml\(fromRank\)\}<\/span> ל-<span class="level-rank-name">\$\{escapeHtml\(toRank\)\}<\/span>/);
   assert.doesNotMatch(javascript, /הגעתם לרמה/);
   assert.doesNotMatch(javascript, /דרגה חדשה ·/);
   assert.match(html, /<p class="eyebrow">דרגה חדשה<\/p>/);
