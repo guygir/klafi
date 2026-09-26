@@ -4578,14 +4578,50 @@ body {
 
 .daily-challenge-desk {
   position: relative;
-  padding-left: 132px !important;
+}
+
+.challenge-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+
+.challenge-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.challenge-date {
+  margin: 0;
+  color: var(--civic);
+  font: 600 12px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
+
+.daily-challenge-desk #daily-challenge-title {
+  margin: 0;
+  font-size: clamp(16px, 4.2vw, 22px);
+  line-height: 1.25;
+}
+
+.challenge-you {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 100%;
+  min-width: 0;
 }
 
 .daily-challenge-leader-art {
-  position: absolute;
-  left: 14px;
-  top: 44px;
-  width: 102px;
+  position: static;
+  flex: 0 0 auto;
+  width: 72px;
   aspect-ratio: 3 / 4;
   overflow: hidden;
   border: 1px solid rgba(44, 51, 48, 0.24);
@@ -4613,13 +4649,15 @@ body {
 
 .challenge-recap {
   display: grid;
-  gap: 14px;
-  margin: 12px 0 16px;
+  gap: 8px;
+  margin: 0 0 10px;
 }
 
 .challenge-recap-score {
   display: grid;
   gap: 6px;
+  justify-items: start;
+  min-width: 0;
 }
 
 .challenge-recap-score small {
@@ -4633,10 +4671,10 @@ body {
 .challenge-recap-score strong {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
   color: var(--ink);
   font-family: "Noto Serif Hebrew", "Fraunces", serif;
-  font-size: clamp(44px, 12vw, 64px);
+  font-size: clamp(28px, 8vw, 40px);
   font-weight: 600;
   line-height: 0.9;
 }
@@ -4676,8 +4714,8 @@ body {
   justify-content: center;
   align-items: stretch;
   gap: 10px;
-  height: min(148px, 24dvh);
-  padding-top: 36px;
+  height: min(110px, 20dvh);
+  padding-top: 28px;
   box-sizing: border-box;
 }
 
@@ -4775,16 +4813,14 @@ body {
 }
 
 @media (max-width: 520px) {
-  .daily-challenge-desk {
-    padding: 16px !important;
+  .challenge-hero {
+    gap: 8px;
   }
   .daily-challenge-leader-art {
-    position: static;
-    width: 72px;
-    margin: 0 0 12px;
+    width: 64px;
   }
   .challenge-recap-score strong {
-    font-size: 52px;
+    font-size: 32px;
   }
   .app-shell.home-active .level-strip {
     grid-template-columns: minmax(128px, 148px) minmax(0, 1fr) 34px;
@@ -4903,11 +4939,12 @@ body {
   .community-nav { margin: 0 0 2px; gap: 2px; }
   .contained-tabs { margin: 0 0 2px; }
   .contained-tabs button { min-height: 26px; }
-  .daily-challenge-desk { padding: 8px !important; }
-  .daily-challenge-leader-art { width: 44px; margin: 0 0 6px; }
-  #daily-challenge-title { font-size: 15px; line-height: 1.2; margin: 0 0 4px; }
-  .challenge-recap { margin: 4px 0 6px; gap: 4px; }
-  .challenge-recap-score strong { font-size: 28px !important; }
+  .daily-challenge-desk { padding: 8px 0 !important; }
+  .challenge-hero { gap: 8px; margin-bottom: 8px; }
+  .daily-challenge-leader-art { width: 56px; margin: 0; }
+  .daily-challenge-desk #daily-challenge-title { font-size: 15px; line-height: 1.2; }
+  .challenge-recap { margin: 0 0 6px; gap: 4px; }
+  .challenge-recap-score strong { font-size: 26px !important; }
   .challenge-hist-plot { height: 72px; padding-top: 16px; }
   .challenge-hist-col { width: 22px; flex-basis: 22px; }
   .challenge-hist-col b { width: 16px; }

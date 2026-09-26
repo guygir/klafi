@@ -270,7 +270,9 @@ const elements = {
   factionBoard: document.querySelector("#faction-board"),
   collectorBoard: document.querySelector("#collector-board"),
   dailyChallengeTitle: document.querySelector("#daily-challenge-title"),
+  dailyChallengeDate: document.querySelector("#daily-challenge-date"),
   dailyChallengeLeaderArt: document.querySelector("#daily-challenge-leader-art"),
+  dailyChallengeScore: document.querySelector("#daily-challenge-score"),
   dailyChallengeRecap: document.querySelector("#daily-challenge-recap"),
   dailyChallengeBoard: document.querySelector("#daily-challenge-board"),
   studioSponsor: document.querySelector("#studio-sponsor"),
@@ -2444,10 +2446,7 @@ function challengeRecap() {
 }
 
 function renderChallengeRecap() {
-  if (!elements.dailyChallengeRecap) return;
   const recap = challengeRecap();
-  elements.dailyChallengeRecap.hidden = false;
-  elements.dailyChallengeRecap.style.setProperty("--bins", String(recap.bins.length));
   const score = recap.current ? recap.current.cards : 0;
   // Players on 0 are hidden (except you), so "alone" means nobody else scored yet, not an empty game.
   const place = !recap.current
@@ -2457,13 +2456,22 @@ function renderChallengeRecap() {
       : !recap.othersScored
         ? "מקום 1 · רק אתם אספתם היום"
         : `מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`;
-  elements.dailyChallengeRecap.innerHTML = `
-    <div class="challenge-recap-score">
-      <small>היום אספתם מהסיעה</small>
+  if (elements.dailyChallengeScore) {
+    elements.dailyChallengeScore.innerHTML = `
       <strong>${score}<span>קלפים</span></strong>
       <b class="challenge-recap-place">${escapeHtml(place)}</b>
-    </div>
-    ${recap.hasCrowd ? `<div class="challenge-hist">
+    `;
+  }
+  if (!elements.dailyChallengeRecap) return;
+  elements.dailyChallengeRecap.style.setProperty("--bins", String(recap.bins.length));
+  if (!recap.hasCrowd) {
+    elements.dailyChallengeRecap.hidden = true;
+    elements.dailyChallengeRecap.innerHTML = "";
+    return;
+  }
+  elements.dailyChallengeRecap.hidden = false;
+  elements.dailyChallengeRecap.innerHTML = `
+    <div class="challenge-hist">
       <small>כמה קלפים אספו היום</small>
       <div class="challenge-hist-plot" dir="ltr" aria-hidden="true">
         ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
@@ -2471,7 +2479,7 @@ function renderChallengeRecap() {
         </div>`).join("")}
       </div>
       <div class="challenge-hist-axis" dir="ltr">${recap.bins.map((bin) => `<span>${escapeHtml(bin.label)}</span>`).join("")}</div>
-    </div>` : ""}
+    </div>
   `;
 }
 
@@ -4802,7 +4810,10 @@ function renderGrowth() {
     card.set === challenge?.targetPartyId && card.releaseSetId === "party-leaders");
   elements.dailyChallengeLeaderArt.innerHTML = challengeLeaderCard ? artMarkup(challengeLeaderCard, true) : "";
   elements.dailyChallengeLeaderArt.style.setProperty("--pip", challengeLeaderCard?.pip || "#1f4f4a");
-  elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
+  if (elements.dailyChallengeDate) {
+    elements.dailyChallengeDate.textContent = challengeDate ? `היום ${challengeDate}` : "היום";
+  }
+  elements.dailyChallengeTitle.textContent = `מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
   renderChallengeRecap();
   const raceLeaders = challenge?.leaders || [];
   const raceScored = raceLeaders.some((entry) => Number(entry.cards) > 0);
