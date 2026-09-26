@@ -229,6 +229,7 @@ const elements = {
   levelNext: document.querySelector("#level-next"),
   levelDialog: document.querySelector("#level-dialog"),
   levelDialogTitle: document.querySelector("#level-dialog-title"),
+  levelDialogCheer: document.querySelector("#level-dialog-cheer"),
   levelUnlocks: document.querySelector("#level-unlocks"),
   levelDialogReward: document.querySelector("#level-dialog-reward"),
   closeLevel: document.querySelector("#close-level"),
@@ -2598,11 +2599,25 @@ function levelUnlockItems(fromLevel, toLevel) {
   return [...new Set(items)];
 }
 
+const LEVEL_CHEERS = Object.freeze([
+  "פששש…",
+  "יפה!",
+  "מטורף!!",
+  "מרשים מאוד.",
+  "הגיע הזמן באמת…",
+  "ידעתי שתצליח!",
+]);
+
+function pickLevelCheer() {
+  return LEVEL_CHEERS[Math.floor(Math.random() * LEVEL_CHEERS.length)];
+}
+
 function fillLevelDialog(progression, fromLevel) {
   const toLevel = fromLevel + 1;
   const fromRank = rankNameAtLevel(fromLevel) || progression.rank;
   const toRank = rankNameAtLevel(toLevel) || progression.nextRank || progression.rank;
-  elements.levelDialogTitle.innerHTML = `התקדם <span class="level-rank-name">מ-${escapeHtml(fromRank)}</span> <span class="level-rank-name">ל-${escapeHtml(toRank)}</span>`;
+  elements.levelDialogTitle.innerHTML = `התקדמת <span class="level-rank-name">מ ${escapeHtml(fromRank)}</span> <span class="level-rank-name">ל ${escapeHtml(toRank)}</span>`;
+  if (elements.levelDialogCheer) elements.levelDialogCheer.textContent = pickLevelCheer();
   const items = levelUnlockItems(fromLevel, toLevel);
   if (elements.levelUnlocks) {
     elements.levelUnlocks.hidden = !items.length;

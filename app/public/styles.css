@@ -2224,6 +2224,11 @@ img.mini-art {
 .policy-dialog h2 { margin-bottom: 10px; font-size: 30px; }
 #level-dialog-title { line-height: 1.25; text-wrap: pretty; }
 #level-dialog-title .level-rank-name { white-space: nowrap; }
+.level-dialog-cheer {
+  margin: 0 0 14px;
+  color: var(--civic);
+  font: 600 16px/1.35 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
 .policy-dialog h3 { margin: 24px 0 8px; font-size: 18px; }
 .policy-dialog p, .policy-dialog li { font-size: 13px; line-height: 1.5; }
 .policy-dialog ol { padding-inline-start: 20px; }
