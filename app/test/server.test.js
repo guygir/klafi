@@ -1899,7 +1899,6 @@ test("every state payload carries a monotonic revision and the seen ack returns 
   assert.equal(home.body.state.revision, seen.body.revision);
 });
 
-
 test("opening one card from a full warehouse resumes the clock instead of granting the slot missed while full", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-cap-resume-"));
   const clock = { value: Date.parse("2026-09-10T12:00:00.000Z") };
@@ -1937,4 +1936,34 @@ test("opening one card from a full warehouse resumes the clock instead of granti
   clock.value = Date.parse(again.body.nextIdleAt) + 60_000;
   const due = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   assert.equal(due.body.newlySettledCount, 1);
+});
+
+test("daily race scores today's party cards on the day they are opened, not when collected", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-daily-race-"));
+  const clock = { value: Date.parse("2026-09-26T20:00:00+03:00") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const catalog = await api(running.base, "/api/catalog");
+  const setOf = new Map(catalog.body.cards.map(({ id, set }) => [id, set]));
+  const { body: { token } } = await api(running.base, "/api/session", { method: "POST" });
+  await api(running.base, "/api/idle/settle", { token, method: "POST" }); // starters collected yesterday 20:00
+  clock.value = Date.parse("2026-09-27T09:00:00+03:00");
+  const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  const unopened = await api(running.base, "/api/leaderboards", { token });
+  const { targetPartyId, day } = unopened.body.dailyChallenge;
+  assert.equal(day, "2026-09-27");
+  assert.equal(unopened.body.dailyChallenge.leaders.find(({ current }) => current).cards, 0, "collected but unopened cards do not score");
+  await api(running.base, "/api/idle/seen", { token, method: "POST", body: { instanceIds: settled.body.cards.map(({ instanceId }) => instanceId) } });
+  const opened = await api(running.base, "/api/leaderboards", { token });
+  const expected = settled.body.cards.filter(({ cardId }) => setOf.get(cardId) === targetPartyId).length;
+  assert.equal(opened.body.dailyChallenge.leaders.find(({ current }) => current).cards, expected);
+  // The race and boards use the live catalog (set-5 "Moments" included), same as the player's state.
+  const state = await api(running.base, "/api/state", { token });
+  assert.equal(opened.body.collectors.find(({ current }) => current).stars, state.body.starCount);
+  clock.value = Date.parse("2026-09-28T00:05:00+03:00");
+  const tomorrow = await api(running.base, "/api/leaderboards", { token });
+  assert.equal(tomorrow.body.dailyChallenge.leaders.find(({ current }) => current).cards, 0, "the race resets at Jerusalem midnight");
 });

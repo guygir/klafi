@@ -37,3 +37,12 @@ export function overlayPendingSeen({ state, cards } = {}, pendingIds = []) {
   if (!stillReady || typeof state.unseenCount !== "number") return { state, cards: nextCards };
   return { state: { ...state, unseenCount: Math.max(0, state.unseenCount - stillReady) }, cards: nextCards };
 }
+
+// /api/community (slim) carries the race day/party but no leaders; only /api/leaderboards counts
+// them. Never let the slim board wipe the leaders of the same day (the "0 on the race" snapshot).
+export function keepDailyRaceLeaders(previous, incoming) {
+  const before = previous?.dailyChallenge;
+  const next = incoming?.dailyChallenge;
+  if (!before?.leaders?.length || next?.leaders?.length || (next?.day && next.day !== before.day)) return incoming;
+  return { ...incoming, dailyChallenge: { ...next, ...before, leaders: before.leaders } };
+}

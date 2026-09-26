@@ -1299,7 +1299,7 @@ export async function createKalpiApp({
         ? { ...studioContent, debugEnabled: debugEnabled && studioRequest, studioEnabled: true }
         : null,
       gameConfig: publicGameConfig(),
-      leaderboards: await store.leaderboardSummary(cards, now(), token),
+      leaderboards: await store.leaderboardSummary(allCards, now(), token),
       specials,
       idleReturn,
       trades: await store.listTrades(token),
@@ -1489,7 +1489,7 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/leaderboards") {
-        json(response, 200, await store.leaderboardSummary(cards, now(), bearer(request)));
+        json(response, 200, await store.leaderboardSummary(allCards, now(), bearer(request)));
         return;
       }
 
@@ -1512,7 +1512,7 @@ export async function createKalpiApp({
         await store.expireTrades(new Date(now()).toISOString());
         json(response, 200, {
           trades: { trades: await store.listTrades(token), simulated: false },
-          leaderboards: await store.leaderboardSummary(cards, now(), token),
+          leaderboards: await store.leaderboardSummary(allCards, now(), token),
           activity: await store.activitySummary(),
           specialWindow: openSpecialWindow(events.events, now(), store.getSession(token)),
         });

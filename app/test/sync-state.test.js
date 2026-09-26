@@ -3,10 +3,11 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { isStaleState, overlayPendingSeen, stateRevision } from "../public/state-sync.js";
+import { isStaleState, keepDailyRaceLeaders, overlayPendingSeen, stateRevision } from "../public/state-sync.js";
 import { idleCountdownCopy, resumeClockAfterCap } from "../public/idle-countdown.js";
 import { IDLE_INTERVAL_MS, resumeIdleClockAfterCap } from "../server/idle-config.js";
 import { bumpStateRevision } from "../server/store.js";
+import { dailyRaceScore, scoresInDailyRace } from "../server/daily-race.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const NOW = Date.parse("2026-09-26T09:00:00.000Z");
@@ -34,6 +35,41 @@ test("opened cards stay hidden while their seen ack is in flight", () => {
   assert.equal(overlayPendingSeen({ state }, ["a"]).state.unseenCount, 7, "already acked: no double count");
   assert.equal(overlayPendingSeen({ state }, ["b"]).state.unseenCount, 6);
   assert.equal(overlayPendingSeen({ state: { unseenCount: 3 } }, []).state.unseenCount, 3);
+});
+
+test("leaving a full warehouse resumes the paused idle clock instead of paying out the missed slot", () => {
+  const dueWhileFull = { unseenPulls: new Array(7).fill("x"), preparedPulls: [], nextIdleAt: iso(NOW - (2 * 60 + 56) * 60_000) };
+  assert.equal(resumeIdleClockAfterCap(dueWhileFull, NOW), true);
+  assert.equal(dueWhileFull.nextIdleAt, iso(NOW + IDLE_INTERVAL_MS));
+  const notYetDue = { preparedPulls: [], nextIdleAt: iso(NOW + 4 * 60_000) };
+  assert.equal(resumeIdleClockAfterCap(notYetDue, NOW), false);
+  assert.equal(notYetDue.nextIdleAt, iso(NOW + 4 * 60_000), "a slot still in the future keeps its time");
+  const withPrepared = { preparedPulls: [{ availableAt: iso(NOW - 60_000) }, { availableAt: iso(NOW - 60_000 + IDLE_INTERVAL_MS) }], nextIdleAt: iso(NOW - 60_000) };
+  resumeIdleClockAfterCap(withPrepared, NOW);
+  assert.deepEqual(withPrepared.preparedPulls.map(({ availableAt }) => availableAt), [iso(NOW + IDLE_INTERVAL_MS), iso(NOW + 2 * IDLE_INTERVAL_MS)]);
+  // The client mirror (display-only) lands on the same schedule, so the timer shows 3h, not a phantom slot.
+  const view = resumeClockAfterCap({ unseenCount: 7, idleCapacity: 8, preparedPulls: [], nextIdleAt: iso(NOW - 176 * 60_000) }, NOW);
+  assert.equal(view.nextIdleAt, iso(NOW + IDLE_INTERVAL_MS));
+  const copy = idleCountdownCopy({ serverState: view, now: NOW });
+  assert.equal(copy.needsSettle, false);
+  assert.equal(copy.text, "הבא בעוד 03:00:00");
+});
+
+test("the daily race scores a card on the Jerusalem day it is opened", () => {
+  const cardsById = new Map([["LIK-1", { set: "LIK" }], ["DEM-1", { set: "DEM" }]]);
+  const day = "2026-09-27";
+  const openedToday = { cardId: "LIK-1", acquiredBy: "idle", pulledAt: "2026-09-26T20:00:00.000Z", seenAt: "2026-09-27T06:00:00.000Z" };
+  const unopened = { cardId: "LIK-1", acquiredBy: "idle", pulledAt: "2026-09-27T05:00:00.000Z", seenAt: null };
+  const openedYesterday = { cardId: "LIK-1", acquiredBy: "idle", seenAt: "2026-09-26T20:59:00.000Z" }; // 23:59 Jerusalem
+  const justAfterMidnight = { cardId: "LIK-1", acquiredBy: "idle", seenAt: "2026-09-26T21:01:00.000Z" }; // 00:01 Jerusalem
+  const traded = { cardId: "LIK-1", acquiredBy: "trade-accepted", seenAt: "2026-09-27T06:00:00.000Z" };
+  const otherParty = { cardId: "DEM-1", acquiredBy: "idle", seenAt: "2026-09-27T06:00:00.000Z" };
+  assert.equal(scoresInDailyRace(openedToday, day), true, "collected yesterday, opened today: scores today");
+  assert.equal(scoresInDailyRace(unopened, day), false);
+  assert.equal(scoresInDailyRace(openedYesterday, day), false);
+  assert.equal(scoresInDailyRace(justAfterMidnight, day), true);
+  assert.equal(scoresInDailyRace(traded, day), false);
+  assert.equal(dailyRaceScore([openedToday, unopened, openedYesterday, justAfterMidnight, traded, otherParty], day, "LIK", cardsById), 2);
 });
 
 test("client acks the seen card when the reveal starts and guards every server state write", async () => {
@@ -68,20 +104,20 @@ test("postgres saves advance the session revision only when something was writte
   await store.pool.end().catch(() => {});
 });
 
-test("leaving a full warehouse resumes the paused idle clock instead of paying out the missed slot", () => {
-  const dueWhileFull = { unseenPulls: new Array(7).fill("x"), preparedPulls: [], nextIdleAt: iso(NOW - (2 * 60 + 56) * 60_000) };
-  assert.equal(resumeIdleClockAfterCap(dueWhileFull, NOW), true);
-  assert.equal(dueWhileFull.nextIdleAt, iso(NOW + IDLE_INTERVAL_MS));
-  const notYetDue = { preparedPulls: [], nextIdleAt: iso(NOW + 4 * 60_000) };
-  assert.equal(resumeIdleClockAfterCap(notYetDue, NOW), false);
-  assert.equal(notYetDue.nextIdleAt, iso(NOW + 4 * 60_000), "a slot still in the future keeps its time");
-  const withPrepared = { preparedPulls: [{ availableAt: iso(NOW - 60_000) }, { availableAt: iso(NOW - 60_000 + IDLE_INTERVAL_MS) }], nextIdleAt: iso(NOW - 60_000) };
-  resumeIdleClockAfterCap(withPrepared, NOW);
-  assert.deepEqual(withPrepared.preparedPulls.map(({ availableAt }) => availableAt), [iso(NOW + IDLE_INTERVAL_MS), iso(NOW + 2 * IDLE_INTERVAL_MS)]);
-  // The client mirror (display-only) lands on the same schedule, so the timer shows 3h, not a phantom slot.
-  const view = resumeClockAfterCap({ unseenCount: 7, idleCapacity: 8, preparedPulls: [], nextIdleAt: iso(NOW - 176 * 60_000) }, NOW);
-  assert.equal(view.nextIdleAt, iso(NOW + IDLE_INTERVAL_MS));
-  const copy = idleCountdownCopy({ serverState: view, now: NOW });
-  assert.equal(copy.needsSettle, false);
-  assert.equal(copy.text, "הבא בעוד 03:00:00");
+test("leaderboards (daily race + collectors) read the live catalog, including set-5 cards", async () => {
+  const serverJs = await readFile(path.join(here, "../server/app.js"), "utf8");
+  assert.doesNotMatch(serverJs, /leaderboardSummary\(cards,/, "cards.json lacks set-5: those cards would never score");
+  assert.equal((serverJs.match(/leaderboardSummary\(allCards,/g) || []).length, 3);
+});
+
+test("the slim community board never wipes the race leaders of the same day", () => {
+  const full = { collectors: [{ label: "a" }], dailyChallenge: { day: "2026-09-27", targetPartyId: "YB", leaders: [{ label: "me", current: true, cards: 2 }] } };
+  const slim = { collectors: [{ label: "b" }], dailyChallenge: { day: "2026-09-27", targetPartyId: "YB", leaders: [] } };
+  const merged = keepDailyRaceLeaders(full, slim);
+  assert.equal(merged.dailyChallenge.leaders[0].cards, 2);
+  assert.equal(merged.collectors[0].label, "b", "the rest of the slim board still applies");
+  const nextDay = { ...slim, dailyChallenge: { ...slim.dailyChallenge, day: "2026-09-28" } };
+  assert.deepEqual(keepDailyRaceLeaders(full, nextDay).dailyChallenge.leaders, [], "a new day starts empty");
+  const fresh = { ...slim, dailyChallenge: { ...slim.dailyChallenge, leaders: [{ label: "me", cards: 3 }] } };
+  assert.equal(keepDailyRaceLeaders(full, fresh).dailyChallenge.leaders[0].cards, 3);
 });

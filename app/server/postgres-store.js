@@ -1099,14 +1099,16 @@ export class PostgresStore {
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
     const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
     const targetPartyId = partyIds.length ? partyIds[dayNumber % partyIds.length] : null;
+    // Race score = cards of today's party OPENED today (seen_at, Jerusalem day); see daily-race.js.
     const packRows = await this.pool.query(
-      `SELECT p.session_token, s.display_name, p.cards,
+      `SELECT i.session_token, s.display_name, i.card_id, i.acquired_by,
               s.avatar_id, s.faction_id, s.highest_rank,
               COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
               s.extras->>'publicBinderSlug' AS binder_slug
-       FROM kalpi_packs p
-       JOIN kalpi_sessions s ON s.token = p.session_token
-       WHERE (p.pulled_at AT TIME ZONE 'Asia/Jerusalem')::date = $1::date`,
+       FROM kalpi_instances i
+       JOIN kalpi_sessions s ON s.token = i.session_token
+       WHERE i.seen_at IS NOT NULL
+         AND (i.seen_at AT TIME ZONE 'Asia/Jerusalem')::date = $1::date`,
       [day],
     );
     const dailyCounts = new Map();
@@ -1121,7 +1123,10 @@ export class PostgresStore {
         binderSlug: row.binder_slug || null,
         cards: 0,
       };
-      existing.cards += (row.cards || []).filter((instance) => cardsById.get(instance.cardId)?.set === targetPartyId).length;
+      const acquiredBy = String(row.acquired_by || "");
+      const scores = !acquiredBy.includes("trade") && !acquiredBy.includes("debug")
+        && cardsById.get(row.card_id)?.set === targetPartyId;
+      if (scores) existing.cards += 1;
       dailyCounts.set(row.session_token, existing);
     }
     if (currentToken && !dailyCounts.has(currentToken)) {

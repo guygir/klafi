@@ -2,7 +2,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
 import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
-import { isStaleState, overlayPendingSeen, stateRevision } from "./state-sync.js";
+import { isStaleState, keepDailyRaceLeaders, overlayPendingSeen, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import {
   exitWalkoutSunburst,
@@ -957,8 +957,12 @@ function flushPendingIdleSeen() {
     const acknowledged = new Set(instanceIds);
     const remaining = pendingIdleSeen().filter((instanceId) => !acknowledged.has(instanceId));
     localStorage.setItem(PENDING_IDLE_SEEN_KEY, JSON.stringify(remaining));
+    const racedParty = model.leaderboards?.dailyChallenge?.targetPartyId;
+    const openedRaceCard = racedParty && (state?.instances || [])
+      .some(({ instanceId, cardId }) => acknowledged.has(instanceId) && model.byId.get(cardId)?.set === racedParty);
     model.idleQueue = model.idleQueue.filter(({ instanceId }) => !acknowledged.has(instanceId));
     applyHomePayload({ state });
+    if (openedRaceCard) refreshDailyChallenge();
     renderHome();
     renderBinder();
     renderAchievements();
@@ -1012,7 +1016,7 @@ function scheduleIdleRefill({ priority = "buffered" } = {}) {
 function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state, specialWindow }) {
   if (events) model.events = events.events || events;
   if (trades) model.trades = trades.trades || trades;
-  if (leaderboards) model.leaderboards = leaderboards;
+  if (leaderboards) model.leaderboards = keepDailyRaceLeaders(model.leaderboards, leaderboards);
   if (activity) model.activity = activity;
   if (specials) model.specials = specials;
   if (specialWindow !== undefined) model.specialWindow = specialWindow;
@@ -6829,6 +6833,7 @@ document.querySelector(".today-docket").addEventListener("click", (event) => {
   }
   elements.navButtons.find((button) => button.dataset.nav === hook.dataset.todayNav)?.click();
   if (hook.dataset.communityPage) renderGrowth();
+  if (hook.dataset.communityPage === "challenge") refreshDailyChallenge();
 });
 elements.tradeOfferedSet.addEventListener("change", renderGrowth);
 elements.tradeWantedSet.addEventListener("change", renderGrowth);
@@ -7064,6 +7069,7 @@ elements.communityTabs.addEventListener("click", (event) => {
   model.communityPage = button.dataset.communityPage;
   model.communitySection = communitySectionFor(button.dataset.communityPage);
   renderGrowth();
+  if (model.communityPage === "challenge") refreshDailyChallenge();
   pollWatchedTrade().catch(() => {});
 });
 

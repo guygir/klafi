@@ -6,6 +6,7 @@ import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
+import { dailyRaceScore } from "./daily-race.js";
 
 /**
  * Per-session write counter. Every state payload carries it as `revision`, so a client can drop a
@@ -509,10 +510,7 @@ export class JsonStore {
         loginStreak: session.loginStreak || 0,
         rankLevel: session.highestRank || 1,
         binderSlug: session.publicBinderSlug || null,
-        cards: session.packs
-          .filter((pack) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(pack.pulledAt)) === day)
-          .flatMap((pack) => pack.cards)
-          .filter((instance) => cardsById.get(instance.cardId)?.set === targetPartyId).length,
+        cards: dailyRaceScore(session.instances, day, targetPartyId, cardsById),
       }))
       .sort((a, b) => b.cards - a.cards);
     const dailyParty = allDailyParty.slice(0, 8);
