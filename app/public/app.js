@@ -2587,12 +2587,9 @@ function markLevelSeen(level) {
 }
 
 function levelUnlockItems(fromLevel, toLevel) {
-  const ranks = model.gameConfig?.progression?.rankNames || model.gameConfig?.progression?.ranks || [];
   const avatars = model.serverState?.avatars || [];
   const items = [];
   for (let level = fromLevel + 1; level <= toLevel; level += 1) {
-    const rank = ranks[level - 1];
-    if (rank) items.push(`דרגה חדשה · ${rank}`);
     items.push("קלף בונוס");
     avatars
       .filter((avatar) => Number(avatar.unlockLevel) === level)
@@ -2603,7 +2600,9 @@ function levelUnlockItems(fromLevel, toLevel) {
 
 function fillLevelDialog(progression, fromLevel) {
   const toLevel = fromLevel + 1;
-  elements.levelDialogTitle.textContent = `הגעתם לרמה ${toLevel}`;
+  const fromRank = rankNameAtLevel(fromLevel) || progression.rank;
+  const toRank = rankNameAtLevel(toLevel) || progression.nextRank || progression.rank;
+  elements.levelDialogTitle.textContent = `התקדם מ-${fromRank} ל-${toRank}`;
   const items = levelUnlockItems(fromLevel, toLevel);
   if (elements.levelUnlocks) {
     elements.levelUnlocks.hidden = !items.length;
