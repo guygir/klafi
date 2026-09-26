@@ -85,11 +85,11 @@ export const PAGE_GUIDES = Object.freeze({
   ]),
   achievements: Object.freeze([
     {
-      ring: "#achievement-grid .achievement-badge, #achievements-empty",
+      ring: "#achievement-tiers, #achievement-grid .achievement-badge, #achievements-empty",
       ringUnion: true,
       place: "above",
       title: "הישגים",
-      body: "כל התגים נמצאים כאן. חלק מופיעים גם מעל האלבום. לכל אחד יש פס התקדמות כמו ברמה — כמה כבר יש מול היעד.",
+      body: "כל התגים נמצאים כאן, בשלושה עמודים: פשוט, בינוני וקשה. חלק מהתגים מופיעים גם מעל האלבום. לכל אחד יש פס התקדמות כמו ברמה — כמה כבר יש מול היעד.",
     },
   ]),
   growth: Object.freeze([

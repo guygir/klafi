@@ -99,6 +99,23 @@ test("session deltas detect scalar and extras-only player changes", () => {
   assert.equal(sessionDeltas(previous, next).sessionChanged, true);
 });
 
+test("session deltas persist earned achievement stamps in extras", () => {
+  const previous = {
+    inventory: {},
+    instances: [],
+    packs: [],
+    achievementsEarned: {},
+    bestLoginStreak: 0,
+  };
+  const next = {
+    ...previous,
+    achievementsEarned: { "faction-pick": "2026-09-26T08:00:00.000Z" },
+    bestLoginStreak: 3,
+  };
+
+  assert.equal(sessionDeltas(previous, next).sessionChanged, true);
+});
+
 test("serverless pools hold at most one short-lived database connection", () => {
   const options = postgresPoolOptions("postgresql://example.invalid/test", {
     ssl: true,

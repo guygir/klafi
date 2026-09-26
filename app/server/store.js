@@ -76,6 +76,8 @@ export function normalizeState(value = {}) {
     session.currentQuiz ??= null;
     session.loginDay ??= null;
     session.loginStreak ??= 0;
+    session.bestLoginStreak ??= session.loginStreak;
+    session.achievementsEarned ??= {};
   }
   return state;
 }
@@ -181,6 +183,8 @@ export class JsonStore {
         pendingRankRewards: [],
         loginDay: null,
         loginStreak: 0,
+        bestLoginStreak: 0,
+        achievementsEarned: {},
         publicBinderSlug: ensurePublicBinderSlug({}),
       };
       await this.persist();

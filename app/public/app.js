@@ -2,6 +2,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
 import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
+import { binderBadgeOrder } from "./badge-order.js";
 import { isStaleState, mergeLeaderboards, overlayPendingSeen, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import {
@@ -72,7 +73,7 @@ const model = {
   binderParty: "",
   binderOwnedOnly: false,
   binderPage: 0,
-  achievementPage: 0,
+  achievementTier: null,
   communityPage: "trade",
   communitySection: "market",
   eventPage: "active",
@@ -215,7 +216,7 @@ const elements = {
   binderEmpty: document.querySelector("#binder-empty"),
   achievementsEmpty: document.querySelector("#achievements-empty"),
   achievementGrid: document.querySelector("#achievement-grid"),
-  achievementPager: document.querySelector("#achievement-pager"),
+  achievementTiers: document.querySelector("#achievement-tiers"),
   communityTabs: document.querySelector("#community-tabs"),
   communitySections: document.querySelector("#community-sections"),
   earnedBadgeRail: document.querySelector("#earned-badge-rail"),
@@ -620,6 +621,7 @@ function applyHomePayload(home) {
       inventory: incoming.inventory ?? previous.inventory ?? {},
       idlePullCount: incoming.idlePullCount ?? previous.idlePullCount ?? 0,
       achievements: incoming.achievements ?? previous.achievements ?? [],
+      achievementPages: incoming.achievementPages ?? previous.achievementPages ?? [],
       loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
     };
     if (home.cards) model.idleQueue = home.cards;
@@ -647,6 +649,7 @@ function applyHomePayload(home) {
         numberedCopies: model.serverState.numberedCopies || [],
         idlePullCount: model.serverState.idlePullCount ?? 0,
         achievements: model.serverState.achievements || [],
+        achievementPages: model.serverState.achievementPages || [],
       },
     }));
     prefetchAvatars(home.state.avatars);
@@ -1982,6 +1985,14 @@ function renderLeagues() {
 
 let leaguesHydrate = null;
 
+/** League badges are stamped when the server builds the room; pull state so they show. */
+function refreshAfterLeagueBadges(leagues) {
+  if (!(leagues || []).some((league) => league?.earnedAchievements?.length)) return;
+  request("/api/state").then((state) => {
+    if (setServerState(state) && elements.achievementGrid?.closest(".view")?.classList.contains("active")) renderAchievements();
+  }).catch(() => {});
+}
+
 async function hydrateLeagues() {
   if (!model.token || model.showcase) return;
   if (leaguesHydrate) return leaguesHydrate;
@@ -1989,6 +2000,7 @@ async function hydrateLeagues() {
     try {
       const payload = await request("/api/leagues");
       setLeagues(payload.leagues);
+      refreshAfterLeagueBadges(payload.leagues);
     } catch {
       /* Community still opens without a league list; a cached room stays. */
       if (!model.leaguesKnown) {
@@ -3918,14 +3930,15 @@ function renderBinder() {
     ? '<span class="binder-scroll-hint">יש עוד קלפים למטה ↓</span>'
     : "";
 
-  const earned = achievementList().filter(({ earned }) => earned);
+  // Only some medals fit: hard first, then medium, then simple; newest first within a tier.
+  const earned = binderBadgeOrder(visibleEarnedBadges());
   const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
   const starCount = localStarCount();
   const starCounter = `<span class="collection-star-count" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b aria-hidden="true">★</b><strong>${starCount}</strong></span>`;
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
   const medals = earned.map((badge) => {
     const copy = hebrewBadge(badge);
-    return `<span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id)}</span>`;
+    return `<span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id, { tier: achievementTier(badge) })}</span>`;
   }).join("");
   rail.innerHTML = `<div class="binder-badge-medals">${medals}<button class="badge-overflow" type="button" hidden data-open-achievements>+</button></div>${starCounter}`;
   queueBinderBadgePack();
@@ -3944,7 +3957,50 @@ function syncBinderScrollCue() {
   document.querySelector("#binder-view")?.classList.toggle("binder-at-end", atEnd);
 }
 
-function badgeArtwork(id) {
+let badgeArtworkSeq = 0;
+const BADGE_SHEEN_KEY = "klafi:badge-sheen";
+let badgeSheenShown = null;
+
+function takeBadgeSheen(id) {
+  if (!badgeSheenShown) {
+    try { badgeSheenShown = new Set(JSON.parse(localStorage.getItem(BADGE_SHEEN_KEY) || "[]")); } catch { badgeSheenShown = new Set(); }
+  }
+  if (badgeSheenShown.has(id)) return false;
+  badgeSheenShown.add(id);
+  try { localStorage.setItem(BADGE_SHEEN_KEY, JSON.stringify([...badgeSheenShown])); } catch { /* private mode */ }
+  return true;
+}
+
+/** Tier mark on every badge: simple 1 star, medium 2, hard 3. */
+function badgeTierStarCount(tier) {
+  return tier === "hard" ? 3 : tier === "medium" ? 2 : 1;
+}
+
+/** Small star row in the shield peak, in the tier's finish, leaving the badge icon alone. */
+function badgeTierStarRow(tier, { style, foilKey } = {}) {
+  const count = badgeTierStarCount(tier);
+  const star = "M0-2.85.86-.86 3.05-.86 1.28.4 1.85 2.55 0 1.44-1.85 2.55-1.28.4-3.05-.86L-.86-.86Z";
+  const gap = 6.6;
+  const start = 24 - ((count - 1) * gap) / 2;
+  const foil = style === "hard" ? ` style="fill:url(#${foilKey}-foil)"` : "";
+  return `<g class="badge-tier-stars" data-tier-stars="${count}">${
+    Array.from({ length: count }, (_, index) =>
+      `<g class="badge-tier-star-wrap" transform="translate(${start + index * gap} 9.1)">
+        <circle class="badge-tier-star-back" r="3.15"/>
+        <path class="badge-tier-star" d="${star}"${foil}/>
+      </g>`
+    ).join("")
+  }</g>`;
+}
+
+/**
+ * Badge art by tier. simple: ink (the original look). medium: gold rim, gold ribbon, seal dot.
+ * hard: holo foil field with a one-time diagonal sheen (static under reduced motion). Unearned
+ * hard badges are a grey outline only (no foil); unearned ink/gold ones are dimmed.
+ * Every badge keeps its own icon and adds a 1/2/3 star row for the tier.
+ * The sheen plays once per badge per device (see takeBadgeSheen), not on every re-render.
+ */
+function badgeArtwork(id, { tier = "simple", earned = true, sheen = false } = {}) {
   const icon = {
     "first-rip": '<path d="M16 20h16v14H16zM16 24l8-5 8 5M24 19v15"/><path d="M20 16l2-4 2 4 2-4 2 4"/>',
     "register-five": '<rect x="15" y="18" width="13" height="17" rx="1"/><path d="M19 15h13v17M23 12h12v17"/>',
@@ -3967,12 +4023,43 @@ function badgeArtwork(id) {
     "rank-three": '<path d="M15 32h18l-3-16H18zM18 16h12l-2-4H20z"/>',
     "fifty-stars": '<path d="M18 16l2 4 4 .6-3 2.9.7 4.1-3.7-2-3.7 2 .7-4.1-3-2.9 4-.6zM30 22l1.6 3.2 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/>',
     "binder-half": '<path d="M14 16h20v22H14zM24 16v22M17 21h5M17 26h5M26 21h5M26 26h5"/>',
-  }[id] || '<circle cx="24" cy="24" r="5"/>';
-  return `<svg class="badge-artwork" viewBox="0 0 48 56" aria-hidden="true">
+    "faction-pick": '<path d="M18 35V13M18 14h13l-3 4.5 3 4.5H18"/>',
+    "own-name": '<circle cx="21" cy="19" r="4"/><path d="M13.5 33c.8-4.6 3.6-7 7.5-7 1.8 0 3.3.5 4.6 1.4M27 34l6.5-6.5 2 2L29 36h-2z"/>',
+    "streak-seven": '<rect x="15" y="16" width="18" height="17" rx="1.5"/><path d="M15 21h18M19 13.5v5M29 13.5v5M20 25h8l-4.5 6"/>',
+    "league-member": '<circle cx="19" cy="19" r="3"/><circle cx="29" cy="19" r="3"/><path d="M13 32c.7-4 3-6 6-6s5.3 2 6 6M23 32c.7-4 3-6 6-6s5.3 2 6 6"/>',
+    "rare-three": '<path d="M17.5 17h13l4.5 6-11 12-11-12z"/><path d="M13 23h22M21 17l-2 6 5 12 5-12-2-6"/>',
+    "numbered-first": '<path d="M21.5 14l-3 20M30 14l-3 20M15.5 20.5h18M14.5 27.5h18"/>',
+    "streak-thirty": '<path d="M24 12.5c1.2 4.2 6.5 6.4 6.5 12.5a6.5 6.5 0 0 1-13 0c0-3.2 1.8-5.4 3.2-7.4.8 2 1.9 3.2 3.3 3.5-1.2-3-.9-5.9 0-8.6z"/>',
+    "ten-copies": '<rect x="13" y="19" width="11" height="15" rx="1"/><rect x="18.5" y="16.5" width="11" height="15" rx="1"/><rect x="24" y="14" width="11" height="15" rx="1"/><path d="M27 19v6M30 19h2.5v6H30z"/>',
+  }[id] || (String(id).startsWith("set-complete:")
+    ? '<rect x="14" y="17" width="12" height="16" rx="1"/><rect x="20" y="14" width="12" height="16" rx="1"/><path d="M23.5 22.5l2.5 2.5 4.5-5"/>'
+    : '<circle cx="24" cy="24" r="5"/>');
+  const style = tier === "hard" && !earned ? "unearned" : tier;
+  const key = `b${badgeArtworkSeq += 1}`;
+  const shell = "M24 3 41 10v15c0 11-7 18-17 23C14 43 7 36 7 25V10z";
+  const foil = style === "hard"
+    ? `<defs>
+      <linearGradient id="${key}-foil" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#f4e7b8"/><stop offset=".3" stop-color="#b9d9d2"/>
+        <stop offset=".55" stop-color="#d9c2e8"/><stop offset=".8" stop-color="#f1d59a"/><stop offset="1" stop-color="#a8cfe0"/>
+      </linearGradient>
+      <clipPath id="${key}-clip"><path d="${shell}"/></clipPath>
+    </defs>`
+    : "";
+  const field = style === "hard"
+    ? `<circle class="badge-field" cx="24" cy="24" r="14" style="fill:url(#${key}-foil)"/>`
+    : '<circle class="badge-field" cx="24" cy="24" r="14"/>';
+  const extra = style === "medium"
+    ? '<circle class="badge-seal-dot" cx="24" cy="42.5" r="2.2"/>'
+    : style === "hard" && sheen
+      ? `<g clip-path="url(#${key}-clip)"><rect class="badge-sheen" x="-18" y="-6" width="12" height="68"/></g>`
+      : "";
+  return `<svg class="badge-artwork badge-tier-${style}" viewBox="0 0 48 56" aria-hidden="true">${foil}
     <path class="badge-ribbon" d="M15 39v14l9-5 9 5V39"/>
-    <path class="badge-shell" d="M24 3 41 10v15c0 11-7 18-17 23C14 43 7 36 7 25V10z"/>
-    <circle class="badge-field" cx="24" cy="24" r="14"/>
-    <g class="badge-icon">${icon}</g>
+    <path class="badge-shell" d="${shell}"/>
+    ${field}
+    <g class="badge-icon">${icon}</g>${extra}
+    ${badgeTierStarRow(tier, { style, foilKey: key })}
   </svg>`;
 }
 
@@ -3990,6 +4077,13 @@ const ACHIEVEMENT_RULES = [
   ["duplicate", "עותק כפול"],
   ["rank", "רמה"],
   ["binderHalf", "חצי אלבום"],
+  ["streak", "רצף ימים (הכי ארוך)"],
+  ["faction", "בחירת מפלגה"],
+  ["profile", "שם או אווטאר משלי"],
+  ["rare", "קלפים נדירים"],
+  ["numbered", "קלפים ממוספרים"],
+  ["league", "חבר בליגה"],
+  ["setComplete", "סדרה מלאה (תג לכל סדרה)"],
 ];
 
 function achievementEditorMarkup(badge = {}) {
@@ -4007,6 +4101,11 @@ function achievementEditorMarkup(badge = {}) {
           </select>
         </label>
         <label>יעד <input data-ach-field="target" type="number" min="0" max="200" value="${badge.target ?? 1}" /></label>
+        <label>עמוד
+          <select data-ach-field="tier">
+            ${ACHIEVEMENT_TIER_ORDER.map((tier) => `<option value="${tier}"${achievementTier(badge) === tier ? " selected" : ""}>${ACHIEVEMENT_TIER_LABELS[tier]}</option>`).join("")}
+          </select>
+        </label>
       </fieldset>`;
 }
 
@@ -4041,6 +4140,7 @@ async function saveStudioAchievements() {
     descriptionHe: row.querySelector('[data-ach-field="descriptionHe"]').value.trim(),
     rule: row.querySelector('[data-ach-field="rule"]').value,
     target: Number(row.querySelector('[data-ach-field="target"]').value) || 0,
+    tier: row.querySelector('[data-ach-field="tier"]')?.value || "simple",
   }));
   try {
     const saved = await request("/api/studio/achievements", {
@@ -4105,9 +4205,29 @@ const BADGE_COPY = {
   "rank-three": ["מצביע מעורב", "הגיעו לרמה 3."],
   "fifty-stars": ["חמישים כוכבים", "הגיעו לחמישים כוכבי אוסף."],
   "binder-half": ["חצי האלבום", "השלימו חצי מהסדרה הפעילה."],
+  "faction-pick": ["בחרתי צד", "בחרו מפלגה."],
+  "own-name": ["שם משלי", "בחרו שם או אווטאר משלכם."],
+  "streak-seven": ["שבוע רצוף", "פתחו קלפים שבעה ימים ברצף."],
+  "league-member": ["חבר בליגה", "היו בליגה עם עוד שחקן לפחות."],
+  "rare-three": ["שלושה נדירים", "אספו שלושה קלפים נדירים שונים."],
+  "ten-copies": ["עשרה עותקים", "אספו עשרה עותקים של אותו קלף."],
+  "numbered-first": ["ממוספר", "אספו קלף הולו ממוספר."],
+  "streak-thirty": ["חודש רצוף", "פתחו קלפים שלושים ימים ברצף."],
 };
 
+const ACHIEVEMENT_TIER_LABELS = Object.freeze({ simple: "פשוט", medium: "בינוני", hard: "קשה" });
+const ACHIEVEMENT_TIER_ORDER = Object.freeze(["simple", "medium", "hard"]);
+
+function achievementTier(badge) {
+  return ACHIEVEMENT_TIER_ORDER.includes(badge?.tier) ? badge.tier : "simple";
+}
+
 function hebrewBadge(badge) {
+  if (badge?.setId) {
+    // One badge per pullable set (server-expanded); the short set name matches the Binder chips.
+    const short = FILTER_SET_SHORT[badge.setId];
+    return { name: short ? `סדרת ${short} מלאה` : badge.name, description: badge.description };
+  }
   const copy = BADGE_COPY[badge.id];
   return { name: copy?.[0] || badge.name, description: copy?.[1] || badge.description };
 }
@@ -4192,9 +4312,10 @@ function localAchievementList() {
       name: BADGE_COPY[id][0],
       description: BADGE_COPY[id][1],
     }));
+  // Unknown ids get no local rule: only the server can award them (no optimistic false earns).
   const definitions = source.map((badge) => ({
     ...badge,
-    rule: badge.rule || rules[badge.id] || "unique",
+    rule: badge.rule || rules[badge.id] || null,
     target: badge.target || targets[badge.id] || 1,
   }));
   const dynamicTargets = {
@@ -4240,8 +4361,25 @@ function achievementList() {
   return server.map((badge) => {
     const fallback = local.find((item) => item.id === badge.id);
     if (badge.earned || !fallback?.earned) return badge;
-    return fallback;
+    return { ...badge, earned: true, progress: badge.target };
   });
+}
+
+/** Server page summary (tier order); falls back to counting the list. */
+function achievementPageList(badges = achievementList()) {
+  const server = model.serverState?.achievementPages;
+  if (server?.length) return server;
+  return ACHIEVEMENT_TIER_ORDER
+    .map((tier) => {
+      const items = badges.filter((badge) => achievementTier(badge) === tier);
+      return { tier, total: items.length, earned: items.filter(({ earned }) => earned).length };
+    })
+    .filter(({ total }) => total);
+}
+
+/** Earned badges (every page is open). */
+function visibleEarnedBadges() {
+  return achievementList().filter((badge) => badge.earned);
 }
 
 function renderAchievements() {
@@ -4251,19 +4389,29 @@ function renderAchievements() {
   if (!badges.length) {
     setEmptyNote(elements.achievementsEmpty, "טוענים את התגים…", { hidden: false });
   }
-  const pageSize = 6;
-  const pages = Math.max(1, Math.ceil(badges.length / pageSize));
-  model.achievementPage = Math.min(model.achievementPage, pages - 1);
+  const pages = achievementPageList(badges);
+  if (!pages.some(({ tier }) => tier === model.achievementTier)) model.achievementTier = pages[0]?.tier || "simple";
+  if (elements.achievementTiers) {
+    elements.achievementTiers.hidden = pages.length < 2;
+    elements.achievementTiers.innerHTML = pages.map((item) => {
+      const active = item.tier === model.achievementTier;
+      return `<button type="button" role="tab" data-achievement-tier="${item.tier}" aria-selected="${active}" aria-controls="achievement-grid" class="${active ? "active" : ""}">
+        <span>${ACHIEVEMENT_TIER_LABELS[item.tier] || item.tier}</span>
+        <small>${item.earned}/${item.total}</small>
+      </button>`;
+    }).join("");
+  }
   elements.achievementGrid.innerHTML = badges
-    .slice(model.achievementPage * pageSize, (model.achievementPage + 1) * pageSize)
+    .filter((badge) => achievementTier(badge) === model.achievementTier)
     .map((badge) => {
     const copy = hebrewBadge(badge);
+    const tier = achievementTier(badge);
     const target = Math.max(1, Number(badge.target) || 1);
     const progress = Math.max(0, Math.min(target, Number(badge.progress) || 0));
     const percent = badge.earned ? 100 : Math.max(0, Math.min(100, Math.round((progress / target) * 100)));
     return `
-    <article class="achievement-badge ${badge.earned ? "earned" : ""}">
-      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id)}</span>
+    <article class="achievement-badge tier-${tier} ${badge.earned ? "earned" : ""}" data-badge-id="${escapeHtml(badge.id)}">
+      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id, { tier, earned: badge.earned, sheen: tier === "hard" && badge.earned && takeBadgeSheen(badge.id) })}</span>
       <div>
         <strong>${escapeHtml(copy.name)}</strong>
         <p>${escapeHtml(copy.description)}</p>
@@ -4274,7 +4422,6 @@ function renderAchievements() {
       </div>
     </article>`;
   }).join("");
-  elements.achievementPager.innerHTML = pagerMarkup(model.achievementPage, pages, "achievements");
 }
 
 function creatorLink() {
@@ -7285,10 +7432,10 @@ elements.binderPager.addEventListener("click", (event) => {
   renderBinder();
 });
 
-elements.achievementPager.addEventListener("click", (event) => {
-  const button = event.target.closest('[data-page-target="achievements"]');
+elements.achievementTiers?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-achievement-tier]");
   if (!button) return;
-  model.achievementPage = Number(button.dataset.page);
+  model.achievementTier = button.dataset.achievementTier;
   renderAchievements();
 });
 

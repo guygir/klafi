@@ -33,6 +33,15 @@ import { eventClaimKey, eventClaimMode, eventReward, isEventClaimed, openSpecial
 import { requestOrigin, serveBinderShareLanding, servePlayerBinderShareLanding, serveShareLanding } from "./share-landing.js";
 import { levelThresholds } from "./progression.js";
 import { createGithubBugFromBody } from "./github-bugs.js";
+import {
+  achievementState,
+  collectionStarCount,
+  expandAchievementCatalog,
+  leagueAchievementMeasures,
+  normalizeAchievementDefinition,
+  pendingAchievementStamps,
+  stampAchievements,
+} from "./achievements.js";
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
@@ -447,83 +456,6 @@ async function writeJsonAtomic(filePath, value) {
   await rename(temporary, filePath);
 }
 
-function achievementMeasures(session, cards) {
-  const ownedIds = new Set(Object.keys(session.inventory));
-  const unique = ownedIds.size;
-  const collectible = cards.filter((card) => card.idleEligible || card.eventOnly || ownedIds.has(card.id));
-  const commons = cards.filter(({ releaseSetId }) => releaseSetId === "party-leaders");
-  const ownedLeaderParties = new Set(commons.filter(({ id }) => ownedIds.has(id)).map(({ set }) => set)).size;
-  const eventClaims = Object.values(session.eventClaims || {}).reduce((sum, claims) => sum + Object.keys(claims || {}).length, 0);
-  const stars = collectionStarCount(session, cards);
-  const idleEligible = cards.filter((card) => card.idleEligible && !card.eventOnly);
-  const ownedIdle = idleEligible.filter(({ id }) => ownedIds.has(id)).length;
-  const partySets = [...new Set(collectible.filter(({ set }) => set !== "SYS").map(({ set }) => set))]
-    .map((set) => {
-      const ids = collectible.filter((card) => card.set === set).map(({ id }) => id);
-      return { set, owned: ids.filter((id) => ownedIds.has(id)).length, total: ids.length };
-    });
-  const bestSet = partySets.sort((a, b) => (b.owned / b.total) - (a.owned / a.total))[0];
-  return {
-    unique,
-    idlePulls: session.idlePullCount || session.packCount || 0,
-    sources: session.eventCounts?.source_opened ?? 0,
-    shares: session.eventCounts?.share_created ?? 0,
-    leaders: commons.filter(({ id }) => ownedIds.has(id)).length,
-    leadersTotal: commons.length || 1,
-    bestSetOwned: bestSet?.owned ?? 0,
-    bestSetTotal: bestSet?.total ?? 1,
-    trades: session.tradeCount || 0,
-    favorites: session.favorites?.length ?? 0,
-    events: eventClaims,
-    leaderParties: ownedLeaderParties,
-    stars,
-    duplicate: Math.max(0, ...Object.values(session.inventory || {}), 0),
-    rank: session.highestRank || 1,
-    binderHalf: ownedIdle,
-    binderHalfTarget: Math.max(1, Math.ceil(idleEligible.length / 2)),
-  };
-}
-
-function achievementProgress(definition, measures) {
-  const dynamicTargets = {
-    leaders: measures.leadersTotal,
-    bestSet: measures.bestSetTotal,
-    binderHalf: measures.binderHalfTarget,
-  };
-  const target = dynamicTargets[definition.rule] || Math.max(1, Number(definition.target) || 1);
-  const raw = {
-    idlePulls: measures.idlePulls,
-    unique: measures.unique,
-    sources: measures.sources,
-    shares: measures.shares,
-    leaders: measures.leaders,
-    bestSet: measures.bestSetOwned,
-    trades: measures.trades,
-    favorites: measures.favorites,
-    events: measures.events,
-    leaderParties: measures.leaderParties,
-    stars: measures.stars,
-    duplicate: measures.duplicate,
-    rank: measures.rank,
-    binderHalf: measures.binderHalf,
-  }[definition.rule] ?? 0;
-  const progress = Math.min(raw, target);
-  return {
-    id: definition.id,
-    name: definition.nameHe || definition.name,
-    description: definition.descriptionHe || definition.description,
-    earned: raw >= target,
-    progress,
-    target,
-  };
-}
-
-function achievementState(session, cards, catalog = []) {
-  const measures = achievementMeasures(session, cards);
-  const definitions = catalog.length ? catalog : [{ id: "first-rip", nameHe: "First reveal", descriptionHe: "Reveal one collected card.", rule: "idlePulls", target: 1 }];
-  return definitions.map((definition) => achievementProgress(definition, measures));
-}
-
 function publicAvatars(session, catalog = [], level = 1) {
   const currentLevel = Math.max(1, level || session.highestRank || 1);
   return catalog.map((avatar) => ({
@@ -563,16 +495,6 @@ export function normalizeDebugRarity(value) {
   return Number.isInteger(n) && n >= 1 && n <= 4 ? n : undefined;
 }
 
-function collectionStarCount(session, cards) {
-  const byId = new Map(cards.map((card) => [card.id, card]));
-  return Object.keys(session.inventory).reduce((sum, cardId) => {
-    const card = byId.get(cardId);
-    if (card?.rarity === "Promotion") return sum + 5;
-    if (card?.rarity?.startsWith("Rare")) return sum + 3;
-    if (card?.rarity?.startsWith("Uncommon")) return sum + 2;
-    return sum + 1;
-  }, 0);
-}
 
 function progressionConfig(config = {}, activeReleaseIds = null) {
   const ranks = Array.isArray(config.rankNames) && config.rankNames.length >= 2
@@ -683,7 +605,7 @@ function publicState(session, now, cards, config = {}) {
     factionId: session.factionId,
     binderSlug: session.publicBinderSlug || null,
     tradeCount: session.tradeCount,
-    achievements: achievementState(session, cards, config.achievements),
+    ...achievementState(session, cards, config.achievements),
     avatars: publicAvatars(session, config.avatars, progressionState(session, cards, config, now).level),
     avatarId: session.avatarId || "kid-boy",
     loginStreak: session.loginStreak || 0,
@@ -979,13 +901,45 @@ export async function createKalpiApp({
     }
   }
   applyReleaseSets();
+  // Players see the expanded catalog (one set-complete badge per pullable set, from allCards, the
+  // same full list the leaderboards score). Studio still edits the raw rows.
+  const playerAchievements = () => expandAchievementCatalog(
+    achievementCatalog.achievements || [],
+    allCards,
+    studioContent?.gameConfig?.releaseSets || [],
+  );
   const runtimeProgression = () => ({
     ...studioContent?.gameConfig?.progression,
-    achievements: achievementCatalog.achievements || [],
+    achievements: playerAchievements(),
     avatars: avatarCatalog.avatars || [],
     quizEnabled,
   });
   const stateFor = (session) => publicState(session, now(), allCards, runtimeProgression());
+  /**
+   * Stamps newly earned achievements into the session so they stay earned (streaks reset, trades
+   * move cards, league membership changes). Writes only when something is new. Not for use inside a
+   * store lock.
+   */
+  async function stampEarnedAchievements(token, extra = {}) {
+    const session = store.getSession(token);
+    const catalog = playerAchievements();
+    if (!session || !pendingAchievementStamps(session, allCards, catalog, extra).length) return [];
+    return (await store.withSession(token, (current) => stampAchievements(current, allCards, catalog, now(), extra))) || [];
+  }
+  // Every session write also stamps newly earned achievements, in the same write (one revision).
+  // Reads never write: GET /api/state and /api/home show live qualification via stateFor.
+  // Looked up on the prototype at call time, so instrumentation of the store class still sees it.
+  const storeProto = Object.getPrototypeOf(store);
+  store.withSession = (token, mutator) => storeProto.withSession.call(store, token, async (current) => {
+    const result = await mutator(current);
+    stampAchievements(current, allCards, playerAchievements(), now());
+    return result;
+  });
+  /** For write routes whose store call skips withSession (faction, trades): stamp, then state. */
+  async function stateForToken(token) {
+    await stampEarnedAchievements(token);
+    return stateFor(store.getSession(token));
+  }
 
   function publicGameConfig() {
     const pack = normalizePackConfig(studioContent?.gameConfig?.pack);
@@ -1118,6 +1072,10 @@ export async function createKalpiApp({
     const members = await store.scoreLeagueMembers(league.memberTokens, allCards);
     const presented = publicLeague(league, members, token, requestOrigin(request));
     presented.qrSvg = qrSvg(presented.joinUrl);
+    // League badges need the other members' scores, so they are stamped here (the room is
+    // prefetched with the community extras). The client refreshes state when this is non-empty.
+    const earned = await stampEarnedAchievements(token, leagueAchievementMeasures(presented));
+    if (earned.length) presented.earnedAchievements = earned;
     return presented;
   }
 
@@ -1649,7 +1607,7 @@ export async function createKalpiApp({
               ? [...new Set([...current.favorites, cardId])]
               : current.favorites.filter((id) => id !== cardId);
           });
-          json(response, 200, stateFor(store.getSession(token)));
+          json(response, 200, await stateForToken(token));
           return;
         }
 
@@ -1672,7 +1630,7 @@ export async function createKalpiApp({
           if (credited?.idleCredited) {
             await store.incrementFaction(store.getSession(token)?.factionId, credited.idleCredited);
           }
-          json(response, 200, stateFor(store.getSession(token)));
+          json(response, 200, await stateForToken(token));
           return;
         }
 
@@ -1750,7 +1708,7 @@ export async function createKalpiApp({
             };
           });
           if (result.status === 201) {
-            result.body.state = stateFor(store.getSession(token));
+            result.body.state = await stateForToken(token);
           }
           json(response, result.status, result.body);
           return;
@@ -1869,7 +1827,7 @@ export async function createKalpiApp({
             return;
           }
           await store.setFaction(token, factionId);
-          json(response, 200, stateFor(store.getSession(token)));
+          json(response, 200, await stateForToken(token));
           return;
         }
 
@@ -1949,7 +1907,7 @@ export async function createKalpiApp({
           }
           json(response, 200, {
             trade: { ...trade, ownerToken: undefined },
-            state: stateFor(store.getSession(token)),
+            state: await stateForToken(token),
             simulated: true,
           });
           return;
@@ -1975,7 +1933,7 @@ export async function createKalpiApp({
           json(response, 200, {
             trade: trades.find(({ tradeId }) => tradeId === tradeAccept[1]),
             trades,
-            state: stateFor(store.getSession(token)),
+            state: await stateForToken(token),
             simulated: false,
           });
           return;
@@ -1989,7 +1947,7 @@ export async function createKalpiApp({
           await store.withSession(token, (current) => {
             current.nextDailyAt = null;
           });
-          json(response, 200, stateFor(store.getSession(token)));
+          json(response, 200, await stateForToken(token));
           return;
         }
 
@@ -2021,7 +1979,7 @@ export async function createKalpiApp({
               creditNow: true,
             });
           });
-          json(response, 200, stateFor(store.getSession(token)));
+          json(response, 200, await stateForToken(token));
           return;
         }
 
@@ -2264,13 +2222,7 @@ export async function createKalpiApp({
           }
           achievementCatalog = {
             schemaVersion: 1,
-            achievements: next.map((item) => ({
-              id: String(item.id),
-              nameHe: String(item.nameHe || item.name || item.id).slice(0, 48),
-              descriptionHe: String(item.descriptionHe || item.description || "").slice(0, 160),
-              rule: String(item.rule),
-              target: Math.max(0, Math.round(Number(item.target) || 0)),
-            })),
+            achievements: next.map(normalizeAchievementDefinition),
           };
           await writeJsonAtomic(achievementsPath, achievementCatalog);
           json(response, 200, achievementCatalog);
@@ -2374,7 +2326,7 @@ export async function createKalpiApp({
           });
           json(response, 201, {
             ...pack,
-            state: stateFor(store.getSession(token)),
+            state: await stateForToken(token),
           });
           return;
         }
