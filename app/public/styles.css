@@ -4598,7 +4598,7 @@ body {
   direction: rtl;
 }
 
-.challenge-date {
+.growth-grid .daily-challenge-desk .challenge-date {
   margin: 0;
   color: var(--civic);
   font: 600 clamp(18px, 5vw, 24px)/1.1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
@@ -4928,7 +4928,7 @@ body {
   .daily-challenge-desk { padding: 8px 0 !important; }
   .challenge-hero { gap: 8px; margin-bottom: 8px; }
   .daily-challenge-leader-art { width: 56px; margin: 0; }
-  .challenge-date { font-size: 18px; }
+  .growth-grid .daily-challenge-desk .challenge-date { font-size: 18px; }
   .daily-challenge-desk #daily-challenge-title { font-size: 15px; line-height: 1.2; }
   .challenge-recap { margin: 0 0 6px; gap: 4px; }
   .challenge-hist-plot { height: 72px; padding-top: 16px; }
