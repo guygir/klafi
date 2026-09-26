@@ -271,6 +271,7 @@ const elements = {
   collectorBoard: document.querySelector("#collector-board"),
   dailyChallengeTitle: document.querySelector("#daily-challenge-title"),
   dailyChallengeDate: document.querySelector("#daily-challenge-date"),
+  dailyChallengeParty: document.querySelector("#daily-challenge-party"),
   dailyChallengeLeaderArt: document.querySelector("#daily-challenge-leader-art"),
   dailyChallengeScore: document.querySelector("#daily-challenge-score"),
   dailyChallengeRecap: document.querySelector("#daily-challenge-recap"),
@@ -4811,7 +4812,12 @@ function renderGrowth() {
   if (elements.dailyChallengeDate) {
     elements.dailyChallengeDate.textContent = challengeDate ? `היום ${challengeDate}` : "היום";
   }
-  elements.dailyChallengeTitle.textContent = `מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
+  if (elements.dailyChallengeTitle) {
+    elements.dailyChallengeTitle.textContent = "מי אסף היום הכי הרבה קלפים של";
+  }
+  if (elements.dailyChallengeParty) {
+    elements.dailyChallengeParty.textContent = partyDisplayName(challenge?.targetPartyId);
+  }
   renderChallengeRecap();
   const raceLeaders = challenge?.leaders || [];
   const raceScored = raceLeaders.some((entry) => Number(entry.cards) > 0);
