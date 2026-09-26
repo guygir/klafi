@@ -289,7 +289,7 @@ test("client: three open tabs, tier art, no unlock toast, copy + icon for every 
   );
   assert.match(html, /<div id="achievement-tiers" class="achievement-tiers" role="tablist" aria-label="עמודי ההישגים"><\/div>/);
   assert.doesNotMatch(html, /id="achievement-pager"|id="achievement-lock-note"/, "tabs replace the pager; no page locking");
-  assert.match(javascript, /const ACHIEVEMENT_TIER_LABELS = Object\.freeze\(\{ simple: "פשוט", medium: "בינוני", hard: "קשה" \}\)/);
+  assert.match(javascript, /const ACHIEVEMENT_TIER_LABELS = Object\.freeze\(\{ simple: "הקלים", medium: "הבינוניים", hard: "הקשים" \}\)/);
   assert.match(javascript, /data-achievement-tier="\$\{item\.tier\}" aria-selected="\$\{active\}"/);
   assert.match(javascript, /badgeArtwork\(badge\.id, \{ tier, earned: badge\.earned, sheen: tier === "hard" && badge\.earned && takeBadgeSheen\(badge\.id\) \}\)/);
   assert.match(javascript, /<svg class="badge-artwork badge-tier-\$\{style\}"/);
@@ -313,7 +313,9 @@ test("client: three open tabs, tier art, no unlock toast, copy + icon for every 
   assert.match(css, /\.badge-artwork \.badge-sheen \{[^}]*animation: badge-sheen 1\.3s ease-out 0\.35s 1 both/, "the sheen runs once");
   assert.match(css, /\.badge-tier-unearned \.badge-field \{ fill: none; stroke: #8f918b/);
   assert.match(tips, /ring: "#achievement-tiers, #achievement-grid \.achievement-badge, #achievements-empty"/);
-  assert.match(tips, /בשלושה עמודים: פשוט, בינוני וקשה\./);
+  assert.match(tips, /בשלושה עמודים: הקלים, הבינוניים והקשים\./);
+  assert.match(css, /\.achievement-tiers button \{\s*display: inline-flex;\s*flex-flow: row nowrap;\s*align-items: baseline;/);
+  assert.match(css, /\.achievement-tiers button small \{\s*font: 600 12px\/1 ui-monospace/);
   const art = javascript.slice(javascript.indexOf("function badgeArtwork("), javascript.indexOf("const ACHIEVEMENT_RULES"));
   const copy = javascript.slice(javascript.indexOf("const BADGE_COPY = {"), javascript.indexOf("function hebrewBadge("));
   for (const { id, rule } of catalog) {

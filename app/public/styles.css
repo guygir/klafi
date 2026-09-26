@@ -5521,7 +5521,7 @@ body {
   }
 }
 
-/* Achievements: three pages (פשוט / בינוני / קשה) as tabs, all always open. */
+/* Achievements: three pages (הקלים / הבינוניים / הקשים) as tabs, all always open. */
 .achievement-tiers {
   flex: 0 0 auto;
   display: grid;
@@ -5532,22 +5532,23 @@ body {
 .achievement-tiers[hidden] { display: none; }
 .achievement-tiers button {
   display: inline-flex;
-  align-items: center;
+  flex-flow: row nowrap;
+  align-items: baseline;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
   min-height: 40px;
-  padding: 4px 6px;
+  padding: 6px 4px;
   border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
   border-radius: 10px;
   background: transparent;
   color: var(--ink);
-  font: 600 13px/1 "IBM Plex Sans Hebrew", sans-serif;
+  font: 600 12px/1 "IBM Plex Sans Hebrew", sans-serif;
   white-space: nowrap;
   cursor: pointer;
 }
 .achievement-tiers button small {
-  font: 600 10px/1 ui-monospace, monospace;
+  font: 600 12px/1 ui-monospace, monospace;
   direction: ltr;
   opacity: 0.72;
 }

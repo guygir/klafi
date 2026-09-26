@@ -48,7 +48,7 @@ test("live walkout quotes stay on the published wording", async () => {
     "BW-M02-Q01": "כל אחת מנהיגה בחלקת האלוהים שלה.",
     "AMH-M01-Q01": "הפתרון בעזה הוא אחד: הגירה",
     "SET5-10": "אתה רמטכ״ל מבולבל, אתה כפוף לראש הממשלה ולדרג המדיני.*",
-    "SET5-05": "אנחנו בחיים בתקופה של נס*",
+    "SET5-05": "אנחנו חיים בתקופה של נס*",
   };
   for (const [id, text] of Object.entries(pins)) {
     const card = catalog.cards.find((entry) => entry.id === id);

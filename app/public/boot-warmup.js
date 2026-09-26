@@ -5,7 +5,8 @@ const lookOnlyShowcase = (() => {
 })();
 const token = lookOnlyShowcase ? null : localStorage.getItem("kalpi-alpha-session");
 const headers = token ? { authorization: `Bearer ${token}` } : {};
-const staticDataVersion = "visible-sets-2";
+const staticDataVersion = "visible-sets-3";
+const PLAYABLE_ART_SET_IDS = ["party-leaders", "party-slot-2", "set-5"];
 const json = async (response) => {
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "WARMUP_FAILED");
@@ -32,8 +33,8 @@ window.__kalpiWarmup = {
   holders: fetch("/api/card-holders").then(json).catch(() => null),
 };
 window.__kalpiWarmup.catalog.then((catalog) => {
-  for (const card of (catalog?.cards || []).slice(0, 12)) {
-    if (!card?.artKey) continue;
+  for (const card of catalog?.cards || []) {
+    if (!card?.artKey || !PLAYABLE_ART_SET_IDS.includes(card.releaseSetId)) continue;
     const image = new Image();
     image.decoding = "async";
     image.src = `/design-assets/${encodeURIComponent(card.artKey)}`;
