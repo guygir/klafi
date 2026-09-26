@@ -4,6 +4,8 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { isStaleState, overlayPendingSeen, stateRevision } from "../public/state-sync.js";
+import { idleCountdownCopy, resumeClockAfterCap } from "../public/idle-countdown.js";
+import { IDLE_INTERVAL_MS, resumeIdleClockAfterCap } from "../server/idle-config.js";
 import { bumpStateRevision } from "../server/store.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -64,4 +66,22 @@ test("postgres saves advance the session revision only when something was writte
   assert.equal(changed.stateRevision, 5);
   assert.equal(JSON.parse(queries[0].params[14]).stateRevision, 5, "revision is persisted in extras");
   await store.pool.end().catch(() => {});
+});
+
+test("leaving a full warehouse resumes the paused idle clock instead of paying out the missed slot", () => {
+  const dueWhileFull = { unseenPulls: new Array(7).fill("x"), preparedPulls: [], nextIdleAt: iso(NOW - (2 * 60 + 56) * 60_000) };
+  assert.equal(resumeIdleClockAfterCap(dueWhileFull, NOW), true);
+  assert.equal(dueWhileFull.nextIdleAt, iso(NOW + IDLE_INTERVAL_MS));
+  const notYetDue = { preparedPulls: [], nextIdleAt: iso(NOW + 4 * 60_000) };
+  assert.equal(resumeIdleClockAfterCap(notYetDue, NOW), false);
+  assert.equal(notYetDue.nextIdleAt, iso(NOW + 4 * 60_000), "a slot still in the future keeps its time");
+  const withPrepared = { preparedPulls: [{ availableAt: iso(NOW - 60_000) }, { availableAt: iso(NOW - 60_000 + IDLE_INTERVAL_MS) }], nextIdleAt: iso(NOW - 60_000) };
+  resumeIdleClockAfterCap(withPrepared, NOW);
+  assert.deepEqual(withPrepared.preparedPulls.map(({ availableAt }) => availableAt), [iso(NOW + IDLE_INTERVAL_MS), iso(NOW + 2 * IDLE_INTERVAL_MS)]);
+  // The client mirror (display-only) lands on the same schedule, so the timer shows 3h, not a phantom slot.
+  const view = resumeClockAfterCap({ unseenCount: 7, idleCapacity: 8, preparedPulls: [], nextIdleAt: iso(NOW - 176 * 60_000) }, NOW);
+  assert.equal(view.nextIdleAt, iso(NOW + IDLE_INTERVAL_MS));
+  const copy = idleCountdownCopy({ serverState: view, now: NOW });
+  assert.equal(copy.needsSettle, false);
+  assert.equal(copy.text, "הבא בעוד 03:00:00");
 });

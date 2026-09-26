@@ -43,6 +43,7 @@ import {
   applyIdleStarterReady,
   isIdleColdStart,
   publicIdleConfig,
+  resumeIdleClockAfterCap,
 } from "./idle-config.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -1629,7 +1630,11 @@ export async function createKalpiApp({
           const requested = Array.isArray(input.instanceIds) ? input.instanceIds : [];
           const seenMs = now();
           const credited = await store.withSession(token, (current) => {
+            const wasFull = (current.unseenPulls || []).length >= IDLE_BACKLOG_CAP;
             const result = creditSeenInstances(current, requested, new Date(seenMs).toISOString());
+            // Leaving a full warehouse resumes the paused clock instead of paying out a slot that
+            // came due while full (Guy's 8 -> 7 -> 8).
+            if (wasFull && current.unseenPulls.length < IDLE_BACKLOG_CAP) resumeIdleClockAfterCap(current, seenMs);
             if (result.accepted.size) applyLoginStreak(current, seenMs);
             if (result.credited) {
               syncProgression(current, allCards, studioContent?.gameConfig?.progression, seenMs);

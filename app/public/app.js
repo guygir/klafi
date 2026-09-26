@@ -1,6 +1,6 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
-import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, idleCountdownCopy, IDLE_BACKLOG_CAP, timeUntil } from "./idle-countdown.js";
+import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { isStaleState, overlayPendingSeen, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
@@ -2841,8 +2841,12 @@ function acknowledgeRevealedPack(pack) {
     const queued = model.idleQueue.filter(({ instanceId }) => opened.has(instanceId)).length;
     model.idleQueue = model.idleQueue.filter(({ instanceId }) => !opened.has(instanceId));
     if (fresh.length && queued) {
-      const unseenCount = Math.max(0, (model.serverState?.unseenCount || 0) - Math.min(fresh.length, queued));
+      const cap = model.serverState?.idleCapacity ?? IDLE_BACKLOG_CAP;
+      const before = model.serverState?.unseenCount || 0;
+      const unseenCount = Math.max(0, before - Math.min(fresh.length, queued));
       model.serverState = { ...model.serverState, unseenCount };
+      // Same rule the server applies on this ack: leaving a full warehouse resumes the clock.
+      if (before >= cap && unseenCount < cap) model.serverState = resumeClockAfterCap(model.serverState);
     }
     return flushPendingIdleSeen();
   }).catch(() => {

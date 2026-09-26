@@ -1899,3 +1899,42 @@ test("every state payload carries a monotonic revision and the seen ack returns 
   assert.equal(home.body.state.revision, seen.body.revision);
 });
 
+
+test("opening one card from a full warehouse resumes the clock instead of granting the slot missed while full", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-cap-resume-"));
+  const clock = { value: Date.parse("2026-09-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const { body: { token } } = await api(running.base, "/api/session", { method: "POST" });
+  await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  clock.value += IDLE_BACKLOG_CAP * IDLE_INTERVAL_MS;
+  const full = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(full.body.state.unseenCount, IDLE_BACKLOG_CAP);
+  // No settle runs while full (the client already has 8 cached); the next slot passes 2h56m ago.
+  clock.value = Date.parse(full.body.state.nextIdleAt) + (2 * 60 + 56) * 60_000;
+  const opened = await api(running.base, "/api/idle/seen", {
+    token,
+    method: "POST",
+    body: { instanceIds: [full.body.cards[0].instanceId] },
+  });
+  assert.equal(opened.body.unseenCount, IDLE_BACKLOG_CAP - 1);
+  assert.equal(Date.parse(opened.body.nextIdleAt), clock.value + IDLE_INTERVAL_MS);
+  const after = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(after.body.newlySettledCount, 0, "no instant payout: 8 -> 7 stays 7");
+  assert.equal(after.body.state.unseenCount, IDLE_BACKLOG_CAP - 1);
+  clock.value += IDLE_INTERVAL_MS;
+  const later = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(later.body.newlySettledCount, 1, "collection resumes one interval after the open");
+  // Below the cap nothing changes: a due slot is still granted as before.
+  const again = await api(running.base, "/api/idle/seen", {
+    token,
+    method: "POST",
+    body: { instanceIds: later.body.cards.slice(0, 2).map(({ instanceId }) => instanceId) },
+  });
+  clock.value = Date.parse(again.body.nextIdleAt) + 60_000;
+  const due = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(due.body.newlySettledCount, 1);
+});
