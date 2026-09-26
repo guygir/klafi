@@ -857,6 +857,9 @@ export async function createKalpiApp({
   const allCards = expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studioContent, set5));
   const cardsById = new Map(allCards.map((card) => [card.id, card]));
   const partyIds = new Set(cards.filter(({ set }) => set !== "SYS").map(({ set }) => set));
+  // Quiz questions ask "which list?", so only party-aligned cards qualify, but from the
+  // full pullable catalog (Studio sets such as set-5 included), never the party-only cards.json.
+  const quizCatalog = () => allCards.filter((card) => partyIds.has(card.set) && !card.eventOnly);
   if (studioContent) {
     studioContent.gameConfig = {
       ...studioContent.gameConfig,
@@ -1087,7 +1090,7 @@ export async function createKalpiApp({
 
   async function presentLeague(league, token, request) {
     if (!league) return null;
-    const members = await store.scoreLeagueMembers(league.memberTokens, cards);
+    const members = await store.scoreLeagueMembers(league.memberTokens, allCards);
     const presented = publicLeague(league, members, token, requestOrigin(request));
     presented.qrSvg = qrSvg(presented.joinUrl);
     return presented;
@@ -1665,7 +1668,7 @@ export async function createKalpiApp({
             if (current.currentQuiz && Date.parse(current.currentQuiz.expiresAt) > currentMs) {
               return { available: true, wonToday: false, ...current.currentQuiz.public };
             }
-            const quiz = buildOwnedCardQuiz(current, cards, rng, currentMs);
+            const quiz = buildOwnedCardQuiz(current, quizCatalog(), rng, currentMs);
             if (!quiz) return { available: false, wonToday: false };
             current.currentQuiz = quiz;
             return { available: true, wonToday: false, ...quiz.public };

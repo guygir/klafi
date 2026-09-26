@@ -1967,3 +1967,34 @@ test("daily race scores today's party cards on the day they are opened, not when
   const tomorrow = await api(running.base, "/api/leaderboards", { token });
   assert.equal(tomorrow.body.dailyChallenge.leaders.find(({ current }) => current).cards, 0, "the race resets at Jerusalem midnight");
 });
+
+test("Studio-set cards (set-5) count in league stars and the owned-card quiz, not only cards.json", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-full-catalog-"));
+  const clock = { value: Date.parse("2026-09-15T12:00:00.000Z") };
+  const running = await start(dataDir, clock, { quizEnabled: true });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const partyOnly = JSON.parse(await readFile(path.join(appRoot, "data/cards.json"), "utf8"));
+  const partyOnlyCards = Array.isArray(partyOnly) ? partyOnly : partyOnly.cards;
+  const catalog = (await api(running.base, "/api/catalog")).body.cards;
+  const studioRare = catalog.find((card) => card.releaseSetId === "set-5" && card.rarity.startsWith("Rare"));
+  assert.ok(studioRare, "catalog serves a set-5 Rare");
+  assert.equal(partyOnlyCards.some((card) => card.id === studioRare.id), false, "the fixture card is outside cards.json");
+
+  const token = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await api(running.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId: studioRare.id } });
+
+  const quiz = await api(running.base, "/api/quiz", { token });
+  assert.equal(quiz.body.available, true, "a player owning only a set-5 card gets a quiz");
+  assert.equal(quiz.body.cardId, studioRare.id);
+  const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  assert.equal(stored.sessions[token].currentQuiz.answers.list, studioRare.setNameHe);
+
+  const created = await api(running.base, "/api/leagues", { token, method: "POST", body: { name: "ליגת רגעים" } });
+  assert.equal(created.status, 201);
+  const member = created.body.league.members.find((entry) => entry.current) || created.body.league.members[0];
+  assert.equal(member.ownedUnique, 1);
+  assert.equal(member.stars, 3, "a set-5 Rare is worth 3 league stars, like everywhere else");
+});
