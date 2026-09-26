@@ -116,14 +116,14 @@ export function applyIdleCountdown(el, view) {
 
 /**
  * Display-only mirror of the server's resumeIdleClockAfterCap (server/idle-config.js): when an
- * open takes the warehouse below the cap, a slot that came due while full restarts one interval
- * from now. Used for the instant local count until the seen ack's server state replaces it.
+ * open takes the warehouse below the cap, the clock restarts at a fresh interval from now, whether
+ * the next slot was overdue or still in the future. Used for the instant local count until the
+ * seen ack's server state replaces it.
  */
 export function resumeClockAfterCap(serverState, now = Date.now()) {
   if (!serverState) return serverState;
   const intervalMs = idleIntervalMs(serverState);
   const times = knownIdleTimes(serverState);
-  if (times.length && times[0] > now) return serverState;
   const shift = times.length ? now + intervalMs - times[0] : 0;
   const move = (iso) => new Date(parseIdleTime(iso) + shift).toISOString();
   const scheduled = parseIdleTime(serverState.nextIdleAt);

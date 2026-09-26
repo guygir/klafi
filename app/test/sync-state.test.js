@@ -41,9 +41,12 @@ test("leaving a full warehouse resumes the paused idle clock instead of paying o
   const dueWhileFull = { unseenPulls: new Array(7).fill("x"), preparedPulls: [], nextIdleAt: iso(NOW - (2 * 60 + 56) * 60_000) };
   assert.equal(resumeIdleClockAfterCap(dueWhileFull, NOW), true);
   assert.equal(dueWhileFull.nextIdleAt, iso(NOW + IDLE_INTERVAL_MS));
-  const notYetDue = { preparedPulls: [], nextIdleAt: iso(NOW + 4 * 60_000) };
-  assert.equal(resumeIdleClockAfterCap(notYetDue, NOW), false);
-  assert.equal(notYetDue.nextIdleAt, iso(NOW + 4 * 60_000), "a slot still in the future keeps its time");
+  // Filled 45 minutes ago: the next slot is still 2h15m away, but the open restarts a fresh 3h.
+  const notYetDue = { preparedPulls: [], nextIdleAt: iso(NOW + 135 * 60_000) };
+  assert.equal(resumeIdleClockAfterCap(notYetDue, NOW), true);
+  assert.equal(notYetDue.nextIdleAt, iso(NOW + IDLE_INTERVAL_MS), "a future slot also restarts at 3h (Guy: 2h15m bug)");
+  const alreadyFresh = { preparedPulls: [], nextIdleAt: iso(NOW + IDLE_INTERVAL_MS) };
+  assert.equal(resumeIdleClockAfterCap(alreadyFresh, NOW), false);
   const withPrepared = { preparedPulls: [{ availableAt: iso(NOW - 60_000) }, { availableAt: iso(NOW - 60_000 + IDLE_INTERVAL_MS) }], nextIdleAt: iso(NOW - 60_000) };
   resumeIdleClockAfterCap(withPrepared, NOW);
   assert.deepEqual(withPrepared.preparedPulls.map(({ availableAt }) => availableAt), [iso(NOW + IDLE_INTERVAL_MS), iso(NOW + 2 * IDLE_INTERVAL_MS)]);
@@ -53,6 +56,8 @@ test("leaving a full warehouse resumes the paused idle clock instead of paying o
   const copy = idleCountdownCopy({ serverState: view, now: NOW });
   assert.equal(copy.needsSettle, false);
   assert.equal(copy.text, "הבא בעוד 03:00:00");
+  const futureView = resumeClockAfterCap({ unseenCount: 7, idleCapacity: 8, preparedPulls: [], nextIdleAt: iso(NOW + 135 * 60_000) }, NOW);
+  assert.equal(idleCountdownCopy({ serverState: futureView, now: NOW }).text, "הבא בעוד 03:00:00", "not 02:15:00");
 });
 
 test("the daily race scores a card on the Jerusalem day it is opened", () => {
