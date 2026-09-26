@@ -6,7 +6,6 @@ import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import {
   LEAGUE_MAX,
-  hebrewSeasonLabel,
   leagueMemberScore,
   leaveLeagueMembership,
   newLeagueCode,
@@ -592,7 +591,6 @@ export class JsonStore {
       const league = {
         code,
         name,
-        seasonLabel: hebrewSeasonLabel(now),
         createdAt: new Date(now).toISOString(),
         ownerToken,
         memberTokens: [ownerToken],

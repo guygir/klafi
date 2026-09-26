@@ -52,13 +52,13 @@ export const PAGE_GUIDES = Object.freeze({
       body: "כאן האתגר היומי וטבלת האספנים. נספרים רק קלפים שכבר פתחתם וראיתם.",
     },
     {
-      ring: ".bottom-nav, #open-advocacy, #open-bug-report",
+      ring: ".bottom-nav, #open-advocacy, #open-feature-request, #open-bug-report",
       ringUnion: true,
       pad: 4,
       radius: 14,
       place: "above",
       title: "הניווט",
-      body: "למטה: היום, אוסף, הישגים, קהילה. מתחת לסרגל יושבים גילוי נאות ו«דיווח באג / בקשת פיצ׳ר».",
+      body: "למטה: היום, אוסף, הישגים, קהילה. מתחת לסרגל: «דיווח באג», «בקשת פיצ׳ר» ו«גילוי נאות».",
     },
   ]),
   pack: Object.freeze([
@@ -393,7 +393,7 @@ function highlightSpec(node, pad = 8) {
   const style = typeof getComputedStyle === "function" ? getComputedStyle(node) : null;
   const computed = Number.parseFloat(style?.borderTopLeftRadius || "0") || 0;
   const compact = Math.max(box.width, box.height) <= 72 && box.width / box.height < 1.35 && box.height / box.width < 1.35;
-  const pillish = node.matches?.("#open-pack, #pack-action, .primary-action, .share-icon-button, .contained-tabs button, .filter-strip button, #open-advocacy, #open-bug-report")
+  const pillish = node.matches?.("#open-pack, #pack-action, .primary-action, .share-icon-button, .contained-tabs button, .filter-strip button, #open-advocacy, #open-feature-request, #open-bug-report")
     || computed >= Math.min(box.width, box.height) / 2 - 1;
   const cardish = node.matches?.("#dialog-card, .binder-shared-card, .kalpi-card, .today-docket, #earned-badge-rail, #earned-badge-list, #community-tabs, #community-sections, .bottom-nav, .work-card");
   if (compact || node.matches?.("button[data-nav]")) {

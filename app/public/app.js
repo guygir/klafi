@@ -350,6 +350,10 @@ const elements = {
   submitReport: document.querySelector("#submit-report"),
   closeReport: document.querySelector("#close-report"),
   openBugReport: document.querySelector("#open-bug-report"),
+  openFeatureRequest: document.querySelector("#open-feature-request"),
+  bugDialogTitle: document.querySelector("#bug-dialog-title"),
+  bugDialogLede: document.querySelector("#bug-dialog-lede"),
+  bugDetailsLabel: document.querySelector("#bug-details-label"),
   bugDialog: document.querySelector("#bug-dialog"),
   bugForm: document.querySelector("#bug-form"),
   bugNickname: document.querySelector("#bug-nickname"),
@@ -1954,14 +1958,16 @@ function renderLeagues() {
     <article class="league-room" data-league-code="${escapeHtml(league.code)}">
       <header class="league-room-head">
         <div class="league-room-title">
-          <span class="league-season">${escapeHtml(league.seasonLabel || "")}</span>
           <h4 title="${escapeHtml(league.name)}">${escapeHtml(league.name)}</h4>
         </div>
         <div class="league-qr">${league.qrSvg || ""}</div>
       </header>
       <div class="league-room-code">
-        <b dir="ltr">${escapeHtml(league.code)}</b>
-        <button type="button" data-copy-league="${escapeHtml(league.joinUrl || league.code)}">העתקת קישור</button>
+        <button type="button" class="league-code-stamp" data-copy-league="${escapeHtml(league.joinUrl || league.code)}" aria-label="העתקת קישור הזמנה · קוד ${escapeHtml(league.code)}">
+          <b dir="ltr">${escapeHtml(league.code)}</b>
+          <small aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg><span>לחצו להעתקת הקישור</span></small>
+        </button>
+        ${leagueLeaveMarkup(league)}
       </div>
       <ol class="league-board">
         ${(league.members || []).map((entry) => `
@@ -1971,7 +1977,6 @@ function renderLeagues() {
             <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
           </li>`).join("")}
       </ol>
-      <footer class="league-room-foot">${leagueLeaveMarkup(league)}</footer>
     </article>`).join("");
 }
 
@@ -3576,8 +3581,8 @@ function renderShowcaseBinder() {
     elements.showcaseFilters.innerHTML = [
       `<label class="filter-party${model.binderParty ? " active" : ""}">
         <span>מפלגה</span>
-        <select data-showcase-party aria-label="בחירת מפלגה או הכול">
-          <option value="">הכול</option>
+        <select data-showcase-party aria-label="סינון לפי מפלגה">
+          <option value="">כל המפלגות</option>
           ${partyOptions.map(([id, name]) => {
             const count = playerCards.filter((card) => card.set === id).length;
             return `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)} · ${count}</option>`;
@@ -3858,8 +3863,8 @@ function renderBinder() {
   elements.binderFilters.innerHTML = [
     `<label class="filter-party${model.binderParty ? " active" : ""}">
       <span>מפלגה</span>
-      <select data-binder-party aria-label="בחירת מפלגה או הכול">
-        <option value="">הכול</option>
+      <select data-binder-party aria-label="סינון לפי מפלגה">
+        <option value="">כל המפלגות</option>
         ${partyOptions.map(([id, name]) => {
           const count = playerCards.filter((card) => card.set === id && inventory[card.id]).length;
           return `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)} · ${count}</option>`;
@@ -6015,9 +6020,41 @@ function updateBugCount() {
   if (elements.bugCount) elements.bugCount.textContent = `${(elements.bugDetails?.value || "").length}/500`;
 }
 
-function openBugDialog() {
+// One report form, two modes. `kind` is sent to /api/bugs so the GitHub issue is titled and
+// labeled as a bug or a feature request.
+const REPORT_MODES = Object.freeze({
+  bug: Object.freeze({
+    title: "דיווח באג",
+    lede: "כתבו מה לא עבד — זה נפתח כפנייה בגיטהאב.",
+    label: "מה קרה?",
+    placeholder: "מה ראיתם, ומה ציפיתם שיהיה?",
+    empty: "כתבו מה לא עבד.",
+    submit: "שליחת הדיווח",
+    toast: "הדיווח נשלח.",
+  }),
+  feature: Object.freeze({
+    title: "בקשת פיצ׳ר",
+    lede: "מה הייתם רוצים שיהיה בקלפי? זה נפתח כבקשה בגיטהאב.",
+    label: "מה להוסיף או לשנות?",
+    placeholder: "מה חסר לכם, ואיך זה יעזור?",
+    empty: "כתבו מה הייתם רוצים שיהיה.",
+    submit: "שליחת הבקשה",
+    toast: "הבקשה נשלחה.",
+  }),
+});
+let reportKind = "bug";
+
+function openBugDialog(kind = "bug") {
   if (!elements.bugDialog) return;
+  reportKind = kind === "feature" ? "feature" : "bug";
+  const mode = REPORT_MODES[reportKind];
   elements.bugForm?.reset();
+  elements.bugDialog.dataset.kind = reportKind;
+  if (elements.bugDialogTitle) elements.bugDialogTitle.textContent = mode.title;
+  if (elements.bugDialogLede) elements.bugDialogLede.textContent = mode.lede;
+  if (elements.bugDetailsLabel) elements.bugDetailsLabel.textContent = mode.label;
+  if (elements.bugDetails) elements.bugDetails.placeholder = mode.placeholder;
+  if (elements.submitBug) elements.submitBug.textContent = mode.submit;
   if (elements.bugStatus) elements.bugStatus.textContent = "";
   updateBugCount();
   elements.bugDialog.showModal();
@@ -6028,7 +6065,7 @@ async function submitBugReport(event) {
   event.preventDefault();
   const text = (elements.bugDetails?.value || "").trim();
   if (!text) {
-    if (elements.bugStatus) elements.bugStatus.textContent = "כתבו מה לא עבד או מה חסר.";
+    if (elements.bugStatus) elements.bugStatus.textContent = REPORT_MODES[reportKind].empty;
     elements.bugDetails?.focus();
     return;
   }
@@ -6040,6 +6077,7 @@ async function submitBugReport(event) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         text,
+        kind: reportKind,
         nickname: (elements.bugNickname?.value || "").trim() || null,
         pageUrl: location.href,
         website: elements.bugWebsite?.value || "",
@@ -6050,7 +6088,7 @@ async function submitBugReport(event) {
         ? "תודה. הדיווח נפתח בגיטהאב."
         : "תודה, הדיווח נשלח.";
     }
-    showToast("הדיווח נשלח.");
+    showToast(REPORT_MODES[reportKind].toast);
     elements.bugDialog?.close();
   } catch (error) {
     if (elements.bugStatus) {
@@ -6931,6 +6969,15 @@ elements.leagueRooms?.addEventListener("click", (event) => {
   if (copy) {
     copyText(copy.dataset.copyLeague).then((copied) => {
       showToast(copied ? "קישור הליגה הועתק." : "העתיקו את הקישור מהקוד.");
+      if (!copied) return;
+      // A short in-place confirmation on the stamp itself, next to the toast.
+      const hint = copy.querySelector("small span");
+      copy.classList.add("copied");
+      if (hint) hint.textContent = "הקישור הועתק";
+      setTimeout(() => {
+        copy.classList.remove("copied");
+        if (hint) hint.textContent = "לחצו להעתקת הקישור";
+      }, 1600);
     });
     return;
   }
@@ -6956,7 +7003,8 @@ elements.closeDialog.addEventListener("click", () => elements.dialog.close());
 elements.dialogReport.addEventListener("click", () => openReportDialog());
 elements.closeReport.addEventListener("click", () => elements.reportDialog.close());
 elements.reportForm.addEventListener("submit", submitCorrectionReport);
-elements.openBugReport?.addEventListener("click", openBugDialog);
+elements.openBugReport?.addEventListener("click", () => openBugDialog("bug"));
+elements.openFeatureRequest?.addEventListener("click", () => openBugDialog("feature"));
 elements.closeBug?.addEventListener("click", () => elements.bugDialog?.close());
 elements.bugForm?.addEventListener("submit", submitBugReport);
 elements.bugDetails?.addEventListener("input", updateBugCount);

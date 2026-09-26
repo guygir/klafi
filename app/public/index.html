@@ -17,14 +17,14 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-95"></script>
+  <script src="/boot-warmup.js?v=card-surface-96"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-95" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-95" />
-  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-95" />
-  <link rel="stylesheet" href="/packrip.css?v=card-surface-95" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-96" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-96" />
+  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-96" />
+  <link rel="stylesheet" href="/packrip.css?v=card-surface-96" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -344,7 +344,7 @@
               <summary>פתיחה או הצטרפות</summary>
               <label class="field-label" for="league-name-input">שם הליגה</label>
               <div class="copy-field league-action-row">
-                <input id="league-name-input" maxlength="20" autocomplete="off" placeholder="ליגת תשרי" />
+                <input id="league-name-input" maxlength="20" autocomplete="off" placeholder="ליגת החברים" />
                 <button id="create-league" type="button">פתיחה</button>
               </div>
               <label class="field-label" for="league-join-input">קוד הזמנה</label>
@@ -570,7 +570,8 @@
     </main>
     <div class="top-nav-row">
       <button id="open-advocacy" class="advocacy-dock" type="button" aria-haspopup="dialog" aria-label="גילוי נאות"><svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/></svg>גילוי נאות</button>
-      <button id="open-bug-report" class="bug-dock" type="button" aria-haspopup="dialog" aria-label="דיווח באג / בקשת פיצ׳ר"><svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="7" width="8" height="12" rx="4"/><path d="M12 7V5.5M9.5 5l1 2M14.5 5l-1 2M8 11H4.5M8 15H5M16 11h3.5M16 15h3M8.5 18l-2.5 2M15.5 18l2.5 2M12 11v8"/></svg>דיווח באג / בקשת פיצ׳ר</button>
+      <button id="open-bug-report" class="bug-dock" type="button" aria-haspopup="dialog" aria-label="דיווח באג"><svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="7" width="8" height="12" rx="4"/><path d="M12 7V5.5M9.5 5l1 2M14.5 5l-1 2M8 11H4.5M8 15H5M16 11h3.5M16 15h3M8.5 18l-2.5 2M15.5 18l2.5 2M12 11v8"/></svg>דיווח באג</button>
+      <button id="open-feature-request" class="feature-dock" type="button" aria-haspopup="dialog" aria-label="בקשת פיצ׳ר"><svg class="dock-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>בקשת פיצ׳ר</button>
       <nav class="bottom-nav" aria-label="ניווט ראשי">
         <button type="button" data-nav="home" class="active" aria-current="page"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11h16v9H4z"/><path d="M9 11V4h6v7"/><path d="M8 11h8"/><path d="M10.5 7h3"/></svg>היום</button>
         <button type="button" data-nav="binder"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="7" y="4" width="11" height="15" rx="2"/><path d="M5 7.5v11A2.5 2.5 0 0 0 7.5 21H15"/><path d="M10 9h5M10 12h5"/></svg>אוסף</button>
@@ -629,12 +630,12 @@
   <dialog id="bug-dialog" class="policy-dialog report-dialog" aria-labelledby="bug-dialog-title">
     <button id="close-bug" class="dialog-close" type="button" aria-label="סגירת הדיווח">×</button>
     <p class="eyebrow">תיקון פתוח</p>
-    <h2 id="bug-dialog-title">דיווח באג / בקשת פיצ׳ר</h2>
-    <p class="lede">כתבו מה לא עבד, או מה הייתם רוצים שיהיה — זה נפתח כפנייה בגיטהאב.</p>
+    <h2 id="bug-dialog-title">דיווח באג</h2>
+    <p id="bug-dialog-lede" class="lede">כתבו מה לא עבד — זה נפתח כפנייה בגיטהאב.</p>
     <form id="bug-form">
       <label for="bug-nickname">שם (לא חובה)</label>
       <input id="bug-nickname" name="nickname" maxlength="80" autocomplete="nickname" placeholder="אלמוני" />
-      <label for="bug-details">מה קרה, או מה חסר?</label>
+      <label id="bug-details-label" for="bug-details">מה קרה?</label>
       <textarea id="bug-details" name="details" maxlength="500" rows="5" required placeholder="מה ראיתם, ומה ציפיתם שיהיה?"></textarea>
       <input id="bug-website" name="website" tabindex="-1" autocomplete="off" class="visually-hidden" aria-hidden="true" />
       <p id="bug-count" class="profile-error" aria-live="polite">0/500</p>
@@ -764,6 +765,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-95"></script>
+  <script type="module" src="/app.js?v=card-surface-96"></script>
 </body>
 </html>

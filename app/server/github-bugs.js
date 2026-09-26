@@ -78,6 +78,17 @@ async function ghFetch(token, pathname, init, fetchImpl = fetch) {
   return { ok: true, json };
 }
 
+// Report kinds the form may send. Anything else (missing, unknown, non-string) is a bug report,
+// so old clients keep working and callers cannot inject arbitrary title prefixes.
+export const REPORT_KINDS = Object.freeze({
+  bug: Object.freeze({ tag: "bug", type: "Bug report" }),
+  feature: Object.freeze({ tag: "feature", type: "Feature request" }),
+});
+
+export function reportKind(raw) {
+  return typeof raw === "string" && Object.hasOwn(REPORT_KINDS, raw) ? raw : "bug";
+}
+
 export async function createGithubBugFromBody(env, body, headers, {
   fetchImpl = fetch,
   now = Date.now,
@@ -116,10 +127,12 @@ export async function createGithubBugFromBody(env, body, headers, {
   const base = siteBaseUrl(env);
   const pageUrl = rawPageUrl.startsWith("http") ? rawPageUrl : base;
   const titleStart = text.replace(/\s+/g, " ").slice(0, 80);
-  const title = `[KLAFI bug] ${titleStart}`.slice(0, 256);
+  const kind = REPORT_KINDS[reportKind(body.kind)];
+  const title = `[KLAFI ${kind.tag}] ${titleStart}`.slice(0, 256);
   const issueBody = `${text}
 
 ---
+Type: ${kind.type}
 Submitted by: ${nickname || "Anonymous"}
 Page: ${pageUrl}
 Date: ${new Date(current).toISOString()}`;

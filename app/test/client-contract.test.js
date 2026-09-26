@@ -43,11 +43,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /class="top-nav-row"[\s\S]*id="open-advocacy"/);
   assert.match(css, /\.advocacy-dock \{[^}]*left:\s*8px/);
   // Footer links: quiet text links with an icon, a 44px tap box, no pill chrome.
-  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*min-height:\s*var\(--dock-height\)/);
-  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*min-width:\s*44px/);
-  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*background:\s*transparent/);
-  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*text-decoration:\s*underline dotted/);
-  assert.match(css, /\.advocacy-dock,\s*\.bug-dock \{[^}]*width:\s*max-content/);
+  assert.match(css, /\.advocacy-dock,\s*\.feature-dock,\s*\.bug-dock \{[^}]*min-height:\s*var\(--dock-height\)/);
+  assert.match(css, /\.advocacy-dock,\s*\.feature-dock,\s*\.bug-dock \{[^}]*min-width:\s*44px/);
+  assert.match(css, /\.advocacy-dock,\s*\.feature-dock,\s*\.bug-dock \{[^}]*background:\s*transparent/);
+  assert.match(css, /\.advocacy-dock,\s*\.feature-dock,\s*\.bug-dock \{[^}]*text-decoration:\s*underline dotted/);
+  assert.match(css, /\.advocacy-dock,\s*\.feature-dock,\s*\.bug-dock \{[^}]*width:\s*max-content/);
   assert.match(css, /--dock-height:\s*44px/);
   assert.match(html, /id="open-advocacy"[^>]*><svg class="dock-icon"[^>]*aria-hidden="true"/);
   assert.match(html, /id="open-bug-report"[^>]*><svg class="dock-icon"[^>]*aria-hidden="true"/);
@@ -679,7 +679,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /סינון האוסף לפי סדרה או מפלגה/);
   assert.match(javascript, /binderParty: ""/);
   assert.match(javascript, /data-binder-party/);
-  assert.match(javascript, /בחירת מפלגה או הכול/);
+  assert.match(javascript, /<select data-binder-party aria-label="סינון לפי מפלגה">\s*<option value="">כל המפלגות<\/option>/);
   assert.match(javascript, /const setOrder = \["ALL", \.\.\.releaseOrder\.map/);
   assert.match(javascript, /const partyOk = !model\.binderParty \|\| card\.set === model\.binderParty/);
   assert.match(javascript, /model\.binderParty = select\.value/);
@@ -698,7 +698,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-95/);
+  assert.match(html, /card-surface-96/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -794,7 +794,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-95/);
+  assert.match(html, /card-surface-96/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -944,7 +944,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-95/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-96/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -959,7 +959,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-95/);
+  assert.match(html, /packrip\.css\?v=card-surface-96/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);
@@ -1028,7 +1028,20 @@ test("leagues: one room with a confirmed leave, cached first paint, never a pend
   assert.match(javascript, /const LEAGUE_CACHE_KEY = "klafi:leagues"/);
   assert.match(javascript, /jobs\.push\(\["leagues", \(\) => hydrateLeagues\(\)\]\)/, "the room is prefetched with the community extras");
   assert.match(javascript, /if \(cached\?\.length\)/, "a cached empty list never paints the no-league setup");
-  // Footer: the bug link also takes feature requests, and the Home tutorial names it the same way.
-  assert.match(html, /id="open-bug-report"[^>]*aria-label="דיווח באג \/ בקשת פיצ׳ר"[\s\S]*?<\/svg>דיווח באג \/ בקשת פיצ׳ר<\/button>/);
-  assert.match(tips, /«דיווח באג \/ בקשת פיצ׳ר»/);
+  // The room code stamp is the copy-invite button; there is no separate copy button or season stamp.
+  assert.match(javascript, /<button type="button" class="league-code-stamp" data-copy-league="/);
+  assert.match(javascript, /aria-label="העתקת קישור הזמנה/);
+  assert.doesNotMatch(javascript, />העתקת קישור</);
+  assert.doesNotMatch(javascript, /league-season|hebrewSeasonLabel/);
+  assert.match(html, /placeholder="ליגת החברים"/);
+  // Footer: three quiet links, each with its icon; bug and feature share one form in two modes.
+  assert.match(html, /id="open-bug-report"[^>]*aria-label="דיווח באג"[^>]*><svg class="dock-icon"[\s\S]*?<\/svg>דיווח באג<\/button>/);
+  assert.match(html, /id="open-feature-request" class="feature-dock"[^>]*aria-label="בקשת פיצ׳ר"[^>]*><svg class="dock-icon"[\s\S]*?<\/svg>בקשת פיצ׳ר<\/button>/);
+  assert.doesNotMatch(html, /דיווח באג \/ בקשת פיצ׳ר/);
+  assert.match(javascript, /openFeatureRequest\?\.addEventListener\("click", \(\) => openBugDialog\("feature"\)\)/);
+  assert.match(javascript, /kind: reportKind,/, "the form tells the server which kind of issue to open");
+  assert.match(javascript, /title: "דיווח באג",/);
+  assert.match(javascript, /title: "בקשת פיצ׳ר",/);
+  assert.match(tips, /ring: "\.bottom-nav, #open-advocacy, #open-feature-request, #open-bug-report"/);
+  assert.match(tips, /«דיווח באג», «בקשת פיצ׳ר» ו«גילוי נאות»/);
 });
