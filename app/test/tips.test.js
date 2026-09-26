@@ -96,6 +96,8 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[4].ring, /open-advocacy|open-bug-report|bottom-nav/);
   assert.match(PAGE_GUIDES.home[4].body, /גילוי נאות/);
   assert.match(PAGE_GUIDES.home[4].body, /דיווח באג/);
+  assert.match(PAGE_GUIDES.home[4].body, /בקשת פיצ׳ר/);
+  assert.match(PAGE_GUIDES.home[4].ring, /#open-feature-request/);
   assert.equal(PAGE_GUIDES.home[4].ringUnion, true);
   assert.equal(PAGE_GUIDES.home[4].place, "above");
   assert.match(PAGE_GUIDES.binder[0].body, /תמונה/);

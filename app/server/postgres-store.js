@@ -9,7 +9,6 @@ import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
 import { visibleDailyRaceLeaders } from "./daily-race.js";
 import {
   LEAGUE_MAX,
-  hebrewSeasonLabel,
   leagueMemberScore,
   leaveLeagueMembership,
   newLeagueCode,
@@ -1281,7 +1280,6 @@ export class PostgresStore {
     return {
       code: row.code,
       name: row.name,
-      seasonLabel: row.season_label,
       createdAt: iso(row.created_at),
       ownerToken: row.owner_token,
       memberTokens: row.member_tokens || [],
@@ -1331,7 +1329,8 @@ export class PostgresStore {
            VALUES ($1,$2,$3,$4,$5,$6::jsonb)
            ON CONFLICT (code) DO NOTHING
            RETURNING *`,
-          [code, name, hebrewSeasonLabel(now), ownerToken, new Date(now).toISOString(), JSON.stringify([ownerToken])],
+          // season_label stays in the table (NOT NULL) for old rows; leagues have no seasons, so new rows store "".
+          [code, name, "", ownerToken, new Date(now).toISOString(), JSON.stringify([ownerToken])],
         );
         if (created.rows[0]) return { league: this.leagueFromRow(created.rows[0]) };
         code = newLeagueCode();

@@ -200,9 +200,10 @@ button:focus-visible {
 }
 .presentation-studio-link { display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; }
 
-/* Footer links (גילוי נאות / דיווח באג): quiet text links with a small icon and a dotted gold
+/* Footer links (גילוי נאות / בקשת פיצ׳ר / דיווח באג): quiet text links with a small icon and a dotted gold
    underline, like «איך משחקים». The box is an invisible 44px tap target. */
 .advocacy-dock,
+.feature-dock,
 .bug-dock {
   position: fixed;
   z-index: 16;
@@ -246,9 +247,16 @@ button:focus-visible {
   right: 8px;
   left: auto;
 }
+.feature-dock {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
 .advocacy-dock:hover,
+.feature-dock:hover,
 .bug-dock:hover { color: var(--civic); }
 .advocacy-dock:focus-visible,
+.feature-dock:focus-visible,
 .bug-dock:focus-visible { outline: 2px solid var(--civic); outline-offset: -2px; }
 
 .live-mark {
@@ -2358,13 +2366,8 @@ img.mini-art {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.league-room .league-season {
-  display: block;
-  margin-bottom: 4px;
-  color: color-mix(in srgb, var(--foil) 78%, var(--ink));
-  font: 600 11px/1.3 "IBM Plex Sans Hebrew", sans-serif;
-  letter-spacing: 0.06em;
-}
+/* Code row (RTL): the stamped invite code on the right is the copy button (it copies the join
+   link); «עזיבת ליגה» sits on the left, same secondary style as the old copy button, red text. */
 .league-room-code {
   display: flex;
   flex-wrap: wrap;
@@ -2376,8 +2379,23 @@ img.mini-art {
   border-block: 1px dashed color-mix(in srgb, var(--rule) 26%, transparent);
   direction: rtl;
 }
+.league-code-stamp {
+  display: inline-grid;
+  justify-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: 0;
+  padding: 2px 2px 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--civic);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.league-code-stamp:focus-visible { outline: 2px solid var(--civic); outline-offset: 3px; }
 /* The invite code as a stamped ballot ticket number. */
-.league-room-code b {
+.league-code-stamp b {
   position: relative;
   display: inline-flex;
   align-items: baseline;
@@ -2391,26 +2409,35 @@ img.mini-art {
   font: 700 20px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.16em;
   transform: rotate(-1.5deg);
+  transition: background 160ms ease, transform 160ms ease;
 }
-.league-room-code b::before {
+.league-code-stamp b::before {
   content: "№";
   color: var(--foil);
   font: 600 13px/1 "Noto Serif Hebrew", serif;
   letter-spacing: 0;
 }
-.league-room-code button {
-  min-height: 44px;
-  padding: 0 16px;
-  border: 1px solid color-mix(in srgb, var(--ink) 26%, transparent);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--paper) 76%, transparent);
-  color: var(--civic);
-  font: 600 13px/1 "IBM Plex Sans Hebrew", sans-serif;
-  letter-spacing: 0;
-  cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease;
+.league-code-stamp:hover b { background: color-mix(in srgb, var(--civic) 11%, rgba(255, 253, 247, 0.7)); }
+.league-code-stamp:active b { transform: rotate(-1.5deg) scale(0.97); }
+.league-code-stamp small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  font: 600 11px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+  text-decoration: underline dotted color-mix(in srgb, var(--foil) 80%, transparent);
+  text-underline-offset: 3px;
 }
-.league-room-code button:hover { border-color: var(--civic); background: color-mix(in srgb, var(--civic) 7%, var(--paper)); }
+.league-code-stamp small svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: var(--civic);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.league-code-stamp.copied small { color: var(--civic); text-decoration: none; }
 /* QR on a light paper inset with a thin gold frame. */
 /* QR on a light paper inset with a thin gold frame, sized to sit in the header row. The SVG
    carries its own 4-module quiet zone, so the inset padding stays small. */
@@ -2455,31 +2482,28 @@ img.mini-art {
   font-weight: 700;
 }
 .league-board li.current-player strong { font-weight: 700; }
-/* Leave: a quiet text button at the foot of the room, then an inline confirm (no dialog). */
-.league-room-foot {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid color-mix(in srgb, var(--foil) 30%, transparent);
-}
+/* Leave: the old copy button's secondary style (44px, 12px radius, paper fill), red text; then an
+   inline confirm that takes the full width of the code row (no dialog). */
 .league-leave,
 .league-leave-confirm button {
   min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid color-mix(in srgb, var(--danger-mute) 45%, transparent);
+  padding: 0 16px;
+  border: 1px solid color-mix(in srgb, var(--ink) 26%, transparent);
   border-radius: 12px;
-  background: transparent;
-  color: var(--danger-mute);
+  background: color-mix(in srgb, var(--paper) 76%, transparent);
+  color: #a3362a;
   font: 600 13px/1 "IBM Plex Sans Hebrew", sans-serif;
+  letter-spacing: 0;
   cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
 }
-.league-leave-confirm { display: grid; gap: 8px; width: 100%; }
+.league-leave:hover { border-color: #a3362a; background: color-mix(in srgb, #a3362a 6%, var(--paper)); }
+.league-leave-confirm { display: grid; gap: 8px; flex: 1 1 100%; width: 100%; }
 .league-leave-confirm p { margin: 0; font: 500 13px/1.4 "IBM Plex Sans Hebrew", sans-serif; }
 .league-leave-confirm div { display: flex; flex-wrap: wrap; gap: 8px; }
 .league-leave-confirm .league-leave-yes {
-  border-color: var(--danger-mute);
-  background: var(--danger-mute);
+  border-color: #a3362a;
+  background: #a3362a;
   color: var(--paper);
 }
 .league-leave-confirm [data-leave-league-cancel] {
@@ -2870,11 +2894,13 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   display: none !important;
 }
 .app-shell.showcase-active .advocacy-dock,
+.app-shell.showcase-active .feature-dock,
 .app-shell.showcase-active .bug-dock,
 .app-shell.showcase-active #main {
   padding-bottom: 8px;
 }
-.app-shell.showcase-active .bug-dock { display: none !important; }
+.app-shell.showcase-active .bug-dock,
+.app-shell.showcase-active .feature-dock { display: none !important; }
 #showcase-view.active {
   overflow: hidden;
 }
@@ -3576,10 +3602,10 @@ body {
   margin-inline: 0;
   min-height: 0;
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
   grid-template-areas:
     "nav nav nav"
-    "advocacy . bug";
+    "advocacy feature bug";
   align-items: end;
   justify-content: center;
   column-gap: 0;
@@ -3598,15 +3624,26 @@ body {
 }
 
 .app-shell > .top-nav-row .advocacy-dock,
+.app-shell > .top-nav-row .feature-dock,
 .app-shell > .top-nav-row .bug-dock,
 .top-nav-row .advocacy-dock,
+.top-nav-row .feature-dock,
 .top-nav-row .bug-dock {
   position: static;
   inset: auto;
+  transform: none;
 }
 
-.top-nav-row .advocacy-dock { grid-area: advocacy; }
-.top-nav-row .bug-dock { grid-area: bug; }
+/* Three quiet links in one row (RTL reading order): bug right, feature centered, advocacy left.
+   Side columns share the leftover width equally so the middle link stays truly centered. */
+.top-nav-row .advocacy-dock { grid-area: advocacy; justify-self: start; }
+.top-nav-row .feature-dock { grid-area: feature; justify-self: center; }
+.top-nav-row .bug-dock { grid-area: bug; justify-self: end; }
+@media (max-width: 360px) {
+  .top-nav-row .advocacy-dock,
+  .top-nav-row .feature-dock,
+  .top-nav-row .bug-dock { padding-inline: 5px; gap: 4px; }
+}
 
 /* Bottom nav: paper bar with a gold/umber rim; icons over labels. The active tab is not a filled
    block (the seal-green fill stays reserved for the main action): seal icon + label, a light
@@ -5453,5 +5490,36 @@ body {
   textarea,
   .trade-form select {
     font-size: 16px !important;
+  }
+}
+
+/* Binder filters: the party dropdown and «באוסף» are exactly chip height (32px), so the first row is
+   no taller than the chip row. On phones (≤520px) the set chips take a full-width row of their own
+   instead of scrolling in the leftover space beside the dropdown. The select keeps 16px text on touch
+   screens (iOS zoom rule above); only its box shrinks. */
+#app #binder-view .filter-party,
+#app #binder-view .filter-owned {
+  box-sizing: border-box;
+  height: 32px;
+  min-height: 32px;
+  padding-block: 0;
+}
+#app #binder-view .filter-party select {
+  height: 30px;
+  min-height: 0;
+  padding: 0 2px;
+  line-height: 30px;
+  max-width: 9.5rem;
+}
+@media (max-width: 520px) {
+  #app #binder-view .filter-strip {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    row-gap: 6px;
+  }
+  #app #binder-view .filter-sets {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
   }
 }

@@ -20,19 +20,6 @@ export function normalizeLeagueCode(value) {
   return raw;
 }
 
-export function hebrewSeasonLabel(now = Date.now()) {
-  const date = new Date(now);
-  const month = new Intl.DateTimeFormat("he-u-ca-hebrew", {
-    month: "long",
-    timeZone: "Asia/Jerusalem",
-  }).format(date);
-  const year = new Intl.DateTimeFormat("he-u-ca-hebrew", {
-    year: "numeric",
-    timeZone: "Asia/Jerusalem",
-  }).format(date);
-  return `${month} · ${year}`;
-}
-
 export function leagueMemberScore(session, cardsById) {
   const inventory = session?.inventory || {};
   const ownedUnique = Object.keys(inventory).filter((cardId) => Number(inventory[cardId]) > 0).length;
@@ -62,7 +49,6 @@ export function publicLeague(league, members, currentToken, origin) {
   return {
     code: league.code,
     name: league.name,
-    seasonLabel: league.seasonLabel,
     createdAt: league.createdAt,
     memberCount: ranked.length,
     joinUrl: `${origin}/?league=${encodeURIComponent(league.code)}`,

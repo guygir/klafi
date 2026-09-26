@@ -6,7 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { createKalpiApp } from "../server/app.js";
-import { LEAGUE_MAX, hebrewSeasonLabel, normalizeLeagueCode } from "../server/leagues.js";
+import { LEAGUE_MAX, normalizeLeagueCode } from "../server/leagues.js";
 import { qrModules, qrSvg } from "../server/qr-svg.js";
 import { openSpecialWindow } from "../server/special-window.js";
 
@@ -77,10 +77,9 @@ test("specials Today window is absent outside Studio dates and present while ope
   assert.equal(openSpecialWindow([{ ...events[0], status: "blocked" }], Date.parse("2026-09-22T12:00:00.000Z")), null);
 });
 
-test("invite codes stay short and Hebrew season stamps Tishrei", () => {
+test("invite codes stay short", () => {
   assert.equal(normalizeLeagueCode("k7t-3m2"), "K7T3M2");
   assert.equal(normalizeLeagueCode("123e4567-e89b-12d3-a456-426614174000"), null);
-  assert.match(hebrewSeasonLabel(Date.parse("2026-09-22T12:00:00+03:00")), /תשרי/);
 });
 
 test("paper QR keeps finder squares and encodes the join URL", () => {
@@ -114,12 +113,12 @@ test("rooms use a short code, paper QR, shared stars, and stop at 32", async (t)
   const created = await api(running.base, "/api/leagues", {
     token: owner.body.token,
     method: "POST",
-    body: { name: "ליגת תשרי" },
+    body: { name: "ליגת החברים" },
   });
   assert.equal(created.status, 201);
   assert.match(created.body.league.code, /^[A-Z2-9]{6}$/);
   assert.equal(created.body.league.memberCount, 1);
-  assert.match(created.body.league.seasonLabel, /תשרי/);
+  assert.equal(created.body.league.seasonLabel, undefined, "leagues have no seasons: no month stamp");
   assert.match(created.body.league.joinUrl, /\?league=/);
   assert.match(created.body.league.qrSvg, /<svg /);
   assert.equal(created.body.league.members[0].factionId, undefined);
