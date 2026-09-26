@@ -2,6 +2,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
 import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, idleCountdownCopy, IDLE_BACKLOG_CAP, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
+import { isStaleState, overlayPendingSeen, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import {
   exitWalkoutSunburst,
@@ -46,6 +47,7 @@ function playerDialogOpen() {
 }
 const model = {
   token: localStorage.getItem(SESSION_KEY),
+  stateRevision: 0,
   editorial: null,
   studioContent: null,
   gameConfig: {
@@ -547,7 +549,7 @@ function flushPendingReports() {
 async function ensureSession() {
   if (model.token) {
     try {
-      model.serverState = await request("/api/state");
+      setServerState(await request("/api/state"));
       return;
     } catch (error) {
       if (error.status !== 401) throw error;
@@ -556,8 +558,9 @@ async function ensureSession() {
 
   const { token } = await request("/api/session", { method: "POST" });
   model.token = token;
+  model.stateRevision = 0;
   localStorage.setItem(SESSION_KEY, token);
-  model.serverState = await request("/api/state");
+  setServerState(await request("/api/state"));
 }
 
 function applyStudioAccess(studioContent = model.studioContent) {
@@ -573,15 +576,37 @@ function applyStudioAccess(studioContent = model.studioContent) {
   }
 }
 
+/** Revision of the newest server state applied; older payloads are dropped (see state-sync.js). */
+function noteStateRevision(state) {
+  const revision = stateRevision(state);
+  if (revision != null) model.stateRevision = Math.max(model.stateRevision || 0, revision);
+}
+
+/** Every full/merged server state goes through here so a late, older response cannot win. */
+function setServerState(state, { merge = false } = {}) {
+  if (!state || typeof state !== "object") return false;
+  if (isStaleState(state, model.stateRevision)) return false;
+  noteStateRevision(state);
+  const { state: shown } = overlayPendingSeen({ state }, pendingIdleSeen());
+  model.serverState = merge ? { ...model.serverState, ...shown } : shown;
+  return true;
+}
+
 function applyHomePayload(home) {
   if (home.token) {
+    if (model.token && home.token !== model.token) model.stateRevision = 0;
     model.token = home.token;
     localStorage.setItem(SESSION_KEY, home.token);
   }
+  // An older response (e.g. a settle computed before the last open's seen ack) never overwrites newer state.
+  if (home.state && isStaleState(home.state, model.stateRevision)) return false;
   if (home.state) {
+    noteStateRevision(home.state);
     stateFreshAt = Date.now();
     const previous = model.serverState || {};
-    const incoming = home.state;
+    const overlaid = overlayPendingSeen({ state: home.state, cards: home.cards }, pendingIdleSeen());
+    const incoming = overlaid.state;
+    home = { ...home, cards: overlaid.cards };
     model.serverState = {
       ...previous,
       ...incoming,
@@ -715,7 +740,7 @@ function applyFullBoot(boot) {
   populateRevealTimingInputs();
   populateLevelIncrements();
   populateStudioMeta();
-  applyHomePayload({ token: boot.token, state: boot.idleReturn.state });
+  applyHomePayload({ token: boot.token, state: boot.idleReturn.state, cards: boot.idleReturn.cards || [] });
 }
 
 let catalogHydrate = null;
@@ -944,6 +969,9 @@ function flushPendingIdleSeen() {
     throw error;
   }).finally(() => {
     idleSeenHydrate = null;
+    // Ids remembered while this ack was in flight (a quick second open) go out right away.
+    const unsent = pendingIdleSeen().filter((instanceId) => !instanceIds.includes(instanceId));
+    if (unsent.length) queueMicrotask(() => flushPendingIdleSeen().catch(() => {}));
   });
   return idleSeenHydrate;
 }
@@ -954,8 +982,7 @@ async function hydrateIdleQueue() {
     idleHydrate = (async () => {
       if (!model.token) await hydrateHome();
       const settled = await request("/api/idle/settle", { method: "POST" });
-      model.idleQueue = settled.cards || [];
-      applyHomePayload({ ...settled, state: settled.state });
+      applyHomePayload({ ...settled, cards: settled.cards || [], state: settled.state });
       prefetchIdleAssets();
       renderHome();
       refreshDailyChallenge();
@@ -989,7 +1016,7 @@ function applyExtrasPayload({ events, trades, leaderboards, activity, specials, 
   if (activity) model.activity = activity;
   if (specials) model.specials = specials;
   if (specialWindow !== undefined) model.specialWindow = specialWindow;
-  if (state) model.serverState = { ...model.serverState, ...state };
+  if (state) setServerState(state, { merge: true });
 }
 
 function paintExtras() {
@@ -1188,7 +1215,7 @@ async function recordEvent(type, details = {}) {
       body: JSON.stringify({ type, ...details }),
     });
     model.activity = await request("/api/activity");
-    model.serverState = await request("/api/state");
+    setServerState(await request("/api/state"));
     renderActivity();
     renderBinder();
     renderAchievements();
@@ -1962,6 +1989,7 @@ async function restoreSessionFromCode() {
       /* Recovery still switches the live session. */
     }
     model.serverState = state;
+    model.stateRevision = stateRevision(state) ?? 0;
     model.idleQueue = [];
     model.extrasReady = false;
     extrasHydrate = null;
@@ -2004,7 +2032,7 @@ async function saveProfile(event) {
     });
     model.serverState.displayName = profile.displayName;
     model.serverState.avatarId = profile.avatarId || model.serverState.avatarId;
-    model.serverState = { ...model.serverState, ...(await request("/api/home")).state };
+    setServerState((await request("/api/home")).state, { merge: true });
     applyExtrasPayload(await request("/api/community"));
     renderProfile();
     renderHome();
@@ -2102,7 +2130,7 @@ async function submitQuiz() {
     });
     stopQuizTimer();
     if (result.correct) {
-      model.serverState = result.state;
+      setServerState(result.state);
       model.idleQueue = result.cards || [];
       model.currentPack = {
         packId: result.cards?.[0] ? `quiz-${result.cards[0].instanceId}` : "quiz",
@@ -2435,7 +2463,7 @@ function startLevelRewardGrant() {
     clearPendingMutation(mutationScope);
     model.levelRewardReady = reward;
     model.levelRewardGrant = null;
-    if (reward.state) model.serverState = reward.state;
+    if (reward.state) setServerState(reward.state);
     prefetchLevelReward(reward.cards);
     renderHome();
     renderPendingLevelCue();
@@ -2507,7 +2535,9 @@ function renderProgression({ announce = false } = {}) {
   }
   const seen = seenLevel();
   const pending = progression.pendingRewards || [];
-  if (pending.length && !elements.levelDialog.open) {
+  if (pending.length && !elements.levelDialog.open && revealInProgress()) {
+    model.renderedLevel = Math.max(seen, progression.level);
+  } else if (pending.length && !elements.levelDialog.open) {
     openPendingLevelDialog();
     markLevelSeen(Math.min(...pending));
   } else if (!seen && !pending.length) {
@@ -2737,7 +2767,7 @@ async function openBibiDebugPack() {
   elements.openBibiPack.textContent = "מכינים…";
   try {
     model.currentPack = await request("/api/packs/bibi-demo", { method: "POST" });
-    model.serverState = await request("/api/state");
+    setServerState(await request("/api/state"));
     model.leaderboards = await request("/api/leaderboards");
     model.currentCardIndex = 0;
     model.previewMode = false;
@@ -2783,6 +2813,47 @@ function setPackAction(label, disabled, hint) {
   elements.packAction.textContent = label;
   elements.packAction.disabled = disabled;
   elements.packHint.textContent = hint;
+}
+
+const SEEN_ACK_MODES = new Set(["idle-return", "level-reward", "quiz"]);
+
+/**
+ * Opening a warehouse card = seeing it. Send the seen ack as soon as the reveal starts (the card is
+ * already granted server-side), so the server credits unique/level/faction during the reveal and
+ * its response is in hand before the player taps back to Today. Once per pack; idempotent server-side.
+ * The local ready-count decrement is display-only and is reconciled by the ack's server state.
+ */
+function acknowledgeRevealedPack(pack) {
+  if (!pack || pack.seenAck || model.previewMode || !SEEN_ACK_MODES.has(pack.mode)) return pack?.seenAck;
+  const instanceIds = (pack.cards || []).map(({ instanceId }) => instanceId).filter(Boolean);
+  const opened = new Set(instanceIds);
+  const ownershipReady = pack.mode === "idle-return" && pack.preparedReveal
+    ? pack.settlement.then((outcome) => {
+      if (outcome.error || !outcome.value?.cards?.some(({ instanceId }) => opened.has(instanceId))) {
+        throw outcome.error || new Error("PREPARED_PULL_NOT_MATERIALIZED");
+      }
+    })
+    : Promise.resolve();
+  pack.seenAck = ownershipReady.then(() => {
+    const alreadyPending = new Set(pendingIdleSeen());
+    const fresh = instanceIds.filter((instanceId) => !alreadyPending.has(instanceId));
+    rememberPendingIdleSeen(instanceIds);
+    const queued = model.idleQueue.filter(({ instanceId }) => opened.has(instanceId)).length;
+    model.idleQueue = model.idleQueue.filter(({ instanceId }) => !opened.has(instanceId));
+    if (fresh.length && queued) {
+      const unseenCount = Math.max(0, (model.serverState?.unseenCount || 0) - Math.min(fresh.length, queued));
+      model.serverState = { ...model.serverState, unseenCount };
+    }
+    return flushPendingIdleSeen();
+  }).catch(() => {
+    scheduleIdleRefill({ priority: "urgent" });
+  });
+  return pack.seenAck;
+}
+
+function revealInProgress() {
+  return Boolean(document.querySelector("#pack-view")?.classList.contains("active"))
+    && ["tearing", "fanned", "walkout", "complete-card"].includes(model.packPhase);
 }
 
 async function handlePackAction() {
@@ -2832,39 +2903,19 @@ async function handlePackAction() {
       renderStudio();
       showView("studio");
       showToast("Guided demo complete. Daily state was not changed.");
-    } else if (model.currentPack.mode === "idle-return" || model.currentPack.mode === "level-reward" || model.currentPack.mode === "quiz") {
-      const instanceIds = model.currentPack.cards.map(({ instanceId }) => instanceId).filter(Boolean);
-      const opened = new Set(instanceIds);
+    } else if (SEEN_ACK_MODES.has(model.currentPack.mode)) {
+      // The seen ack was sent when the reveal started (acknowledgeRevealedPack), so the server has
+      // usually credited progress/unique/faction by now and Today paints the server's numbers.
+      acknowledgeRevealedPack(model.currentPack);
+      const opened = new Set(model.currentPack.cards.map(({ instanceId }) => instanceId).filter(Boolean));
       model.idleQueue = model.idleQueue.filter(({ instanceId }) => !opened.has(instanceId));
-      model.serverState = {
-        ...model.serverState,
-        unseenCount: Math.max(0, (model.serverState?.unseenCount || 0) - opened.size),
-      };
-      applyHomePayload({ state: model.serverState });
+      // Leave the pack view first: a level-up dialog held back during the reveal opens here.
+      showView(model.idleQueue.length ? "home" : "binder");
       renderHome();
       renderBinder();
       renderAchievements();
       renderGrowth();
       renderProgression({ announce: true });
-      if (model.idleQueue.length) {
-        showView("home");
-      } else {
-        showView("binder");
-      }
-      const ownershipReady = model.currentPack.mode === "idle-return" && model.currentPack.preparedReveal
-        ? model.currentPack.settlement.then((outcome) => {
-          if (outcome.error || !outcome.value?.cards?.some(({ instanceId }) => opened.has(instanceId))) {
-            throw outcome.error || new Error("PREPARED_PULL_NOT_MATERIALIZED");
-          }
-        })
-        : Promise.resolve();
-      rememberPendingIdleSeen(instanceIds);
-      ownershipReady.then(() => {
-        model.idleQueue = model.idleQueue.filter(({ instanceId }) => !opened.has(instanceId));
-        return flushPendingIdleSeen();
-      }).catch(() => {
-        scheduleIdleRefill({ priority: "urgent" });
-      });
     } else {
       model.leaderboards = await request("/api/leaderboards");
       renderHome();
@@ -2947,6 +2998,7 @@ function maybeShowNumberedTip() {
 }
 
 function startWalkout() {
+  acknowledgeRevealedPack(model.currentPack);
   packTimers.forEach(clearTimeout);
   packTimers = [];
   resetPackRip();
@@ -3825,7 +3877,7 @@ async function saveStudioAchievements() {
       body: JSON.stringify({ achievements }),
     });
     model.gameConfig.achievements = saved.achievements;
-    model.serverState = await request("/api/state");
+    setServerState(await request("/api/state"));
     renderAchievements();
     showToast("Achievements published.");
   } catch (error) {
@@ -4182,7 +4234,7 @@ function settleReceivedCard(cardId, message) {
 }
 
 function applyTradeResult(result) {
-  if (result?.state) model.serverState = { ...model.serverState, ...result.state };
+  if (result?.state) setServerState(result.state, { merge: true });
   if (result?.trades) model.trades = result.trades.trades || result.trades;
   watchOpenTrade();
   renderBinder();
@@ -4198,7 +4250,7 @@ async function pollWatchedTrade() {
   if (watched?.status === "accepted") {
     const receivedCardId = model.watchedTrade.receivedCardId;
     model.watchedTrade = null;
-    model.serverState = await request("/api/state");
+    setServerState(await request("/api/state"));
     settleReceivedCard(receivedCardId, "מישהו קיבל את ההצעה. הקלף נכנס לאוסף.");
     return;
   }
@@ -4528,7 +4580,7 @@ async function claimTodaySpecial() {
   elements.todaySpecialsRow.disabled = true;
   try {
     model.currentPack = await request(`/api/events/${encodeURIComponent(windowOpen.id)}/pull`, { method: "POST" });
-    model.serverState = await request("/api/state");
+    setServerState(await request("/api/state"));
     model.specialWindow = { ...windowOpen, claimedToday: true };
     model.currentCardIndex = 0;
     model.previewMode = false;
@@ -4683,7 +4735,7 @@ async function pullEventCard() {
   elements.eventPull.disabled = true;
   try {
     model.currentPack = await request(`/api/events/${encodeURIComponent(eventId)}/pull`, { method: "POST" });
-    model.serverState = await request("/api/state");
+    setServerState(await request("/api/state"));
     model.events = (await request("/api/events")).events;
     model.currentCardIndex = 0;
     model.previewMode = false;
@@ -5599,7 +5651,7 @@ async function createTradeOffer() {
 async function simulateTradeAcceptance(tradeId) {
   try {
     const result = await request(`/api/trades/${encodeURIComponent(tradeId)}/simulate-accept`, { method: "POST" });
-    model.serverState = result.state;
+    setServerState(result.state);
     await refreshSocialBoards();
     showToast("ההחלפה המדומה הושלמה.");
   } catch {
@@ -5633,11 +5685,11 @@ async function cancelTradeOffer(tradeId) {
 async function saveFaction() {
   showWait("שומרים את המפלגה…");
   try {
-    model.serverState = await request("/api/faction", {
+    setServerState(await request("/api/faction", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ factionId: elements.factionSelect.value || null }),
-    });
+    }));
     renderProfile();
     renderBinder();
     renderGrowth();
@@ -5653,7 +5705,7 @@ async function resetDailyPack() {
   const resetButtons = [elements.debugResetPack, elements.headerDebugReset];
   resetButtons.forEach((button) => { button.disabled = true; });
   try {
-    model.serverState = await request("/api/debug/reset-pack", { method: "POST" });
+    setServerState(await request("/api/debug/reset-pack", { method: "POST" }));
     renderHome();
     renderGrowth();
     showToast("Daily pack reset. Today is ready again.");
@@ -5666,11 +5718,11 @@ async function resetDailyPack() {
 
 async function debugUnlockCard(cardId) {
   try {
-    model.serverState = await request("/api/debug/unlock-card", {
+    setServerState(await request("/api/debug/unlock-card", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ cardId }),
-    });
+    }));
     renderBinder();
     openCardDialog(cardId);
     showToast("Card unlocked for local testing.");

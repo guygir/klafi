@@ -7,6 +7,15 @@ import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
 
+/**
+ * Per-session write counter. Every state payload carries it as `revision`, so a client can drop a
+ * response that was computed before one it has already applied (responses can arrive out of order).
+ */
+export function bumpStateRevision(session) {
+  session.stateRevision = (Number(session.stateRevision) || 0) + 1;
+  return session.stateRevision;
+}
+
 export const CARD_HOLDER_SYNC_MS = 60 * 60 * 1000;
 
 export const EMPTY_STATE = {
@@ -196,6 +205,7 @@ export class JsonStore {
       const session = this.getSession(token);
       if (!session) return null;
       const result = await mutator(session);
+      bumpStateRevision(session);
       await this.persist();
       return result;
     });

@@ -1872,3 +1872,30 @@ test("studio debug pull is editor-gated, rarity-filtered, and writes nothing", a
   assert.deepEqual(stateAfter.body, stateBefore.body, "player state untouched");
   assert.ok(!stateAfter.body.instances?.some(({ acquiredBy }) => acquiredBy === "studio-debug"));
 });
+
+test("every state payload carries a monotonic revision and the seen ack returns credited progress", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-revision-"));
+  const clock = { value: Date.parse("2026-09-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const { body: { token } } = await api(running.base, "/api/session", { method: "POST" });
+  const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  const read = await api(running.base, "/api/state", { token });
+  assert.equal(typeof settled.body.state.revision, "number");
+  assert.equal(read.body.revision, settled.body.state.revision, "a read returns the revision of the last write");
+  const before = read.body.progression.unique;
+  const seen = await api(running.base, "/api/idle/seen", {
+    token,
+    method: "POST",
+    body: { instanceIds: [settled.body.cards[0].instanceId] },
+  });
+  assert.ok(seen.body.revision > settled.body.state.revision, "the seen ack is newer than the settle before it");
+  assert.equal(seen.body.progression.unique, before + 1, "the ack itself carries the credited progress");
+  assert.equal(seen.body.unseenCount, settled.body.state.unseenCount - 1);
+  const home = await api(running.base, "/api/home", { token });
+  assert.equal(home.body.state.revision, seen.body.revision);
+});
+

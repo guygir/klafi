@@ -1,0 +1,39 @@
+// Client/server state ordering. The server is authoritative; these helpers only decide which
+// server payload is newest and hide cards the player has already opened while the seen ack is in
+// flight. Nothing here invents state: every number still comes from a server payload.
+
+/** Server write counter carried as `state.revision`; missing (old server / cache) means unknown. */
+export function stateRevision(state) {
+  const revision = Number(state?.revision);
+  return Number.isFinite(revision) && revision >= 0 ? revision : null;
+}
+
+/**
+ * True when `incoming` was computed before a state the client already applied. Responses can land
+ * out of order (a settle sent before an open can arrive after the open's seen ack), so an older
+ * revision must never overwrite a newer one. Equal revisions are the same server data.
+ */
+export function isStaleState(incoming, appliedRevision = 0) {
+  const revision = stateRevision(incoming);
+  return revision != null && revision < (Number(appliedRevision) || 0);
+}
+
+/**
+ * Cards the player already opened stay hidden until the server confirms the seen ack. A payload
+ * computed before the ack still lists them as ready; drop them from the queue and from the count
+ * so the ready count never jumps back up after an open.
+ */
+export function overlayPendingSeen({ state, cards } = {}, pendingIds = []) {
+  const pending = new Set((pendingIds || []).filter(Boolean));
+  if (!pending.size || !state) return { state, cards };
+  let stillReady = 0;
+  let nextCards = cards;
+  if (Array.isArray(cards)) {
+    stillReady = cards.filter(({ instanceId }) => pending.has(instanceId)).length;
+    nextCards = cards.filter(({ instanceId }) => !pending.has(instanceId));
+  } else if (Array.isArray(state.instances)) {
+    stillReady = state.instances.filter(({ instanceId, seenAt }) => pending.has(instanceId) && !seenAt).length;
+  }
+  if (!stillReady || typeof state.unseenCount !== "number") return { state, cards: nextCards };
+  return { state: { ...state, unseenCount: Math.max(0, state.unseenCount - stillReady) }, cards: nextCards };
+}

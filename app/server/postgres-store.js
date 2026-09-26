@@ -78,6 +78,7 @@ function extrasFromSession(session) {
     loginDay: session.loginDay || null,
     loginStreak: session.loginStreak || 0,
     publicBinderSlug: session.publicBinderSlug || null,
+    stateRevision: Number(session.stateRevision) || 0,
   };
 }
 
@@ -486,6 +487,7 @@ export class PostgresStore {
       loginDay: extras.loginDay || null,
       loginStreak: extras.loginStreak || 0,
       publicBinderSlug: extras.publicBinderSlug || null,
+      stateRevision: Number(extras.stateRevision) || 0,
     };
   }
 
@@ -505,6 +507,8 @@ export class PostgresStore {
       this.remember(token, session);
       return;
     }
+    // Only real writes advance the revision (the row lock serializes them), so no-op settles stay free.
+    session.stateRevision = (Number(previous.stateRevision) || 0) + 1;
     await client.query(
       `WITH session_update AS (
          UPDATE kalpi_sessions SET
