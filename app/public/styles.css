@@ -4583,7 +4583,7 @@ body {
 .challenge-hero {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  align-items: stretch;
+  align-items: start;
   gap: 12px;
   margin: 0 0 10px;
   direction: ltr;
@@ -4592,38 +4592,26 @@ body {
 .challenge-copy {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 6px;
   min-width: 0;
+  padding-top: 0;
   direction: rtl;
 }
 
-.growth-grid .daily-challenge-desk .challenge-date {
-  margin: 0;
-  color: var(--civic);
-  font: 600 clamp(18px, 5vw, 24px)/1.1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
-}
-
-.daily-challenge-desk #daily-challenge-title {
-  margin: 0;
-  font-size: clamp(14px, 3.8vw, 17px);
-  font-weight: 500;
-  line-height: 1.3;
-}
-
+.growth-grid .daily-challenge-desk .challenge-date,
+.daily-challenge-desk #daily-challenge-title,
 .growth-grid .daily-challenge-desk .challenge-party {
   margin: 0;
   color: var(--ink);
-  font: 600 clamp(18px, 4.8vw, 24px)/1.15 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  font: 600 clamp(16px, 4.4vw, 20px)/1.25 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
 }
 
 .challenge-you {
   display: flex;
   flex-flow: column nowrap;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 100%;
+  justify-content: flex-start;
   min-width: 0;
   direction: rtl;
 }
@@ -4631,7 +4619,7 @@ body {
 .daily-challenge-leader-art {
   position: static;
   flex: 0 0 auto;
-  width: 96px;
+  width: 128px;
   aspect-ratio: 3 / 4;
   overflow: hidden;
   border: 1px solid rgba(44, 51, 48, 0.24);
@@ -4665,14 +4653,15 @@ body {
   margin: 0 0 10px;
 }
 
-.challenge-recap-score {
+.challenge-copy .challenge-recap-score {
   display: grid;
-  justify-items: center;
+  justify-items: start;
+  margin-top: 2px;
   min-width: 0;
 }
 
 .challenge-recap-place {
-  justify-self: center;
+  justify-self: start;
   padding: 4px 10px;
   border: 1px solid var(--rule);
   border-radius: 999px;
@@ -4815,7 +4804,7 @@ body {
     gap: 8px;
   }
   .daily-challenge-leader-art {
-    width: 88px;
+    width: 112px;
   }
   .app-shell.home-active .level-strip {
     grid-template-columns: minmax(128px, 148px) minmax(0, 1fr) 34px;
@@ -4936,10 +4925,10 @@ body {
   .contained-tabs button { min-height: 26px; }
   .daily-challenge-desk { padding: 8px 0 !important; }
   .challenge-hero { gap: 8px; margin-bottom: 8px; }
-  .daily-challenge-leader-art { width: 80px; margin: 0; }
-  .growth-grid .daily-challenge-desk .challenge-date { font-size: 18px; }
-  .daily-challenge-desk #daily-challenge-title { font-size: 14px; line-height: 1.25; }
-  .growth-grid .daily-challenge-desk .challenge-party { font-size: 18px; }
+  .daily-challenge-leader-art { width: 100px; margin: 0; }
+  .growth-grid .daily-challenge-desk .challenge-date,
+  .daily-challenge-desk #daily-challenge-title,
+  .growth-grid .daily-challenge-desk .challenge-party { font-size: 16px; }
   .challenge-recap { margin: 0 0 6px; gap: 4px; }
   .challenge-hist-plot { height: 72px; padding-top: 16px; }
   .challenge-hist-col { width: 22px; flex-basis: 22px; }
