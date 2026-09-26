@@ -743,6 +743,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /home\.hidden = granted/);
   assert.doesNotMatch(javascript, /home\.hidden = unsupported \|\| granted \|\| denied/);
   assert.match(javascript, /קלף הבונוס כבר נכנס לאוסף/);
+  assert.match(javascript, /התקדמת <span class="level-rank-name">מ\$\{escapeHtml\(fromRank\)\}<\/span> <span class="level-rank-name">ל\$\{escapeHtml\(toRank\)\}<\/span>/);
+  assert.match(javascript, /const LEVEL_CHEERS = Object\.freeze\(\[/);
+  assert.match(javascript, /פששש…/);
+  assert.match(javascript, /ידעתי שתצליח!/);
+  assert.match(html, /id="level-dialog-cheer"/);
+  assert.doesNotMatch(javascript, /הגעתם לרמה/);
+  assert.doesNotMatch(javascript, /דרגה חדשה ·/);
+  assert.match(html, /<p class="eyebrow">עלית רמה!<\/p>/);
+  assert.doesNotMatch(html, /עליתם רמה|>רמה חדשה</);
   assert.doesNotMatch(javascript, /קלף בונוס נכנס למחסן/);
   assert.doesNotMatch(javascript, /level-unlock-faces/);
   assert.doesNotMatch(javascript, /openPendingLevelDialog\(\);\s*return;/);

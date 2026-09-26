@@ -229,6 +229,7 @@ const elements = {
   levelNext: document.querySelector("#level-next"),
   levelDialog: document.querySelector("#level-dialog"),
   levelDialogTitle: document.querySelector("#level-dialog-title"),
+  levelDialogCheer: document.querySelector("#level-dialog-cheer"),
   levelUnlocks: document.querySelector("#level-unlocks"),
   levelDialogReward: document.querySelector("#level-dialog-reward"),
   closeLevel: document.querySelector("#close-level"),
@@ -2594,12 +2595,9 @@ function markLevelSeen(level) {
 }
 
 function levelUnlockItems(fromLevel, toLevel) {
-  const ranks = model.gameConfig?.progression?.rankNames || model.gameConfig?.progression?.ranks || [];
   const avatars = model.serverState?.avatars || [];
   const items = [];
   for (let level = fromLevel + 1; level <= toLevel; level += 1) {
-    const rank = ranks[level - 1];
-    if (rank) items.push(`דרגה חדשה · ${rank}`);
     items.push("קלף בונוס");
     avatars
       .filter((avatar) => Number(avatar.unlockLevel) === level)
@@ -2608,9 +2606,25 @@ function levelUnlockItems(fromLevel, toLevel) {
   return [...new Set(items)];
 }
 
+const LEVEL_CHEERS = Object.freeze([
+  "פששש…",
+  "יפה!",
+  "מטורף!!",
+  "מרשים מאוד.",
+  "הגיע הזמן באמת…",
+  "ידעתי שתצליח!",
+]);
+
+function pickLevelCheer() {
+  return LEVEL_CHEERS[Math.floor(Math.random() * LEVEL_CHEERS.length)];
+}
+
 function fillLevelDialog(progression, fromLevel) {
   const toLevel = fromLevel + 1;
-  elements.levelDialogTitle.textContent = `הגעתם לרמה ${toLevel}`;
+  const fromRank = rankNameAtLevel(fromLevel) || progression.rank;
+  const toRank = rankNameAtLevel(toLevel) || progression.nextRank || progression.rank;
+  elements.levelDialogTitle.innerHTML = `התקדמת <span class="level-rank-name">מ${escapeHtml(fromRank)}</span> <span class="level-rank-name">ל${escapeHtml(toRank)}</span>`;
+  if (elements.levelDialogCheer) elements.levelDialogCheer.textContent = pickLevelCheer();
   const items = levelUnlockItems(fromLevel, toLevel);
   if (elements.levelUnlocks) {
     elements.levelUnlocks.hidden = !items.length;
