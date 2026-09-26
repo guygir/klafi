@@ -2457,9 +2457,10 @@ function renderChallengeRecap() {
         ? "מקום 1 · רק אתם אספתם היום"
         : `מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`;
   if (elements.dailyChallengeScore) {
+    const ranked = place.startsWith("מקום");
     elements.dailyChallengeScore.innerHTML = `
       <strong>${score}<span>קלפים</span></strong>
-      <b class="challenge-recap-place">${escapeHtml(place)}</b>
+      <b class="challenge-recap-place${ranked ? "" : " is-status"}">${escapeHtml(place)}</b>
     `;
   }
   if (!elements.dailyChallengeRecap) return;
