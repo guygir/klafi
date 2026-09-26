@@ -3367,7 +3367,9 @@ function filterSetChip(set, label, count, active) {
 }
 
 function binderPartyPool(cards = []) {
-  return model.binderParty ? cards.filter((card) => card.set === model.binderParty) : cards;
+  const openIds = new Set(openBinderReleaseIds());
+  const live = cards.filter((card) => openIds.has(card.releaseSetId) && !card.eventOnly);
+  return model.binderParty ? live.filter((card) => card.set === model.binderParty) : live;
 }
 
 function binderSetChipCount(set, cards, { inventory = null, ownedOnly = false, numberedIds = null, numberedCards = null } = {}) {
