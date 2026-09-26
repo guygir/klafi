@@ -3370,10 +3370,9 @@ function binderPartyPool(cards = []) {
   return model.binderParty ? cards.filter((card) => card.set === model.binderParty) : cards;
 }
 
-function binderSetChipCount(set, cards, { inventory = null, numberedIds = null, numberedCards = null } = {}) {
+function binderSetChipCount(set, cards, { inventory = null, ownedOnly = false, numberedIds = null, numberedCards = null } = {}) {
   const pool = binderPartyPool(cards);
-  const ownedOnly = Boolean(inventory);
-  const counted = (list) => (ownedOnly ? list.filter((card) => inventory[card.id]) : list);
+  const counted = (list) => (ownedOnly && inventory ? list.filter((card) => inventory[card.id]) : list);
   if (set === "ALL") return counted(pool).length;
   if (set === "NUMBERED") {
     if (numberedCards) return counted(binderPartyPool(numberedCards)).length;
@@ -3632,10 +3631,7 @@ function renderShowcaseBinder() {
         <span>מפלגה</span>
         <select data-showcase-party aria-label="סינון לפי מפלגה">
           <option value="">כל המפלגות</option>
-          ${partyOptions.map(([id, name]) => {
-            const count = playerCards.filter((card) => card.set === id).length;
-            return `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)} · ${count}</option>`;
-          }).join("")}
+          ${partyOptions.map(([id, name]) => `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)}</option>`).join("")}
         </select>
       </label>`,
       `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
@@ -3910,10 +3906,7 @@ function renderBinder() {
       <span>מפלגה</span>
       <select data-binder-party aria-label="סינון לפי מפלגה">
         <option value="">כל המפלגות</option>
-        ${partyOptions.map(([id, name]) => {
-          const count = playerCards.filter((card) => card.set === id && inventory[card.id]).length;
-          return `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)} · ${count}</option>`;
-        }).join("")}
+        ${partyOptions.map(([id, name]) => `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)}</option>`).join("")}
       </select>
     </label>`,
     `<label class="filter-owned${(guest || model.binderOwnedOnly) ? " active" : ""}">
@@ -3922,7 +3915,12 @@ function renderBinder() {
     </label>`,
     `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
     ...setOrder.map((set) => {
-      const count = binderSetChipCount(set, playerCards, { inventory, numberedIds });
+      const count = binderSetChipCount(set, playerCards, {
+        inventory,
+        numberedIds,
+        numberedCards: possibleNumberedCards(),
+        ownedOnly: guest || model.binderOwnedOnly,
+      });
       const active = model.binderFilter === set;
       return filterSetChip(set, setLabels[set] || set, count, active);
     }),
