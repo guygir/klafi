@@ -27,7 +27,7 @@ import {
   stampKey,
   stampMax,
 } from "./numbered.js";
-import { LEAGUE_NAME_MAX, publicLeague } from "./leagues.js";
+import { LEAGUE_NAME_MAX, currentLeagueOf, publicLeague } from "./leagues.js";
 import { qrSvg } from "./qr-svg.js";
 import { eventClaimKey, eventClaimMode, eventReward, isEventClaimed, openSpecialWindow } from "./special-window.js";
 import { requestOrigin, serveBinderShareLanding, servePlayerBinderShareLanding, serveShareLanding } from "./share-landing.js";
@@ -324,6 +324,24 @@ function normalizeDisplayName(value) {
   if (normalized.length < 2 || normalized.length > 24) return null;
   if (!/^[\p{L}\p{N} ._'״׳-]+$/u.test(normalized)) return null;
   return normalized;
+}
+
+const LEAGUE_ERROR_MESSAGES = {
+  ALREADY_IN_LEAGUE: "אפשר להיות רק בליגה אחת. כדי לפתוח או להצטרף לליגה אחרת, קודם עזבו את הליגה שלכם.",
+  LEAGUE_FULL: "הליגה מלאה — אפשר עד 32 שחקנים.",
+  LEAGUE_NOT_FOUND: "הקוד לא נמצא.",
+  NOT_IN_LEAGUE: "אתם כבר לא בליגה הזו.",
+};
+
+function leagueErrorStatus(error, fallback) {
+  if (error === "UNAUTHORIZED") return 401;
+  if (error === "ALREADY_IN_LEAGUE" || error === "LEAGUE_FULL") return 409;
+  if (error === "LEAGUE_NOT_FOUND" || error === "NOT_IN_LEAGUE") return 404;
+  return fallback;
+}
+
+function leagueErrorBody(error) {
+  return LEAGUE_ERROR_MESSAGES[error] ? { error, message: LEAGUE_ERROR_MESSAGES[error] } : { error };
 }
 
 /** League name: normalized like a display name, truncated to LEAGUE_NAME_MAX code points. */
@@ -1785,7 +1803,7 @@ export async function createKalpiApp({
           const name = normalizeLeagueName(input.name) || "ליגה";
           const created = await store.createLeague(token, name, now());
           if (created.error) {
-            json(response, created.error === "UNAUTHORIZED" ? 401 : 400, { error: created.error });
+            json(response, leagueErrorStatus(created.error, 400), leagueErrorBody(created.error));
             return;
           }
           json(response, 201, { league: await presentLeague(created.league, token, request) });
@@ -1796,18 +1814,32 @@ export async function createKalpiApp({
           const input = await readJson(request);
           const joined = await store.joinLeague(token, input.code);
           if (joined.error) {
-            const status = joined.error === "LEAGUE_FULL" ? 409 : joined.error === "UNAUTHORIZED" ? 401 : 404;
-            json(response, status, { error: joined.error });
+            json(response, leagueErrorStatus(joined.error, 404), leagueErrorBody(joined.error));
             return;
           }
           json(response, 200, { league: await presentLeague(joined.league, token, request) });
           return;
         }
 
+        // One league per player: the list carries at most one room. Legacy players who joined several
+        // before the rule see the most recent; leaving it reveals the next, until they are in none.
         if (request.method === "GET" && url.pathname === "/api/leagues") {
-          const rooms = await store.listLeagues(token);
+          const current = currentLeagueOf(await store.listLeagues(token));
+          json(response, 200, { leagues: current ? [await presentLeague(current, token, request)] : [] });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/leagues/leave") {
+          const input = await readJson(request);
+          const left = await store.leaveLeague(token, input.code);
+          if (left.error) {
+            json(response, leagueErrorStatus(left.error, 404), leagueErrorBody(left.error));
+            return;
+          }
+          const next = currentLeagueOf(await store.listLeagues(token));
           json(response, 200, {
-            leagues: await Promise.all(rooms.map((league) => presentLeague(league, token, request))),
+            left: true,
+            leagues: next ? [await presentLeague(next, token, request)] : [],
           });
           return;
         }

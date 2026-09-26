@@ -2455,6 +2455,56 @@ img.mini-art {
   font-weight: 700;
 }
 .league-board li.current-player strong { font-weight: 700; }
+/* Leave: a quiet text button at the foot of the room, then an inline confirm (no dialog). */
+.league-room-foot {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--foil) 30%, transparent);
+}
+.league-leave,
+.league-leave-confirm button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--danger-mute) 45%, transparent);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--danger-mute);
+  font: 600 13px/1 "IBM Plex Sans Hebrew", sans-serif;
+  cursor: pointer;
+}
+.league-leave-confirm { display: grid; gap: 8px; width: 100%; }
+.league-leave-confirm p { margin: 0; font: 500 13px/1.4 "IBM Plex Sans Hebrew", sans-serif; }
+.league-leave-confirm div { display: flex; flex-wrap: wrap; gap: 8px; }
+.league-leave-confirm .league-leave-yes {
+  border-color: var(--danger-mute);
+  background: var(--danger-mute);
+  color: var(--paper);
+}
+.league-leave-confirm [data-leave-league-cancel] {
+  border-color: color-mix(in srgb, var(--ink) 26%, transparent);
+  color: var(--ink);
+}
+/* First visit with no cached room: a quiet skeleton instead of the "no league" setup. */
+.league-skeleton {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--foil) 40%, var(--rule));
+  border-radius: 10px;
+}
+.league-skeleton span {
+  display: block;
+  height: 14px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  animation: league-skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+.league-skeleton span:first-child { width: 55%; height: 20px; }
+.league-skeleton span:last-child { width: 80%; }
+@keyframes league-skeleton-pulse { to { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .league-skeleton span { animation: none; } }
 .league-board .report-link.inline {
   display: inline-flex;
   align-items: center;
@@ -2482,7 +2532,7 @@ img.mini-art {
   position: fixed;
   z-index: 30;
   left: 50%;
-  bottom: 92px;
+  bottom: calc(var(--nav-clearance) + 10px);
   max-width: calc(100% - 32px);
   padding: 10px 14px;
   border-radius: 9px;
@@ -2576,7 +2626,9 @@ img.mini-art {
 body { background: var(--paper); direction: rtl; }
 .paper-noise { opacity: 0.05; }
 .app-shell { position: relative; isolation: isolate; max-width: 820px; }
-.app-shell > :not(.site-card-peeks):not(.klafi-tips):not(.top-nav-row):not(.numbered-tip) { position: relative; z-index: 1; }
+/* .toast stays fixed: as a relative grid child it took an implicit 20px row under #main, a second
+   bottom reserve on top of --nav-clearance on every view. */
+.app-shell > :not(.site-card-peeks):not(.klafi-tips):not(.top-nav-row):not(.numbered-tip):not(.toast) { position: relative; z-index: 1; }
 h1, h2, h3 { font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.035em; }
 .wordmark b { color: var(--ink); font-size: 24px; }
@@ -3857,29 +3909,41 @@ body {
   padding-bottom: var(--nav-clearance);
 }
 
+/* Bottom reserve = exactly the cue row: no view margin, a 4px grid tail, and the "more cards" cue in
+   its own 16px row under the grid (never an overlay on the card names). At the end of the grid the
+   cue text hides (binder-at-end) but keeps its row, so nothing jumps. */
 #binder-view.view.active {
   position: relative;
   min-height: 0;
+  margin-bottom: 0;
   padding-bottom: 0;
 }
 
 #binder-view.view.active .binder-grid {
-  padding-bottom: 22px;
+  padding-bottom: 4px;
+  /* Row snapping trapped the grid: on short phones a card row is taller than the grid's viewport, and
+     snapping back to the row start kept the last names under the cue (375x667 never reached the end). */
+  scroll-snap-type: none;
 }
 
 #binder-pager.binder-scroll-dock {
-  position: absolute;
-  z-index: 2;
-  left: 0;
-  right: 0;
-  bottom: 6px;
+  position: static;
+  z-index: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: auto;
-  flex: none;
-  margin: 0;
+  flex: 0 0 16px;
+  height: 16px;
+  margin: 2px 0 0;
   min-height: 0;
-  padding: 8px 12px 0;
-  background: linear-gradient(to top, var(--paper) 48%, color-mix(in srgb, var(--paper) 70%, transparent) 82%, transparent);
+  padding: 0 12px;
+  background: none;
   pointer-events: none;
+}
+
+#binder-view.binder-at-end #binder-pager .binder-scroll-hint {
+  visibility: hidden;
 }
 
 .view-pager:empty { display: none; }
@@ -4335,6 +4399,58 @@ body {
 .trade-desk .trade-actions #trade-create,
 .trade-desk .trade-actions #trade-demo {
   width: 100%;
+}
+
+/* Trade compose: the publish button shares the title row (RTL: title right, button left), and each
+   side stacks a large card over its two selects. The thumb scales with the viewport width and height
+   so both cards stay whole from 320px phones to desktop. */
+.trade-desk-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  margin: 0 0 4px;
+  direction: rtl;
+}
+.trade-desk .trade-desk-head h2 {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(16px, 4.6vw, 20px);
+  line-height: 1.2;
+}
+#app .trade-desk .trade-desk-head #trade-create {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 16px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.trade-desk .trade-actions:not(:has(> :not([hidden]))) { display: none; }
+#app .trade-desk .trade-form {
+  --trade-thumb-w: clamp(72px, min(30vw, 14dvh), 128px);
+  margin-top: 2px;
+}
+#app .trade-desk .trade-form fieldset {
+  padding: 6px 8px 8px !important;
+}
+#app .trade-desk .trade-choice-row {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: stretch;
+  gap: 6px;
+}
+#app .trade-desk .trade-compose .trade-thumb {
+  justify-self: center;
+}
+#app .trade-desk .trade-compose .trade-thumb-frame {
+  width: var(--trade-thumb-w);
+  height: calc(var(--trade-thumb-w) * 96 / 63);
+}
+#app .trade-desk .trade-choice-fields label {
+  margin-top: 2px !important;
 }
 
 .faction-member-board {

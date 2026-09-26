@@ -2,7 +2,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
 import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
-import { isStaleState, keepDailyRaceLeaders, overlayPendingSeen, stateRevision } from "./state-sync.js";
+import { isStaleState, mergeLeaderboards, overlayPendingSeen, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import {
   exitWalkoutSunburst,
@@ -88,6 +88,9 @@ const model = {
   extrasReady: false,
   specialWindow: null,
   leagues: [],
+  leaguesKnown: false,
+  leaguesCacheToken: null,
+  leagueLeaveConfirm: null,
   showcase: false,
   cardHolders: { holders: {}, numberedHolders: {} },
   cardHoldersReady: false,
@@ -730,7 +733,7 @@ function applyFullBoot(boot) {
   model.gameConfig = boot.gameConfig;
   applyStudioAccess(boot.studioContent);
   applyVisualConfig();
-  model.leaderboards = boot.leaderboards;
+  model.leaderboards = mergeLeaderboards(null, boot.leaderboards);
   model.specials = boot.specials;
   model.serverState = boot.idleReturn.state;
   model.idleQueue = boot.idleReturn.cards || [];
@@ -1016,7 +1019,7 @@ function scheduleIdleRefill({ priority = "buffered" } = {}) {
 function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state, specialWindow }) {
   if (events) model.events = events.events || events;
   if (trades) model.trades = trades.trades || trades;
-  if (leaderboards) model.leaderboards = keepDailyRaceLeaders(model.leaderboards, leaderboards);
+  if (leaderboards) model.leaderboards = mergeLeaderboards(model.leaderboards, leaderboards);
   if (activity) model.activity = activity;
   if (specials) model.specials = specials;
   if (specialWindow !== undefined) model.specialWindow = specialWindow;
@@ -1048,6 +1051,8 @@ async function hydrateExtras() {
       const jobs = [
         ["community", () => request("/api/community")],
       ];
+      // Prefetch the league room with the community extras so the Leagues tab opens on it.
+      if (model.token) jobs.push(["leagues", () => hydrateLeagues()]);
       if (studioSecret()) {
         jobs.push(["events", () => request("/api/events")]);
         jobs.push(["specials", () => request("/api/specials")]);
@@ -1055,6 +1060,7 @@ async function hydrateExtras() {
       await Promise.all(jobs.map(async ([key, run]) => {
         try {
           const payload = await run();
+          if (key === "leagues") return;
           applyExtrasPayload(key === "community" ? payload : { [key]: payload });
           paintExtras();
         } catch {
@@ -1864,13 +1870,82 @@ function leagueFaceMarkup(entry = {}) {
   return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
 }
 
+// Leagues: one per player (server-enforced). The room is cached per session token so Community opens
+// on it at once; /api/leagues refreshes it silently (prefetched with the community extras). Until the
+// first answer, with no cache, the desk shows a skeleton, never the "no league" setup.
+const LEAGUE_CACHE_KEY = "klafi:leagues";
+
+function readLeagueCache() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(LEAGUE_CACHE_KEY) || "null");
+    return cached && cached.token === model.token && Array.isArray(cached.leagues) ? cached.leagues : null;
+  } catch {
+    return null;
+  }
+}
+
+function setLeagues(leagues) {
+  model.leagues = (leagues || []).slice(0, 1);
+  model.leaguesKnown = true;
+  if (model.leagueLeaveConfirm && !model.leagues.some(({ code }) => code === model.leagueLeaveConfirm)) {
+    model.leagueLeaveConfirm = null;
+  }
+  try {
+    if (model.token) localStorage.setItem(LEAGUE_CACHE_KEY, JSON.stringify({ token: model.token, leagues: model.leagues }));
+  } catch {
+    /* A full storage only costs the instant first paint. */
+  }
+}
+
+function ensureLeagueCache() {
+  if (model.leaguesKnown || model.leaguesCacheToken === model.token) return;
+  model.leaguesCacheToken = model.token;
+  const cached = readLeagueCache();
+  // Only a cached room is trusted for the first paint; a cached "no league" waits for the server
+  // (the player may have joined elsewhere), so the empty setup never flashes before a room.
+  if (cached?.length) {
+    model.leagues = cached.slice(0, 1);
+    model.leaguesKnown = true;
+  }
+}
+
+function leagueLeaveMarkup(league) {
+  if (model.leagueLeaveConfirm !== league.code) {
+    return `<button type="button" class="league-leave" data-leave-league="${escapeHtml(league.code)}">עזיבת ליגה</button>`;
+  }
+  return `<div class="league-leave-confirm" role="group" aria-label="אישור עזיבת הליגה">
+        <p>${Number(league.memberCount) <= 1
+          ? `לעזוב את «${escapeHtml(league.name)}»? אתם האחרונים בליגה, אז היא תיסגר.`
+          : `לעזוב את «${escapeHtml(league.name)}»? הכוכבים שלכם נשארים, ואפשר לחזור עם הקוד.`}</p>
+        <div>
+          <button type="button" class="league-leave-yes" data-leave-league-confirm="${escapeHtml(league.code)}">כן, לעזוב</button>
+          <button type="button" data-leave-league-cancel>ביטול</button>
+        </div>
+      </div>`;
+}
+
 function renderLeagues() {
   if (!elements.leagueRooms) return;
-  const rooms = model.leagues || [];
+  ensureLeagueCache();
+  const rooms = (model.leagues || []).slice(0, 1);
   const desk = elements.leagueRooms.closest(".league-desk");
+  const pending = !model.leaguesKnown && Boolean(model.token) && !model.showcase;
   desk?.classList.toggle("has-rooms", rooms.length > 0);
+  desk?.classList.toggle("leagues-pending", pending);
   const setup = desk?.querySelector(".league-setup");
-  if (setup) setup.open = rooms.length === 0;
+  if (setup) {
+    // One league per player: with a room, the create/join form only reappears to show a rejection
+    // (e.g. an invite link for a second league).
+    const status = Boolean(elements.leagueStatus?.textContent);
+    setup.hidden = pending || (rooms.length > 0 && !status);
+    setup.open = rooms.length === 0 || status;
+  }
+  if (pending) {
+    elements.leagueRooms.innerHTML = `<div class="league-skeleton" aria-busy="true" aria-label="טוענים את הליגה…">
+      <span></span><span></span><span></span>
+    </div>`;
+    return;
+  }
   if (!rooms.length) {
     elements.leagueRooms.innerHTML = '<p class="work-note">עדיין אין ליגה. פתחו אחת, או הזינו קוד הזמנה.</p>';
     return;
@@ -1896,22 +1971,49 @@ function renderLeagues() {
             <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
           </li>`).join("")}
       </ol>
+      <footer class="league-room-foot">${leagueLeaveMarkup(league)}</footer>
     </article>`).join("");
 }
 
+let leaguesHydrate = null;
+
 async function hydrateLeagues() {
   if (!model.token || model.showcase) return;
-  try {
-    const payload = await request("/api/leagues");
-    model.leagues = payload.leagues || [];
+  if (leaguesHydrate) return leaguesHydrate;
+  leaguesHydrate = (async () => {
+    try {
+      const payload = await request("/api/leagues");
+      setLeagues(payload.leagues);
+    } catch {
+      /* Community still opens without a league list; a cached room stays. */
+      if (!model.leaguesKnown) {
+        model.leagues = [];
+        model.leaguesKnown = true;
+      }
+    }
     renderLeagues();
-  } catch {
-    /* Community still opens without a league list. */
-  }
+  })().finally(() => {
+    leaguesHydrate = null;
+  });
+  return leaguesHydrate;
 }
 
 function setLeagueStatus(message) {
   if (elements.leagueStatus) elements.leagueStatus.textContent = message || "";
+  const setup = elements.leagueStatus?.closest(".league-setup");
+  if (setup && message) {
+    setup.hidden = false;
+    setup.open = true;
+  } else if (setup && !message && model.leagues?.length) {
+    setup.hidden = true;
+  }
+}
+
+function leagueErrorCopy(error, fallback) {
+  if (error?.body?.message) return error.body.message;
+  if (error?.body?.error === "LEAGUE_FULL") return "הליגה מלאה — אפשר עד 32 שחקנים.";
+  if (error?.status === 404) return "הקוד לא נמצא.";
+  return fallback;
 }
 
 async function createLeagueRoom() {
@@ -1923,14 +2025,41 @@ async function createLeagueRoom() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: elements.leagueNameInput?.value || "" }),
     });
-    model.leagues = [payload.league, ...(model.leagues || []).filter((room) => room.code !== payload.league.code)];
+    setLeagues([payload.league]);
     renderLeagues();
     if (elements.leagueNameInput) elements.leagueNameInput.value = "";
     showToast("הליגה נפתחה.");
-  } catch {
-    setLeagueStatus("לא הצלחנו לפתוח ליגה עכשיו.");
+  } catch (error) {
+    setLeagueStatus(leagueErrorCopy(error, "לא הצלחנו לפתוח ליגה עכשיו."));
+    if (error?.body?.error === "ALREADY_IN_LEAGUE") hydrateLeagues().catch(() => {});
   } finally {
     if (elements.createLeague) elements.createLeague.disabled = false;
+  }
+}
+
+async function leaveLeagueRoom(code) {
+  const button = elements.leagueRooms?.querySelector("[data-leave-league-confirm]");
+  if (button) button.disabled = true;
+  try {
+    const payload = await request("/api/leagues/leave", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    model.leagueLeaveConfirm = null;
+    setLeagueStatus("");
+    setLeagues(payload.leagues);
+    renderLeagues();
+    showToast("עזבתם את הליגה.");
+    if (!model.leagues.length) elements.leagueNameInput?.focus({ preventScroll: true });
+  } catch (error) {
+    model.leagueLeaveConfirm = null;
+    if (error?.body?.error === "NOT_IN_LEAGUE") {
+      await hydrateLeagues();
+      return;
+    }
+    renderLeagues();
+    showToast("לא הצלחנו לעזוב את הליגה עכשיו.");
   }
 }
 
@@ -1948,16 +2077,12 @@ async function joinLeagueFromInput(rawCode) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ code }),
     });
-    model.leagues = [payload.league, ...(model.leagues || []).filter((room) => room.code !== payload.league.code)];
+    setLeagues([payload.league]);
     renderLeagues();
     if (elements.leagueJoinInput) elements.leagueJoinInput.value = "";
     showToast("נכנסתם לליגה.");
   } catch (error) {
-    setLeagueStatus(error.status === 409
-      ? "הליגה מלאה — אפשר עד 32 שחקנים."
-      : error.status === 404
-        ? "הקוד לא נמצא."
-        : "לא הצלחנו להצטרף לליגה.");
+    setLeagueStatus(leagueErrorCopy(error, "לא הצלחנו להצטרף לליגה."));
   } finally {
     if (elements.joinLeague) elements.joinLeague.disabled = false;
   }
@@ -1988,6 +2113,9 @@ async function restoreSessionFromCode() {
       headers: { authorization: `Bearer ${token}` },
     });
     model.token = token;
+    model.leagues = [];
+    model.leaguesKnown = false;
+    model.leaguesCacheToken = null;
     localStorage.setItem(SESSION_KEY, token);
     try {
       localStorage.removeItem(PENDING_MUTATIONS_KEY);
@@ -2286,10 +2414,16 @@ function challengeRecap() {
   }));
   const field = Math.max(1, ...bins.map(({ count }) => count));
   const hasCrowd = leaders.length >= 2;
-  const meta = current
-    ? `${current.cards} קלפים · ${hasCrowd ? `מקום ${place}` : "מחכים לעוד שחקנים"}`
-    : "עוד לא אספתם מהסיעה של היום";
-  return { current, place, bins, field, meta, players: leaders.length, hasCrowd };
+  // The server hides other players on 0, so the board is "who scored today" plus your own row.
+  const othersScored = leaders.filter((entry) => !entry.current && Number(entry.cards) > 0).length;
+  const meta = !current
+    ? "עוד לא אספתם מהסיעה של היום"
+    : Number(current.cards) > 0
+      ? `${current.cards} קלפים · מקום ${place}${othersScored ? "" : " · רק אתם אספתם היום"}`
+      : othersScored
+        ? `עוד לא אספתם היום · ${othersScored === 1 ? "שחקן אחד כבר אסף" : `${othersScored} שחקנים כבר אספו`}`
+        : "עוד אף אחד לא אסף היום — פתחו ותהיו ראשונים";
+  return { current, place, bins, field, meta, players: leaders.length, hasCrowd, othersScored };
 }
 
 function renderChallengeRecap() {
@@ -2298,11 +2432,14 @@ function renderChallengeRecap() {
   elements.dailyChallengeRecap.hidden = false;
   elements.dailyChallengeRecap.style.setProperty("--bins", String(recap.bins.length));
   const score = recap.current ? recap.current.cards : 0;
-  const place = !recap.hasCrowd
-    ? "מחכים לעוד שחקנים"
-    : recap.place
-    ? `מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`
-    : "עוד לא בטבלה";
+  // Players on 0 are hidden (except you), so "alone" means nobody else scored yet, not an empty game.
+  const place = !recap.current
+    ? "עוד לא בטבלה"
+    : !score
+      ? recap.othersScored ? "עוד לא אספתם היום" : "עוד אף אחד לא אסף היום"
+      : !recap.othersScored
+        ? "מקום 1 · רק אתם אספתם היום"
+        : `מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`;
   elements.dailyChallengeRecap.innerHTML = `
     <div class="challenge-recap-score">
       <small>היום אספתם מהסיעה</small>
@@ -2310,7 +2447,7 @@ function renderChallengeRecap() {
       <b class="challenge-recap-place">${escapeHtml(place)}</b>
     </div>
     ${recap.hasCrowd ? `<div class="challenge-hist">
-      <small>איך כולם אספו היום</small>
+      <small>כמה קלפים אספו היום</small>
       <div class="challenge-hist-plot" dir="ltr" aria-hidden="true">
         ${recap.bins.map((bin, index) => `<div class="challenge-hist-col${bin.you ? " you" : ""}">
           <b style="height:${bin.count ? Math.max(4, Math.round((bin.count / recap.field) * 100)) : 0}%; animation-delay:${index * 40}ms"></b>
@@ -2785,7 +2922,7 @@ async function openBibiDebugPack() {
   try {
     model.currentPack = await request("/api/packs/bibi-demo", { method: "POST" });
     setServerState(await request("/api/state"));
-    model.leaderboards = await request("/api/leaderboards");
+    model.leaderboards = mergeLeaderboards(model.leaderboards, await request("/api/leaderboards"));
     model.currentCardIndex = 0;
     model.previewMode = false;
     model.currentPack.cards = model.currentPack.cards.slice(0, 1);
@@ -2938,7 +3075,7 @@ async function handlePackAction() {
       renderGrowth();
       renderProgression({ announce: true });
     } else {
-      model.leaderboards = await request("/api/leaderboards");
+      model.leaderboards = mergeLeaderboards(model.leaderboards, await request("/api/leaderboards"));
       renderHome();
       renderBinder();
       renderGrowth();
@@ -3791,6 +3928,15 @@ function renderBinder() {
   const nextStrip = elements.binderFilters?.querySelector(".filter-sets");
   if (nextStrip) nextStrip.scrollLeft = filterX;
   if (elements.binderGrid) elements.binderGrid.scrollTop = gridY;
+  syncBinderScrollCue();
+}
+
+// The "more cards" cue sits in its own row under the grid; hide its text once the last row is in view.
+function syncBinderScrollCue() {
+  const grid = elements.binderGrid;
+  if (!grid) return;
+  const atEnd = grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 4;
+  document.querySelector("#binder-view")?.classList.toggle("binder-at-end", atEnd);
 }
 
 function badgeArtwork(id) {
@@ -4284,7 +4430,7 @@ async function pollWatchedTrade() {
 async function refreshDailyChallenge() {
   try {
     const boards = await request("/api/leaderboards");
-    model.leaderboards = boards;
+    model.leaderboards = mergeLeaderboards(model.leaderboards, boards);
     renderTodayDocket();
     if (model.communityPage === "challenge" || model.communityPage === "collectors") renderGrowth();
   } catch {
@@ -4361,7 +4507,10 @@ function renderGrowth() {
   communityTabs?.removeAttribute("hidden");
   growthGrid?.removeAttribute("hidden");
   syncCommunityPage();
-  if (model.communityPage === "leagues") hydrateLeagues().catch(() => {});
+  if (model.communityPage === "leagues") {
+    renderLeagues();
+    hydrateLeagues().catch(() => {});
+  }
   if (!model.catalog.length || !model.serverState || !elements.tradePreview) {
     setEmptyNote(elements.growthEmpty, pendingCopy("טוענים את הקהילה…", "לא הצלחנו לטעון את הקהילה."), {
       pending: !catalogFailed,
@@ -4457,6 +4606,8 @@ function renderGrowth() {
   if (elements.tradeActive && elements.tradeCompose) {
     elements.tradeActive.hidden = !mine;
     elements.tradeCompose.hidden = Boolean(mine);
+    // The publish button lives in the title row; it goes with the compose form.
+    elements.tradeCreate.hidden = Boolean(mine);
     elements.tradeActive.innerHTML = mine ? `${tradeRowMarkup(mine)}<p class="work-note">אפשר הצעה אחת בכל פעם. כשמישהו מקבל, הקלף נכנס לאוסף מיד.</p>` : "";
     if (mine) queueCardTextFit(elements.tradeActive);
   }
@@ -4501,9 +4652,12 @@ function renderGrowth() {
   elements.dailyChallengeLeaderArt.style.setProperty("--pip", challengeLeaderCard?.pip || "#1f4f4a");
   elements.dailyChallengeTitle.textContent = `היום ${challengeDate} · מי אסף הכי הרבה קלפים של ${partyDisplayName(challenge?.targetPartyId)}?`;
   renderChallengeRecap();
-  elements.dailyChallengeBoard.innerHTML = challenge?.leaders?.length
-    ? challenge.leaders.slice(0, 3).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${index + 1}. ${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("")
-    : '<p class="work-note">עוד אף אחד לא אסף מהסיעה של היום.</p>';
+  const raceLeaders = challenge?.leaders || [];
+  const raceScored = raceLeaders.some((entry) => Number(entry.cards) > 0);
+  const raceNote = raceScored
+    ? ""
+    : `<p class="work-note">${raceLeaders.length ? "עוד אף אחד לא אסף מהסיעה של היום — הקלף הראשון שתפתחו ישים אתכם בראש." : "עוד אף אחד לא אסף מהסיעה של היום."}</p>`;
+  elements.dailyChallengeBoard.innerHTML = raceLeaders.slice(0, 3).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${raceScored ? `${index + 1}. ` : ""}${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("") + raceNote;
 
   const specialDescriptions = {
     "prestige-legacy": "דמויות פוליטיות מתקופות שונות.",
@@ -5874,7 +6028,7 @@ async function submitBugReport(event) {
   event.preventDefault();
   const text = (elements.bugDetails?.value || "").trim();
   if (!text) {
-    if (elements.bugStatus) elements.bugStatus.textContent = "כתבו מה לא עבד.";
+    if (elements.bugStatus) elements.bugStatus.textContent = "כתבו מה לא עבד או מה חסר.";
     elements.bugDetails?.focus();
     return;
   }
@@ -6756,6 +6910,23 @@ elements.leagueJoinInput?.addEventListener("keydown", (event) => {
   }
 });
 elements.leagueRooms?.addEventListener("click", (event) => {
+  const leave = event.target.closest("[data-leave-league]");
+  if (leave) {
+    model.leagueLeaveConfirm = leave.dataset.leaveLeague;
+    renderLeagues();
+    elements.leagueRooms.querySelector("[data-leave-league-cancel]")?.focus({ preventScroll: true });
+    return;
+  }
+  const confirmLeave = event.target.closest("[data-leave-league-confirm]");
+  if (confirmLeave) {
+    leaveLeagueRoom(confirmLeave.dataset.leaveLeagueConfirm).catch(() => {});
+    return;
+  }
+  if (event.target.closest("[data-leave-league-cancel]")) {
+    model.leagueLeaveConfirm = null;
+    renderLeagues();
+    return;
+  }
   const copy = event.target.closest("[data-copy-league]");
   if (copy) {
     copyText(copy.dataset.copyLeague).then((copied) => {
@@ -7057,6 +7228,8 @@ elements.binderFilters.addEventListener("change", (event) => {
   renderBinder();
 });
 
+elements.binderGrid?.addEventListener("scroll", syncBinderScrollCue, { passive: true });
+window.addEventListener("resize", syncBinderScrollCue, { passive: true });
 elements.binderPager.addEventListener("click", (event) => {
   const button = event.target.closest('[data-page-target="binder"]');
   if (!button) return;

@@ -3,11 +3,11 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { isStaleState, keepDailyRaceLeaders, overlayPendingSeen, stateRevision } from "../public/state-sync.js";
+import { isStaleState, keepDailyRaceLeaders, mergeLeaderboards, overlayPendingSeen, stateRevision } from "../public/state-sync.js";
 import { idleCountdownCopy, resumeClockAfterCap } from "../public/idle-countdown.js";
 import { IDLE_INTERVAL_MS, resumeIdleClockAfterCap } from "../server/idle-config.js";
 import { bumpStateRevision } from "../server/store.js";
-import { dailyRaceScore, scoresInDailyRace } from "../server/daily-race.js";
+import { dailyRaceScore, scoresInDailyRace, visibleDailyRaceLeaders } from "../server/daily-race.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const NOW = Date.parse("2026-09-26T09:00:00.000Z");
@@ -143,4 +143,26 @@ test("postgres daily race reads a sargable Jerusalem-day seen_at range backed by
   const migration = await readFile(path.join(here, "../server/migrations/007_instances_seen_at_index.sql"), "utf8");
   assert.match(migration, /CREATE INDEX IF NOT EXISTS kalpi_instances_seen_at_idx\s+ON kalpi_instances \(seen_at\)\s+WHERE seen_at IS NOT NULL/);
   assert.doesNotMatch(migration, /^\s*CREATE INDEX CONCURRENTLY/m, "the session-pooler runner wraps migrations in BEGIN");
+});
+
+test("race boards never reintroduce other players on 0 from cached leaders", () => {
+  const cached = { dailyChallenge: { day: "2026-09-27", leaders: [{ label: "a", cards: 2 }, { label: "old-zero", cards: 0 }, { label: "me", current: true, cards: 0 }] } };
+  const slim = { dailyChallenge: { day: "2026-09-27", leaders: [] } };
+  const merged = mergeLeaderboards(cached, slim);
+  assert.deepEqual(merged.dailyChallenge.leaders.map(({ label }) => label), ["a", "me"], "self stays even at 0");
+  const fresh = { dailyChallenge: { day: "2026-09-27", leaders: [{ label: "b", cards: 0 }, { label: "c", cards: 1 }] } };
+  assert.deepEqual(mergeLeaderboards(null, fresh).dailyChallenge.leaders.map(({ label }) => label), ["c"]);
+  assert.equal(mergeLeaderboards(null, null), null);
+});
+
+test("race board: zeros hidden except self; self keeps the last row when ranked below the top 8", () => {
+  const others = Array.from({ length: 10 }, (_, index) => ({ label: `p${index}`, cards: 10 - index }));
+  const zeros = [{ label: "z1", cards: 0 }, { label: "z2", cards: 0 }];
+  const selfZero = { label: "me", current: true, cards: 0 };
+  const board = visibleDailyRaceLeaders([...zeros, ...others, selfZero]);
+  assert.equal(board.length, 8);
+  assert.equal(board.at(-1).label, "me", "self at 0 still shows, in the last row");
+  assert.equal(board.filter(({ cards, current }) => !current && cards === 0).length, 0);
+  assert.deepEqual(visibleDailyRaceLeaders([...zeros, selfZero]).map(({ label }) => label), ["me"]);
+  assert.deepEqual(visibleDailyRaceLeaders(zeros), [], "a guest sees only scorers");
 });

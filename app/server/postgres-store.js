@@ -6,7 +6,15 @@ import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
-import { LEAGUE_MAX, hebrewSeasonLabel, leagueMemberScore, newLeagueCode, normalizeLeagueCode } from "./leagues.js";
+import { visibleDailyRaceLeaders } from "./daily-race.js";
+import {
+  LEAGUE_MAX,
+  hebrewSeasonLabel,
+  leagueMemberScore,
+  leaveLeagueMembership,
+  newLeagueCode,
+  normalizeLeagueCode,
+} from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
 
 const { Pool } = pg;
@@ -1147,9 +1155,7 @@ export class PostgresStore {
       });
     }
     const allDailyParty = [...dailyCounts.values()].sort((a, b) => b.cards - a.cards);
-    const dailyParty = allDailyParty.slice(0, 8);
-    const currentDaily = allDailyParty.find(({ current }) => current);
-    if (currentDaily && !dailyParty.some(({ current }) => current)) dailyParty.splice(7, 1, currentDaily);
+    const dailyParty = visibleDailyRaceLeaders(allDailyParty);
     const targetPartyNameHe = cards.find((card) => card.set === targetPartyId)?.setNameHe || targetPartyId;
     return {
       collectors,
@@ -1317,6 +1323,7 @@ export class PostgresStore {
     return this.exclusive(async () => {
       const owner = await this.loadSession(ownerToken);
       if (!owner) return { error: "UNAUTHORIZED" };
+      if (await this.lockedMemberLeagueCount(ownerToken)) return { error: "ALREADY_IN_LEAGUE" };
       let code = newLeagueCode();
       for (let attempt = 0; attempt < 8; attempt += 1) {
         const created = await this.executor().query(
@@ -1340,6 +1347,8 @@ export class PostgresStore {
       if (!session) return { error: "UNAUTHORIZED" };
       const code = normalizeLeagueCode(rawCode);
       if (!code) return { error: "LEAGUE_NOT_FOUND" };
+      // Same lock order as leave: the player's advisory lock first, then the league row.
+      await this.executor().query("SELECT pg_advisory_xact_lock(hashtext($1))", [`kalpi-league:${token}`]);
       const result = await this.executor().query(
         "SELECT * FROM kalpi_leagues WHERE code = $1 FOR UPDATE",
         [code],
@@ -1347,6 +1356,7 @@ export class PostgresStore {
       const league = this.leagueFromRow(result.rows[0]);
       if (!league) return { error: "LEAGUE_NOT_FOUND" };
       if (!league.memberTokens.includes(token)) {
+        if (await this.lockedMemberLeagueCount(token)) return { error: "ALREADY_IN_LEAGUE" };
         if (league.memberTokens.length >= LEAGUE_MAX) return { error: "LEAGUE_FULL" };
         league.memberTokens.push(token);
         await this.executor().query(
@@ -1358,13 +1368,52 @@ export class PostgresStore {
     });
   }
 
+  /**
+   * Inside a transaction: serialize this player's league changes (advisory lock on the token, so two
+   * concurrent create/join calls cannot both pass the one-league check) and count their leagues.
+   */
+  async lockedMemberLeagueCount(token) {
+    await this.executor().query("SELECT pg_advisory_xact_lock(hashtext($1))", [`kalpi-league:${token}`]);
+    const result = await this.executor().query(
+      "SELECT count(*)::integer AS count FROM kalpi_leagues WHERE member_tokens @> $1::jsonb",
+      [JSON.stringify([token])],
+    );
+    return result.rows[0]?.count || 0;
+  }
+
+  async leaveLeague(token, rawCode) {
+    await this.ensureLeaguesTable();
+    return this.exclusive(async () => {
+      const session = await this.loadSession(token);
+      if (!session) return { error: "UNAUTHORIZED" };
+      const code = normalizeLeagueCode(rawCode);
+      if (!code) return { error: "NOT_IN_LEAGUE" };
+      await this.executor().query("SELECT pg_advisory_xact_lock(hashtext($1))", [`kalpi-league:${token}`]);
+      const result = await this.executor().query(
+        "SELECT * FROM kalpi_leagues WHERE code = $1 FOR UPDATE",
+        [code],
+      );
+      const left = leaveLeagueMembership(this.leagueFromRow(result.rows[0]), token);
+      if (left.error) return left;
+      if (left.deleted) {
+        await this.executor().query("DELETE FROM kalpi_leagues WHERE code = $1", [code]);
+      } else {
+        await this.executor().query(
+          "UPDATE kalpi_leagues SET member_tokens = $2::jsonb, owner_token = $3 WHERE code = $1",
+          [code, JSON.stringify(left.league.memberTokens), left.league.ownerToken],
+        );
+      }
+      return { left: true, deleted: Boolean(left.deleted) };
+    });
+  }
+
   async listLeagues(token) {
     await this.ensureLeaguesTable();
     const result = await this.pool.query(
       `SELECT * FROM kalpi_leagues
-       WHERE owner_token = $1 OR member_tokens @> $2::jsonb
+       WHERE member_tokens @> $1::jsonb
        ORDER BY created_at DESC`,
-      [token, JSON.stringify([token])],
+      [JSON.stringify([token])],
     );
     return result.rows.map((row) => this.leagueFromRow(row));
   }

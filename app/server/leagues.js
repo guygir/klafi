@@ -69,3 +69,25 @@ export function publicLeague(league, members, currentToken, origin) {
     members: ranked,
   };
 }
+
+/**
+ * One league per player. Leaving removes the player's token; if they hosted, the host passes to the
+ * oldest remaining member (memberTokens is in join order), and a league left with no members is
+ * deleted. Returns { league } with the updated room, { deleted: true }, or { error }.
+ * Pure: callers persist the result (both stores share this rule).
+ */
+export function leaveLeagueMembership(league, token) {
+  if (!league || !league.memberTokens.includes(token)) return { error: "NOT_IN_LEAGUE" };
+  const memberTokens = league.memberTokens.filter((member) => member !== token);
+  if (!memberTokens.length) return { deleted: true };
+  const ownerToken = league.ownerToken === token || !memberTokens.includes(league.ownerToken)
+    ? memberTokens[0]
+    : league.ownerToken;
+  return { league: { ...league, memberTokens, ownerToken } };
+}
+
+/** Legacy players who joined several leagues before the one-league rule see the most recent one. */
+export function currentLeagueOf(leagues) {
+  return [...(leagues || [])]
+    .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt))[0] || null;
+}
