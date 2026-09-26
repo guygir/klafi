@@ -2111,3 +2111,76 @@ test("daily race hides players on 0 except the requesting player", async (t) => 
   const guest = (await api(again.base, "/api/leaderboards")).body.dailyChallenge.leaders;
   assert.deepEqual(guest.map(({ cards }) => cards), [1], "without a session only scorers show");
 });
+
+test("opening a card at the full warehouse restarts the timer at exactly 3h from the open", async (t) => {
+  const HOUR = 60 * 60 * 1000;
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-full-restart-"));
+  const clock = { value: Date.parse("2026-09-26T06:00:00.000Z") };
+  const running = await start(dataDir, clock, { quizEnabled: true });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const token = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const open = (instanceIds) => api(running.base, "/api/idle/seen", { token, method: "POST", body: { instanceIds } });
+  const settle = () => api(running.base, "/api/idle/settle", { token, method: "POST" });
+
+  // Starters, then fill to the cap on the normal 3h schedule (the 8th pack lands exactly on time).
+  const starters = await settle();
+  assert.equal(starters.body.cards.length, IDLE_STARTER_READY);
+  await open(starters.body.cards.map(({ instanceId }) => instanceId));
+  clock.value += IDLE_BACKLOG_CAP * IDLE_INTERVAL_MS;
+  const full = await settle();
+  assert.equal(full.body.state.unseenCount, IDLE_BACKLOG_CAP);
+  const filledAt = clock.value;
+  assert.ok(Date.parse(full.body.state.nextIdleAt) > filledAt, "the clock kept a future slot while full");
+
+  // Case 1 (Guy's report): 45 minutes after filling, the next slot is still in the future.
+  clock.value += 45 * 60 * 1000;
+  const openedAt = clock.value;
+  const afterOpen = await open([full.body.cards[0].instanceId]);
+  assert.equal(afterOpen.body.unseenCount, IDLE_BACKLOG_CAP - 1);
+  assert.equal(afterOpen.body.nextIdleAt, new Date(openedAt + IDLE_INTERVAL_MS).toISOString(), "fresh 3h, not 2h15m");
+  const prepared = afterOpen.body.preparedPulls.map(({ availableAt }) => Date.parse(availableAt));
+  if (prepared.length) assert.equal(prepared[0], openedAt + IDLE_INTERVAL_MS);
+  clock.value = openedAt + IDLE_INTERVAL_MS - 1000;
+  assert.equal((await settle()).body.newlySettledCount, 0, "no payout before the fresh 3h");
+  clock.value = openedAt + IDLE_INTERVAL_MS;
+  const refilled = await settle();
+  assert.equal(refilled.body.newlySettledCount, 1);
+  assert.equal(refilled.body.state.unseenCount, IDLE_BACKLOG_CAP);
+
+  // Case 2: full for several hours (slot overdue), a settle ran while full, then open.
+  clock.value += 5 * HOUR;
+  const stillFull = await settle();
+  assert.equal(stillFull.body.newlySettledCount, 0);
+  clock.value += 17 * 60 * 1000;
+  const openedLate = clock.value;
+  const lateOpen = await open([stillFull.body.cards[0].instanceId]);
+  assert.equal(lateOpen.body.nextIdleAt, new Date(openedLate + IDLE_INTERVAL_MS).toISOString());
+  assert.equal((await settle()).body.newlySettledCount, 0, "no instant payout of time accrued while full");
+
+  // Case 3: backlog above the cap (a quiz reward on top of 8): 9 -> 8 is still full, 8 -> 7 restarts.
+  clock.value += IDLE_INTERVAL_MS;
+  const eight = await settle();
+  assert.equal(eight.body.state.unseenCount, IDLE_BACKLOG_CAP);
+  const quiz = await api(running.base, "/api/quiz", { token });
+  assert.equal(quiz.body.available, true);
+  const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  const win = await api(running.base, "/api/quiz/answer", {
+    token,
+    method: "POST",
+    body: { quizId: quiz.body.quizId, answers: stored.sessions[token].currentQuiz.answers },
+  });
+  assert.equal(win.status, 201);
+  assert.equal(win.body.state.unseenCount, IDLE_BACKLOG_CAP + 1);
+  const nineIds = (await settle()).body.cards.map(({ instanceId }) => instanceId);
+  clock.value += 30 * 60 * 1000;
+  const toEight = await open([nineIds[0]]);
+  assert.equal(toEight.body.unseenCount, IDLE_BACKLOG_CAP);
+  clock.value += 10 * 60 * 1000;
+  const openedBelow = clock.value;
+  const toSeven = await open([nineIds[1]]);
+  assert.equal(toSeven.body.unseenCount, IDLE_BACKLOG_CAP - 1);
+  assert.equal(toSeven.body.nextIdleAt, new Date(openedBelow + IDLE_INTERVAL_MS).toISOString());
+});
