@@ -121,3 +121,26 @@ test("the slim community board never wipes the race leaders of the same day", ()
   const fresh = { ...slim, dailyChallenge: { ...slim.dailyChallenge, leaders: [{ label: "me", cards: 3 }] } };
   assert.equal(keepDailyRaceLeaders(full, fresh).dailyChallenge.leaders[0].cards, 3);
 });
+
+test("postgres daily race reads a sargable Jerusalem-day seen_at range backed by migration 007", async () => {
+  const { PostgresStore } = await import("../server/postgres-store.js");
+  const store = new PostgresStore("postgres://qa@127.0.0.1:1/none");
+  const queries = [];
+  store.pool.query = async (sql, params = []) => { queries.push({ sql, params }); return { rows: [], rowCount: 0 }; };
+  const cards = [{ id: "SET5-01", set: "LIK", rarity: "Common" }, { id: "YB-01", set: "YB", rarity: "Common" }];
+  // 23:30 UTC on Sep 26 is already Sep 27 in Jerusalem.
+  await store.leaderboardSummary(cards, Date.parse("2026-09-26T23:30:00.000Z"), null);
+  const race = queries.find(({ sql }) => /FROM kalpi_instances i/.test(sql) && /seen_at/.test(sql));
+  assert.ok(race, "the race query ran");
+  assert.deepEqual(race.params, ["2026-09-27"]);
+  assert.match(race.sql, /i\.seen_at >= \(\$1::date\)::timestamp AT TIME ZONE 'Asia\/Jerusalem'/);
+  assert.match(race.sql, /i\.seen_at < \(\$1::date \+ 1\)::timestamp AT TIME ZONE 'Asia\/Jerusalem'/);
+  assert.doesNotMatch(race.sql, /\(i\.seen_at AT TIME ZONE[^)]*\)::date/, "wrapping seen_at in a function defeats the index");
+  await store.pool.end().catch(() => {});
+
+  const storeJs = await readFile(path.join(here, "../server/postgres-store.js"), "utf8");
+  assert.match(storeJs, /\["007_instances_seen_at_index", "007_instances_seen_at_index\.sql"\]/);
+  const migration = await readFile(path.join(here, "../server/migrations/007_instances_seen_at_index.sql"), "utf8");
+  assert.match(migration, /CREATE INDEX IF NOT EXISTS kalpi_instances_seen_at_idx\s+ON kalpi_instances \(seen_at\)\s+WHERE seen_at IS NOT NULL/);
+  assert.doesNotMatch(migration, /^\s*CREATE INDEX CONCURRENTLY/m, "the session-pooler runner wraps migrations in BEGIN");
+});

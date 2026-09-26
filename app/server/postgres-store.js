@@ -18,6 +18,7 @@ const MIGRATIONS = [
   ["004_numbered_streaks", "004_numbered_streaks.sql"],
   ["005_card_holder_snapshot", "005_card_holder_snapshot.sql"],
   ["006_numbered_grant_cadence", "006_numbered_grant_cadence.sql"],
+  ["007_instances_seen_at_index", "007_instances_seen_at_index.sql"],
 ];
 
 function iso(value) {
@@ -1100,6 +1101,8 @@ export class PostgresStore {
     const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
     const targetPartyId = partyIds.length ? partyIds[dayNumber % partyIds.length] : null;
     // Race score = cards of today's party OPENED today (seen_at, Jerusalem day); see daily-race.js.
+    // Half-open range [Jerusalem midnight, next Jerusalem midnight) so kalpi_instances_seen_at_idx
+    // (migration 007) applies; equal to (seen_at AT TIME ZONE 'Asia/Jerusalem')::date = $1, DST included.
     const packRows = await this.pool.query(
       `SELECT i.session_token, s.display_name, i.card_id, i.acquired_by,
               s.avatar_id, s.faction_id, s.highest_rank,
@@ -1108,7 +1111,8 @@ export class PostgresStore {
        FROM kalpi_instances i
        JOIN kalpi_sessions s ON s.token = i.session_token
        WHERE i.seen_at IS NOT NULL
-         AND (i.seen_at AT TIME ZONE 'Asia/Jerusalem')::date = $1::date`,
+         AND i.seen_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Jerusalem'
+         AND i.seen_at < ($1::date + 1)::timestamp AT TIME ZONE 'Asia/Jerusalem'`,
       [day],
     );
     const dailyCounts = new Map();
