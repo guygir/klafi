@@ -4604,7 +4604,7 @@ body {
 
 .daily-challenge-desk #daily-challenge-title {
   margin: 0;
-  font-size: clamp(16px, 4.2vw, 22px);
+  font-size: clamp(16px, 4.4vw, 22px);
   line-height: 1.25;
 }
 

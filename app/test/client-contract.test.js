@@ -411,7 +411,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.challenge-hist-col b[\s\S]{0,80}?width:\s*32px/);
   assert.match(css, /\.challenge-hist-plot[\s\S]{0,160}?direction:\s*ltr/);
   assert.match(css, /\.challenge-hist-axis[\s\S]{0,160}?direction:\s*ltr/);
-  assert.match(css, /\.challenge-hist-plot[\s\S]{0,220}?height:\s*min\(148px,\s*24dvh\)/);
+  assert.match(css, /\.challenge-hist-plot[\s\S]{0,220}?height:\s*min\(110px,\s*20dvh\)/);
   assert.match(javascript, /TRADE_BOARD_PAGE_SIZE = 3/);
   assert.match(javascript, /function renderTradeBoard/);
   assert.match(javascript, /function tradeHasCards/);
