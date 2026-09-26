@@ -3590,9 +3590,6 @@ body {
 #achievements-view.active {
   overflow: hidden;
 }
-#achievement-pager {
-  flex: 0 0 auto;
-}
 
 .app-shell > .top-nav-row,
 .top-nav-row {
@@ -5523,3 +5520,86 @@ body {
     max-width: 100%;
   }
 }
+
+/* Achievements: three pages (פשוט / בינוני / קשה) as tabs, all always open. */
+.achievement-tiers {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  margin: 4px 0 6px;
+}
+.achievement-tiers[hidden] { display: none; }
+.achievement-tiers button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 4px 6px;
+  border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font: 600 13px/1 "IBM Plex Sans Hebrew", sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.achievement-tiers button small {
+  font: 600 10px/1 ui-monospace, monospace;
+  direction: ltr;
+  opacity: 0.72;
+}
+.achievement-tiers button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.achievement-tiers button:focus-visible { outline: 2px solid var(--civic); outline-offset: 2px; }
+
+#achievements-view .achievement-badge.tier-medium.earned { border-width: 1.5px; border-color: var(--foil); background: color-mix(in srgb, var(--foil) 7%, transparent); }
+#achievements-view .achievement-badge.tier-hard.earned {
+  border-color: #8a6d2c;
+  background: linear-gradient(120deg, rgba(244, 231, 184, 0.28), rgba(185, 217, 210, 0.22) 45%, rgba(217, 194, 232, 0.22) 75%, rgba(241, 213, 154, 0.26));
+}
+
+/* Badge art tiers. simple = the original ink look. */
+.badge-artwork.badge-tier-medium .badge-shell { fill: var(--paper-deep); stroke: var(--foil); stroke-width: 2.4; }
+.badge-artwork.badge-tier-medium .badge-ribbon { fill: var(--foil); stroke: #8a6d2c; }
+.badge-artwork .badge-seal-dot { fill: var(--foil); stroke: #8a6d2c; stroke-width: 0.8; }
+.badge-artwork.badge-tier-hard .badge-shell { fill: #e6dcc0; stroke: #8a6d2c; stroke-width: 2; }
+.badge-artwork.badge-tier-hard .badge-ribbon { fill: #d9c2e8; stroke: #8a6d2c; }
+.badge-artwork.badge-tier-hard .badge-field { stroke: rgba(255, 255, 255, 0.85); stroke-width: 1.2; }
+.badge-artwork .badge-sheen {
+  fill: rgba(255, 255, 255, 0.78);
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translateX(0) skewX(-18deg);
+  animation: badge-sheen 1.3s ease-out 0.35s 1 both;
+}
+@keyframes badge-sheen {
+  from { transform: translateX(0) skewX(-18deg); }
+  to { transform: translateX(84px) skewX(-18deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .badge-artwork .badge-sheen { animation: none; opacity: 0; }
+}
+/* Unearned hard badges: grey outline only (no foil). */
+.badge-artwork.badge-tier-unearned .badge-ribbon,
+.badge-artwork.badge-tier-unearned .badge-shell,
+.badge-artwork.badge-tier-unearned .badge-field { fill: none; stroke: #8f918b; stroke-width: 1.4; }
+.badge-artwork.badge-tier-unearned .badge-icon { stroke: #8f918b; }
+
+/* Tier stars: 1 / 2 / 3 in the shield peak, readable on the 34px Binder strip and at 320px. */
+.badge-artwork .badge-tier-stars { pointer-events: none; }
+.badge-artwork .badge-tier-star-back { fill: var(--paper); stroke: none; }
+.badge-artwork .badge-tier-star {
+  stroke-width: 0.7;
+  paint-order: stroke fill;
+}
+.badge-artwork.badge-tier-simple .badge-tier-star { fill: var(--ink); stroke: var(--paper); }
+.badge-artwork.badge-tier-medium .badge-tier-star-back { fill: var(--ink); }
+.badge-artwork.badge-tier-medium .badge-tier-star { fill: var(--foil); stroke: #8a6d2c; }
+.badge-artwork.badge-tier-hard .badge-tier-star-back { fill: #2a2618; }
+.badge-artwork.badge-tier-hard .badge-tier-star { stroke: #6a5424; }
+.badge-artwork.badge-tier-unearned .badge-tier-star-back { fill: none; }
+.badge-artwork.badge-tier-unearned .badge-tier-star { fill: none; stroke: #8f918b; stroke-width: 1.15; }
+.achievement-seal,
+#binder-view .badge-medallion { overflow: visible; }

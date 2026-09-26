@@ -69,6 +69,8 @@ function emptySession(token, createdAt) {
     currentQuiz: null,
     loginDay: null,
     loginStreak: 0,
+    bestLoginStreak: 0,
+    achievementsEarned: {},
     publicBinderSlug: ensurePublicBinderSlug({}),
   };
 }
@@ -85,6 +87,8 @@ function extrasFromSession(session) {
     currentQuiz: session.currentQuiz || null,
     loginDay: session.loginDay || null,
     loginStreak: session.loginStreak || 0,
+    bestLoginStreak: Math.max(Number(session.bestLoginStreak) || 0, session.loginStreak || 0),
+    achievementsEarned: session.achievementsEarned || {},
     publicBinderSlug: session.publicBinderSlug || null,
     stateRevision: Number(session.stateRevision) || 0,
   };
@@ -494,6 +498,8 @@ export class PostgresStore {
       currentQuiz: extras.currentQuiz || null,
       loginDay: extras.loginDay || null,
       loginStreak: extras.loginStreak || 0,
+      bestLoginStreak: Math.max(Number(extras.bestLoginStreak) || 0, extras.loginStreak || 0),
+      achievementsEarned: extras.achievementsEarned || {},
       publicBinderSlug: extras.publicBinderSlug || null,
       stateRevision: Number(extras.stateRevision) || 0,
     };

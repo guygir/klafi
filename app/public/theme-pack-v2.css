@@ -1248,7 +1248,7 @@ body:has(#app[data-theme="pack-v2"]) {
   width: 36px;
   height: 42px;
   flex: 0 0 auto;
-  overflow: hidden;
+  overflow: visible;
 }
 
 #binder-view .collection-star-count {

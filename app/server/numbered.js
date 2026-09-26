@@ -16,6 +16,8 @@ export function applyLoginStreak(session, nowMs) {
     ? Math.max(1, Number(session.loginStreak) || 0) + 1
     : 1;
   session.loginDay = today;
+  // Streak badges read the best run ever, so a reset never un-earns them.
+  session.bestLoginStreak = Math.max(Number(session.bestLoginStreak) || 0, session.loginStreak);
   return true;
 }
 
