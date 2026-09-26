@@ -2451,7 +2451,7 @@ function challengePlaceLine(recap) {
   const score = recap.current ? recap.current.cards : 0;
   if (!recap.current) return "עוד לא בטבלה";
   if (!score) return recap.othersScored ? "עוד לא אספתם" : "עוד אין דירוג";
-  return `אתם ${recap.place}/${Math.max(recap.players, recap.place)}`;
+  return `אתם מקום ${recap.place} מתוך ${Math.max(recap.players, recap.place)}`;
 }
 
 function renderChallengeRecap() {

@@ -450,13 +450,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /מי אסף הכי הרבה קלפים של \$\{partyDisplayName/);
   assert.doesNotMatch(javascript, /היום \$\{challengeDate\} · מי אסף/);
   assert.match(css, /\.daily-challenge-leader-art \{\s*position: static;\s*flex: 0 0 auto;\s*width: 128px;/);
-  assert.match(css, /\.growth-grid \.daily-challenge-desk \.challenge-party/);
+  assert.match(css, /\.growth-grid \.daily-challenge-desk #daily-challenge-party/);
   assert.match(css, /\.challenge-hero \{\s*display: grid;\s*grid-template-columns: auto minmax\(0, 1fr\)/);
   assert.match(css, /\.challenge-hero \{[^}]*align-items:\s*start/);
   assert.match(css, /\.challenge-hero \{[^}]*direction:\s*ltr/);
   assert.match(html, /challenge-copy[\s\S]*id="daily-challenge-score"/);
-  assert.match(css, /\.growth-grid \.daily-challenge-desk \.challenge-date,\s*\.daily-challenge-desk #daily-challenge-title,\s*\.growth-grid \.daily-challenge-desk \.challenge-party/);
-  assert.match(javascript, /אתם \$\{recap\.place\}\/\$\{Math\.max\(recap\.players, recap\.place\)\}/);
+  assert.match(css, /\.growth-grid \.daily-challenge-desk #daily-challenge-date,\s*\.growth-grid \.daily-challenge-desk #daily-challenge-title,\s*\.growth-grid \.daily-challenge-desk #daily-challenge-party/);
+  assert.match(css, /\.growth-grid \.daily-challenge-desk #daily-challenge-date \{\s*color: var\(--civic\)/);
+  assert.match(javascript, /אתם מקום \$\{recap\.place\} מתוך \$\{Math\.max\(recap\.players, recap\.place\)\}/);
+  assert.doesNotMatch(javascript, /אתם \$\{recap\.place\}\//);
   assert.doesNotMatch(javascript, /<strong>\$\{score\}<span>קלפים<\/span><\/strong>/);
   assert.doesNotMatch(css, /padding-left: 132px/);
   assert.match(html, /id="today-challenge-hook"/);
@@ -717,7 +719,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-107/);
+  assert.match(html, /card-surface-108/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -825,7 +827,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-107/);
+  assert.match(html, /card-surface-108/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -975,7 +977,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-107/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-108/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -990,7 +992,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-107/);
+  assert.match(html, /packrip\.css\?v=card-surface-108/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);
