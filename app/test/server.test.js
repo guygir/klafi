@@ -1872,3 +1872,129 @@ test("studio debug pull is editor-gated, rarity-filtered, and writes nothing", a
   assert.deepEqual(stateAfter.body, stateBefore.body, "player state untouched");
   assert.ok(!stateAfter.body.instances?.some(({ acquiredBy }) => acquiredBy === "studio-debug"));
 });
+
+test("every state payload carries a monotonic revision and the seen ack returns credited progress", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-revision-"));
+  const clock = { value: Date.parse("2026-09-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const { body: { token } } = await api(running.base, "/api/session", { method: "POST" });
+  const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  const read = await api(running.base, "/api/state", { token });
+  assert.equal(typeof settled.body.state.revision, "number");
+  assert.equal(read.body.revision, settled.body.state.revision, "a read returns the revision of the last write");
+  const before = read.body.progression.unique;
+  const seen = await api(running.base, "/api/idle/seen", {
+    token,
+    method: "POST",
+    body: { instanceIds: [settled.body.cards[0].instanceId] },
+  });
+  assert.ok(seen.body.revision > settled.body.state.revision, "the seen ack is newer than the settle before it");
+  assert.equal(seen.body.progression.unique, before + 1, "the ack itself carries the credited progress");
+  assert.equal(seen.body.unseenCount, settled.body.state.unseenCount - 1);
+  const home = await api(running.base, "/api/home", { token });
+  assert.equal(home.body.state.revision, seen.body.revision);
+});
+
+test("opening one card from a full warehouse resumes the clock instead of granting the slot missed while full", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-cap-resume-"));
+  const clock = { value: Date.parse("2026-09-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const { body: { token } } = await api(running.base, "/api/session", { method: "POST" });
+  await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  clock.value += IDLE_BACKLOG_CAP * IDLE_INTERVAL_MS;
+  const full = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(full.body.state.unseenCount, IDLE_BACKLOG_CAP);
+  // No settle runs while full (the client already has 8 cached); the next slot passes 2h56m ago.
+  clock.value = Date.parse(full.body.state.nextIdleAt) + (2 * 60 + 56) * 60_000;
+  const opened = await api(running.base, "/api/idle/seen", {
+    token,
+    method: "POST",
+    body: { instanceIds: [full.body.cards[0].instanceId] },
+  });
+  assert.equal(opened.body.unseenCount, IDLE_BACKLOG_CAP - 1);
+  assert.equal(Date.parse(opened.body.nextIdleAt), clock.value + IDLE_INTERVAL_MS);
+  const after = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(after.body.newlySettledCount, 0, "no instant payout: 8 -> 7 stays 7");
+  assert.equal(after.body.state.unseenCount, IDLE_BACKLOG_CAP - 1);
+  clock.value += IDLE_INTERVAL_MS;
+  const later = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(later.body.newlySettledCount, 1, "collection resumes one interval after the open");
+  // Below the cap nothing changes: a due slot is still granted as before.
+  const again = await api(running.base, "/api/idle/seen", {
+    token,
+    method: "POST",
+    body: { instanceIds: later.body.cards.slice(0, 2).map(({ instanceId }) => instanceId) },
+  });
+  clock.value = Date.parse(again.body.nextIdleAt) + 60_000;
+  const due = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(due.body.newlySettledCount, 1);
+});
+
+test("daily race scores today's party cards on the day they are opened, not when collected", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-daily-race-"));
+  const clock = { value: Date.parse("2026-09-26T20:00:00+03:00") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const catalog = await api(running.base, "/api/catalog");
+  const setOf = new Map(catalog.body.cards.map(({ id, set }) => [id, set]));
+  const { body: { token } } = await api(running.base, "/api/session", { method: "POST" });
+  await api(running.base, "/api/idle/settle", { token, method: "POST" }); // starters collected yesterday 20:00
+  clock.value = Date.parse("2026-09-27T09:00:00+03:00");
+  const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  const unopened = await api(running.base, "/api/leaderboards", { token });
+  const { targetPartyId, day } = unopened.body.dailyChallenge;
+  assert.equal(day, "2026-09-27");
+  assert.equal(unopened.body.dailyChallenge.leaders.find(({ current }) => current).cards, 0, "collected but unopened cards do not score");
+  await api(running.base, "/api/idle/seen", { token, method: "POST", body: { instanceIds: settled.body.cards.map(({ instanceId }) => instanceId) } });
+  const opened = await api(running.base, "/api/leaderboards", { token });
+  const expected = settled.body.cards.filter(({ cardId }) => setOf.get(cardId) === targetPartyId).length;
+  assert.equal(opened.body.dailyChallenge.leaders.find(({ current }) => current).cards, expected);
+  // The race and boards use the live catalog (set-5 "Moments" included), same as the player's state.
+  const state = await api(running.base, "/api/state", { token });
+  assert.equal(opened.body.collectors.find(({ current }) => current).stars, state.body.starCount);
+  clock.value = Date.parse("2026-09-28T00:05:00+03:00");
+  const tomorrow = await api(running.base, "/api/leaderboards", { token });
+  assert.equal(tomorrow.body.dailyChallenge.leaders.find(({ current }) => current).cards, 0, "the race resets at Jerusalem midnight");
+});
+
+test("Studio-set cards (set-5) count in league stars and the owned-card quiz, not only cards.json", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-full-catalog-"));
+  const clock = { value: Date.parse("2026-09-15T12:00:00.000Z") };
+  const running = await start(dataDir, clock, { quizEnabled: true });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const partyOnly = JSON.parse(await readFile(path.join(appRoot, "data/cards.json"), "utf8"));
+  const partyOnlyCards = Array.isArray(partyOnly) ? partyOnly : partyOnly.cards;
+  const catalog = (await api(running.base, "/api/catalog")).body.cards;
+  const studioRare = catalog.find((card) => card.releaseSetId === "set-5" && card.rarity.startsWith("Rare"));
+  assert.ok(studioRare, "catalog serves a set-5 Rare");
+  assert.equal(partyOnlyCards.some((card) => card.id === studioRare.id), false, "the fixture card is outside cards.json");
+
+  const token = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await api(running.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId: studioRare.id } });
+
+  const quiz = await api(running.base, "/api/quiz", { token });
+  assert.equal(quiz.body.available, true, "a player owning only a set-5 card gets a quiz");
+  assert.equal(quiz.body.cardId, studioRare.id);
+  const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  assert.equal(stored.sessions[token].currentQuiz.answers.list, studioRare.setNameHe);
+
+  const created = await api(running.base, "/api/leagues", { token, method: "POST", body: { name: "ליגת רגעים" } });
+  assert.equal(created.status, 201);
+  const member = created.body.league.members.find((entry) => entry.current) || created.body.league.members[0];
+  assert.equal(member.ownedUnique, 1);
+  assert.equal(member.stars, 3, "a set-5 Rare is worth 3 league stars, like everywhere else");
+});

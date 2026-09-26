@@ -30,6 +30,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     starCount: collectionStarCount(inventory, shell.cardIndex || []),
     totalCards: idleTotal,
     unseenCount: session.unseenPulls?.length ?? 0,
+    revision: Number(session.stateRevision) || 0,
     preparedPulls: session.preparedPulls || [],
     idleCapacity: IDLE_BACKLOG_CAP,
     idleIntervalMs: IDLE_INTERVAL_MS,

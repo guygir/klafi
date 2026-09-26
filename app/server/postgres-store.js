@@ -18,6 +18,7 @@ const MIGRATIONS = [
   ["004_numbered_streaks", "004_numbered_streaks.sql"],
   ["005_card_holder_snapshot", "005_card_holder_snapshot.sql"],
   ["006_numbered_grant_cadence", "006_numbered_grant_cadence.sql"],
+  ["007_instances_seen_at_index", "007_instances_seen_at_index.sql"],
 ];
 
 function iso(value) {
@@ -78,6 +79,7 @@ function extrasFromSession(session) {
     loginDay: session.loginDay || null,
     loginStreak: session.loginStreak || 0,
     publicBinderSlug: session.publicBinderSlug || null,
+    stateRevision: Number(session.stateRevision) || 0,
   };
 }
 
@@ -486,6 +488,7 @@ export class PostgresStore {
       loginDay: extras.loginDay || null,
       loginStreak: extras.loginStreak || 0,
       publicBinderSlug: extras.publicBinderSlug || null,
+      stateRevision: Number(extras.stateRevision) || 0,
     };
   }
 
@@ -505,6 +508,8 @@ export class PostgresStore {
       this.remember(token, session);
       return;
     }
+    // Only real writes advance the revision (the row lock serializes them), so no-op settles stay free.
+    session.stateRevision = (Number(previous.stateRevision) || 0) + 1;
     await client.query(
       `WITH session_update AS (
          UPDATE kalpi_sessions SET
@@ -1095,14 +1100,19 @@ export class PostgresStore {
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
     const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
     const targetPartyId = partyIds.length ? partyIds[dayNumber % partyIds.length] : null;
+    // Race score = cards of today's party OPENED today (seen_at, Jerusalem day); see daily-race.js.
+    // Half-open range [Jerusalem midnight, next Jerusalem midnight) so kalpi_instances_seen_at_idx
+    // (migration 007) applies; equal to (seen_at AT TIME ZONE 'Asia/Jerusalem')::date = $1, DST included.
     const packRows = await this.pool.query(
-      `SELECT p.session_token, s.display_name, p.cards,
+      `SELECT i.session_token, s.display_name, i.card_id, i.acquired_by,
               s.avatar_id, s.faction_id, s.highest_rank,
               COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
               s.extras->>'publicBinderSlug' AS binder_slug
-       FROM kalpi_packs p
-       JOIN kalpi_sessions s ON s.token = p.session_token
-       WHERE (p.pulled_at AT TIME ZONE 'Asia/Jerusalem')::date = $1::date`,
+       FROM kalpi_instances i
+       JOIN kalpi_sessions s ON s.token = i.session_token
+       WHERE i.seen_at IS NOT NULL
+         AND i.seen_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Jerusalem'
+         AND i.seen_at < ($1::date + 1)::timestamp AT TIME ZONE 'Asia/Jerusalem'`,
       [day],
     );
     const dailyCounts = new Map();
@@ -1117,7 +1127,10 @@ export class PostgresStore {
         binderSlug: row.binder_slug || null,
         cards: 0,
       };
-      existing.cards += (row.cards || []).filter((instance) => cardsById.get(instance.cardId)?.set === targetPartyId).length;
+      const acquiredBy = String(row.acquired_by || "");
+      const scores = !acquiredBy.includes("trade") && !acquiredBy.includes("debug")
+        && cardsById.get(row.card_id)?.set === targetPartyId;
+      if (scores) existing.cards += 1;
       dailyCounts.set(row.session_token, existing);
     }
     if (currentToken && !dailyCounts.has(currentToken)) {

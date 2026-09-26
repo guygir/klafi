@@ -121,6 +121,7 @@ export function sessionFromHomeRow(row) {
     publicBinderSlug: extras.publicBinderSlug || null,
     factionId: row.faction_id || null,
     loginStreak: extras.loginStreak || 0,
+    stateRevision: Number(extras.stateRevision) || 0,
   };
 }
 

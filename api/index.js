@@ -36,7 +36,12 @@ function restoreRequestUrl(request) {
 export default async function vercelHandler(request, response) {
   const requestId = request.headers["x-request-id"] || randomUUID();
   try {
-    handlerPromise ??= createRuntimeHandler({ loadDotEnv: false });
+    // A failed boot (e.g. a migration hitting a transient DB error) must not poison this
+    // warm instance forever: drop the rejected promise so the next request retries init.
+    handlerPromise ??= createRuntimeHandler({ loadDotEnv: false }).catch((error) => {
+      handlerPromise = undefined;
+      throw error;
+    });
     const handler = await handlerPromise;
     return handler(restoreRequestUrl(request), response);
   } catch (error) {

@@ -43,6 +43,7 @@ import {
   applyIdleStarterReady,
   isIdleColdStart,
   publicIdleConfig,
+  resumeIdleClockAfterCap,
 } from "./idle-config.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -651,6 +652,7 @@ function publicState(session, now, cards, config = {}) {
     idleCapacity: IDLE_BACKLOG_CAP,
     idleStarterReady: IDLE_STARTER_READY,
     unseenCount: session.unseenPulls?.length ?? 0,
+    revision: Number(session.stateRevision) || 0,
     preparedPulls: session.preparedPulls ?? [],
     idlePullCount: session.idlePullCount ?? 0,
     factionId: session.factionId,
@@ -686,6 +688,7 @@ function publicIdleState(session, now, cards, config = {}) {
     idleCapacity: IDLE_BACKLOG_CAP,
     idleStarterReady: IDLE_STARTER_READY,
     unseenCount: session.unseenPulls?.length ?? 0,
+    revision: Number(session.stateRevision) || 0,
     preparedPulls: session.preparedPulls ?? [],
     idlePullCount: session.idlePullCount ?? 0,
     progression,
@@ -854,6 +857,9 @@ export async function createKalpiApp({
   const allCards = expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studioContent, set5));
   const cardsById = new Map(allCards.map((card) => [card.id, card]));
   const partyIds = new Set(cards.filter(({ set }) => set !== "SYS").map(({ set }) => set));
+  // Quiz questions ask "which list?", so only party-aligned cards qualify, but from the
+  // full pullable catalog (Studio sets such as set-5 included), never the party-only cards.json.
+  const quizCatalog = () => allCards.filter((card) => partyIds.has(card.set) && !card.eventOnly);
   if (studioContent) {
     studioContent.gameConfig = {
       ...studioContent.gameConfig,
@@ -1084,7 +1090,7 @@ export async function createKalpiApp({
 
   async function presentLeague(league, token, request) {
     if (!league) return null;
-    const members = await store.scoreLeagueMembers(league.memberTokens, cards);
+    const members = await store.scoreLeagueMembers(league.memberTokens, allCards);
     const presented = publicLeague(league, members, token, requestOrigin(request));
     presented.qrSvg = qrSvg(presented.joinUrl);
     return presented;
@@ -1296,7 +1302,7 @@ export async function createKalpiApp({
         ? { ...studioContent, debugEnabled: debugEnabled && studioRequest, studioEnabled: true }
         : null,
       gameConfig: publicGameConfig(),
-      leaderboards: await store.leaderboardSummary(cards, now(), token),
+      leaderboards: await store.leaderboardSummary(allCards, now(), token),
       specials,
       idleReturn,
       trades: await store.listTrades(token),
@@ -1486,7 +1492,7 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/leaderboards") {
-        json(response, 200, await store.leaderboardSummary(cards, now(), bearer(request)));
+        json(response, 200, await store.leaderboardSummary(allCards, now(), bearer(request)));
         return;
       }
 
@@ -1509,7 +1515,7 @@ export async function createKalpiApp({
         await store.expireTrades(new Date(now()).toISOString());
         json(response, 200, {
           trades: { trades: await store.listTrades(token), simulated: false },
-          leaderboards: await store.leaderboardSummary(cards, now(), token),
+          leaderboards: await store.leaderboardSummary(allCards, now(), token),
           activity: await store.activitySummary(),
           specialWindow: openSpecialWindow(events.events, now(), store.getSession(token)),
         });
@@ -1627,7 +1633,11 @@ export async function createKalpiApp({
           const requested = Array.isArray(input.instanceIds) ? input.instanceIds : [];
           const seenMs = now();
           const credited = await store.withSession(token, (current) => {
+            const wasFull = (current.unseenPulls || []).length >= IDLE_BACKLOG_CAP;
             const result = creditSeenInstances(current, requested, new Date(seenMs).toISOString());
+            // Leaving a full warehouse resumes the paused clock instead of paying out a slot that
+            // came due while full (Guy's 8 -> 7 -> 8).
+            if (wasFull && current.unseenPulls.length < IDLE_BACKLOG_CAP) resumeIdleClockAfterCap(current, seenMs);
             if (result.accepted.size) applyLoginStreak(current, seenMs);
             if (result.credited) {
               syncProgression(current, allCards, studioContent?.gameConfig?.progression, seenMs);
@@ -1658,7 +1668,7 @@ export async function createKalpiApp({
             if (current.currentQuiz && Date.parse(current.currentQuiz.expiresAt) > currentMs) {
               return { available: true, wonToday: false, ...current.currentQuiz.public };
             }
-            const quiz = buildOwnedCardQuiz(current, cards, rng, currentMs);
+            const quiz = buildOwnedCardQuiz(current, quizCatalog(), rng, currentMs);
             if (!quiz) return { available: false, wonToday: false };
             current.currentQuiz = quiz;
             return { available: true, wonToday: false, ...quiz.public };
