@@ -4585,14 +4585,48 @@ body {
 
 .daily-challenge-desk {
   position: relative;
-  padding-left: 132px !important;
+}
+
+.challenge-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  margin: 0 0 10px;
+  direction: ltr;
+}
+
+.challenge-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 0;
+  direction: rtl;
+}
+
+.growth-grid .daily-challenge-desk .challenge-date,
+.daily-challenge-desk #daily-challenge-title,
+.growth-grid .daily-challenge-desk .challenge-party {
+  margin: 0;
+  color: var(--ink);
+  font: 600 clamp(16px, 4.4vw, 20px)/1.25 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
+
+.challenge-you {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  direction: rtl;
 }
 
 .daily-challenge-leader-art {
-  position: absolute;
-  left: 14px;
-  top: 44px;
-  width: 102px;
+  position: static;
+  flex: 0 0 auto;
+  width: 128px;
   aspect-ratio: 3 / 4;
   overflow: hidden;
   border: 1px solid rgba(44, 51, 48, 0.24);
@@ -4603,7 +4637,9 @@ body {
 .daily-challenge-leader-art .mini-art {
   width: 100%;
   height: 100%;
-  background: var(--paper-deep) center / cover no-repeat;
+  object-fit: cover;
+  object-position: top center;
+  background: var(--paper-deep) center top / cover no-repeat;
 }
 
 .daily-challenge-leader-art .mini-art.placeholder {
@@ -4620,39 +4656,15 @@ body {
 
 .challenge-recap {
   display: grid;
-  gap: 14px;
-  margin: 12px 0 16px;
-}
-
-.challenge-recap-score {
-  display: grid;
-  gap: 6px;
-}
-
-.challenge-recap-score small {
-  color: var(--civic);
-  font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-.challenge-recap-score strong {
-  display: flex;
-  align-items: baseline;
   gap: 8px;
-  color: var(--ink);
-  font-family: "Noto Serif Hebrew", "Fraunces", serif;
-  font-size: clamp(44px, 12vw, 64px);
-  font-weight: 600;
-  line-height: 0.9;
+  margin: 0 0 10px;
 }
 
-.challenge-recap-score strong span {
-  color: rgba(26, 31, 28, 0.62);
-  font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
-  font-size: 14px;
-  font-weight: 500;
+.challenge-copy .challenge-recap-score {
+  display: grid;
+  justify-items: start;
+  margin-top: 2px;
+  min-width: 0;
 }
 
 .challenge-recap-place {
@@ -4663,8 +4675,21 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.challenge-recap-place.is-status {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-weight: 600;
+  white-space: normal;
+  max-width: 12rem;
+  opacity: 0.72;
 }
 
 .challenge-hist {
@@ -4683,8 +4708,8 @@ body {
   justify-content: center;
   align-items: stretch;
   gap: 10px;
-  height: min(148px, 24dvh);
-  padding-top: 36px;
+  height: min(110px, 20dvh);
+  padding-top: 28px;
   box-sizing: border-box;
 }
 
@@ -4782,16 +4807,11 @@ body {
 }
 
 @media (max-width: 520px) {
-  .daily-challenge-desk {
-    padding: 16px !important;
+  .challenge-hero {
+    gap: 8px;
   }
   .daily-challenge-leader-art {
-    position: static;
-    width: 72px;
-    margin: 0 0 12px;
-  }
-  .challenge-recap-score strong {
-    font-size: 52px;
+    width: 112px;
   }
   .app-shell.home-active .level-strip {
     grid-template-columns: minmax(128px, 148px) minmax(0, 1fr) 34px;
@@ -4910,11 +4930,13 @@ body {
   .community-nav { margin: 0 0 2px; gap: 2px; }
   .contained-tabs { margin: 0 0 2px; }
   .contained-tabs button { min-height: 26px; }
-  .daily-challenge-desk { padding: 8px !important; }
-  .daily-challenge-leader-art { width: 44px; margin: 0 0 6px; }
-  #daily-challenge-title { font-size: 15px; line-height: 1.2; margin: 0 0 4px; }
-  .challenge-recap { margin: 4px 0 6px; gap: 4px; }
-  .challenge-recap-score strong { font-size: 28px !important; }
+  .daily-challenge-desk { padding: 8px 0 !important; }
+  .challenge-hero { gap: 8px; margin-bottom: 8px; }
+  .daily-challenge-leader-art { width: 100px; margin: 0; }
+  .growth-grid .daily-challenge-desk .challenge-date,
+  .daily-challenge-desk #daily-challenge-title,
+  .growth-grid .daily-challenge-desk .challenge-party { font-size: 16px; }
+  .challenge-recap { margin: 0 0 6px; gap: 4px; }
   .challenge-hist-plot { height: 72px; padding-top: 16px; }
   .challenge-hist-col { width: 22px; flex-basis: 22px; }
   .challenge-hist-col b { width: 16px; }
