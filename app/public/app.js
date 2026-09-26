@@ -2321,7 +2321,7 @@ function renderHome() {
   const available = unseen > 0 || due;
   const readyCopy = homeIdleReadyCopy({ unseenCount: unseen, available });
   const idleCapacity = model.serverState?.idleCapacity ?? model.gameConfig?.idle?.capacity ?? IDLE_BACKLOG_CAP;
-  elements.collectionCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה · ${percent}%`;
+  elements.collectionCount.textContent = `${owned} מתוך ${total} מתוך כל הקלפים · ${percent}%`;
   elements.collectionProgress.style.width = `${percent}%`;
   elements.openPack.disabled = !available;
   elements.openPack.textContent = readyCopy.action;
@@ -3366,6 +3366,22 @@ function filterSetChip(set, label, count, active) {
   return `<button type="button" role="tab" aria-selected="${active}" tabindex="${active ? "0" : "-1"}" class="${active ? "active" : ""}" data-filter="${escapeHtml(set)}"><span class="filter-name">${escapeHtml(label)}</span><span class="filter-count">${count}</span></button>`;
 }
 
+function binderPartyPool(cards = []) {
+  return model.binderParty ? cards.filter((card) => card.set === model.binderParty) : cards;
+}
+
+function binderSetChipCount(set, cards, { inventory = null, numberedIds = null, numberedCards = null } = {}) {
+  const pool = binderPartyPool(cards);
+  const ownedOnly = Boolean(inventory);
+  const counted = (list) => (ownedOnly ? list.filter((card) => inventory[card.id]) : list);
+  if (set === "ALL") return counted(pool).length;
+  if (set === "NUMBERED") {
+    if (numberedCards) return counted(binderPartyPool(numberedCards)).length;
+    return counted(pool.filter((card) => numberedIds?.has(card.id))).length;
+  }
+  return counted(pool.filter((card) => card.releaseSetId === set.slice(8))).length;
+}
+
 function displayedCardQuote(card) {
   const text = String(card.walkout.text || "").trim();
   if (!text) return "";
@@ -3594,7 +3610,7 @@ function renderShowcaseBinder() {
   for (const release of model.gameConfig?.releaseSets || []) {
     setLabels[`RELEASE:${release.id}`] = FILTER_SET_SHORT[release.id] || release.nameHe;
   }
-  setLabels.ALL = "הכול";
+  setLabels.ALL = "כל הקלפים";
   setLabels.NUMBERED = "ממוספרים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
   if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && model.binderFilter !== "NUMBERED" && !model.binderFilter.startsWith("RELEASE:")) {
@@ -3624,11 +3640,7 @@ function renderShowcaseBinder() {
       </label>`,
       `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
       ...setOrder.map((set) => {
-        const count = set === "ALL"
-          ? playerCards.length
-          : set === "NUMBERED"
-            ? numberedCards.length
-          : playerCards.filter((card) => card.releaseSetId === set.slice(8)).length;
+        const count = binderSetChipCount(set, playerCards, { numberedCards });
         const active = model.binderFilter === set;
         return filterSetChip(set, setLabels[set] || set, count, active);
       }),
@@ -3815,7 +3827,7 @@ function renderBinder() {
     if (model.serverState?.totalCards) {
       const { owned, total, percent } = completion();
       elements.binderPercent.textContent = `${percent}%`;
-      elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
+      elements.binderCount.textContent = `${owned} מתוך ${total} מתוך כל הקלפים`;
     } else {
       elements.binderPercent.textContent = "…";
       elements.binderCount.textContent = "טוענים את הסדרה";
@@ -3856,8 +3868,8 @@ function renderBinder() {
     })()
     : completion();
   elements.binderPercent.textContent = `${percent}%`;
-  elements.binderPercent.title = `${owned} קלפים שונים מתוך ${total} בסדרה הפעילה כרגע`;
-  elements.binderCount.textContent = `${owned} מתוך ${total} בסדרה הפעילה`;
+  elements.binderPercent.title = `${owned} קלפים שונים מתוך ${total} מתוך כל הקלפים`;
+  elements.binderCount.textContent = `${owned} מתוך ${total} מתוך כל הקלפים`;
   setEmptyNote(
     elements.binderEmpty,
     waitingOwnership ? "טוענים את האוסף…" : "פתחו קלף כדי להתחיל.",
@@ -3881,7 +3893,7 @@ function renderBinder() {
   for (const release of model.gameConfig?.releaseSets || []) {
     setLabels[`RELEASE:${release.id}`] = FILTER_SET_SHORT[release.id] || release.nameHe;
   }
-  setLabels.ALL = "הכול";
+  setLabels.ALL = "כל הקלפים";
   setLabels.SPECIALS = "מיוחדים";
   setLabels.NUMBERED = "ממוספרים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
@@ -3910,11 +3922,7 @@ function renderBinder() {
     </label>`,
     `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
     ...setOrder.map((set) => {
-      const count = set === "ALL"
-        ? owned
-        : set === "NUMBERED"
-          ? numberedIds.size
-        : playerCards.filter((card) => card.releaseSetId === set.slice(8) && inventory[card.id]).length;
+      const count = binderSetChipCount(set, playerCards, { inventory, numberedIds });
       const active = model.binderFilter === set;
       return filterSetChip(set, setLabels[set] || set, count, active);
     }),
