@@ -2261,6 +2261,7 @@ export async function createKalpiApp({
             ...(item.reward === "pull" ? { reward: "pull" } : {}),
             ...(item.claim === "once" ? { claim: "once" } : {}),
             ...(item.tickerHe ? { tickerHe: String(item.tickerHe).slice(0, 160) } : {}),
+            ...(item.claimedTickerHe ? { claimedTickerHe: String(item.claimedTickerHe).slice(0, 160) } : {}),
           }));
           await writeJsonAtomic(eventsPath, events);
           json(response, 200, events);

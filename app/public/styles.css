@@ -3593,7 +3593,8 @@ body {
   cursor: pointer;
   container-type: inline-size;
 }
-.today-specials-line[data-state="idle"] { cursor: default; }
+.today-specials-line[data-state="idle"],
+.today-specials-line:disabled { cursor: default; }
 .today-specials-track {
   display: flex;
   width: max-content;

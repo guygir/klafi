@@ -452,6 +452,14 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /elements\.todaySpecialsRow\?\.addEventListener\("click", \(\) => \{\s*claimTodaySpecial\(\)/);
   assert.match(javascript, /windowOpen\.reward === "pull"/);
   assert.match(javascript, /windowOpen\.tickerHe/);
+  // Claimed launch pull: same event, same marquee, data-driven claimed copy, and no longer a control.
+  const specialsBody = javascript.match(/\nfunction renderTodaySpecials[\s\S]*?\n}\n/)[0];
+  assert.match(specialsBody, /windowOpen\.claimedToday\s*\?\s*windowOpen\.claimedTickerHe/);
+  assert.match(specialsBody, /row\.classList\.toggle\("is-marquee", Boolean\(windowOpen\)\)/);
+  assert.match(specialsBody, /const inert = windowOpen\?\.reward === "pull" && Boolean\(windowOpen\.claimedToday\)/);
+  assert.match(specialsBody, /row\.disabled = inert/);
+  assert.match(javascript, /if \(windowOpen\.reward === "pull"\) \{\s*if \(windowOpen\.claimedToday\) return;\s*await claimEventPull/);
+  assert.match(css, /\.today-specials-line\[data-state="idle"\],\s*\.today-specials-line:disabled \{ cursor: default; \}/);
   assert.match(javascript, /PULL_CAP_REACHED/);
   assert.match(javascript, /המחסן מלא/);
   assert.match(javascript, /חבילה נוספת נכנסה למחסן/);

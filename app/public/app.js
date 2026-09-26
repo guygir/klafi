@@ -2370,7 +2370,9 @@ function renderTodaySpecials() {
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
   let line = "אין אירוע כרגע";
   if (windowOpen?.reward === "pull") {
-    line = windowOpen.tickerHe || `${windowOpen.nameHe} · חבילה נוספת לכל שחקן`;
+    line = windowOpen.claimedToday
+      ? windowOpen.claimedTickerHe || `${windowOpen.nameHe} · החבילה כבר אצלכם`
+      : windowOpen.tickerHe || `${windowOpen.nameHe} · חבילה נוספת לכל שחקן`;
   } else if (windowOpen) {
     const closes = new Date(windowOpen.closesAt);
     const until = Number.isNaN(closes.getTime())
@@ -2386,6 +2388,13 @@ function renderTodaySpecials() {
   const state = !windowOpen ? "idle" : windowOpen.claimedToday ? "claimed" : "live";
   if (row.dataset.state !== state) row.dataset.state = state;
   row.classList.toggle("is-marquee", Boolean(windowOpen));
+  // A claimed pull event keeps scrolling its "already yours" line but is no longer a control:
+  // disabled = no click, no focus, no pop-up, no POST. (Card events manage .disabled themselves.)
+  const inert = windowOpen?.reward === "pull" && Boolean(windowOpen.claimedToday);
+  if (inert !== (row.dataset.inert === "true")) {
+    row.dataset.inert = String(inert);
+    row.disabled = inert;
+  }
   for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
     if (copy && copy.textContent !== line) copy.textContent = line;
   }
@@ -4578,6 +4587,7 @@ async function claimTodaySpecial() {
   const windowOpen = model.specialWindow;
   if (!windowOpen) return;
   if (windowOpen.reward === "pull") {
+    if (windowOpen.claimedToday) return;
     await claimEventPull(windowOpen);
     return;
   }
