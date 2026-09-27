@@ -90,24 +90,26 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGE_GUIDES.card.length, 1);
   assert.equal(PAGE_GUIDES.dialog.length, 2);
   assert.match(PAGE_GUIDES.home[0].title, /המטרה/);
-  assert.match(PAGE_GUIDES.home[0].body, /אוספים קלפים/);
-  assert.match(PAGE_GUIDES.home[0].body, /עולים רמה/);
+  assert.match(PAGE_GUIDES.home[0].body, /מטרת המשחק/);
+  assert.match(PAGE_GUIDES.home[0].body, /בחירות 2026/);
+  assert.match(PAGE_GUIDES.home[0].body, /עותק אחד בלבד/);
   assert.match(PAGE_GUIDES.home[0].ring, /today-hero/);
   assert.equal(PAGE_GUIDES.home[0].ringUnion, undefined);
   assert.match(PAGE_GUIDES.home[1].body, /היום/);
   assert.match(PAGE_GUIDES.home[1].ring, /today-open-cue|cooldown-copy/);
-  assert.match(PAGE_GUIDES.home[1].body, /המחסן/);
+  assert.match(PAGE_GUIDES.home[1].body, /8 חבילות/);
   assert.match(PAGE_GUIDES.home[1].body, /השעון/);
   assert.equal(PAGE_GUIDES.home[1].ringUnion, true);
-  assert.match(PAGE_GUIDES.home[2].body, /יש קלפים במחסן/);
-  assert.match(PAGE_GUIDES.home[2].body, /רואים אותם/);
+  assert.match(PAGE_GUIDES.home[2].body, /יש חבילות שמחכות/);
+  assert.match(PAGE_GUIDES.home[2].body, /פתיחת קלף/);
   assert.match(PAGE_GUIDES.home[3].ring, /level-avatar-button/);
-  assert.match(PAGE_GUIDES.home[3].body, /אווטאר/);
+  assert.match(PAGE_GUIDES.home[3].body, /התמונה שלכם/);
   assert.match(PAGE_GUIDES.home[4].body, /האתגר/);
+  assert.match(PAGE_GUIDES.home[4].body, /בטופ/);
   assert.match(PAGE_GUIDES.home[5].ring, /open-advocacy|open-bug-report|bottom-nav/);
-  assert.match(PAGE_GUIDES.home[5].body, /גילוי נאות/);
-  assert.match(PAGE_GUIDES.home[5].body, /דיווח באג/);
-  assert.match(PAGE_GUIDES.home[5].body, /בקשת פיצ׳ר/);
+  assert.match(PAGE_GUIDES.home[5].body, /תפריט הניווט/);
+  assert.match(PAGE_GUIDES.home[5].body, /לדווח על באגים/);
+  assert.match(PAGE_GUIDES.home[5].body, /לבקש פיצ׳רים/);
   assert.match(PAGE_GUIDES.home[5].ring, /#open-feature-request/);
   assert.equal(PAGE_GUIDES.home[5].ringUnion, true);
   assert.equal(PAGE_GUIDES.home[5].place, "above");
@@ -120,9 +122,15 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.card[0].body, /מיקומו באלבום/);
   assert.equal(PAGE_GUIDES.card[0].place, "top");
   assert.equal(PAGE_GUIDES.card[0].hideLegend, true);
+  for (const steps of [...Object.values(PAGE_GUIDES), TIPS_STEPS]) {
+    for (const step of steps) {
+      assert.doesNotMatch(step.body, /\u2014/, `${step.title} body uses a normal dash`);
+      assert.doesNotMatch(step.title, /\u2014/, `${step.title} uses a normal dash`);
+    }
+  }
   assert.match(CARD_CALLOUTS[3].sel, /card-rarity-run|card-image-meta/);
   assert.match(PAGE_GUIDES.binder[0].body, /שיתוף האלבום/);
-  assert.match(PAGE_GUIDES.binder[0].body, /תמונה/);
+  assert.match(PAGE_GUIDES.binder[0].body, /כל הקלפים במשחק/);
   assert.match(PAGE_GUIDES.binder[0].ring, /binder-stats-row|binder-head/);
   assert.equal(PAGE_GUIDES.binder[0].arrowTo, undefined);
   assert.match(PAGE_GUIDES.binder[1].title, /תגים/);
@@ -130,32 +138,32 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.binder[1].body, /כוכבי האוסף/);
   assert.match(PAGE_GUIDES.binder[2].body, /סדרה/);
   assert.match(PAGE_GUIDES.binder[2].body, /תנסו ללחוץ על קלף שהשגתם/);
-  assert.match(PAGE_GUIDES.binder[2].body, /מעל הניווט/);
+  assert.match(PAGE_GUIDES.binder[2].body, /מקור לציטוט/);
   assert.match(PAGE_GUIDES.growth[0].body, /החלפות/);
   assert.match(PAGE_GUIDES.growth[0].ring, /community-sections/);
   assert.match(PAGE_GUIDES.growth[1].body, /מפרסמים/);
   assert.match(PAGE_GUIDES.growth[2].body, /הצעות/);
   assert.match(PAGE_GUIDES.growth[3].ring, /community-section-race|community-tab-leagues|community-tab-challenge/);
   assert.match(PAGE_GUIDES.growth[3].body, /ליגות/);
-  assert.match(PAGE_GUIDES.growth[3].body, /האתגר/);
+  assert.match(PAGE_GUIDES.growth[3].body, /האתגר היומי/);
   assert.match(PAGE_GUIDES.growth[3].body, /מפלגות/);
-  assert.match(PAGE_GUIDES.growth[3].body, /מחסן/);
+  assert.match(PAGE_GUIDES.growth[3].body, /אולי אלו אתם/);
   assert.match(PAGE_GUIDES.achievements[0].ring, /achievement-tiers/);
   assert.match(PAGE_GUIDES.achievements[0].body, /הקלים/);
   assert.match(PAGE_GUIDES.achievements[1].ring, /achievement-grid/);
-  assert.match(PAGE_GUIDES.achievements[1].body, /פס התקדמות/);
+  assert.match(PAGE_GUIDES.achievements[1].body, /מד התקדמות/);
   assert.match(PAGE_GUIDES.achievements[1].body, /מעל האלבום/);
   assert.equal(PAGE_GUIDES.achievements[1].place, "above");
   assert.equal(PAGE_GUIDES.growth[0].ringUnion, true);
   assert.match(TIPS_STEPS[0].body, /כשיש קלפים/);
   assert.match(TIPS_STEPS[0].body, /מחסן/);
   assert.match(TIPS_STEPS[1].body, /רואים את הקלף/);
-  assert.match(PAGE_GUIDES.pack[0].body, /מחסן/);
+  assert.match(PAGE_GUIDES.pack[0].body, /קרעו את החבילה/);
   assert.match(PAGE_GUIDES.pack[0].ring, /pr-pack|#rip-stage/);
-  assert.match(PAGE_GUIDES.dialog[0].body, /המקור האמיתי/);
+  assert.match(PAGE_GUIDES.dialog[0].body, /לכמה עוד אנשים/);
   assert.match(PAGE_GUIDES.dialog[1].ring, /dialog-whatsapp|dialog-instagram/);
-  assert.match(PAGE_GUIDES.dialog[1].body, /וואטסאפ/);
-  assert.match(PAGE_GUIDES.dialog[1].body, /סטורי/);
+  assert.match(PAGE_GUIDES.dialog[1].body, /להשוויץ/);
+  assert.match(PAGE_GUIDES.dialog[1].body, /רק לראות - לא לגעת/);
   const shifted = toFrame(
     { left: 20, top: 30, width: 10, height: 8, right: 30, bottom: 38 },
     { left: 8, top: 8 },
