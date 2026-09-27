@@ -466,6 +466,7 @@ export class JsonStore {
       enqueueAcceptedTradeNotice(owner, trade, {
         acceptedAt,
         accepterName: accepter.displayName,
+        ownerName: owner.displayName,
       });
       bumpStateRevision(owner);
       bumpStateRevision(accepter);

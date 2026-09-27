@@ -1018,6 +1018,7 @@ export class PostgresStore {
       enqueueAcceptedTradeNotice(owner, trade, {
         acceptedAt,
         accepterName: accepter.displayName,
+        ownerName: owner.displayName,
       });
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;

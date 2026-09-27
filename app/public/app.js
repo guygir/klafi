@@ -5,6 +5,7 @@ import { starContributionBins } from "./star-contribution-bins.js";
 import { binderBadgeOrder } from "./badge-order.js";
 import { isStaleState, mergeLeaderboards, overlayPendingSeen, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
+import { tradeApprovedLines } from "./trade-approved.js";
 import {
   exitWalkoutSunburst,
   readSunburstRarityOverride,
@@ -45,7 +46,6 @@ function playerDialogOpen() {
     elements.reportDialog,
     elements.levelDialog,
     elements.eventDialog,
-    elements.tradeNoticeDialog,
     elements.waitDialog,
     elements.shareSheet,
   ].some((dialog) => dialog?.open);
@@ -247,11 +247,6 @@ const elements = {
   eventDialogCopy: document.querySelector("#event-dialog-copy"),
   eventDialogOk: document.querySelector("#event-dialog-ok"),
   closeEventDialog: document.querySelector("#close-event-dialog"),
-  tradeNoticeDialog: document.querySelector("#trade-notice-dialog"),
-  tradeNoticeTitle: document.querySelector("#trade-notice-title"),
-  tradeNoticeCopy: document.querySelector("#trade-notice-copy"),
-  tradeNoticeOk: document.querySelector("#trade-notice-ok"),
-  closeTradeNotice: document.querySelector("#close-trade-notice"),
   avatarSeal: document.querySelector("#avatar-seal"),
   levelLetter: document.querySelector("#level-letter"),
   levelLetterText: document.querySelector("#level-letter-text"),
@@ -382,6 +377,8 @@ const elements = {
   submitBug: document.querySelector("#submit-bug"),
   closeBug: document.querySelector("#close-bug"),
   toast: document.querySelector("#toast"),
+  toastTitle: document.querySelector("#toast-title"),
+  toastCopy: document.querySelector("#toast-copy"),
   waitDialog: document.querySelector("#wait-dialog"),
   waitDialogCopy: document.querySelector("#wait-dialog-copy"),
   bottomNav: document.querySelector(".bottom-nav"),
@@ -4690,13 +4687,6 @@ function watchOpenTrade() {
   if (mine) model.watchedTrade = { tradeId: mine.tradeId, receivedCardId: mine.wantedCardId };
 }
 
-function settleReceivedCard(cardId, message) {
-  renderBinder();
-  renderGrowth();
-  showToast(message);
-  if (cardId) openCardDialog(cardId);
-}
-
 function applyTradeResult(result) {
   if (result?.state) setServerState(result.state, { merge: true });
   if (result?.trades) model.trades = result.trades.trades || result.trades;
@@ -4715,64 +4705,75 @@ function pendingTradeNotices() {
   return [...(model.serverState?.pendingTradeNotices || [])].filter((notice) => notice?.id);
 }
 
-function fillTradeNotice(notice) {
-  const name = String(notice.accepterName || "").trim() || "מישהו";
-  const card = model.byId.get(notice.receivedCardId);
-  const cardTitle = card?.titleHe || "";
-  if (elements.tradeNoticeTitle) elements.tradeNoticeTitle.textContent = "ההחלפה אושרה!";
-  if (elements.tradeNoticeCopy) {
-    elements.tradeNoticeCopy.textContent = cardTitle
-      ? `${name} קיבל את ההצעה. ${cardTitle} נכנס לאוסף.`
-      : `${name} קיבל את ההצעה. הקלף נכנס לאוסף.`;
+function tradeToastOpen() {
+  return Boolean(elements.toast?.classList.contains("show") && elements.toast?.classList.contains("trade-toast"));
+}
+
+function cardTitleHe(cardId) {
+  return model.byId.get(cardId)?.titleHe || "";
+}
+
+function showAcceptedTradeToast({ otherName, receivedCardId, givenCardId }) {
+  const lines = tradeApprovedLines({
+    otherName,
+    receivedTitle: cardTitleHe(receivedCardId),
+    givenTitle: cardTitleHe(givenCardId),
+  });
+  if (elements.toastTitle) {
+    elements.toastTitle.hidden = false;
+    elements.toastTitle.textContent = lines.title;
   }
-  if (elements.tradeNoticeDialog) {
-    elements.tradeNoticeDialog.dataset.noticeId = notice.id;
-    elements.tradeNoticeDialog.dataset.receivedCardId = notice.receivedCardId || "";
+  if (elements.toastCopy) {
+    elements.toastCopy.textContent = `${lines.who}\n${lines.swap}`;
+  } else if (elements.toast) {
+    elements.toast.textContent = `${lines.title} ${lines.who} ${lines.swap}`;
   }
+  elements.toast?.classList.add("show", "trade-toast");
+  clearTimeout(showToast.timeout);
+  showToast.timeout = setTimeout(() => {
+    elements.toast?.classList.remove("show", "trade-toast");
+    if (elements.toastTitle) {
+      elements.toastTitle.hidden = true;
+      elements.toastTitle.textContent = "";
+    }
+    queueMicrotask(() => maybeShowTradeNotice());
+  }, 5200);
 }
 
 function maybeShowTradeNotice() {
   if (model.showcase || model.tradeNoticeBusy || !stateFreshAt) return;
-  if (!elements.tradeNoticeDialog || elements.tradeNoticeDialog.open) return;
-  if (elements.waitDialog?.open || tipsOverlayOpen()) return;
+  if (elements.waitDialog?.open || tipsOverlayOpen() || tradeToastOpen()) return;
   if (playerDialogOpen()) return;
   const notice = pendingTradeNotices()[0];
   if (!notice) return;
-  fillTradeNotice(notice);
-  elements.tradeNoticeDialog.showModal();
+  showAcceptedTradeToast({
+    otherName: notice.accepterName,
+    receivedCardId: notice.receivedCardId,
+    givenCardId: notice.givenCardId,
+  });
+  ackPendingTradeNotice(notice.id);
 }
 
-async function dismissTradeNotice() {
-  const dialog = elements.tradeNoticeDialog;
-  const id = dialog?.dataset.noticeId || "";
-  const receivedCardId = dialog?.dataset.receivedCardId || "";
-  if (dialog?.open) dialog.close();
-  if (id && !model.tradeNoticeBusy) {
-    model.tradeNoticeBusy = true;
-    try {
-      const result = await request("/api/trades/notices/ack", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (result?.state) setServerState(result.state, { merge: true });
-      else if (model.serverState?.pendingTradeNotices) {
-        model.serverState.pendingTradeNotices = pendingTradeNotices().filter((notice) => notice.id !== id);
-      }
-    } catch {
-      if (model.serverState?.pendingTradeNotices) {
-        model.serverState.pendingTradeNotices = pendingTradeNotices().filter((notice) => notice.id !== id);
-      }
-    } finally {
-      model.tradeNoticeBusy = false;
-      if (dialog) {
-        delete dialog.dataset.noticeId;
-        delete dialog.dataset.receivedCardId;
-      }
+async function ackPendingTradeNotice(id) {
+  if (!id || model.tradeNoticeBusy) return;
+  model.tradeNoticeBusy = true;
+  try {
+    const result = await request("/api/trades/notices/ack", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (result?.state) setServerState(result.state, { merge: true });
+    else if (model.serverState?.pendingTradeNotices) {
+      model.serverState.pendingTradeNotices = pendingTradeNotices().filter((notice) => notice.id !== id);
     }
+  } catch {
+    if (model.serverState?.pendingTradeNotices) {
+      model.serverState.pendingTradeNotices = pendingTradeNotices().filter((notice) => notice.id !== id);
+    }
+  } finally {
+    model.tradeNoticeBusy = false;
   }
-  if (receivedCardId && model.byId.has(receivedCardId)) openCardDialog(receivedCardId);
-  queueMicrotask(() => maybeShowTradeNotice());
 }
 
 async function pollWatchedTrade() {
@@ -6229,7 +6230,12 @@ async function acceptTradeOffer(tradeId) {
   try {
     const result = await request(`/api/trades/${encodeURIComponent(tradeId)}/accept`, { method: "POST" });
     applyTradeResult(result);
-    settleReceivedCard(result.trade?.offeredCardId, "ההחלפה הושלמה. הקלף נכנס לאוסף.");
+    hideWait();
+    showAcceptedTradeToast({
+      otherName: result.trade?.ownerLabel,
+      receivedCardId: result.trade?.offeredCardId,
+      givenCardId: result.trade?.wantedCardId,
+    });
   } catch {
     showToast("ההצעה כבר לא זמינה או שחסר לכם הקלף המבוקש.");
   } finally {
@@ -6525,10 +6531,18 @@ async function submitBugReport(event) {
 }
 
 function showToast(message, ms = 2200) {
-  elements.toast.textContent = message;
-  elements.toast.classList.add("show");
+  elements.toast?.classList.remove("trade-toast");
+  if (elements.toastTitle) {
+    elements.toastTitle.hidden = true;
+    elements.toastTitle.textContent = "";
+  }
+  if (elements.toastCopy) elements.toastCopy.textContent = message;
+  else if (elements.toast) elements.toast.textContent = message;
+  elements.toast?.classList.add("show");
   clearTimeout(showToast.timeout);
-  showToast.timeout = setTimeout(() => elements.toast.classList.remove("show"), ms);
+  showToast.timeout = setTimeout(() => {
+    elements.toast?.classList.remove("show", "trade-toast");
+  }, ms);
 }
 
 function wrapCanvasText(context, text, x, y, maxWidth, lineHeight, maxLines = 4) {
@@ -7822,15 +7836,6 @@ elements.eventDialog.addEventListener("click", (event) => {
   if (event.target === elements.eventDialog) elements.eventDialog.close();
 });
 elements.eventDialog.addEventListener("close", () => maybeShowTradeNotice());
-elements.closeTradeNotice?.addEventListener("click", () => dismissTradeNotice());
-elements.tradeNoticeOk?.addEventListener("click", () => dismissTradeNotice());
-elements.tradeNoticeDialog?.addEventListener("click", (event) => {
-  if (event.target === elements.tradeNoticeDialog) dismissTradeNotice();
-});
-elements.tradeNoticeDialog?.addEventListener("cancel", (event) => {
-  event.preventDefault();
-  dismissTradeNotice();
-});
 elements.advocacyDialog.addEventListener("click", (event) => {
   if (event.target === elements.advocacyDialog) elements.advocacyDialog.close();
 });

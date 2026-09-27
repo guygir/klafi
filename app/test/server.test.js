@@ -778,6 +778,7 @@ test("players can see and accept open trades from other collectors", async (t) =
   assert.equal(ownerState.body.pendingTradeNotices[0].givenCardId, offered.id);
   assert.equal(ownerState.body.pendingTradeNotices[0].tradeId, offer.tradeId);
   assert.match(ownerState.body.pendingTradeNotices[0].accepterName, /שחקן/);
+  assert.equal(ownerState.body.pendingTradeNotices[0].ownerName, "מציע בדיקה");
   const ownerHome = await api(running.base, "/api/home", { token: ownerToken });
   assert.equal(ownerHome.body.state.pendingTradeNotices.length, 1);
   assert.equal(ownerHome.body.state.pendingTradeNotices[0].id, ownerState.body.pendingTradeNotices[0].id);

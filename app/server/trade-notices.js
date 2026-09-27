@@ -11,11 +11,12 @@ export function publicTradeNotices(session) {
       givenCardId: String(notice?.givenCardId || ""),
       acceptedAt: notice?.acceptedAt || null,
       accepterName: String(notice?.accepterName || "").trim() || "שחקן",
+      ownerName: String(notice?.ownerName || "").trim() || "שחקן",
     }))
     .filter((notice) => notice.id && notice.receivedCardId);
 }
 
-export function enqueueAcceptedTradeNotice(owner, trade, { acceptedAt, accepterName } = {}) {
+export function enqueueAcceptedTradeNotice(owner, trade, { acceptedAt, accepterName, ownerName } = {}) {
   if (!owner || !trade) return null;
   owner.pendingTradeNotices = Array.isArray(owner.pendingTradeNotices) ? owner.pendingTradeNotices : [];
   const notice = {
@@ -25,6 +26,7 @@ export function enqueueAcceptedTradeNotice(owner, trade, { acceptedAt, accepterN
     givenCardId: trade.offeredCardId,
     acceptedAt: acceptedAt || null,
     accepterName: String(accepterName || "").trim() || "שחקן",
+    ownerName: String(ownerName || owner.displayName || "").trim() || "שחקן",
   };
   owner.pendingTradeNotices.push(notice);
   if (owner.pendingTradeNotices.length > TRADE_NOTICE_CAP) {
