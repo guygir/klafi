@@ -835,6 +835,7 @@ export function attachKlafiTips(env = globalThis) {
     overlay.setAttribute("aria-hidden", "false");
     title.textContent = step.title;
     body.textContent = step.body;
+    card.classList.toggle("is-top", step.place === "top");
     if (legend) {
       if (step.callouts?.length && !step.hideLegend) {
         legend.hidden = false;
