@@ -524,13 +524,14 @@ let reportFlush = null;
 let reportRetryTimer = null;
 function flushPendingReports() {
   if (reportFlush) return reportFlush;
-  if (!model.token || !pendingReports().length) return Promise.resolve([]);
+  if (!model.token || !pendingReports().length) return Promise.resolve({ delivered: [], issueUrl: "" });
   clearTimeout(reportRetryTimer);
   reportFlush = (async () => {
     const delivered = [];
+    let issueUrl = "";
     for (const report of pendingReports()) {
       try {
-        await request("/api/reports", {
+        const result = await request("/api/reports", {
           method: "POST",
           headers: {
             "content-type": "application/json",
@@ -541,6 +542,7 @@ function flushPendingReports() {
         const remaining = pendingReports().filter(({ reportId }) => reportId !== report.reportId);
         localStorage.setItem(PENDING_REPORTS_KEY, JSON.stringify(remaining));
         delivered.push(report.reportId);
+        if (result?.issueUrl) issueUrl = result.issueUrl;
       } catch (error) {
         if (error.status >= 400 && error.status < 500 && ![408, 429].includes(error.status)) {
           const remaining = pendingReports().filter(({ reportId }) => reportId !== report.reportId);
@@ -550,7 +552,7 @@ function flushPendingReports() {
         throw error;
       }
     }
-    return delivered;
+    return { delivered, issueUrl };
   })().catch((error) => {
     reportRetryTimer = setTimeout(() => flushPendingReports().catch(() => {}), 15_000 + Math.floor(Math.random() * 30_000));
     throw error;
@@ -6230,10 +6232,10 @@ async function submitCorrectionReport(event) {
   elements.reportStatus.textContent = "שומרים את הדיווח…";
   rememberPendingReport(report);
   try {
-    await flushPendingReports();
+    const flushed = await flushPendingReports();
     elements.reportStatus.textContent = "";
     elements.reportDialog.close();
-    showToast("הדיווח התקבל ונכנס לבדיקה.");
+    showToast(flushed?.issueUrl ? "הדיווח התקבל ונפתח בגיטהאב." : "הדיווח התקבל ונכנס לבדיקה.");
   } catch {
     elements.reportStatus.textContent = "";
     elements.reportDialog.close();

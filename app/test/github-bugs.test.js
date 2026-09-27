@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   BUG_RATE_COOKIE,
+  correctionReportKind,
   createGithubBugFromBody,
+  createGithubIssueFromCorrection,
   parseGithubRepo,
   rateCookie,
   reportKind,
@@ -102,4 +104,41 @@ test("feature requests reuse the bug flow with their own title tag and type line
   // Feature requests share the same 3-per-day budget as bug reports.
   const limited = await createGithubBugFromBody(env, { text: "עוד", kind: "feature" }, { cookie: rateCookie([1, 2, 3], { secure: false }) }, { fetchImpl, now: () => 7 });
   assert.equal(limited.status, 429);
+});
+
+test("player name reports open a GitHub issue like bugs, and skip GitHub when it is off", async () => {
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url, init });
+    return { ok: true, status: 201, async text() { return JSON.stringify({ html_url: "https://github.com/guygir/klafi/issues/101" }); } };
+  };
+  assert.equal(correctionReportKind("name"), "name");
+  assert.equal(correctionReportKind("source"), "source");
+  assert.equal(correctionReportKind("admin"), "other");
+  assert.equal(reportKind("name"), "name");
+
+  const missing = await createGithubIssueFromCorrection({}, {
+    category: "name",
+    details: "שם מדווח: בדיקה פוגענית בטבלה",
+    nickname: "גיזפין",
+    pagePath: "/?view=growth",
+  }, {});
+  assert.equal(missing.ok, false);
+  assert.equal(missing.status, 503);
+
+  const env = { GITHUB_COMMENTS_TOKEN: "tok", GITHUB_COMMENTS_REPO: "guygir/klafi" };
+  const named = await createGithubIssueFromCorrection(env, {
+    category: "name",
+    details: "שם מדווח: בדיקה פוגענית בטבלה\nכינוי פוגעני",
+    nickname: "גיזפין",
+    pagePath: "/?view=growth",
+  }, {}, { fetchImpl, now: () => 8 });
+  assert.equal(named.ok, true);
+  assert.equal(named.issueUrl, "https://github.com/guygir/klafi/issues/101");
+  const payload = JSON.parse(calls[0].init.body);
+  assert.match(payload.title, /^\[KLAFI name\] /);
+  assert.match(payload.body, /Type: Player name report/);
+  assert.match(payload.body, /שם מדווח: בדיקה פוגענית בטבלה/);
+  assert.match(payload.body, /Submitted by: גיזפין/);
+  assert.match(payload.body, /Page: https:\/\/klafi\.vercel\.app\/\?view=growth/);
 });
