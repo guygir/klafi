@@ -32,7 +32,7 @@ export const CARD_CALLOUTS = Object.freeze([
   { n: 1, sel: ".card-quote-zone", label: "ציטוט", side: "start" },
   { n: 2, sel: ".card-name-zone", label: "שם", side: "start" },
   { n: 3, sel: ".card-party-zone", label: "מפלגה", side: "end" },
-  { n: 4, sel: ".card-image-meta strong", label: "נדירות", side: "chip" },
+  { n: 4, sel: ".card-rarity-run, .card-image-meta .card-meta-end strong, .card-image-meta strong", label: "נדירות", side: "chip" },
   { n: 5, sel: ".card-code-tag", label: "סדרה", side: "end" },
 ]);
 
@@ -94,8 +94,9 @@ export const PAGE_GUIDES = Object.freeze({
     {
       ring: "#pack-view.active .walkout .kalpi-card.stage-portrait, #dialog-card .kalpi-card",
       title: "הקלף",
-      body: "כמו במשחק קופסה: כל מספר מצביע על אזור בקלף.",
-      place: "above",
+      body: "בקלף ניתן הפוליטיקאי ניתן לראות ציטוט שלו (1), שמו (2), מפלגתו (3), נדירות הקלף (4) וסדרת הקלפים ממנה הקלף הגיע (5) - תוכלו לראות אותו בסדרה זו באלבום.",
+      place: "top",
+      hideLegend: true,
       callouts: CARD_CALLOUTS,
     },
   ]),
@@ -509,11 +510,11 @@ export function calloutBadgePoint(hostBox, targetBox, side = "start", view = vie
   const pad = 14;
   const cy = targetBox.top + targetBox.height / 2;
   if (side === "end") {
-    return { x: Math.max(pad, targetBox.left - 2), y: Math.max(pad, Math.min(cy, (view.height || cy) - pad)) };
+    return { x: Math.max(pad, targetBox.left - 20), y: Math.max(pad, Math.min(cy, (view.height || cy) - pad)) };
   }
   if (side === "chip") {
     return {
-      x: Math.min((view.width || targetBox.right) - pad, targetBox.right + 2),
+      x: Math.min((view.width || targetBox.right) - pad, targetBox.right + 20),
       y: Math.max(pad, targetBox.top + targetBox.height / 2),
     };
   }
@@ -536,6 +537,14 @@ function firstWithin(root, selector) {
   }
 }
 
+export function calloutStub(x, y, tx, ty, length = 16) {
+  const dx = tx - x;
+  const dy = ty - y;
+  const dist = Math.hypot(dx, dy) || 1;
+  const reach = Math.min(length, Math.max(0, dist - 8));
+  return { x2: x + (dx / dist) * reach, y2: y + (dy / dist) * reach, reach };
+}
+
 export function drawCalloutMarks(svg, hostNode, callouts, frame, view = viewportBox()) {
   if (!svg || !hostNode || !callouts?.length) return [];
   const hostBox = boxOf(hostNode);
@@ -550,7 +559,10 @@ export function drawCalloutMarks(svg, hostNode, callouts, frame, view = viewport
     const y = point.y - (frame?.top || 0);
     const tx = target.left + target.width / 2 - (frame?.left || 0);
     const ty = target.top + target.height / 2 - (frame?.top || 0);
-    svg.append(svgEl("line", { class: "klafi-tips-callout-line", x1: x, y1: y, x2: tx, y2: ty }));
+    const tip = calloutStub(x, y, tx, ty);
+    if (tip.reach >= 6) {
+      svg.append(svgEl("line", { class: "klafi-tips-callout-line", x1: x, y1: y, x2: tip.x2, y2: tip.y2 }));
+    }
     svg.append(svgEl("circle", { class: "klafi-tips-callout-disk", cx: x, cy: y, r: 10 }));
     svg.append(svgEl("text", {
       class: "klafi-tips-callout-n",
@@ -622,6 +634,16 @@ export function placeCard(card, ring, to, prefer = "", view = viewportBox(), doc
     left: Math.max(pad, Math.min(left, vw - width - pad)),
     top: Math.max(pad, Math.min(top, vh - height - floor)),
   });
+  if (prefer === "top") {
+    const top = pad;
+    const overlapsRing = top + height > ring.top && top < ring.bottom;
+    const centered = clamp((vw - width) / 2, top);
+    const right = clamp(vw - width - pad, top);
+    const fit = overlapsRing ? right : centered;
+    card.style.left = `${fit.left}px`;
+    card.style.top = `${top}px`;
+    return;
+  }
   const above = clamp(ring.left + (ring.width - width) / 2, ring.top - height - 12);
   const spots = [
     ...(prefer === "above" ? [above] : []),
@@ -814,7 +836,7 @@ export function attachKlafiTips(env = globalThis) {
     title.textContent = step.title;
     body.textContent = step.body;
     if (legend) {
-      if (step.callouts?.length) {
+      if (step.callouts?.length && !step.hideLegend) {
         legend.hidden = false;
         legend.replaceChildren(...step.callouts.map((item) => {
           const row = doc.createElement("li");
