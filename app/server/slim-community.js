@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import pg from "pg";
 import { collectionStarCount } from "./visible-sets.js";
+import { takeCollectorBoard } from "./collector-board.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { openSpecialWindow } from "./special-window.js";
@@ -92,9 +93,11 @@ export function slimDailyChallenge(config, now = Date.now()) {
   return { day, targetPartyId, targetPartyNameHe, leaders: [] };
 }
 
-export function slimLeaderboards(config, collectors = [], factions = [], now = Date.now()) {
+export function slimLeaderboards(config, collectors = [], factions = [], now = Date.now(), extras = {}) {
   return {
     collectors,
+    collectorCount: extras.collectorCount ?? collectors.length,
+    yourCollectorRank: extras.yourCollectorRank ?? collectors.find((entry) => entry.current)?.rank ?? null,
     factions,
     dailyChallenge: slimDailyChallenge(config, now),
     fixture: false,
@@ -202,11 +205,9 @@ async function collectorBoards(db, config, now, token) {
     })
     .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
     .map((entry, index) => ({ ...entry, rank: index + 1 }));
-  const collectors = allCollectors.slice(0, 8);
-  const currentCollector = allCollectors.find(({ current }) => current);
-  if (currentCollector && !collectors.some(({ current }) => current)) collectors.splice(7, 1, currentCollector);
+  const { collectors, collectorCount, yourCollectorRank } = takeCollectorBoard(allCollectors);
   const factions = factionStandingsFromCollectors(allCollectors);
-  return slimLeaderboards(config, collectors, factions, now);
+  return slimLeaderboards(config, collectors, factions, now, { collectorCount, yourCollectorRank });
 }
 
 async function activitySummary(db) {

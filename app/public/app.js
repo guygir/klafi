@@ -1,6 +1,6 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
-import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
+import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, HOME_SETTLE_HINT, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { binderBadgeOrder } from "./badge-order.js";
 import { isStaleState, mergeLeaderboards, overlayPendingSeen, stateRevision } from "./state-sync.js";
@@ -153,6 +153,7 @@ const elements = {
   todaySpecialsCopyRepeat: document.querySelector("#today-specials-copy-repeat"),
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
+  homeSettleHint: document.querySelector("#home-settle-hint"),
   homeCopy: document.querySelector("#home-copy"),
   skipToMain: document.querySelector("#skip-to-main"),
   advocacyShort: document.querySelector("#advocacy-short"),
@@ -270,6 +271,7 @@ const elements = {
   factionMembers: document.querySelector("#faction-members"),
   factionBoard: document.querySelector("#faction-board"),
   collectorBoard: document.querySelector("#collector-board"),
+  collectorRank: document.querySelector("#collector-rank"),
   dailyChallengeTitle: document.querySelector("#daily-challenge-title"),
   dailyChallengeDate: document.querySelector("#daily-challenge-date"),
   dailyChallengeParty: document.querySelector("#daily-challenge-party"),
@@ -999,7 +1001,9 @@ async function hydrateIdleQueue() {
   if (!idleHydrate) {
     idleHydrate = (async () => {
       if (!model.token) await hydrateHome();
-      const settled = await request("/api/idle/settle", { method: "POST" });
+      const warmedSettle = window.__kalpiWarmup?.idleSettle;
+      if (window.__kalpiWarmup) window.__kalpiWarmup.idleSettle = null;
+      const settled = await (warmedSettle || request("/api/idle/settle", { method: "POST" }));
       applyHomePayload({ ...settled, cards: settled.cards || [], state: settled.state });
       prefetchIdleAssets();
       renderHome();
@@ -1025,6 +1029,18 @@ function scheduleIdleRefill({ priority = "buffered" } = {}) {
       scheduleIdleRefill({ priority: "buffered" });
     });
   }, delay);
+}
+
+function kickDueIdleSettle() {
+  if (model.showcase || !model.token) return;
+  const clock = idleCountdownCopy({
+    serverState: model.serverState,
+    idleQueueLength: model.idleQueue.length,
+  });
+  if (!clock.needsSettle && cachedDueCount() <= 0) return;
+  hydrateIdleQueue().catch(() => {
+    scheduleIdleRefill({ priority: "urgent" });
+  });
 }
 
 function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state, specialWindow }) {
@@ -1165,6 +1181,7 @@ async function bootstrap() {
     return bootstrapShowcase();
   }
   applyCachedHome();
+  kickDueIdleSettle();
   if (notifyPermission() === "granted") {
     ensureServiceWorker().then(() => scheduleIdleNotification()).catch(() => {});
   }
@@ -2314,12 +2331,22 @@ async function submitQuiz() {
   }
 }
 
+function renderHomeSettleHint(text = "") {
+  if (!elements.homeSettleHint) return;
+  elements.homeSettleHint.textContent = text;
+  elements.homeSettleHint.hidden = !text;
+}
+
 function renderHome() {
   const { owned, total, percent } = completion();
   const unseen = model.serverState?.unseenCount ?? model.idleQueue.length;
   const due = Boolean(model.serverState?.nextIdleAt) && !timeUntil(model.serverState.nextIdleAt);
   const available = unseen > 0 || due;
-  const readyCopy = homeIdleReadyCopy({ unseenCount: unseen, available });
+  const clock = idleCountdownCopy({
+    serverState: model.serverState,
+    idleQueueLength: model.idleQueue.length,
+  });
+  const readyCopy = homeIdleReadyCopy({ unseenCount: unseen, available, awaitingSettle: clock.needsSettle });
   const idleCapacity = model.serverState?.idleCapacity ?? model.gameConfig?.idle?.capacity ?? IDLE_BACKLOG_CAP;
   elements.collectionCount.textContent = `${owned} מתוך ${total} מתוך כל הקלפים · ${percent}%`;
   elements.collectionProgress.style.width = `${percent}%`;
@@ -2339,6 +2366,7 @@ function renderHome() {
     .filter(Boolean);
   if (elements.activeRelease) elements.activeRelease.textContent = releaseNames.join(" + ");
   elements.homeTitle.textContent = readyCopy.title;
+  renderHomeSettleHint(readyCopy.settleHint);
   elements.homeCopy.textContent = readyCopy.lede;
   renderSiteCardPeeks();
   renderProgression();
@@ -2513,11 +2541,15 @@ function renderTodayDocket() {
 
   const leader = model.leaderboards?.collectors?.[0];
   const currentCollector = model.leaderboards?.collectors?.find(({ current }) => current);
-  const collectorCrowd = (model.leaderboards?.collectors?.length || 0) >= 2;
+  const collectorTotal = Number(model.leaderboards?.collectorCount)
+    || model.leaderboards?.collectors?.length
+    || 0;
+  const yourRank = currentCollector?.rank || model.leaderboards?.yourCollectorRank;
+  const collectorCrowd = collectorTotal >= 2 || (model.leaderboards?.collectors?.length || 0) >= 2;
   elements.todayLeaderHook.textContent = !collectorCrowd
     ? "הטבלה מחכה לעוד שחקנים"
-    : currentCollector?.rank
-    ? `אתם במקום ${currentCollector.rank}`
+    : yourRank
+    ? `אתם במקום ${yourRank}`
     : leader?.current
       ? "אתם במקום הראשון"
       : "המקום הראשון פנוי";
@@ -2748,6 +2780,7 @@ function updateCountdown() {
     idleQueueLength: model.idleQueue.length,
   });
   applyIdleCountdown(elements.cooldownCopy, view);
+  renderHomeSettleHint(view.needsSettle ? HOME_SETTLE_HINT : "");
   if (elements.headerStatus) elements.headerStatus.hidden = true;
   if (view.needsSettle && !idleHydrate) scheduleIdleRefill({ priority: "urgent" });
   if (view.full) {
@@ -3557,14 +3590,14 @@ function printRunFor(card) {
 function holderLine(count, numbered = false, card = null) {
   if (numbered) {
     const of = printRunFor(card);
-    if (of > 0) return `${count}/${of} מחזיקים עותק ממוספר`;
+    if (of > 0) return `${count}/${of} שחקנים שונים מחזיקים עותק ממוספר`;
     if (count <= 0) return "אף שחקן עדיין לא מחזיק עותק ממוספר";
     if (count === 1) return "שחקן אחד מחזיק עותק ממוספר";
-    return `${count} שחקנים מחזיקים עותק ממוספר`;
+    return `${count} שחקנים שונים מחזיקים עותק ממוספר`;
   }
   if (count <= 0) return "אף שחקן עדיין לא מחזיק בקלף הזה";
   if (count === 1) return "שחקן אחד מחזיק בקלף הזה";
-  return `${count} שחקנים מחזיקים בקלף הזה`;
+  return `${count} שחקנים שונים מחזיקים בקלף הזה`;
 }
 
 async function hydrateCardHolders() {
@@ -4810,12 +4843,21 @@ function renderGrowth() {
   ].join("");
   if (elements.factionBoard) elements.factionBoard.innerHTML = "";
   renderFactionMembers();
-  const collectorEntries = model.leaderboards?.collectors || [];
-  const collectorPreview = collectorEntries.slice(0, 3);
+  const collectorEntries = (model.leaderboards?.collectors || []).slice(0, 10);
+  const collectorTotal = Number(model.leaderboards?.collectorCount) || collectorEntries.length;
   const currentCollector = collectorEntries.find(({ current }) => current);
-  if (currentCollector && !collectorPreview.includes(currentCollector)) collectorPreview.push(currentCollector);
-  elements.collectorBoard.innerHTML = collectorPreview.length
-    ? collectorPreview.map((entry) => {
+  const yourRank = currentCollector?.rank || model.leaderboards?.yourCollectorRank;
+  if (elements.collectorRank) {
+    if (yourRank && collectorTotal) {
+      elements.collectorRank.hidden = false;
+      elements.collectorRank.textContent = `אתם ${yourRank}/${collectorTotal}`;
+    } else {
+      elements.collectorRank.hidden = true;
+      elements.collectorRank.textContent = "";
+    }
+  }
+  elements.collectorBoard.innerHTML = collectorEntries.length
+    ? collectorEntries.map((entry) => {
         const ranks = model.gameConfig?.progression?.rankNames || model.gameConfig?.progression?.ranks || [];
         const rankName = ranks[(entry.rankLevel || 1) - 1] || "";
         return `<div class="collector-row${entry.current ? " current-player" : ""}">
@@ -4847,7 +4889,7 @@ function renderGrowth() {
   const raceNote = raceScored
     ? ""
     : `<p class="work-note">${raceLeaders.length ? "עוד אף אחד לא אסף מהסיעה של היום — הקלף הראשון שתפתחו ישים אתכם בראש." : "עוד אף אחד לא אסף מהסיעה של היום."}</p>`;
-  elements.dailyChallengeBoard.innerHTML = raceLeaders.slice(0, 3).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${raceScored ? `${index + 1}. ` : ""}${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("") + raceNote;
+  elements.dailyChallengeBoard.innerHTML = raceLeaders.slice(0, 10).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${raceScored ? `${index + 1}. ` : ""}${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("") + raceNote;
 
   const specialDescriptions = {
     "prestige-legacy": "דמויות פוליטיות מתקופות שונות.",

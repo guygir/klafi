@@ -17,14 +17,14 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-117"></script>
+  <script src="/boot-warmup.js?v=card-surface-118"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-117" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-117" />
-  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-117" />
-  <link rel="stylesheet" href="/packrip.css?v=card-surface-117" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-118" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-118" />
+  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-118" />
+  <link rel="stylesheet" href="/packrip.css?v=card-surface-118" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -102,6 +102,7 @@
               <div class="home-title-row" id="today-open-cue">
                 <div class="today-open-copy">
                   <h1 id="home-title">גם כשאתם לא פה, הקלפים ממשיכים להיאסף.</h1>
+                  <p id="home-settle-hint" class="home-settle-hint" hidden>(רגע, אני טוען… אולי מגיע לכם עוד?)</p>
                   <p id="cooldown-copy" class="next-pack-clock is-clock">הבא בעוד 03:00:00</p>
                 </div>
               </div>
@@ -336,6 +337,7 @@
           </article>
           <article id="community-panel-collectors" class="work-card leaderboard-desk" role="tabpanel" aria-labelledby="community-tab-collectors" tabindex="0">
             <p class="work-kicker">טבלת האספנים</p>
+            <p id="collector-rank" class="work-note" hidden></p>
             <div id="collector-board" class="leaderboard-list"></div>
           </article>
           <article id="community-panel-leagues" class="work-card league-desk" role="tabpanel" aria-labelledby="community-tab-leagues" tabindex="0" hidden>
@@ -507,8 +509,8 @@
             <div id="avatar-unlocks" class="studio-unlock-grid"></div>
             <fieldset class="studio-numbered-sets">
               <legend>סדרות ממוספרות</legend>
-              <p class="work-note">כל משיכת היום נספרת. החותמת על ה־30, 60, 90… עד מקום ברשימה. מנהיג = רק ה־30.</p>
-              <label>כל כמה העתקים
+              <p class="work-note">כל משיכת היום מתגלגלת בסיכוי 1 מתוך N. אחרי שכל העותקים הממוספרים של אותו קלף יצאו — הסיכוי יורד ל־0. מנהיג עם מקום 1 = עותק ממוספר אחד לכל היותר.</p>
+              <label>סיכוי 1 מתוך
                 <input id="numbered-every" type="number" min="1" max="1000" value="30" />
               </label>
               <div id="numbered-sets"></div>
@@ -778,6 +780,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-117"></script>
+  <script type="module" src="/app.js?v=card-surface-118"></script>
 </body>
 </html>
