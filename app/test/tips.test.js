@@ -116,7 +116,6 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.card[0].body, /משחק קופסה/);
   assert.match(PAGE_GUIDES.card[0].body, /הכוכבים הם הנדירות/);
   assert.match(PAGE_GUIDES.card[0].body, /נפוץ נותן כוכב אוסף אחד/);
-  assert.equal(CARD_CALLOUTS[3].note, "נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5");
   assert.match(PAGE_GUIDES.binder[0].body, /שיתוף האלבום/);
   assert.match(PAGE_GUIDES.binder[0].body, /תמונה/);
   assert.match(PAGE_GUIDES.binder[0].ring, /binder-stats-row|binder-head/);

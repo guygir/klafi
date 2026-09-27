@@ -194,7 +194,6 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /title: "המטרה"/);
   assert.match(tipsJs, /CARD_CALLOUTS/);
   assert.match(tipsJs, /הכוכבים הם הנדירות/);
-  assert.match(tipsJs, /נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5/);
   assert.match(tipsJs, /page === "card"/);
   assert.match(css, /\.klafi-tips-callout-disk/);
   assert.match(html, /אל תציגו שוב/);

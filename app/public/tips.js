@@ -32,7 +32,7 @@ export const CARD_CALLOUTS = Object.freeze([
   { n: 1, sel: ".card-quote-zone", label: "ציטוט", side: "start" },
   { n: 2, sel: ".card-name-zone", label: "שם", side: "start" },
   { n: 3, sel: ".card-party-zone", label: "מפלגה", side: "end" },
-  { n: 4, sel: ".card-image-meta strong", label: "נדירות", note: "נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5", side: "chip" },
+  { n: 4, sel: ".card-image-meta strong", label: "נדירות", side: "chip" },
   { n: 5, sel: ".card-code-tag", label: "סדרה", side: "end" },
 ]);
 
@@ -821,11 +821,6 @@ export function attachKlafiTips(env = globalThis) {
           const mark = doc.createElement("b");
           mark.textContent = String(item.n);
           row.append(mark, doc.createTextNode(` ${item.label}`));
-          if (item.note) {
-            const extra = doc.createElement("span");
-            extra.textContent = ` — ${item.note}`;
-            row.append(extra);
-          }
           return row;
         }));
       } else {
