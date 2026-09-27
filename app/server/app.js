@@ -32,7 +32,7 @@ import { qrSvg } from "./qr-svg.js";
 import { eventClaimKey, eventClaimMode, eventReward, isEventClaimed, openSpecialWindow } from "./special-window.js";
 import { requestOrigin, serveBinderShareLanding, servePlayerBinderShareLanding, serveShareLanding } from "./share-landing.js";
 import { levelThresholds } from "./progression.js";
-import { createGithubBugFromBody, createGithubIssueFromCorrection } from "./github-bugs.js";
+import { createGithubBugFromBody } from "./github-bugs.js";
 import {
   achievementState,
   collectionStarCount,
@@ -1564,16 +1564,7 @@ export async function createKalpiApp({
             pagePath,
             createdAt: new Date(now()).toISOString(),
           });
-          const github = await createGithubIssueFromCorrection(process.env, {
-            category,
-            details,
-            nickname: session.displayName,
-            pagePath,
-          }, request.headers);
-          json(response, 202, {
-            ...queued,
-            issueUrl: github.ok ? github.issueUrl || "" : "",
-          }, github.ok && github.headers ? github.headers : {});
+          json(response, 202, queued);
           return;
         }
 

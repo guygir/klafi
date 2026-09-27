@@ -660,7 +660,6 @@ test("correction reports persist once and remain reviewable", async (t) => {
   };
   const named = await api(running.base, "/api/reports", { token, method: "POST", body: nameReport });
   assert.equal(named.status, 202);
-  assert.equal(named.body.issueUrl, "");
   const queueAfter = await api(running.base, "/api/studio/reports", { studio: "review-secret" });
   assert.equal(queueAfter.body.reports.length, 2);
   assert.ok(queueAfter.body.reports.some(({ category }) => category === "name"));

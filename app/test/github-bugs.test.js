@@ -106,7 +106,7 @@ test("feature requests reuse the bug flow with their own title tag and type line
   assert.equal(limited.status, 429);
 });
 
-test("player name reports open a GitHub issue like bugs, and skip GitHub when it is off", async () => {
+test("player name reports open a GitHub issue through the same helper as bugs", async () => {
   const calls = [];
   const fetchImpl = async (url, init) => {
     calls.push({ url, init });

@@ -6229,17 +6229,34 @@ async function submitCorrectionReport(event) {
   }
 
   elements.submitReport.disabled = true;
-  elements.reportStatus.textContent = "שומרים את הדיווח…";
-  rememberPendingReport(report);
+  elements.reportStatus.textContent = "שולחים…";
   try {
-    const flushed = await flushPendingReports();
+    const github = await request("/api/bugs", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        text: details,
+        kind: report.category,
+        nickname: model.serverState?.displayName || null,
+        pageUrl: location.href,
+        website: "",
+      }),
+    });
+    rememberPendingReport(report);
+    try {
+      await flushPendingReports();
+    } catch {
+      /* Studio copy can retry later; the GitHub issue already opened. */
+    }
     elements.reportStatus.textContent = "";
     elements.reportDialog.close();
-    showToast(flushed?.issueUrl ? "הדיווח התקבל ונפתח בגיטהאב." : "הדיווח התקבל ונכנס לבדיקה.");
-  } catch {
-    elements.reportStatus.textContent = "";
-    elements.reportDialog.close();
-    showToast("הדיווח נשמר במכשיר ויישלח אוטומטית.");
+    showToast(github?.issueUrl ? "תודה. הדיווח נפתח בגיטהאב." : "הדיווח נשלח.");
+  } catch (error) {
+    elements.reportStatus.textContent = error.status === 429
+      ? "נסו שוב מחר — יש מגבלה של שלושה דיווחים ביום."
+      : error.status === 503
+        ? "דיווח הבאגים עדיין לא מוכן."
+        : "לא הצלחנו לשלוח. נסו שוב.";
   } finally {
     elements.submitReport.disabled = false;
   }
