@@ -7644,6 +7644,9 @@ flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
 window.__kalpiDebug = {
   openCardDialog,
+  renderSealedPackRip,
+  showView,
+  tips: klafiTips,
   setOwned(cardId, count) {
     if (!model.serverState) return false;
     model.serverState.inventory ??= {};
