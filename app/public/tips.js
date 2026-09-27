@@ -83,6 +83,12 @@ export const PAGE_GUIDES = Object.freeze({
       hideLegend: true,
       callouts: CARD_CALLOUTS,
     },
+    {
+      ring: "#pack-action",
+      emptyRing: 'button[data-nav="binder"]',
+      title: "הוספה לאוסף",
+      body: "ברכותיי על הקלף החדש! לחצו לאוסף כדי להכניס אותו לאלבום שלכם.",
+    },
   ]),
   binder: Object.freeze([
     {
@@ -994,15 +1000,11 @@ export function attachKlafiTips(env = globalThis) {
       else park();
       return;
     }
-    maybeStartPull();
-    if (state.mode) return;
     maybeStartPage();
   }
 
   function maybeStart() {
     if (state.mode === "pull") return;
-    maybeStartPull();
-    if (state.mode) return;
     maybeStartPage();
   }
 

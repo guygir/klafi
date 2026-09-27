@@ -87,7 +87,7 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGE_GUIDES.binder.length, 3);
   assert.equal(PAGE_GUIDES.achievements.length, 2);
   assert.equal(PAGE_GUIDES.growth.length, 4);
-  assert.equal(PAGE_GUIDES.card.length, 1);
+  assert.equal(PAGE_GUIDES.card.length, 2);
   assert.equal(PAGE_GUIDES.dialog.length, 2);
   assert.match(PAGE_GUIDES.home[0].title, /המטרה/);
   assert.match(PAGE_GUIDES.home[0].body, /מטרת המשחק היא לאסוף/);
@@ -129,6 +129,9 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.card[0].body, /מיקומו באלבום/);
   assert.equal(PAGE_GUIDES.card[0].place, "top");
   assert.equal(PAGE_GUIDES.card[0].hideLegend, true);
+  assert.equal(PAGE_GUIDES.card[1].title, "הוספה לאוסף");
+  assert.equal(PAGE_GUIDES.card[1].body, "ברכותיי על הקלף החדש! לחצו לאוסף כדי להכניס אותו לאלבום שלכם.");
+  assert.equal(PAGE_GUIDES.card[1].ring, "#pack-action");
   assert.match(CARD_CALLOUTS[3].sel, /card-rarity-run|card-image-meta/);
   assert.match(PAGE_GUIDES.binder[0].body, /שיתוף האלבום/);
   assert.match(PAGE_GUIDES.binder[0].body, /להשוויץ לחברים/);
