@@ -3143,6 +3143,7 @@ function finishWalkoutCard() {
   const doneLabel = model.currentPack.mode === "studio-debug" ? "חזרה לסטודיו" : "לאוסף";
   setPackAction(isLast ? doneLabel : "הקלף הבא", false, "");
   maybeShowNumberedTip();
+  if (!model.showcase) klafiTips.sync();
 }
 
 function numberedTipTargets() {

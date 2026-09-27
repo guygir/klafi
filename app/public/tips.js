@@ -28,8 +28,24 @@ export const TIPS_STEPS = Object.freeze([
   },
 ]);
 
+export const CARD_CALLOUTS = Object.freeze([
+  { n: 1, sel: ".card-quote-zone", label: "ציטוט", side: "start" },
+  { n: 2, sel: ".card-name-zone", label: "שם", side: "start" },
+  { n: 3, sel: ".card-party-zone", label: "מפלגה", side: "start" },
+  { n: 4, sel: ".card-image-meta strong", label: "נדירות", side: "chip" },
+  { n: 5, sel: ".card-code-tag", label: "סדרה", side: "end" },
+]);
+
 export const PAGE_GUIDES = Object.freeze({
   home: Object.freeze([
+    {
+      ring: "#home-pack, #open-pack",
+      ringUnion: true,
+      pad: 6,
+      radius: 16,
+      title: "המטרה",
+      body: "אוספים קלפים על הפוליטיקה הישראלית. כל קלף הוא ציטוט או עובדה עם מקור. פותחים, קוראים — ואז הוא נרשם באוסף, ועולים רמה.",
+    },
     {
       ring: "#today-open-copy, #home-title",
       title: "היום",
@@ -67,6 +83,15 @@ export const PAGE_GUIDES = Object.freeze({
       arrowTo: "#rip-stage",
       title: "קריעה",
       body: "קרעו את החבילה. הקלף נרשם לאוסף כשאתם רואים אותו — לא כשהוא מחכה במחסן.",
+    },
+  ]),
+  card: Object.freeze([
+    {
+      ring: "#pack-view.active .walkout .kalpi-card.stage-portrait, #dialog-card .kalpi-card",
+      title: "הקלף",
+      body: "כמו במשחק קופסה: כל מספר מצביע על אזור בקלף.",
+      place: "above",
+      callouts: CARD_CALLOUTS,
     },
   ]),
   binder: Object.freeze([
@@ -210,7 +235,8 @@ export function shouldAutoOpenPage(seen, page, flags = {}) {
   return Boolean(page && PAGE_GUIDES[page] && !seen?.["*"] && !seen?.[page]);
 }
 
-export function activeGuidePage(flags) {
+export function activeGuidePage(flags, seen = {}) {
+  if (flags?.cardRevealed && !seen?.card && !seen?.["*"]) return "card";
   if (flags?.dialogOpen) return "dialog";
   if (flags?.homeActive) return "home";
   if (flags?.packActive) return "pack";
@@ -221,7 +247,14 @@ export function activeGuidePage(flags) {
 }
 
 export function pageGuideReady(page, flags) {
-  return Boolean(page) && activeGuidePage(flags) === page;
+  if (page === "card") return Boolean(flags?.cardRevealed);
+  if (page === "dialog") return Boolean(flags?.dialogOpen);
+  if (page === "home") return Boolean(flags?.homeActive) && !flags?.dialogOpen;
+  if (page === "pack") return Boolean(flags?.packActive) && !flags?.dialogOpen;
+  if (page === "binder") return Boolean(flags?.binderActive) && !flags?.dialogOpen;
+  if (page === "achievements") return Boolean(flags?.achievementsActive) && !flags?.dialogOpen;
+  if (page === "growth") return Boolean(flags?.growthActive) && !flags?.dialogOpen;
+  return false;
 }
 
 export function firstVisible(selector, root) {
@@ -415,10 +448,70 @@ function holePath(spec) {
   return roundedHole(spec.box, spec.radius);
 }
 
-function svgEl(name, attrs) {
+function svgEl(name, attrs, text) {
   const node = document.createElementNS("http://www.w3.org/2000/svg", name);
   for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+  if (text != null) node.textContent = String(text);
   return node;
+}
+
+export function calloutBadgePoint(hostBox, targetBox, side = "start", view = viewportBox()) {
+  const pad = 14;
+  const cy = targetBox.top + targetBox.height / 2;
+  if (side === "end") {
+    return { x: Math.max(pad, targetBox.left - 2), y: Math.max(pad, Math.min(cy, (view.height || cy) - pad)) };
+  }
+  if (side === "chip") {
+    return {
+      x: Math.min((view.width || targetBox.right) - pad, targetBox.right + 2),
+      y: Math.max(pad, targetBox.top + targetBox.height / 2),
+    };
+  }
+  return {
+    x: Math.min((view.width || hostBox.right) - pad, Math.max(pad, hostBox.right - 11)),
+    y: cy,
+  };
+}
+
+function firstWithin(root, selector) {
+  if (!root?.querySelectorAll || !selector) return null;
+  try {
+    const nodes = [...root.querySelectorAll(selector)];
+    return nodes.find((node) => {
+      const box = node.getBoundingClientRect?.() || { width: 0, height: 0 };
+      return box.width > 0 && box.height > 0;
+    }) || nodes[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+export function drawCalloutMarks(svg, hostNode, callouts, frame, view = viewportBox()) {
+  if (!svg || !hostNode || !callouts?.length) return [];
+  const hostBox = boxOf(hostNode);
+  const marks = [];
+  for (const item of callouts) {
+    const node = firstWithin(hostNode, item.sel);
+    if (!node) continue;
+    const target = boxOf(node);
+    if (target.width <= 0 || target.height <= 0) continue;
+    const point = calloutBadgePoint(hostBox, target, item.side || "start", view);
+    const x = point.x - (frame?.left || 0);
+    const y = point.y - (frame?.top || 0);
+    const tx = target.left + target.width / 2 - (frame?.left || 0);
+    const ty = target.top + target.height / 2 - (frame?.top || 0);
+    svg.append(svgEl("line", { class: "klafi-tips-callout-line", x1: x, y1: y, x2: tx, y2: ty }));
+    svg.append(svgEl("circle", { class: "klafi-tips-callout-disk", cx: x, cy: y, r: 10 }));
+    svg.append(svgEl("text", {
+      class: "klafi-tips-callout-n",
+      x,
+      y: y + 0.5,
+      "text-anchor": "middle",
+      "dominant-baseline": "central",
+    }, item.n));
+    marks.push({ n: item.n, x, y, label: item.label });
+  }
+  return marks;
 }
 
 function drawRing(svg, spec) {
@@ -537,13 +630,19 @@ function drawArrow(svg, fromSpec, toSpec) {
 }
 
 function readFlags(doc) {
+  const dialog = doc.querySelector("#card-dialog");
   return {
     homeActive: Boolean(doc.querySelector("#home-view")?.classList.contains("active")),
     packActive: Boolean(doc.querySelector("#pack-view")?.classList.contains("active")),
     binderActive: Boolean(doc.querySelector("#binder-view")?.classList.contains("active")),
     achievementsActive: Boolean(doc.querySelector("#achievements-view")?.classList.contains("active")),
     growthActive: Boolean(doc.querySelector("#growth-view")?.classList.contains("active")),
-    dialogOpen: Boolean(doc.querySelector("#card-dialog")?.open),
+    dialogOpen: Boolean(dialog?.open),
+    cardRevealed: Boolean(
+      (doc.querySelector("#pack-view")?.classList.contains("active")
+        && doc.querySelector("#pack-view")?.querySelector(".walkout .kalpi-card.stage-portrait"))
+      || (dialog?.open && doc.querySelector("#dialog-card")?.querySelector(".kalpi-card")),
+    ),
     guestBinder: Boolean(doc.querySelector("#guest-binder-banner") && !doc.querySelector("#guest-binder-banner").hidden),
   };
 }
@@ -561,6 +660,7 @@ export function attachKlafiTips(env = globalThis) {
   const nextBtn = doc.querySelector("#klafi-tips-next");
   const backBtn = doc.querySelector("#klafi-tips-back");
   const skipBtn = doc.querySelector("#klafi-tips-skip");
+  const legend = doc.querySelector("#klafi-tips-legend");
   const replay = doc.querySelector("#replay-tips");
   const pageReplays = [...doc.querySelectorAll("[data-replay-tips]")];
   const packHint = doc.querySelector("#pack-hint");
@@ -663,6 +763,21 @@ export function attachKlafiTips(env = globalThis) {
     overlay.setAttribute("aria-hidden", "false");
     title.textContent = step.title;
     body.textContent = step.body;
+    if (legend) {
+      if (step.callouts?.length) {
+        legend.hidden = false;
+        legend.replaceChildren(...step.callouts.map((item) => {
+          const row = doc.createElement("li");
+          const mark = doc.createElement("b");
+          mark.textContent = String(item.n);
+          row.append(mark, doc.createTextNode(` ${item.label}`));
+          return row;
+        }));
+      } else {
+        legend.hidden = true;
+        legend.replaceChildren();
+      }
+    }
     if (stepLabel) {
       stepLabel.setAttribute("dir", "ltr");
       stepLabel.textContent = `${state.step}/${steps.length}`;
@@ -739,6 +854,9 @@ export function attachKlafiTips(env = globalThis) {
       drawRing(marks, toSpec);
       drawArrow(marks, fromSpec, toSpec);
     }
+    if (step.callouts?.length && (preferredRing || ringNode)) {
+      drawCalloutMarks(marks, preferredRing || ringNode, step.callouts, frame, { width: vw, height: vh });
+    }
     placeCard(card, fromSpec.box, toSpec?.box || null, step.place || "", { width: vw, height: vh, left: 0, top: 0 });
     queueMicrotask(() => nextBtn?.focus({ preventScroll: true }));
     if (viewHasEnterOffset()) {
@@ -798,7 +916,7 @@ export function attachKlafiTips(env = globalThis) {
   function maybeStartPage() {
     if (state.mode === "pull") return;
     const pageFlags = flags();
-    const page = activeGuidePage(pageFlags);
+    const page = activeGuidePage(pageFlags, readSeenPages(env));
     if (!shouldAutoOpenPage(readSeenPages(env), page, pageFlags)) return;
     startPage(page);
   }
@@ -887,6 +1005,13 @@ export function attachKlafiTips(env = globalThis) {
     view.addEventListener("animationend", () => {
       if (state.started && !state.parked) schedulePaint();
     });
+  }
+  const ripStage = doc.querySelector("#rip-stage");
+  if (ripStage) {
+    new MutationObserver(() => {
+      if (state.mode === "page" && (state.page === "pack" || state.page === "card")) sync();
+      else if (!state.mode) maybeStartPage();
+    }).observe(ripStage, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
   }
   const binderGrid = doc.querySelector("#binder-grid");
   if (binderGrid) {

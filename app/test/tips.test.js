@@ -5,7 +5,9 @@ import {
   TIPS_STORAGE,
   PAGES_STORAGE,
   TIPS_STEPS,
+  CARD_CALLOUTS,
   PAGE_GUIDES,
+  calloutBadgePoint,
   unionBoxes,
   intersectBox,
   toFrame,
@@ -79,27 +81,36 @@ test("firstVisible falls back when boxes are 0x0 and leftover pack hint is recog
 });
 
 test("each nav page has a first-visit guide; seen pages and mute stop auto-open", () => {
-  assert.deepEqual(Object.keys(PAGE_GUIDES), ["home", "pack", "binder", "achievements", "growth", "dialog"]);
-  assert.equal(PAGE_GUIDES.home.length, 5);
+  assert.deepEqual(Object.keys(PAGE_GUIDES), ["home", "pack", "card", "binder", "achievements", "growth", "dialog"]);
+  assert.equal(PAGE_GUIDES.home.length, 6);
   assert.equal(PAGE_GUIDES.binder.length, 2);
   assert.equal(PAGE_GUIDES.achievements.length, 1);
   assert.equal(PAGE_GUIDES.growth.length, 4);
-  assert.match(PAGE_GUIDES.home[0].body, /היום/);
-  assert.match(PAGE_GUIDES.home[0].ring, /today-open-copy|#home-title/);
-  assert.match(PAGE_GUIDES.home[0].body, /המחסן/);
-  assert.match(PAGE_GUIDES.home[0].body, /השעון/);
-  assert.match(PAGE_GUIDES.home[1].body, /יש קלפים במחסן/);
-  assert.match(PAGE_GUIDES.home[1].body, /רואים אותם/);
-  assert.match(PAGE_GUIDES.home[2].ring, /level-avatar-button/);
-  assert.match(PAGE_GUIDES.home[2].body, /אווטאר/);
-  assert.match(PAGE_GUIDES.home[3].body, /האתגר/);
-  assert.match(PAGE_GUIDES.home[4].ring, /open-advocacy|open-bug-report|bottom-nav/);
-  assert.match(PAGE_GUIDES.home[4].body, /גילוי נאות/);
-  assert.match(PAGE_GUIDES.home[4].body, /דיווח באג/);
-  assert.match(PAGE_GUIDES.home[4].body, /בקשת פיצ׳ר/);
-  assert.match(PAGE_GUIDES.home[4].ring, /#open-feature-request/);
-  assert.equal(PAGE_GUIDES.home[4].ringUnion, true);
-  assert.equal(PAGE_GUIDES.home[4].place, "above");
+  assert.equal(PAGE_GUIDES.card.length, 1);
+  assert.match(PAGE_GUIDES.home[0].title, /המטרה/);
+  assert.match(PAGE_GUIDES.home[0].body, /אוספים קלפים/);
+  assert.match(PAGE_GUIDES.home[0].body, /עולים רמה/);
+  assert.match(PAGE_GUIDES.home[0].ring, /home-pack|#open-pack/);
+  assert.match(PAGE_GUIDES.home[1].body, /היום/);
+  assert.match(PAGE_GUIDES.home[1].ring, /today-open-copy|#home-title/);
+  assert.match(PAGE_GUIDES.home[1].body, /המחסן/);
+  assert.match(PAGE_GUIDES.home[1].body, /השעון/);
+  assert.match(PAGE_GUIDES.home[2].body, /יש קלפים במחסן/);
+  assert.match(PAGE_GUIDES.home[2].body, /רואים אותם/);
+  assert.match(PAGE_GUIDES.home[3].ring, /level-avatar-button/);
+  assert.match(PAGE_GUIDES.home[3].body, /אווטאר/);
+  assert.match(PAGE_GUIDES.home[4].body, /האתגר/);
+  assert.match(PAGE_GUIDES.home[5].ring, /open-advocacy|open-bug-report|bottom-nav/);
+  assert.match(PAGE_GUIDES.home[5].body, /גילוי נאות/);
+  assert.match(PAGE_GUIDES.home[5].body, /דיווח באג/);
+  assert.match(PAGE_GUIDES.home[5].body, /בקשת פיצ׳ר/);
+  assert.match(PAGE_GUIDES.home[5].ring, /#open-feature-request/);
+  assert.equal(PAGE_GUIDES.home[5].ringUnion, true);
+  assert.equal(PAGE_GUIDES.home[5].place, "above");
+  assert.equal(CARD_CALLOUTS.length, 5);
+  assert.deepEqual(CARD_CALLOUTS.map(({ label }) => label), ["ציטוט", "שם", "מפלגה", "נדירות", "סדרה"]);
+  assert.equal(PAGE_GUIDES.card[0].callouts, CARD_CALLOUTS);
+  assert.match(PAGE_GUIDES.card[0].body, /משחק קופסה/);
   assert.match(PAGE_GUIDES.binder[0].body, /תמונה/);
   assert.match(PAGE_GUIDES.binder[0].ring, /earned-badge-list/);
   assert.match(PAGE_GUIDES.binder[1].body, /סדרה/);
@@ -152,10 +163,23 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGES_STORAGE, "klafi:page-tips");
   assert.equal(activeGuidePage({ homeActive: true }), "home");
   assert.equal(activeGuidePage({ binderActive: true, dialogOpen: true }), "dialog");
+  assert.equal(activeGuidePage({ packActive: true, cardRevealed: true }), "card");
+  assert.equal(activeGuidePage({ packActive: true, cardRevealed: true }, { card: true }), "pack");
   assert.equal(activeGuidePage({ achievementsActive: true }), "achievements");
   assert.equal(activeGuidePage({ growthActive: true }), "growth");
   assert.equal(pageGuideReady("binder", { binderActive: true }), true);
   assert.equal(pageGuideReady("binder", { homeActive: true }), false);
+  assert.equal(pageGuideReady("pack", { packActive: true, cardRevealed: true }), true);
+  assert.equal(pageGuideReady("card", { cardRevealed: true }), true);
+  assert.equal(pageGuideReady("card", { packActive: true }), false);
+  const badge = calloutBadgePoint(
+    { left: 40, right: 300, top: 80, bottom: 500 },
+    { left: 60, right: 280, top: 400, bottom: 440, height: 40 },
+    "start",
+    { width: 390, height: 844 },
+  );
+  assert.equal(badge.x, 289);
+  assert.equal(badge.y, 420);
   assert.equal(shouldAutoOpenPage({}, "home"), true);
   assert.equal(shouldAutoOpenPage({ home: true }, "home"), false);
   assert.equal(shouldAutoOpenPage({ home: true }, "binder"), true);
