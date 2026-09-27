@@ -28,7 +28,7 @@ export function dailyRaceScore(instances, day, targetPartyId, cardsById) {
     .length;
 }
 
-export const DAILY_RACE_BOARD_SIZE = 8;
+export const DAILY_RACE_BOARD_SIZE = 10;
 
 /**
  * The race board as served: players on 0 are hidden, except the requesting player, who always sees

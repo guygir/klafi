@@ -4058,7 +4058,14 @@ body {
 }
 
 #collector-board,
-#daily-challenge-board,
+#daily-challenge-board {
+  max-height: min(420px, 48vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-inline: 10px;
+}
 #faction-members {
   overflow: visible;
   padding-inline: 10px;
