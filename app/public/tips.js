@@ -39,8 +39,7 @@ export const CARD_CALLOUTS = Object.freeze([
 export const PAGE_GUIDES = Object.freeze({
   home: Object.freeze([
     {
-      ring: ".pack-plinth, #home-pack, .home-copy, #today-open-cue, .today-open-copy, #home-title, #cooldown-copy",
-      ringUnion: true,
+      ring: ".today-hero",
       pad: 8,
       radius: 16,
       title: "המטרה",
@@ -102,12 +101,13 @@ export const PAGE_GUIDES = Object.freeze({
   ]),
   binder: Object.freeze([
     {
-      ring: ".binder-head, #binder-grid, #binder-empty, #share-my-binder",
+      ring: ".binder-stats-row, .binder-head",
       ringUnion: true,
       pad: 6,
       radius: 14,
+      arrowTo: "#share-my-binder",
       title: "האלבום",
-      body: "כאן כל הקלפים שראיתם. «שיתוף האלבום» למעלה שולח תמונה של האוסף — הקלפים עצמם נשארים אצלכם.",
+      body: "כאן כל הקלפים שראיתם. הכפתור «שיתוף האלבום» למעלה שולח תמונה של האוסף — הקלפים עצמם נשארים אצלכם.",
     },
     {
       ring: "#earned-badge-list, .collection-star-count, .binder-badge-medals",

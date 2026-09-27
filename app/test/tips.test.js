@@ -91,9 +91,8 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[0].title, /המטרה/);
   assert.match(PAGE_GUIDES.home[0].body, /אוספים קלפים/);
   assert.match(PAGE_GUIDES.home[0].body, /עולים רמה/);
-  assert.match(PAGE_GUIDES.home[0].ring, /pack-plinth|#home-pack/);
-  assert.match(PAGE_GUIDES.home[0].ring, /home-copy|today-open-cue|#home-title/);
-  assert.equal(PAGE_GUIDES.home[0].ringUnion, true);
+  assert.match(PAGE_GUIDES.home[0].ring, /today-hero/);
+  assert.equal(PAGE_GUIDES.home[0].ringUnion, undefined);
   assert.match(PAGE_GUIDES.home[1].body, /היום/);
   assert.match(PAGE_GUIDES.home[1].ring, /today-open-cue|cooldown-copy/);
   assert.match(PAGE_GUIDES.home[1].body, /המחסן/);
@@ -117,7 +116,8 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.card[0].body, /משחק קופסה/);
   assert.match(PAGE_GUIDES.binder[0].body, /שיתוף האלבום/);
   assert.match(PAGE_GUIDES.binder[0].body, /תמונה/);
-  assert.match(PAGE_GUIDES.binder[0].ring, /binder-head|binder-grid|share-my-binder/);
+  assert.match(PAGE_GUIDES.binder[0].ring, /binder-stats-row|binder-head/);
+  assert.match(PAGE_GUIDES.binder[0].arrowTo, /share-my-binder/);
   assert.match(PAGE_GUIDES.binder[1].title, /תגים/);
   assert.match(PAGE_GUIDES.binder[1].ring, /earned-badge-list|collection-star-count/);
   assert.match(PAGE_GUIDES.binder[1].body, /כוכבי האוסף/);

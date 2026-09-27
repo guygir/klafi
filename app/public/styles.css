@@ -3730,6 +3730,14 @@ body {
   padding: 0;
   background: transparent;
 }
+#home-view .today-hero {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--today-pack-w);
+  gap: inherit;
+  align-items: stretch;
+  min-width: 0;
+}
 #home-view .pack-plinth {
   position: relative;
   display: flex;
