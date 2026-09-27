@@ -2522,7 +2522,7 @@ function renderTodayDocket() {
   elements.todayLeaderHook.textContent = !collectorCrowd
     ? "הטבלה מחכה לעוד שחקנים"
     : yourRank
-    ? `אתם ${yourRank}/${collectorTotal}`
+    ? `אתם במקום ${yourRank}`
     : leader?.current
       ? "אתם במקום הראשון"
       : "המקום הראשון פנוי";
