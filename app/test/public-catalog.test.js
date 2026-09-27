@@ -80,6 +80,7 @@ test("slim home state includes inventory for binder reads", () => {
   assert.equal(state.idleCapacity, IDLE_BACKLOG_CAP);
   assert.equal(state.starCount, 0);
   assert.equal(state.factionId, null);
+  assert.deepEqual(state.pendingTradeNotices, []);
 });
 
 test("slim home state keeps a selected faction on the player", () => {

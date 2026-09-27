@@ -43,6 +43,7 @@ import {
   stampAchievements,
 } from "./achievements.js";
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
+import { ackTradeNotices, publicTradeNotices } from "./trade-notices.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
 import {
@@ -616,6 +617,7 @@ function publicState(session, now, cards, config = {}) {
       && Boolean(Object.keys(session.inventory || {}).length)
       && session.quizWonDay !== jerusalemDay(now),
     quizWonToday: Boolean(config.quizEnabled) && session.quizWonDay === jerusalemDay(now),
+    pendingTradeNotices: publicTradeNotices(session),
   };
 }
 
@@ -643,6 +645,7 @@ function publicIdleState(session, now, cards, config = {}) {
     loginStreak: session.loginStreak || 0,
     factionId: session.factionId || null,
     numberedCopies: numberedCopies(session.instances),
+    pendingTradeNotices: publicTradeNotices(session),
   };
 }
 
@@ -1911,6 +1914,20 @@ export async function createKalpiApp({
             state: await stateForToken(token),
             simulated: true,
           });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/trades/notices/ack") {
+          const input = await readJson(request);
+          const ids = Array.isArray(input.ids) ? input.ids : input.id ? [input.id] : [];
+          if (!ids.length) {
+            json(response, 400, { error: "INVALID_TRADE_NOTICE" });
+            return;
+          }
+          await store.withSession(token, (current) => {
+            ackTradeNotices(current, ids);
+          });
+          json(response, 200, { state: await stateForToken(token) });
           return;
         }
 

@@ -769,9 +769,33 @@ test("players can see and accept open trades from other collectors", async (t) =
   });
   assert.equal(accepted.status, 200);
   assert.equal(accepted.body.state.inventory[offered.id], 1);
+  assert.deepEqual(accepted.body.state.pendingTradeNotices || [], []);
   const ownerState = await api(running.base, "/api/state", { token: ownerToken });
   assert.equal(ownerState.body.inventory[wanted.id], 1);
   assert.equal(ownerState.body.inventory[offered.id], undefined);
+  assert.equal(ownerState.body.pendingTradeNotices.length, 1);
+  assert.equal(ownerState.body.pendingTradeNotices[0].receivedCardId, wanted.id);
+  assert.equal(ownerState.body.pendingTradeNotices[0].givenCardId, offered.id);
+  assert.equal(ownerState.body.pendingTradeNotices[0].tradeId, offer.tradeId);
+  assert.match(ownerState.body.pendingTradeNotices[0].accepterName, /שחקן/);
+  const ownerHome = await api(running.base, "/api/home", { token: ownerToken });
+  assert.equal(ownerHome.body.state.pendingTradeNotices.length, 1);
+  assert.equal(ownerHome.body.state.pendingTradeNotices[0].id, ownerState.body.pendingTradeNotices[0].id);
+  const missingAck = await api(running.base, "/api/trades/notices/ack", {
+    token: ownerToken,
+    method: "POST",
+    body: {},
+  });
+  assert.equal(missingAck.status, 400);
+  const ack = await api(running.base, "/api/trades/notices/ack", {
+    token: ownerToken,
+    method: "POST",
+    body: { id: ownerState.body.pendingTradeNotices[0].id },
+  });
+  assert.equal(ack.status, 200);
+  assert.deepEqual(ack.body.state.pendingTradeNotices, []);
+  const afterAck = await api(running.base, "/api/state", { token: ownerToken });
+  assert.deepEqual(afterAck.body.pendingTradeNotices, []);
 });
 
 test("only one concurrent accepter can complete a trade", async (t) => {

@@ -2228,6 +2228,17 @@ img.mini-art {
   margin: 0;
   font: 600 16px/1.4 "IBM Plex Sans Hebrew", sans-serif;
 }
+.trade-notice-dialog {
+  width: min(420px, calc(100% - 24px));
+}
+.trade-notice-dialog .eyebrow {
+  margin: 0 0 8px;
+  color: var(--civic);
+}
+.trade-notice-dialog #trade-notice-copy {
+  margin: 0 0 18px;
+  font: 500 15px/1.5 "IBM Plex Sans Hebrew", sans-serif;
+}
 .policy-dialog h2 { margin-bottom: 10px; font-size: 30px; }
 #level-dialog-title { line-height: 1.25; text-wrap: pretty; }
 #level-dialog-title .level-rank-name { white-space: nowrap; }

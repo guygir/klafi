@@ -1,6 +1,7 @@
 import { collectionStarCount } from "./visible-sets.js";
 import { levelThresholds } from "./progression.js";
 import { IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY } from "./idle-config.js";
+import { publicTradeNotices } from "./trade-notices.js";
 
 export function slimPublicState(session, shell, now = Date.now()) {
   const idleIds = new Set(shell.idleCardIds || []);
@@ -57,6 +58,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
       teaser: shell.gameConfig?.progression?.teaser || "האם תגיעו לדרגת ראש הממשלה?",
       pendingRewards: [...(session.pendingRankRewards || [])],
     },
+    pendingTradeNotices: publicTradeNotices(session),
     inventory: session.inventory || {},
     favorites: session.favorites || [],
     now,

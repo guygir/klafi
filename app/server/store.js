@@ -13,6 +13,7 @@ import {
   normalizeLeagueCode,
 } from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
+import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
 import { takeCollectorBoard } from "./collector-board.js";
 import { dailyRaceScore, visibleDailyRaceLeaders } from "./daily-race.js";
 
@@ -73,6 +74,7 @@ export function normalizeState(value = {}) {
     session.highestRank ??= 1;
     session.claimedRankRewards ??= [];
     session.pendingRankRewards ??= [];
+    session.pendingTradeNotices ??= [];
     session.avatarId ??= "kid-boy";
     session.quizWonDay ??= null;
     session.currentQuiz ??= null;
@@ -206,6 +208,7 @@ export class JsonStore {
         highestRank: 1,
         claimedRankRewards: [],
         pendingRankRewards: [],
+        pendingTradeNotices: [],
         loginDay: null,
         loginStreak: 0,
         bestLoginStreak: 0,
@@ -460,6 +463,12 @@ export class JsonStore {
       });
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
+      enqueueAcceptedTradeNotice(owner, trade, {
+        acceptedAt,
+        accepterName: accepter.displayName,
+      });
+      bumpStateRevision(owner);
+      bumpStateRevision(accepter);
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = sessionToken;

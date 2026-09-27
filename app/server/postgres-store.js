@@ -17,6 +17,7 @@ import {
   normalizeLeagueCode,
 } from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
+import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
 
 const { Pool } = pg;
 
@@ -68,6 +69,7 @@ function emptySession(token, createdAt) {
     highestRank: 1,
     claimedRankRewards: [],
     pendingRankRewards: [],
+    pendingTradeNotices: [],
     quizWonDay: null,
     currentQuiz: null,
     loginDay: null,
@@ -87,6 +89,7 @@ function extrasFromSession(session) {
     preparedPulls: session.preparedPulls || [],
     claimedRankRewards: session.claimedRankRewards || [],
     pendingRankRewards: session.pendingRankRewards || [],
+    pendingTradeNotices: session.pendingTradeNotices || [],
     currentQuiz: session.currentQuiz || null,
     loginDay: session.loginDay || null,
     loginStreak: session.loginStreak || 0,
@@ -498,6 +501,7 @@ export class PostgresStore {
       highestRank: row.highest_rank,
       claimedRankRewards: extras.claimedRankRewards || [],
       pendingRankRewards: extras.pendingRankRewards || [],
+      pendingTradeNotices: extras.pendingTradeNotices || [],
       quizWonDay: row.quiz_won_day,
       currentQuiz: extras.currentQuiz || null,
       loginDay: extras.loginDay || null,
@@ -1011,6 +1015,10 @@ export class PostgresStore {
       });
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
+      enqueueAcceptedTradeNotice(owner, trade, {
+        acceptedAt,
+        accepterName: accepter.displayName,
+      });
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = sessionToken;
