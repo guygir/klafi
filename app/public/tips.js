@@ -39,11 +39,9 @@ export const CARD_CALLOUTS = Object.freeze([
 export const PAGE_GUIDES = Object.freeze({
   home: Object.freeze([
     {
-      ring: ".pack-plinth, #home-pack",
+      ring: ".pack-plinth, #home-pack, .home-copy, #today-open-cue, .today-open-copy, #home-title, #cooldown-copy",
       ringUnion: true,
-      pad: 10,
-      padX: 28,
-      minWidth: 208,
+      pad: 8,
       radius: 16,
       title: "המטרה",
       body: "אוספים קלפים על הפוליטיקה הישראלית. כל קלף הוא ציטוט או עובדה עם מקור. פותחים, קוראים — ואז הוא נרשם באוסף, ועולים רמה.",
@@ -104,12 +102,12 @@ export const PAGE_GUIDES = Object.freeze({
   ]),
   binder: Object.freeze([
     {
-      ring: ".binder-head, #binder-grid, #binder-empty",
+      ring: ".binder-head, #binder-grid, #binder-empty, #share-my-binder",
       ringUnion: true,
       pad: 6,
       radius: 14,
       title: "האלבום",
-      body: "כאן כל הקלפים שראיתם. שיתוף האלבום שולח תמונה — הקלף נשאר אצל מי שפתח.",
+      body: "כאן כל הקלפים שראיתם. «שיתוף האלבום» למעלה שולח תמונה של האוסף — הקלפים עצמם נשארים אצלכם.",
     },
     {
       ring: "#earned-badge-list, .collection-star-count, .binder-badge-medals",
