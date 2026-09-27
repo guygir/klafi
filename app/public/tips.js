@@ -6,18 +6,10 @@ export const TIPS_MAX_AGE = 31536000;
 export const TIPS_STEPS = Object.freeze([
   {
     id: 1,
-    ring: "#open-pack",
-    arrowTo: "",
-    title: "המשחק",
-    body: "המחסן אוסף לבד כל שלוש שעות. כשיש קלפים - פתחו אותם. הם נרשמים לאוסף רק אחרי שרואים אותם.",
-  },
-  {
-    id: 2,
-    ring: "#binder-grid .binder-shared-card, #binder-grid button, #dialog-card",
+    ring: "#pack-action",
     emptyRing: 'button[data-nav="binder"]',
-    arrowTo: "#dialog-whatsapp, #dialog-source",
-    title: "האלבום",
-    body: "עכשיו הוא באלבום. פתחו קלף - המקור האמיתי למטה. שיתוף שולח תמונה, לא את הקלף עצמו.",
+    title: "ברכותיי על הקלף החדש!",
+    body: "לחצו לאוסף כדי להכניס אותו לאלבום שלכם.",
   },
 ]);
 
@@ -181,7 +173,7 @@ export const PAGE_GUIDES = Object.freeze({
   ]),
 });
 
-const PULL_PAGES = Object.freeze(["home", "pack", "binder", "dialog"]);
+const PULL_PAGES = Object.freeze(["pull", "pack", "card"]);
 
 export function parseTipsCookie(header) {
   const match = String(header || "").match(/(?:^|;\s*)klafi_tips=(on|off)(?:;|$)/);
@@ -301,12 +293,12 @@ export function firstVisible(selector, root) {
 }
 
 export function stepViewReady(stepId, flags) {
-  if (stepId === 1) return Boolean(flags.homeActive);
+  if (stepId <= 1) return Boolean(flags.packActive || flags.cardRevealed || flags.homeActive);
   return Boolean(flags.binderActive || flags.dialogOpen);
 }
 
 export function advanceStepFromView(stepId, flags) {
-  if (stepId === 1 && (flags.binderActive || flags.dialogOpen)) return 2;
+  if (stepId < TIPS_STEPS.length && (flags.binderActive || flags.dialogOpen)) return stepId + 1;
   return stepId;
 }
 
@@ -872,12 +864,9 @@ export function attachKlafiTips(env = globalThis) {
       return;
     }
     state.paintTries = 0;
-    const preferredRing = state.mode === "pull" && state.step === 2 && flags().dialogOpen
-      ? firstVisible("#dialog-card", doc)
-      : null;
     const fromSpec = clampSpecToView(growSpec(specToFrame(united
       ? specFromBox(united, step.pad ?? 4, step.radius ?? 10, step.padX)
-      : highlightSpec(preferredRing || ringNode, step.pad ?? 8, step.padX), frame), { minWidth: step.minWidth, viewWidth: vw }), { width: vw, height: vh }, step.clipPad);
+      : highlightSpec(ringNode, step.pad ?? 8, step.padX), frame), { minWidth: step.minWidth, viewWidth: vw }), { width: vw, height: vh }, step.clipPad);
     const toNode = step.arrowTo ? firstPaintTarget(step.arrowTo) : null;
     const toSpec = clampSpecToView(specToFrame(toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null, frame), { width: vw, height: vh });
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
@@ -903,8 +892,8 @@ export function attachKlafiTips(env = globalThis) {
       drawRing(marks, toSpec);
       drawArrow(marks, fromSpec, toSpec);
     }
-    if (step.callouts?.length && (preferredRing || ringNode)) {
-      drawCalloutMarks(marks, preferredRing || ringNode, step.callouts, frame, { width: vw, height: vh });
+    if (step.callouts?.length && ringNode) {
+      drawCalloutMarks(marks, ringNode, step.callouts, frame, { width: vw, height: vh });
     }
     placeCard(card, fromSpec.box, toSpec?.box || null, step.place || "", { width: vw, height: vh, left: 0, top: 0 });
     queueMicrotask(() => nextBtn?.focus({ preventScroll: true }));
@@ -963,6 +952,26 @@ export function attachKlafiTips(env = globalThis) {
     }, 280);
   }
 
+  function startPull(step = 1) {
+    state.mode = "pull";
+    state.started = true;
+    state.page = null;
+    state.step = Math.max(1, Math.min(step, TIPS_STEPS.length || 1));
+    state.parked = false;
+    state.paintTries = 0;
+    seedMute("pull");
+    schedulePaint();
+  }
+
+  function maybeStartPull() {
+    if (state.mode) return;
+    if (readTipsPref(env) === "off") return;
+    const seen = readSeenPages(env);
+    if (seen.pull || seen["*"]) return;
+    if (!flags().cardRevealed) return;
+    startPull();
+  }
+
   function maybeStartPage() {
     if (state.mode === "pull") return;
     const pageFlags = flags();
@@ -985,11 +994,15 @@ export function attachKlafiTips(env = globalThis) {
       else park();
       return;
     }
+    maybeStartPull();
+    if (state.mode) return;
     maybeStartPage();
   }
 
   function maybeStart() {
     if (state.mode === "pull") return;
+    maybeStartPull();
+    if (state.mode) return;
     maybeStartPage();
   }
 
@@ -1066,7 +1079,7 @@ export function attachKlafiTips(env = globalThis) {
   const binderGrid = doc.querySelector("#binder-grid");
   if (binderGrid) {
     const observer = new MutationObserver(() => {
-      if (state.mode === "pull" && state.step === 2) sync();
+      if (state.mode === "pull") sync();
       if (state.mode === "page" && state.page === "binder") sync();
     });
     observer.observe(binderGrid, { childList: true, subtree: true });

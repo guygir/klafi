@@ -34,7 +34,7 @@ import {
 } from "../public/tips.js";
 
 test("cookie off stops auto-open; replay re-enables later views", () => {
-  assert.equal(TIPS_STEPS.length, 2);
+  assert.equal(TIPS_STEPS.length, 1);
   assert.equal(TIPS_COOKIE, "klafi_tips");
   assert.equal(TIPS_STORAGE, "klafi:tips");
   assert.equal(parseTipsCookie("theme=dark; klafi_tips=off; other=1"), "off");
@@ -62,10 +62,10 @@ test("cookie off stops auto-open; replay re-enables later views", () => {
   assert.equal(readTipsPref(env), "on");
   assert.equal(shouldAutoOpen(readTipsPref(env), { homeActive: true, started: false }), true);
   assert.equal(advanceStepFromView(1, { packActive: true }), 1);
-  assert.equal(advanceStepFromView(1, { binderActive: true }), 2);
-  assert.equal(stepViewReady(2, { packActive: true }), false);
-  assert.equal(stepViewReady(2, { binderActive: true }), true);
-  assert.equal(stepViewReady(2, { dialogOpen: true }), true);
+  assert.equal(advanceStepFromView(1, { binderActive: true }), 1);
+  assert.equal(stepViewReady(1, { packActive: true }), true);
+  assert.equal(stepViewReady(1, { cardRevealed: true }), true);
+  assert.equal(stepViewReady(1, { homeActive: true }), true);
 });
 
 test("firstVisible falls back when boxes are 0x0 and leftover pack hint is recognized", () => {
@@ -162,9 +162,10 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.achievements[1].body, /מעל האלבום/);
   assert.equal(PAGE_GUIDES.achievements[1].place, "above");
   assert.equal(PAGE_GUIDES.growth[0].ringUnion, true);
-  assert.match(TIPS_STEPS[0].body, /כשיש קלפים/);
-  assert.match(TIPS_STEPS[0].body, /מחסן/);
-  assert.match(TIPS_STEPS[1].title, /האלבום/);
+  assert.equal(TIPS_STEPS[0].title, "ברכותיי על הקלף החדש!");
+  assert.equal(TIPS_STEPS[0].body, "לחצו לאוסף כדי להכניס אותו לאלבום שלכם.");
+  assert.equal(TIPS_STEPS[0].ring, "#pack-action");
+  assert.equal(TIPS_STEPS[1], undefined);
   assert.equal(PAGE_GUIDES.pack.length, 0);
   assert.equal(shouldAutoOpenPage({}, "pack"), false);
   assert.match(PAGE_GUIDES.dialog[0].body, /מי לא אוהב להתרפק/);
