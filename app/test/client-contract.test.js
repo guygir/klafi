@@ -685,8 +685,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(warmup, /design-assets/);
   assert.match(javascript, /function possibleNumberedCards/);
   assert.match(javascript, /function isPossibleNumberedCard/);
-  assert.match(javascript, /שחקנים מחזיקים בקלף הזה/);
-  assert.match(javascript, /\$\{count\}\/\$\{of\} מחזיקים עותק ממוספר/);
+  assert.match(javascript, /שחקנים שונים מחזיקים בקלף הזה/);
+  assert.match(javascript, /\$\{count\}\/\$\{of\} שחקנים שונים מחזיקים עותק ממוספר/);
   assert.match(warmup, /lookOnlyShowcase/);
   assert.match(warmup, /\/share\/binder/);
   assert.doesNotMatch(javascript, /שחקנים נוספים מחזיקים/);
@@ -735,7 +735,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-113/);
+  assert.match(html, /card-surface-114/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -748,14 +748,20 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /const warmedShell = window\.__kalpiWarmup\?\.shell/);
   assert.match(javascript, /const warmedCatalog = window\.__kalpiWarmup\?\.catalog/);
   assert.match(javascript, /const warmedHome = window\.__kalpiWarmup\?\.home/);
+  assert.match(javascript, /const warmedSettle = window\.__kalpiWarmup\?\.idleSettle/);
   assert.match(javascript, /window\.__kalpiWarmup\?\.holders/);
   assert.match(warmup, /\/api\/card-holders/);
   assert.match(javascript, /hydrateCardHolders\(\)\.catch/);
   assert.match(javascript, /const due = Boolean\(model\.serverState\?\.nextIdleAt\) && !timeUntil\(model\.serverState\.nextIdleAt\)/);
-  assert.match(javascript, /homeIdleReadyCopy\(\{ unseenCount: unseen, available \}\)/);
+  assert.match(javascript, /homeIdleReadyCopy\(\{ unseenCount: unseen, available, awaitingSettle: clock\.needsSettle \}\)/);
   assert.match(javascript, /idleStarterReady/);
   assert.match(javascript, /gameConfig\?\.idle\?\.capacity/);
   assert.match(javascript, /יש לכם \$\{unseenCount\} קלפים שמחכים/);
+  assert.match(javascript, /HOME_SETTLE_HINT/);
+  assert.match(javascript, /function renderHomeSettleHint/);
+  assert.match(html, /id="home-settle-hint"/);
+  assert.match(html, /\(רגע, אני טוען… אולי מגיע לכם עוד\?\)/);
+  assert.match(idleCountdownJs, /export const HOME_SETTLE_HINT = "\(רגע, אני טוען… אולי מגיע לכם עוד\?\)"/);
   assert.doesNotMatch(javascript, /newlySettledCount !== 1/);
   assert.doesNotMatch(tipsJs, /מתחילים עם קלף אחד|חבילה אחת מוכנה|יש קלף במחסן\?/);
   assert.match(javascript, /home\.hidden = granted/);
@@ -803,6 +809,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.player-name \{ max-width: 168px; \}/);
   assert.match(javascript, /function cachedDueCount/);
   assert.match(javascript, /function hydrateIdleQueue/);
+  assert.match(javascript, /function kickDueIdleSettle/);
+  assert.match(javascript, /applyCachedHome\(\);\s*kickDueIdleSettle\(\)/);
   assert.match(javascript, /function scheduleIdleRefill/);
   assert.match(javascript, /function flushPendingIdleSeen/);
   assert.match(javascript, /PENDING_IDLE_SEEN_KEY/);
@@ -821,6 +829,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(warmup, /window\.__kalpiWarmup/);
   assert.match(warmup, /cache: "force-cache"/);
   assert.match(warmup, /Math\.random\(\) \* 8000/);
+  assert.match(warmup, /\/api\/idle\/settle/);
+  assert.match(warmup, /function cachedIdleIsDue/);
+  assert.match(warmup, /idleSettle/);
   assert.doesNotMatch(warmup, /\/api\/warm/);
   assert.match(css, /\.binder-slot\.is-loading/);
   assert.match(css, /binder-well-wait/);
@@ -843,7 +854,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-113/);
+  assert.match(html, /card-surface-114/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -993,7 +1004,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-113/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-114/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -1008,7 +1019,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-113/);
+  assert.match(html, /packrip\.css\?v=card-surface-114/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);

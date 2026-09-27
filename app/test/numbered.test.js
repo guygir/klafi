@@ -9,12 +9,14 @@ import {
   previousJerusalemDay,
   stampEligible,
   stampFromGrant,
-  stampFromGrantCount,
+  grantCadenceToMinted,
+  rollNumberedStamp,
   stampKey,
   stampMax,
   streakLabel,
   takeInstanceForCard,
 } from "../server/numbered.js";
+import { tallyCardHolders } from "../server/store.js";
 
 test("stamp eligibility is list-slot print runs plus numberedSets, idle only", () => {
   const set5 = { id: "SET5-01", set: "LIK", listSlot: 1, releaseSetId: "set-5" };
@@ -40,21 +42,21 @@ test("stamp eligibility is list-slot print runs plus numberedSets, idle only", (
   assert.deepEqual(normalizeNumberedSets(["set-5", "party-leaders"], ["set-5"]), ["set-5"]);
 });
 
-test("numbered cadence is every N grants up to list place", () => {
+test("numbered stamps roll 1/N until the print run is gone", () => {
   assert.equal(normalizeNumberedEvery(undefined), 30);
   assert.equal(normalizeNumberedEvery(0), 30);
   assert.equal(normalizeNumberedEvery(30), 30);
-  assert.deepEqual(stampFromGrantCount(1, 1, 30), null);
-  assert.deepEqual(stampFromGrantCount(29, 1, 30), null);
-  assert.deepEqual(stampFromGrantCount(30, 1, 30), { index: 1, of: 1 });
-  assert.deepEqual(stampFromGrantCount(60, 1, 30), null);
-  assert.deepEqual(stampFromGrantCount(30, 3, 30), { index: 1, of: 3 });
-  assert.deepEqual(stampFromGrantCount(60, 3, 30), { index: 2, of: 3 });
-  assert.deepEqual(stampFromGrantCount(90, 3, 30), { index: 3, of: 3 });
-  assert.deepEqual(stampFromGrantCount(120, 3, 30), null);
-  assert.deepEqual(stampFromGrantCount(2, 2, 2), { index: 1, of: 2 });
-  assert.deepEqual(stampFromGrantCount(4, 2, 2), { index: 2, of: 2 });
-  assert.deepEqual(stampFromGrantCount(3, 2, 2), null);
+  assert.equal(grantCadenceToMinted(0, 30), 0);
+  assert.equal(grantCadenceToMinted(29, 30), 0);
+  assert.equal(grantCadenceToMinted(30, 30), 1);
+  assert.equal(grantCadenceToMinted(90, 30), 3);
+  assert.equal(rollNumberedStamp(0, 1, 30, () => 0.99), null);
+  assert.deepEqual(rollNumberedStamp(0, 1, 30, () => 0), { index: 1, of: 1 });
+  assert.equal(rollNumberedStamp(1, 1, 30, () => 0), null);
+  assert.deepEqual(rollNumberedStamp(0, 3, 25, () => 0), { index: 1, of: 3 });
+  assert.deepEqual(rollNumberedStamp(2, 3, 25, () => 0), { index: 3, of: 3 });
+  assert.equal(rollNumberedStamp(3, 3, 25, () => 0), null);
+  assert.deepEqual(rollNumberedStamp(0, 2, 1, () => 0.99), { index: 1, of: 2 });
 });
 
 test("login streak counts Jerusalem days and resets after a gap", () => {
@@ -94,4 +96,14 @@ test("trades move the numbered instance instead of minting a new stamp", () => {
   assert.equal(to.instances[0].numberedOf, 1);
   assert.equal(to.instances[0].acquiredBy, "trade-accepted");
   assert.equal(takeInstanceForCard(to, "SET5-01")?.instanceId, "a");
+});
+
+test("holder tally counts distinct live sessions, not extra copies", () => {
+  const tally = tallyCardHolders({
+    a: { inventory: { C1: 5 }, instances: [{ cardId: "C1", numberedIndex: 1 }] },
+    b: { inventory: { C1: 2 }, instances: [] },
+    empty: { inventory: {}, instances: [] },
+  });
+  assert.equal(tally.holders.C1, 2);
+  assert.equal(tally.numberedHolders.C1, 1);
 });

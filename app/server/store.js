@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
+import { moveOwnedCard, rollNumberedStamp } from "./numbered.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import {
   LEAGUE_MAX,
@@ -94,6 +94,7 @@ export function tallyCardHolders(sessions = {}) {
   const holders = {};
   const numberedHolders = {};
   for (const session of Object.values(sessions || {})) {
+    // One live session with many copies still counts as one holder.
     for (const [cardId, copies] of Object.entries(session.inventory || {})) {
       if (Number(copies) > 0) holders[cardId] = (holders[cardId] || 0) + 1;
     }
@@ -114,9 +115,10 @@ export function cardHolderSnapshotFresh(snapshot, nowMs, ttlMs = CARD_HOLDER_SYN
 }
 
 export class JsonStore {
-  constructor(filePath, { now = () => Date.now() } = {}) {
+  constructor(filePath, { now = () => Date.now(), numberedRandom = Math.random } = {}) {
     this.filePath = filePath;
     this.now = now;
+    this.numberedRandom = numberedRandom;
     this.state = structuredClone(EMPTY_STATE);
     this.queue = Promise.resolve();
     this.transaction = new AsyncLocalStorage();
@@ -565,9 +567,11 @@ export class JsonStore {
 
   async claimNumberedStamp(key, max, every = 30) {
     this.state.numberedIssued ??= {};
-    const next = (this.state.numberedIssued[key] || 0) + 1;
-    this.state.numberedIssued[key] = next;
-    return stampFromGrantCount(next, max, every);
+    const have = this.state.numberedIssued[key] || 0;
+    const stamp = rollNumberedStamp(have, max, every, this.numberedRandom);
+    if (!stamp) return null;
+    this.state.numberedIssued[key] = stamp.index;
+    return stamp;
   }
 
   scoreLeagueMembers(memberTokens, cards = []) {

@@ -45,6 +45,7 @@ async function start(dataDir, clock, {
     databaseUrl,
     studioSecret,
     now: () => clock.value,
+    numberedRandom: () => 0.99,
     rng: () => 0,
   });
   const server = createServer(handler);
