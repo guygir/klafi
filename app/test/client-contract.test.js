@@ -68,6 +68,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="dialog-trust"/);
   assert.match(html, /aria-labelledby="card-dialog-title"/);
   assert.match(html, /aria-labelledby="report-dialog-title"/);
+  assert.match(html, /זה נפתח כפנייה בגיטהאב, כמו דיווח באג/);
+  assert.match(javascript, /function submitCorrectionReport[\s\S]*?request\("\/api\/bugs"[\s\S]*?kind: report\.category/);
+  assert.match(javascript, /תודה\. הדיווח נפתח בגיטהאב/);
   assert.match(html, /aria-labelledby="level-dialog-title"/);
   assert.match(html, /aria-labelledby="profile-dialog-title"/);
   assert.match(html, /aria-labelledby="advocacy-trust-title"/);

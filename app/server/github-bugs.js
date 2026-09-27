@@ -80,13 +80,41 @@ async function ghFetch(token, pathname, init, fetchImpl = fetch) {
 
 // Report kinds the form may send. Anything else (missing, unknown, non-string) is a bug report,
 // so old clients keep working and callers cannot inject arbitrary title prefixes.
+export const CORRECTION_KINDS = Object.freeze({
+  name: Object.freeze({ tag: "name", type: "Player name report" }),
+  source: Object.freeze({ tag: "source", type: "Card source report" }),
+  quote: Object.freeze({ tag: "quote", type: "Card quote report" }),
+  identity: Object.freeze({ tag: "identity", type: "Card identity report" }),
+  display: Object.freeze({ tag: "display", type: "Card display report" }),
+  other: Object.freeze({ tag: "report", type: "Card report" }),
+});
+
 export const REPORT_KINDS = Object.freeze({
   bug: Object.freeze({ tag: "bug", type: "Bug report" }),
   feature: Object.freeze({ tag: "feature", type: "Feature request" }),
+  ...CORRECTION_KINDS,
 });
 
 export function reportKind(raw) {
   return typeof raw === "string" && Object.hasOwn(REPORT_KINDS, raw) ? raw : "bug";
+}
+
+export function correctionReportKind(raw) {
+  return typeof raw === "string" && Object.hasOwn(CORRECTION_KINDS, raw) ? raw : "other";
+}
+
+export async function createGithubIssueFromCorrection(env, report, headers, opts) {
+  const category = correctionReportKind(report?.category);
+  const pagePath = typeof report?.pagePath === "string" ? report.pagePath.trim() : "";
+  const base = siteBaseUrl(env);
+  const pageUrl = pagePath.startsWith("http") ? pagePath : `${base}${pagePath || ""}`;
+  return createGithubBugFromBody(env, {
+    text: report?.details,
+    kind: category,
+    nickname: report?.nickname,
+    pageUrl,
+    website: report?.website,
+  }, headers, opts);
 }
 
 export async function createGithubBugFromBody(env, body, headers, {
