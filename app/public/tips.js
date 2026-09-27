@@ -31,7 +31,7 @@ export const TIPS_STEPS = Object.freeze([
 export const CARD_CALLOUTS = Object.freeze([
   { n: 1, sel: ".card-quote-zone", label: "ציטוט", side: "start" },
   { n: 2, sel: ".card-name-zone", label: "שם", side: "start" },
-  { n: 3, sel: ".card-party-zone", label: "מפלגה", side: "start" },
+  { n: 3, sel: ".card-party-zone", label: "מפלגה", side: "end" },
   { n: 4, sel: ".card-image-meta strong", label: "נדירות", side: "chip" },
   { n: 5, sel: ".card-code-tag", label: "סדרה", side: "end" },
 ]);
