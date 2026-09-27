@@ -40,14 +40,20 @@ export function normalizeNumberedEvery(value) {
   return Math.min(1000, n);
 }
 
-export function stampFromGrantCount(grants, max, every = DEFAULT_NUMBERED_EVERY) {
+export function grantCadenceToMinted(grants, every = DEFAULT_NUMBERED_EVERY) {
+  const interval = normalizeNumberedEvery(every);
+  const count = Math.max(0, Math.round(Number(grants) || 0));
+  return Math.floor(count / interval);
+}
+
+export function rollNumberedStamp(minted, max, every = DEFAULT_NUMBERED_EVERY, random = Math.random) {
   const interval = normalizeNumberedEvery(every);
   const cap = Math.max(0, Math.round(Number(max) || 0));
-  const count = Math.max(0, Math.round(Number(grants) || 0));
-  if (!interval || !cap || count < interval || count % interval !== 0) return null;
-  const index = count / interval;
-  if (index > cap) return null;
-  return { index, of: cap };
+  const have = Math.max(0, Math.round(Number(minted) || 0));
+  if (!interval || !cap || have >= cap) return null;
+  const roll = Number(typeof random === "function" ? random() : random);
+  if (!Number.isFinite(roll) || roll >= 1 / interval) return null;
+  return { index: have + 1, of: cap };
 }
 
 export function stampMax(card) {

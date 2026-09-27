@@ -3556,14 +3556,14 @@ function printRunFor(card) {
 function holderLine(count, numbered = false, card = null) {
   if (numbered) {
     const of = printRunFor(card);
-    if (of > 0) return `${count}/${of} מחזיקים עותק ממוספר`;
+    if (of > 0) return `${count}/${of} שחקנים שונים מחזיקים עותק ממוספר`;
     if (count <= 0) return "אף שחקן עדיין לא מחזיק עותק ממוספר";
     if (count === 1) return "שחקן אחד מחזיק עותק ממוספר";
-    return `${count} שחקנים מחזיקים עותק ממוספר`;
+    return `${count} שחקנים שונים מחזיקים עותק ממוספר`;
   }
   if (count <= 0) return "אף שחקן עדיין לא מחזיק בקלף הזה";
   if (count === 1) return "שחקן אחד מחזיק בקלף הזה";
-  return `${count} שחקנים מחזיקים בקלף הזה`;
+  return `${count} שחקנים שונים מחזיקים בקלף הזה`;
 }
 
 async function hydrateCardHolders() {

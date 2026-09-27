@@ -780,6 +780,7 @@ export async function createKalpiApp({
   quizEnabled = false,
   studioSecret = process.env.STUDIO_SECRET || null,
   now = () => Date.now(),
+  numberedRandom = Math.random,
   rng = randomInt,
   holderWarm = false,
   holderSyncMs = CARD_HOLDER_SYNC_MS,
@@ -857,8 +858,8 @@ export async function createKalpiApp({
     }
   }
   const store = databaseUrl
-    ? new PostgresStore(databaseUrl, { ssl: databaseSsl, now })
-    : new JsonStore(path.join(dataDir, "state.json"), { now });
+    ? new PostgresStore(databaseUrl, { ssl: databaseSsl, now, numberedRandom })
+    : new JsonStore(path.join(dataDir, "state.json"), { now, numberedRandom });
   const initialized = await store.init();
   const studioOverlay = initialized && Object.hasOwn(initialized, "studioConfig")
     ? initialized.studioConfig

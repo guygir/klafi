@@ -5,7 +5,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
-import { moveOwnedCard, stampFromGrantCount } from "./numbered.js";
+import { moveOwnedCard, rollNumberedStamp } from "./numbered.js";
 import { visibleDailyRaceLeaders } from "./daily-race.js";
 import {
   LEAGUE_MAX,
@@ -26,6 +26,7 @@ const MIGRATIONS = [
   ["005_card_holder_snapshot", "005_card_holder_snapshot.sql"],
   ["006_numbered_grant_cadence", "006_numbered_grant_cadence.sql"],
   ["007_instances_seen_at_index", "007_instances_seen_at_index.sql"],
+  ["008_numbered_chance", "008_numbered_chance.sql"],
 ];
 
 function iso(value) {
@@ -151,7 +152,7 @@ export function sessionDeltas(previous, session) {
 }
 
 export class PostgresStore {
-  constructor(connectionString, { ssl = false, now = () => Date.now() } = {}) {
+  constructor(connectionString, { ssl = false, now = () => Date.now(), numberedRandom = Math.random } = {}) {
     const poolOptions = postgresPoolOptions(connectionString, { ssl });
     this.transactionPooling = poolOptions.connectionString !== connectionString;
     this.pool = guardPool(new Pool(poolOptions));
@@ -159,6 +160,7 @@ export class PostgresStore {
     this.requestSessions = new AsyncLocalStorage();
     this.sessionCache = new Map();
     this.now = now;
+    this.numberedRandom = numberedRandom;
     this.holderRefresh = null;
     this.holderSnapshot = null;
     this.holderTableReady = false;
@@ -1172,15 +1174,26 @@ export class PostgresStore {
   }
 
   async claimNumberedStamp(key, max, every = 30) {
+    const cap = Math.max(0, Math.round(Number(max) || 0));
+    if (!cap) return null;
+    const current = await this.executor().query(
+      "SELECT issued FROM kalpi_numbered_issued WHERE stamp_key = $1",
+      [key],
+    );
+    const have = current.rows[0]?.issued || 0;
+    if (!rollNumberedStamp(have, cap, every, this.numberedRandom)) return null;
     const result = await this.executor().query(
       `INSERT INTO kalpi_numbered_issued (stamp_key, issued)
        VALUES ($1, 1)
        ON CONFLICT (stamp_key) DO UPDATE
        SET issued = kalpi_numbered_issued.issued + 1
+       WHERE kalpi_numbered_issued.issued < $2
        RETURNING issued`,
-      [key],
+      [key, cap],
     );
-    return stampFromGrantCount(result.rows[0]?.issued, max, every);
+    const minted = result.rows[0]?.issued;
+    if (!minted) return null;
+    return { index: minted, of: cap };
   }
 
   async ensureHolderSnapshotTable() {
@@ -1226,16 +1239,18 @@ export class PostgresStore {
     await this.ensureHolderSnapshotTable();
     const [owned, numbered] = await Promise.all([
       this.pool.query(
-        `SELECT card_id, COUNT(*)::int AS holders
-         FROM kalpi_inventory
-         WHERE copies > 0
-         GROUP BY card_id`,
+        `SELECT i.card_id, COUNT(*)::int AS holders
+         FROM kalpi_inventory i
+         JOIN kalpi_sessions s ON s.token = i.session_token
+         WHERE i.copies > 0
+         GROUP BY i.card_id`,
       ),
       this.pool.query(
-        `SELECT card_id, COUNT(DISTINCT session_token)::int AS holders
-         FROM kalpi_instances
-         WHERE numbered_index > 0
-         GROUP BY card_id`,
+        `SELECT i.card_id, COUNT(DISTINCT i.session_token)::int AS holders
+         FROM kalpi_instances i
+         JOIN kalpi_sessions s ON s.token = i.session_token
+         WHERE i.numbered_index > 0
+         GROUP BY i.card_id`,
       ),
     ]);
     const holders = {};
