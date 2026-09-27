@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { tradeApprovedLines } from "../public/trade-approved.js";
 
-test("accepted-trade toast names both sides of the swap", () => {
+test("accepted-trade popup names both sides of the swap", () => {
   const lines = tradeApprovedLines({
     otherName: "  דנה  ",
     receivedTitle: "בנימין נתניהו",
