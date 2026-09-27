@@ -6,6 +6,7 @@ import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import { takeCollectorBoard } from "./collector-board.js";
 import { visibleDailyRaceLeaders } from "./daily-race.js";
 import {
   LEAGUE_MAX,
@@ -1106,9 +1107,7 @@ export class PostgresStore {
       })
       .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
-    const collectors = allCollectors.slice(0, 8);
-    const currentCollector = allCollectors.find(({ current }) => current);
-    if (currentCollector && !collectors.some(({ current }) => current)) collectors.splice(7, 1, currentCollector);
+    const { collectors, collectorCount, yourCollectorRank } = takeCollectorBoard(allCollectors);
     const factions = factionStandingsFromCollectors(allCollectors);
 
     const partyIds = [...new Set(cards.filter(({ set }) => set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set))].sort();
@@ -1166,6 +1165,8 @@ export class PostgresStore {
     const targetPartyNameHe = cards.find((card) => card.set === targetPartyId)?.setNameHe || targetPartyId;
     return {
       collectors,
+      collectorCount,
+      yourCollectorRank,
       factions,
       dailyChallenge: { day, targetPartyId, targetPartyNameHe, leaders: dailyParty },
       fixture: false,

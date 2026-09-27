@@ -160,12 +160,12 @@ test("race boards never reintroduce other players on 0 from cached leaders", () 
   assert.equal(mergeLeaderboards(null, null), null);
 });
 
-test("race board: zeros hidden except self; self keeps the last row when ranked below the top 8", () => {
-  const others = Array.from({ length: 10 }, (_, index) => ({ label: `p${index}`, cards: 10 - index }));
+test("race board: zeros hidden except self; self keeps the last row when ranked below the top 10", () => {
+  const others = Array.from({ length: 12 }, (_, index) => ({ label: `p${index}`, cards: 12 - index }));
   const zeros = [{ label: "z1", cards: 0 }, { label: "z2", cards: 0 }];
   const selfZero = { label: "me", current: true, cards: 0 };
   const board = visibleDailyRaceLeaders([...zeros, ...others, selfZero]);
-  assert.equal(board.length, 8);
+  assert.equal(board.length, 10);
   assert.equal(board.at(-1).label, "me", "self at 0 still shows, in the last row");
   assert.equal(board.filter(({ cards, current }) => !current && cards === 0).length, 0);
   assert.deepEqual(visibleDailyRaceLeaders([...zeros, selfZero]).map(({ label }) => label), ["me"]);
