@@ -43,6 +43,7 @@ export const PAGE_GUIDES = Object.freeze({
       ringUnion: true,
       pad: 10,
       padX: 28,
+      minWidth: 208,
       radius: 16,
       title: "המטרה",
       body: "אוספים קלפים על הפוליטיקה הישראלית. כל קלף הוא ציטוט או עובדה עם מקור. פותחים, קוראים — ואז הוא נרשם באוסף, ועולים רמה.",
@@ -83,8 +84,8 @@ export const PAGE_GUIDES = Object.freeze({
   ]),
   pack: Object.freeze([
     {
-      ring: "#rip-stage .pr-pack, #rip-stage",
-      emptyRing: "#pack-action",
+      ring: ".pr-pack",
+      emptyRing: "#rip-stage",
       arrowTo: "#pack-action",
       pad: 12,
       radius: 18,
@@ -111,7 +112,7 @@ export const PAGE_GUIDES = Object.freeze({
       body: "כאן כל הקלפים שראיתם. שיתוף האלבום שולח תמונה — הקלף נשאר אצל מי שפתח.",
     },
     {
-      ring: "#earned-badge-rail, #earned-badge-list, .collection-star-count",
+      ring: "#earned-badge-list, .collection-star-count, .binder-badge-medals",
       ringUnion: true,
       pad: 6,
       radius: 14,
@@ -397,6 +398,22 @@ export function unionBoxes(nodes, clipNode) {
 
 function specFromBox(box, pad = 8, radius = 14, padX) {
   return { kind: "round", box: inflate(box, pad, padX), radius };
+}
+
+function growSpec(spec, { minWidth, viewWidth } = {}) {
+  if (!spec?.box || !minWidth || spec.box.width >= minWidth) return spec;
+  const extra = minWidth - spec.box.width;
+  const mid = (viewWidth || 0) / 2;
+  const boxMid = spec.box.left + spec.box.width / 2;
+  const box = { ...spec.box };
+  if (boxMid <= mid) {
+    box.right += extra;
+    box.width += extra;
+  } else {
+    box.left -= extra;
+    box.width += extra;
+  }
+  return { ...spec, box };
 }
 
 function clampSpecToView(spec, view) {
@@ -854,9 +871,9 @@ export function attachKlafiTips(env = globalThis) {
     const preferredRing = state.mode === "pull" && state.step === 3 && flags().dialogOpen
       ? firstVisible("#dialog-card", doc)
       : null;
-    const fromSpec = clampSpecToView(specToFrame(united
+    const fromSpec = clampSpecToView(growSpec(specToFrame(united
       ? specFromBox(united, step.pad ?? 4, step.radius ?? 10, step.padX)
-      : highlightSpec(preferredRing || ringNode, step.pad ?? 8, step.padX), frame), { width: vw, height: vh });
+      : highlightSpec(preferredRing || ringNode, step.pad ?? 8, step.padX), frame), { minWidth: step.minWidth, viewWidth: vw }), { width: vw, height: vh });
     const toNode = step.arrowTo ? firstPaintTarget(step.arrowTo) : null;
     const toSpec = clampSpecToView(specToFrame(toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null, frame), { width: vw, height: vh });
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);

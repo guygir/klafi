@@ -93,6 +93,7 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[0].body, /עולים רמה/);
   assert.match(PAGE_GUIDES.home[0].ring, /pack-plinth|#home-pack/);
   assert.equal(PAGE_GUIDES.home[0].padX, 28);
+  assert.equal(PAGE_GUIDES.home[0].minWidth, 208);
   assert.match(PAGE_GUIDES.home[1].body, /היום/);
   assert.match(PAGE_GUIDES.home[1].ring, /today-open-cue|cooldown-copy/);
   assert.match(PAGE_GUIDES.home[1].body, /המחסן/);
