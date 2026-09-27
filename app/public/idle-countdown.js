@@ -1,6 +1,7 @@
 export const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
 export const IDLE_BACKLOG_CAP = 8;
 export const IDLE_FULL_COPY = "המחסן מלא. פתחו קלף כדי שהאיסוף יחזור לרוץ.";
+export const HOME_SETTLE_HINT = "(רגע, אני טוען… אולי מגיע לכם עוד?)";
 
 export function timeUntil(iso, now = Date.now()) {
   if (!iso) return 0;
@@ -95,13 +96,14 @@ export function idleCountdownCopy({ serverState, idleQueueLength = 0, now = Date
   };
 }
 
-export function homeIdleReadyCopy({ unseenCount = 0, available = unseenCount > 0 } = {}) {
+export function homeIdleReadyCopy({ unseenCount = 0, available = unseenCount > 0, awaitingSettle = false } = {}) {
   return {
     title: unseenCount > 0
       ? unseenCount === 1 ? "יש לכם קלף שמחכה." : `יש לכם ${unseenCount} קלפים שמחכים.`
       : "הקלף הבא בדרך.",
     lede: available ? "כל פעם פותחים קלף אחד." : "כל שלוש שעות נאסף קלף אחד לבד.",
     action: available ? "פתיחת קלף" : "ממשיכים לאסוף",
+    settleHint: awaitingSettle ? HOME_SETTLE_HINT : "",
   };
 }
 

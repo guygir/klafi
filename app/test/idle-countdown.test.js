@@ -7,6 +7,7 @@ import {
   applyIdleCountdown,
   formatCountdown,
   homeIdleReadyCopy,
+  HOME_SETTLE_HINT,
   idleCountdownCopy,
   idleScheduleIsDue,
   nextCollectionRemaining,
@@ -505,6 +506,9 @@ test("home clock and ready copy after three starter pulls and after opening them
   const ready = homeIdleReadyCopy({ unseenCount: IDLE_STARTER_READY, available: true });
   assert.equal(ready.title, `יש לכם ${IDLE_STARTER_READY} קלפים שמחכים.`);
   assert.equal(ready.action, "פתיחת קלף");
+  assert.equal(ready.settleHint, "");
+  const awaiting = homeIdleReadyCopy({ unseenCount: 1, available: true, awaitingSettle: true });
+  assert.equal(awaiting.settleHint, HOME_SETTLE_HINT);
 
   const afterOpen = idleCountdownCopy({
     serverState: {

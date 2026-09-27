@@ -76,6 +76,7 @@ body:has(#app[data-theme="pack-v2"]) {
 }
 
 #app[data-theme="pack-v2"] #home-view #cooldown-copy,
+#app[data-theme="pack-v2"] #home-view #home-settle-hint,
 #app[data-theme="pack-v2"] #home-view .primary-action,
 #app[data-theme="pack-v2"] #home-view .debug-pack-action,
 #app[data-theme="pack-v2"] #home-view #open-quiz,
