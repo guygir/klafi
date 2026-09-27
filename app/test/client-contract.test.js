@@ -681,8 +681,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(warmup, /design-assets/);
   assert.match(javascript, /function possibleNumberedCards/);
   assert.match(javascript, /function isPossibleNumberedCard/);
-  assert.match(javascript, /שחקנים מחזיקים בקלף הזה/);
-  assert.match(javascript, /\$\{count\}\/\$\{of\} מחזיקים עותק ממוספר/);
+  assert.match(javascript, /שחקנים שונים מחזיקים בקלף הזה/);
+  assert.match(javascript, /\$\{count\}\/\$\{of\} שחקנים שונים מחזיקים עותק ממוספר/);
   assert.match(warmup, /lookOnlyShowcase/);
   assert.match(warmup, /\/share\/binder/);
   assert.doesNotMatch(javascript, /שחקנים נוספים מחזיקים/);
