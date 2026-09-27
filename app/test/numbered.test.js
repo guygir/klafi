@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtemp, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 import {
   applyLoginStreak,
@@ -16,7 +19,7 @@ import {
   streakLabel,
   takeInstanceForCard,
 } from "../server/numbered.js";
-import { listNumberedPulls, tallyCardHolders } from "../server/store.js";
+import { JsonStore, listNumberedPulls, tallyCardHolders } from "../server/store.js";
 
 test("stamp eligibility is list-slot print runs plus numberedSets, idle only", () => {
   const set5 = { id: "SET5-01", set: "LIK", listSlot: 1, releaseSetId: "set-5" };
@@ -106,6 +109,26 @@ test("holder tally counts distinct live sessions, not extra copies", () => {
   });
   assert.equal(tally.holders.C1, 2);
   assert.equal(tally.numberedHolders.C1, 1);
+});
+
+test("card holder summary attaches live numbered pulls without storing them on the snapshot", async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-pulls-"));
+  const store = new JsonStore(path.join(dir, "state.json"));
+  await store.init();
+  const token = await store.createSession(new Date().toISOString());
+  await store.withSession(token, (session) => {
+    session.displayName = "ג׳וזפין";
+    session.inventory = { C1: 1 };
+    session.instances = [{ cardId: "C1", numberedIndex: 3, numberedOf: 10 }];
+  });
+  const summary = await store.cardHolderSummary();
+  assert.equal(summary.holders.C1, 1);
+  assert.equal(summary.numberedHolders.C1, 1);
+  assert.deepEqual(summary.numberedPulls, [
+    { cardId: "C1", displayName: "ג׳וזפין", index: 3, of: 10, binderSlug: store.getSession(token).publicBinderSlug },
+  ]);
+  assert.equal(store.state.cardHolderSnapshot.numberedPulls, undefined);
+  await rm(dir, { recursive: true, force: true });
 });
 
 test("numbered pulls keep the player name and stamp so the card dialog can link them", () => {

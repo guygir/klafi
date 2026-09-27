@@ -1131,5 +1131,5 @@ test("leagues: one room with a confirmed leave, cached first paint, never a pend
   assert.match(javascript, /title: "דיווח באג",/);
   assert.match(javascript, /title: "בקשת פיצ׳ר",/);
   assert.match(tips, /ring: "\.bottom-nav, #open-advocacy, #open-feature-request, #open-bug-report"/);
-  assert.match(tips, /«דיווח באג», «בקשת פיצ׳ר» ו«גילוי נאות»/);
+  assert.match(tips, /לדווח על באגים, לבקש פיצ׳רים/);
 });
