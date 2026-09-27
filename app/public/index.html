@@ -17,14 +17,14 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-133"></script>
+  <script src="/boot-warmup.js?v=card-surface-134"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-133" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-133" />
-  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-133" />
-  <link rel="stylesheet" href="/packrip.css?v=card-surface-133" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-134" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-134" />
+  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-134" />
+  <link rel="stylesheet" href="/packrip.css?v=card-surface-134" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -679,6 +679,25 @@
     <button id="event-dialog-ok" class="primary-action" type="button">הבנתי</button>
   </dialog>
 
+  <dialog id="trade-notice-dialog" class="policy-dialog trade-notice-dialog" aria-labelledby="trade-notice-title" aria-describedby="trade-notice-copy">
+    <button id="close-trade-notice" class="dialog-close" type="button" aria-label="סגירה">×</button>
+    <p class="eyebrow" id="trade-notice-kicker">החלפה</p>
+    <h2 id="trade-notice-title">ההחלפה אושרה!</h2>
+    <p id="trade-notice-copy">החלפתם עם שחקן</p>
+    <div class="trade-notice-cards" aria-hidden="false">
+      <div class="trade-side">
+        <small>קיבלתם</small>
+        <div id="trade-notice-received" class="trade-thumb"></div>
+      </div>
+      <b aria-hidden="true">⇄</b>
+      <div class="trade-side">
+        <small>נתתם</small>
+        <div id="trade-notice-given" class="trade-thumb"></div>
+      </div>
+    </div>
+    <button id="trade-notice-ok" class="primary-action" type="button">הבנתי</button>
+  </dialog>
+
   <dialog id="profile-dialog" class="policy-dialog" aria-labelledby="profile-dialog-title">
     <button id="close-profile" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">הפרופיל שלי</p>
@@ -785,6 +804,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-133"></script>
+  <script type="module" src="/app.js?v=card-surface-134"></script>
 </body>
 </html>
