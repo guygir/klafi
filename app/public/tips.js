@@ -636,11 +636,8 @@ export function placeCard(card, ring, to, prefer = "", view = viewportBox(), doc
   });
   if (prefer === "top") {
     const top = pad;
-    const overlapsRing = top + height > ring.top && top < ring.bottom;
-    const centered = clamp((vw - width) / 2, top);
     const right = clamp(vw - width - pad, top);
-    const fit = overlapsRing ? right : centered;
-    card.style.left = `${fit.left}px`;
+    card.style.left = `${right.left}px`;
     card.style.top = `${top}px`;
     return;
   }

@@ -5112,9 +5112,9 @@ body {
   text-align: start;
 }
 .klafi-tips-card.is-top {
-  width: min(228px, calc(100vw - 96px));
-  min-height: 188px;
-  padding: 14px 12px 16px;
+  width: min(200px, calc(100vw - 120px));
+  min-height: 200px;
+  padding: 16px 12px 18px;
 }
 .klafi-tips-card.is-top h2 {
   margin-bottom: 6px;
