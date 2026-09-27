@@ -21,15 +21,33 @@ try {
 const homeDelay = token && cachedHome?.token === token
   ? 2000 + Math.floor(Math.random() * 8000)
   : 0;
+function cachedIdleIsDue(cached) {
+  const now = Date.now();
+  const times = [];
+  for (const pull of cached?.state?.preparedPulls || []) {
+    const at = Date.parse(pull?.availableAt);
+    if (Number.isFinite(at)) times.push(at);
+  }
+  const scheduled = Date.parse(cached?.state?.nextIdleAt);
+  if (Number.isFinite(scheduled)) times.push(scheduled);
+  if (!times.length) return true;
+  return times.some((at) => at <= now);
+}
 const home = lookOnlyShowcase
   ? null
   : new Promise((resolve) => setTimeout(resolve, homeDelay))
     .then(() => fetch("/api/home", { cache: "no-store", headers }))
     .then(json);
+// Home is a delayed read and does not grant due packs. Start settle with the
+// first paint so an overnight return does not sit on yesterday's waiting count.
+const idleSettle = !lookOnlyShowcase && token && (!cachedHome || cachedHome.token === token) && cachedIdleIsDue(cachedHome)
+  ? fetch("/api/idle/settle", { method: "POST", cache: "no-store", headers }).then(json)
+  : null;
 window.__kalpiWarmup = {
   shell: fetch(`/shell.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json),
   catalog: fetch(`/catalog.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json),
   home,
+  idleSettle,
   holders: fetch("/api/card-holders").then(json).catch(() => null),
 };
 window.__kalpiWarmup.catalog.then((catalog) => {
