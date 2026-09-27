@@ -105,7 +105,6 @@ export const PAGE_GUIDES = Object.freeze({
       ringUnion: true,
       pad: 6,
       radius: 14,
-      arrowTo: "#share-my-binder",
       title: "האלבום",
       body: "כאן כל הקלפים שראיתם. הכפתור «שיתוף האלבום» למעלה שולח תמונה של האוסף — הקלפים עצמם נשארים אצלכם.",
     },

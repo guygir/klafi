@@ -117,7 +117,7 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.binder[0].body, /שיתוף האלבום/);
   assert.match(PAGE_GUIDES.binder[0].body, /תמונה/);
   assert.match(PAGE_GUIDES.binder[0].ring, /binder-stats-row|binder-head/);
-  assert.match(PAGE_GUIDES.binder[0].arrowTo, /share-my-binder/);
+  assert.equal(PAGE_GUIDES.binder[0].arrowTo, undefined);
   assert.match(PAGE_GUIDES.binder[1].title, /תגים/);
   assert.match(PAGE_GUIDES.binder[1].ring, /earned-badge-list|collection-star-count/);
   assert.match(PAGE_GUIDES.binder[1].body, /כוכבי האוסף/);
