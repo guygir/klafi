@@ -113,6 +113,7 @@ export const PAGE_GUIDES = Object.freeze({
     },
     {
       ring: "#earned-badge-list, .collection-star-count, .binder-badge-medals",
+      emptyRing: "#earned-badge-rail",
       ringUnion: true,
       pad: 6,
       radius: 14,
