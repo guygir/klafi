@@ -693,6 +693,7 @@ function readFlags(doc) {
     dialogOpen: Boolean(dialog?.open),
     cardRevealed: Boolean(
       (doc.querySelector("#pack-view")?.classList.contains("active")
+        && doc.querySelector("#pack-view")?.hasAttribute("data-reveal-settled")
         && doc.querySelector("#pack-view")?.querySelector(".walkout .kalpi-card.stage-portrait"))
       || (dialog?.open && doc.querySelector("#dialog-card")?.querySelector(".kalpi-card")),
     ),

@@ -3225,6 +3225,27 @@ function playRevealSound(stage) {
   if (clip) sfx.play(clip, { reveal: true });
 }
 
+const PACK_REVEAL_SETTLE_MS = 720;
+let packRevealSettleTimer = 0;
+
+function packViewEl() {
+  return document.querySelector("#pack-view");
+}
+
+function clearPackRevealSettled() {
+  clearTimeout(packRevealSettleTimer);
+  packViewEl()?.removeAttribute("data-reveal-settled");
+}
+
+function settlePackRevealAndSyncTips() {
+  clearTimeout(packRevealSettleTimer);
+  const wait = prefersReducedMotion() ? 0 : PACK_REVEAL_SETTLE_MS;
+  packRevealSettleTimer = setTimeout(() => {
+    packViewEl()?.setAttribute("data-reveal-settled", "");
+    if (!model.showcase) klafiTips.sync();
+  }, wait);
+}
+
 function finishWalkoutCard() {
   model.walkoutStage = WALKOUT_STAGES.length - 1;
   renderWalkoutStage();
@@ -3234,7 +3255,7 @@ function finishWalkoutCard() {
   const doneLabel = model.currentPack.mode === "studio-debug" ? "חזרה לסטודיו" : "לאוסף";
   setPackAction(isLast ? doneLabel : "הקלף הבא", false, "");
   maybeShowNumberedTip();
-  if (!model.showcase) klafiTips.sync();
+  settlePackRevealAndSyncTips();
 }
 
 function numberedTipTargets() {
@@ -3293,6 +3314,7 @@ function startWalkout() {
   teardownWalkoutSunburst({ immediate: true });
   sfx.stopReveals();
   model.packPhase = "walkout";
+  clearPackRevealSettled();
   if (prefersReducedMotion()) {
     finishWalkoutCard();
     return;
