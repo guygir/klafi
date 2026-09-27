@@ -13,13 +13,6 @@ export const TIPS_STEPS = Object.freeze([
   },
   {
     id: 2,
-    ring: "#pack-action",
-    arrowTo: "#rip-stage",
-    title: "קריעה",
-    body: "קרעו את החבילה. האוסף, הרמה והמפלגה מתעדכנים כשאתם רואים את הקלף — לא כשהוא מחכה במחסן.",
-  },
-  {
-    id: 3,
     ring: "#binder-grid .binder-shared-card, #binder-grid button, #dialog-card",
     emptyRing: 'button[data-nav="binder"]',
     arrowTo: "#dialog-whatsapp, #dialog-source",
@@ -43,7 +36,7 @@ export const PAGE_GUIDES = Object.freeze({
       pad: 8,
       radius: 16,
       title: "המטרה",
-      body: "אוספים קלפים על הפוליטיקה הישראלית. כל קלף הוא ציטוט או עובדה עם מקור. פותחים, קוראים — ואז הוא נרשם באוסף, ועולים רמה.",
+      body: "מטרת המשחק היא לאסוף כמה שיותר קלפים של הפוליטיקאים המועמדים לבחירות 2026. כל קלף של פוליטיקאי מכיל ציטוט שלו. פותחים, קוראים, לומדים להכיר את כולם! יש קלפים יותר נפוצים, ויש כאלו יותר נדירים. יש גם קלפים עם עותק אחד בלבד בארץ… חושבים שתוכלו להשיג אותם?",
     },
     {
       ring: "#today-open-cue, .today-open-copy, #home-title, #cooldown-copy",
@@ -51,26 +44,28 @@ export const PAGE_GUIDES = Object.freeze({
       pad: 8,
       radius: 14,
       title: "היום",
-      body: "זה מסך היום. המחסן ממשיך לאסוף קלף כל שלוש שעות, גם בלי שתיגעו. השעון הירוק שמתחת לכותרת מראה מתי מגיע הבא. אם יש חלון מיוחד, שורת האירוע רצה למעלה.",
+      body: "זה מסך היום. כל שלוש שעות, גם בלי שתבואו לבקר, נצברת לכם חבילה לפתיחה, עד מקסימום 8 חבילות. השעון הירוק שמתחת לכותרת מראה מתי תקבלו את החבילה הבאה.",
     },
     {
       ring: "#open-pack",
       arrowTo: "#cooldown-copy",
       title: "פתיחה",
-      body: "יש קלפים במחסן? לחצו על «פתיחת קלף». האוסף, הרמה והמפלגה מתעדכנים רק אחרי שרואים אותם. שיתוף שולח תמונה בלבד — לא את הקלף עצמו.",
+      body: "יש חבילות שמחכות? לחצו על «פתיחת קלף» כדי לראות מה קיבלתם!",
     },
     {
       ring: "#level-avatar-button, #player-name",
       ringUnion: true,
-      pad: 8,
+      pad: 16,
+      padX: 16,
+      clipPad: 2,
       radius: 14,
       title: "האווטאר",
-      body: "כאן הפנים שלכם, אות המפלגה, והאש של רצף הכניסות. לחיצה פותחת את הפרופיל ואת האווטארים. זה השם (הזמני) שלכם שיופיע בליגות, תחרויות וטבלאות - לחצו עליו כדי לשנות.",
+      body: "כאן התמונה שלכם שתופיע בטבלאות הניקוד, ביחד עם המפלגה בה אתם תומכים (אם תרצו לסמן), ורצף הכניסות שלכם מופיעים. לחיצה פותחת את הפרופיל לעריכה. זה השם (הזמני) שלך שיופיע בליגות, תחרויות וטבלאות - לחץ עליו כדי לשנות.",
     },
     {
       ring: ".today-docket",
       title: "המרוץ",
-      body: "כאן האתגר היומי וטבלת האספנים. נספרים רק קלפים שכבר פתחתם וראיתם.",
+      body: "כאן מופיעים האתגר היומי וטבלת האספנים. חושבים שתוכלו להיות בטופ?",
     },
     {
       ring: ".bottom-nav, #open-advocacy, #open-feature-request, #open-bug-report",
@@ -79,20 +74,15 @@ export const PAGE_GUIDES = Object.freeze({
       radius: 14,
       place: "above",
       title: "הניווט",
-      body: "למטה: היום, אוסף, הישגים, קהילה. מתחת לסרגל: «דיווח באג», «בקשת פיצ׳ר» ו«גילוי נאות».",
+      body: "למטה, תפריט הניווט: היום, אוסף, הישגים וקהילה. בקרו בכל אחת מהאופציות כדי לגלות כל מה שיש למשחק להציע! בנוסף, תוכלו לדווח על באגים, לבקש פיצ׳רים בכפתורים (שהם אפילו עוד יותר) למטה.",
     },
-  ]),
-  pack: Object.freeze([
     {
-      ring: ".pr-pack",
-      emptyRing: "#rip-stage",
-      arrowTo: "#pack-action",
-      pad: 12,
-      radius: 18,
-      title: "קריעה",
-      body: "קרעו את החבילה. הקלף נרשם לאוסף כשאתם רואים אותו — לא כשהוא מחכה במחסן.",
+      ring: "#open-pack",
+      title: "יאללה, בואו נפתח!",
+      body: "יאללה, בואו נפתח!",
     },
   ]),
+  pack: Object.freeze([]),
   card: Object.freeze([
     {
       ring: "#pack-view.active .walkout .kalpi-card.stage-portrait, #dialog-card .kalpi-card",
@@ -272,7 +262,7 @@ export function resetAllPageGuides(env = globalThis) {
 
 export function shouldAutoOpenPage(seen, page, flags = {}) {
   if (page === "binder" && flags.guestBinder) return false;
-  return Boolean(page && PAGE_GUIDES[page] && !seen?.["*"] && !seen?.[page]);
+  return Boolean(page && PAGE_GUIDES[page]?.length && !seen?.["*"] && !seen?.[page]);
 }
 
 export function activeGuidePage(flags, seen = {}) {
@@ -313,13 +303,11 @@ export function firstVisible(selector, root) {
 
 export function stepViewReady(stepId, flags) {
   if (stepId === 1) return Boolean(flags.homeActive);
-  if (stepId === 2) return Boolean(flags.packActive);
   return Boolean(flags.binderActive || flags.dialogOpen);
 }
 
 export function advanceStepFromView(stepId, flags) {
-  if (stepId === 1 && flags.packActive) return 2;
-  if (stepId === 2 && (flags.binderActive || flags.dialogOpen)) return 3;
+  if (stepId === 1 && (flags.binderActive || flags.dialogOpen)) return 2;
   return stepId;
 }
 
@@ -418,9 +406,9 @@ function growSpec(spec, { minWidth, viewWidth } = {}) {
   return { ...spec, box };
 }
 
-function clampSpecToView(spec, view) {
+function clampSpecToView(spec, view, clipPad) {
   if (!spec?.box || !view) return spec;
-  const pad = 8;
+  const pad = Number.isFinite(clipPad) ? clipPad : 8;
   const clip = {
     left: pad,
     top: pad,
@@ -889,12 +877,12 @@ export function attachKlafiTips(env = globalThis) {
       return;
     }
     state.paintTries = 0;
-    const preferredRing = state.mode === "pull" && state.step === 3 && flags().dialogOpen
+    const preferredRing = state.mode === "pull" && state.step === 2 && flags().dialogOpen
       ? firstVisible("#dialog-card", doc)
       : null;
     const fromSpec = clampSpecToView(growSpec(specToFrame(united
       ? specFromBox(united, step.pad ?? 4, step.radius ?? 10, step.padX)
-      : highlightSpec(preferredRing || ringNode, step.pad ?? 8, step.padX), frame), { minWidth: step.minWidth, viewWidth: vw }), { width: vw, height: vh });
+      : highlightSpec(preferredRing || ringNode, step.pad ?? 8, step.padX), frame), { minWidth: step.minWidth, viewWidth: vw }), { width: vw, height: vh }, step.clipPad);
     const toNode = step.arrowTo ? firstPaintTarget(step.arrowTo) : null;
     const toSpec = clampSpecToView(specToFrame(toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null, frame), { width: vw, height: vh });
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
@@ -1021,7 +1009,7 @@ export function attachKlafiTips(env = globalThis) {
     persistOn();
     resetAllPageGuides(env);
     const page = activeGuidePage(flags()) || "home";
-    if (PAGE_GUIDES[page]) {
+    if (PAGE_GUIDES[page]?.length) {
       startPage(page);
       return;
     }
@@ -1032,7 +1020,7 @@ export function attachKlafiTips(env = globalThis) {
     persistOn();
     const page = activeGuidePage(flags());
     unmarkPageSeen(page, env);
-    if (page && PAGE_GUIDES[page]) {
+    if (page && PAGE_GUIDES[page]?.length) {
       startPage(page);
       return;
     }
@@ -1090,7 +1078,7 @@ export function attachKlafiTips(env = globalThis) {
   const binderGrid = doc.querySelector("#binder-grid");
   if (binderGrid) {
     const observer = new MutationObserver(() => {
-      if (state.mode === "pull" && state.step === 3) sync();
+      if (state.mode === "pull" && state.step === 2) sync();
       if (state.mode === "page" && state.page === "binder") sync();
     });
     observer.observe(binderGrid, { childList: true, subtree: true });

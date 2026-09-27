@@ -128,6 +128,7 @@ test("share binder is look-only and does not create a player session", async (t)
   assert.equal(holders.status, 200);
   assert.deepEqual(holders.body.holders, {});
   assert.deepEqual(holders.body.numberedHolders, {});
+  assert.deepEqual(holders.body.numberedPulls, []);
 
   const home = await api(running.base, "/api/home");
   assert.equal(home.status, 200);

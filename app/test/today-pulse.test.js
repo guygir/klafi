@@ -33,9 +33,10 @@ test("quiet copy hides a small launch crowd", () => {
   assert.equal(TODAY_PULSE_MIN_USERS, 5);
   assert.equal(TODAY_PULSE_MIN_PACKS, 8);
   assert.equal(TODAY_PULSE_REFRESH_MS, 15 * 60 * 1000);
-  assert.equal(todayPulseCopy(), TODAY_PULSE_QUIET_COPY);
-  assert.equal(todayPulseCopy({ packs: 8, users: 1 }), TODAY_PULSE_QUIET_COPY);
-  assert.equal(todayPulseCopy({ packs: 7, users: 5 }), TODAY_PULSE_QUIET_COPY);
+  assert.equal(TODAY_PULSE_QUIET_COPY, "המחסן ממשיך לאסוף חבילות גם עכשיו");
+  assert.equal(todayPulseCopy(), "");
+  assert.equal(todayPulseCopy({ packs: 8, users: 1 }), "");
+  assert.equal(todayPulseCopy({ packs: 7, users: 5 }), "");
   assert.equal(
     todayPulseCopy({ packs: 12, users: 6 }),
     "היום ניתנו 12 חבילות ל־6 שחקנים",

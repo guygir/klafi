@@ -95,9 +95,10 @@ const model = {
   leaguesCacheToken: null,
   leagueLeaveConfirm: null,
   showcase: false,
-  cardHolders: { holders: {}, numberedHolders: {} },
+  cardHolders: { holders: {}, numberedHolders: {}, numberedPulls: [] },
   cardHoldersReady: false,
   dialogNumbered: false,
+  dialogNumberedPreview: null,
   reports: [],
   reportSubject: null,
   levelRewardReady: null,
@@ -203,6 +204,7 @@ const elements = {
   studioShareBinderLink: document.querySelector("#studio-share-binder-link"),
   studioShareBinderCopy: document.querySelector("#studio-share-binder-copy"),
   dialogHolders: document.querySelector("#dialog-holders"),
+  dialogNumberedPulls: document.querySelector("#dialog-numbered-pulls"),
   binderPercent: document.querySelector("#binder-percent"),
   binderCount: document.querySelector("#binder-count"),
   binderEyebrow: document.querySelector("#binder-eyebrow"),
@@ -2202,6 +2204,7 @@ async function restoreSessionFromCode() {
 async function saveProfile(event) {
   event.preventDefault();
   elements.profileError.textContent = "";
+  showWait("שומרים…");
   try {
     const profile = await request("/api/profile", {
       method: "POST",
@@ -2224,6 +2227,8 @@ async function saveProfile(event) {
     elements.profileError.textContent = error.status === 400
       ? "אפשר להשתמש ב־2–24 אותיות, מספרים, רווחים, גרש או מקף."
       : "לא הצלחנו לשמור את השם.";
+  } finally {
+    hideWait();
   }
 }
 
@@ -2572,7 +2577,6 @@ function renderTodaySpecials() {
   if (!row) return;
   const windowOpen = model.specialWindow;
   if (windowOpen?.reward === "pull" && !windowOpen.claimedToday) refreshEventPredictionIfStale();
-  document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
   let line = todayPulseCopy(model.activity?.todayPulse);
   if (windowOpen?.reward === "pull") {
     line = windowOpen.claimedToday
@@ -2589,6 +2593,15 @@ function renderTodaySpecials() {
         ? `פתוח עד ${until}. קלף אחד להיום.`
         : "קלף אחד להיום — והוא נשאר באלבום.";
     line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
+  }
+  const hasLine = Boolean(line);
+  row.hidden = !hasLine;
+  document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen) || hasLine);
+  if (!hasLine) {
+    for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
+      if (copy && copy.textContent) copy.textContent = "";
+    }
+    return;
   }
   const state = !windowOpen ? "pulse" : windowOpen.claimedToday ? "claimed" : "live";
   if (row.dataset.state !== state) row.dataset.state = state;
@@ -3594,10 +3607,16 @@ function catalogNumberedInstance(card) {
 }
 
 function catalogCardMarkup(card, surface = "binder", numbered = false) {
+  const preview = model.dialogNumberedPreview;
+  const stamp = numbered
+    ? (preview?.cardId === card?.id
+      ? { numberedIndex: preview.index, numberedOf: preview.of, finish: "Holo" }
+      : catalogNumberedInstance(card))
+    : {};
   return cardMarkup(card, {
     finish: card.rarity,
     count: 1,
-    ...(numbered ? catalogNumberedInstance(card) : {}),
+    ...stamp,
   }, { progressiveStage: "portrait", surface });
 }
 
@@ -3628,6 +3647,18 @@ function holderLine(count, numbered = false, card = null) {
   return `${count} שחקנים שונים מחזיקים בקלף הזה`;
 }
 
+function numberedPullsFor(card) {
+  return (model.cardHolders?.numberedPulls || []).filter((pull) => pull.cardId === card?.id);
+}
+
+function numberedPullLine(pull) {
+  const name = escapeHtml(pull.displayName || "שחקן");
+  const index = Number(pull.index) || 0;
+  const of = Number(pull.of) || 0;
+  const stamp = of > 0 ? `${index}/${of}` : String(index);
+  return `<p class="card-numbered-pull">${name} שלף את <button type="button" class="numbered-pull-link" data-numbered-preview data-card-id="${escapeHtml(pull.cardId)}" data-numbered-index="${index}" data-numbered-of="${of}">הממוספר ${stamp}</button> של קלף זה!</p>`;
+}
+
 async function hydrateCardHolders() {
   try {
     const warmed = window.__kalpiWarmup?.holders;
@@ -3637,6 +3668,7 @@ async function hydrateCardHolders() {
     model.cardHolders = {
       holders: payload.holders || {},
       numberedHolders: payload.numberedHolders || {},
+      numberedPulls: Array.isArray(payload.numberedPulls) ? payload.numberedPulls : [],
     };
     model.cardHoldersReady = true;
     if (model.showcase) renderShowcaseBinder();
@@ -3732,7 +3764,12 @@ function renderShowcaseBinder() {
 }
 
 function displayCardMarkup(card, surface = "display") {
-  const stamp = stampForCard(card);
+  const preview = surface === "display" && model.dialogNumberedPreview?.cardId === card?.id
+    ? model.dialogNumberedPreview
+    : null;
+  const stamp = preview
+    ? { numberedIndex: preview.index, numberedOf: preview.of, finish: "Holo" }
+    : stampForCard(card);
   return cardMarkup(card, {
     finish: stamp?.finish || card.rarity,
     count: ownedCountFor(card),
@@ -6171,16 +6208,27 @@ function openCardDialog(cardId, numbered = false) {
   model.dialogCardId = cardId;
   model.dialogBack = false;
   model.dialogNumbered = Boolean(numbered);
+  model.dialogNumberedPreview = null;
   renderDialogCard();
   elements.dialog.showModal();
   queueCardTextFit(elements.dialog);
   maybeShowNumberedTip();
 }
 
+function openNumberedPreview(cardId, index, of) {
+  if (!cardId || !model.byId.get(cardId)) return;
+  model.dialogCardId = cardId;
+  model.dialogBack = false;
+  model.dialogNumbered = true;
+  model.dialogNumberedPreview = { cardId, index: Number(index) || 0, of: Number(of) || 0 };
+  renderDialogCard();
+  if (!elements.dialog.open) elements.dialog.showModal();
+  queueCardTextFit(elements.dialog);
+}
+
 function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   const ownedCount = model.showcase ? 0 : (model.serverState?.inventory?.[card.id] ?? 0);
-  const numbered = model.showcase ? model.dialogNumbered : Boolean(stampForCard(card)?.numberedIndex);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
   elements.dialogCard.innerHTML = model.showcase
@@ -6192,8 +6240,13 @@ function renderDialogCard() {
     elements.dialogTrust.hidden = !line;
   }
   if (elements.dialogHolders) {
-    elements.dialogHolders.textContent = holderLine(holderCountFor(card, numbered), numbered, card);
+    elements.dialogHolders.textContent = holderLine(holderCountFor(card, false), false, card);
     elements.dialogHolders.hidden = !model.cardHoldersReady;
+  }
+  if (elements.dialogNumberedPulls) {
+    const pulls = numberedPullsFor(card);
+    elements.dialogNumberedPulls.innerHTML = pulls.map(numberedPullLine).join("");
+    elements.dialogNumberedPulls.hidden = !model.cardHoldersReady || pulls.length === 0;
   }
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
@@ -7652,6 +7705,12 @@ elements.earnedBadgeList?.addEventListener("keydown", (event) => {
 });
 
 elements.dialog.addEventListener("click", (event) => {
+  const link = event.target.closest?.("[data-numbered-preview]");
+  if (link) {
+    event.preventDefault();
+    openNumberedPreview(link.dataset.cardId, link.dataset.numberedIndex, link.dataset.numberedOf);
+    return;
+  }
   if (event.target === elements.dialog) elements.dialog.close();
 });
 elements.closeEventDialog.addEventListener("click", () => elements.eventDialog.close());

@@ -15,7 +15,7 @@ export function todayPulseCopy(pulse) {
   if (users >= TODAY_PULSE_MIN_USERS && packs >= TODAY_PULSE_MIN_PACKS) {
     return `היום ניתנו ${packs} חבילות ל־${users} שחקנים`;
   }
-  return TODAY_PULSE_QUIET_COPY;
+  return "";
 }
 
 export function countTodayPulse(sessions, day = jerusalemDayKey()) {

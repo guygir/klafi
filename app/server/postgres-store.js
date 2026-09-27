@@ -1299,14 +1299,36 @@ export class PostgresStore {
     return this.holderSnapshot;
   }
 
+  async listNumberedPulls() {
+    const result = await this.pool.query(
+      `SELECT i.card_id, s.display_name, i.numbered_index, i.numbered_of,
+              s.extras->>'publicBinderSlug' AS binder_slug
+       FROM kalpi_instances i
+       JOIN kalpi_sessions s ON s.token = i.session_token
+       WHERE i.numbered_index > 0
+       ORDER BY i.card_id, i.numbered_index, s.display_name`,
+    );
+    return result.rows.map((row) => ({
+      cardId: row.card_id,
+      displayName: String(row.display_name || "").trim() || "שחקן",
+      index: Number(row.numbered_index),
+      of: Number(row.numbered_of) || 0,
+      binderSlug: row.binder_slug || null,
+    }));
+  }
+
   async cardHolderSummary() {
     try {
       const snapshot = await this.readCardHolderSnapshot();
-      if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
+      const numberedPulls = await this.listNumberedPulls().catch(() => []);
+      if (!snapshot?.computedAt) {
+        const fresh = await this.refreshCardHolderSnapshot();
+        return { ...fresh, numberedPulls };
+      }
       if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
-      return snapshot;
+      return { ...snapshot, numberedPulls };
     } catch {
-      return { holders: {}, numberedHolders: {}, computedAt: new Date(this.now()).toISOString() };
+      return { holders: {}, numberedHolders: {}, numberedPulls: [], computedAt: new Date(this.now()).toISOString() };
     }
   }
 

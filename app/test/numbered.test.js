@@ -16,7 +16,7 @@ import {
   streakLabel,
   takeInstanceForCard,
 } from "../server/numbered.js";
-import { tallyCardHolders } from "../server/store.js";
+import { listNumberedPulls, tallyCardHolders } from "../server/store.js";
 
 test("stamp eligibility is list-slot print runs plus numberedSets, idle only", () => {
   const set5 = { id: "SET5-01", set: "LIK", listSlot: 1, releaseSetId: "set-5" };
@@ -106,4 +106,25 @@ test("holder tally counts distinct live sessions, not extra copies", () => {
   });
   assert.equal(tally.holders.C1, 2);
   assert.equal(tally.numberedHolders.C1, 1);
+});
+
+test("numbered pulls keep the player name and stamp so the card dialog can link them", () => {
+  const pulls = listNumberedPulls({
+    a: {
+      displayName: "ג׳וזפין",
+      publicBinderSlug: "josephine",
+      instances: [
+        { cardId: "C1", numberedIndex: 2, numberedOf: 5 },
+        { cardId: "C2", numberedIndex: 0 },
+      ],
+    },
+    b: {
+      displayName: "דני",
+      instances: [{ cardId: "C1", numberedIndex: 1, numberedOf: 5 }],
+    },
+  });
+  assert.deepEqual(pulls, [
+    { cardId: "C1", displayName: "דני", index: 1, of: 5, binderSlug: null },
+    { cardId: "C1", displayName: "ג׳וזפין", index: 2, of: 5, binderSlug: "josephine" },
+  ]);
 });

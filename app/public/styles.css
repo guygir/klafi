@@ -2894,6 +2894,34 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   text-align: center;
 }
 .card-holders-note[hidden] { display: none; }
+.card-numbered-pulls {
+  max-width: 42ch;
+  margin: 4px auto 0;
+  color: var(--civic);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+}
+.card-numbered-pulls[hidden] { display: none; }
+.card-numbered-pulls .card-numbered-pull {
+  margin: 0 0 4px;
+}
+.card-numbered-pulls .card-numbered-pull:last-child {
+  margin-bottom: 0;
+}
+.card-numbered-pulls .numbered-pull-link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
 
 .app-shell.showcase-active {
   padding-bottom: 28px;

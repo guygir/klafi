@@ -110,6 +110,27 @@ export function tallyCardHolders(sessions = {}) {
   return { holders, numberedHolders };
 }
 
+export function listNumberedPulls(sessions = {}) {
+  const pulls = [];
+  for (const session of Object.values(sessions || {})) {
+    const displayName = String(session.displayName || "").trim() || "שחקן";
+    const binderSlug = session.publicBinderSlug || null;
+    for (const instance of session.instances || []) {
+      const index = Number(instance?.numberedIndex);
+      if (!(index > 0) || !instance.cardId) continue;
+      pulls.push({
+        cardId: instance.cardId,
+        displayName,
+        index,
+        of: Number(instance.numberedOf) || 0,
+        binderSlug,
+      });
+    }
+  }
+  pulls.sort((a, b) => a.cardId.localeCompare(b.cardId) || a.index - b.index || a.displayName.localeCompare(b.displayName, "he"));
+  return pulls;
+}
+
 export function cardHolderSnapshotFresh(snapshot, nowMs, ttlMs = CARD_HOLDER_SYNC_MS) {
   const at = Date.parse(snapshot?.computedAt || "");
   return Number.isFinite(at) && (nowMs - at) < ttlMs;
@@ -562,9 +583,13 @@ export class JsonStore {
 
   async cardHolderSummary() {
     const snapshot = this.state.cardHolderSnapshot;
-    if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
+    const numberedPulls = listNumberedPulls(this.state.sessions);
+    if (!snapshot?.computedAt) {
+      const fresh = await this.refreshCardHolderSnapshot();
+      return { ...fresh, numberedPulls };
+    }
     if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
-    return snapshot;
+    return { ...snapshot, numberedPulls };
   }
 
   async claimNumberedStamp(key, max, every = 30) {
