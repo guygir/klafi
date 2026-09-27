@@ -94,7 +94,7 @@ export const PAGE_GUIDES = Object.freeze({
     {
       ring: "#pack-view.active .walkout .kalpi-card.stage-portrait, #dialog-card .kalpi-card",
       title: "הקלף",
-      body: "כמו במשחק קופסה: כל מספר מצביע על אזור בקלף.",
+      body: "כמו במשחק קופסה: כל מספר מצביע על אזור בקלף. הכוכבים הם הנדירות — נפוץ נותן כוכב אוסף אחד, לא נפוץ שניים, נדיר שלושה, ומיוחד חמישה.",
       place: "above",
       callouts: CARD_CALLOUTS,
     },

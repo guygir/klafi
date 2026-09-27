@@ -114,6 +114,8 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.deepEqual(CARD_CALLOUTS.map(({ label }) => label), ["ציטוט", "שם", "מפלגה", "נדירות", "סדרה"]);
   assert.equal(PAGE_GUIDES.card[0].callouts, CARD_CALLOUTS);
   assert.match(PAGE_GUIDES.card[0].body, /משחק קופסה/);
+  assert.match(PAGE_GUIDES.card[0].body, /הכוכבים הם הנדירות/);
+  assert.match(PAGE_GUIDES.card[0].body, /נפוץ נותן כוכב אוסף אחד/);
   assert.match(PAGE_GUIDES.binder[0].body, /שיתוף האלבום/);
   assert.match(PAGE_GUIDES.binder[0].body, /תמונה/);
   assert.match(PAGE_GUIDES.binder[0].ring, /binder-stats-row|binder-head/);
