@@ -193,7 +193,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="klafi-tips-legend"/);
   assert.match(tipsJs, /title: "המטרה"/);
   assert.match(tipsJs, /CARD_CALLOUTS/);
-  assert.match(tipsJs, /הכוכבים הם הנדירות/);
+  assert.match(tipsJs, /נדירות הקלף \(4\)/);
+  assert.match(tipsJs, /הסט והמספר של הקלף \(5\)/);
+  assert.match(tipsJs, /place: "top"/);
   assert.match(tipsJs, /page === "card"/);
   assert.match(css, /\.klafi-tips-callout-disk/);
   assert.match(html, /אל תציגו שוב/);
@@ -215,6 +217,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.klafi-tips-marks \{ pointer-events: none; z-index: 2; \}/);
   assert.match(css, /\.klafi-tips-card \{ z-index: 4; \}/);
   assert.match(css, /\.klafi-tips-card \{[\s\S]*?background: #eee5d4/);
+  assert.match(css, /\.klafi-tips-card\.is-top \{/);
   assert.doesNotMatch(css, /\.klafi-tips-card \{[\s\S]*?background: rgba\(238, 229, 212, 0\.6\)/);
   assert.match(tipsJs, /kind === "circle"/);
   assert.match(tipsJs, /klafi-tips-dot/);
@@ -744,7 +747,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-120/);
+  assert.match(html, /card-surface-122/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -863,7 +866,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-120/);
+  assert.match(html, /card-surface-122/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -1014,7 +1017,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-120/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-122/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -1029,7 +1032,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-120/);
+  assert.match(html, /packrip\.css\?v=card-surface-122/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);

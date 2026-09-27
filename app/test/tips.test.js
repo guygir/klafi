@@ -8,6 +8,7 @@ import {
   CARD_CALLOUTS,
   PAGE_GUIDES,
   calloutBadgePoint,
+  calloutStub,
   unionBoxes,
   intersectBox,
   toFrame,
@@ -113,9 +114,13 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(CARD_CALLOUTS.length, 5);
   assert.deepEqual(CARD_CALLOUTS.map(({ label }) => label), ["ציטוט", "שם", "מפלגה", "נדירות", "סדרה"]);
   assert.equal(PAGE_GUIDES.card[0].callouts, CARD_CALLOUTS);
-  assert.match(PAGE_GUIDES.card[0].body, /משחק קופסה/);
-  assert.match(PAGE_GUIDES.card[0].body, /הכוכבים הם הנדירות/);
-  assert.match(PAGE_GUIDES.card[0].body, /נפוץ נותן כוכב אוסף אחד/);
+  assert.match(PAGE_GUIDES.card[0].body, /ציטוט שלו \(1\)/);
+  assert.match(PAGE_GUIDES.card[0].body, /נדירות הקלף \(4\)/);
+  assert.match(PAGE_GUIDES.card[0].body, /הסט והמספר של הקלף \(5\)/);
+  assert.match(PAGE_GUIDES.card[0].body, /מיקומו באלבום/);
+  assert.equal(PAGE_GUIDES.card[0].place, "top");
+  assert.equal(PAGE_GUIDES.card[0].hideLegend, true);
+  assert.match(CARD_CALLOUTS[3].sel, /card-rarity-run|card-image-meta/);
   assert.match(PAGE_GUIDES.binder[0].body, /שיתוף האלבום/);
   assert.match(PAGE_GUIDES.binder[0].body, /תמונה/);
   assert.match(PAGE_GUIDES.binder[0].ring, /binder-stats-row|binder-head/);
@@ -199,6 +204,21 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   );
   assert.equal(badge.x, 289);
   assert.equal(badge.y, 420);
+  const chip = calloutBadgePoint(
+    { left: 40, right: 300, top: 80, bottom: 500 },
+    { left: 250, right: 274, top: 96, bottom: 120, height: 24 },
+    "chip",
+    { width: 390, height: 844 },
+  );
+  assert.equal(chip.x, 294);
+  const stub = calloutStub(289, 420, 170, 420);
+  assert.equal(stub.reach, 16);
+  assert.ok(Math.abs(stub.x2 - 273) < 0.5);
+  const topCard = { offsetWidth: 300, offsetHeight: 180, style: {} };
+  const cardRing = { left: 40, top: 210, width: 310, height: 420, right: 350, bottom: 630 };
+  placeCard(topCard, cardRing, null, "top", { width: 390, height: 844 }, { querySelector: () => null });
+  assert.equal(topCard.style.top, "16px");
+  assert.ok(Number.parseFloat(topCard.style.left) > 16, "top coachmark stays off the left series mark");
   assert.equal(shouldAutoOpenPage({}, "home"), true);
   assert.equal(shouldAutoOpenPage({ home: true }, "home"), false);
   assert.equal(shouldAutoOpenPage({ home: true }, "binder"), true);

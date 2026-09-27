@@ -5111,6 +5111,20 @@ body {
   pointer-events: auto;
   text-align: start;
 }
+.klafi-tips-card.is-top {
+  width: min(200px, calc(100vw - 120px));
+  min-height: 200px;
+  padding: 16px 12px 18px;
+}
+.klafi-tips-card.is-top h2 {
+  margin-bottom: 6px;
+  font-size: 19px;
+}
+.klafi-tips-card.is-top p {
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+}
 
 .klafi-tips-kicker {
   margin: 0 0 4px;
