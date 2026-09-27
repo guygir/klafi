@@ -5112,17 +5112,18 @@ body {
   text-align: start;
 }
 .klafi-tips-card.is-top {
-  width: min(268px, calc(100vw - 72px));
-  padding: 10px 14px 10px;
+  width: min(228px, calc(100vw - 96px));
+  min-height: 188px;
+  padding: 14px 12px 16px;
 }
 .klafi-tips-card.is-top h2 {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   font-size: 19px;
 }
 .klafi-tips-card.is-top p {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   font-size: 14px;
-  line-height: 1.35;
+  line-height: 1.45;
 }
 
 .klafi-tips-kicker {

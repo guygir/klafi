@@ -116,8 +116,8 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGE_GUIDES.card[0].callouts, CARD_CALLOUTS);
   assert.match(PAGE_GUIDES.card[0].body, /ציטוט שלו \(1\)/);
   assert.match(PAGE_GUIDES.card[0].body, /נדירות הקלף \(4\)/);
-  assert.match(PAGE_GUIDES.card[0].body, /סדרת הקלפים ממנה הקלף הגיע \(5\)/);
-  assert.match(PAGE_GUIDES.card[0].body, /באלבום/);
+  assert.match(PAGE_GUIDES.card[0].body, /הסט והמספר של הקלף \(5\)/);
+  assert.match(PAGE_GUIDES.card[0].body, /מיקומו באלבום/);
   assert.equal(PAGE_GUIDES.card[0].place, "top");
   assert.equal(PAGE_GUIDES.card[0].hideLegend, true);
   assert.match(CARD_CALLOUTS[3].sel, /card-rarity-run|card-image-meta/);

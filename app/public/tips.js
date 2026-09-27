@@ -94,7 +94,7 @@ export const PAGE_GUIDES = Object.freeze({
     {
       ring: "#pack-view.active .walkout .kalpi-card.stage-portrait, #dialog-card .kalpi-card",
       title: "הקלף",
-      body: "בקלף ניתן הפוליטיקאי ניתן לראות ציטוט שלו (1), שמו (2), מפלגתו (3), נדירות הקלף (4) וסדרת הקלפים ממנה הקלף הגיע (5) - תוכלו לראות אותו בסדרה זו באלבום.",
+      body: "בקלף הפוליטיקאי ניתן לראות ציטוט שלו (1), שמו (2), מפלגתו (3), נדירות הקלף (4) ואת הסט והמספר של הקלף (5) - המייצגים את מיקומו באלבום.",
       place: "top",
       hideLegend: true,
       callouts: CARD_CALLOUTS,
