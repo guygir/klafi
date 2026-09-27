@@ -3176,6 +3176,7 @@ function finishWalkoutCard() {
   const doneLabel = model.currentPack.mode === "studio-debug" ? "חזרה לסטודיו" : "לאוסף";
   setPackAction(isLast ? doneLabel : "הקלף הבא", false, "");
   maybeShowNumberedTip();
+  if (!model.showcase) klafiTips.sync();
 }
 
 function numberedTipTargets() {
@@ -7685,6 +7686,9 @@ flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
 window.__kalpiDebug = {
   openCardDialog,
+  renderSealedPackRip,
+  showView,
+  tips: klafiTips,
   setOwned(cardId, count) {
     if (!model.serverState) return false;
     model.serverState.inventory ??= {};

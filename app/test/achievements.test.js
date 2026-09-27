@@ -312,8 +312,9 @@ test("client: three open tabs, tier art, no unlock toast, copy + icon for every 
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*\.badge-artwork \.badge-sheen \{ animation: none; opacity: 0; \}/);
   assert.match(css, /\.badge-artwork \.badge-sheen \{[^}]*animation: badge-sheen 1\.3s ease-out 0\.35s 1 both/, "the sheen runs once");
   assert.match(css, /\.badge-tier-unearned \.badge-field \{ fill: none; stroke: #8f918b/);
-  assert.match(tips, /ring: "#achievement-tiers, #achievement-grid \.achievement-badge, #achievements-empty"/);
-  assert.match(tips, /בשלושה עמודים: הקלים, הבינוניים והקשים\./);
+  assert.match(tips, /ring: "#achievement-tiers"/);
+  assert.match(tips, /ring: "#achievement-grid, #achievements-empty"/);
+  assert.match(tips, /שלושה עמודים: הקלים, הבינוניים והקשים/);
   assert.match(css, /\.achievement-tiers button \{\s*display: inline-flex;\s*flex-flow: row nowrap;\s*align-items: center;/);
   assert.match(css, /\.achievement-tiers button small \{\s*font: 600 12px\/1 ui-monospace/);
   const art = javascript.slice(javascript.indexOf("function badgeArtwork("), javascript.indexOf("const ACHIEVEMENT_RULES"));
