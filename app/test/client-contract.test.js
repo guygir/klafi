@@ -541,7 +541,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /PULL_CAP_REACHED/);
   assert.match(javascript, /המחסן מלא/);
   assert.match(javascript, /חבילה נוספת נכנסה למחסן/);
-  assert.match(javascript, /elements\.eventDialog,\n\s*elements\.shareSheet/);
+  assert.match(javascript, /elements\.eventDialog,\n\s*elements\.tradeNoticeDialog,\n\s*elements\.waitDialog,\n\s*elements\.shareSheet/);
   assert.match(javascript, /function claimEventPull[\s\S]*?applyEventPullPayload\(result\)[\s\S]*?finally/);
   // Instant pop-up: claimEventPull is synchronous up to the dialog; the outcome is predicted from
   // cached state and the POST only reconciles (no pending state, no optimistic count changes).
