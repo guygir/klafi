@@ -484,7 +484,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /#collector-rank\.work-note \{[^}]*font-size: 14px !important/);
   assert.match(javascript, /slice\(0, 10\)/);
   assert.match(html, /id="today-specials-row"/);
-  assert.match(html, /class="today-specials-line"/);
+  assert.match(html, /class="today-specials-line is-marquee"/);
   assert.match(html, /id="today-specials-copy"/);
   assert.match(html, /id="today-specials-copy-repeat"/);
   assert.match(html, /data-today-nav="specials"/);
