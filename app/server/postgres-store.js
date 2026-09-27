@@ -5,7 +5,8 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
-import { moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import { jerusalemDay, moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import { emptyTodayPulse } from "../public/today-pulse.js";
 import { takeCollectorBoard } from "./collector-board.js";
 import { visibleDailyRaceLeaders } from "./daily-race.js";
 import {
@@ -832,9 +833,12 @@ export class PostgresStore {
 
   async activitySummary() {
     const counts = {};
-    const events = await this.pool.query(
-      "SELECT type, session_token FROM kalpi_events ORDER BY recorded_at DESC LIMIT 5000",
-    );
+    const [events, pulse] = await Promise.all([
+      this.pool.query(
+        "SELECT type, session_token FROM kalpi_events ORDER BY recorded_at DESC LIMIT 5000",
+      ),
+      this.todayPulse(),
+    ]);
     const sessions = new Set();
     for (const event of events.rows) {
       counts[event.type] = (counts[event.type] ?? 0) + 1;
@@ -845,7 +849,30 @@ export class PostgresStore {
       participatingSessions: sessions.size,
       fixture: false,
       label: "Recorded PoC activity",
+      todayPulse: pulse,
     };
+  }
+
+  async todayPulse(now = Date.now()) {
+    const day = jerusalemDay(now);
+    try {
+      const result = await this.pool.query(
+        `SELECT COUNT(*)::int AS packs, COUNT(DISTINCT session_token)::int AS users
+         FROM kalpi_instances
+         WHERE acquired_by = 'idle'
+           AND pulled_at IS NOT NULL
+           AND pulled_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Jerusalem'
+           AND pulled_at < ($1::date + 1)::timestamp AT TIME ZONE 'Asia/Jerusalem'`,
+        [day],
+      );
+      return {
+        day,
+        packs: Number(result.rows[0]?.packs) || 0,
+        users: Number(result.rows[0]?.users) || 0,
+      };
+    } catch {
+      return emptyTodayPulse(now);
+    }
   }
 
   async setFaction(token, factionId) {

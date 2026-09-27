@@ -2,7 +2,8 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import { jerusalemDay, moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import { countTodayPulse } from "../public/today-pulse.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import {
   LEAGUE_MAX,
@@ -313,6 +314,7 @@ export class JsonStore {
       participatingSessions: sessions.size,
       fixture: false,
       label: "Recorded PoC activity",
+      todayPulse: countTodayPulse(this.state.sessions, jerusalemDay(Date.now())),
     };
   }
 

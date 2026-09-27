@@ -14,6 +14,7 @@ import {
 } from "./walkout-sunburst.js";
 import { destroyPackRip, mountPackRip, packRipMarkup, preloadPackRipAssets, schedulePackRipPrefetch } from "./packrip.js";
 import { createSfx, revealClipForStage, sfxRarityKey } from "./sfx.js";
+import { TODAY_PULSE_REFRESH_MS, todayPulseCopy } from "./today-pulse.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
@@ -21,6 +22,7 @@ const HOME_CACHE_KEY = "kalpi-home-cache";
 // When the server state last arrived (0 = only the localStorage cache so far).
 let stateFreshAt = 0;
 let eventPredictionRefreshAt = 0;
+let lastTodayPulseAt = 0;
 const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
@@ -1049,7 +1051,10 @@ function applyExtrasPayload({ events, trades, leaderboards, activity, specials, 
   if (events) model.events = events.events || events;
   if (trades) model.trades = trades.trades || trades;
   if (leaderboards) model.leaderboards = mergeLeaderboards(model.leaderboards, leaderboards);
-  if (activity) model.activity = activity;
+  if (activity) {
+    model.activity = activity;
+    lastTodayPulseAt = Date.now();
+  }
   if (specials) model.specials = specials;
   if (specialWindow !== undefined) model.specialWindow = specialWindow;
   if (state) setServerState(state, { merge: true });
@@ -2568,7 +2573,7 @@ function renderTodaySpecials() {
   const windowOpen = model.specialWindow;
   if (windowOpen?.reward === "pull" && !windowOpen.claimedToday) refreshEventPredictionIfStale();
   document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
-  let line = "אין אירוע כרגע";
+  let line = todayPulseCopy(model.activity?.todayPulse);
   if (windowOpen?.reward === "pull") {
     line = windowOpen.claimedToday
       ? windowOpen.claimedTickerHe || `${windowOpen.nameHe} · החבילה כבר אצלכם`
@@ -2585,9 +2590,9 @@ function renderTodaySpecials() {
         : "קלף אחד להיום — והוא נשאר באלבום.";
     line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
   }
-  const state = !windowOpen ? "idle" : windowOpen.claimedToday ? "claimed" : "live";
+  const state = !windowOpen ? "pulse" : windowOpen.claimedToday ? "claimed" : "live";
   if (row.dataset.state !== state) row.dataset.state = state;
-  row.classList.toggle("is-marquee", Boolean(windowOpen));
+  row.classList.toggle("is-marquee", true);
   // A claimed pull event keeps scrolling its "already yours" line but is no longer a control:
   // disabled = no click, no focus, no pop-up, no POST. (Card events manage .disabled themselves.)
   const inert = windowOpen?.reward === "pull" && Boolean(windowOpen.claimedToday);
@@ -2793,6 +2798,27 @@ function updateCountdown() {
 }
 
 setInterval(updateCountdown, 1000);
+setInterval(() => {
+  refreshTodayPulse().catch(() => {});
+}, TODAY_PULSE_REFRESH_MS);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") refreshTodayPulse().catch(() => {});
+});
+
+async function refreshTodayPulse({ force = false } = {}) {
+  if (!model.token || model.showcase) return;
+  const now = Date.now();
+  if (!force && lastTodayPulseAt && now - lastTodayPulseAt < TODAY_PULSE_REFRESH_MS) return;
+  lastTodayPulseAt = now;
+  try {
+    const payload = await request("/api/community");
+    if (payload?.activity) model.activity = payload.activity;
+    if (payload?.specialWindow !== undefined) model.specialWindow = payload.specialWindow;
+    renderTodaySpecials();
+  } catch {
+    /* Keep the last pulse line until the next 15-minute tick. */
+  }
+}
 
 function resetPackRip() {
   packRipListeners?.abort();
@@ -4852,7 +4878,7 @@ function renderGrowth() {
   if (elements.collectorRank) {
     if (yourRank && collectorTotal) {
       elements.collectorRank.hidden = false;
-      elements.collectorRank.textContent = `אתם ${yourRank}/${collectorTotal}`;
+      elements.collectorRank.textContent = `אתם מקום ${yourRank} מתוך ${collectorTotal}`;
     } else {
       elements.collectorRank.hidden = true;
       elements.collectorRank.textContent = "";

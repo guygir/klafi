@@ -102,7 +102,12 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[2].body, /יש קלפים במחסן/);
   assert.match(PAGE_GUIDES.home[2].body, /רואים אותם/);
   assert.match(PAGE_GUIDES.home[3].ring, /level-avatar-button/);
+  assert.match(PAGE_GUIDES.home[3].ring, /player-name/);
+  assert.equal(PAGE_GUIDES.home[3].ringUnion, true);
   assert.match(PAGE_GUIDES.home[3].body, /אווטאר/);
+  assert.match(PAGE_GUIDES.home[3].body, /השם \(הזמני\)/);
+  assert.match(PAGE_GUIDES.home[3].body, /ליגות, תחרויות וטבלאות/);
+  assert.match(PAGE_GUIDES.home[3].body, /לחצו עליו כדי לשנות/);
   assert.match(PAGE_GUIDES.home[4].body, /האתגר/);
   assert.match(PAGE_GUIDES.home[5].ring, /open-advocacy|open-bug-report|bottom-nav/);
   assert.match(PAGE_GUIDES.home[5].body, /גילוי נאות/);

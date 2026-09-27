@@ -1019,6 +1019,9 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(community.body.leaderboards.dailyChallenge.day, leaderboards.body.dailyChallenge.day);
   assert.ok(Array.isArray(community.body.trades.trades));
   assert.equal(community.body.activity.counts.pack_opened, 1);
+  assert.equal(typeof community.body.activity.todayPulse?.day, "string");
+  assert.equal(typeof community.body.activity.todayPulse?.packs, "number");
+  assert.equal(typeof community.body.activity.todayPulse?.users, "number");
   const likFaction = leaderboards.body.factions.find(({ partyId }) => partyId === "LIK");
   assert.ok(likFaction);
   assert.equal(likFaction.stars, currentCollector.stars);

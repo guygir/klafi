@@ -479,7 +479,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="today-leader-hook"/);
   assert.match(html, /id="collector-rank"/);
   assert.match(javascript, /אתם במקום \$\{yourRank\}/);
-  assert.match(javascript, /אתם \$\{yourRank\}\/\$\{collectorTotal\}/);
+  assert.match(javascript, /אתם מקום \$\{yourRank\} מתוך \$\{collectorTotal\}/);
+  assert.doesNotMatch(javascript, /אתם \$\{yourRank\}\/\$\{collectorTotal\}/);
+  assert.match(css, /#collector-rank\.work-note \{[^}]*font-size: 14px !important/);
   assert.match(javascript, /slice\(0, 10\)/);
   assert.match(html, /id="today-specials-row"/);
   assert.match(html, /class="today-specials-line"/);
@@ -487,8 +489,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="today-specials-copy-repeat"/);
   assert.match(html, /data-today-nav="specials"/);
   assert.doesNotMatch(html, /id="today-specials-row"[^>]*hidden/);
-  assert.match(html, /id="today-specials-row"[^>]*data-state="idle"/);
-  assert.match(html, /id="today-specials-copy">אין אירוע כרגע</);
+  assert.match(html, /id="today-specials-row"[^>]*data-state="pulse"/);
+  assert.match(html, /id="today-specials-copy">המחסן ממשיך לאסוף חבילות גם עכשיו</);
   assert.doesNotMatch(html, /id="today-specials-visual"/);
   assert.doesNotMatch(html, /id="today-specials-hook"/);
   assert.match(javascript, /function renderTodaySpecials/);
@@ -512,11 +514,16 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   // Claimed launch pull: same event, same marquee, data-driven claimed copy, and no longer a control.
   const specialsBody = javascript.match(/\nfunction renderTodaySpecials[\s\S]*?\n}\n/)[0];
   assert.match(specialsBody, /windowOpen\.claimedToday\s*\?\s*windowOpen\.claimedTickerHe/);
-  assert.match(specialsBody, /row\.classList\.toggle\("is-marquee", Boolean\(windowOpen\)\)/);
+  assert.match(specialsBody, /todayPulseCopy\(model\.activity\?\.todayPulse\)/);
+  assert.match(specialsBody, /row\.classList\.toggle\("is-marquee", true\)/);
+  assert.match(javascript, /from "\.\/today-pulse\.js"/);
+  assert.match(javascript, /function refreshTodayPulse/);
+  assert.match(javascript, /TODAY_PULSE_REFRESH_MS/);
   assert.match(specialsBody, /const inert = windowOpen\?\.reward === "pull" && Boolean\(windowOpen\.claimedToday\)/);
   assert.match(specialsBody, /row\.disabled = inert/);
   assert.match(javascript, /if \(windowOpen\.reward === "pull"\) \{\s*if \(windowOpen\.claimedToday\) return;\s*await claimEventPull/);
-  assert.match(css, /\.today-specials-line\[data-state="idle"\],\s*\.today-specials-line:disabled \{ cursor: default; \}/);
+  assert.match(css, /\.today-specials-line\[data-state="idle"\],\s*\.today-specials-line\[data-state="pulse"\],\s*\.today-specials-line:disabled \{ cursor: default; \}/);
+  assert.match(css, /\.today-specials-line\[data-state="pulse"\] \{ --specials-marquee-duration: 22s; \}/);
   assert.match(javascript, /PULL_CAP_REACHED/);
   assert.match(javascript, /המחסן מלא/);
   assert.match(javascript, /חבילה נוספת נכנסה למחסן/);
@@ -708,7 +715,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /חסרים לכם עוד \$\{progression\.remaining\} קלפים חדשים כדי לעלות רמה/);
   assert.match(javascript, /\$\{unique\}\/\$\{target\}/);
   assert.match(javascript, /function nextCollectionRemaining/);
-  assert.match(javascript, /אין אירוע כרגע/);
+  assert.match(javascript, /todayPulseCopy/);
+  assert.doesNotMatch(javascript, /אין אירוע כרגע/);
   assert.match(html, /data-today-nav="growth"/);
   assert.doesNotMatch(html, /data-today-nav="events"/);
   assert.match(javascript, /data-trade-card/);
@@ -747,7 +755,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-122/);
+  assert.match(html, /card-surface-123/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -866,7 +874,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-122/);
+  assert.match(html, /card-surface-123/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -1017,7 +1025,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-122/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-123/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -1032,7 +1040,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-122/);
+  assert.match(html, /packrip\.css\?v=card-surface-123/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);
