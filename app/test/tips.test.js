@@ -111,12 +111,11 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[3].body, /ליגות, תחרויות וטבלאות/);
   assert.match(PAGE_GUIDES.home[3].body, /לחץ עליו כדי לשנות/);
   assert.match(PAGE_GUIDES.home[4].body, /האתגר היומי/);
-  assert.match(PAGE_GUIDES.home[5].ring, /open-advocacy|open-bug-report|bottom-nav/);
+  assert.equal(PAGE_GUIDES.home[5].ring, ".bottom-nav");
   assert.match(PAGE_GUIDES.home[5].body, /תפריט הניווט/);
   assert.match(PAGE_GUIDES.home[5].body, /לדווח על באגים/);
   assert.match(PAGE_GUIDES.home[5].body, /לבקש פיצ׳רים/);
-  assert.match(PAGE_GUIDES.home[5].ring, /#open-feature-request/);
-  assert.equal(PAGE_GUIDES.home[5].ringUnion, true);
+  assert.equal(PAGE_GUIDES.home[5].ringUnion, undefined);
   assert.equal(PAGE_GUIDES.home[5].place, "above");
   assert.equal(PAGE_GUIDES.home[6].ring, "#open-pack");
   assert.equal(PAGE_GUIDES.home[6].title, "יאללה, בואו נפתח!");
@@ -142,8 +141,10 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.binder[2].body, /סדרה/);
   assert.match(PAGE_GUIDES.binder[2].body, /תנסו ללחוץ על קלף שהשגתם/);
   assert.match(PAGE_GUIDES.binder[2].body, /מקור לציטוט/);
-  assert.match(PAGE_GUIDES.growth[0].body, /החלפות/);
+  assert.doesNotMatch(PAGE_GUIDES.growth[0].body, /שתי קומות/);
+  assert.match(PAGE_GUIDES.growth[0].body, /בקהילה ניתן להחליף/);
   assert.match(PAGE_GUIDES.growth[0].body, /הציעו טרייד/);
+  assert.doesNotMatch(PAGE_GUIDES.growth[3].body, /שתי קומות/);
   assert.match(PAGE_GUIDES.growth[0].ring, /community-sections/);
   assert.match(PAGE_GUIDES.growth[1].body, /הצעה להחלפה/);
   assert.match(PAGE_GUIDES.growth[2].body, /הצעות/);

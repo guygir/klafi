@@ -314,7 +314,7 @@ test("client: three open tabs, tier art, no unlock toast, copy + icon for every 
   assert.match(css, /\.badge-tier-unearned \.badge-field \{ fill: none; stroke: #8f918b/);
   assert.match(tips, /ring: "#achievement-tiers"/);
   assert.match(tips, /ring: "#achievement-grid, #achievements-empty"/);
-  assert.match(tips, /שלושה עמודים: הקלים, הבינוניים והקשים/);
+  assert.match(tips, /ישנם שלושה עמודים של הישגים אפשריים: הקלים, הבינוניים והקשים/);
   assert.match(css, /\.achievement-tiers button \{\s*display: inline-flex;\s*flex-flow: row nowrap;\s*align-items: center;/);
   assert.match(css, /\.achievement-tiers button small \{\s*font: 600 12px\/1 ui-monospace/);
   const art = javascript.slice(javascript.indexOf("function badgeArtwork("), javascript.indexOf("const ACHIEVEMENT_RULES"));

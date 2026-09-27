@@ -68,8 +68,7 @@ export const PAGE_GUIDES = Object.freeze({
       body: "כאן מופיעים האתגר היומי וטבלת האספנים. חושבים שתוכלו להיות בטופ?",
     },
     {
-      ring: ".bottom-nav, #open-advocacy, #open-feature-request, #open-bug-report",
-      ringUnion: true,
+      ring: ".bottom-nav",
       pad: 4,
       radius: 14,
       place: "above",
@@ -144,7 +143,7 @@ export const PAGE_GUIDES = Object.freeze({
       pad: 3,
       radius: 8,
       title: "קהילה",
-      body: "שתי קומות: בהחלפות מפרסמים עסקאות. במרוץ - ליגות, אספנים, האתגר ומפלגות. בקהילה ניתן להחליף קלפים עם חבריכם - הציעו טרייד או בדקו הצעות פתוחות. בנוסף, אספנות היא תחום תחרותי - בקרו במרוץ כדי לראות עד כמה…",
+      body: "בקהילה ניתן להחליף קלפים עם חבריכם - הציעו טרייד או בדקו הצעות פתוחות. בנוסף, אספנות היא תחום תחרותי - בקרו במרוץ כדי לראות עד כמה…",
     },
     {
       ring: "#community-panel-trade, #community-tab-trade",
@@ -457,10 +456,6 @@ function roundedHole(box, radius) {
   const r = Math.min(radius, box.width / 2, box.height / 2);
   const { left: x, top: y, width: w, height: h } = box;
   return `M${x + r} ${y}h${w - r * 2}a${r} ${r} 0 0 1 ${r} ${r}v${h - r * 2}a${r} ${r} 0 0 1 ${-r} ${r}h${-(w - r * 2)}a${r} ${r} 0 0 1 ${-r} ${-r}v${-(h - r * 2)}a${r} ${r} 0 0 1 ${r} ${-r}z`;
-}
-
-function boxesOverlap(a, b) {
-  return a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
 }
 
 function circleHole(cx, cy, radius) {
@@ -888,23 +883,16 @@ export function attachKlafiTips(env = globalThis) {
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     dim.setAttribute("width", String(vw));
     dim.setAttribute("height", String(vh));
-    // Keep the bug-report pill reachable during guides: cut it out of the veil
-    // and let clicks pass through there; the ring hole itself stays inert.
-    const bugNode = overlay.parentElement === doc.body ? doc.querySelector("#open-bug-report") : null;
-    const bugSpec = bugNode && boxOf(bugNode).width > 0
-      ? clampSpecToView(specToFrame(highlightSpec(bugNode, 3), frame), { width: vw, height: vh })
-      : null;
-    const bugInRing = Boolean(bugSpec && boxesOverlap(bugSpec.box, fromSpec.box));
     dim.replaceChildren();
     dim.append(svgEl("path", {
       "fill-rule": "evenodd",
       class: "klafi-tips-veil",
-      d: `M0 0H${vw}V${vh}H0Z${holePath(fromSpec)}${bugSpec && !bugInRing ? holePath(bugSpec) : ""}`,
+      d: `M0 0H${vw}V${vh}H0Z${holePath(fromSpec)}`,
     }));
     dim.append(svgEl("path", {
       "fill-rule": "evenodd",
       class: "klafi-tips-block",
-      d: `${holePath(fromSpec)}${bugSpec && bugInRing ? holePath(bugSpec) : ""}`,
+      d: holePath(fromSpec),
     }));
     marks.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     marks.setAttribute("width", String(vw));
