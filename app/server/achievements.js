@@ -4,6 +4,8 @@
  * only renders what `achievementState` / `achievementPages` return.
  */
 
+import { IDLE_BACKLOG_CAP } from "./idle-config.js";
+
 export const ACHIEVEMENT_TIERS = Object.freeze(["simple", "medium", "hard"]);
 /** A catalog row with this rule and no setId expands to one badge per pullable release set. */
 export const SET_COMPLETE_RULE = "setComplete";
@@ -25,6 +27,7 @@ export function normalizeAchievementDefinition(item) {
     target: Math.max(0, Math.round(Number(item.target) || 0)),
     tier: normalizeTier(item.tier),
     ...(item.setId ? { setId: String(item.setId) } : {}),
+    ...(item.hidden ? { hidden: true } : {}),
   };
 }
 
@@ -127,6 +130,7 @@ export function achievementMeasures(session, cards, extra = {}) {
     profile: hasCustomProfile(session) ? 1 : 0,
     rare: cards.filter((card) => card.rarity?.startsWith("Rare") && Number(inventory[card.id]) > 0).length,
     numbered: (session.instances || []).filter((item) => Number(item?.numberedIndex) > 0).length,
+    warehouseFull: (session.unseenPulls?.length || 0) >= IDLE_BACKLOG_CAP ? 1 : 0,
     league: extra.league ? 1 : 0,
     setOwned: cards.reduce((owned, card) => {
       if (card.idleEligible && !card.eventOnly && card.releaseSetId && Number(inventory[card.id]) > 0) {
@@ -163,11 +167,14 @@ export function achievementProgress(definition, measures, earnedAt = null) {
   const target = ruleTarget(definition, measures);
   const raw = ruleValue(definition, measures);
   const earned = Boolean(earnedAt) || raw >= target;
+  const hidden = Boolean(definition.hidden);
+  const secret = hidden && !earned;
   return {
     id: definition.id,
     ...(definition.setId ? { setId: definition.setId } : {}),
-    name: definition.nameHe || definition.name,
-    description: definition.descriptionHe || definition.description,
+    ...(hidden ? { hidden: true } : {}),
+    name: secret ? "?" : (definition.nameHe || definition.name),
+    description: secret ? "" : (definition.descriptionHe || definition.description),
     tier: normalizeTier(definition.tier),
     earned,
     earnedAt: earnedAt || null,
