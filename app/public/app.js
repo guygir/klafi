@@ -4646,11 +4646,12 @@ function streakRewardMarkup(reward) {
 function streakRewardLine(calendar) {
   const today = calendar?.days?.find((cell) => cell.current && cell.reward);
   if (!today?.reward) return "";
-  if (today.held) return "המחסן מלא. פתחו קלף כדי לקבל את הפרס.";
-  if (today.reward.kind === "pack") return today.claimed || today.checked ? "חבילה נכנסה למחסן." : "היום מחכה חבילה.";
+  if (today.reward.kind === "pack") {
+    return today.claimed ? "חבילה מחכה בתא. לחיצה כפולה פותחת אותה." : "היום מחכה חבילה.";
+  }
   const labels = { 1: "נפוץ", 2: "לא נפוץ", 3: "נדיר" };
   const label = labels[today.reward.stars] || "נפוץ";
-  return today.claimed || today.checked ? `קלף ${label} נכנס למחסן.` : `היום מחכה קלף ${label}.`;
+  return today.claimed ? `קלף ${label} מחכה בתא. לחיצה כפולה פותחת אותו.` : `היום מחכה קלף ${label}.`;
 }
 
 function streakCellClasses(cell) {
@@ -4660,43 +4661,53 @@ function streakCellClasses(cell) {
     cell.current ? "is-today" : "",
     cell.reward ? "has-reward" : "",
     cell.claimed ? "is-claimed" : "",
-    cell.held ? "is-held" : "",
+    cell.opened ? "is-opened" : "",
   ].filter(Boolean).join(" ");
 }
 
 function streakCheckMarkup() {
-  return `<span class="streak-cell-check" aria-hidden="true"><svg viewBox="0 0 14 14" width="13" height="13"><path d="M2 3.2 7 11.4 12 3.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/></svg></span>`;
+  return `<span class="streak-cell-check" aria-hidden="true"><svg viewBox="0 0 32 32" width="18" height="18"><circle cx="16" cy="16" r="14.2" fill="#F4EFE4" stroke="#1A1F1C" stroke-width="1.6"/><circle cx="16" cy="16" r="11" fill="none" stroke="#1F4F4A" stroke-width="1.15"/><path d="M9 12.2h14" fill="none" stroke="#C4A35A" stroke-width="1.6" stroke-linecap="square"/><path d="M10 14.2 16 23.4 22 14.2" fill="none" stroke="#1F4F4A" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/></svg></span>`;
 }
 
-function paintStreakCalendar(calendar) {
+function playStreakStamp() {
+  if (prefersReducedMotion() || !sfx.soundOn) return;
+  sfx.unlock();
+  sfx.play("click");
+}
+
+function paintStreakCalendar(calendar, { stamp = false } = {}) {
   const dialog = elements.streakDialog;
   if (!dialog || !calendar) return;
   const day = calendar.day || 1;
   if (elements.streakDialogTitle) elements.streakDialogTitle.textContent = `יום ${day} ברצף`;
   if (elements.streakDialogCopy) {
     elements.streakDialogCopy.textContent = calendar.streak > 1
-      ? `${calendar.streak} ימים ברצף. מחר מסמנים את הוי הבא.`
-      : "כל כניסה ביום חדש מסמנת וי ירוק על הלוח. חלק מהימים מחכים עם חבילה או עם קלף לפי כוכבים.";
+      ? `${calendar.streak} ימים ברצף. מחר נוחתת החותמת הבאה.`
+      : "כל כניסה ביום חדש חותמת את היום. חלק מהימים מחכים עם חבילה או עם קלף לפי כוכבים.";
   }
   if (elements.streakCalendar) {
-    elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => `
-      <li class="${streakCellClasses(cell)}" data-day="${cell.day}">
+    elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => {
+      const openable = Boolean(cell.claimed && cell.reward);
+      return `
+      <li class="${streakCellClasses(cell)}${stamp && cell.current ? " is-landing" : ""}" data-day="${cell.day}"${openable ? ` tabindex="0" title="לחיצה כפולה לפתיחה" aria-label="יום ${cell.day}, לחיצה כפולה לפתיחה"` : ""}>
         <span class="streak-cell-day">${cell.day}</span>
         ${cell.reward ? streakRewardMarkup(cell.reward) : ""}
         ${cell.checked ? streakCheckMarkup() : ""}
-      </li>`).join("");
+      </li>`;
+    }).join("");
   }
   const rewardLine = streakRewardLine(calendar);
   if (elements.streakDialogReward) {
     elements.streakDialogReward.hidden = !rewardLine;
     elements.streakDialogReward.textContent = rewardLine;
   }
+  if (stamp) playStreakStamp();
 }
 
-function openStreakCalendar({ force = false, calendar } = {}) {
+function openStreakCalendar({ force = false, calendar, stamp = false } = {}) {
   const next = calendar || model.serverState?.streakCalendar;
   if (!next?.days || !elements.streakDialog) return false;
-  paintStreakCalendar(next);
+  paintStreakCalendar(next, { stamp });
   if (!elements.streakDialog.open) elements.streakDialog.showModal();
   return true;
 }
@@ -4710,7 +4721,7 @@ function maybeShowStreakCalendar({ force = false } = {}) {
   const calendar = model.serverState?.streakCalendar;
   if (!calendar) return false;
   if (!force && !calendar.showPopup) return false;
-  return openStreakCalendar({ force, calendar });
+  return openStreakCalendar({ force, calendar, stamp: !force && Boolean(calendar.showPopup) });
 }
 
 function maybeShowDeferredPopups() {
@@ -4724,6 +4735,53 @@ async function dismissStreakCalendar() {
   if (dialog?.open) dialog.close();
   await ackStreakCalendar();
   queueMicrotask(() => maybeShowTradeNotice());
+}
+
+function streakRewardCell(event) {
+  return event.target?.closest?.(".streak-cell.has-reward.is-claimed");
+}
+
+async function openClaimedStreakReward(day) {
+  const calendar = model.serverState?.streakCalendar;
+  const cell = calendar?.days?.find((item) => item.day === Number(day));
+  if (!cell?.claimed || !cell.reward || homePackRipBusy) return;
+  sfx.unlock();
+  homePackRipBusy = true;
+  model.streakRewardOpening = true;
+  const isPack = cell.reward.kind === "pack";
+  let rip = null;
+  try {
+    if (elements.streakDialog?.open) elements.streakDialog.close();
+    if (!model.catalog.length) await loadStaticCatalog();
+    if (isPack) rip = playHomePackRip();
+    const pulled = await request("/api/streak/open", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ day: cell.day }),
+    });
+    if (!pulled.cards?.length) throw new Error("EMPTY_STREAK_REWARD");
+    if (pulled.state) setServerState(pulled.state, { merge: true });
+    if (isPack) await rip.finished;
+    model.currentPack = {
+      packId: pulled.packId || `streak-${cell.day}`,
+      mode: "streak",
+      pulledAt: new Date().toISOString(),
+      cards: pulled.cards,
+    };
+    model.currentCardIndex = 0;
+    model.previewMode = false;
+    if (isPack) rip.release({ revealing: true });
+    showView("pack");
+    startWalkout();
+  } catch {
+    rip?.release();
+    showToast("לא הצלחנו לפתוח את הפרס.");
+    renderHome();
+    showView("home");
+  } finally {
+    homePackRipBusy = false;
+    model.streakRewardOpening = false;
+  }
 }
 
 async function ackStreakCalendar() {
@@ -4780,7 +4838,8 @@ function showAcceptedTradeNotice({ otherName, receivedCardId, givenCardId, notic
 }
 
 function maybeShowTradeNotice() {
-  if (model.showcase || model.tradeNoticeBusy || !stateFreshAt) return;
+  if (model.showcase || model.tradeNoticeBusy || model.streakRewardOpening || !stateFreshAt) return;
+  if (revealInProgress()) return;
   if (elements.waitDialog?.open || tipsOverlayOpen()) return;
   if (elements.tradeNoticeDialog?.open) return;
   if (playerDialogOpen()) return;
@@ -7243,6 +7302,19 @@ elements.levelStreak?.addEventListener("click", (event) => {
 });
 elements.streakDialogOk?.addEventListener("click", () => dismissStreakCalendar());
 elements.closeStreakDialog?.addEventListener("click", () => dismissStreakCalendar());
+elements.streakCalendar?.addEventListener("dblclick", (event) => {
+  const cell = streakRewardCell(event);
+  if (!cell) return;
+  event.preventDefault();
+  openClaimedStreakReward(cell.dataset.day);
+});
+elements.streakCalendar?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  const cell = streakRewardCell(event);
+  if (!cell) return;
+  event.preventDefault();
+  openClaimedStreakReward(cell.dataset.day);
+});
 elements.streakDialog?.addEventListener("close", () => {
   ackStreakCalendar().then(() => queueMicrotask(() => maybeShowTradeNotice()));
 });

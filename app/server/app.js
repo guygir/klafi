@@ -30,7 +30,10 @@ import {
 import {
   applyVisitStreak,
   ackStreakCalendar,
+  calendarDay,
   publicStreakCalendar,
+  streakAcquiredBy,
+  streakRewardForDay,
   STREAK_STAR_TIERS,
 } from "./streak-calendar.js";
 import { LEAGUE_NAME_MAX, currentLeagueOf, publicLeague } from "./leagues.js";
@@ -1231,7 +1234,7 @@ export async function createKalpiApp({
     });
   }
 
-  async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID(), creditNow = false }) {
+  async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID(), creditNow = false, warehouse = true }) {
     const isNew = !grantedCopyCounts(session)[pull.cardId];
     if (creditNow) {
       session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
@@ -1253,7 +1256,7 @@ export async function createKalpiApp({
       stamp,
     });
     session.instances.push(instance);
-    if (!creditNow) {
+    if (!creditNow && warehouse) {
       session.unseenPulls ??= [];
       session.unseenPulls.push(instance.instanceId);
     }
@@ -1267,31 +1270,53 @@ export async function createKalpiApp({
     return filtered.length ? filtered : pool;
   }
 
+  function creditStreakInstance(session, instance, seenAt) {
+    if (!instance || instance.seenAt) return false;
+    instance.seenAt = seenAt;
+    session.inventory ??= {};
+    const total = (session.instances || []).filter((item) => item.cardId === instance.cardId).length;
+    const current = session.inventory[instance.cardId] ?? 0;
+    if (current >= total) return false;
+    session.inventory[instance.cardId] = current + 1;
+    return true;
+  }
+
+  function creditAbandonedStreakRewards(session, seenAt) {
+    let credited = 0;
+    for (const instance of session.instances || []) {
+      if (!/^streak-\d+$/.test(String(instance.acquiredBy || ""))) continue;
+      if (creditStreakInstance(session, instance, seenAt)) credited += 1;
+    }
+    return credited;
+  }
+
   async function grantPendingStreakReward(session) {
-    const pending = session.pendingStreakReward;
-    if (!pending?.day) return null;
-    session.unseenPulls ??= [];
-    if (session.unseenPulls.length >= IDLE_BACKLOG_CAP) return null;
+    const rewardDay = calendarDay(session.visitStreak);
+    const reward = streakRewardForDay(rewardDay);
+    session.pendingStreakReward = null;
+    if (!reward) return null;
+    session.visitStreakClaims ??= [];
+    if (session.visitStreakClaims.includes(rewardDay)) return null;
     const currentMs = now();
-    const pool = streakRewardPool(activeIdleCards(allCards, currentMs), pending);
+    const pool = streakRewardPool(activeIdleCards(allCards, currentMs), reward);
     if (!pool.length) return null;
     const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(session), session.idleDuplicateStreak || 0));
     const pulledAt = new Date(currentMs).toISOString();
     const instance = await grantCard(session, pull, {
-      acquiredBy: `streak-${pending.day}`,
+      acquiredBy: streakAcquiredBy(session.visitStreak, rewardDay),
       pulledAt,
+      warehouse: false,
     });
     session.packs ??= [];
     session.packs.push({
-      packId: `streak-${pending.day}-${instance.instanceId}`,
-      mode: "streak",
+      packId: `streak-${session.visitStreak}-${instance.instanceId}`,
+      mode: reward.kind === "pack" ? "streak-pack" : "streak-card",
       pulledAt,
       nextDailyAt: null,
       cards: [instance],
     });
     session.packs = session.packs.slice(-100);
-    session.visitStreakClaims = [...new Set([...(session.visitStreakClaims || []), pending.day])];
-    session.pendingStreakReward = null;
+    session.visitStreakClaims = [...new Set([...session.visitStreakClaims, rewardDay])];
     return instance;
   }
 
@@ -1299,9 +1324,15 @@ export async function createKalpiApp({
     const session = store.getSession(token);
     if (!session) return;
     const today = jerusalemDay(now());
-    if (session.visitDay === today && !session.pendingStreakReward) return;
+    const day = calendarDay(session.visitStreak);
+    const rewardDue = Boolean(streakRewardForDay(day)) && !(session.visitStreakClaims || []).includes(day);
+    if (session.visitDay === today && !session.pendingStreakReward && !rewardDue) return;
     await store.withSession(token, async (current) => {
-      applyVisitStreak(current, now());
+      const stamped = applyVisitStreak(current, now());
+      if (stamped.reset) {
+        const credited = creditAbandonedStreakRewards(current, new Date(now()).toISOString());
+        if (credited) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
+      }
       await grantPendingStreakReward(current);
     });
   }
@@ -1982,6 +2013,40 @@ export async function createKalpiApp({
             ackStreakCalendar(current);
           });
           json(response, 200, { state: await stateForToken(token) });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/streak/open") {
+          const input = await readJson(request);
+          const day = Math.round(Number(input.day));
+          const reward = streakRewardForDay(day);
+          if (!reward) {
+            json(response, 400, { error: "INVALID_STREAK_DAY" });
+            return;
+          }
+          const opened = await store.withSession(token, (current) => {
+            if (!(current.visitStreakClaims || []).includes(day)) return { error: "unclaimed" };
+            const acquiredBy = streakAcquiredBy(current.visitStreak, day);
+            const instance = (current.instances || []).find((item) => item.acquiredBy === acquiredBy);
+            if (!instance) return { error: "missing" };
+            const credited = creditStreakInstance(current, instance, new Date(now()).toISOString());
+            if (credited) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
+            return { instance, reward };
+          });
+          if (!opened || opened.error === "unclaimed") {
+            json(response, 409, { error: "STREAK_REWARD_UNCLAIMED" });
+            return;
+          }
+          if (opened.error === "missing") {
+            json(response, 404, { error: "STREAK_REWARD_MISSING" });
+            return;
+          }
+          json(response, 200, {
+            mode: opened.reward.kind === "pack" ? "streak-pack" : "streak-card",
+            packId: `streak-open-${day}`,
+            cards: [opened.instance],
+            state: await stateForToken(token),
+          });
           return;
         }
 

@@ -5407,7 +5407,9 @@ body {
   margin: 0 0 14px;
   font: 500 15px/1.45 "IBM Plex Sans Hebrew", sans-serif;
 }
+#streak-calendar,
 .streak-dialog .streak-calendar {
+  direction: ltr;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 5px;
@@ -5418,6 +5420,13 @@ body {
   border: 1px solid color-mix(in srgb, var(--rule) 55%, var(--paper-deep));
   background: var(--paper-deep);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+#streak-dialog #close-streak-dialog:focus,
+#streak-dialog #close-streak-dialog:focus-visible {
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--civic);
 }
 .streak-cell {
   position: relative;
@@ -5465,14 +5474,31 @@ body {
 }
 .streak-cell-check {
   position: absolute;
-  inset-inline-end: 2px;
-  bottom: 2px;
+  inset-inline-end: 1px;
+  bottom: 1px;
   display: grid;
   place-items: center;
-  width: 14px;
-  height: 12px;
-  color: #1f6b46;
+  width: 18px;
+  height: 18px;
+  color: var(--civic);
+  transform: rotate(-14deg);
+  filter: drop-shadow(0 1px 0 rgba(26, 31, 28, 0.35));
   pointer-events: none;
+}
+.streak-cell.is-landing .streak-cell-check {
+  animation: streak-stamp-land 320ms cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes streak-stamp-land {
+  0% { opacity: 0; transform: rotate(-28deg) scale(1.45); }
+  70% { opacity: 1; transform: rotate(-10deg) scale(0.96); }
+  100% { opacity: 1; transform: rotate(-14deg) scale(1); }
+}
+.streak-cell.is-claimed.has-reward {
+  cursor: pointer;
+}
+.streak-cell.is-claimed.has-reward:focus-visible {
+  outline: 2px solid var(--civic);
+  outline-offset: 1px;
 }
 .streak-cell:not(.has-reward) {
   grid-template-rows: 1fr;
@@ -5484,17 +5510,13 @@ body {
   color: var(--ink);
 }
 .streak-cell.is-checked {
-  background: color-mix(in srgb, #d7eadc 56%, var(--paper));
-  border-color: color-mix(in srgb, #1f6b46 38%, var(--rule));
+  background: color-mix(in srgb, var(--civic) 12%, var(--paper));
+  border-color: color-mix(in srgb, var(--civic) 42%, var(--rule));
 }
 .streak-cell.is-today {
   outline: 2px solid var(--civic);
   outline-offset: 0;
   z-index: 1;
-}
-.streak-cell.is-held {
-  outline: 2px dashed var(--danger-mute);
-  outline-offset: 0;
 }
 .streak-cell.is-claimed .streak-cell-prize {
   opacity: 0.92;
@@ -5506,6 +5528,7 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .streak-fire { animation: none; }
+  .streak-cell.is-landing .streak-cell-check { animation: none; }
 }
 
 .level-letter,

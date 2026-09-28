@@ -25,6 +25,15 @@ export function calendarDay(streak) {
   return ((count - 1) % STREAK_CALENDAR_DAYS) + 1;
 }
 
+/** Absolute visit count for a cell on the current 30-day table. Day 3 of streak 33 is `streak-33`. */
+export function streakAcquiredBy(visitStreak, cellDay) {
+  const streak = Math.max(0, Math.round(Number(visitStreak) || 0));
+  const current = calendarDay(streak);
+  const day = Math.round(Number(cellDay) || 0);
+  if (!current || day < 1 || day > current) return null;
+  return `streak-${streak - current + day}`;
+}
+
 export function streakRewardForDay(day) {
   return STREAK_REWARDS[day] || null;
 }
@@ -61,13 +70,14 @@ export function applyVisitStreak(session, nowMs) {
   const today = jerusalemDay(nowMs);
   const dayNow = calendarDay(session.visitStreak);
   if (session.visitDay === today) {
-    return { stamped: false, day: dayNow, reward: session.pendingStreakReward || streakRewardForDay(dayNow) };
+    return { stamped: false, day: dayNow, reward: streakRewardForDay(dayNow), reset: false };
   }
   const previous = Math.max(0, Number(session.visitStreak) || 0);
   const consecutive = session.visitDay === previousJerusalemDay(nowMs);
   const next = consecutive ? previous + 1 : 1;
   const wrapped = consecutive && calendarDay(next) === 1 && previous >= STREAK_CALENDAR_DAYS;
-  if (!consecutive || wrapped) {
+  const reset = !consecutive || wrapped;
+  if (reset) {
     session.visitStreakClaims = [];
     session.pendingStreakReward = null;
   }
@@ -76,11 +86,7 @@ export function applyVisitStreak(session, nowMs) {
   session.bestVisitStreak = Math.max(Number(session.bestVisitStreak) || 0, next);
   const day = calendarDay(next);
   const reward = streakRewardForDay(day);
-  const claims = new Set(session.visitStreakClaims || []);
-  if (reward && !claims.has(day)) {
-    session.pendingStreakReward = { day, ...reward };
-  }
-  return { stamped: true, day, reward: session.pendingStreakReward || reward };
+  return { stamped: true, day, reward, reset };
 }
 
 export function ackStreakCalendar(session) {
@@ -94,24 +100,27 @@ export function publicStreakCalendar(session) {
   const streak = Math.max(0, Number(session?.visitStreak) || 0);
   const day = calendarDay(streak);
   const claims = new Set(session?.visitStreakClaims || []);
-  const pending = session?.pendingStreakReward || null;
   const today = session?.visitDay || null;
+  const instances = session?.instances || [];
   return {
     streak,
     day,
     today,
     showPopup: Boolean(today && session?.streakCalendarAckDay !== today),
-    pendingReward: pending,
     days: Array.from({ length: STREAK_CALENDAR_DAYS }, (_, index) => {
       const n = index + 1;
       const reward = streakRewardForDay(n);
+      const acquiredBy = streakAcquiredBy(streak, n);
+      const granted = acquiredBy
+        ? instances.find((item) => item?.acquiredBy === acquiredBy)
+        : null;
       return {
         day: n,
         checked: day > 0 && n <= day,
         current: n === day,
         reward,
         claimed: Boolean(reward && claims.has(n)),
-        held: Boolean(pending && pending.day === n && !claims.has(n)),
+        opened: Boolean(granted?.seenAt),
       };
     }),
   };
