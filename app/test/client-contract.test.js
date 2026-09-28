@@ -125,7 +125,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function quoteTrustLabel/);
   assert.match(javascript, /function partyTrustLabel/);
   assert.match(javascript, /function configureSourceLink/);
-  assert.match(javascript, /displayCardMarkup\(card, "event"\)/);
+  assert.doesNotMatch(javascript, /displayCardMarkup\(card, "event"\)/);
   assert.match(javascript, /openCardDialog\(chip\.dataset\.tradeChoiceCard\)/);
   assert.match(javascript, /displayCardMarkup\(card\)/);
   assert.doesNotMatch(javascript, /displayCardMarkup\(selected, "trade"\)/);
@@ -540,7 +540,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="event-dialog-title"/);
   assert.match(html, /id="event-dialog-ok" class="primary-action"/);
   assert.match(javascript, /function claimEventPull/);
-  assert.match(javascript, /activeEvent\?\.reward === "pull"/);
+  assert.doesNotMatch(javascript, /function renderEvents/);
+  assert.doesNotMatch(javascript, /function pullEventCard/);
+  assert.doesNotMatch(javascript, /showView\("events"\)/);
+  assert.doesNotMatch(html, /id="events-view"/);
+  assert.doesNotMatch(javascript, /חזרו לאירוע/);
   assert.match(javascript, /PULL_CAP_REACHED/);
   assert.match(javascript, /המחסן מלא/);
   assert.match(javascript, /חבילה נוספת נכנסה למחסן/);
@@ -558,8 +562,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(claimBody, /readyCount \+ 1|unseenCount \+=|idleQueue\.push/);
   assert.doesNotMatch(claimBody, /בודקים|todaySpecialsRow\.disabled/);
   assert.match(javascript, /function predictedReadyPulls[\s\S]*?preparedPulls[\s\S]*?availableAt\) <= nowMs/);
-  // Stale cached state is refreshed on the events page (throttled), never on the tap.
-  assert.match(javascript, /refreshEventPredictionIfStale\(\)/);
+  // Stale cached state is refreshed in the background (throttled), never on the tap.
   assert.match(javascript, /function refreshEventPredictionIfStale[\s\S]*?EVENT_PREDICTION_STALE_MS[\s\S]*?nextIdle <= nowMs[\s\S]*?hydrateIdleQueue\(\)/);
   assert.match(javascript, /function applyHomePayload[\s\S]*?stateFreshAt = Date\.now\(\)/);
   assert.doesNotMatch(claimBody, /hydrateIdleQueue|refreshEventPrediction/);
@@ -777,7 +780,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-136/);
+  assert.match(html, /card-surface-137/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -896,7 +899,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-136/);
+  assert.match(html, /card-surface-137/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -1040,7 +1043,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-136/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-137/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -1055,7 +1058,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-136/);
+  assert.match(html, /packrip\.css\?v=card-surface-137/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);

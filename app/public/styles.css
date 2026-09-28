@@ -3381,20 +3381,6 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .leaderboard-list strong { font-size: 12px; }
 .leaderboard-list .current-player { font-weight: 600; color: var(--civic); }
 .debug-community { opacity: 0.7; }
-.specials-catalog { margin-top: 28px; border-top: 1px solid rgba(44, 51, 48, 0.22); padding-top: 16px; }
-.specials-grid { margin-top: 14px; grid-template-columns: 1fr; }
-.special-set { padding: 14px 0; border: 0; border-bottom: 1px solid rgba(44, 51, 48, 0.18); background: transparent; }
-
-.active-event { max-width: 620px; margin: 20px 0 14px; padding: 20px 0; border-block: 1px solid rgba(44, 51, 48, 0.25); }
-.active-event h2 { margin-bottom: 6px; font-size: 25px; }
-.event-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 14px; margin-top: 24px; }
-.event-card { min-width: 0; }
-.event-card .kalpi-card { width: 100%; }
-.event-upcoming { margin-top: 22px; font-size: 12px; color: rgba(26, 31, 28, 0.62); }
-.event-explainer { max-width: 42ch; margin: 0 0 12px; font-size: 13px; }
-.event-ledger { display: grid; gap: 16px; }
-.event-ledger-block .work-kicker { margin-bottom: 6px; }
-.event-ledger-block p { margin: 0 0 6px; font-size: 14px; color: var(--ink); }
 
 .bottom-nav { height: 58px; width: min(620px, calc(100% - 24px)); border-radius: 12px; box-shadow: 0 8px 24px rgba(26, 31, 28, 0.12); }
 .bottom-nav button { flex-direction: column; justify-content: center; gap: 2px; padding: 4px; border-inline-start: 1px solid rgba(44, 51, 48, 0.12); font-size: 10px; }
@@ -3932,7 +3918,6 @@ body {
 
 .binder-head h1,
 #achievements-view h1,
-#events-view h1,
 .workspace-head h1 {
   margin-bottom: 4px;
   font-size: clamp(24px, 5vw, 36px);

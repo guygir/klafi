@@ -27,7 +27,6 @@ const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
 const STATIC_DATA_VERSION = "visible-sets-3";
 const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5"];
-const DAY_MS = 24 * 60 * 60 * 1000;
 const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 
@@ -79,7 +78,6 @@ const model = {
   achievementTier: null,
   communityPage: "trade",
   communitySection: "market",
-  eventPage: "active",
   reviewFilter: "all",
   selectedStudioPartyId: null,
   selectedStudioMemberId: null,
@@ -835,7 +833,6 @@ function paintPlayerView(name) {
   if (name === "home") renderHome();
   else if (name === "binder") renderBinder();
   else if (name === "achievements") renderAchievements();
-  else if (name === "events") renderEvents();
   else if (name === "growth") renderGrowth();
   else if (name === "studio") renderStudio();
   showView(name);
@@ -1091,7 +1088,6 @@ function paintExtras() {
   renderHome();
   renderBinder();
   renderAchievements();
-  renderEvents();
   renderGrowth();
   renderStudio();
 }
@@ -1493,7 +1489,7 @@ function showView(name) {
       else button.removeAttribute("aria-current");
     }
   }
-  elements.bottomNav.hidden = model.showcase || !["home", "binder", "achievements", "events", "growth"].includes(name);
+  elements.bottomNav.hidden = model.showcase || !["home", "binder", "achievements", "growth"].includes(name);
   if (!model.showcase) klafiTips.sync();
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
@@ -1548,11 +1544,6 @@ function showWait(copy) {
 
 function hideWait() {
   if (elements.waitDialog?.open) elements.waitDialog.close();
-}
-
-function formatEventCountdown(milliseconds) {
-  const days = Math.floor(milliseconds / DAY_MS);
-  return days >= 2 ? `${days} ימים` : formatCountdown(milliseconds);
 }
 
 function avatarUrl(avatar) {
@@ -3114,8 +3105,7 @@ async function handlePackAction() {
       startWalkout();
     } else if (model.currentPack.mode === "event") {
       renderBinder();
-      renderEvents();
-      showView("events");
+      showView("binder");
       renderProgression({ announce: true });
       showToast("קלף האירוע נוסף לאוסף.");
     } else if (model.currentPack.mode === "studio-debug") {
@@ -4256,7 +4246,6 @@ async function saveStudioEvents() {
     });
     model.events = (await request("/api/events")).events;
     populateStudioMeta();
-    renderEvents();
     renderTodayDocket();
     showToast("Events published.");
   } catch (error) {
@@ -5096,25 +5085,6 @@ function renderGrowth() {
     : `<p class="work-note">${raceLeaders.length ? "עוד אף אחד לא אסף מהסיעה של היום — הקלף הראשון שתפתחו ישים אתכם בראש." : "עוד אף אחד לא אסף מהסיעה של היום."}</p>`;
   elements.dailyChallengeBoard.innerHTML = raceLeaders.slice(0, 10).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${raceScored ? `${index + 1}. ` : ""}${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("") + raceNote;
 
-  const specialDescriptions = {
-    "prestige-legacy": "דמויות פוליטיות מתקופות שונות.",
-    mouthpieces: "סיווג עריכתי גלוי של אנשי תקשורת ושל מסרים.",
-    "satire-imitations": "דמויות סאטיריות — לא ציטוטים של הפוליטיקאים עצמם.",
-    "legendary-aces": "קלפי קידום שזמינים רק באירועים.",
-    records: "עובדות מספריות ורקורדים, עם יחידת המדידה וההסתייגות על הקלף.",
-    "current-ministers": "תפקיד נוכחי לצד תוצאה שנמדדה בכהונה — בלי לטעון שהתפקיד גרם לתוצאה.",
-  };
-  if (elements.specialsGrid) elements.specialsGrid.innerHTML = (model.specials.sets || []).map((set) => `
-    <section class="special-set">
-      <header><span>P</span><div><h3>${escapeHtml(set.nameHe)}</h3></div></header>
-      <p>${escapeHtml(specialDescriptions[set.id] || "")}</p>
-      <div>${(set.cards || model.specials.cards.filter((special) => special.setId === set.id)).map((special) => `<article>
-        <span>${escapeHtml(special.id)}</span>
-        <strong lang="he" dir="rtl">${escapeHtml(special.nameHe)}</strong>
-        <blockquote lang="he" dir="rtl">${escapeHtml(special.displayText)}</blockquote>
-        <a href="${escapeHtml(special.sourceUrl)}" target="_blank" rel="noopener">למקור ↗</a>
-      </article>`).join("")}</div>
-    </section>`).join("");
   syncCommunityPage();
   const openCount = model.trades.filter((trade) => trade.status === "open" && !trade.ownedByCurrent).length;
   const openTab = document.querySelector("#community-tab-open-trades");
@@ -5124,59 +5094,6 @@ function renderGrowth() {
     boardHint.hidden = true;
     boardHint.textContent = "";
   }
-}
-
-function renderEvents() {
-  if (!elements.activeEvent) return;
-  if (!model.extrasReady) {
-    elements.activeEvent.innerHTML = `<p class="empty-note ${catalogFailed ? "is-failed" : "is-loading"}">${pendingCopy("טוענים את האירועים…", "לא הצלחנו לטעון את האירועים.")}</p>`;
-    elements.eventPull.hidden = true;
-    if (elements.eventCards) elements.eventCards.innerHTML = "";
-    if (elements.eventUpcoming) elements.eventUpcoming.innerHTML = "";
-    return;
-  }
-  const active = model.events.find((event) => event.active);
-  if (!active) {
-    elements.activeEvent.innerHTML = "<h2>אין אירוע פעיל כרגע.</h2><p>האירוע הבא יופיע כאן.</p>";
-    elements.eventPull.hidden = true;
-    elements.eventCards.innerHTML = "";
-  } else {
-    const remaining = formatEventCountdown(Math.max(0, Date.parse(active.closesAt) - Date.now()));
-    elements.activeEvent.innerHTML = `<p class="work-kicker">פתוח עכשיו · ${remaining}</p><h2>${escapeHtml(active.nameHe)}</h2><p>${escapeHtml(active.descriptionHe)}</p>`;
-    elements.eventPull.hidden = false;
-    elements.eventPull.disabled = active.claimedToday;
-    elements.eventPull.dataset.eventId = active.id;
-    elements.eventPull.textContent = active.reward === "pull"
-      ? (active.claimedToday ? "החבילה הנוספת כבר אצלכם" : "איסוף החבילה הנוספת")
-      : (active.claimedToday ? "הקלף היומי כבר נאסף" : "פתיחת קלף האירוע");
-    if (active.reward === "pull" && !active.claimedToday) refreshEventPredictionIfStale();
-    elements.eventCards.innerHTML = active.cards.map((card) => `
-      <article class="event-card">${displayCardMarkup(card, "event")}</article>`).join("");
-  }
-  const upcoming = model.events.filter((event) => !event.active && Date.parse(event.opensAt) > Date.now());
-  const past = model.events.filter((event) => !event.active && Date.parse(event.opensAt) <= Date.now());
-  const scheduled = upcoming.filter(({ status }) => status !== "blocked");
-  const awaitingApproval = upcoming.filter(({ status }) => status === "blocked");
-  const ledgerSection = (title, items, line) => items.length
-    ? `<section class="event-ledger-block"><p class="work-kicker">${title}</p>${items.map((event) => `<p>${escapeHtml(line(event))}</p>`).join("")}</section>`
-    : "";
-  elements.eventUpcoming.innerHTML = `
-    <div class="event-ledger">
-      ${ledgerSection("מתוזמן", scheduled, (event) => `${event.nameHe} · ${new Date(event.opensAt).toLocaleDateString("he-IL")}`)}
-      ${ledgerSection("בהכנה", awaitingApproval, (event) => `${event.nameHe} · ממתין לאישור תוכן ואמנות`)}
-      ${ledgerSection("נסגרו", past, (event) => event.nameHe)}
-      ${!scheduled.length && !awaitingApproval.length && !past.length ? "<p>אין אירועים נוספים בלוח.</p>" : ""}
-    </div>`;
-  elements.activeEvent.hidden = model.eventPage !== "active";
-  elements.eventPull.hidden = model.eventPage !== "active" || !active;
-  elements.eventCards.hidden = model.eventPage !== "collection";
-  elements.eventUpcoming.hidden = model.eventPage !== "upcoming";
-  document.querySelector(".specials-catalog").hidden = model.eventPage !== "upcoming";
-  elements.eventTabs?.querySelectorAll("[data-event-page]").forEach((button) => {
-    const activePage = button.dataset.eventPage === model.eventPage;
-    button.classList.toggle("active", activePage);
-    button.setAttribute("aria-selected", String(activePage));
-  });
 }
 
 function pullCountCopy(count) {
@@ -5194,7 +5111,7 @@ const EVENT_PULL_COPY = {
   cap: (cap) => ({
     outcome: "cap",
     title: "המחסן מלא",
-    copy: `יש לכם כבר ${cap} חבילות שמחכות, וזה המקסימום. פתחו חבילה אחת וחזרו לאירוע, והחבילה הנוספת תחכה לכם.`,
+    copy: `יש לכם כבר ${cap} חבילות שמחכות, וזה המקסימום. פתחו חבילה אחת, והחבילה הנוספת תחכה לכם.`,
   }),
   claimed: () => ({
     outcome: "claimed",
@@ -5297,34 +5214,6 @@ function claimEventPull(windowOpen) {
     eventPullInFlight = null;
   });
   return eventPullInFlight;
-}
-
-async function pullEventCard() {
-  const eventId = elements.eventPull.dataset.eventId;
-  if (!eventId) return;
-  const activeEvent = model.events.find(({ id }) => id === eventId);
-  if (activeEvent?.reward === "pull") {
-    elements.eventPull.disabled = true;
-    await claimEventPull(activeEvent);
-    model.events = (await request("/api/events").catch(() => ({ events: model.events }))).events;
-    renderEvents();
-    return;
-  }
-  elements.eventPull.disabled = true;
-  try {
-    model.currentPack = await request(`/api/events/${encodeURIComponent(eventId)}/pull`, { method: "POST" });
-    setServerState(await request("/api/state"));
-    model.events = (await request("/api/events")).events;
-    model.currentCardIndex = 0;
-    model.previewMode = false;
-    model.currentPack.cards = (model.currentPack.cards || []).slice(0, 1);
-    showView("pack");
-    startWalkout();
-  } catch {
-    model.events = (await request("/api/events")).events;
-    renderEvents();
-    showToast("קלף האירוע כבר נאסף היום.");
-  }
 }
 
 function revealDelayInputs() {
@@ -5552,7 +5441,6 @@ async function saveVisualConfig() {
     renderHome();
     renderBinder();
     renderAchievements();
-    renderEvents();
     renderGrowth();
     showToast("Visual configuration published to the game.");
   } catch (error) {
@@ -7315,7 +7203,6 @@ elements.sharedOpenGame.addEventListener("click", leaveSharedCard);
 elements.showcaseOpenGame?.addEventListener("click", leaveShowcase);
 elements.openBibiPack.addEventListener("click", openBibiDebugPack);
 elements.packAction.addEventListener("click", handlePackAction);
-elements.eventPull?.addEventListener("click", pullEventCard);
 elements.retry.addEventListener("click", bootstrap);
 elements.openQuiz?.addEventListener("click", openQuizDialog);
 elements.closeQuiz?.addEventListener("click", () => {
@@ -7691,9 +7578,6 @@ elements.navButtons.forEach((button) => {
     } else if (button.dataset.nav === "achievements") {
       renderAchievements();
       showView("achievements");
-    } else if (button.dataset.nav === "events") {
-      renderEvents();
-      showView("events");
     } else if (button.dataset.nav === "growth") {
       renderGrowth();
       showView("growth");
@@ -7761,13 +7645,6 @@ elements.communityTabs.addEventListener("click", (event) => {
   renderGrowth();
   if (model.communityPage === "challenge") refreshDailyChallenge();
   pollWatchedTrade().catch(() => {});
-});
-
-elements.eventTabs?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-event-page]");
-  if (!button) return;
-  model.eventPage = button.dataset.eventPage;
-  renderEvents();
 });
 
 elements.binderGrid.addEventListener("click", (event) => {
