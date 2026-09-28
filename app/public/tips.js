@@ -45,7 +45,7 @@ export const PAGE_GUIDES = Object.freeze({
       body: "יש חבילות שמחכות? לחצו על «פתיחת קלף» כדי לראות מה קיבלתם!",
     },
     {
-      ring: "#level-avatar-button, #player-name",
+      ring: "#level-avatar-button, #level-streak, #player-name",
       ringUnion: true,
       pad: 16,
       padX: 16,

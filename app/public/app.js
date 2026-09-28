@@ -15,22 +15,18 @@ import {
 } from "./walkout-sunburst.js";
 import { destroyPackRip, mountPackRip, packRipMarkup, preloadPackRipAssets, schedulePackRipPrefetch } from "./packrip.js";
 import { createSfx, revealClipForStage, sfxRarityKey } from "./sfx.js";
-import { TODAY_PULSE_REFRESH_MS, todayPulseCopy } from "./today-pulse.js";
-
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
 // When the server state last arrived (0 = only the localStorage cache so far).
 let stateFreshAt = 0;
 let eventPredictionRefreshAt = 0;
-let lastTodayPulseAt = 0;
 const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
 const STATIC_DATA_VERSION = "visible-sets-3";
 const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5"];
-const DAY_MS = 24 * 60 * 60 * 1000;
 const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 
@@ -47,6 +43,7 @@ function playerDialogOpen() {
     elements.levelDialog,
     elements.eventDialog,
     elements.tradeNoticeDialog,
+    elements.streakDialog,
     elements.waitDialog,
     elements.shareSheet,
   ].some((dialog) => dialog?.open);
@@ -81,7 +78,6 @@ const model = {
   achievementTier: null,
   communityPage: "trade",
   communitySection: "market",
-  eventPage: "active",
   reviewFilter: "all",
   selectedStudioPartyId: null,
   selectedStudioMemberId: null,
@@ -154,9 +150,6 @@ const elements = {
   joinLeague: document.querySelector("#join-league"),
   leagueStatus: document.querySelector("#league-status"),
   leagueRooms: document.querySelector("#league-rooms"),
-  todaySpecialsRow: document.querySelector("#today-specials-row"),
-  todaySpecialsCopy: document.querySelector("#today-specials-copy"),
-  todaySpecialsCopyRepeat: document.querySelector("#today-specials-copy-repeat"),
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
   homeSettleHint: document.querySelector("#home-settle-hint"),
@@ -255,6 +248,13 @@ const elements = {
   tradeNoticeGiven: document.querySelector("#trade-notice-given"),
   tradeNoticeOk: document.querySelector("#trade-notice-ok"),
   closeTradeNotice: document.querySelector("#close-trade-notice"),
+  streakDialog: document.querySelector("#streak-dialog"),
+  streakDialogTitle: document.querySelector("#streak-dialog-title"),
+  streakDialogCopy: document.querySelector("#streak-dialog-copy"),
+  streakDialogReward: document.querySelector("#streak-dialog-reward"),
+  streakCalendar: document.querySelector("#streak-calendar"),
+  streakDialogOk: document.querySelector("#streak-dialog-ok"),
+  closeStreakDialog: document.querySelector("#close-streak-dialog"),
   avatarSeal: document.querySelector("#avatar-seal"),
   levelLetter: document.querySelector("#level-letter"),
   levelLetterText: document.querySelector("#level-letter-text"),
@@ -646,7 +646,9 @@ function applyHomePayload(home) {
       idlePullCount: incoming.idlePullCount ?? previous.idlePullCount ?? 0,
       achievements: incoming.achievements ?? previous.achievements ?? [],
       achievementPages: incoming.achievementPages ?? previous.achievementPages ?? [],
-      loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
+        loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
+        visitStreak: incoming.visitStreak ?? previous.visitStreak ?? 0,
+        streakCalendar: incoming.streakCalendar ?? previous.streakCalendar ?? null,
     };
     if (home.cards) model.idleQueue = home.cards;
     localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
@@ -669,6 +671,8 @@ function applyHomePayload(home) {
         favorites: model.serverState.favorites || [],
         starCount: model.serverState.starCount,
         loginStreak: model.serverState.loginStreak || 0,
+        visitStreak: model.serverState.visitStreak || 0,
+        streakCalendar: model.serverState.streakCalendar || null,
         factionId: model.serverState.factionId || null,
         numberedCopies: model.serverState.numberedCopies || [],
         pendingTradeNotices: model.serverState.pendingTradeNotices || [],
@@ -829,7 +833,6 @@ function paintPlayerView(name) {
   if (name === "home") renderHome();
   else if (name === "binder") renderBinder();
   else if (name === "achievements") renderAchievements();
-  else if (name === "events") renderEvents();
   else if (name === "growth") renderGrowth();
   else if (name === "studio") renderStudio();
   showView(name);
@@ -1071,10 +1074,7 @@ function applyExtrasPayload({ events, trades, leaderboards, activity, specials, 
     watchOpenTrade();
   }
   if (leaderboards) model.leaderboards = mergeLeaderboards(model.leaderboards, leaderboards);
-  if (activity) {
-    model.activity = activity;
-    lastTodayPulseAt = Date.now();
-  }
+  if (activity) model.activity = activity;
   if (specials) model.specials = specials;
   if (specialWindow !== undefined) model.specialWindow = specialWindow;
   if (state) {
@@ -1088,7 +1088,6 @@ function paintExtras() {
   renderHome();
   renderBinder();
   renderAchievements();
-  renderEvents();
   renderGrowth();
   renderStudio();
 }
@@ -1490,7 +1489,7 @@ function showView(name) {
       else button.removeAttribute("aria-current");
     }
   }
-  elements.bottomNav.hidden = model.showcase || !["home", "binder", "achievements", "events", "growth"].includes(name);
+  elements.bottomNav.hidden = model.showcase || !["home", "binder", "achievements", "growth"].includes(name);
   if (!model.showcase) klafiTips.sync();
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
@@ -1545,11 +1544,6 @@ function showWait(copy) {
 
 function hideWait() {
   if (elements.waitDialog?.open) elements.waitDialog.close();
-}
-
-function formatEventCountdown(milliseconds) {
-  const days = Math.floor(milliseconds / DAY_MS);
-  return days >= 2 ? `${days} ימים` : formatCountdown(milliseconds);
 }
 
 function avatarUrl(avatar) {
@@ -2587,56 +2581,6 @@ function renderTodayDocket() {
       ? "אתם במקום הראשון"
       : "המקום הראשון פנוי";
   elements.todayLeaderMeta.textContent = "";
-  renderTodaySpecials();
-}
-
-// The Today event ticker. Always visible; CSS owns the motion (see .today-specials-line).
-// updateCountdown calls this every second, so it only writes to the DOM when something changed:
-// re-setting the copy's text each tick is what used to re-trigger layout (and restart the line).
-function renderTodaySpecials() {
-  const row = elements.todaySpecialsRow;
-  if (!row) return;
-  const windowOpen = model.specialWindow;
-  if (windowOpen?.reward === "pull" && !windowOpen.claimedToday) refreshEventPredictionIfStale();
-  let line = todayPulseCopy(model.activity?.todayPulse);
-  if (windowOpen?.reward === "pull") {
-    line = windowOpen.claimedToday
-      ? windowOpen.claimedTickerHe || `${windowOpen.nameHe} · החבילה כבר אצלכם`
-      : windowOpen.tickerHe || `${windowOpen.nameHe} · חבילה נוספת לכל שחקן`;
-  } else if (windowOpen) {
-    const closes = new Date(windowOpen.closesAt);
-    const until = Number.isNaN(closes.getTime())
-      ? ""
-      : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
-    const detail = windowOpen.claimedToday
-      ? "הקלף היומי כבר באוסף — והוא נשאר באלבום."
-      : until
-        ? `פתוח עד ${until}. קלף אחד להיום.`
-        : "קלף אחד להיום — והוא נשאר באלבום.";
-    line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
-  }
-  const hasLine = Boolean(line);
-  row.hidden = !hasLine;
-  document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen) || hasLine);
-  if (!hasLine) {
-    for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
-      if (copy && copy.textContent) copy.textContent = "";
-    }
-    return;
-  }
-  const state = !windowOpen ? "pulse" : windowOpen.claimedToday ? "claimed" : "live";
-  if (row.dataset.state !== state) row.dataset.state = state;
-  row.classList.toggle("is-marquee", true);
-  // A claimed pull event keeps scrolling its "already yours" line but is no longer a control:
-  // disabled = no click, no focus, no pop-up, no POST. (Card events manage .disabled themselves.)
-  const inert = windowOpen?.reward === "pull" && Boolean(windowOpen.claimedToday);
-  if (inert !== (row.dataset.inert === "true")) {
-    row.dataset.inert = String(inert);
-    row.disabled = inert;
-  }
-  for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
-    if (copy && copy.textContent !== line) copy.textContent = line;
-  }
 }
 
 function layoutAdvocacyDock() {
@@ -2757,7 +2701,7 @@ function dismissLevelDialog() {
   if (elements.levelDialog.open) elements.levelDialog.close();
   const pending = model.serverState?.progression?.pendingRewards || [];
   if (pending.length) queueMicrotask(() => openPendingLevelDialog());
-  else queueMicrotask(() => maybeShowTradeNotice());
+  else queueMicrotask(() => maybeShowDeferredPopups());
 }
 
 function renderProgression({ announce = false } = {}) {
@@ -2765,12 +2709,13 @@ function renderProgression({ announce = false } = {}) {
   if (!progression) return;
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
-  const streak = Number(model.serverState?.loginStreak) || 0;
-  const showStreak = streak >= 3;
+  const streak = Number(model.serverState?.visitStreak ?? model.serverState?.loginStreak) || 0;
+  const showStreak = streak >= 1;
   elements.levelRank.textContent = progression.rank;
   if (elements.levelStreak) {
     elements.levelStreak.hidden = !showStreak;
     if (elements.levelStreakCount) elements.levelStreakCount.textContent = showStreak ? String(streak) : "";
+    elements.levelStreak.setAttribute("aria-label", showStreak ? `רצף ${streak} · לוח הפרסים` : "לוח הרצף");
   }
   if (elements.playerStreak) {
     elements.playerStreak.hidden = !showStreak;
@@ -2780,9 +2725,7 @@ function renderProgression({ announce = false } = {}) {
   elements.levelAvatarButton?.classList.toggle("has-week-streak", streak >= 7);
   elements.playerName?.classList.toggle("has-streak", showStreak);
   if (elements.levelAvatarButton) {
-    elements.levelAvatarButton.setAttribute("aria-label", showStreak
-      ? `${progression.rank} · רצף ${streak} · הפרופיל והאווטאר`
-      : `${progression.rank} · הפרופיל והאווטאר`);
+    elements.levelAvatarButton.setAttribute("aria-label", `${progression.rank} · הפרופיל והאווטאר`);
   }
   if (elements.levelTeaser) elements.levelTeaser.textContent = progression.teaser;
   const unique = progression.unique || 0;
@@ -2833,27 +2776,6 @@ function updateCountdown() {
 }
 
 setInterval(updateCountdown, 1000);
-setInterval(() => {
-  refreshTodayPulse().catch(() => {});
-}, TODAY_PULSE_REFRESH_MS);
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") refreshTodayPulse().catch(() => {});
-});
-
-async function refreshTodayPulse({ force = false } = {}) {
-  if (!model.token || model.showcase) return;
-  const now = Date.now();
-  if (!force && lastTodayPulseAt && now - lastTodayPulseAt < TODAY_PULSE_REFRESH_MS) return;
-  lastTodayPulseAt = now;
-  try {
-    const payload = await request("/api/community");
-    if (payload?.activity) model.activity = payload.activity;
-    if (payload?.specialWindow !== undefined) model.specialWindow = payload.specialWindow;
-    renderTodaySpecials();
-  } catch {
-    /* Keep the last pulse line until the next 15-minute tick. */
-  }
-}
 
 function resetPackRip() {
   packRipListeners?.abort();
@@ -3183,8 +3105,7 @@ async function handlePackAction() {
       startWalkout();
     } else if (model.currentPack.mode === "event") {
       renderBinder();
-      renderEvents();
-      showView("events");
+      showView("binder");
       renderProgression({ announce: true });
       showToast("קלף האירוע נוסף לאוסף.");
     } else if (model.currentPack.mode === "studio-debug") {
@@ -4325,7 +4246,6 @@ async function saveStudioEvents() {
     });
     model.events = (await request("/api/events")).events;
     populateStudioMeta();
-    renderEvents();
     renderTodayDocket();
     showToast("Events published.");
   } catch (error) {
@@ -4709,6 +4629,220 @@ function tipsOverlayOpen() {
   return Boolean(overlay && !overlay.hidden);
 }
 
+function tipsBusy() {
+  return tipsOverlayOpen() || Boolean(klafiTips.getState?.()?.started && klafiTips.getState?.()?.mode === "page");
+}
+
+function streakRewardMarkup(reward) {
+  if (!reward) return "";
+  if (reward.kind === "pack") {
+    return `<span class="streak-cell-prize"><img class="streak-cell-pack" src="/packrip/pack-closed.webp" alt="חבילה"></span>`;
+  }
+  const stars = Math.max(1, Math.min(3, Number(reward.stars) || 1));
+  const labels = { 1: "נפוץ", 2: "לא נפוץ", 3: "נדיר" };
+  const glyphs = Array.from({ length: stars }, () => "<span>★</span>").join("");
+  return `<span class="streak-cell-prize"><span class="streak-cell-stars" data-stars="${stars}" aria-label="${labels[stars]}">${glyphs}</span></span>`;
+}
+
+function streakPrizeName(reward) {
+  if (reward?.kind === "pack") return "חבילה";
+  const labels = { 1: "קלף נפוץ", 2: "קלף לא נפוץ", 3: "קלף נדיר" };
+  return labels[reward?.stars] || "קלף נפוץ";
+}
+
+function streakRewardLine(calendar) {
+  const today = calendar?.days?.find((cell) => cell.current && cell.reward);
+  if (!today?.reward) return "";
+  if (today.reward.kind === "pack") {
+    return today.claimed ? "חבילה מחכה. לחיצה כפולה פותחת אותה." : "היום מחכה חבילה.";
+  }
+  const name = streakPrizeName(today.reward);
+  return today.claimed ? `${name} מחכה. לחיצה כפולה פותחת אותו.` : `היום מחכה ${name}.`;
+}
+
+function streakRunLine(count) {
+  const n = Math.max(1, Number(count) || 1);
+  if (n === 1) return "אתה מתחבר כבר יום אחד ברצף.";
+  if (n === 2) return "אתה מתחבר כבר יומיים ברצף.";
+  return `אתה מתחבר כבר ${n} ימים ברצף.`;
+}
+
+function streakWaitLine(days) {
+  const n = Math.max(1, Number(days) || 1);
+  if (n === 1) return "בעוד יום";
+  if (n === 2) return "בעוד יומיים";
+  return `בעוד ${n} ימים`;
+}
+
+function nextStreakReward(calendar) {
+  const days = calendar?.days || [];
+  const today = Math.max(1, Number(calendar?.day) || 1);
+  if (!days.length) return null;
+  for (let offset = 1; offset <= days.length; offset += 1) {
+    const cell = days[(today - 1 + offset) % days.length];
+    if (cell?.reward) return { wait: offset, reward: cell.reward };
+  }
+  return null;
+}
+
+function streakDialogBody(calendar) {
+  const next = nextStreakReward(calendar);
+  const prize = next ? `${streakWaitLine(next.wait)} מגיע הפרס הבא והוא ${streakPrizeName(next.reward)}.` : "";
+  return [
+    "כדאי להתחבר כל יום כדי לא לאבד את הרצף!",
+    streakRunLine(calendar?.streak || calendar?.day || 1),
+    prize,
+  ].filter(Boolean).join("\n");
+}
+
+function streakCellClasses(cell) {
+  return [
+    "streak-cell",
+    cell.checked ? "is-checked" : "",
+    cell.current ? "is-today" : "",
+    cell.reward ? "has-reward" : "",
+    cell.claimed ? "is-claimed" : "",
+    cell.opened ? "is-opened" : "",
+  ].filter(Boolean).join(" ");
+}
+
+function streakCheckMarkup(ringsOnly = false) {
+  const tick = ringsOnly
+    ? ""
+    : `<path d="M20 34.5 28.5 43.5 46 22" fill="none" stroke="#14312E" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  return `<span class="streak-cell-check" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="#14312E" stroke-width="2.4"/><circle cx="32" cy="32" r="22.4" fill="none" stroke="#14312E" stroke-width="1.15"/>${tick}</svg></span>`;
+}
+
+function playStreakStamp() {
+  if (prefersReducedMotion() || !sfx.soundOn) return;
+  sfx.unlock();
+  sfx.play("streak-stamp");
+}
+
+function paintStreakCalendar(calendar, { stamp = false } = {}) {
+  const dialog = elements.streakDialog;
+  if (!dialog || !calendar) return;
+  const day = calendar.day || 1;
+  if (elements.streakDialogTitle) elements.streakDialogTitle.textContent = `יום ${day} ברצף`;
+  if (elements.streakDialogCopy) elements.streakDialogCopy.textContent = streakDialogBody(calendar);
+  if (elements.streakCalendar) {
+    elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => {
+      const openable = Boolean(cell.claimed && cell.reward);
+      return `
+      <li class="${streakCellClasses(cell)}${stamp && cell.current ? " is-landing" : ""}" data-day="${cell.day}"${openable ? ` tabindex="0" title="לחיצה כפולה לפתיחה" aria-label="יום ${cell.day}, לחיצה כפולה לפתיחה"` : ""}>
+        <span class="streak-cell-day">${cell.day}</span>
+        ${cell.reward ? streakRewardMarkup(cell.reward) : ""}
+        ${cell.checked ? streakCheckMarkup(Boolean(cell.reward)) : ""}
+      </li>`;
+    }).join("");
+  }
+  const rewardLine = streakRewardLine(calendar);
+  if (elements.streakDialogReward) {
+    elements.streakDialogReward.hidden = !rewardLine;
+    elements.streakDialogReward.textContent = rewardLine;
+  }
+  if (stamp) playStreakStamp();
+}
+
+function openStreakCalendar({ force = false, calendar, stamp = false } = {}) {
+  const next = calendar || model.serverState?.streakCalendar;
+  if (!next?.days || !elements.streakDialog) return false;
+  paintStreakCalendar(next, { stamp });
+  if (!elements.streakDialog.open) elements.streakDialog.showModal();
+  return true;
+}
+
+function maybeShowStreakCalendar({ force = false } = {}) {
+  if (model.showcase || model.streakNoticeBusy) return false;
+  if (!force && !stateFreshAt) return false;
+  if (elements.waitDialog?.open || (!force && tipsBusy())) return false;
+  if (elements.streakDialog?.open) return true;
+  if (!force && playerDialogOpen()) return false;
+  const calendar = model.serverState?.streakCalendar;
+  if (!calendar) return false;
+  if (!force && !calendar.showPopup) return false;
+  return openStreakCalendar({ force, calendar, stamp: !force && Boolean(calendar.showPopup) });
+}
+
+function maybeShowDeferredPopups() {
+  if (maybeShowStreakCalendar()) return true;
+  maybeShowTradeNotice();
+  return false;
+}
+
+async function dismissStreakCalendar() {
+  const dialog = elements.streakDialog;
+  if (dialog?.open) dialog.close();
+  await ackStreakCalendar();
+  queueMicrotask(() => maybeShowTradeNotice());
+}
+
+function streakRewardCell(event) {
+  return event.target?.closest?.(".streak-cell.has-reward.is-claimed");
+}
+
+async function openClaimedStreakReward(day) {
+  const calendar = model.serverState?.streakCalendar;
+  const cell = calendar?.days?.find((item) => item.day === Number(day));
+  if (!cell?.claimed || !cell.reward || homePackRipBusy) return;
+  sfx.unlock();
+  homePackRipBusy = true;
+  model.streakRewardOpening = true;
+  const isPack = cell.reward.kind === "pack";
+  let rip = null;
+  try {
+    if (elements.streakDialog?.open) elements.streakDialog.close();
+    if (!model.catalog.length) await loadStaticCatalog();
+    if (isPack) rip = playHomePackRip();
+    const pulled = await request("/api/streak/open", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ day: cell.day }),
+    });
+    if (!pulled.cards?.length) throw new Error("EMPTY_STREAK_REWARD");
+    if (pulled.state) setServerState(pulled.state, { merge: true });
+    if (isPack) await rip.finished;
+    model.currentPack = {
+      packId: pulled.packId || `streak-${cell.day}`,
+      mode: "streak",
+      pulledAt: new Date().toISOString(),
+      cards: pulled.cards,
+    };
+    model.currentCardIndex = 0;
+    model.previewMode = false;
+    if (isPack) rip.release({ revealing: true });
+    showView("pack");
+    startWalkout();
+  } catch {
+    rip?.release();
+    showToast("לא הצלחנו לפתוח את הפרס.");
+    renderHome();
+    showView("home");
+  } finally {
+    homePackRipBusy = false;
+    model.streakRewardOpening = false;
+  }
+}
+
+async function ackStreakCalendar() {
+  const calendar = model.serverState?.streakCalendar;
+  if (!calendar?.showPopup || model.streakNoticeBusy) return;
+  model.streakNoticeBusy = true;
+  try {
+    const result = await request("/api/streak/ack", { method: "POST" });
+    if (result?.state) setServerState(result.state, { merge: true });
+    else if (model.serverState?.streakCalendar) {
+      model.serverState.streakCalendar = { ...calendar, showPopup: false };
+    }
+  } catch {
+    if (model.serverState?.streakCalendar) {
+      model.serverState.streakCalendar = { ...calendar, showPopup: false };
+    }
+  } finally {
+    model.streakNoticeBusy = false;
+  }
+}
+
 function pendingTradeNotices() {
   return [...(model.serverState?.pendingTradeNotices || [])].filter((notice) => notice?.id);
 }
@@ -4744,7 +4878,8 @@ function showAcceptedTradeNotice({ otherName, receivedCardId, givenCardId, notic
 }
 
 function maybeShowTradeNotice() {
-  if (model.showcase || model.tradeNoticeBusy || !stateFreshAt) return;
+  if (model.showcase || model.tradeNoticeBusy || model.streakRewardOpening || !stateFreshAt) return;
+  if (revealInProgress()) return;
   if (elements.waitDialog?.open || tipsOverlayOpen()) return;
   if (elements.tradeNoticeDialog?.open) return;
   if (playerDialogOpen()) return;
@@ -5064,25 +5199,6 @@ function renderGrowth() {
     : `<p class="work-note">${raceLeaders.length ? "עוד אף אחד לא אסף מהסיעה של היום — הקלף הראשון שתפתחו ישים אתכם בראש." : "עוד אף אחד לא אסף מהסיעה של היום."}</p>`;
   elements.dailyChallengeBoard.innerHTML = raceLeaders.slice(0, 10).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${raceScored ? `${index + 1}. ` : ""}${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("") + raceNote;
 
-  const specialDescriptions = {
-    "prestige-legacy": "דמויות פוליטיות מתקופות שונות.",
-    mouthpieces: "סיווג עריכתי גלוי של אנשי תקשורת ושל מסרים.",
-    "satire-imitations": "דמויות סאטיריות — לא ציטוטים של הפוליטיקאים עצמם.",
-    "legendary-aces": "קלפי קידום שזמינים רק באירועים.",
-    records: "עובדות מספריות ורקורדים, עם יחידת המדידה וההסתייגות על הקלף.",
-    "current-ministers": "תפקיד נוכחי לצד תוצאה שנמדדה בכהונה — בלי לטעון שהתפקיד גרם לתוצאה.",
-  };
-  if (elements.specialsGrid) elements.specialsGrid.innerHTML = (model.specials.sets || []).map((set) => `
-    <section class="special-set">
-      <header><span>P</span><div><h3>${escapeHtml(set.nameHe)}</h3></div></header>
-      <p>${escapeHtml(specialDescriptions[set.id] || "")}</p>
-      <div>${(set.cards || model.specials.cards.filter((special) => special.setId === set.id)).map((special) => `<article>
-        <span>${escapeHtml(special.id)}</span>
-        <strong lang="he" dir="rtl">${escapeHtml(special.nameHe)}</strong>
-        <blockquote lang="he" dir="rtl">${escapeHtml(special.displayText)}</blockquote>
-        <a href="${escapeHtml(special.sourceUrl)}" target="_blank" rel="noopener">למקור ↗</a>
-      </article>`).join("")}</div>
-    </section>`).join("");
   syncCommunityPage();
   const openCount = model.trades.filter((trade) => trade.status === "open" && !trade.ownedByCurrent).length;
   const openTab = document.querySelector("#community-tab-open-trades");
@@ -5091,94 +5207,6 @@ function renderGrowth() {
   if (boardHint) {
     boardHint.hidden = true;
     boardHint.textContent = "";
-  }
-}
-
-function renderEvents() {
-  if (!elements.activeEvent) return;
-  if (!model.extrasReady) {
-    elements.activeEvent.innerHTML = `<p class="empty-note ${catalogFailed ? "is-failed" : "is-loading"}">${pendingCopy("טוענים את האירועים…", "לא הצלחנו לטעון את האירועים.")}</p>`;
-    elements.eventPull.hidden = true;
-    if (elements.eventCards) elements.eventCards.innerHTML = "";
-    if (elements.eventUpcoming) elements.eventUpcoming.innerHTML = "";
-    return;
-  }
-  const active = model.events.find((event) => event.active);
-  if (!active) {
-    elements.activeEvent.innerHTML = "<h2>אין אירוע פעיל כרגע.</h2><p>האירוע הבא יופיע כאן.</p>";
-    elements.eventPull.hidden = true;
-    elements.eventCards.innerHTML = "";
-  } else {
-    const remaining = formatEventCountdown(Math.max(0, Date.parse(active.closesAt) - Date.now()));
-    elements.activeEvent.innerHTML = `<p class="work-kicker">פתוח עכשיו · ${remaining}</p><h2>${escapeHtml(active.nameHe)}</h2><p>${escapeHtml(active.descriptionHe)}</p>`;
-    elements.eventPull.hidden = false;
-    elements.eventPull.disabled = active.claimedToday;
-    elements.eventPull.dataset.eventId = active.id;
-    elements.eventPull.textContent = active.reward === "pull"
-      ? (active.claimedToday ? "החבילה הנוספת כבר אצלכם" : "איסוף החבילה הנוספת")
-      : (active.claimedToday ? "הקלף היומי כבר נאסף" : "פתיחת קלף האירוע");
-    elements.eventCards.innerHTML = active.cards.map((card) => `
-      <article class="event-card">${displayCardMarkup(card, "event")}</article>`).join("");
-  }
-  const upcoming = model.events.filter((event) => !event.active && Date.parse(event.opensAt) > Date.now());
-  const past = model.events.filter((event) => !event.active && Date.parse(event.opensAt) <= Date.now());
-  const scheduled = upcoming.filter(({ status }) => status !== "blocked");
-  const awaitingApproval = upcoming.filter(({ status }) => status === "blocked");
-  const ledgerSection = (title, items, line) => items.length
-    ? `<section class="event-ledger-block"><p class="work-kicker">${title}</p>${items.map((event) => `<p>${escapeHtml(line(event))}</p>`).join("")}</section>`
-    : "";
-  elements.eventUpcoming.innerHTML = `
-    <div class="event-ledger">
-      ${ledgerSection("מתוזמן", scheduled, (event) => `${event.nameHe} · ${new Date(event.opensAt).toLocaleDateString("he-IL")}`)}
-      ${ledgerSection("בהכנה", awaitingApproval, (event) => `${event.nameHe} · ממתין לאישור תוכן ואמנות`)}
-      ${ledgerSection("נסגרו", past, (event) => event.nameHe)}
-      ${!scheduled.length && !awaitingApproval.length && !past.length ? "<p>אין אירועים נוספים בלוח.</p>" : ""}
-    </div>`;
-  elements.activeEvent.hidden = model.eventPage !== "active";
-  elements.eventPull.hidden = model.eventPage !== "active" || !active;
-  elements.eventCards.hidden = model.eventPage !== "collection";
-  elements.eventUpcoming.hidden = model.eventPage !== "upcoming";
-  document.querySelector(".specials-catalog").hidden = model.eventPage !== "upcoming";
-  elements.eventTabs?.querySelectorAll("[data-event-page]").forEach((button) => {
-    const activePage = button.dataset.eventPage === model.eventPage;
-    button.classList.toggle("active", activePage);
-    button.setAttribute("aria-selected", String(activePage));
-  });
-}
-
-async function claimTodaySpecial() {
-  const windowOpen = model.specialWindow;
-  if (!windowOpen) return;
-  if (windowOpen.reward === "pull") {
-    if (windowOpen.claimedToday) return;
-    await claimEventPull(windowOpen);
-    return;
-  }
-  if (windowOpen.claimedToday) {
-    elements.navButtons.find((button) => button.dataset.nav === "binder")?.click();
-    return;
-  }
-  elements.todaySpecialsRow.disabled = true;
-  try {
-    model.currentPack = await request(`/api/events/${encodeURIComponent(windowOpen.id)}/pull`, { method: "POST" });
-    setServerState(await request("/api/state"));
-    model.specialWindow = { ...windowOpen, claimedToday: true };
-    model.currentCardIndex = 0;
-    model.previewMode = false;
-    model.currentPack.cards = (model.currentPack.cards || []).slice(0, 1);
-    renderTodayDocket();
-    showView("pack");
-    startWalkout();
-  } catch (error) {
-    if (error.status === 409) {
-      model.specialWindow = { ...windowOpen, claimedToday: true };
-      renderTodayDocket();
-      showToast("קלף האירוע כבר נאסף היום.");
-      return;
-    }
-    showToast("חלון האיסוף סגור עכשיו.");
-  } finally {
-    elements.todaySpecialsRow.disabled = false;
   }
 }
 
@@ -5197,7 +5225,7 @@ const EVENT_PULL_COPY = {
   cap: (cap) => ({
     outcome: "cap",
     title: "המחסן מלא",
-    copy: `יש לכם כבר ${cap} חבילות שמחכות, וזה המקסימום. פתחו חבילה אחת וחזרו ללחוץ על השורה, והחבילה הנוספת תחכה לכם.`,
+    copy: `יש לכם כבר ${cap} חבילות שמחכות, וזה המקסימום. פתחו חבילה אחת, והחבילה הנוספת תחכה לכם.`,
   }),
   claimed: () => ({
     outcome: "claimed",
@@ -5300,34 +5328,6 @@ function claimEventPull(windowOpen) {
     eventPullInFlight = null;
   });
   return eventPullInFlight;
-}
-
-async function pullEventCard() {
-  const eventId = elements.eventPull.dataset.eventId;
-  if (!eventId) return;
-  const activeEvent = model.events.find(({ id }) => id === eventId);
-  if (activeEvent?.reward === "pull") {
-    elements.eventPull.disabled = true;
-    await claimEventPull(activeEvent);
-    model.events = (await request("/api/events").catch(() => ({ events: model.events }))).events;
-    renderEvents();
-    return;
-  }
-  elements.eventPull.disabled = true;
-  try {
-    model.currentPack = await request(`/api/events/${encodeURIComponent(eventId)}/pull`, { method: "POST" });
-    setServerState(await request("/api/state"));
-    model.events = (await request("/api/events")).events;
-    model.currentCardIndex = 0;
-    model.previewMode = false;
-    model.currentPack.cards = (model.currentPack.cards || []).slice(0, 1);
-    showView("pack");
-    startWalkout();
-  } catch {
-    model.events = (await request("/api/events")).events;
-    renderEvents();
-    showToast("קלף האירוע כבר נאסף היום.");
-  }
 }
 
 function revealDelayInputs() {
@@ -5555,7 +5555,6 @@ async function saveVisualConfig() {
     renderHome();
     renderBinder();
     renderAchievements();
-    renderEvents();
     renderGrowth();
     showToast("Visual configuration published to the game.");
   } catch (error) {
@@ -7318,7 +7317,6 @@ elements.sharedOpenGame.addEventListener("click", leaveSharedCard);
 elements.showcaseOpenGame?.addEventListener("click", leaveShowcase);
 elements.openBibiPack.addEventListener("click", openBibiDebugPack);
 elements.packAction.addEventListener("click", handlePackAction);
-elements.eventPull?.addEventListener("click", pullEventCard);
 elements.retry.addEventListener("click", bootstrap);
 elements.openQuiz?.addEventListener("click", openQuizDialog);
 elements.closeQuiz?.addEventListener("click", () => {
@@ -7337,6 +7335,29 @@ elements.quizQuestions?.addEventListener("click", (event) => {
 });
 elements.playerName.addEventListener("click", openProfileDialog);
 elements.levelAvatarButton?.addEventListener("click", openProfileDialog);
+elements.levelStreak?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  openStreakCalendar({ force: true });
+});
+elements.streakDialogOk?.addEventListener("click", () => dismissStreakCalendar());
+elements.closeStreakDialog?.addEventListener("click", () => dismissStreakCalendar());
+elements.streakCalendar?.addEventListener("dblclick", (event) => {
+  const cell = streakRewardCell(event);
+  if (!cell) return;
+  event.preventDefault();
+  openClaimedStreakReward(cell.dataset.day);
+});
+elements.streakCalendar?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  const cell = streakRewardCell(event);
+  if (!cell) return;
+  event.preventDefault();
+  openClaimedStreakReward(cell.dataset.day);
+});
+elements.streakDialog?.addEventListener("close", () => {
+  ackStreakCalendar().then(() => queueMicrotask(() => maybeShowTradeNotice()));
+});
 elements.addAchievement?.addEventListener("click", () => {
   if (!elements.studioAchievements) return;
   elements.studioAchievements.insertAdjacentHTML("beforeend", achievementEditorMarkup({
@@ -7450,7 +7471,7 @@ elements.avatarPicker?.addEventListener("click", (event) => {
 elements.saveAchievements?.addEventListener("click", saveStudioAchievements);
 elements.saveEvents?.addEventListener("click", saveStudioEvents);
 elements.closeProfile.addEventListener("click", () => elements.profileDialog.close());
-elements.profileDialog.addEventListener("close", () => maybeShowTradeNotice());
+elements.profileDialog.addEventListener("close", () => maybeShowDeferredPopups());
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
 elements.dialog.addEventListener("close", () => maybeShowTradeNotice());
 elements.dialogReport.addEventListener("click", () => openReportDialog());
@@ -7505,11 +7526,6 @@ for (const preview of [elements.tradeOfferedPreview, elements.tradeWantedPreview
     if (card) openCardDialog(card.dataset.tradeChoiceCard);
   });
 }
-// The event ticker sits in .home-grid, outside .today-docket, so it needs its own listener
-// (the docket delegate below never saw its clicks).
-elements.todaySpecialsRow?.addEventListener("click", () => {
-  claimTodaySpecial().catch(() => showToast("לא הצלחנו לאסוף את הקלף המיוחד."));
-});
 document.querySelector(".today-docket").addEventListener("click", (event) => {
   const hook = event.target.closest("[data-today-nav]");
   if (!hook) return;
@@ -7689,9 +7705,6 @@ elements.navButtons.forEach((button) => {
     } else if (button.dataset.nav === "achievements") {
       renderAchievements();
       showView("achievements");
-    } else if (button.dataset.nav === "events") {
-      renderEvents();
-      showView("events");
     } else if (button.dataset.nav === "growth") {
       renderGrowth();
       showView("growth");
@@ -7759,13 +7772,6 @@ elements.communityTabs.addEventListener("click", (event) => {
   renderGrowth();
   if (model.communityPage === "challenge") refreshDailyChallenge();
   pollWatchedTrade().catch(() => {});
-});
-
-elements.eventTabs?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-event-page]");
-  if (!button) return;
-  model.eventPage = button.dataset.eventPage;
-  renderEvents();
 });
 
 elements.binderGrid.addEventListener("click", (event) => {
@@ -7923,18 +7929,27 @@ document.addEventListener("visibilitychange", () => {
 const tipsOverlay = document.querySelector("#klafi-tips");
 if (tipsOverlay) {
   new MutationObserver(() => {
-    if (tipsOverlay.hidden) maybeShowTradeNotice();
+    if (tipsOverlay.hidden) maybeShowDeferredPopups();
   }).observe(tipsOverlay, { attributes: true, attributeFilter: ["hidden"] });
 }
 // Warm the rip layers on the first idle moment so the first pack tap starts the rip at once.
 schedulePackRipPrefetch();
-bootstrap().then(() => {
-  if (!model.showcase) klafiTips.maybeStart();
+bootstrap().then(async () => {
+  if (model.showcase) return;
+  try {
+    await homeHydrate;
+  } catch {
+    /* Home can fail; the calendar waits for the next successful hydrate. */
+  }
+  klafiTips.maybeStart();
+  if (!tipsBusy()) maybeShowStreakCalendar();
 });
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
 window.__kalpiDebug = {
   showAcceptedTradeNotice,
+  openStreakCalendar,
+  paintStreakCalendar,
   openCardDialog,
   renderSealedPackRip,
   showView,

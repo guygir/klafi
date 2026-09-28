@@ -11,6 +11,7 @@ Levels are unchanged from the locked kit.
 | `rip-pc7` | pack rip (cycle 2/3) | BigSoundBank / La Sonothèque, "Torn paper #6" (#3243) by Joseph Sardin, https://bigsoundbank.com/s3243.html | CC0 |
 | `rip-pc11` | pack rip (cycle 3/3) | Mixkit #2378 "Scissors cutting paper", trimmed to the first two snips, https://mixkit.co/free-sound-effects/scissors-cutting-paper/ | Mixkit Sound Effects Free License (https://mixkit.co/license/#sfxFree) |
 | `click` | primary button click (G5) | Mixkit, derived (warmer variant) | Mixkit Sound Effects Free License |
+| `streak-stamp` | visit-streak seal (office hole punch) | Freesound 460352 "OfficeHolePuncher.wav" by Tycoh, https://freesound.org/people/Tycoh/sounds/460352/ | CC0 |
 | `reveal-quote` | quote reveal (K, confirmation_001 pitched -2) | Kenney Interface Sounds, confirmation_001, https://kenney.nl/assets/interface-sounds | CC0 |
 | `reveal-party` | party reveal (I, pitched +2) | Kenney Interface Sounds, confirmation_001 | CC0 |
 | `rarity-1` | common reveal (J, pitched +4) | Kenney Interface Sounds, confirmation_001 | CC0 |

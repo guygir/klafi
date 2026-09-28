@@ -4,6 +4,7 @@ import pg from "pg";
 import { slimPublicState } from "./slim-state.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { newPublicBinderSlug } from "./public-binder.js";
+import { applyVisitStreak, visitStreakExtras } from "./streak-calendar.js";
 
 const { Pool } = pg;
 const SECURITY_HEADERS = Object.freeze({
@@ -122,6 +123,12 @@ export function sessionFromHomeRow(row) {
     publicBinderSlug: extras.publicBinderSlug || null,
     factionId: row.faction_id || null,
     loginStreak: extras.loginStreak || 0,
+    visitDay: extras.visitDay || null,
+    visitStreak: extras.visitStreak || 0,
+    bestVisitStreak: extras.bestVisitStreak || 0,
+    visitStreakClaims: extras.visitStreakClaims || [],
+    pendingStreakReward: extras.pendingStreakReward || null,
+    streakCalendarAckDay: extras.streakCalendarAckDay || null,
     stateRevision: Number(extras.stateRevision) || 0,
   };
 }
@@ -169,6 +176,11 @@ async function createSession(db, now) {
       publicBinderSlug,
       factionId: null,
       loginStreak: 0,
+      visitDay: null,
+      visitStreak: 0,
+      visitStreakClaims: [],
+      pendingStreakReward: null,
+      streakCalendarAckDay: null,
     },
   };
 }
@@ -190,6 +202,13 @@ export async function handleSlimHome(request, response) {
       await db.query(
         `UPDATE kalpi_sessions SET extras = COALESCE(extras, '{}'::jsonb) || $2::jsonb WHERE token = $1`,
         [token, JSON.stringify({ publicBinderSlug: session.publicBinderSlug })],
+      );
+    }
+    const visit = applyVisitStreak(session, Date.now());
+    if (visit.stamped) {
+      await db.query(
+        `UPDATE kalpi_sessions SET extras = COALESCE(extras, '{}'::jsonb) || $2::jsonb, updated_at = NOW() WHERE token = $1`,
+        [token, JSON.stringify(visitStreakExtras(session))],
       );
     }
     json(response, 200, { token, state: slimPublicState(session, config) });

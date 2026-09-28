@@ -15,7 +15,6 @@
   /* Fixed bottom row: the nav bar, then the footer links (44px tap boxes) directly under it. */
   --nav-height: 62px;
   --dock-height: 44px;
-  --specials-marquee-duration: 9s;
   --nav-clearance: calc(var(--nav-height) + var(--dock-height) + var(--footer-pill-gap) + env(safe-area-inset-bottom, 0px));
   color: var(--ink);
   background: var(--paper);
@@ -3382,20 +3381,6 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .leaderboard-list strong { font-size: 12px; }
 .leaderboard-list .current-player { font-weight: 600; color: var(--civic); }
 .debug-community { opacity: 0.7; }
-.specials-catalog { margin-top: 28px; border-top: 1px solid rgba(44, 51, 48, 0.22); padding-top: 16px; }
-.specials-grid { margin-top: 14px; grid-template-columns: 1fr; }
-.special-set { padding: 14px 0; border: 0; border-bottom: 1px solid rgba(44, 51, 48, 0.18); background: transparent; }
-
-.active-event { max-width: 620px; margin: 20px 0 14px; padding: 20px 0; border-block: 1px solid rgba(44, 51, 48, 0.25); }
-.active-event h2 { margin-bottom: 6px; font-size: 25px; }
-.event-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: 14px; margin-top: 24px; }
-.event-card { min-width: 0; }
-.event-card .kalpi-card { width: 100%; }
-.event-upcoming { margin-top: 22px; font-size: 12px; color: rgba(26, 31, 28, 0.62); }
-.event-explainer { max-width: 42ch; margin: 0 0 12px; font-size: 13px; }
-.event-ledger { display: grid; gap: 16px; }
-.event-ledger-block .work-kicker { margin-bottom: 6px; }
-.event-ledger-block p { margin: 0 0 6px; font-size: 14px; color: var(--ink); }
 
 .bottom-nav { height: 58px; width: min(620px, calc(100% - 24px)); border-radius: 12px; box-shadow: 0 8px 24px rgba(26, 31, 28, 0.12); }
 .bottom-nav button { flex-direction: column; justify-content: center; gap: 2px; padding: 4px; border-inline-start: 1px solid rgba(44, 51, 48, 0.12); font-size: 10px; }
@@ -3810,16 +3795,6 @@ body {
 #home-view .collection-line {
   display: none;
 }
-#home-view .home-grid > .today-specials-line {
-  grid-column: 1 / -1;
-  align-self: start;
-  z-index: 4;
-  width: 100%;
-  min-height: 16px;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-}
 #home-view .today-hero {
   grid-column: 1 / -1;
   display: grid;
@@ -3843,14 +3818,6 @@ body {
   min-height: 0;
   overflow: visible;
 }
-#home-view.has-specials .today-docket-row {
-  min-height: 44px;
-  padding-block: 5px;
-}
-#home-view.has-specials .today-docket-row > small {
-  display: none;
-}
-
 .home-title-row {
   display: flex;
   align-items: flex-start;
@@ -3914,68 +3881,6 @@ body {
   display: none !important;
 }
 
-/* Today event ticker. One line, always in layout. The track holds two identical copies in an RTL
-   flex row; each copy is at least one row wide (100cqi is a fixed length, never a % of the track:
-   a % padding here resolved against the track itself and WebKit grew it without bound). The line
-   moves LEFT: copies sit left-to-right (each copy's text stays RTL), the track starts shifted right
-   by one copy (50%) and slides back to 0, where the second copy sits exactly where the first
-   started, so the loop is seamless. Reduced motion / idle: one copy, no transform, right-aligned. */
-.today-specials-line {
-  display: block;
-  overflow: hidden;
-  width: 100%;
-  min-height: 22px;
-  margin-top: 8px;
-  margin-bottom: 6px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--civic);
-  text-align: start;
-  cursor: pointer;
-  container-type: inline-size;
-}
-.today-specials-line[data-state="idle"],
-.today-specials-line[data-state="pulse"],
-.today-specials-line:disabled { cursor: default; }
-.today-specials-line[data-state="pulse"] { --specials-marquee-duration: 22s; }
-.today-specials-track {
-  display: flex;
-  width: max-content;
-  direction: ltr;
-  white-space: nowrap;
-}
-.today-specials-copy {
-  flex: none;
-  box-sizing: border-box;
-  min-inline-size: 100cqi;
-  padding-inline-end: 2.5em;
-  direction: rtl;
-  font: 600 12px/1.3 "IBM Plex Sans Hebrew", sans-serif;
-}
-.today-specials-copy[aria-hidden="true"] { display: none; }
-.today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: block; }
-.today-specials-line.is-marquee .today-specials-track {
-  animation: specials-marquee var(--specials-marquee-duration) linear infinite;
-}
-.today-specials-line.is-marquee:hover .today-specials-track,
-.today-specials-line.is-marquee:focus-visible .today-specials-track {
-  animation-play-state: paused;
-}
-@media (prefers-reduced-motion: reduce) {
-  .today-specials-line.is-marquee .today-specials-track { animation: none; }
-  .today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: none; }
-  .today-specials-copy {
-    max-inline-size: 100cqi;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-@keyframes specials-marquee {
-  from { transform: translateX(50%); }
-  to { transform: translateX(0); }
-}
-
 .today-docket > header { display: none; }
 .today-docket-list {
   grid-template-columns: 1fr;
@@ -4013,7 +3918,6 @@ body {
 
 .binder-head h1,
 #achievements-view h1,
-#events-view h1,
 .workspace-head h1 {
   margin-bottom: 4px;
   font-size: clamp(24px, 5vw, 36px);
@@ -5434,6 +5338,12 @@ body {
   font: 600 13px/1 "IBM Plex Sans Hebrew", sans-serif;
 }
 
+.level-avatar-stack {
+  position: relative;
+  display: inline-flex;
+  justify-self: center;
+}
+
 .level-streak,
 .collector-streak {
   display: inline-flex;
@@ -5446,10 +5356,17 @@ body {
 
 .level-streak {
   position: absolute;
-  top: -6px;
-  right: -11px;
-  z-index: 3;
-  height: 18px;
+  top: -10px;
+  right: -14px;
+  z-index: 4;
+  min-width: 32px;
+  min-height: 32px;
+  height: auto;
+  padding: 6px 2px 4px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 .streak-count {
@@ -5472,6 +5389,157 @@ body {
 
 .level-avatar-button.has-week-streak {
   box-shadow: 0 0 0 2px var(--foil, #c4a35a);
+}
+
+.streak-dialog {
+  width: min(420px, calc(100% - 24px));
+  padding: 36px 18px 22px;
+}
+.streak-dialog .eyebrow {
+  margin: 0 0 8px;
+  color: var(--civic);
+}
+.streak-dialog h2 {
+  margin-bottom: 8px;
+  font-size: 26px;
+}
+#streak-dialog-copy {
+  margin: 0 0 14px;
+  white-space: pre-line;
+  font: 500 15px/1.45 "IBM Plex Sans Hebrew", sans-serif;
+}
+#streak-calendar,
+.streak-dialog .streak-calendar {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+  margin: 0 0 14px;
+  padding: 8px;
+  list-style: none;
+  padding-inline-start: 8px;
+  border: 1px solid color-mix(in srgb, var(--rule) 55%, var(--paper-deep));
+  background: var(--paper-deep);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+#streak-dialog #close-streak-dialog:focus,
+#streak-dialog #close-streak-dialog:focus-visible {
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--civic);
+}
+.streak-cell {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: center;
+  justify-items: center;
+  aspect-ratio: 1;
+  min-height: 48px;
+  padding: 3px 2px 2px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--rule) 42%, var(--paper));
+  background: var(--paper);
+  color: var(--ink);
+}
+.streak-cell-day {
+  position: relative;
+  z-index: 2;
+  justify-self: start;
+  align-self: start;
+  margin: 3px 0 0 4px;
+  font: 700 11px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+.streak-cell-prize {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.streak-cell-pack {
+  width: 22px;
+  height: auto;
+  transform: rotate(-8deg);
+  filter: drop-shadow(0 1px 1px rgba(26, 31, 28, 0.28));
+}
+.streak-cell-stars {
+  color: var(--foil);
+  font: 700 12px/1 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", serif;
+  letter-spacing: 0.02em;
+}
+.streak-cell-stars[data-stars="1"] {
+  font-size: 14px;
+}
+.streak-cell-stars[data-stars="3"] {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  column-gap: 1px;
+  font-size: 10px;
+  line-height: 0.82;
+  letter-spacing: 0;
+}
+.streak-cell-stars[data-stars="3"] > span:first-child {
+  grid-column: 1 / -1;
+  justify-self: center;
+}
+.streak-cell-check {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.streak-cell-check svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-8deg);
+  opacity: 0.58;
+}
+.streak-cell.is-landing .streak-cell-check svg {
+  animation: streak-stamp-land 320ms cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes streak-stamp-land {
+  0% { opacity: 0; transform: rotate(-16deg) scale(1.12); }
+  70% { opacity: 0.7; transform: rotate(-6deg) scale(0.98); }
+  100% { opacity: 0.58; transform: rotate(-8deg) scale(1); }
+}
+.streak-cell.is-claimed.has-reward {
+  cursor: pointer;
+}
+.streak-cell.is-claimed.has-reward:focus-visible {
+  outline: 2px solid var(--civic);
+  outline-offset: 1px;
+}
+.streak-cell:not(.has-reward) {
+  grid-template-rows: auto 1fr;
+}
+.streak-cell.is-checked {
+  background: color-mix(in srgb, var(--civic) 12%, var(--paper));
+  border-color: color-mix(in srgb, var(--civic) 42%, var(--rule));
+}
+.streak-cell.is-today {
+  outline: 2px solid var(--civic);
+  outline-offset: 0;
+  z-index: 1;
+}
+.streak-cell.is-claimed .streak-cell-prize {
+  opacity: 0.92;
+}
+.streak-dialog-reward {
+  margin: 0 0 14px;
+  color: var(--civic);
+  font: 600 14px/1.4 "IBM Plex Sans Hebrew", sans-serif;
+}
+@media (prefers-reduced-motion: reduce) {
+  .streak-fire { animation: none; }
+  .streak-cell.is-landing .streak-cell-check svg { animation: none; }
 }
 
 .level-letter,
