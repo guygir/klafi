@@ -4071,8 +4071,10 @@ function badgeTierStarRow(tier, { style, foilKey } = {}) {
  * Every badge keeps its own icon and adds a 1/2/3 star row for the tier.
  * The sheen plays once per badge per device (see takeBadgeSheen), not on every re-render.
  */
-function badgeArtwork(id, { tier = "simple", earned = true, sheen = false } = {}) {
-  const icon = {
+function badgeArtwork(id, { tier = "simple", earned = true, sheen = false, secret = false } = {}) {
+  const icon = secret
+    ? '<path d="M21.2 20.2a2.8 2.8 0 1 1 5.2 1.5c-.7.8-2.2 1.3-2.2 2.8"/><circle cx="24.2" cy="28.6" r="1"/>'
+    : {
     "first-rip": '<path d="M16 20h16v14H16zM16 24l8-5 8 5M24 19v15"/><path d="M20 16l2-4 2 4 2-4 2 4"/>',
     "register-five": '<rect x="15" y="18" width="13" height="17" rx="1"/><path d="M19 15h13v17M23 12h12v17"/>',
     "source-check": '<circle cx="22" cy="23" r="7"/><path d="M27 28l6 6M19 23l2 2 4-5"/>',
@@ -4102,6 +4104,7 @@ function badgeArtwork(id, { tier = "simple", earned = true, sheen = false } = {}
     "numbered-first": '<path d="M21.5 14l-3 20M30 14l-3 20M15.5 20.5h18M14.5 27.5h18"/>',
     "streak-thirty": '<path d="M24 12.5c1.2 4.2 6.5 6.4 6.5 12.5a6.5 6.5 0 0 1-13 0c0-3.2 1.8-5.4 3.2-7.4.8 2 1.9 3.2 3.3 3.5-1.2-3-.9-5.9 0-8.6z"/>',
     "ten-copies": '<rect x="13" y="19" width="11" height="15" rx="1"/><rect x="18.5" y="16.5" width="11" height="15" rx="1"/><rect x="24" y="14" width="11" height="15" rx="1"/><path d="M27 19v6M30 19h2.5v6H30z"/>',
+    "warehouse-full": '<path d="M15 20h18v14H15zM18 20v-4h12v4M19 25h10M19 29h7"/>',
   }[id] || (String(id).startsWith("set-complete:")
     ? '<rect x="14" y="17" width="12" height="16" rx="1"/><rect x="20" y="14" width="12" height="16" rx="1"/><path d="M23.5 22.5l2.5 2.5 4.5-5"/>'
     : '<circle cx="24" cy="24" r="5"/>');
@@ -4153,6 +4156,7 @@ const ACHIEVEMENT_RULES = [
   ["profile", "שם או אווטאר משלי"],
   ["rare", "קלפים נדירים"],
   ["numbered", "קלפים ממוספרים"],
+  ["warehouseFull", "מחסן מלא עד הסוף"],
   ["league", "חבר בליגה"],
   ["setComplete", "סדרה מלאה (תג לכל סדרה)"],
 ];
@@ -4172,6 +4176,7 @@ function achievementEditorMarkup(badge = {}) {
           </select>
         </label>
         <label>יעד <input data-ach-field="target" type="number" min="0" max="200" value="${badge.target ?? 1}" /></label>
+        <label>נסתר עד שמשיגים <input data-ach-field="hidden" type="checkbox"${badge.hidden ? " checked" : ""} /></label>
         <label>עמוד
           <select data-ach-field="tier">
             ${ACHIEVEMENT_TIER_ORDER.map((tier) => `<option value="${tier}"${achievementTier(badge) === tier ? " selected" : ""}>${ACHIEVEMENT_TIER_LABELS[tier]}</option>`).join("")}
@@ -4212,6 +4217,7 @@ async function saveStudioAchievements() {
     rule: row.querySelector('[data-ach-field="rule"]').value,
     target: Number(row.querySelector('[data-ach-field="target"]').value) || 0,
     tier: row.querySelector('[data-ach-field="tier"]')?.value || "simple",
+    hidden: Boolean(row.querySelector('[data-ach-field="hidden"]')?.checked),
   }));
   try {
     const saved = await request("/api/studio/achievements", {
@@ -4282,6 +4288,7 @@ const BADGE_COPY = {
   "rare-three": ["שלושה נדירים", "אספו שלושה קלפים נדירים שונים."],
   "ten-copies": ["עשרה עותקים", "אספו עשרה עותקים של אותו קלף."],
   "numbered-first": ["ממוספר", "אספו קלף הולו ממוספר."],
+  "warehouse-full": ["עד אפס מקום", "המחסן הגיע לשמונה קלפים שמחכים."],
   "streak-thirty": ["חודש רצוף", "פתחו קלפים שלושים ימים ברצף."],
 };
 
@@ -4474,21 +4481,22 @@ function renderAchievements() {
   elements.achievementGrid.innerHTML = badges
     .filter((badge) => achievementTier(badge) === model.achievementTier)
     .map((badge) => {
-    const copy = hebrewBadge(badge);
+    const secret = Boolean(badge.hidden) && !badge.earned;
+    const copy = secret ? { name: "?", description: "" } : hebrewBadge(badge);
     const tier = achievementTier(badge);
     const target = Math.max(1, Number(badge.target) || 1);
     const progress = Math.max(0, Math.min(target, Number(badge.progress) || 0));
     const percent = badge.earned ? 100 : Math.max(0, Math.min(100, Math.round((progress / target) * 100)));
     return `
-    <article class="achievement-badge tier-${tier} ${badge.earned ? "earned" : ""}" data-badge-id="${escapeHtml(badge.id)}">
-      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id, { tier, earned: badge.earned, sheen: tier === "hard" && badge.earned && takeBadgeSheen(badge.id) })}</span>
+    <article class="achievement-badge tier-${tier} ${badge.earned ? "earned" : ""} ${secret ? "is-secret" : ""}" data-badge-id="${escapeHtml(badge.id)}">
+      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id, { tier, earned: badge.earned && !secret, sheen: tier === "hard" && badge.earned && takeBadgeSheen(badge.id), secret })}</span>
       <div>
         <strong>${escapeHtml(copy.name)}</strong>
         <p>${escapeHtml(copy.description)}</p>
-        <div class="achievement-track" role="img" aria-label="${progress} מתוך ${target}">
+        ${secret ? "" : `<div class="achievement-track" role="img" aria-label="${progress} מתוך ${target}">
           <span style="width:${percent}%"></span>
           <b>${badge.earned ? target : progress}/${target}</b>
-        </div>
+        </div>`}
       </div>
     </article>`;
   }).join("");

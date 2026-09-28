@@ -2227,6 +2227,22 @@ img.mini-art {
   margin: 0;
   font: 600 16px/1.4 "IBM Plex Sans Hebrew", sans-serif;
 }
+.wait-dialog p::before,
+#home-settle-hint:not([hidden])::before,
+.empty-note.is-loading::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-inline-end: 8px;
+  vertical-align: -4px;
+  background: url("/antique-wait.png?v=card-surface-149") center / 460% no-repeat;
+  animation: antique-press 1.2s steps(2, end) infinite;
+}
+@keyframes antique-press {
+  0%, 45% { transform: scale(1) rotate(-10deg); opacity: 0.45; }
+  55%, 100% { transform: scale(1) rotate(8deg); opacity: 1; }
+}
 .trade-notice-dialog {
   width: min(420px, calc(100% - 24px));
 }
@@ -5539,7 +5555,10 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .streak-fire { animation: none; }
-  .streak-cell.is-landing .streak-cell-check svg { animation: none; }
+  .streak-cell.is-landing .streak-cell-check svg,
+  .wait-dialog p::before,
+  #home-settle-hint:not([hidden])::before,
+  .empty-note.is-loading::before { animation: none; }
 }
 
 .level-letter,

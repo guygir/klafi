@@ -1,7 +1,7 @@
 export const PARTY_BALLOTS = Object.freeze({
   YSR: { letters: "דרך", chip: "ballot-letter-ysr.png" },
   LIK: { letters: "מחל", chip: "ballot-letter-lik.png" },
-  BYD: { letters: "ב", chip: "ballot-letter-byd.png" },
+  BYD: { letters: "רק", chip: "ballot-letter-byd.png" },
   YB: { letters: "ל", chip: "ballot-letter-yb.png" },
   DEM: { letters: "אמת", chip: "ballot-letter-dem.png" },
   RZ: { letters: "ט", chip: "ballot-letter-rz.png" },
@@ -20,9 +20,11 @@ export function partyLetterChipNames() {
 }
 
 export function factionLetters(party) {
-  const listed = (party?.finalLetters || party?.requestedLetters || [])[0] || "";
-  if (listed) return listed;
-  return PARTY_BALLOTS[party?.id]?.letters || "";
+  const official = (party?.finalLetters || [])[0] || "";
+  if (official) return official;
+  const designed = PARTY_BALLOTS[party?.id]?.letters || "";
+  if (designed) return designed;
+  return (party?.requestedLetters || [])[0] || "";
 }
 
 export function factionLetterArt(party) {

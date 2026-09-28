@@ -67,6 +67,15 @@
       "tier": "simple"
     },
     {
+      "id": "warehouse-full",
+      "nameHe": "עד אפס מקום",
+      "descriptionHe": "המחסן הגיע לשמונה קלפים שמחכים.",
+      "rule": "warehouseFull",
+      "target": 1,
+      "tier": "simple",
+      "hidden": true
+    },
+    {
       "id": "collector-ten",
       "nameHe": "עשרה שונים",
       "descriptionHe": "אספו עשרה קלפים שונים.",
@@ -176,7 +185,8 @@
       "descriptionHe": "אספו קלף הולו ממוספר.",
       "rule": "numbered",
       "target": 1,
-      "tier": "hard"
+      "tier": "hard",
+      "hidden": true
     },
     {
       "id": "streak-thirty",
