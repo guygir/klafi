@@ -524,48 +524,23 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /אתם \$\{yourRank\}\/\$\{collectorTotal\}/);
   assert.match(css, /#collector-rank\.work-note \{[^}]*font-size: 14px !important/);
   assert.match(javascript, /slice\(0, 10\)/);
-  assert.match(html, /id="today-specials-row"/);
-  assert.match(html, /class="today-specials-line is-marquee"/);
-  assert.match(html, /id="today-specials-copy"/);
-  assert.match(html, /id="today-specials-copy-repeat"/);
-  assert.match(html, /data-today-nav="specials"/);
-  assert.match(html, /id="today-specials-row"[^>]*hidden/);
-  assert.match(html, /id="today-specials-row"[^>]*data-state="pulse"/);
-  assert.match(html, /id="today-specials-copy"><\/span>/);
-  assert.doesNotMatch(html, /id="today-specials-copy">המחסן ממשיך לאסוף חבילות גם עכשיו</);
-  assert.doesNotMatch(html, /id="today-specials-visual"/);
-  assert.doesNotMatch(html, /id="today-specials-hook"/);
-  assert.match(javascript, /function renderTodaySpecials/);
-  assert.doesNotMatch(javascript, /function layoutTodaySpecials/);
-  assert.match(javascript, /row\.hidden = !hasLine/);
-  assert.match(javascript, /copy\.textContent !== line/);
-  assert.match(javascript, /is-marquee/);
+  assert.doesNotMatch(html, /id="today-specials-row"/);
+  assert.doesNotMatch(html, /today-specials-line/);
+  assert.doesNotMatch(html, /id="today-specials-copy"/);
+  assert.doesNotMatch(javascript, /function renderTodaySpecials/);
+  assert.doesNotMatch(javascript, /function claimTodaySpecial/);
+  assert.doesNotMatch(javascript, /function refreshTodayPulse/);
+  assert.doesNotMatch(javascript, /from "\.\/today-pulse\.js"/);
+  assert.doesNotMatch(css, /today-specials-line/);
+  assert.doesNotMatch(css, /specials-marquee/);
   assert.match(javascript, /idlePullCount \?\? previous\.idlePullCount/);
   assert.match(javascript, /achievements \?\? previous\.achievements/);
   assert.match(javascript, /function hydrateHome[\s\S]*renderAchievements/);
-  assert.match(css, /specials-marquee/);
-  assert.doesNotMatch(css, /\.today-specials-line\.is-ready:not\(\.is-fit\)/);
-  assert.match(javascript, /function claimTodaySpecial/);
   assert.match(html, /<dialog id="event-dialog" class="policy-dialog event-dialog"/);
   assert.match(html, /id="event-dialog-title"/);
   assert.match(html, /id="event-dialog-ok" class="primary-action"/);
   assert.match(javascript, /function claimEventPull/);
-  assert.match(javascript, /elements\.todaySpecialsRow\?\.addEventListener\("click", \(\) => \{\s*claimTodaySpecial\(\)/);
-  assert.match(javascript, /windowOpen\.reward === "pull"/);
-  assert.match(javascript, /windowOpen\.tickerHe/);
-  // Claimed launch pull: same event, same marquee, data-driven claimed copy, and no longer a control.
-  const specialsBody = javascript.match(/\nfunction renderTodaySpecials[\s\S]*?\n}\n/)[0];
-  assert.match(specialsBody, /windowOpen\.claimedToday\s*\?\s*windowOpen\.claimedTickerHe/);
-  assert.match(specialsBody, /todayPulseCopy\(model\.activity\?\.todayPulse\)/);
-  assert.match(specialsBody, /row\.classList\.toggle\("is-marquee", true\)/);
-  assert.match(javascript, /from "\.\/today-pulse\.js"/);
-  assert.match(javascript, /function refreshTodayPulse/);
-  assert.match(javascript, /TODAY_PULSE_REFRESH_MS/);
-  assert.match(specialsBody, /const inert = windowOpen\?\.reward === "pull" && Boolean\(windowOpen\.claimedToday\)/);
-  assert.match(specialsBody, /row\.disabled = inert/);
-  assert.match(javascript, /if \(windowOpen\.reward === "pull"\) \{\s*if \(windowOpen\.claimedToday\) return;\s*await claimEventPull/);
-  assert.match(css, /\.today-specials-line\[data-state="idle"\],\s*\.today-specials-line\[data-state="pulse"\],\s*\.today-specials-line:disabled \{ cursor: default; \}/);
-  assert.match(css, /\.today-specials-line\[data-state="pulse"\] \{ --specials-marquee-duration: 22s; \}/);
+  assert.match(javascript, /activeEvent\?\.reward === "pull"/);
   assert.match(javascript, /PULL_CAP_REACHED/);
   assert.match(javascript, /המחסן מלא/);
   assert.match(javascript, /חבילה נוספת נכנסה למחסן/);
@@ -583,8 +558,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(claimBody, /readyCount \+ 1|unseenCount \+=|idleQueue\.push/);
   assert.doesNotMatch(claimBody, /בודקים|todaySpecialsRow\.disabled/);
   assert.match(javascript, /function predictedReadyPulls[\s\S]*?preparedPulls[\s\S]*?availableAt\) <= nowMs/);
-  // Stale cached state is refreshed while the event line shows (throttled), never on the tap.
-  assert.match(javascript, /function renderTodaySpecials[\s\S]*?refreshEventPredictionIfStale\(\)/);
+  // Stale cached state is refreshed on the events page (throttled), never on the tap.
+  assert.match(javascript, /refreshEventPredictionIfStale\(\)/);
   assert.match(javascript, /function refreshEventPredictionIfStale[\s\S]*?EVENT_PREDICTION_STALE_MS[\s\S]*?nextIdle <= nowMs[\s\S]*?hydrateIdleQueue\(\)/);
   assert.match(javascript, /function applyHomePayload[\s\S]*?stateFreshAt = Date\.now\(\)/);
   assert.doesNotMatch(claimBody, /hydrateIdleQueue|refreshEventPrediction/);
@@ -762,7 +737,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /חסרים לכם עוד \$\{progression\.remaining\} קלפים חדשים כדי לעלות רמה/);
   assert.match(javascript, /\$\{unique\}\/\$\{target\}/);
   assert.match(javascript, /function nextCollectionRemaining/);
-  assert.match(javascript, /todayPulseCopy/);
+  assert.doesNotMatch(javascript, /todayPulseCopy/);
   assert.doesNotMatch(javascript, /אין אירוע כרגע/);
   assert.match(html, /data-today-nav="growth"/);
   assert.doesNotMatch(html, /data-today-nav="events"/);
@@ -802,7 +777,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-135/);
+  assert.match(html, /card-surface-136/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -921,7 +896,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-135/);
+  assert.match(html, /card-surface-136/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -978,8 +953,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="replay-tips"/);
   assert.doesNotMatch(html, /data-replay-tips/);
   assert.match(html, /class="binder-stats-row"/);
-  assert.match(html, /class="home-grid"[\s\S]*id="today-specials-row"[\s\S]*class="today-hero"[\s\S]*class="pack-plinth"/);
-  assert.match(css, /#home-view \.home-grid > \.today-specials-line/);
+  assert.match(html, /class="home-grid"[\s\S]*class="today-hero"[\s\S]*class="pack-plinth"/);
+  assert.doesNotMatch(css, /#home-view \.home-grid > \.today-specials-line/);
   assert.match(css, /#home-view \.today-hero \{/);
   assert.match(css, /grid-column:\s*1\s*\/\s*-1/);
   assert.match(css, /\.level-letter,\s*\.collector-letter \{[^}]*object-fit:\s*contain/);
@@ -1006,16 +981,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /min-height:\s*32px/);
   assert.match(css, /#binder-view \.filter-strip/);
   assert.match(css, /#binder-view\.view\.active \{[^}]*flex-direction:\s*column/);
-  assert.doesNotMatch(css, /#home-view \.pack-plinth \.pack-wrapper,\s*#home-view \.pack-plinth \.today-specials-line/);
-  assert.doesNotMatch(css, /\.today-specials-copy \{[^}]*padding-inline-end:\s*100%/);
-  assert.match(css, /\.today-specials-copy \{[^}]*min-inline-size:\s*100cqi/);
-  // Moves LEFT: LTR track of RTL copies, sliding from +50% back to 0.
-  assert.match(css, /\.today-specials-track \{[^}]*direction:\s*ltr/);
-  assert.match(css, /\.today-specials-copy \{[^}]*direction:\s*rtl/);
-  assert.match(css, /@keyframes specials-marquee \{\s*from \{ transform: translateX\(50%\); \}\s*to \{ transform: translateX\(0\); \}/);
-  assert.match(css, /\.today-specials-line \{[^}]*container-type:\s*inline-size/);
-  assert.match(css, /prefers-reduced-motion: reduce\) \{\s*\.today-specials-line\.is-marquee \.today-specials-track \{ animation: none; \}/);
-  assert.match(css, /animation: specials-marquee var\(--specials-marquee-duration\) linear infinite/);
+  assert.doesNotMatch(css, /today-specials-copy/);
+  assert.doesNotMatch(css, /@keyframes specials-marquee/);
+  assert.doesNotMatch(css, /--specials-marquee-duration/);
   assert.match(javascript, /function explainUnavailableNotifications/);
   assert.match(javascript, /function avatarBallotState/);
   assert.match(javascript, /ballot-letter-lik\.png/);
@@ -1053,7 +1021,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /floor: 4\.5/);
   assert.doesNotMatch(html, /id="dialog-flip"/);
   assert.match(css, /--footer-pill-gap:\s*0px/);
-  assert.match(css, /--specials-marquee-duration:\s*9s/);
+  assert.doesNotMatch(css, /--specials-marquee-duration/);
   // The clearance reserved under the content is exactly the fixed row: nav + footer links + safe area.
   assert.match(css, /--nav-clearance:\s*calc\(var\(--nav-height\) \+ var\(--dock-height\) \+ var\(--footer-pill-gap\) \+ env\(safe-area-inset-bottom, 0px\)\)/);
   assert.match(css, /@media \(max-width: 412px\) and \(max-height: 680px\) \{\s*\/\*[^*]*\*\/\s*:root \{ --nav-height: 54px; \}/);
@@ -1072,7 +1040,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-135/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-136/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -1087,7 +1055,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-135/);
+  assert.match(html, /packrip\.css\?v=card-surface-136/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);

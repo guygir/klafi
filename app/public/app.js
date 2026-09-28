@@ -15,15 +15,12 @@ import {
 } from "./walkout-sunburst.js";
 import { destroyPackRip, mountPackRip, packRipMarkup, preloadPackRipAssets, schedulePackRipPrefetch } from "./packrip.js";
 import { createSfx, revealClipForStage, sfxRarityKey } from "./sfx.js";
-import { TODAY_PULSE_REFRESH_MS, todayPulseCopy } from "./today-pulse.js";
-
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
 // When the server state last arrived (0 = only the localStorage cache so far).
 let stateFreshAt = 0;
 let eventPredictionRefreshAt = 0;
-let lastTodayPulseAt = 0;
 const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
@@ -155,9 +152,6 @@ const elements = {
   joinLeague: document.querySelector("#join-league"),
   leagueStatus: document.querySelector("#league-status"),
   leagueRooms: document.querySelector("#league-rooms"),
-  todaySpecialsRow: document.querySelector("#today-specials-row"),
-  todaySpecialsCopy: document.querySelector("#today-specials-copy"),
-  todaySpecialsCopyRepeat: document.querySelector("#today-specials-copy-repeat"),
   closeProfile: document.querySelector("#close-profile"),
   homeTitle: document.querySelector("#home-title"),
   homeSettleHint: document.querySelector("#home-settle-hint"),
@@ -1083,10 +1077,7 @@ function applyExtrasPayload({ events, trades, leaderboards, activity, specials, 
     watchOpenTrade();
   }
   if (leaderboards) model.leaderboards = mergeLeaderboards(model.leaderboards, leaderboards);
-  if (activity) {
-    model.activity = activity;
-    lastTodayPulseAt = Date.now();
-  }
+  if (activity) model.activity = activity;
   if (specials) model.specials = specials;
   if (specialWindow !== undefined) model.specialWindow = specialWindow;
   if (state) {
@@ -2599,56 +2590,6 @@ function renderTodayDocket() {
       ? "אתם במקום הראשון"
       : "המקום הראשון פנוי";
   elements.todayLeaderMeta.textContent = "";
-  renderTodaySpecials();
-}
-
-// The Today event ticker. Always visible; CSS owns the motion (see .today-specials-line).
-// updateCountdown calls this every second, so it only writes to the DOM when something changed:
-// re-setting the copy's text each tick is what used to re-trigger layout (and restart the line).
-function renderTodaySpecials() {
-  const row = elements.todaySpecialsRow;
-  if (!row) return;
-  const windowOpen = model.specialWindow;
-  if (windowOpen?.reward === "pull" && !windowOpen.claimedToday) refreshEventPredictionIfStale();
-  let line = todayPulseCopy(model.activity?.todayPulse);
-  if (windowOpen?.reward === "pull") {
-    line = windowOpen.claimedToday
-      ? windowOpen.claimedTickerHe || `${windowOpen.nameHe} · החבילה כבר אצלכם`
-      : windowOpen.tickerHe || `${windowOpen.nameHe} · חבילה נוספת לכל שחקן`;
-  } else if (windowOpen) {
-    const closes = new Date(windowOpen.closesAt);
-    const until = Number.isNaN(closes.getTime())
-      ? ""
-      : closes.toLocaleDateString("he-IL", { day: "numeric", month: "long" });
-    const detail = windowOpen.claimedToday
-      ? "הקלף היומי כבר באוסף — והוא נשאר באלבום."
-      : until
-        ? `פתוח עד ${until}. קלף אחד להיום.`
-        : "קלף אחד להיום — והוא נשאר באלבום.";
-    line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
-  }
-  const hasLine = Boolean(line);
-  row.hidden = !hasLine;
-  document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen) || hasLine);
-  if (!hasLine) {
-    for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
-      if (copy && copy.textContent) copy.textContent = "";
-    }
-    return;
-  }
-  const state = !windowOpen ? "pulse" : windowOpen.claimedToday ? "claimed" : "live";
-  if (row.dataset.state !== state) row.dataset.state = state;
-  row.classList.toggle("is-marquee", true);
-  // A claimed pull event keeps scrolling its "already yours" line but is no longer a control:
-  // disabled = no click, no focus, no pop-up, no POST. (Card events manage .disabled themselves.)
-  const inert = windowOpen?.reward === "pull" && Boolean(windowOpen.claimedToday);
-  if (inert !== (row.dataset.inert === "true")) {
-    row.dataset.inert = String(inert);
-    row.disabled = inert;
-  }
-  for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
-    if (copy && copy.textContent !== line) copy.textContent = line;
-  }
 }
 
 function layoutAdvocacyDock() {
@@ -2844,27 +2785,6 @@ function updateCountdown() {
 }
 
 setInterval(updateCountdown, 1000);
-setInterval(() => {
-  refreshTodayPulse().catch(() => {});
-}, TODAY_PULSE_REFRESH_MS);
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") refreshTodayPulse().catch(() => {});
-});
-
-async function refreshTodayPulse({ force = false } = {}) {
-  if (!model.token || model.showcase) return;
-  const now = Date.now();
-  if (!force && lastTodayPulseAt && now - lastTodayPulseAt < TODAY_PULSE_REFRESH_MS) return;
-  lastTodayPulseAt = now;
-  try {
-    const payload = await request("/api/community");
-    if (payload?.activity) model.activity = payload.activity;
-    if (payload?.specialWindow !== undefined) model.specialWindow = payload.specialWindow;
-    renderTodaySpecials();
-  } catch {
-    /* Keep the last pulse line until the next 15-minute tick. */
-  }
-}
 
 function resetPackRip() {
   packRipListeners?.abort();
@@ -5229,6 +5149,7 @@ function renderEvents() {
     elements.eventPull.textContent = active.reward === "pull"
       ? (active.claimedToday ? "החבילה הנוספת כבר אצלכם" : "איסוף החבילה הנוספת")
       : (active.claimedToday ? "הקלף היומי כבר נאסף" : "פתיחת קלף האירוע");
+    if (active.reward === "pull" && !active.claimedToday) refreshEventPredictionIfStale();
     elements.eventCards.innerHTML = active.cards.map((card) => `
       <article class="event-card">${displayCardMarkup(card, "event")}</article>`).join("");
   }
@@ -5258,42 +5179,6 @@ function renderEvents() {
   });
 }
 
-async function claimTodaySpecial() {
-  const windowOpen = model.specialWindow;
-  if (!windowOpen) return;
-  if (windowOpen.reward === "pull") {
-    if (windowOpen.claimedToday) return;
-    await claimEventPull(windowOpen);
-    return;
-  }
-  if (windowOpen.claimedToday) {
-    elements.navButtons.find((button) => button.dataset.nav === "binder")?.click();
-    return;
-  }
-  elements.todaySpecialsRow.disabled = true;
-  try {
-    model.currentPack = await request(`/api/events/${encodeURIComponent(windowOpen.id)}/pull`, { method: "POST" });
-    setServerState(await request("/api/state"));
-    model.specialWindow = { ...windowOpen, claimedToday: true };
-    model.currentCardIndex = 0;
-    model.previewMode = false;
-    model.currentPack.cards = (model.currentPack.cards || []).slice(0, 1);
-    renderTodayDocket();
-    showView("pack");
-    startWalkout();
-  } catch (error) {
-    if (error.status === 409) {
-      model.specialWindow = { ...windowOpen, claimedToday: true };
-      renderTodayDocket();
-      showToast("קלף האירוע כבר נאסף היום.");
-      return;
-    }
-    showToast("חלון האיסוף סגור עכשיו.");
-  } finally {
-    elements.todaySpecialsRow.disabled = false;
-  }
-}
-
 function pullCountCopy(count) {
   return count === 1 ? "חבילה אחת" : `${count} חבילות`;
 }
@@ -5309,7 +5194,7 @@ const EVENT_PULL_COPY = {
   cap: (cap) => ({
     outcome: "cap",
     title: "המחסן מלא",
-    copy: `יש לכם כבר ${cap} חבילות שמחכות, וזה המקסימום. פתחו חבילה אחת וחזרו ללחוץ על השורה, והחבילה הנוספת תחכה לכם.`,
+    copy: `יש לכם כבר ${cap} חבילות שמחכות, וזה המקסימום. פתחו חבילה אחת וחזרו לאירוע, והחבילה הנוספת תחכה לכם.`,
   }),
   claimed: () => ({
     outcome: "claimed",
@@ -7627,11 +7512,6 @@ for (const preview of [elements.tradeOfferedPreview, elements.tradeWantedPreview
     if (card) openCardDialog(card.dataset.tradeChoiceCard);
   });
 }
-// The event ticker sits in .home-grid, outside .today-docket, so it needs its own listener
-// (the docket delegate below never saw its clicks).
-elements.todaySpecialsRow?.addEventListener("click", () => {
-  claimTodaySpecial().catch(() => showToast("לא הצלחנו לאסוף את הקלף המיוחד."));
-});
 document.querySelector(".today-docket").addEventListener("click", (event) => {
   const hook = event.target.closest("[data-today-nav]");
   if (!hook) return;

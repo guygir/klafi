@@ -15,7 +15,6 @@
   /* Fixed bottom row: the nav bar, then the footer links (44px tap boxes) directly under it. */
   --nav-height: 62px;
   --dock-height: 44px;
-  --specials-marquee-duration: 9s;
   --nav-clearance: calc(var(--nav-height) + var(--dock-height) + var(--footer-pill-gap) + env(safe-area-inset-bottom, 0px));
   color: var(--ink);
   background: var(--paper);
@@ -3810,16 +3809,6 @@ body {
 #home-view .collection-line {
   display: none;
 }
-#home-view .home-grid > .today-specials-line {
-  grid-column: 1 / -1;
-  align-self: start;
-  z-index: 4;
-  width: 100%;
-  min-height: 16px;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-}
 #home-view .today-hero {
   grid-column: 1 / -1;
   display: grid;
@@ -3843,14 +3832,6 @@ body {
   min-height: 0;
   overflow: visible;
 }
-#home-view.has-specials .today-docket-row {
-  min-height: 44px;
-  padding-block: 5px;
-}
-#home-view.has-specials .today-docket-row > small {
-  display: none;
-}
-
 .home-title-row {
   display: flex;
   align-items: flex-start;
@@ -3912,68 +3893,6 @@ body {
 .masthead .presentation-link,
 .masthead .presentation-studio-link {
   display: none !important;
-}
-
-/* Today event ticker. One line, always in layout. The track holds two identical copies in an RTL
-   flex row; each copy is at least one row wide (100cqi is a fixed length, never a % of the track:
-   a % padding here resolved against the track itself and WebKit grew it without bound). The line
-   moves LEFT: copies sit left-to-right (each copy's text stays RTL), the track starts shifted right
-   by one copy (50%) and slides back to 0, where the second copy sits exactly where the first
-   started, so the loop is seamless. Reduced motion / idle: one copy, no transform, right-aligned. */
-.today-specials-line {
-  display: block;
-  overflow: hidden;
-  width: 100%;
-  min-height: 22px;
-  margin-top: 8px;
-  margin-bottom: 6px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--civic);
-  text-align: start;
-  cursor: pointer;
-  container-type: inline-size;
-}
-.today-specials-line[data-state="idle"],
-.today-specials-line[data-state="pulse"],
-.today-specials-line:disabled { cursor: default; }
-.today-specials-line[data-state="pulse"] { --specials-marquee-duration: 22s; }
-.today-specials-track {
-  display: flex;
-  width: max-content;
-  direction: ltr;
-  white-space: nowrap;
-}
-.today-specials-copy {
-  flex: none;
-  box-sizing: border-box;
-  min-inline-size: 100cqi;
-  padding-inline-end: 2.5em;
-  direction: rtl;
-  font: 600 12px/1.3 "IBM Plex Sans Hebrew", sans-serif;
-}
-.today-specials-copy[aria-hidden="true"] { display: none; }
-.today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: block; }
-.today-specials-line.is-marquee .today-specials-track {
-  animation: specials-marquee var(--specials-marquee-duration) linear infinite;
-}
-.today-specials-line.is-marquee:hover .today-specials-track,
-.today-specials-line.is-marquee:focus-visible .today-specials-track {
-  animation-play-state: paused;
-}
-@media (prefers-reduced-motion: reduce) {
-  .today-specials-line.is-marquee .today-specials-track { animation: none; }
-  .today-specials-line.is-marquee .today-specials-copy[aria-hidden="true"] { display: none; }
-  .today-specials-copy {
-    max-inline-size: 100cqi;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-@keyframes specials-marquee {
-  from { transform: translateX(50%); }
-  to { transform: translateX(0); }
 }
 
 .today-docket > header { display: none; }
