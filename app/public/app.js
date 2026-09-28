@@ -4720,6 +4720,10 @@ function tipsOverlayOpen() {
   return Boolean(overlay && !overlay.hidden);
 }
 
+function tipsBusy() {
+  return tipsOverlayOpen() || Boolean(klafiTips.getState?.()?.started && klafiTips.getState?.()?.mode === "page");
+}
+
 function streakRewardMarkup(reward) {
   if (!reward) return "";
   if (reward.kind === "pack") {
@@ -4755,7 +4759,7 @@ function paintStreakCalendar(calendar) {
       <li class="streak-cell${cell.checked ? " is-checked" : ""}${cell.current ? " is-today" : ""}${cell.reward ? " has-reward" : ""}" data-day="${cell.day}">
         <span class="streak-cell-day">${cell.day}</span>
         ${cell.reward ? streakRewardMarkup(cell.reward) : ""}
-        ${cell.checked ? `<span class="streak-cell-check" aria-hidden="true">✓</span>` : ""}
+        ${cell.checked ? `<span class="streak-cell-check" aria-hidden="true"><svg viewBox="0 0 12 12" width="11" height="11"><path d="M2 6.2 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg></span>` : ""}
       </li>`).join("");
   }
   const rewardLine = streakRewardLine(calendar);
@@ -4767,7 +4771,7 @@ function paintStreakCalendar(calendar) {
 
 function openStreakCalendar({ force = false, calendar } = {}) {
   const next = calendar || model.serverState?.streakCalendar;
-  if (!next || !elements.streakDialog) return false;
+  if (!next?.days || !elements.streakDialog) return false;
   paintStreakCalendar(next);
   if (!elements.streakDialog.open) elements.streakDialog.showModal();
   return true;
@@ -4776,7 +4780,7 @@ function openStreakCalendar({ force = false, calendar } = {}) {
 function maybeShowStreakCalendar({ force = false } = {}) {
   if (model.showcase || model.streakNoticeBusy) return false;
   if (!force && !stateFreshAt) return false;
-  if (elements.waitDialog?.open || tipsOverlayOpen()) return false;
+  if (elements.waitDialog?.open || (!force && tipsBusy())) return false;
   if (elements.streakDialog?.open) return true;
   if (!force && playerDialogOpen()) return false;
   const calendar = model.serverState?.streakCalendar;
@@ -8048,13 +8052,13 @@ if (tipsOverlay) {
 schedulePackRipPrefetch();
 bootstrap().then(async () => {
   if (model.showcase) return;
-  klafiTips.maybeStart();
   try {
     await homeHydrate;
   } catch {
     /* Home can fail; the calendar waits for the next successful hydrate. */
   }
-  if (!tipsOverlayOpen()) maybeShowStreakCalendar();
+  klafiTips.maybeStart();
+  if (!tipsBusy()) maybeShowStreakCalendar();
 });
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));

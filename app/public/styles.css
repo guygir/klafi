@@ -5549,25 +5549,22 @@ body {
 }
 .streak-cell-check {
   position: absolute;
-  inset: 0;
+  inset-inline-end: 2px;
+  bottom: 2px;
   display: grid;
   place-items: center;
+  width: 12px;
+  height: 12px;
   color: #1f6b46;
-  font: 800 22px/1 "IBM Plex Sans Hebrew", sans-serif;
-  text-shadow: 0 1px 0 rgba(244, 239, 228, 0.85);
   pointer-events: none;
 }
 .streak-cell.is-checked {
-  background: color-mix(in srgb, #d7eadc 55%, var(--paper));
+  background: color-mix(in srgb, #d7eadc 48%, var(--paper));
   border-color: color-mix(in srgb, #1f6b46 35%, var(--rule));
 }
 .streak-cell.is-today {
   outline: 2px solid var(--civic);
   outline-offset: 1px;
-}
-.streak-cell.has-reward.is-checked .streak-cell-pack,
-.streak-cell.has-reward.is-checked .streak-cell-stars {
-  opacity: 0.35;
 }
 .streak-dialog-reward {
   margin: 0 0 14px;
