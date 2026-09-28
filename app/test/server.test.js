@@ -1479,8 +1479,10 @@ test("first enter of a Jerusalem day stamps the visit calendar and grants reward
   assert.equal(opened.body.state.streakCalendar.days[4].opened, true);
   assert.equal(opened.body.state.unseenCount, dayFive.body.state.unseenCount);
   const again = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 5 } });
-  assert.equal(again.status, 200);
-  assert.equal(again.body.state.inventory[streakPull.cardId], copiesBefore + 1);
+  assert.equal(again.status, 409);
+  assert.equal(again.body.error, "STREAK_REWARD_OPENED");
+  const afterReplay = await api(running.base, "/api/state", { token });
+  assert.equal(afterReplay.body.inventory[streakPull.cardId], copiesBefore + 1);
   const oneStar = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 2 } });
   assert.equal(oneStar.status, 200);
   assert.equal(oneStar.body.mode, "streak-card");

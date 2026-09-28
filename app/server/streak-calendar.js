@@ -55,6 +55,7 @@ export function visitStreakExtras(session) {
     visitStreakClaims: Array.isArray(session.visitStreakClaims) ? session.visitStreakClaims : [],
     pendingStreakReward: session.pendingStreakReward || null,
     streakCalendarAckDay: session.streakCalendarAckDay || null,
+    streakPrizeSkipped: Boolean(session.streakPrizeSkipped),
   };
 }
 
@@ -66,13 +67,15 @@ export function normalizeVisitStreak(session) {
   session.visitStreakClaims ??= [];
   session.pendingStreakReward ??= null;
   session.streakCalendarAckDay ??= null;
+  session.streakPrizeSkipped = Boolean(session.streakPrizeSkipped);
   return session;
 }
 
 /**
- * Visit / first-enter streak. Separate from pack-open loginStreak (achievements).
- * Consecutive Jerusalem days increment; a missed day resets to 1.
- * After day 30 the table wraps and claims start a new cycle. The fire count keeps growing.
+ * visitStreak is the counter. The 30-day table and the fire only read it.
+ * Consecutive Jerusalem days increment; a missed day resets the counter to 1.
+ * Changing the table length or its prizes does not write the counter.
+ * After day 30 the table starts a new cycle and claims clear. The counter keeps growing.
  */
 export function applyVisitStreak(session, nowMs) {
   normalizeVisitStreak(session);
@@ -102,6 +105,19 @@ export function ackStreakCalendar(session) {
   if (!session?.visitDay) return false;
   if (session.streakCalendarAckDay === session.visitDay) return false;
   session.streakCalendarAckDay = session.visitDay;
+  return true;
+}
+
+/** Closing the table while today's prize is still unopened. Opening the prize does not set this. */
+export function noteSkippedStreakPrize(session) {
+  if (!session || session.streakPrizeSkipped) return false;
+  const day = calendarDay(session.visitStreak);
+  if (!streakRewardForDay(day)) return false;
+  if (!(session.visitStreakClaims || []).includes(day)) return false;
+  const acquiredBy = streakAcquiredBy(session.visitStreak, day);
+  const instance = (session.instances || []).find((item) => item?.acquiredBy === acquiredBy);
+  if (!instance || instance.seenAt) return false;
+  session.streakPrizeSkipped = true;
   return true;
 }
 

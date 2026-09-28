@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   ackStreakCalendar,
   applyVisitStreak,
+  noteSkippedStreakPrize,
   calendarDay,
   publicStreakCalendar,
   streakAcquiredBy,
@@ -90,4 +91,29 @@ test("reward days stay on the calendar without a warehouse hold", () => {
   assert.equal(ackStreakCalendar(session), true);
   assert.equal(publicStreakCalendar(session).showPopup, false);
   assert.deepEqual(visitStreakExtras(session).visitDay, "2026-09-25");
+});
+
+test("closing the table on an unopened prize marks the skip; opening it does not", () => {
+  const session = {
+    visitDay: "2026-09-22",
+    visitStreak: 2,
+    visitStreakClaims: [2],
+    instances: [{ acquiredBy: "streak-2", seenAt: null }],
+  };
+  assert.equal(noteSkippedStreakPrize(session), true);
+  assert.equal(session.streakPrizeSkipped, true);
+  assert.equal(noteSkippedStreakPrize(session), false);
+  assert.equal(visitStreakExtras(session).streakPrizeSkipped, true);
+
+  const opened = {
+    visitDay: "2026-09-22",
+    visitStreak: 2,
+    visitStreakClaims: [2],
+    instances: [{ acquiredBy: "streak-2", seenAt: "2026-09-22T08:00:00.000Z" }],
+  };
+  assert.equal(noteSkippedStreakPrize(opened), false);
+  assert.equal(opened.streakPrizeSkipped, undefined);
+
+  const quiet = { visitDay: "2026-09-21", visitStreak: 1, visitStreakClaims: [], instances: [] };
+  assert.equal(noteSkippedStreakPrize(quiet), false);
 });

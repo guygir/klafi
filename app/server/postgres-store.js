@@ -81,6 +81,7 @@ function emptySession(token, createdAt) {
     visitStreakClaims: [],
     pendingStreakReward: null,
     streakCalendarAckDay: null,
+    streakPrizeSkipped: false,
     achievementsEarned: {},
     publicBinderSlug: ensurePublicBinderSlug({}),
   };
@@ -106,6 +107,7 @@ function extrasFromSession(session) {
     visitStreakClaims: session.visitStreakClaims || [],
     pendingStreakReward: session.pendingStreakReward || null,
     streakCalendarAckDay: session.streakCalendarAckDay || null,
+    streakPrizeSkipped: Boolean(session.streakPrizeSkipped),
     achievementsEarned: session.achievementsEarned || {},
     publicBinderSlug: session.publicBinderSlug || null,
     stateRevision: Number(session.stateRevision) || 0,
@@ -525,6 +527,7 @@ export class PostgresStore {
       visitStreakClaims: extras.visitStreakClaims || [],
       pendingStreakReward: extras.pendingStreakReward || null,
       streakCalendarAckDay: extras.streakCalendarAckDay || null,
+      streakPrizeSkipped: Boolean(extras.streakPrizeSkipped),
       achievementsEarned: extras.achievementsEarned || {},
       publicBinderSlug: extras.publicBinderSlug || null,
       stateRevision: Number(extras.stateRevision) || 0,

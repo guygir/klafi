@@ -18,9 +18,7 @@ try {
 } catch {
   /* The application will replace malformed cache data. */
 }
-const homeDelay = token && cachedHome?.token === token
-  ? 2000 + Math.floor(Math.random() * 8000)
-  : 0;
+const homeDelay = 0;
 function cachedIdleIsDue(cached) {
   const now = Date.now();
   const times = [];
@@ -38,8 +36,8 @@ const home = lookOnlyShowcase
   : new Promise((resolve) => setTimeout(resolve, homeDelay))
     .then(() => fetch("/api/home", { cache: "no-store", headers }))
     .then(json);
-// Home is a delayed read and does not grant due packs. Start settle with the
-// first paint so an overnight return does not sit on yesterday's waiting count.
+// Home is the first server read. It does not grant due packs. Settle still
+// starts with the first paint so an overnight return does not sit on yesterday's waiting count.
 const idleSettle = !lookOnlyShowcase && token && (!cachedHome || cachedHome.token === token) && cachedIdleIsDue(cachedHome)
   ? fetch("/api/idle/settle", { method: "POST", cache: "no-store", headers }).then(json)
   : null;

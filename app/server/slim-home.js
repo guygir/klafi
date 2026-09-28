@@ -129,6 +129,7 @@ export function sessionFromHomeRow(row) {
     visitStreakClaims: extras.visitStreakClaims || [],
     pendingStreakReward: extras.pendingStreakReward || null,
     streakCalendarAckDay: extras.streakCalendarAckDay || null,
+    streakPrizeSkipped: Boolean(extras.streakPrizeSkipped),
     stateRevision: Number(extras.stateRevision) || 0,
   };
 }
@@ -181,6 +182,7 @@ async function createSession(db, now) {
       visitStreakClaims: [],
       pendingStreakReward: null,
       streakCalendarAckDay: null,
+      streakPrizeSkipped: false,
     },
   };
 }

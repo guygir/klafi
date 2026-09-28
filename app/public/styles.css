@@ -2236,12 +2236,12 @@ img.mini-art {
   height: 18px;
   margin-inline-end: 8px;
   vertical-align: -4px;
-  background: url("/antique-wait.png?v=card-surface-149") center / 460% no-repeat;
-  animation: antique-press 1.2s steps(2, end) infinite;
+  background: url("/antique-wait.png?v=card-surface-151") 0 0 / 216px 18px no-repeat;
+  animation: antique-press 1.2s steps(12) infinite;
 }
 @keyframes antique-press {
-  0%, 45% { transform: scale(1) rotate(-10deg); opacity: 0.45; }
-  55%, 100% { transform: scale(1) rotate(8deg); opacity: 1; }
+  from { background-position: 0 0; }
+  to { background-position: -216px 0; }
 }
 .trade-notice-dialog {
   width: min(420px, calc(100% - 24px));
@@ -5526,12 +5526,21 @@ body {
   70% { opacity: 0.7; transform: rotate(-6deg) scale(0.98); }
   100% { opacity: 0.58; transform: rotate(-8deg) scale(1); }
 }
-.streak-cell.is-claimed.has-reward {
+.streak-cell.is-claimed.has-reward:not(.is-opened) {
   cursor: pointer;
 }
-.streak-cell.is-claimed.has-reward:focus-visible {
+.streak-cell.is-claimed.has-reward:not(.is-opened):focus-visible {
   outline: 2px solid var(--civic);
   outline-offset: 1px;
+}
+.streak-cell.is-opened {
+  cursor: default;
+}
+.streak-cell.is-opened .streak-cell-check {
+  z-index: 2;
+}
+.streak-cell.is-opened .streak-cell-check svg {
+  opacity: 0.72;
 }
 .streak-cell:not(.has-reward) {
   grid-template-rows: auto 1fr;
@@ -5547,6 +5556,9 @@ body {
 }
 .streak-cell.is-claimed .streak-cell-prize {
   opacity: 0.92;
+}
+.streak-cell.is-opened .streak-cell-prize {
+  opacity: 0.34;
 }
 .streak-dialog-reward {
   margin: 0 0 14px;
