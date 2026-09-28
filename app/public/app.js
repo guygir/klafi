@@ -47,6 +47,7 @@ function playerDialogOpen() {
     elements.levelDialog,
     elements.eventDialog,
     elements.tradeNoticeDialog,
+    elements.streakDialog,
     elements.waitDialog,
     elements.shareSheet,
   ].some((dialog) => dialog?.open);
@@ -255,6 +256,13 @@ const elements = {
   tradeNoticeGiven: document.querySelector("#trade-notice-given"),
   tradeNoticeOk: document.querySelector("#trade-notice-ok"),
   closeTradeNotice: document.querySelector("#close-trade-notice"),
+  streakDialog: document.querySelector("#streak-dialog"),
+  streakDialogTitle: document.querySelector("#streak-dialog-title"),
+  streakDialogCopy: document.querySelector("#streak-dialog-copy"),
+  streakDialogReward: document.querySelector("#streak-dialog-reward"),
+  streakCalendar: document.querySelector("#streak-calendar"),
+  streakDialogOk: document.querySelector("#streak-dialog-ok"),
+  closeStreakDialog: document.querySelector("#close-streak-dialog"),
   avatarSeal: document.querySelector("#avatar-seal"),
   levelLetter: document.querySelector("#level-letter"),
   levelLetterText: document.querySelector("#level-letter-text"),
@@ -646,7 +654,9 @@ function applyHomePayload(home) {
       idlePullCount: incoming.idlePullCount ?? previous.idlePullCount ?? 0,
       achievements: incoming.achievements ?? previous.achievements ?? [],
       achievementPages: incoming.achievementPages ?? previous.achievementPages ?? [],
-      loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
+        loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
+        visitStreak: incoming.visitStreak ?? previous.visitStreak ?? 0,
+        streakCalendar: incoming.streakCalendar ?? previous.streakCalendar ?? null,
     };
     if (home.cards) model.idleQueue = home.cards;
     localStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
@@ -669,6 +679,8 @@ function applyHomePayload(home) {
         favorites: model.serverState.favorites || [],
         starCount: model.serverState.starCount,
         loginStreak: model.serverState.loginStreak || 0,
+        visitStreak: model.serverState.visitStreak || 0,
+        streakCalendar: model.serverState.streakCalendar || null,
         factionId: model.serverState.factionId || null,
         numberedCopies: model.serverState.numberedCopies || [],
         pendingTradeNotices: model.serverState.pendingTradeNotices || [],
@@ -2757,7 +2769,7 @@ function dismissLevelDialog() {
   if (elements.levelDialog.open) elements.levelDialog.close();
   const pending = model.serverState?.progression?.pendingRewards || [];
   if (pending.length) queueMicrotask(() => openPendingLevelDialog());
-  else queueMicrotask(() => maybeShowTradeNotice());
+  else queueMicrotask(() => maybeShowDeferredPopups());
 }
 
 function renderProgression({ announce = false } = {}) {
@@ -2765,12 +2777,13 @@ function renderProgression({ announce = false } = {}) {
   if (!progression) return;
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
-  const streak = Number(model.serverState?.loginStreak) || 0;
-  const showStreak = streak >= 3;
+  const streak = Number(model.serverState?.visitStreak ?? model.serverState?.loginStreak) || 0;
+  const showStreak = streak >= 1;
   elements.levelRank.textContent = progression.rank;
   if (elements.levelStreak) {
     elements.levelStreak.hidden = !showStreak;
     if (elements.levelStreakCount) elements.levelStreakCount.textContent = showStreak ? String(streak) : "";
+    elements.levelStreak.setAttribute("aria-label", showStreak ? `רצף ${streak} · לוח הפרסים` : "לוח הרצף");
   }
   if (elements.playerStreak) {
     elements.playerStreak.hidden = !showStreak;
@@ -2780,9 +2793,7 @@ function renderProgression({ announce = false } = {}) {
   elements.levelAvatarButton?.classList.toggle("has-week-streak", streak >= 7);
   elements.playerName?.classList.toggle("has-streak", showStreak);
   if (elements.levelAvatarButton) {
-    elements.levelAvatarButton.setAttribute("aria-label", showStreak
-      ? `${progression.rank} · רצף ${streak} · הפרופיל והאווטאר`
-      : `${progression.rank} · הפרופיל והאווטאר`);
+    elements.levelAvatarButton.setAttribute("aria-label", `${progression.rank} · הפרופיל והאווטאר`);
   }
   if (elements.levelTeaser) elements.levelTeaser.textContent = progression.teaser;
   const unique = progression.unique || 0;
@@ -4707,6 +4718,103 @@ function applyTradeResult(result) {
 function tipsOverlayOpen() {
   const overlay = document.querySelector("#klafi-tips");
   return Boolean(overlay && !overlay.hidden);
+}
+
+function streakRewardMarkup(reward) {
+  if (!reward) return "";
+  if (reward.kind === "pack") {
+    return `<img class="streak-cell-pack" src="/packrip/pack-closed.webp" alt="חבילה">`;
+  }
+  const stars = Math.max(1, Math.min(3, Number(reward.stars) || 1));
+  const labels = { 1: "נפוץ", 2: "לא נפוץ", 3: "נדיר" };
+  return `<span class="streak-cell-stars" data-stars="${stars}" aria-label="${labels[stars]}">${"★".repeat(stars)}</span>`;
+}
+
+function streakRewardLine(calendar) {
+  const today = calendar?.days?.find((cell) => cell.current && cell.reward);
+  if (!today?.reward) return "";
+  if (today.held) return "המחסן מלא. פתחו קלף כדי לקבל את הפרס.";
+  if (today.reward.kind === "pack") return today.claimed || today.checked ? "חבילה נכנסה למחסן." : "היום מחכה חבילה.";
+  const labels = { 1: "נפוץ", 2: "לא נפוץ", 3: "נדיר" };
+  const label = labels[today.reward.stars] || "נפוץ";
+  return today.claimed || today.checked ? `קלף ${label} נכנס למחסן.` : `היום מחכה קלף ${label}.`;
+}
+
+function paintStreakCalendar(calendar) {
+  const dialog = elements.streakDialog;
+  if (!dialog || !calendar) return;
+  const day = calendar.day || 1;
+  if (elements.streakDialogTitle) elements.streakDialogTitle.textContent = `יום ${day} ברצף`;
+  if (elements.streakDialogCopy) {
+    elements.streakDialogCopy.textContent = calendar.streak > 1
+      ? `${calendar.streak} ימים ברצף. שמרו על הכניסה מחר בשביל הוי הבא.`
+      : "כל כניסה ביום חדש מסמנת וי על הלוח. חלק מהימים מחכים עם חבילה או קלף לפי נדירות.";
+  }
+  if (elements.streakCalendar) {
+    elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => `
+      <li class="streak-cell${cell.checked ? " is-checked" : ""}${cell.current ? " is-today" : ""}${cell.reward ? " has-reward" : ""}" data-day="${cell.day}">
+        <span class="streak-cell-day">${cell.day}</span>
+        ${cell.reward ? streakRewardMarkup(cell.reward) : ""}
+        ${cell.checked ? `<span class="streak-cell-check" aria-hidden="true">✓</span>` : ""}
+      </li>`).join("");
+  }
+  const rewardLine = streakRewardLine(calendar);
+  if (elements.streakDialogReward) {
+    elements.streakDialogReward.hidden = !rewardLine;
+    elements.streakDialogReward.textContent = rewardLine;
+  }
+}
+
+function openStreakCalendar({ force = false, calendar } = {}) {
+  const next = calendar || model.serverState?.streakCalendar;
+  if (!next || !elements.streakDialog) return false;
+  paintStreakCalendar(next);
+  if (!elements.streakDialog.open) elements.streakDialog.showModal();
+  return true;
+}
+
+function maybeShowStreakCalendar({ force = false } = {}) {
+  if (model.showcase || model.streakNoticeBusy) return false;
+  if (!force && !stateFreshAt) return false;
+  if (elements.waitDialog?.open || tipsOverlayOpen()) return false;
+  if (elements.streakDialog?.open) return true;
+  if (!force && playerDialogOpen()) return false;
+  const calendar = model.serverState?.streakCalendar;
+  if (!calendar) return false;
+  if (!force && !calendar.showPopup) return false;
+  return openStreakCalendar({ force, calendar });
+}
+
+function maybeShowDeferredPopups() {
+  if (maybeShowStreakCalendar()) return true;
+  maybeShowTradeNotice();
+  return false;
+}
+
+async function dismissStreakCalendar() {
+  const dialog = elements.streakDialog;
+  if (dialog?.open) dialog.close();
+  await ackStreakCalendar();
+  queueMicrotask(() => maybeShowTradeNotice());
+}
+
+async function ackStreakCalendar() {
+  const calendar = model.serverState?.streakCalendar;
+  if (!calendar?.showPopup || model.streakNoticeBusy) return;
+  model.streakNoticeBusy = true;
+  try {
+    const result = await request("/api/streak/ack", { method: "POST" });
+    if (result?.state) setServerState(result.state, { merge: true });
+    else if (model.serverState?.streakCalendar) {
+      model.serverState.streakCalendar = { ...calendar, showPopup: false };
+    }
+  } catch {
+    if (model.serverState?.streakCalendar) {
+      model.serverState.streakCalendar = { ...calendar, showPopup: false };
+    }
+  } finally {
+    model.streakNoticeBusy = false;
+  }
 }
 
 function pendingTradeNotices() {
@@ -7337,6 +7445,16 @@ elements.quizQuestions?.addEventListener("click", (event) => {
 });
 elements.playerName.addEventListener("click", openProfileDialog);
 elements.levelAvatarButton?.addEventListener("click", openProfileDialog);
+elements.levelStreak?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  openStreakCalendar({ force: true });
+});
+elements.streakDialogOk?.addEventListener("click", () => dismissStreakCalendar());
+elements.closeStreakDialog?.addEventListener("click", () => dismissStreakCalendar());
+elements.streakDialog?.addEventListener("close", () => {
+  ackStreakCalendar().then(() => queueMicrotask(() => maybeShowTradeNotice()));
+});
 elements.addAchievement?.addEventListener("click", () => {
   if (!elements.studioAchievements) return;
   elements.studioAchievements.insertAdjacentHTML("beforeend", achievementEditorMarkup({
@@ -7450,7 +7568,7 @@ elements.avatarPicker?.addEventListener("click", (event) => {
 elements.saveAchievements?.addEventListener("click", saveStudioAchievements);
 elements.saveEvents?.addEventListener("click", saveStudioEvents);
 elements.closeProfile.addEventListener("click", () => elements.profileDialog.close());
-elements.profileDialog.addEventListener("close", () => maybeShowTradeNotice());
+elements.profileDialog.addEventListener("close", () => maybeShowDeferredPopups());
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
 elements.dialog.addEventListener("close", () => maybeShowTradeNotice());
 elements.dialogReport.addEventListener("click", () => openReportDialog());
@@ -7923,18 +8041,27 @@ document.addEventListener("visibilitychange", () => {
 const tipsOverlay = document.querySelector("#klafi-tips");
 if (tipsOverlay) {
   new MutationObserver(() => {
-    if (tipsOverlay.hidden) maybeShowTradeNotice();
+    if (tipsOverlay.hidden) maybeShowDeferredPopups();
   }).observe(tipsOverlay, { attributes: true, attributeFilter: ["hidden"] });
 }
 // Warm the rip layers on the first idle moment so the first pack tap starts the rip at once.
 schedulePackRipPrefetch();
-bootstrap().then(() => {
-  if (!model.showcase) klafiTips.maybeStart();
+bootstrap().then(async () => {
+  if (model.showcase) return;
+  klafiTips.maybeStart();
+  try {
+    await homeHydrate;
+  } catch {
+    /* Home can fail; the calendar waits for the next successful hydrate. */
+  }
+  if (!tipsOverlayOpen()) maybeShowStreakCalendar();
 });
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
 window.__kalpiDebug = {
   showAcceptedTradeNotice,
+  openStreakCalendar,
+  paintStreakCalendar,
   openCardDialog,
   renderSealedPackRip,
   showView,

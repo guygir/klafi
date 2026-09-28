@@ -104,6 +104,7 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[2].body, /יש חבילות שמחכות/);
   assert.match(PAGE_GUIDES.home[2].body, /פתיחת קלף/);
   assert.match(PAGE_GUIDES.home[3].ring, /level-avatar-button/);
+  assert.match(PAGE_GUIDES.home[3].ring, /level-streak/);
   assert.match(PAGE_GUIDES.home[3].ring, /player-name/);
   assert.equal(PAGE_GUIDES.home[3].ringUnion, true);
   assert.equal(PAGE_GUIDES.home[3].pad, 16);

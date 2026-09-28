@@ -333,7 +333,17 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="level-letter-text"/);
   assert.match(html, /id="level-streak"/);
   assert.match(html, /id="level-streak-count"/);
-  assert.match(javascript, /const showStreak = streak >= 3/);
+  assert.match(html, /class="level-avatar-stack"/);
+  assert.match(html, /<button type="button" id="level-streak"/);
+  assert.match(html, /id="level-avatar-button"[\s\S]*?<\/button>[\s\S]*id="level-streak"/);
+  assert.match(html, /id="streak-dialog"/);
+  assert.match(html, /id="streak-calendar"/);
+  assert.match(javascript, /const showStreak = streak >= 1/);
+  assert.match(javascript, /function maybeShowStreakCalendar/);
+  assert.match(javascript, /function openStreakCalendar/);
+  assert.match(javascript, /function dismissStreakCalendar/);
+  assert.match(javascript, /\/api\/streak\/ack/);
+  assert.match(javascript, /visitStreak \?\? model\.serverState\?\.loginStreak/);
   assert.match(javascript, /applyIdleCountdown\(elements\.cooldownCopy, view\)/);
   assert.match(javascript, /function idleCountdownCopy/);
   assert.match(javascript, /המחסן מלא\. פתחו קלף כדי שהאיסוף יחזור לרוץ/);
@@ -559,7 +569,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /PULL_CAP_REACHED/);
   assert.match(javascript, /המחסן מלא/);
   assert.match(javascript, /חבילה נוספת נכנסה למחסן/);
-  assert.match(javascript, /elements\.eventDialog,\n\s*elements\.tradeNoticeDialog,\n\s*elements\.waitDialog,\n\s*elements\.shareSheet/);
+  assert.match(javascript, /elements\.eventDialog,\n\s*elements\.tradeNoticeDialog,\n\s*elements\.streakDialog,\n\s*elements\.waitDialog,\n\s*elements\.shareSheet/);
   assert.match(javascript, /function claimEventPull[\s\S]*?applyEventPullPayload\(result\)[\s\S]*?finally/);
   // Instant pop-up: claimEventPull is synchronous up to the dialog; the outcome is predicted from
   // cached state and the POST only reconciles (no pending state, no optimistic count changes).
@@ -792,7 +802,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-134/);
+  assert.match(html, /card-surface-135/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -911,7 +921,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-134/);
+  assert.match(html, /card-surface-135/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -1062,7 +1072,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-134/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-135/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -1077,7 +1087,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-134/);
+  assert.match(html, /packrip\.css\?v=card-surface-135/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);

@@ -81,6 +81,12 @@ export function normalizeState(value = {}) {
     session.loginDay ??= null;
     session.loginStreak ??= 0;
     session.bestLoginStreak ??= session.loginStreak;
+    session.visitDay ??= null;
+    session.visitStreak ??= 0;
+    session.bestVisitStreak ??= session.visitStreak;
+    session.visitStreakClaims ??= [];
+    session.pendingStreakReward ??= null;
+    session.streakCalendarAckDay ??= null;
     session.achievementsEarned ??= {};
   }
   return state;
@@ -212,6 +218,12 @@ export class JsonStore {
         loginDay: null,
         loginStreak: 0,
         bestLoginStreak: 0,
+        visitDay: null,
+        visitStreak: 0,
+        bestVisitStreak: 0,
+        visitStreakClaims: [],
+        pendingStreakReward: null,
+        streakCalendarAckDay: null,
         achievementsEarned: {},
         publicBinderSlug: ensurePublicBinderSlug({}),
       };

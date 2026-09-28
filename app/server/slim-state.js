@@ -2,6 +2,7 @@ import { collectionStarCount } from "./visible-sets.js";
 import { levelThresholds } from "./progression.js";
 import { IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY } from "./idle-config.js";
 import { publicTradeNotices } from "./trade-notices.js";
+import { publicStreakCalendar } from "./streak-calendar.js";
 
 export function slimPublicState(session, shell, now = Date.now()) {
   const idleIds = new Set(shell.idleCardIds || []);
@@ -41,6 +42,8 @@ export function slimPublicState(session, shell, now = Date.now()) {
     packAvailable: Boolean((session.unseenPulls || []).length),
     highestRank: session.highestRank || 1,
     loginStreak: session.loginStreak || 0,
+    visitStreak: session.visitStreak || 0,
+    streakCalendar: publicStreakCalendar(session),
     factionId: session.factionId || null,
     binderSlug: session.publicBinderSlug || null,
     numberedCopies: (session.instances || []).filter((item) => Number(item?.numberedIndex) > 0),

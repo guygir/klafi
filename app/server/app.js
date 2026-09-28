@@ -27,6 +27,12 @@ import {
   stampKey,
   stampMax,
 } from "./numbered.js";
+import {
+  applyVisitStreak,
+  ackStreakCalendar,
+  publicStreakCalendar,
+  STREAK_STAR_TIERS,
+} from "./streak-calendar.js";
 import { LEAGUE_NAME_MAX, currentLeagueOf, publicLeague } from "./leagues.js";
 import { qrSvg } from "./qr-svg.js";
 import { eventClaimKey, eventClaimMode, eventReward, isEventClaimed, openSpecialWindow } from "./special-window.js";
@@ -611,6 +617,8 @@ function publicState(session, now, cards, config = {}) {
     avatarId: session.avatarId || "kid-boy",
     loginStreak: session.loginStreak || 0,
     loginDay: session.loginDay || null,
+    visitStreak: session.visitStreak || 0,
+    streakCalendar: publicStreakCalendar(session),
     numberedCopies: numberedCopies(session.instances),
     progression: progressionState(session, cards, config, now),
     quizAvailable: Boolean(config.quizEnabled)
@@ -643,6 +651,8 @@ function publicIdleState(session, now, cards, config = {}) {
     progression,
     avatars: publicAvatars(session, config.avatars, progression.level),
     loginStreak: session.loginStreak || 0,
+    visitStreak: session.visitStreak || 0,
+    streakCalendar: publicStreakCalendar(session),
     factionId: session.factionId || null,
     numberedCopies: numberedCopies(session.instances),
     pendingTradeNotices: publicTradeNotices(session),
@@ -931,7 +941,8 @@ export async function createKalpiApp({
     return (await store.withSession(token, (current) => stampAchievements(current, allCards, catalog, now(), extra))) || [];
   }
   // Every session write also stamps newly earned achievements, in the same write (one revision).
-  // Reads never write: GET /api/state and /api/home show live qualification via stateFor.
+  // GET /api/state stays a read. First enter of a Jerusalem day on /api/home and /api/bootstrap
+  // stamps the visit calendar (and may grant a streak reward) — that is a write on purpose.
   // Looked up on the prototype at call time, so instrumentation of the store class still sees it.
   const storeProto = Object.getPrototypeOf(store);
   store.withSession = (token, mutator) => storeProto.withSession.call(store, token, async (current) => {
@@ -1090,6 +1101,7 @@ export async function createKalpiApp({
    */
   async function settleIdleSession(current, currentMs, pool) {
     current.unseenPulls ??= [];
+    await grantPendingStreakReward(current);
     current.preparedPulls = (current.preparedPulls || [])
       .filter((pull) => pull?.instanceId && pull?.cardId && Number.isFinite(Date.parse(pull.availableAt)))
       .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));
@@ -1248,6 +1260,52 @@ export async function createKalpiApp({
     return instance;
   }
 
+  function streakRewardPool(pool, reward) {
+    if (reward?.kind !== "rarity") return pool;
+    const tier = STREAK_STAR_TIERS[reward.stars] || "Common";
+    const filtered = pool.filter((card) => rarityTier(card) === tier);
+    return filtered.length ? filtered : pool;
+  }
+
+  async function grantPendingStreakReward(session) {
+    const pending = session.pendingStreakReward;
+    if (!pending?.day) return null;
+    session.unseenPulls ??= [];
+    if (session.unseenPulls.length >= IDLE_BACKLOG_CAP) return null;
+    const currentMs = now();
+    const pool = streakRewardPool(activeIdleCards(allCards, currentMs), pending);
+    if (!pool.length) return null;
+    const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(session), session.idleDuplicateStreak || 0));
+    const pulledAt = new Date(currentMs).toISOString();
+    const instance = await grantCard(session, pull, {
+      acquiredBy: `streak-${pending.day}`,
+      pulledAt,
+    });
+    session.packs ??= [];
+    session.packs.push({
+      packId: `streak-${pending.day}-${instance.instanceId}`,
+      mode: "streak",
+      pulledAt,
+      nextDailyAt: null,
+      cards: [instance],
+    });
+    session.packs = session.packs.slice(-100);
+    session.visitStreakClaims = [...new Set([...(session.visitStreakClaims || []), pending.day])];
+    session.pendingStreakReward = null;
+    return instance;
+  }
+
+  async function stampVisitAndGrant(token) {
+    const session = store.getSession(token);
+    if (!session) return;
+    const today = jerusalemDay(now());
+    if (session.visitDay === today && !session.pendingStreakReward) return;
+    await store.withSession(token, async (current) => {
+      applyVisitStreak(current, now());
+      await grantPendingStreakReward(current);
+    });
+  }
+
   async function persistStudioConfig() {
     if (!studioContent) return;
     await store.saveStudioConfig({
@@ -1276,9 +1334,10 @@ export async function createKalpiApp({
 
   async function buildBootstrap(token, studioRequest) {
     const settled = await settleIdle(token);
+    await stampVisitAndGrant(token);
     const idleReturn = settled.error
       ? { mode: "idle-return", newlySettledCount: 0, cards: [], state: stateFor(store.getSession(token)) }
-      : settled;
+      : { ...settled, state: stateFor(store.getSession(token)) };
     await store.expireTrades(new Date(now()).toISOString());
     return {
       token,
@@ -1455,6 +1514,7 @@ export async function createKalpiApp({
           token = await store.createSession(new Date(now()).toISOString());
         }
         await store.ensureBinderSlug(token);
+        await stampVisitAndGrant(token);
         json(response, 200, { token, state: stateFor(store.getSession(token)) });
         return;
       }
@@ -1914,6 +1974,14 @@ export async function createKalpiApp({
             state: await stateForToken(token),
             simulated: true,
           });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/streak/ack") {
+          await store.withSession(token, (current) => {
+            ackStreakCalendar(current);
+          });
+          json(response, 200, { state: await stateForToken(token) });
           return;
         }
 

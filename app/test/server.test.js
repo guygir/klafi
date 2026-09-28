@@ -1399,20 +1399,63 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.match(home.body.token, /^[0-9a-f-]{36}$/i);
   assert.ok(home.body.state.displayName);
   assert.equal(home.body.state.loginStreak, 0);
+  assert.equal(home.body.state.visitStreak, 1);
+  assert.equal(home.body.state.streakCalendar.day, 1);
+  assert.equal(home.body.state.streakCalendar.showPopup, true);
   assert.equal(home.body.state.progression.rank, "אזרח סקרן");
   assert.equal(home.body.catalog, undefined);
   assert.equal(typeof home.body.state.inventory, "object");
   const again = await api(running.base, "/api/home", { token: home.body.token });
   assert.equal(again.body.token, home.body.token);
   assert.equal(again.body.state.loginStreak, 0);
+  assert.equal(again.body.state.visitStreak, 1);
   clock.value = Date.parse("2026-09-16T12:00:00.000Z");
   const nextDay = await api(running.base, "/api/home", { token: home.body.token });
   assert.equal(nextDay.body.state.loginStreak, 0);
+  assert.equal(nextDay.body.state.visitStreak, 2);
+  assert.equal(nextDay.body.state.streakCalendar.day, 2);
   const warm = await api(running.base, "/api/warm");
   assert.deepEqual(warm, { status: 200, body: { status: "ready" } });
   const holders = await api(running.base, "/api/card-holders");
   assert.equal(holders.status, 200);
   assert.ok(holders.body.computedAt);
+});
+
+test("first enter of a Jerusalem day stamps the visit calendar and grants reward days", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-streak-calendar-"));
+  const clock = { value: Date.parse("2026-09-21T07:00:00.000Z") };
+  const running = await start(dataDir, clock, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const home = await api(running.base, "/api/home");
+  const token = home.body.token;
+  assert.equal(home.body.state.visitStreak, 1);
+  assert.equal(home.body.state.loginStreak, 0);
+  assert.equal(home.body.state.streakCalendar.showPopup, true);
+  assert.equal(home.body.state.streakCalendar.days[0].checked, true);
+  assert.equal(home.body.state.streakCalendar.days[2].reward.kind, "pack");
+  const peek = await api(running.base, "/api/state", { token });
+  assert.equal(peek.body.visitStreak, 1);
+  const ack = await api(running.base, "/api/streak/ack", { token, method: "POST" });
+  assert.equal(ack.status, 200);
+  assert.equal(ack.body.state.streakCalendar.showPopup, false);
+  clock.value = Date.parse("2026-09-22T07:00:00.000Z");
+  await api(running.base, "/api/home", { token });
+  clock.value = Date.parse("2026-09-23T07:00:00.000Z");
+  const dayThree = await api(running.base, "/api/home", { token });
+  assert.equal(dayThree.body.state.visitStreak, 3);
+  assert.equal(dayThree.body.state.streakCalendar.day, 3);
+  assert.equal(dayThree.body.state.streakCalendar.days[2].claimed, true);
+  assert.equal(dayThree.body.state.unseenCount >= 1, true);
+  const state = await api(running.base, "/api/state", { token });
+  const streakPull = (state.body.instances || []).find((item) => item.acquiredBy === "streak-3");
+  assert.ok(streakPull, "day 3 grants a warehouse pull");
+  clock.value = Date.parse("2026-09-25T07:00:00.000Z");
+  const missed = await api(running.base, "/api/home", { token });
+  assert.equal(missed.body.state.visitStreak, 1);
+  assert.equal(missed.body.state.streakCalendar.days.filter((cell) => cell.checked).length, 1);
 });
 
 test("bootstrap creates a guest session in one request", async (t) => {
@@ -1926,7 +1969,10 @@ test("every state payload carries a monotonic revision and the seen ack returns 
   assert.equal(seen.body.progression.unique, before + 1, "the ack itself carries the credited progress");
   assert.equal(seen.body.unseenCount, settled.body.state.unseenCount - 1);
   const home = await api(running.base, "/api/home", { token });
-  assert.equal(home.body.state.revision, seen.body.revision);
+  assert.ok(home.body.state.revision >= seen.body.revision);
+  assert.equal(home.body.state.visitStreak, 1);
+  const homeAgain = await api(running.base, "/api/home", { token });
+  assert.equal(homeAgain.body.state.revision, home.body.state.revision, "same-day home does not write again");
 });
 
 test("opening one card from a full warehouse resumes the clock instead of granting the slot missed while full", async (t) => {
