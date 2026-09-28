@@ -92,11 +92,13 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[0].title, /המטרה/);
   assert.match(PAGE_GUIDES.home[0].body, /מטרת המשחק היא לאסוף/);
   assert.match(PAGE_GUIDES.home[0].body, /בחירות 2026/);
+  assert.match(PAGE_GUIDES.home[0].body, /עותק אחד בלבד/);
   assert.match(PAGE_GUIDES.home[0].ring, /today-hero/);
   assert.equal(PAGE_GUIDES.home[0].ringUnion, undefined);
   assert.match(PAGE_GUIDES.home[1].body, /היום/);
   assert.match(PAGE_GUIDES.home[1].ring, /today-open-cue|cooldown-copy/);
   assert.match(PAGE_GUIDES.home[1].body, /כל שלוש שעות/);
+  assert.match(PAGE_GUIDES.home[1].body, /8 חבילות/);
   assert.match(PAGE_GUIDES.home[1].body, /השעון/);
   assert.equal(PAGE_GUIDES.home[1].ringUnion, true);
   assert.match(PAGE_GUIDES.home[2].body, /יש חבילות שמחכות/);
@@ -111,6 +113,7 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[3].body, /ליגות, תחרויות וטבלאות/);
   assert.match(PAGE_GUIDES.home[3].body, /לחץ עליו כדי לשנות/);
   assert.match(PAGE_GUIDES.home[4].body, /האתגר היומי/);
+  assert.match(PAGE_GUIDES.home[4].body, /בטופ/);
   assert.equal(PAGE_GUIDES.home[5].ring, ".bottom-nav");
   assert.match(PAGE_GUIDES.home[5].body, /תפריט הניווט/);
   assert.match(PAGE_GUIDES.home[5].body, /לדווח על באגים/);
@@ -132,9 +135,16 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGE_GUIDES.card[1].title, "הוספה לאוסף");
   assert.equal(PAGE_GUIDES.card[1].body, "ברכותיי על הקלף החדש! לחצו לאוסף כדי להכניס אותו לאלבום שלכם.");
   assert.equal(PAGE_GUIDES.card[1].ring, "#pack-action");
+  for (const steps of [...Object.values(PAGE_GUIDES), TIPS_STEPS]) {
+    for (const step of steps) {
+      assert.doesNotMatch(step.body, /\u2014/, `${step.title} body uses a normal dash`);
+      assert.doesNotMatch(step.title, /\u2014/, `${step.title} uses a normal dash`);
+    }
+  }
   assert.match(CARD_CALLOUTS[3].sel, /card-rarity-run|card-image-meta/);
   assert.match(PAGE_GUIDES.binder[0].body, /שיתוף האלבום/);
   assert.match(PAGE_GUIDES.binder[0].body, /להשוויץ לחברים/);
+  assert.match(PAGE_GUIDES.binder[0].body, /כל הקלפים במשחק/);
   assert.match(PAGE_GUIDES.binder[0].ring, /binder-stats-row|binder-head/);
   assert.equal(PAGE_GUIDES.binder[0].arrowTo, undefined);
   assert.match(PAGE_GUIDES.binder[1].title, /תגים/);

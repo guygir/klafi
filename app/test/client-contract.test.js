@@ -227,6 +227,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.klafi-tips-marks \{ pointer-events: none; z-index: 2; \}/);
   assert.match(css, /\.klafi-tips-card \{ z-index: 4; \}/);
   assert.match(css, /\.klafi-tips-card \{[\s\S]*?background: #eee5d4/);
+  assert.match(css, /\.klafi-tips-card p \{[\s\S]*?white-space: pre-line/);
   assert.match(css, /\.klafi-tips-card\.is-top \{/);
   assert.doesNotMatch(css, /\.klafi-tips-card \{[\s\S]*?background: rgba\(238, 229, 212, 0\.6\)/);
   assert.match(tipsJs, /kind === "circle"/);

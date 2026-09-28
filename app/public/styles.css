@@ -5235,6 +5235,7 @@ body {
 .klafi-tips-card p {
   margin: 0 0 12px;
   font: 400 15px/1.4 "IBM Plex Sans Hebrew", sans-serif;
+  white-space: pre-line;
 }
 .klafi-tips-legend {
   display: grid;
