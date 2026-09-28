@@ -4640,18 +4640,59 @@ function streakRewardMarkup(reward) {
   }
   const stars = Math.max(1, Math.min(3, Number(reward.stars) || 1));
   const labels = { 1: "נפוץ", 2: "לא נפוץ", 3: "נדיר" };
-  return `<span class="streak-cell-prize"><span class="streak-cell-stars" data-stars="${stars}" aria-label="${labels[stars]}">${"★".repeat(stars)}</span></span>`;
+  const glyphs = Array.from({ length: stars }, () => "<span>★</span>").join("");
+  return `<span class="streak-cell-prize"><span class="streak-cell-stars" data-stars="${stars}" aria-label="${labels[stars]}">${glyphs}</span></span>`;
+}
+
+function streakPrizeName(reward) {
+  if (reward?.kind === "pack") return "חבילה";
+  const labels = { 1: "קלף נפוץ", 2: "קלף לא נפוץ", 3: "קלף נדיר" };
+  return labels[reward?.stars] || "קלף נפוץ";
 }
 
 function streakRewardLine(calendar) {
   const today = calendar?.days?.find((cell) => cell.current && cell.reward);
   if (!today?.reward) return "";
   if (today.reward.kind === "pack") {
-    return today.claimed ? "חבילה מחכה בתא. לחיצה כפולה פותחת אותה." : "היום מחכה חבילה.";
+    return today.claimed ? "חבילה מחכה. לחיצה כפולה פותחת אותה." : "היום מחכה חבילה.";
   }
-  const labels = { 1: "נפוץ", 2: "לא נפוץ", 3: "נדיר" };
-  const label = labels[today.reward.stars] || "נפוץ";
-  return today.claimed ? `קלף ${label} מחכה בתא. לחיצה כפולה פותחת אותו.` : `היום מחכה קלף ${label}.`;
+  const name = streakPrizeName(today.reward);
+  return today.claimed ? `${name} מחכה. לחיצה כפולה פותחת אותו.` : `היום מחכה ${name}.`;
+}
+
+function streakRunLine(count) {
+  const n = Math.max(1, Number(count) || 1);
+  if (n === 1) return "אתה מתחבר כבר יום אחד ברצף.";
+  if (n === 2) return "אתה מתחבר כבר יומיים ברצף.";
+  return `אתה מתחבר כבר ${n} ימים ברצף.`;
+}
+
+function streakWaitLine(days) {
+  const n = Math.max(1, Number(days) || 1);
+  if (n === 1) return "בעוד יום";
+  if (n === 2) return "בעוד יומיים";
+  return `בעוד ${n} ימים`;
+}
+
+function nextStreakReward(calendar) {
+  const days = calendar?.days || [];
+  const today = Math.max(1, Number(calendar?.day) || 1);
+  if (!days.length) return null;
+  for (let offset = 1; offset <= days.length; offset += 1) {
+    const cell = days[(today - 1 + offset) % days.length];
+    if (cell?.reward) return { wait: offset, reward: cell.reward };
+  }
+  return null;
+}
+
+function streakDialogBody(calendar) {
+  const next = nextStreakReward(calendar);
+  const prize = next ? `${streakWaitLine(next.wait)} מגיע הפרס הבא והוא ${streakPrizeName(next.reward)}.` : "";
+  return [
+    "כדאי להתחבר כל יום כדי לא לאבד את הרצף!",
+    streakRunLine(calendar?.streak || calendar?.day || 1),
+    prize,
+  ].filter(Boolean).join("\n");
 }
 
 function streakCellClasses(cell) {
@@ -4665,14 +4706,17 @@ function streakCellClasses(cell) {
   ].filter(Boolean).join(" ");
 }
 
-function streakCheckMarkup() {
-  return `<span class="streak-cell-check" aria-hidden="true"><svg viewBox="0 0 32 32" width="18" height="18"><circle cx="16" cy="16" r="14.2" fill="#F4EFE4" stroke="#1A1F1C" stroke-width="1.6"/><circle cx="16" cy="16" r="11" fill="none" stroke="#1F4F4A" stroke-width="1.15"/><path d="M9 12.2h14" fill="none" stroke="#C4A35A" stroke-width="1.6" stroke-linecap="square"/><path d="M10 14.2 16 23.4 22 14.2" fill="none" stroke="#1F4F4A" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/></svg></span>`;
+function streakCheckMarkup(ringsOnly = false) {
+  const tick = ringsOnly
+    ? ""
+    : `<path d="M20 34.5 28.5 43.5 46 22" fill="none" stroke="#14312E" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  return `<span class="streak-cell-check" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="#14312E" stroke-width="2.4"/><circle cx="32" cy="32" r="22.4" fill="none" stroke="#14312E" stroke-width="1.15"/>${tick}</svg></span>`;
 }
 
 function playStreakStamp() {
   if (prefersReducedMotion() || !sfx.soundOn) return;
   sfx.unlock();
-  sfx.play("click");
+  sfx.play("streak-stamp");
 }
 
 function paintStreakCalendar(calendar, { stamp = false } = {}) {
@@ -4680,11 +4724,7 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
   if (!dialog || !calendar) return;
   const day = calendar.day || 1;
   if (elements.streakDialogTitle) elements.streakDialogTitle.textContent = `יום ${day} ברצף`;
-  if (elements.streakDialogCopy) {
-    elements.streakDialogCopy.textContent = calendar.streak > 1
-      ? `${calendar.streak} ימים ברצף. מחר נוחתת החותמת הבאה.`
-      : "כל כניסה ביום חדש חותמת את היום. חלק מהימים מחכים עם חבילה או עם קלף לפי כוכבים.";
-  }
+  if (elements.streakDialogCopy) elements.streakDialogCopy.textContent = streakDialogBody(calendar);
   if (elements.streakCalendar) {
     elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => {
       const openable = Boolean(cell.claimed && cell.reward);
@@ -4692,7 +4732,7 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
       <li class="${streakCellClasses(cell)}${stamp && cell.current ? " is-landing" : ""}" data-day="${cell.day}"${openable ? ` tabindex="0" title="לחיצה כפולה לפתיחה" aria-label="יום ${cell.day}, לחיצה כפולה לפתיחה"` : ""}>
         <span class="streak-cell-day">${cell.day}</span>
         ${cell.reward ? streakRewardMarkup(cell.reward) : ""}
-        ${cell.checked ? streakCheckMarkup() : ""}
+        ${cell.checked ? streakCheckMarkup(Boolean(cell.reward)) : ""}
       </li>`;
     }).join("");
   }

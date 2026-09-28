@@ -37,8 +37,8 @@ test("calendar days stay 1-30 and wrap claims after a full table", () => {
   }
   assert.equal(session.visitStreak, 30);
   assert.equal(calendarDay(session.visitStreak), 30);
-  assert.equal(last.reward.kind, "rarity");
-  assert.equal(last.reward.stars, 3);
+  assert.equal(last.reward.kind, "pack");
+  assert.equal(last.reward.stars, undefined);
   assert.equal(session.pendingStreakReward, null);
   session.visitStreakClaims = [30];
   applyVisitStreak(session, monday + 30 * DAY);
@@ -51,30 +51,43 @@ test("calendar days stay 1-30 and wrap claims after a full table", () => {
 
 test("reward days stay on the calendar without a warehouse hold", () => {
   assert.equal(STREAK_CALENDAR_DAYS, 30);
-  assert.equal(STREAK_REWARDS[3].kind, "pack");
-  assert.equal(STREAK_REWARDS[7].stars, 1);
+  assert.equal(STREAK_REWARDS[5].kind, "pack");
+  assert.equal(STREAK_REWARDS[10].kind, "pack");
+  assert.equal(STREAK_REWARDS[30].kind, "pack");
+  assert.equal(STREAK_REWARDS[2].stars, 1);
+  assert.equal(STREAK_REWARDS[4].stars, 1);
+  assert.equal(STREAK_REWARDS[6].stars, 1);
+  assert.equal(STREAK_REWARDS[8].stars, 2);
+  assert.equal(STREAK_REWARDS[12].stars, 2);
+  assert.equal(STREAK_REWARDS[14].stars, 2);
+  assert.equal(STREAK_REWARDS[16].stars, 2);
+  assert.equal(STREAK_REWARDS[19].stars, 3);
+  assert.equal(STREAK_REWARDS[23].stars, 3);
+  assert.equal(STREAK_REWARDS[28].stars, 3);
   assert.equal(STREAK_STAR_TIERS[1], "Common");
   const session = {};
-  applyVisitStreak(session, monday);
-  applyVisitStreak(session, monday + DAY);
-  const third = applyVisitStreak(session, monday + 2 * DAY);
-  assert.equal(third.day, 3);
-  assert.equal(third.reward.kind, "pack");
+  let fifth;
+  for (let index = 0; index < 5; index += 1) {
+    fifth = applyVisitStreak(session, monday + index * DAY);
+  }
+  assert.equal(fifth.day, 5);
+  assert.equal(fifth.reward.kind, "pack");
   assert.equal(session.pendingStreakReward, null);
-  session.visitStreakClaims = [3];
-  session.instances = [{ acquiredBy: "streak-3", cardId: "x", seenAt: null }];
+  session.visitStreakClaims = [5];
+  session.instances = [{ acquiredBy: "streak-5", cardId: "x", seenAt: null }];
   const calendar = publicStreakCalendar(session);
-  assert.equal(calendar.day, 3);
+  assert.equal(calendar.day, 5);
   assert.equal(calendar.showPopup, true);
   assert.equal(calendar.pendingReward, undefined);
-  assert.equal(calendar.days.filter((cell) => cell.checked).length, 3);
-  assert.equal(calendar.days[2].held, undefined);
-  assert.equal(calendar.days[2].claimed, true);
-  assert.equal(calendar.days[2].opened, false);
-  assert.equal(calendar.days[2].reward.kind, "pack");
-  session.instances[0].seenAt = "2026-09-23T07:00:00.000Z";
-  assert.equal(publicStreakCalendar(session).days[2].opened, true);
+  assert.equal(calendar.days.filter((cell) => cell.checked).length, 5);
+  assert.equal(calendar.days[4].held, undefined);
+  assert.equal(calendar.days[4].claimed, true);
+  assert.equal(calendar.days[4].opened, false);
+  assert.equal(calendar.days[4].reward.kind, "pack");
+  assert.equal(calendar.days[1].reward.stars, 1);
+  session.instances[0].seenAt = "2026-09-25T07:00:00.000Z";
+  assert.equal(publicStreakCalendar(session).days[4].opened, true);
   assert.equal(ackStreakCalendar(session), true);
   assert.equal(publicStreakCalendar(session).showPopup, false);
-  assert.deepEqual(visitStreakExtras(session).visitDay, "2026-09-23");
+  assert.deepEqual(visitStreakExtras(session).visitDay, "2026-09-25");
 });

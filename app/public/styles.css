@@ -5405,6 +5405,7 @@ body {
 }
 #streak-dialog-copy {
   margin: 0 0 14px;
+  white-space: pre-line;
   font: 500 15px/1.45 "IBM Plex Sans Hebrew", sans-serif;
 }
 #streak-calendar,
@@ -5437,21 +5438,28 @@ body {
   aspect-ratio: 1;
   min-height: 48px;
   padding: 3px 2px 2px;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--rule) 42%, var(--paper));
   background: var(--paper);
   color: var(--ink);
 }
 .streak-cell-day {
+  position: relative;
+  z-index: 2;
   justify-self: start;
-  margin-inline-start: 3px;
-  font: 700 10px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  align-self: start;
+  margin: 3px 0 0 4px;
+  font: 700 11px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
   letter-spacing: 0.02em;
-  color: color-mix(in srgb, var(--ink) 72%, var(--paper));
+  color: var(--ink);
 }
 .streak-cell-prize {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: grid;
   place-items: center;
-  min-height: 18px;
+  pointer-events: none;
 }
 .streak-cell-pack {
   width: 22px;
@@ -5462,36 +5470,45 @@ body {
 .streak-cell-stars {
   color: var(--foil);
   font: 700 12px/1 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", serif;
-  letter-spacing: -0.04em;
+  letter-spacing: 0.02em;
 }
 .streak-cell-stars[data-stars="1"] {
-  color: var(--civic);
-  font-size: 13px;
+  font-size: 14px;
 }
 .streak-cell-stars[data-stars="3"] {
-  font-size: 11px;
-  letter-spacing: -0.08em;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  column-gap: 1px;
+  font-size: 10px;
+  line-height: 0.82;
+  letter-spacing: 0;
+}
+.streak-cell-stars[data-stars="3"] > span:first-child {
+  grid-column: 1 / -1;
+  justify-self: center;
 }
 .streak-cell-check {
   position: absolute;
-  inset-inline-end: 1px;
-  bottom: 1px;
+  inset: 0;
+  z-index: 0;
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
-  color: var(--civic);
-  transform: rotate(-14deg);
-  filter: drop-shadow(0 1px 0 rgba(26, 31, 28, 0.35));
   pointer-events: none;
 }
-.streak-cell.is-landing .streak-cell-check {
+.streak-cell-check svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-8deg);
+  opacity: 0.58;
+}
+.streak-cell.is-landing .streak-cell-check svg {
   animation: streak-stamp-land 320ms cubic-bezier(.2, .7, .2, 1) both;
 }
 @keyframes streak-stamp-land {
-  0% { opacity: 0; transform: rotate(-28deg) scale(1.45); }
-  70% { opacity: 1; transform: rotate(-10deg) scale(0.96); }
-  100% { opacity: 1; transform: rotate(-14deg) scale(1); }
+  0% { opacity: 0; transform: rotate(-16deg) scale(1.12); }
+  70% { opacity: 0.7; transform: rotate(-6deg) scale(0.98); }
+  100% { opacity: 0.58; transform: rotate(-8deg) scale(1); }
 }
 .streak-cell.is-claimed.has-reward {
   cursor: pointer;
@@ -5501,13 +5518,7 @@ body {
   outline-offset: 1px;
 }
 .streak-cell:not(.has-reward) {
-  grid-template-rows: 1fr;
-}
-.streak-cell:not(.has-reward) .streak-cell-day {
-  justify-self: center;
-  margin: 0;
-  font-size: 13px;
-  color: var(--ink);
+  grid-template-rows: auto 1fr;
 }
 .streak-cell.is-checked {
   background: color-mix(in srgb, var(--civic) 12%, var(--paper));
@@ -5528,7 +5539,7 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .streak-fire { animation: none; }
-  .streak-cell.is-landing .streak-cell-check { animation: none; }
+  .streak-cell.is-landing .streak-cell-check svg { animation: none; }
 }
 
 .level-letter,

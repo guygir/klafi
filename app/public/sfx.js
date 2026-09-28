@@ -18,7 +18,7 @@
 export const SFX_BASE = "/sfx/";
 export const SFX_CLIPS = Object.freeze([
   "rip-pc4", "rip-pc7", "rip-pc11",
-  "click",
+  "click", "streak-stamp",
   "reveal-quote", "reveal-party",
   "rarity-1", "rarity-2", "rarity-3", "rarity-4",
 ]);

@@ -2,15 +2,24 @@ import { jerusalemDay, previousJerusalemDay } from "./numbered.js";
 
 export const STREAK_CALENDAR_DAYS = 30;
 
-/** Absolute day 1–30. Pack = warehouse pull. Stars = 1 Common / 2 Uncommon / 3 Rare. */
+/** Absolute day 1–30. Pack every 5 days. Stars = 1 Common / 2 Uncommon / 3 Rare. */
 export const STREAK_REWARDS = Object.freeze({
-  3: Object.freeze({ kind: "pack" }),
-  7: Object.freeze({ kind: "rarity", stars: 1 }),
+  2: Object.freeze({ kind: "rarity", stars: 1 }),
+  4: Object.freeze({ kind: "rarity", stars: 1 }),
+  5: Object.freeze({ kind: "pack" }),
+  6: Object.freeze({ kind: "rarity", stars: 1 }),
+  8: Object.freeze({ kind: "rarity", stars: 2 }),
   10: Object.freeze({ kind: "pack" }),
+  12: Object.freeze({ kind: "rarity", stars: 2 }),
   14: Object.freeze({ kind: "rarity", stars: 2 }),
-  21: Object.freeze({ kind: "pack" }),
-  25: Object.freeze({ kind: "rarity", stars: 2 }),
-  30: Object.freeze({ kind: "rarity", stars: 3 }),
+  15: Object.freeze({ kind: "pack" }),
+  16: Object.freeze({ kind: "rarity", stars: 2 }),
+  19: Object.freeze({ kind: "rarity", stars: 3 }),
+  20: Object.freeze({ kind: "pack" }),
+  23: Object.freeze({ kind: "rarity", stars: 3 }),
+  25: Object.freeze({ kind: "pack" }),
+  28: Object.freeze({ kind: "rarity", stars: 3 }),
+  30: Object.freeze({ kind: "pack" }),
 });
 
 export const STREAK_STAR_TIERS = Object.freeze({
