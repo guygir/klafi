@@ -17,14 +17,14 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-123"></script>
+  <script src="/boot-warmup.js?v=card-surface-134"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-123" />
-  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-123" />
-  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-123" />
-  <link rel="stylesheet" href="/packrip.css?v=card-surface-123" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-134" />
+  <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-134" />
+  <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-134" />
+  <link rel="stylesheet" href="/packrip.css?v=card-surface-134" />
 </head>
 <body>
   <a class="skip-link" id="skip-to-main" href="#main">דילוג לתוכן</a>
@@ -90,10 +90,10 @@
 
       <section id="home-view" class="view active">
         <div class="home-grid">
-          <button type="button" class="today-specials-line" id="today-specials-row" data-state="idle" data-today-nav="specials">
+          <button type="button" class="today-specials-line is-marquee" id="today-specials-row" data-state="pulse" data-today-nav="specials" hidden>
             <span class="today-specials-track">
-              <span class="today-specials-copy" id="today-specials-copy">אין אירוע כרגע</span>
-              <span class="today-specials-copy" id="today-specials-copy-repeat" aria-hidden="true">אין אירוע כרגע</span>
+              <span class="today-specials-copy" id="today-specials-copy"></span>
+              <span class="today-specials-copy" id="today-specials-copy-repeat" aria-hidden="true"></span>
             </span>
           </button>
           <div class="today-hero">
@@ -602,6 +602,7 @@
     </div>
     <p id="dialog-trust" class="card-trust-note" hidden></p>
     <p id="dialog-holders" class="card-holders-note" hidden></p>
+    <div id="dialog-numbered-pulls" class="card-numbered-pulls" hidden></div>
     <div class="dialog-meta-row">
       <a id="dialog-source" class="dialog-source" href="#" target="_blank" rel="noopener">למקור ↗</a>
       <button id="dialog-report" class="report-link" type="button">דיווח על טעות בקלף</button>
@@ -678,6 +679,25 @@
     <button id="event-dialog-ok" class="primary-action" type="button">הבנתי</button>
   </dialog>
 
+  <dialog id="trade-notice-dialog" class="policy-dialog trade-notice-dialog" aria-labelledby="trade-notice-title" aria-describedby="trade-notice-copy">
+    <button id="close-trade-notice" class="dialog-close" type="button" aria-label="סגירה">×</button>
+    <p class="eyebrow" id="trade-notice-kicker">החלפה</p>
+    <h2 id="trade-notice-title">ההחלפה אושרה!</h2>
+    <p id="trade-notice-copy">החלפתם עם שחקן</p>
+    <div class="trade-notice-cards" aria-hidden="false">
+      <div class="trade-side">
+        <small>קיבלתם</small>
+        <div id="trade-notice-received" class="trade-thumb"></div>
+      </div>
+      <b aria-hidden="true">⇄</b>
+      <div class="trade-side">
+        <small>נתתם</small>
+        <div id="trade-notice-given" class="trade-thumb"></div>
+      </div>
+    </div>
+    <button id="trade-notice-ok" class="primary-action" type="button">הבנתי</button>
+  </dialog>
+
   <dialog id="profile-dialog" class="policy-dialog" aria-labelledby="profile-dialog-title">
     <button id="close-profile" class="dialog-close" type="button" aria-label="סגירה">×</button>
     <p class="eyebrow">הפרופיל שלי</p>
@@ -744,7 +764,10 @@
   <dialog id="wait-dialog" class="policy-dialog wait-dialog" aria-live="assertive" aria-busy="true">
     <p id="wait-dialog-copy">רגע…</p>
   </dialog>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <strong id="toast-title" class="toast-title" hidden></strong>
+    <span id="toast-copy" class="toast-copy"></span>
+  </div>
   <aside id="numbered-tip" class="numbered-tip" hidden>
     <p>שלפת קלף ממוספר!<br>עותק ממוספר הוא יחיד במינו! שווה שיתוף אם אתם שואלים אותי…</p>
     <button type="button" id="numbered-tip-dismiss">הבנתי</button>
@@ -752,9 +775,9 @@
   <div id="klafi-tips" class="klafi-tips" hidden aria-hidden="true">
     <svg id="klafi-tips-dim" class="klafi-tips-dim" aria-hidden="true"></svg>
     <aside id="klafi-tips-card" class="klafi-tips-card" role="dialog" aria-modal="false" aria-labelledby="klafi-tips-title" aria-describedby="klafi-tips-body">
-      <p class="klafi-tips-kicker" id="klafi-tips-step" dir="ltr">1/3</p>
-      <h2 id="klafi-tips-title">היום</h2>
-      <p id="klafi-tips-body">זה מסך היום. המחסן ממשיך לאסוף קלף כל שלוש שעות, גם בלי שתיגעו. השעון שמתחת לכותרת מראה מתי מגיע הבא.</p>
+      <p class="klafi-tips-kicker" id="klafi-tips-step" dir="ltr">1/7</p>
+      <h2 id="klafi-tips-title">המטרה</h2>
+      <p id="klafi-tips-body">מטרת המשחק היא לאסוף כמה שיותר קלפים של הפוליטיקאים המועמדים לבחירות 2026. כל קלף של פוליטיקאי מכיל ציטוט שלו. פותחים, קוראים, לומדים להכיר את כולם! יש קלפים יותר נפוצים, ויש כאלו יותר נדירים. יש גם קלפים עם עותק אחד בלבד בארץ… חושבים שתוכלו להשיג אותם?</p>
       <ol id="klafi-tips-legend" class="klafi-tips-legend" hidden></ol>
       <label class="klafi-tips-mute" for="klafi-tips-mute" hidden>
         <input id="klafi-tips-mute" type="checkbox" />
@@ -781,6 +804,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-123"></script>
+  <script type="module" src="/app.js?v=card-surface-134"></script>
 </body>
 </html>

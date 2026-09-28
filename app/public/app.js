@@ -5,6 +5,7 @@ import { starContributionBins } from "./star-contribution-bins.js";
 import { binderBadgeOrder } from "./badge-order.js";
 import { isStaleState, mergeLeaderboards, overlayPendingSeen, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
+import { tradeApprovedLines } from "./trade-approved.js";
 import {
   exitWalkoutSunburst,
   readSunburstRarityOverride,
@@ -14,6 +15,7 @@ import {
 } from "./walkout-sunburst.js";
 import { destroyPackRip, mountPackRip, packRipMarkup, preloadPackRipAssets, schedulePackRipPrefetch } from "./packrip.js";
 import { createSfx, revealClipForStage, sfxRarityKey } from "./sfx.js";
+import { TODAY_PULSE_REFRESH_MS, todayPulseCopy } from "./today-pulse.js";
 
 const SESSION_KEY = "kalpi-alpha-session";
 const STUDIO_KEY = "kalpi-studio-secret";
@@ -21,6 +23,7 @@ const HOME_CACHE_KEY = "kalpi-home-cache";
 // When the server state last arrived (0 = only the localStorage cache so far).
 let stateFreshAt = 0;
 let eventPredictionRefreshAt = 0;
+let lastTodayPulseAt = 0;
 const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
@@ -43,6 +46,8 @@ function playerDialogOpen() {
     elements.reportDialog,
     elements.levelDialog,
     elements.eventDialog,
+    elements.tradeNoticeDialog,
+    elements.waitDialog,
     elements.shareSheet,
   ].some((dialog) => dialog?.open);
 }
@@ -93,9 +98,10 @@ const model = {
   leaguesCacheToken: null,
   leagueLeaveConfirm: null,
   showcase: false,
-  cardHolders: { holders: {}, numberedHolders: {} },
+  cardHolders: { holders: {}, numberedHolders: {}, numberedPulls: [] },
   cardHoldersReady: false,
   dialogNumbered: false,
+  dialogNumberedPreview: null,
   reports: [],
   reportSubject: null,
   levelRewardReady: null,
@@ -201,6 +207,7 @@ const elements = {
   studioShareBinderLink: document.querySelector("#studio-share-binder-link"),
   studioShareBinderCopy: document.querySelector("#studio-share-binder-copy"),
   dialogHolders: document.querySelector("#dialog-holders"),
+  dialogNumberedPulls: document.querySelector("#dialog-numbered-pulls"),
   binderPercent: document.querySelector("#binder-percent"),
   binderCount: document.querySelector("#binder-count"),
   binderEyebrow: document.querySelector("#binder-eyebrow"),
@@ -241,6 +248,13 @@ const elements = {
   eventDialogCopy: document.querySelector("#event-dialog-copy"),
   eventDialogOk: document.querySelector("#event-dialog-ok"),
   closeEventDialog: document.querySelector("#close-event-dialog"),
+  tradeNoticeDialog: document.querySelector("#trade-notice-dialog"),
+  tradeNoticeTitle: document.querySelector("#trade-notice-title"),
+  tradeNoticeCopy: document.querySelector("#trade-notice-copy"),
+  tradeNoticeReceived: document.querySelector("#trade-notice-received"),
+  tradeNoticeGiven: document.querySelector("#trade-notice-given"),
+  tradeNoticeOk: document.querySelector("#trade-notice-ok"),
+  closeTradeNotice: document.querySelector("#close-trade-notice"),
   avatarSeal: document.querySelector("#avatar-seal"),
   levelLetter: document.querySelector("#level-letter"),
   levelLetterText: document.querySelector("#level-letter-text"),
@@ -371,6 +385,8 @@ const elements = {
   submitBug: document.querySelector("#submit-bug"),
   closeBug: document.querySelector("#close-bug"),
   toast: document.querySelector("#toast"),
+  toastTitle: document.querySelector("#toast-title"),
+  toastCopy: document.querySelector("#toast-copy"),
   waitDialog: document.querySelector("#wait-dialog"),
   waitDialogCopy: document.querySelector("#wait-dialog-copy"),
   bottomNav: document.querySelector(".bottom-nav"),
@@ -655,6 +671,7 @@ function applyHomePayload(home) {
         loginStreak: model.serverState.loginStreak || 0,
         factionId: model.serverState.factionId || null,
         numberedCopies: model.serverState.numberedCopies || [],
+        pendingTradeNotices: model.serverState.pendingTradeNotices || [],
         idlePullCount: model.serverState.idlePullCount ?? 0,
         achievements: model.serverState.achievements || [],
         achievementPages: model.serverState.achievementPages || [],
@@ -888,6 +905,7 @@ async function hydrateHome() {
       renderHome();
       renderBinder();
       renderAchievements();
+      maybeShowTradeNotice();
       return home;
     }).finally(() => {
       homeHydrate = null;
@@ -1010,6 +1028,7 @@ async function hydrateIdleQueue() {
       prefetchIdleAssets();
       renderHome();
       refreshDailyChallenge();
+      maybeShowTradeNotice();
       flushPendingIdleSeen().catch(() => {});
       return settled;
     })().finally(() => {
@@ -1047,12 +1066,21 @@ function kickDueIdleSettle() {
 
 function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state, specialWindow }) {
   if (events) model.events = events.events || events;
-  if (trades) model.trades = trades.trades || trades;
+  if (trades) {
+    model.trades = trades.trades || trades;
+    watchOpenTrade();
+  }
   if (leaderboards) model.leaderboards = mergeLeaderboards(model.leaderboards, leaderboards);
-  if (activity) model.activity = activity;
+  if (activity) {
+    model.activity = activity;
+    lastTodayPulseAt = Date.now();
+  }
   if (specials) model.specials = specials;
   if (specialWindow !== undefined) model.specialWindow = specialWindow;
-  if (state) setServerState(state, { merge: true });
+  if (state) {
+    setServerState(state, { merge: true });
+    maybeShowTradeNotice();
+  }
 }
 
 function paintExtras() {
@@ -2197,6 +2225,7 @@ async function restoreSessionFromCode() {
 async function saveProfile(event) {
   event.preventDefault();
   elements.profileError.textContent = "";
+  showWait("שומרים…");
   try {
     const profile = await request("/api/profile", {
       method: "POST",
@@ -2219,6 +2248,8 @@ async function saveProfile(event) {
     elements.profileError.textContent = error.status === 400
       ? "אפשר להשתמש ב־2–24 אותיות, מספרים, רווחים, גרש או מקף."
       : "לא הצלחנו לשמור את השם.";
+  } finally {
+    hideWait();
   }
 }
 
@@ -2567,8 +2598,7 @@ function renderTodaySpecials() {
   if (!row) return;
   const windowOpen = model.specialWindow;
   if (windowOpen?.reward === "pull" && !windowOpen.claimedToday) refreshEventPredictionIfStale();
-  document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen));
-  let line = "אין אירוע כרגע";
+  let line = todayPulseCopy(model.activity?.todayPulse);
   if (windowOpen?.reward === "pull") {
     line = windowOpen.claimedToday
       ? windowOpen.claimedTickerHe || `${windowOpen.nameHe} · החבילה כבר אצלכם`
@@ -2585,9 +2615,18 @@ function renderTodaySpecials() {
         : "קלף אחד להיום — והוא נשאר באלבום.";
     line = `חלון מיוחד · ${windowOpen.nameHe} · ${detail}`;
   }
-  const state = !windowOpen ? "idle" : windowOpen.claimedToday ? "claimed" : "live";
+  const hasLine = Boolean(line);
+  row.hidden = !hasLine;
+  document.querySelector("#home-view")?.classList.toggle("has-specials", Boolean(windowOpen) || hasLine);
+  if (!hasLine) {
+    for (const copy of [elements.todaySpecialsCopy, elements.todaySpecialsCopyRepeat]) {
+      if (copy && copy.textContent) copy.textContent = "";
+    }
+    return;
+  }
+  const state = !windowOpen ? "pulse" : windowOpen.claimedToday ? "claimed" : "live";
   if (row.dataset.state !== state) row.dataset.state = state;
-  row.classList.toggle("is-marquee", Boolean(windowOpen));
+  row.classList.toggle("is-marquee", true);
   // A claimed pull event keeps scrolling its "already yours" line but is no longer a control:
   // disabled = no click, no focus, no pop-up, no POST. (Card events manage .disabled themselves.)
   const inert = windowOpen?.reward === "pull" && Boolean(windowOpen.claimedToday);
@@ -2718,6 +2757,7 @@ function dismissLevelDialog() {
   if (elements.levelDialog.open) elements.levelDialog.close();
   const pending = model.serverState?.progression?.pendingRewards || [];
   if (pending.length) queueMicrotask(() => openPendingLevelDialog());
+  else queueMicrotask(() => maybeShowTradeNotice());
 }
 
 function renderProgression({ announce = false } = {}) {
@@ -2793,6 +2833,27 @@ function updateCountdown() {
 }
 
 setInterval(updateCountdown, 1000);
+setInterval(() => {
+  refreshTodayPulse().catch(() => {});
+}, TODAY_PULSE_REFRESH_MS);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") refreshTodayPulse().catch(() => {});
+});
+
+async function refreshTodayPulse({ force = false } = {}) {
+  if (!model.token || model.showcase) return;
+  const now = Date.now();
+  if (!force && lastTodayPulseAt && now - lastTodayPulseAt < TODAY_PULSE_REFRESH_MS) return;
+  lastTodayPulseAt = now;
+  try {
+    const payload = await request("/api/community");
+    if (payload?.activity) model.activity = payload.activity;
+    if (payload?.specialWindow !== undefined) model.specialWindow = payload.specialWindow;
+    renderTodaySpecials();
+  } catch {
+    /* Keep the last pulse line until the next 15-minute tick. */
+  }
+}
 
 function resetPackRip() {
   packRipListeners?.abort();
@@ -3568,10 +3629,16 @@ function catalogNumberedInstance(card) {
 }
 
 function catalogCardMarkup(card, surface = "binder", numbered = false) {
+  const preview = model.dialogNumberedPreview;
+  const stamp = numbered
+    ? (preview?.cardId === card?.id
+      ? { numberedIndex: preview.index, numberedOf: preview.of, finish: "Holo" }
+      : catalogNumberedInstance(card))
+    : {};
   return cardMarkup(card, {
     finish: card.rarity,
     count: 1,
-    ...(numbered ? catalogNumberedInstance(card) : {}),
+    ...stamp,
   }, { progressiveStage: "portrait", surface });
 }
 
@@ -3602,6 +3669,18 @@ function holderLine(count, numbered = false, card = null) {
   return `${count} שחקנים שונים מחזיקים בקלף הזה`;
 }
 
+function numberedPullsFor(card) {
+  return (model.cardHolders?.numberedPulls || []).filter((pull) => pull.cardId === card?.id);
+}
+
+function numberedPullLine(pull) {
+  const name = escapeHtml(pull.displayName || "שחקן");
+  const index = Number(pull.index) || 0;
+  const of = Number(pull.of) || 0;
+  const stamp = of > 0 ? `${index}/${of}` : String(index);
+  return `<p class="card-numbered-pull">${name} שלף את <button type="button" class="numbered-pull-link" data-numbered-preview data-card-id="${escapeHtml(pull.cardId)}" data-numbered-index="${index}" data-numbered-of="${of}">הממוספר ${stamp}</button> של קלף זה!</p>`;
+}
+
 async function hydrateCardHolders() {
   try {
     const warmed = window.__kalpiWarmup?.holders;
@@ -3611,6 +3690,7 @@ async function hydrateCardHolders() {
     model.cardHolders = {
       holders: payload.holders || {},
       numberedHolders: payload.numberedHolders || {},
+      numberedPulls: Array.isArray(payload.numberedPulls) ? payload.numberedPulls : [],
     };
     model.cardHoldersReady = true;
     if (model.showcase) renderShowcaseBinder();
@@ -3706,7 +3786,12 @@ function renderShowcaseBinder() {
 }
 
 function displayCardMarkup(card, surface = "display") {
-  const stamp = stampForCard(card);
+  const preview = surface === "display" && model.dialogNumberedPreview?.cardId === card?.id
+    ? model.dialogNumberedPreview
+    : null;
+  const stamp = preview
+    ? { numberedIndex: preview.index, numberedOf: preview.of, finish: "Holo" }
+    : stampForCard(card);
   return cardMarkup(card, {
     finish: stamp?.finish || card.rarity,
     count: ownedCountFor(card),
@@ -4610,32 +4695,118 @@ function watchOpenTrade() {
   if (mine) model.watchedTrade = { tradeId: mine.tradeId, receivedCardId: mine.wantedCardId };
 }
 
-function settleReceivedCard(cardId, message) {
-  renderBinder();
-  renderGrowth();
-  showToast(message);
-  if (cardId) openCardDialog(cardId);
-}
-
 function applyTradeResult(result) {
   if (result?.state) setServerState(result.state, { merge: true });
   if (result?.trades) model.trades = result.trades.trades || result.trades;
   watchOpenTrade();
   renderBinder();
   renderGrowth();
+  maybeShowTradeNotice();
+}
+
+function tipsOverlayOpen() {
+  const overlay = document.querySelector("#klafi-tips");
+  return Boolean(overlay && !overlay.hidden);
+}
+
+function pendingTradeNotices() {
+  return [...(model.serverState?.pendingTradeNotices || [])].filter((notice) => notice?.id);
+}
+
+function cardTitleHe(cardId) {
+  return model.byId.get(cardId)?.titleHe || "";
+}
+
+function paintTradeNoticeThumb(node, cardId) {
+  const card = model.byId.get(cardId);
+  if (!node) return;
+  node.hidden = !card;
+  node.innerHTML = card ? tradeThumbMarkup(card) : "";
+  if (card) queueCardTextFit(node);
+}
+
+function showAcceptedTradeNotice({ otherName, receivedCardId, givenCardId, noticeId = "" }) {
+  const dialog = elements.tradeNoticeDialog;
+  if (!dialog) return;
+  const lines = tradeApprovedLines({
+    otherName,
+    receivedTitle: cardTitleHe(receivedCardId),
+    givenTitle: cardTitleHe(givenCardId),
+  });
+  if (elements.tradeNoticeTitle) elements.tradeNoticeTitle.textContent = lines.title;
+  if (elements.tradeNoticeCopy) elements.tradeNoticeCopy.textContent = lines.who;
+  paintTradeNoticeThumb(elements.tradeNoticeReceived, receivedCardId);
+  paintTradeNoticeThumb(elements.tradeNoticeGiven, givenCardId);
+  dialog.dataset.noticeId = noticeId || "";
+  dialog.dataset.receivedCardId = receivedCardId || "";
+  dialog.dataset.givenCardId = givenCardId || "";
+  if (!dialog.open) dialog.showModal();
+}
+
+function maybeShowTradeNotice() {
+  if (model.showcase || model.tradeNoticeBusy || !stateFreshAt) return;
+  if (elements.waitDialog?.open || tipsOverlayOpen()) return;
+  if (elements.tradeNoticeDialog?.open) return;
+  if (playerDialogOpen()) return;
+  const notice = pendingTradeNotices()[0];
+  if (!notice) return;
+  showAcceptedTradeNotice({
+    otherName: notice.accepterName,
+    receivedCardId: notice.receivedCardId,
+    givenCardId: notice.givenCardId,
+    noticeId: notice.id,
+  });
+}
+
+async function dismissTradeNotice() {
+  const dialog = elements.tradeNoticeDialog;
+  const id = dialog?.dataset.noticeId || "";
+  if (dialog?.open) dialog.close();
+  if (id) await ackPendingTradeNotice(id);
+  if (dialog) {
+    delete dialog.dataset.noticeId;
+    delete dialog.dataset.receivedCardId;
+    delete dialog.dataset.givenCardId;
+  }
+  queueMicrotask(() => maybeShowTradeNotice());
+}
+
+async function ackPendingTradeNotice(id) {
+  if (!id || model.tradeNoticeBusy) return;
+  model.tradeNoticeBusy = true;
+  try {
+    const result = await request("/api/trades/notices/ack", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (result?.state) setServerState(result.state, { merge: true });
+    else if (model.serverState?.pendingTradeNotices) {
+      model.serverState.pendingTradeNotices = pendingTradeNotices().filter((notice) => notice.id !== id);
+    }
+  } catch {
+    if (model.serverState?.pendingTradeNotices) {
+      model.serverState.pendingTradeNotices = pendingTradeNotices().filter((notice) => notice.id !== id);
+    }
+  } finally {
+    model.tradeNoticeBusy = false;
+  }
 }
 
 async function pollWatchedTrade() {
+  maybeShowTradeNotice();
   if (!model.watchedTrade || document.visibilityState !== "visible" || !model.token) return;
   const payload = await request("/api/trades");
   const trades = payload.trades || payload;
   model.trades = trades;
   const watched = trades.find((trade) => trade.tradeId === model.watchedTrade.tradeId);
   if (watched?.status === "accepted") {
-    const receivedCardId = model.watchedTrade.receivedCardId;
     model.watchedTrade = null;
     setServerState(await request("/api/state"));
-    settleReceivedCard(receivedCardId, "מישהו קיבל את ההצעה. הקלף נכנס לאוסף.");
+    renderBinder();
+    renderGrowth();
+    renderHome();
+    maybeShowTradeNotice();
     return;
   }
   if (!watched || watched.status !== "open") {
@@ -4852,7 +5023,7 @@ function renderGrowth() {
   if (elements.collectorRank) {
     if (yourRank && collectorTotal) {
       elements.collectorRank.hidden = false;
-      elements.collectorRank.textContent = `אתם ${yourRank}/${collectorTotal}`;
+      elements.collectorRank.textContent = `אתם מקום ${yourRank} מתוך ${collectorTotal}`;
     } else {
       elements.collectorRank.hidden = true;
       elements.collectorRank.textContent = "";
@@ -6070,12 +6241,23 @@ async function simulateTradeAcceptance(tradeId) {
 }
 
 async function acceptTradeOffer(tradeId) {
+  if (model.acceptingTrade) return;
+  model.acceptingTrade = true;
+  showWait("מאשרים…");
   try {
     const result = await request(`/api/trades/${encodeURIComponent(tradeId)}/accept`, { method: "POST" });
     applyTradeResult(result);
-    settleReceivedCard(result.trade?.offeredCardId, "ההחלפה הושלמה. הקלף נכנס לאוסף.");
+    hideWait();
+    showAcceptedTradeNotice({
+      otherName: result.trade?.ownerLabel,
+      receivedCardId: result.trade?.offeredCardId,
+      givenCardId: result.trade?.wantedCardId,
+    });
   } catch {
     showToast("ההצעה כבר לא זמינה או שחסר לכם הקלף המבוקש.");
+  } finally {
+    hideWait();
+    model.acceptingTrade = false;
   }
 }
 
@@ -6145,16 +6327,27 @@ function openCardDialog(cardId, numbered = false) {
   model.dialogCardId = cardId;
   model.dialogBack = false;
   model.dialogNumbered = Boolean(numbered);
+  model.dialogNumberedPreview = null;
   renderDialogCard();
   elements.dialog.showModal();
   queueCardTextFit(elements.dialog);
   maybeShowNumberedTip();
 }
 
+function openNumberedPreview(cardId, index, of) {
+  if (!cardId || !model.byId.get(cardId)) return;
+  model.dialogCardId = cardId;
+  model.dialogBack = false;
+  model.dialogNumbered = true;
+  model.dialogNumberedPreview = { cardId, index: Number(index) || 0, of: Number(of) || 0 };
+  renderDialogCard();
+  if (!elements.dialog.open) elements.dialog.showModal();
+  queueCardTextFit(elements.dialog);
+}
+
 function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
   const ownedCount = model.showcase ? 0 : (model.serverState?.inventory?.[card.id] ?? 0);
-  const numbered = model.showcase ? model.dialogNumbered : Boolean(stampForCard(card)?.numberedIndex);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
   elements.dialogCard.innerHTML = model.showcase
@@ -6166,8 +6359,13 @@ function renderDialogCard() {
     elements.dialogTrust.hidden = !line;
   }
   if (elements.dialogHolders) {
-    elements.dialogHolders.textContent = holderLine(holderCountFor(card, numbered), numbered, card);
+    elements.dialogHolders.textContent = holderLine(holderCountFor(card, false), false, card);
     elements.dialogHolders.hidden = !model.cardHoldersReady;
+  }
+  if (elements.dialogNumberedPulls) {
+    const pulls = numberedPullsFor(card);
+    elements.dialogNumberedPulls.innerHTML = pulls.map(numberedPullLine).join("");
+    elements.dialogNumberedPulls.hidden = !model.cardHoldersReady || pulls.length === 0;
   }
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
@@ -6350,10 +6548,17 @@ async function submitBugReport(event) {
 }
 
 function showToast(message, ms = 2200) {
-  elements.toast.textContent = message;
-  elements.toast.classList.add("show");
+  if (elements.toastTitle) {
+    elements.toastTitle.hidden = true;
+    elements.toastTitle.textContent = "";
+  }
+  if (elements.toastCopy) elements.toastCopy.textContent = message;
+  else if (elements.toast) elements.toast.textContent = message;
+  elements.toast?.classList.add("show");
   clearTimeout(showToast.timeout);
-  showToast.timeout = setTimeout(() => elements.toast.classList.remove("show"), ms);
+  showToast.timeout = setTimeout(() => {
+    elements.toast?.classList.remove("show");
+  }, ms);
 }
 
 function wrapCanvasText(context, text, x, y, maxWidth, lineHeight, maxLines = 4) {
@@ -7245,7 +7450,9 @@ elements.avatarPicker?.addEventListener("click", (event) => {
 elements.saveAchievements?.addEventListener("click", saveStudioAchievements);
 elements.saveEvents?.addEventListener("click", saveStudioEvents);
 elements.closeProfile.addEventListener("click", () => elements.profileDialog.close());
+elements.profileDialog.addEventListener("close", () => maybeShowTradeNotice());
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
+elements.dialog.addEventListener("close", () => maybeShowTradeNotice());
 elements.dialogReport.addEventListener("click", () => openReportDialog());
 elements.closeReport.addEventListener("click", () => elements.reportDialog.close());
 elements.reportForm.addEventListener("submit", submitCorrectionReport);
@@ -7626,6 +7833,12 @@ elements.earnedBadgeList?.addEventListener("keydown", (event) => {
 });
 
 elements.dialog.addEventListener("click", (event) => {
+  const link = event.target.closest?.("[data-numbered-preview]");
+  if (link) {
+    event.preventDefault();
+    openNumberedPreview(link.dataset.cardId, link.dataset.numberedIndex, link.dataset.numberedOf);
+    return;
+  }
   if (event.target === elements.dialog) elements.dialog.close();
 });
 elements.closeEventDialog.addEventListener("click", () => elements.eventDialog.close());
@@ -7633,9 +7846,20 @@ elements.eventDialogOk.addEventListener("click", () => {
   const retry = elements.eventDialog.dataset.outcome === "retry";
   elements.eventDialog.close();
   if (retry && model.specialWindow?.reward === "pull") claimEventPull(model.specialWindow);
+  maybeShowTradeNotice();
 });
 elements.eventDialog.addEventListener("click", (event) => {
   if (event.target === elements.eventDialog) elements.eventDialog.close();
+});
+elements.eventDialog.addEventListener("close", () => maybeShowTradeNotice());
+elements.closeTradeNotice?.addEventListener("click", () => dismissTradeNotice());
+elements.tradeNoticeOk?.addEventListener("click", () => dismissTradeNotice());
+elements.tradeNoticeDialog?.addEventListener("click", (event) => {
+  if (event.target === elements.tradeNoticeDialog) dismissTradeNotice();
+});
+elements.tradeNoticeDialog?.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  dismissTradeNotice();
 });
 elements.advocacyDialog.addEventListener("click", (event) => {
   if (event.target === elements.advocacyDialog) elements.advocacyDialog.close();
@@ -7696,6 +7920,12 @@ if (!window.__klafiTradeWatch) {
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") pollWatchedTrade().catch(() => {});
 });
+const tipsOverlay = document.querySelector("#klafi-tips");
+if (tipsOverlay) {
+  new MutationObserver(() => {
+    if (tipsOverlay.hidden) maybeShowTradeNotice();
+  }).observe(tipsOverlay, { attributes: true, attributeFilter: ["hidden"] });
+}
 // Warm the rip layers on the first idle moment so the first pack tap starts the rip at once.
 schedulePackRipPrefetch();
 bootstrap().then(() => {
@@ -7704,6 +7934,7 @@ bootstrap().then(() => {
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
 window.__kalpiDebug = {
+  showAcceptedTradeNotice,
   openCardDialog,
   renderSealedPackRip,
   showView,

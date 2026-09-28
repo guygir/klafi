@@ -5,7 +5,8 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
-import { moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import { jerusalemDay, moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import { emptyTodayPulse } from "../public/today-pulse.js";
 import { takeCollectorBoard } from "./collector-board.js";
 import { visibleDailyRaceLeaders } from "./daily-race.js";
 import {
@@ -16,6 +17,7 @@ import {
   normalizeLeagueCode,
 } from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
+import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
 
 const { Pool } = pg;
 
@@ -67,6 +69,7 @@ function emptySession(token, createdAt) {
     highestRank: 1,
     claimedRankRewards: [],
     pendingRankRewards: [],
+    pendingTradeNotices: [],
     quizWonDay: null,
     currentQuiz: null,
     loginDay: null,
@@ -86,6 +89,7 @@ function extrasFromSession(session) {
     preparedPulls: session.preparedPulls || [],
     claimedRankRewards: session.claimedRankRewards || [],
     pendingRankRewards: session.pendingRankRewards || [],
+    pendingTradeNotices: session.pendingTradeNotices || [],
     currentQuiz: session.currentQuiz || null,
     loginDay: session.loginDay || null,
     loginStreak: session.loginStreak || 0,
@@ -497,6 +501,7 @@ export class PostgresStore {
       highestRank: row.highest_rank,
       claimedRankRewards: extras.claimedRankRewards || [],
       pendingRankRewards: extras.pendingRankRewards || [],
+      pendingTradeNotices: extras.pendingTradeNotices || [],
       quizWonDay: row.quiz_won_day,
       currentQuiz: extras.currentQuiz || null,
       loginDay: extras.loginDay || null,
@@ -832,9 +837,12 @@ export class PostgresStore {
 
   async activitySummary() {
     const counts = {};
-    const events = await this.pool.query(
-      "SELECT type, session_token FROM kalpi_events ORDER BY recorded_at DESC LIMIT 5000",
-    );
+    const [events, pulse] = await Promise.all([
+      this.pool.query(
+        "SELECT type, session_token FROM kalpi_events ORDER BY recorded_at DESC LIMIT 5000",
+      ),
+      this.todayPulse(),
+    ]);
     const sessions = new Set();
     for (const event of events.rows) {
       counts[event.type] = (counts[event.type] ?? 0) + 1;
@@ -845,7 +853,30 @@ export class PostgresStore {
       participatingSessions: sessions.size,
       fixture: false,
       label: "Recorded PoC activity",
+      todayPulse: pulse,
     };
+  }
+
+  async todayPulse(now = Date.now()) {
+    const day = jerusalemDay(now);
+    try {
+      const result = await this.pool.query(
+        `SELECT COUNT(*)::int AS packs, COUNT(DISTINCT session_token)::int AS users
+         FROM kalpi_instances
+         WHERE acquired_by = 'idle'
+           AND pulled_at IS NOT NULL
+           AND pulled_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Jerusalem'
+           AND pulled_at < ($1::date + 1)::timestamp AT TIME ZONE 'Asia/Jerusalem'`,
+        [day],
+      );
+      return {
+        day,
+        packs: Number(result.rows[0]?.packs) || 0,
+        users: Number(result.rows[0]?.users) || 0,
+      };
+    } catch {
+      return emptyTodayPulse(now);
+    }
   }
 
   async setFaction(token, factionId) {
@@ -984,6 +1015,11 @@ export class PostgresStore {
       });
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
+      enqueueAcceptedTradeNotice(owner, trade, {
+        acceptedAt,
+        accepterName: accepter.displayName,
+        ownerName: owner.displayName,
+      });
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = sessionToken;
@@ -1272,14 +1308,36 @@ export class PostgresStore {
     return this.holderSnapshot;
   }
 
+  async listNumberedPulls() {
+    const result = await this.pool.query(
+      `SELECT i.card_id, s.display_name, i.numbered_index, i.numbered_of,
+              s.extras->>'publicBinderSlug' AS binder_slug
+       FROM kalpi_instances i
+       JOIN kalpi_sessions s ON s.token = i.session_token
+       WHERE i.numbered_index > 0
+       ORDER BY i.card_id, i.numbered_index, s.display_name`,
+    );
+    return result.rows.map((row) => ({
+      cardId: row.card_id,
+      displayName: String(row.display_name || "").trim() || "שחקן",
+      index: Number(row.numbered_index),
+      of: Number(row.numbered_of) || 0,
+      binderSlug: row.binder_slug || null,
+    }));
+  }
+
   async cardHolderSummary() {
     try {
       const snapshot = await this.readCardHolderSnapshot();
-      if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
+      const numberedPulls = await this.listNumberedPulls().catch(() => []);
+      if (!snapshot?.computedAt) {
+        const fresh = await this.refreshCardHolderSnapshot();
+        return { ...fresh, numberedPulls };
+      }
       if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
-      return snapshot;
+      return { ...snapshot, numberedPulls };
     } catch {
-      return { holders: {}, numberedHolders: {}, computedAt: new Date(this.now()).toISOString() };
+      return { holders: {}, numberedHolders: {}, numberedPulls: [], computedAt: new Date(this.now()).toISOString() };
     }
   }
 

@@ -128,6 +128,7 @@ test("share binder is look-only and does not create a player session", async (t)
   assert.equal(holders.status, 200);
   assert.deepEqual(holders.body.holders, {});
   assert.deepEqual(holders.body.numberedHolders, {});
+  assert.deepEqual(holders.body.numberedPulls, []);
 
   const home = await api(running.base, "/api/home");
   assert.equal(home.status, 200);
@@ -768,9 +769,34 @@ test("players can see and accept open trades from other collectors", async (t) =
   });
   assert.equal(accepted.status, 200);
   assert.equal(accepted.body.state.inventory[offered.id], 1);
+  assert.deepEqual(accepted.body.state.pendingTradeNotices || [], []);
   const ownerState = await api(running.base, "/api/state", { token: ownerToken });
   assert.equal(ownerState.body.inventory[wanted.id], 1);
   assert.equal(ownerState.body.inventory[offered.id], undefined);
+  assert.equal(ownerState.body.pendingTradeNotices.length, 1);
+  assert.equal(ownerState.body.pendingTradeNotices[0].receivedCardId, wanted.id);
+  assert.equal(ownerState.body.pendingTradeNotices[0].givenCardId, offered.id);
+  assert.equal(ownerState.body.pendingTradeNotices[0].tradeId, offer.tradeId);
+  assert.match(ownerState.body.pendingTradeNotices[0].accepterName, /שחקן/);
+  assert.equal(ownerState.body.pendingTradeNotices[0].ownerName, "מציע בדיקה");
+  const ownerHome = await api(running.base, "/api/home", { token: ownerToken });
+  assert.equal(ownerHome.body.state.pendingTradeNotices.length, 1);
+  assert.equal(ownerHome.body.state.pendingTradeNotices[0].id, ownerState.body.pendingTradeNotices[0].id);
+  const missingAck = await api(running.base, "/api/trades/notices/ack", {
+    token: ownerToken,
+    method: "POST",
+    body: {},
+  });
+  assert.equal(missingAck.status, 400);
+  const ack = await api(running.base, "/api/trades/notices/ack", {
+    token: ownerToken,
+    method: "POST",
+    body: { id: ownerState.body.pendingTradeNotices[0].id },
+  });
+  assert.equal(ack.status, 200);
+  assert.deepEqual(ack.body.state.pendingTradeNotices, []);
+  const afterAck = await api(running.base, "/api/state", { token: ownerToken });
+  assert.deepEqual(afterAck.body.pendingTradeNotices, []);
 });
 
 test("only one concurrent accepter can complete a trade", async (t) => {
@@ -1019,6 +1045,9 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(community.body.leaderboards.dailyChallenge.day, leaderboards.body.dailyChallenge.day);
   assert.ok(Array.isArray(community.body.trades.trades));
   assert.equal(community.body.activity.counts.pack_opened, 1);
+  assert.equal(typeof community.body.activity.todayPulse?.day, "string");
+  assert.equal(typeof community.body.activity.todayPulse?.packs, "number");
+  assert.equal(typeof community.body.activity.todayPulse?.users, "number");
   const likFaction = leaderboards.body.factions.find(({ partyId }) => partyId === "LIK");
   assert.ok(likFaction);
   assert.equal(likFaction.stars, currentCollector.stars);

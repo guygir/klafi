@@ -6,6 +6,8 @@ import { takeCollectorBoard } from "./collector-board.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { openSpecialWindow } from "./special-window.js";
+import { jerusalemDay } from "./numbered.js";
+import { emptyTodayPulse } from "../public/today-pulse.js";
 
 const { Pool } = pg;
 const SECURITY_HEADERS = Object.freeze({
@@ -109,7 +111,13 @@ export function emptyCommunity(config, now = Date.now(), specialWindow = null) {
   return {
     trades: { trades: [], simulated: false },
     leaderboards: slimLeaderboards(config, [], [], now),
-    activity: { counts: {}, participatingSessions: 0, fixture: false, label: "Recorded PoC activity" },
+    activity: {
+      counts: {},
+      participatingSessions: 0,
+      fixture: false,
+      label: "Recorded PoC activity",
+      todayPulse: emptyTodayPulse(now),
+    },
     specialWindow,
   };
 }
@@ -210,6 +218,28 @@ async function collectorBoards(db, config, now, token) {
   return slimLeaderboards(config, collectors, factions, now, { collectorCount, yourCollectorRank });
 }
 
+async function todayPulse(db, now = Date.now()) {
+  const day = jerusalemDay(now);
+  try {
+    const result = await db.query(
+      `SELECT COUNT(*)::int AS packs, COUNT(DISTINCT session_token)::int AS users
+       FROM kalpi_instances
+       WHERE acquired_by = 'idle'
+         AND pulled_at IS NOT NULL
+         AND pulled_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Jerusalem'
+         AND pulled_at < ($1::date + 1)::timestamp AT TIME ZONE 'Asia/Jerusalem'`,
+      [day],
+    );
+    return {
+      day,
+      packs: Number(result.rows[0]?.packs) || 0,
+      users: Number(result.rows[0]?.users) || 0,
+    };
+  } catch {
+    return emptyTodayPulse(now);
+  }
+}
+
 async function activitySummary(db) {
   const events = await db.query(
     "SELECT type, session_token FROM kalpi_events ORDER BY recorded_at DESC LIMIT 5000",
@@ -225,6 +255,7 @@ async function activitySummary(db) {
     participatingSessions: sessions.size,
     fixture: false,
     label: "Recorded PoC activity",
+    todayPulse: await todayPulse(db),
   };
 }
 

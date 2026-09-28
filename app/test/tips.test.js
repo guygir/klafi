@@ -34,7 +34,7 @@ import {
 } from "../public/tips.js";
 
 test("cookie off stops auto-open; replay re-enables later views", () => {
-  assert.equal(TIPS_STEPS.length, 3);
+  assert.equal(TIPS_STEPS.length, 1);
   assert.equal(TIPS_COOKIE, "klafi_tips");
   assert.equal(TIPS_STORAGE, "klafi:tips");
   assert.equal(parseTipsCookie("theme=dark; klafi_tips=off; other=1"), "off");
@@ -61,11 +61,11 @@ test("cookie off stops auto-open; replay re-enables later views", () => {
   writeTipsPref("on", env);
   assert.equal(readTipsPref(env), "on");
   assert.equal(shouldAutoOpen(readTipsPref(env), { homeActive: true, started: false }), true);
-  assert.equal(advanceStepFromView(1, { packActive: true }), 2);
-  assert.equal(advanceStepFromView(2, { binderActive: true }), 3);
-  assert.equal(stepViewReady(2, { packActive: false }), false);
-  assert.equal(stepViewReady(2, { packActive: true }), true);
-  assert.equal(stepViewReady(3, { dialogOpen: true }), true);
+  assert.equal(advanceStepFromView(1, { packActive: true }), 1);
+  assert.equal(advanceStepFromView(1, { binderActive: true }), 1);
+  assert.equal(stepViewReady(1, { packActive: true }), true);
+  assert.equal(stepViewReady(1, { cardRevealed: true }), true);
+  assert.equal(stepViewReady(1, { homeActive: true }), true);
 });
 
 test("firstVisible falls back when boxes are 0x0 and leftover pack hint is recognized", () => {
@@ -83,36 +83,46 @@ test("firstVisible falls back when boxes are 0x0 and leftover pack hint is recog
 
 test("each nav page has a first-visit guide; seen pages and mute stop auto-open", () => {
   assert.deepEqual(Object.keys(PAGE_GUIDES), ["home", "pack", "card", "binder", "achievements", "growth", "dialog"]);
-  assert.equal(PAGE_GUIDES.home.length, 6);
+  assert.equal(PAGE_GUIDES.home.length, 7);
   assert.equal(PAGE_GUIDES.binder.length, 3);
   assert.equal(PAGE_GUIDES.achievements.length, 2);
   assert.equal(PAGE_GUIDES.growth.length, 4);
-  assert.equal(PAGE_GUIDES.card.length, 1);
+  assert.equal(PAGE_GUIDES.card.length, 2);
   assert.equal(PAGE_GUIDES.dialog.length, 2);
   assert.match(PAGE_GUIDES.home[0].title, /המטרה/);
-  assert.match(PAGE_GUIDES.home[0].body, /מטרת המשחק/);
+  assert.match(PAGE_GUIDES.home[0].body, /מטרת המשחק היא לאסוף/);
   assert.match(PAGE_GUIDES.home[0].body, /בחירות 2026/);
   assert.match(PAGE_GUIDES.home[0].body, /עותק אחד בלבד/);
   assert.match(PAGE_GUIDES.home[0].ring, /today-hero/);
   assert.equal(PAGE_GUIDES.home[0].ringUnion, undefined);
   assert.match(PAGE_GUIDES.home[1].body, /היום/);
   assert.match(PAGE_GUIDES.home[1].ring, /today-open-cue|cooldown-copy/);
+  assert.match(PAGE_GUIDES.home[1].body, /כל שלוש שעות/);
   assert.match(PAGE_GUIDES.home[1].body, /8 חבילות/);
   assert.match(PAGE_GUIDES.home[1].body, /השעון/);
   assert.equal(PAGE_GUIDES.home[1].ringUnion, true);
   assert.match(PAGE_GUIDES.home[2].body, /יש חבילות שמחכות/);
   assert.match(PAGE_GUIDES.home[2].body, /פתיחת קלף/);
   assert.match(PAGE_GUIDES.home[3].ring, /level-avatar-button/);
+  assert.match(PAGE_GUIDES.home[3].ring, /player-name/);
+  assert.equal(PAGE_GUIDES.home[3].ringUnion, true);
+  assert.equal(PAGE_GUIDES.home[3].pad, 16);
+  assert.equal(PAGE_GUIDES.home[3].clipPad, 2);
   assert.match(PAGE_GUIDES.home[3].body, /התמונה שלכם/);
-  assert.match(PAGE_GUIDES.home[4].body, /האתגר/);
+  assert.match(PAGE_GUIDES.home[3].body, /השם \(הזמני\)/);
+  assert.match(PAGE_GUIDES.home[3].body, /ליגות, תחרויות וטבלאות/);
+  assert.match(PAGE_GUIDES.home[3].body, /לחץ עליו כדי לשנות/);
+  assert.match(PAGE_GUIDES.home[4].body, /האתגר היומי/);
   assert.match(PAGE_GUIDES.home[4].body, /בטופ/);
-  assert.match(PAGE_GUIDES.home[5].ring, /open-advocacy|open-bug-report|bottom-nav/);
+  assert.equal(PAGE_GUIDES.home[5].ring, ".bottom-nav");
   assert.match(PAGE_GUIDES.home[5].body, /תפריט הניווט/);
   assert.match(PAGE_GUIDES.home[5].body, /לדווח על באגים/);
   assert.match(PAGE_GUIDES.home[5].body, /לבקש פיצ׳רים/);
-  assert.match(PAGE_GUIDES.home[5].ring, /#open-feature-request/);
-  assert.equal(PAGE_GUIDES.home[5].ringUnion, true);
+  assert.equal(PAGE_GUIDES.home[5].ringUnion, undefined);
   assert.equal(PAGE_GUIDES.home[5].place, "above");
+  assert.equal(PAGE_GUIDES.home[6].ring, "#open-pack");
+  assert.equal(PAGE_GUIDES.home[6].title, "יאללה, בואו נפתח!");
+  assert.equal(PAGE_GUIDES.home[6].body, "יאללה, בואו נפתח!");
   assert.equal(CARD_CALLOUTS.length, 5);
   assert.deepEqual(CARD_CALLOUTS.map(({ label }) => label), ["ציטוט", "שם", "מפלגה", "נדירות", "סדרה"]);
   assert.equal(PAGE_GUIDES.card[0].callouts, CARD_CALLOUTS);
@@ -122,6 +132,9 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.card[0].body, /מיקומו באלבום/);
   assert.equal(PAGE_GUIDES.card[0].place, "top");
   assert.equal(PAGE_GUIDES.card[0].hideLegend, true);
+  assert.equal(PAGE_GUIDES.card[1].title, "הוספה לאוסף");
+  assert.equal(PAGE_GUIDES.card[1].body, "ברכותיי על הקלף החדש! לחצו לאוסף כדי להכניס אותו לאלבום שלכם.");
+  assert.equal(PAGE_GUIDES.card[1].ring, "#pack-action");
   for (const steps of [...Object.values(PAGE_GUIDES), TIPS_STEPS]) {
     for (const step of steps) {
       assert.doesNotMatch(step.body, /\u2014/, `${step.title} body uses a normal dash`);
@@ -130,19 +143,25 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   }
   assert.match(CARD_CALLOUTS[3].sel, /card-rarity-run|card-image-meta/);
   assert.match(PAGE_GUIDES.binder[0].body, /שיתוף האלבום/);
+  assert.match(PAGE_GUIDES.binder[0].body, /להשוויץ לחברים/);
   assert.match(PAGE_GUIDES.binder[0].body, /כל הקלפים במשחק/);
   assert.match(PAGE_GUIDES.binder[0].ring, /binder-stats-row|binder-head/);
   assert.equal(PAGE_GUIDES.binder[0].arrowTo, undefined);
   assert.match(PAGE_GUIDES.binder[1].title, /תגים/);
   assert.match(PAGE_GUIDES.binder[1].ring, /earned-badge-list|collection-star-count/);
   assert.match(PAGE_GUIDES.binder[1].body, /כוכבי האוסף/);
+  assert.match(PAGE_GUIDES.binder[1].body, /סימני היכר/);
   assert.match(PAGE_GUIDES.binder[2].body, /סדרה/);
   assert.match(PAGE_GUIDES.binder[2].body, /תנסו ללחוץ על קלף שהשגתם/);
   assert.match(PAGE_GUIDES.binder[2].body, /מקור לציטוט/);
-  assert.match(PAGE_GUIDES.growth[0].body, /החלפות/);
+  assert.doesNotMatch(PAGE_GUIDES.growth[0].body, /שתי קומות/);
+  assert.match(PAGE_GUIDES.growth[0].body, /בקהילה ניתן להחליף/);
+  assert.match(PAGE_GUIDES.growth[0].body, /הציעו טרייד/);
+  assert.doesNotMatch(PAGE_GUIDES.growth[3].body, /שתי קומות/);
   assert.match(PAGE_GUIDES.growth[0].ring, /community-sections/);
-  assert.match(PAGE_GUIDES.growth[1].body, /מפרסמים/);
+  assert.match(PAGE_GUIDES.growth[1].body, /הצעה להחלפה/);
   assert.match(PAGE_GUIDES.growth[2].body, /הצעות/);
+  assert.match(PAGE_GUIDES.growth[2].body, /לפלטר/);
   assert.match(PAGE_GUIDES.growth[3].ring, /community-section-race|community-tab-leagues|community-tab-challenge/);
   assert.match(PAGE_GUIDES.growth[3].body, /ליגות/);
   assert.match(PAGE_GUIDES.growth[3].body, /האתגר היומי/);
@@ -150,19 +169,22 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.growth[3].body, /אולי אלו אתם/);
   assert.match(PAGE_GUIDES.achievements[0].ring, /achievement-tiers/);
   assert.match(PAGE_GUIDES.achievements[0].body, /הקלים/);
+  assert.match(PAGE_GUIDES.achievements[0].body, /המשימות על הפרק/);
   assert.match(PAGE_GUIDES.achievements[1].ring, /achievement-grid/);
   assert.match(PAGE_GUIDES.achievements[1].body, /מד התקדמות/);
   assert.match(PAGE_GUIDES.achievements[1].body, /מעל האלבום/);
   assert.equal(PAGE_GUIDES.achievements[1].place, "above");
   assert.equal(PAGE_GUIDES.growth[0].ringUnion, true);
-  assert.match(TIPS_STEPS[0].body, /כשיש קלפים/);
-  assert.match(TIPS_STEPS[0].body, /מחסן/);
-  assert.match(TIPS_STEPS[1].body, /רואים את הקלף/);
-  assert.match(PAGE_GUIDES.pack[0].body, /קרעו את החבילה/);
-  assert.match(PAGE_GUIDES.pack[0].ring, /pr-pack|#rip-stage/);
+  assert.equal(TIPS_STEPS[0].title, "ברכותיי על הקלף החדש!");
+  assert.equal(TIPS_STEPS[0].body, "לחצו לאוסף כדי להכניס אותו לאלבום שלכם.");
+  assert.equal(TIPS_STEPS[0].ring, "#pack-action");
+  assert.equal(TIPS_STEPS[1], undefined);
+  assert.equal(PAGE_GUIDES.pack.length, 0);
+  assert.equal(shouldAutoOpenPage({}, "pack"), false);
+  assert.match(PAGE_GUIDES.dialog[0].body, /מי לא אוהב להתרפק/);
   assert.match(PAGE_GUIDES.dialog[0].body, /לכמה עוד אנשים/);
   assert.match(PAGE_GUIDES.dialog[1].ring, /dialog-whatsapp|dialog-instagram/);
-  assert.match(PAGE_GUIDES.dialog[1].body, /להשוויץ/);
+  assert.match(PAGE_GUIDES.dialog[1].body, /להשוויץ לחברים/);
   assert.match(PAGE_GUIDES.dialog[1].body, /רק לראות - לא לגעת/);
   const shifted = toFrame(
     { left: 20, top: 30, width: 10, height: 8, right: 30, bottom: 38 },

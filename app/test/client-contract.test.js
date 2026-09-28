@@ -8,7 +8,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(here, "../public");
 
 test("client selectors match the HTML and preserve Alpha UX constraints", async () => {
-  const [html, appJs, idleCountdownJs, avatarBallotJs, tipsJs, warmup, baseCss, themeCss, sunburstJs, sunburstCss, binderShare] = await Promise.all([
+  const [html, appJs, idleCountdownJs, avatarBallotJs, tipsJs, warmup, baseCss, themeCss, sunburstJs, sunburstCss, binderShare, tradeApprovedJs] = await Promise.all([
     readFile(path.join(publicDir, "index.html"), "utf8"),
     readFile(path.join(publicDir, "app.js"), "utf8"),
     readFile(path.join(publicDir, "idle-countdown.js"), "utf8"),
@@ -20,8 +20,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
     readFile(path.join(publicDir, "walkout-sunburst.js"), "utf8"),
     readFile(path.join(publicDir, "walkout-sunburst.css"), "utf8"),
     readFile(path.join(publicDir, "share/binder.html"), "utf8"),
+    readFile(path.join(publicDir, "trade-approved.js"), "utf8"),
   ]);
-  const javascript = `${appJs}\n${idleCountdownJs}\n${avatarBallotJs}`;
+  const javascript = `${appJs}\n${idleCountdownJs}\n${avatarBallotJs}\n${tradeApprovedJs}`;
   const css = `${baseCss}\n${themeCss}`;
 
   const selectorIds = [...`${javascript}\n${tipsJs}`.matchAll(/querySelector\("#([^"]+)"\)/g)].map((match) => match[1]);
@@ -205,6 +206,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(tipsJs, /klafi:tips/);
   assert.match(tipsJs, /klafi:page-tips/);
   assert.match(tipsJs, /PAGE_GUIDES/);
+  assert.match(tipsJs, /title: "הוספה לאוסף"/);
+  assert.match(tipsJs, /ברכותיי על הקלף החדש!/);
+  assert.match(tipsJs, /לחצו לאוסף כדי להכניס אותו לאלבום שלכם/);
+  assert.doesNotMatch(tipsJs, /המחסן אוסף לבד כל שלוש שעות/);
+  assert.doesNotMatch(tipsJs, /עכשיו הוא באלבום\. פתחו קלף/);
+  assert.match(html, /id="klafi-tips-title">המטרה</);
+  assert.match(html, /id="klafi-tips-body">מטרת המשחק היא לאסוף כמה שיותר קלפים/);
+  assert.doesNotMatch(html, /id="klafi-tips-body">זה מסך היום\. המחסן ממשיך לאסוף קלף/);
+  assert.match(html, /id="klafi-tips-step"[^>]*>1\/7</);
   assert.match(tipsJs, /getAnimations/);
   assert.match(tipsJs, /viewHasEnterOffset/);
   assert.match(tipsJs, /doc\.body/);
@@ -338,6 +348,26 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="wait-dialog"/);
   assert.match(javascript, /showWait\("מפרסמים את ההחלפה/);
   assert.match(javascript, /showWait\("שומרים את המפלגה/);
+  assert.match(javascript, /showWait\("שומרים…"/);
+  assert.match(javascript, /showWait\("מאשרים…"/);
+  assert.match(javascript, /function maybeShowTradeNotice/);
+  assert.match(javascript, /function showAcceptedTradeNotice/);
+  assert.match(javascript, /function dismissTradeNotice/);
+  assert.match(javascript, /function ackPendingTradeNotice/);
+  assert.match(javascript, /\/api\/trades\/notices\/ack/);
+  assert.match(javascript, /from "\.\/trade-approved\.js"/);
+  assert.match(html, /id="trade-notice-dialog"/);
+  assert.match(html, /id="trade-notice-received"/);
+  assert.match(html, /id="trade-notice-given"/);
+  assert.match(html, /id="trade-notice-ok"/);
+  assert.match(html, /הבנתי/);
+  assert.match(javascript, /ההחלפה אושרה!/);
+  assert.match(css, /\.trade-notice-dialog/);
+  assert.match(css, /\.trade-notice-cards/);
+  assert.doesNotMatch(javascript, /function showAcceptedTradeToast/);
+  assert.doesNotMatch(javascript, /function settleReceivedCard/);
+  assert.doesNotMatch(javascript, /openCardDialog\(receivedCardId\)/);
+  assert.doesNotMatch(javascript, /openCardDialog\(result\.trade/);
   assert.match(html, /id="today-open-cue"/);
   assert.match(html, /id="cooldown-copy"/);
   assert.doesNotMatch(javascript, /function isApproachingBadge/);
@@ -414,7 +444,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /cubic-bezier\(0\.16,\s*1,\s*0\.3,\s*1\)/);
   assert.match(javascript, /function tradeThumbMarkup/);
   assert.match(javascript, /function pollWatchedTrade/);
-  assert.match(javascript, /function settleReceivedCard/);
+  assert.match(javascript, /function showAcceptedTradeNotice/);
   assert.match(html, /class="trade-thumb"/);
   assert.match(javascript, /class="trade-offer-bar"/);
   assert.match(javascript, /אין לכם את/);
@@ -480,21 +510,24 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="today-leader-hook"/);
   assert.match(html, /id="collector-rank"/);
   assert.match(javascript, /אתם במקום \$\{yourRank\}/);
-  assert.match(javascript, /אתם \$\{yourRank\}\/\$\{collectorTotal\}/);
+  assert.match(javascript, /אתם מקום \$\{yourRank\} מתוך \$\{collectorTotal\}/);
+  assert.doesNotMatch(javascript, /אתם \$\{yourRank\}\/\$\{collectorTotal\}/);
+  assert.match(css, /#collector-rank\.work-note \{[^}]*font-size: 14px !important/);
   assert.match(javascript, /slice\(0, 10\)/);
   assert.match(html, /id="today-specials-row"/);
-  assert.match(html, /class="today-specials-line"/);
+  assert.match(html, /class="today-specials-line is-marquee"/);
   assert.match(html, /id="today-specials-copy"/);
   assert.match(html, /id="today-specials-copy-repeat"/);
   assert.match(html, /data-today-nav="specials"/);
-  assert.doesNotMatch(html, /id="today-specials-row"[^>]*hidden/);
-  assert.match(html, /id="today-specials-row"[^>]*data-state="idle"/);
-  assert.match(html, /id="today-specials-copy">אין אירוע כרגע</);
+  assert.match(html, /id="today-specials-row"[^>]*hidden/);
+  assert.match(html, /id="today-specials-row"[^>]*data-state="pulse"/);
+  assert.match(html, /id="today-specials-copy"><\/span>/);
+  assert.doesNotMatch(html, /id="today-specials-copy">המחסן ממשיך לאסוף חבילות גם עכשיו</);
   assert.doesNotMatch(html, /id="today-specials-visual"/);
   assert.doesNotMatch(html, /id="today-specials-hook"/);
   assert.match(javascript, /function renderTodaySpecials/);
   assert.doesNotMatch(javascript, /function layoutTodaySpecials/);
-  assert.doesNotMatch(javascript, /todaySpecialsRow\.hidden/);
+  assert.match(javascript, /row\.hidden = !hasLine/);
   assert.match(javascript, /copy\.textContent !== line/);
   assert.match(javascript, /is-marquee/);
   assert.match(javascript, /idlePullCount \?\? previous\.idlePullCount/);
@@ -513,15 +546,20 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   // Claimed launch pull: same event, same marquee, data-driven claimed copy, and no longer a control.
   const specialsBody = javascript.match(/\nfunction renderTodaySpecials[\s\S]*?\n}\n/)[0];
   assert.match(specialsBody, /windowOpen\.claimedToday\s*\?\s*windowOpen\.claimedTickerHe/);
-  assert.match(specialsBody, /row\.classList\.toggle\("is-marquee", Boolean\(windowOpen\)\)/);
+  assert.match(specialsBody, /todayPulseCopy\(model\.activity\?\.todayPulse\)/);
+  assert.match(specialsBody, /row\.classList\.toggle\("is-marquee", true\)/);
+  assert.match(javascript, /from "\.\/today-pulse\.js"/);
+  assert.match(javascript, /function refreshTodayPulse/);
+  assert.match(javascript, /TODAY_PULSE_REFRESH_MS/);
   assert.match(specialsBody, /const inert = windowOpen\?\.reward === "pull" && Boolean\(windowOpen\.claimedToday\)/);
   assert.match(specialsBody, /row\.disabled = inert/);
   assert.match(javascript, /if \(windowOpen\.reward === "pull"\) \{\s*if \(windowOpen\.claimedToday\) return;\s*await claimEventPull/);
-  assert.match(css, /\.today-specials-line\[data-state="idle"\],\s*\.today-specials-line:disabled \{ cursor: default; \}/);
+  assert.match(css, /\.today-specials-line\[data-state="idle"\],\s*\.today-specials-line\[data-state="pulse"\],\s*\.today-specials-line:disabled \{ cursor: default; \}/);
+  assert.match(css, /\.today-specials-line\[data-state="pulse"\] \{ --specials-marquee-duration: 22s; \}/);
   assert.match(javascript, /PULL_CAP_REACHED/);
   assert.match(javascript, /המחסן מלא/);
   assert.match(javascript, /חבילה נוספת נכנסה למחסן/);
-  assert.match(javascript, /elements\.eventDialog,\n\s*elements\.shareSheet/);
+  assert.match(javascript, /elements\.eventDialog,\n\s*elements\.tradeNoticeDialog,\n\s*elements\.waitDialog,\n\s*elements\.shareSheet/);
   assert.match(javascript, /function claimEventPull[\s\S]*?applyEventPullPayload\(result\)[\s\S]*?finally/);
   // Instant pop-up: claimEventPull is synchronous up to the dialog; the outcome is predicted from
   // cached state and the POST only reconciles (no pending state, no optimistic count changes).
@@ -685,6 +723,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="studio-share-binder"/);
   assert.match(html, /id="studio-share-binder-link"/);
   assert.match(html, /id="dialog-holders"/);
+  assert.match(html, /id="dialog-numbered-pulls"/);
+  assert.match(javascript, /שלף את/);
+  assert.match(javascript, /הממוספר \$\{stamp\}/);
+  assert.match(javascript, /function openNumberedPreview/);
+  assert.match(javascript, /data-numbered-preview/);
   assert.doesNotMatch(javascript, /card-holders-chip/);
   assert.match(html, /אין כאן שחקן במשחק/);
   assert.match(javascript, /\/api\/card-holders/);
@@ -709,7 +752,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /חסרים לכם עוד \$\{progression\.remaining\} קלפים חדשים כדי לעלות רמה/);
   assert.match(javascript, /\$\{unique\}\/\$\{target\}/);
   assert.match(javascript, /function nextCollectionRemaining/);
-  assert.match(javascript, /אין אירוע כרגע/);
+  assert.match(javascript, /todayPulseCopy/);
+  assert.doesNotMatch(javascript, /אין אירוע כרגע/);
   assert.match(html, /data-today-nav="growth"/);
   assert.doesNotMatch(html, /data-today-nav="events"/);
   assert.match(javascript, /data-trade-card/);
@@ -748,7 +792,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-123/);
+  assert.match(html, /card-surface-134/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -867,7 +911,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-123/);
+  assert.match(html, /card-surface-134/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -1018,7 +1062,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-123/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-134/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -1033,7 +1077,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-123/);
+  assert.match(html, /packrip\.css\?v=card-surface-134/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);
@@ -1116,6 +1160,7 @@ test("leagues: one room with a confirmed leave, cached first paint, never a pend
   assert.match(javascript, /kind: reportKind,/, "the form tells the server which kind of issue to open");
   assert.match(javascript, /title: "דיווח באג",/);
   assert.match(javascript, /title: "בקשת פיצ׳ר",/);
-  assert.match(tips, /ring: "\.bottom-nav, #open-advocacy, #open-feature-request, #open-bug-report"/);
+  assert.match(tips, /ring: "\.bottom-nav"/);
+  assert.doesNotMatch(tips, /ring: "\.bottom-nav, #open-advocacy/);
   assert.match(tips, /לדווח על באגים, לבקש פיצ׳רים/);
 });

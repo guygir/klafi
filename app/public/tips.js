@@ -6,25 +6,10 @@ export const TIPS_MAX_AGE = 31536000;
 export const TIPS_STEPS = Object.freeze([
   {
     id: 1,
-    ring: "#open-pack",
-    arrowTo: "",
-    title: "המשחק",
-    body: "המחסן אוסף לבד כל שלוש שעות. כשיש קלפים - פתחו אותם. הם נרשמים לאוסף רק אחרי שרואים אותם.",
-  },
-  {
-    id: 2,
     ring: "#pack-action",
-    arrowTo: "#rip-stage",
-    title: "קריעה",
-    body: "קרעו את החבילה. האוסף, הרמה והמפלגה מתעדכנים כשאתם רואים את הקלף - לא כשהוא מחכה במחסן.",
-  },
-  {
-    id: 3,
-    ring: "#binder-grid .binder-shared-card, #binder-grid button, #dialog-card",
     emptyRing: 'button[data-nav="binder"]',
-    arrowTo: "#dialog-whatsapp, #dialog-source",
-    title: "האלבום",
-    body: "עכשיו הוא באלבום. פתחו קלף - המקור האמיתי למטה. שיתוף שולח תמונה, לא את הקלף עצמו.",
+    title: "ברכותיי על הקלף החדש!",
+    body: "לחצו לאוסף כדי להכניס אותו לאלבום שלכם.",
   },
 ]);
 
@@ -60,9 +45,14 @@ export const PAGE_GUIDES = Object.freeze({
       body: "יש חבילות שמחכות? לחצו על «פתיחת קלף» כדי לראות מה קיבלתם!",
     },
     {
-      ring: "#level-avatar-button",
+      ring: "#level-avatar-button, #player-name",
+      ringUnion: true,
+      pad: 16,
+      padX: 16,
+      clipPad: 2,
+      radius: 14,
       title: "האווטאר",
-      body: "כאן התמונה שלכם שתופיע בטבלאות הניקוד, ביחד עם המפלגה בה אתם תומכים (אם תרצו לסמן) ורצף הכניסות שלכם. לחיצה פותחת את הפרופיל לעריכה.",
+      body: "כאן התמונה שלכם שתופיע בטבלאות הניקוד, ביחד עם המפלגה בה אתם תומכים (אם תרצו לסמן), ורצף הכניסות שלכם מופיעים. לחיצה פותחת את הפרופיל לעריכה. זה השם (הזמני) שלך שיופיע בליגות, תחרויות וטבלאות - לחץ עליו כדי לשנות.",
     },
     {
       ring: ".today-docket",
@@ -70,26 +60,20 @@ export const PAGE_GUIDES = Object.freeze({
       body: "כאן מופיעים האתגר היומי וטבלת האספנים.\n\nחושבים שתוכלו להיות בטופ?",
     },
     {
-      ring: ".bottom-nav, #open-advocacy, #open-feature-request, #open-bug-report",
-      ringUnion: true,
+      ring: ".bottom-nav",
       pad: 4,
       radius: 14,
       place: "above",
       title: "הניווט",
       body: "למטה, תפריט הניווט: היום, אוסף, הישגים וקהילה.\n\nבקרו בכל אחת מהאופציות כדי לגלות כל מה שיש למשחק להציע!\n\nבנוסף, תוכלו לדווח על באגים, לבקש פיצ׳רים בכפתורים (שהם אפילו עוד יותר) למטה.",
     },
-  ]),
-  pack: Object.freeze([
     {
-      ring: ".pr-pack",
-      emptyRing: "#rip-stage",
-      arrowTo: "#pack-action",
-      pad: 12,
-      radius: 18,
-      title: "קריעה",
-      body: "קרעו את החבילה! בואו נראה מה קיבלתם.",
+      ring: "#open-pack",
+      title: "יאללה, בואו נפתח!",
+      body: "יאללה, בואו נפתח!",
     },
   ]),
+  pack: Object.freeze([]),
   card: Object.freeze([
     {
       ring: "#pack-view.active .walkout .kalpi-card.stage-portrait, #dialog-card .kalpi-card",
@@ -98,6 +82,12 @@ export const PAGE_GUIDES = Object.freeze({
       place: "top",
       hideLegend: true,
       callouts: CARD_CALLOUTS,
+    },
+    {
+      ring: "#pack-action",
+      emptyRing: 'button[data-nav="binder"]',
+      title: "הוספה לאוסף",
+      body: "ברכותיי על הקלף החדש! לחצו לאוסף כדי להכניס אותו לאלבום שלכם.",
     },
   ]),
   binder: Object.freeze([
@@ -151,7 +141,7 @@ export const PAGE_GUIDES = Object.freeze({
       pad: 3,
       radius: 8,
       title: "קהילה",
-      body: "שתי קומות: בהחלפות מפרסמים עסקאות. במרוץ - ליגות, אספנים, האתגר ומפלגות.\n\nבקהילה ניתן להחליף קלפים עם חבריכם - הציעו טרייד או בדקו הצעות פתוחות. בנוסף, אספנות היא תחום תחרותי - בקרו במרוץ כדי לראות עד כמה…",
+      body: "בקהילה ניתן להחליף קלפים עם חבריכם - הציעו טרייד או בדקו הצעות פתוחות. בנוסף, אספנות היא תחום תחרותי - בקרו במרוץ כדי לראות עד כמה…",
     },
     {
       ring: "#community-panel-trade, #community-tab-trade",
@@ -189,7 +179,7 @@ export const PAGE_GUIDES = Object.freeze({
   ]),
 });
 
-const PULL_PAGES = Object.freeze(["home", "pack", "binder", "dialog"]);
+const PULL_PAGES = Object.freeze(["pull", "pack", "card"]);
 
 export function parseTipsCookie(header) {
   const match = String(header || "").match(/(?:^|;\s*)klafi_tips=(on|off)(?:;|$)/);
@@ -269,7 +259,7 @@ export function resetAllPageGuides(env = globalThis) {
 
 export function shouldAutoOpenPage(seen, page, flags = {}) {
   if (page === "binder" && flags.guestBinder) return false;
-  return Boolean(page && PAGE_GUIDES[page] && !seen?.["*"] && !seen?.[page]);
+  return Boolean(page && PAGE_GUIDES[page]?.length && !seen?.["*"] && !seen?.[page]);
 }
 
 export function activeGuidePage(flags, seen = {}) {
@@ -309,14 +299,12 @@ export function firstVisible(selector, root) {
 }
 
 export function stepViewReady(stepId, flags) {
-  if (stepId === 1) return Boolean(flags.homeActive);
-  if (stepId === 2) return Boolean(flags.packActive);
+  if (stepId <= 1) return Boolean(flags.packActive || flags.cardRevealed || flags.homeActive);
   return Boolean(flags.binderActive || flags.dialogOpen);
 }
 
 export function advanceStepFromView(stepId, flags) {
-  if (stepId === 1 && flags.packActive) return 2;
-  if (stepId === 2 && (flags.binderActive || flags.dialogOpen)) return 3;
+  if (stepId < TIPS_STEPS.length && (flags.binderActive || flags.dialogOpen)) return stepId + 1;
   return stepId;
 }
 
@@ -415,9 +403,9 @@ function growSpec(spec, { minWidth, viewWidth } = {}) {
   return { ...spec, box };
 }
 
-function clampSpecToView(spec, view) {
+function clampSpecToView(spec, view, clipPad) {
   if (!spec?.box || !view) return spec;
-  const pad = 8;
+  const pad = Number.isFinite(clipPad) ? clipPad : 8;
   const clip = {
     left: pad,
     top: pad,
@@ -466,10 +454,6 @@ function roundedHole(box, radius) {
   const r = Math.min(radius, box.width / 2, box.height / 2);
   const { left: x, top: y, width: w, height: h } = box;
   return `M${x + r} ${y}h${w - r * 2}a${r} ${r} 0 0 1 ${r} ${r}v${h - r * 2}a${r} ${r} 0 0 1 ${-r} ${r}h${-(w - r * 2)}a${r} ${r} 0 0 1 ${-r} ${-r}v${-(h - r * 2)}a${r} ${r} 0 0 1 ${r} ${-r}z`;
-}
-
-function boxesOverlap(a, b) {
-  return a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
 }
 
 function circleHole(cx, cy, radius) {
@@ -886,34 +870,24 @@ export function attachKlafiTips(env = globalThis) {
       return;
     }
     state.paintTries = 0;
-    const preferredRing = state.mode === "pull" && state.step === 3 && flags().dialogOpen
-      ? firstVisible("#dialog-card", doc)
-      : null;
     const fromSpec = clampSpecToView(growSpec(specToFrame(united
       ? specFromBox(united, step.pad ?? 4, step.radius ?? 10, step.padX)
-      : highlightSpec(preferredRing || ringNode, step.pad ?? 8, step.padX), frame), { minWidth: step.minWidth, viewWidth: vw }), { width: vw, height: vh });
+      : highlightSpec(ringNode, step.pad ?? 8, step.padX), frame), { minWidth: step.minWidth, viewWidth: vw }), { width: vw, height: vh }, step.clipPad);
     const toNode = step.arrowTo ? firstPaintTarget(step.arrowTo) : null;
     const toSpec = clampSpecToView(specToFrame(toNode && toNode !== ringNode ? highlightSpec(toNode, 6) : null, frame), { width: vw, height: vh });
     dim.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     dim.setAttribute("width", String(vw));
     dim.setAttribute("height", String(vh));
-    // Keep the bug-report pill reachable during guides: cut it out of the veil
-    // and let clicks pass through there; the ring hole itself stays inert.
-    const bugNode = overlay.parentElement === doc.body ? doc.querySelector("#open-bug-report") : null;
-    const bugSpec = bugNode && boxOf(bugNode).width > 0
-      ? clampSpecToView(specToFrame(highlightSpec(bugNode, 3), frame), { width: vw, height: vh })
-      : null;
-    const bugInRing = Boolean(bugSpec && boxesOverlap(bugSpec.box, fromSpec.box));
     dim.replaceChildren();
     dim.append(svgEl("path", {
       "fill-rule": "evenodd",
       class: "klafi-tips-veil",
-      d: `M0 0H${vw}V${vh}H0Z${holePath(fromSpec)}${bugSpec && !bugInRing ? holePath(bugSpec) : ""}`,
+      d: `M0 0H${vw}V${vh}H0Z${holePath(fromSpec)}`,
     }));
     dim.append(svgEl("path", {
       "fill-rule": "evenodd",
       class: "klafi-tips-block",
-      d: `${holePath(fromSpec)}${bugSpec && bugInRing ? holePath(bugSpec) : ""}`,
+      d: holePath(fromSpec),
     }));
     marks.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     marks.setAttribute("width", String(vw));
@@ -924,8 +898,8 @@ export function attachKlafiTips(env = globalThis) {
       drawRing(marks, toSpec);
       drawArrow(marks, fromSpec, toSpec);
     }
-    if (step.callouts?.length && (preferredRing || ringNode)) {
-      drawCalloutMarks(marks, preferredRing || ringNode, step.callouts, frame, { width: vw, height: vh });
+    if (step.callouts?.length && ringNode) {
+      drawCalloutMarks(marks, ringNode, step.callouts, frame, { width: vw, height: vh });
     }
     placeCard(card, fromSpec.box, toSpec?.box || null, step.place || "", { width: vw, height: vh, left: 0, top: 0 });
     queueMicrotask(() => nextBtn?.focus({ preventScroll: true }));
@@ -984,6 +958,26 @@ export function attachKlafiTips(env = globalThis) {
     }, 280);
   }
 
+  function startPull(step = 1) {
+    state.mode = "pull";
+    state.started = true;
+    state.page = null;
+    state.step = Math.max(1, Math.min(step, TIPS_STEPS.length || 1));
+    state.parked = false;
+    state.paintTries = 0;
+    seedMute("pull");
+    schedulePaint();
+  }
+
+  function maybeStartPull() {
+    if (state.mode) return;
+    if (readTipsPref(env) === "off") return;
+    const seen = readSeenPages(env);
+    if (seen.pull || seen["*"]) return;
+    if (!flags().cardRevealed) return;
+    startPull();
+  }
+
   function maybeStartPage() {
     if (state.mode === "pull") return;
     const pageFlags = flags();
@@ -1018,7 +1012,7 @@ export function attachKlafiTips(env = globalThis) {
     persistOn();
     resetAllPageGuides(env);
     const page = activeGuidePage(flags()) || "home";
-    if (PAGE_GUIDES[page]) {
+    if (PAGE_GUIDES[page]?.length) {
       startPage(page);
       return;
     }
@@ -1029,7 +1023,7 @@ export function attachKlafiTips(env = globalThis) {
     persistOn();
     const page = activeGuidePage(flags());
     unmarkPageSeen(page, env);
-    if (page && PAGE_GUIDES[page]) {
+    if (page && PAGE_GUIDES[page]?.length) {
       startPage(page);
       return;
     }
@@ -1087,7 +1081,7 @@ export function attachKlafiTips(env = globalThis) {
   const binderGrid = doc.querySelector("#binder-grid");
   if (binderGrid) {
     const observer = new MutationObserver(() => {
-      if (state.mode === "pull" && state.step === 3) sync();
+      if (state.mode === "pull") sync();
       if (state.mode === "page" && state.page === "binder") sync();
     });
     observer.observe(binderGrid, { childList: true, subtree: true });

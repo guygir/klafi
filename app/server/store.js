@@ -2,7 +2,8 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import { jerusalemDay, moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import { countTodayPulse } from "../public/today-pulse.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import {
   LEAGUE_MAX,
@@ -12,6 +13,7 @@ import {
   normalizeLeagueCode,
 } from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
+import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
 import { takeCollectorBoard } from "./collector-board.js";
 import { dailyRaceScore, visibleDailyRaceLeaders } from "./daily-race.js";
 
@@ -72,6 +74,7 @@ export function normalizeState(value = {}) {
     session.highestRank ??= 1;
     session.claimedRankRewards ??= [];
     session.pendingRankRewards ??= [];
+    session.pendingTradeNotices ??= [];
     session.avatarId ??= "kid-boy";
     session.quizWonDay ??= null;
     session.currentQuiz ??= null;
@@ -107,6 +110,27 @@ export function tallyCardHolders(sessions = {}) {
     }
   }
   return { holders, numberedHolders };
+}
+
+export function listNumberedPulls(sessions = {}) {
+  const pulls = [];
+  for (const session of Object.values(sessions || {})) {
+    const displayName = String(session.displayName || "").trim() || "שחקן";
+    const binderSlug = session.publicBinderSlug || null;
+    for (const instance of session.instances || []) {
+      const index = Number(instance?.numberedIndex);
+      if (!(index > 0) || !instance.cardId) continue;
+      pulls.push({
+        cardId: instance.cardId,
+        displayName,
+        index,
+        of: Number(instance.numberedOf) || 0,
+        binderSlug,
+      });
+    }
+  }
+  pulls.sort((a, b) => a.cardId.localeCompare(b.cardId) || a.index - b.index || a.displayName.localeCompare(b.displayName, "he"));
+  return pulls;
 }
 
 export function cardHolderSnapshotFresh(snapshot, nowMs, ttlMs = CARD_HOLDER_SYNC_MS) {
@@ -184,6 +208,7 @@ export class JsonStore {
         highestRank: 1,
         claimedRankRewards: [],
         pendingRankRewards: [],
+        pendingTradeNotices: [],
         loginDay: null,
         loginStreak: 0,
         bestLoginStreak: 0,
@@ -313,6 +338,7 @@ export class JsonStore {
       participatingSessions: sessions.size,
       fixture: false,
       label: "Recorded PoC activity",
+      todayPulse: countTodayPulse(this.state.sessions, jerusalemDay(Date.now())),
     };
   }
 
@@ -437,6 +463,13 @@ export class JsonStore {
       });
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
+      enqueueAcceptedTradeNotice(owner, trade, {
+        acceptedAt,
+        accepterName: accepter.displayName,
+        ownerName: owner.displayName,
+      });
+      bumpStateRevision(owner);
+      bumpStateRevision(accepter);
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = sessionToken;
@@ -560,9 +593,13 @@ export class JsonStore {
 
   async cardHolderSummary() {
     const snapshot = this.state.cardHolderSnapshot;
-    if (!snapshot?.computedAt) return this.refreshCardHolderSnapshot();
+    const numberedPulls = listNumberedPulls(this.state.sessions);
+    if (!snapshot?.computedAt) {
+      const fresh = await this.refreshCardHolderSnapshot();
+      return { ...fresh, numberedPulls };
+    }
     if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
-    return snapshot;
+    return { ...snapshot, numberedPulls };
   }
 
   async claimNumberedStamp(key, max, every = 30) {
