@@ -639,11 +639,22 @@ function applyHomePayload(home) {
     const overlaid = overlayPendingSeen({ state: home.state, cards: home.cards }, pendingIdleSeen());
     const incoming = overlaid.state;
     home = { ...home, cards: overlaid.cards };
+    const incomingUnseen = Number(incoming.unseenCount) || 0;
+    const incomingPulls = Number(incoming.idlePullCount ?? incoming.idlePulls) || 0;
+    const keepAssumed = Boolean(model.assumedStarterWarehouse)
+      && !Array.isArray(home.cards)
+      && incomingUnseen === 0
+      && incomingPulls === 0;
+    if (!keepAssumed) model.assumedStarterWarehouse = false;
+    const starterReady = Number(incoming.idleStarterReady ?? previous.idleStarterReady) || 3;
     model.serverState = {
       ...previous,
       ...incoming,
       inventory: incoming.inventory ?? previous.inventory ?? {},
       idlePullCount: incoming.idlePullCount ?? previous.idlePullCount ?? 0,
+      unseenCount: keepAssumed
+        ? (Number(previous.unseenCount) || starterReady)
+        : (incoming.unseenCount ?? previous.unseenCount ?? 0),
       achievements: incoming.achievements ?? previous.achievements ?? [],
       achievementPages: incoming.achievementPages ?? previous.achievementPages ?? [],
         loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
@@ -713,10 +724,13 @@ async function loadShell() {
   }
   model.editorial = shell.editorial || model.editorial;
   if (!model.serverState && shell.totals) {
+    const starterReady = Number(shell.gameConfig?.idle?.starterReady) || 3;
+    const freshVisit = !model.token;
+    model.assumedStarterWarehouse = freshVisit;
     model.serverState = {
       ownedUnique: 0,
       totalCards: shell.totals.idleEligible,
-      unseenCount: 0,
+      unseenCount: freshVisit ? starterReady : 0,
       idleCapacity: shell.gameConfig?.idle?.capacity,
       idleIntervalMs: shell.gameConfig?.idle?.intervalMs,
       idleStarterReady: shell.gameConfig?.idle?.starterReady,
@@ -2709,7 +2723,7 @@ function renderProgression({ announce = false } = {}) {
   if (!progression) return;
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
-  const streak = Number(model.serverState?.visitStreak ?? model.serverState?.loginStreak) || 0;
+  const streak = Number(model.serverState?.visitStreak) || 0;
   const showStreak = streak >= 1;
   elements.levelRank.textContent = progression.rank;
   if (elements.levelStreak) {
@@ -4105,6 +4119,7 @@ function badgeArtwork(id, { tier = "simple", earned = true, sheen = false, secre
     "streak-thirty": '<path d="M24 12.5c1.2 4.2 6.5 6.4 6.5 12.5a6.5 6.5 0 0 1-13 0c0-3.2 1.8-5.4 3.2-7.4.8 2 1.9 3.2 3.3 3.5-1.2-3-.9-5.9 0-8.6z"/>',
     "ten-copies": '<rect x="13" y="19" width="11" height="15" rx="1"/><rect x="18.5" y="16.5" width="11" height="15" rx="1"/><rect x="24" y="14" width="11" height="15" rx="1"/><path d="M27 19v6M30 19h2.5v6H30z"/>',
     "warehouse-full": '<path d="M15 20h18v14H15zM18 20v-4h12v4M19 25h10M19 29h7"/>',
+    "streak-prize-skip": '<path d="M16 24h16v11H16zM16 28h16M24 24v11M19.5 24c0-2.4 2.2-3.6 4.5-2.2 2.3-1.4 4.5-.2 4.5 2.2"/>',
   }[id] || (String(id).startsWith("set-complete:")
     ? '<rect x="14" y="17" width="12" height="16" rx="1"/><rect x="20" y="14" width="12" height="16" rx="1"/><path d="M23.5 22.5l2.5 2.5 4.5-5"/>'
     : '<circle cx="24" cy="24" r="5"/>');
@@ -4157,6 +4172,7 @@ const ACHIEVEMENT_RULES = [
   ["rare", "קלפים נדירים"],
   ["numbered", "קלפים ממוספרים"],
   ["warehouseFull", "מחסן מלא עד הסוף"],
+  ["streakPrizeSkipped", "דילוג על פרס בלוח הרצף"],
   ["league", "חבר בליגה"],
   ["setComplete", "סדרה מלאה (תג לכל סדרה)"],
 ];
@@ -4289,6 +4305,7 @@ const BADGE_COPY = {
   "ten-copies": ["עשרה עותקים", "אספו עשרה עותקים של אותו קלף."],
   "numbered-first": ["ממוספר", "אספו קלף הולו ממוספר."],
   "warehouse-full": ["עד אפס מקום", "המחסן הגיע לשמונה קלפים שמחכים."],
+  "streak-prize-skip": ["אין מתנות חינם", "סגרתם את לוח הרצף בלי לפתוח את הפרס של היום."],
   "streak-thirty": ["חודש רצוף", "פתחו קלפים שלושים ימים ברצף."],
 };
 
@@ -4480,9 +4497,10 @@ function renderAchievements() {
   }
   elements.achievementGrid.innerHTML = badges
     .filter((badge) => achievementTier(badge) === model.achievementTier)
+    .sort((left, right) => Number(Boolean(left.hidden)) - Number(Boolean(right.hidden)))
     .map((badge) => {
     const secret = Boolean(badge.hidden) && !badge.earned;
-    const copy = secret ? { name: "?", description: "" } : hebrewBadge(badge);
+    const copy = secret ? { name: "?", description: "שחקו עוד כדי לגלות..." } : hebrewBadge(badge);
     const tier = achievementTier(badge);
     const target = Math.max(1, Number(badge.target) || 1);
     const progress = Math.max(0, Math.min(target, Number(badge.progress) || 0));
@@ -4661,6 +4679,7 @@ function streakPrizeName(reward) {
 function streakRewardLine(calendar) {
   const today = calendar?.days?.find((cell) => cell.current && cell.reward);
   if (!today?.reward) return "";
+  if (today.opened) return today.reward.kind === "pack" ? "החבילה נלקחה." : "הפרס נלקח.";
   if (today.reward.kind === "pack") {
     return today.claimed ? "חבילה מחכה. לחיצה כפולה פותחת אותה." : "היום מחכה חבילה.";
   }
@@ -4735,12 +4754,18 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
   if (elements.streakDialogCopy) elements.streakDialogCopy.textContent = streakDialogBody(calendar);
   if (elements.streakCalendar) {
     elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => {
-      const openable = Boolean(cell.claimed && cell.reward);
+      const openable = Boolean(cell.claimed && cell.reward && !cell.opened);
+      const taken = Boolean(cell.opened && cell.reward);
+      const label = openable
+        ? ` tabindex="0" title="לחיצה כפולה לפתיחה" aria-label="יום ${cell.day}, לחיצה כפולה לפתיחה"`
+        : taken
+          ? ` aria-label="יום ${cell.day}, הפרס נלקח"`
+          : "";
       return `
-      <li class="${streakCellClasses(cell)}${stamp && cell.current ? " is-landing" : ""}" data-day="${cell.day}"${openable ? ` tabindex="0" title="לחיצה כפולה לפתיחה" aria-label="יום ${cell.day}, לחיצה כפולה לפתיחה"` : ""}>
+      <li class="${streakCellClasses(cell)}${stamp && cell.current ? " is-landing" : ""}" data-day="${cell.day}"${label}>
         <span class="streak-cell-day">${cell.day}</span>
         ${cell.reward ? streakRewardMarkup(cell.reward) : ""}
-        ${cell.checked ? streakCheckMarkup(Boolean(cell.reward)) : ""}
+        ${cell.checked ? streakCheckMarkup(Boolean(cell.reward) && !cell.opened) : ""}
       </li>`;
     }).join("");
   }
@@ -4786,13 +4811,13 @@ async function dismissStreakCalendar() {
 }
 
 function streakRewardCell(event) {
-  return event.target?.closest?.(".streak-cell.has-reward.is-claimed");
+  return event.target?.closest?.(".streak-cell.has-reward.is-claimed:not(.is-opened)");
 }
 
 async function openClaimedStreakReward(day) {
   const calendar = model.serverState?.streakCalendar;
   const cell = calendar?.days?.find((item) => item.day === Number(day));
-  if (!cell?.claimed || !cell.reward || homePackRipBusy) return;
+  if (!cell?.claimed || !cell.reward || cell.opened || homePackRipBusy) return;
   sfx.unlock();
   homePackRipBusy = true;
   model.streakRewardOpening = true;
@@ -4821,8 +4846,12 @@ async function openClaimedStreakReward(day) {
     if (isPack) rip.release({ revealing: true });
     showView("pack");
     startWalkout();
-  } catch {
+  } catch (error) {
     rip?.release();
+    if (error?.message === "STREAK_REWARD_OPENED") {
+      renderHome();
+      return;
+    }
     showToast("לא הצלחנו לפתוח את הפרס.");
     renderHome();
     showView("home");
@@ -4834,7 +4863,7 @@ async function openClaimedStreakReward(day) {
 
 async function ackStreakCalendar() {
   const calendar = model.serverState?.streakCalendar;
-  if (!calendar?.showPopup || model.streakNoticeBusy) return;
+  if (model.streakRewardOpening || !calendar?.showPopup || model.streakNoticeBusy) return;
   model.streakNoticeBusy = true;
   try {
     const result = await request("/api/streak/ack", { method: "POST" });

@@ -30,6 +30,7 @@ import {
 import {
   applyVisitStreak,
   ackStreakCalendar,
+  noteSkippedStreakPrize,
   calendarDay,
   publicStreakCalendar,
   streakAcquiredBy,
@@ -2010,6 +2011,7 @@ export async function createKalpiApp({
 
         if (request.method === "POST" && url.pathname === "/api/streak/ack") {
           await store.withSession(token, (current) => {
+            noteSkippedStreakPrize(current);
             ackStreakCalendar(current);
           });
           json(response, 200, { state: await stateForToken(token) });
@@ -2029,8 +2031,10 @@ export async function createKalpiApp({
             const acquiredBy = streakAcquiredBy(current.visitStreak, day);
             const instance = (current.instances || []).find((item) => item.acquiredBy === acquiredBy);
             if (!instance) return { error: "missing" };
+            if (instance.seenAt) return { error: "opened" };
             const credited = creditStreakInstance(current, instance, new Date(now()).toISOString());
             if (credited) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
+            ackStreakCalendar(current);
             return { instance, reward };
           });
           if (!opened || opened.error === "unclaimed") {
@@ -2039,6 +2043,10 @@ export async function createKalpiApp({
           }
           if (opened.error === "missing") {
             json(response, 404, { error: "STREAK_REWARD_MISSING" });
+            return;
+          }
+          if (opened.error === "opened") {
+            json(response, 409, { error: "STREAK_REWARD_OPENED" });
             return;
           }
           json(response, 200, {

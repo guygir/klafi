@@ -55,10 +55,10 @@ const CARDS = [
   { id: "r2", set: "B", rarity: "Rare Holo", idleEligible: true },
 ];
 
-test("achievements.json: pages 9 / 8 / 8 rows (hard expands to one badge per pullable set)", () => {
+test("achievements.json: pages 9 / 9 / 8 rows (hard expands to one badge per pullable set)", () => {
   const byTier = Object.fromEntries(ACHIEVEMENT_TIERS.map((tier) => [tier, catalog.filter((item) => item.tier === tier).map(({ id }) => id)]));
   assert.deepEqual(byTier.simple, ["first-rip", "register-five", "source-check", "share-pull", "first-double", "idle-eight", "faction-pick", "own-name", "warehouse-full"]);
-  assert.deepEqual(byTier.medium, ["collector-ten", "three-parties", "twenty-stars", "trade-match", "rank-three", "streak-seven", "league-member", "rare-three"]);
+  assert.deepEqual(byTier.medium, ["collector-ten", "three-parties", "twenty-stars", "trade-match", "rank-three", "streak-seven", "league-member", "rare-three", "streak-prize-skip"]);
   assert.deepEqual(byTier.hard, ["set-complete", "commons-complete", "five-leaders", "fifty-stars", "trade-three", "numbered-first", "streak-thirty", "ten-copies"]);
   assert.equal(catalog.find(({ id }) => id === "rare-three").target, 3);
   assert.deepEqual(catalog.find(({ id }) => id === "ten-copies"), { id: "ten-copies", nameHe: "עשרה עותקים", descriptionHe: "אספו עשרה עותקים של אותו קלף.", rule: "duplicate", target: 10, tier: "hard" });
@@ -71,10 +71,11 @@ test("achievements.json: pages 9 / 8 / 8 rows (hard expands to one badge per pul
   }
   assert.equal(catalog.find(({ id }) => id === "numbered-first").hidden, true);
   assert.equal(catalog.find(({ id }) => id === "warehouse-full").hidden, true);
+  assert.equal(catalog.find(({ id }) => id === "streak-prize-skip").hidden, true);
   const secret = achievementProgress(catalog.find(({ id }) => id === "warehouse-full"), measures);
   assert.equal(secret.earned, false);
   assert.equal(secret.name, "?");
-  assert.equal(secret.description, "");
+  assert.equal(secret.description, "שחקו עוד כדי לגלות...");
   const revealed = achievementProgress(catalog.find(({ id }) => id === "warehouse-full"), { warehouseFull: 1 });
   assert.equal(revealed.name, "עד אפס מקום");
   assert.equal(achievementMeasures(session({ unseenPulls: Array(8).fill("x") }), allCards).warehouseFull, 1);
@@ -224,7 +225,7 @@ test("server: state carries tiers + pages; a write stamps earnedAt and it surviv
   const fresh = await api(running.base, "/api/state", { token });
   assert.deepEqual(fresh.body.achievementPages, [
     { tier: "simple", total: 9, earned: 0 },
-    { tier: "medium", total: 8, earned: 0 },
+    { tier: "medium", total: 9, earned: 0 },
     { tier: "hard", total: 10, earned: 0 },
   ]);
   const setBadges = fresh.body.achievements.filter(({ setId }) => setId);
@@ -289,7 +290,7 @@ test("server: Studio save keeps each badge's tier (missing = simple)", async (t)
   assert.equal(saved.body.achievements.find(({ id }) => id === "ten-copies").tier, "hard");
   const onDisk = JSON.parse(await readFile(achievementsPath, "utf8")).achievements;
   assert.deepEqual(onDisk.map(({ tier }) => tier), saved.body.achievements.map(({ tier }) => tier));
-  assert.equal(onDisk.filter(({ tier }) => tier === "medium").length, 8);
+  assert.equal(onDisk.filter(({ tier }) => tier === "medium").length, 9);
 });
 
 test("client: three open tabs, tier art, no unlock toast, copy + icon for every badge", async () => {
@@ -301,6 +302,8 @@ test("client: three open tabs, tier art, no unlock toast, copy + icon for every 
   assert.match(javascript, /const ACHIEVEMENT_TIER_LABELS = Object\.freeze\(\{ simple: "הקלים", medium: "הבינוניים", hard: "הקשים" \}\)/);
   assert.match(javascript, /data-achievement-tier="\$\{item\.tier\}" aria-selected="\$\{active\}"/);
   assert.match(javascript, /badgeArtwork\(badge\.id, \{ tier, earned: badge\.earned && !secret, sheen: tier === "hard" && badge\.earned && takeBadgeSheen\(badge\.id\), secret \}\)/);
+  assert.match(javascript, /Number\(Boolean\(left\.hidden\)\) - Number\(Boolean\(right\.hidden\)\)/);
+  assert.match(javascript, /שחקו עוד כדי לגלות\.\.\./);
   assert.match(javascript, /<svg class="badge-artwork badge-tier-\$\{style\}"/);
   assert.match(javascript, /class="badge-seal-dot"/);
   assert.match(javascript, /style="fill:url\(#\$\{key\}-foil\)"/);

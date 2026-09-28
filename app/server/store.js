@@ -87,6 +87,7 @@ export function normalizeState(value = {}) {
     session.visitStreakClaims ??= [];
     session.pendingStreakReward ??= null;
     session.streakCalendarAckDay ??= null;
+    session.streakPrizeSkipped = Boolean(session.streakPrizeSkipped);
     session.achievementsEarned ??= {};
   }
   return state;
@@ -224,6 +225,7 @@ export class JsonStore {
         visitStreakClaims: [],
         pendingStreakReward: null,
         streakCalendarAckDay: null,
+        streakPrizeSkipped: false,
         achievementsEarned: {},
         publicBinderSlug: ensurePublicBinderSlug({}),
       };

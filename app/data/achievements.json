@@ -140,6 +140,15 @@
       "tier": "medium"
     },
     {
+      "id": "streak-prize-skip",
+      "nameHe": "אין מתנות חינם",
+      "descriptionHe": "סגרתם את לוח הרצף בלי לפתוח את הפרס של היום.",
+      "rule": "streakPrizeSkipped",
+      "target": 1,
+      "tier": "medium",
+      "hidden": true
+    },
+    {
       "id": "set-complete",
       "nameHe": "סדרה מלאה",
       "descriptionHe": "אספו את כל הקלפים בסדרה.",
