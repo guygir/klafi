@@ -4636,11 +4636,11 @@ function tipsBusy() {
 function streakRewardMarkup(reward) {
   if (!reward) return "";
   if (reward.kind === "pack") {
-    return `<img class="streak-cell-pack" src="/packrip/pack-closed.webp" alt="חבילה">`;
+    return `<span class="streak-cell-prize"><img class="streak-cell-pack" src="/packrip/pack-closed.webp" alt="חבילה"></span>`;
   }
   const stars = Math.max(1, Math.min(3, Number(reward.stars) || 1));
   const labels = { 1: "נפוץ", 2: "לא נפוץ", 3: "נדיר" };
-  return `<span class="streak-cell-stars" data-stars="${stars}" aria-label="${labels[stars]}">${"★".repeat(stars)}</span>`;
+  return `<span class="streak-cell-prize"><span class="streak-cell-stars" data-stars="${stars}" aria-label="${labels[stars]}">${"★".repeat(stars)}</span></span>`;
 }
 
 function streakRewardLine(calendar) {
@@ -4653,6 +4653,21 @@ function streakRewardLine(calendar) {
   return today.claimed || today.checked ? `קלף ${label} נכנס למחסן.` : `היום מחכה קלף ${label}.`;
 }
 
+function streakCellClasses(cell) {
+  return [
+    "streak-cell",
+    cell.checked ? "is-checked" : "",
+    cell.current ? "is-today" : "",
+    cell.reward ? "has-reward" : "",
+    cell.claimed ? "is-claimed" : "",
+    cell.held ? "is-held" : "",
+  ].filter(Boolean).join(" ");
+}
+
+function streakCheckMarkup() {
+  return `<span class="streak-cell-check" aria-hidden="true"><svg viewBox="0 0 14 14" width="13" height="13"><path d="M2 3.2 7 11.4 12 3.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter"/></svg></span>`;
+}
+
 function paintStreakCalendar(calendar) {
   const dialog = elements.streakDialog;
   if (!dialog || !calendar) return;
@@ -4660,15 +4675,15 @@ function paintStreakCalendar(calendar) {
   if (elements.streakDialogTitle) elements.streakDialogTitle.textContent = `יום ${day} ברצף`;
   if (elements.streakDialogCopy) {
     elements.streakDialogCopy.textContent = calendar.streak > 1
-      ? `${calendar.streak} ימים ברצף. שמרו על הכניסה מחר בשביל הוי הבא.`
-      : "כל כניסה ביום חדש מסמנת וי על הלוח. חלק מהימים מחכים עם חבילה או קלף לפי נדירות.";
+      ? `${calendar.streak} ימים ברצף. מחר מסמנים את הוי הבא.`
+      : "כל כניסה ביום חדש מסמנת וי ירוק על הלוח. חלק מהימים מחכים עם חבילה או עם קלף לפי כוכבים.";
   }
   if (elements.streakCalendar) {
     elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => `
-      <li class="streak-cell${cell.checked ? " is-checked" : ""}${cell.current ? " is-today" : ""}${cell.reward ? " has-reward" : ""}" data-day="${cell.day}">
+      <li class="${streakCellClasses(cell)}" data-day="${cell.day}">
         <span class="streak-cell-day">${cell.day}</span>
         ${cell.reward ? streakRewardMarkup(cell.reward) : ""}
-        ${cell.checked ? `<span class="streak-cell-check" aria-hidden="true"><svg viewBox="0 0 12 12" width="11" height="11"><path d="M2 6.2 4.8 9 10 3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg></span>` : ""}
+        ${cell.checked ? streakCheckMarkup() : ""}
       </li>`).join("");
   }
   const rewardLine = streakRewardLine(calendar);

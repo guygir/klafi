@@ -5393,7 +5393,7 @@ body {
 
 .streak-dialog {
   width: min(420px, calc(100% - 24px));
-  padding-bottom: 24px;
+  padding: 36px 18px 22px;
 }
 .streak-dialog .eyebrow {
   margin: 0 0 8px;
@@ -5404,71 +5404,104 @@ body {
   font-size: 26px;
 }
 #streak-dialog-copy {
-  margin: 0 0 16px;
+  margin: 0 0 14px;
   font: 500 15px/1.45 "IBM Plex Sans Hebrew", sans-serif;
 }
-.streak-calendar {
+.streak-dialog .streak-calendar {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 6px;
-  margin: 0 0 16px;
-  padding: 10px;
+  gap: 5px;
+  margin: 0 0 14px;
+  padding: 8px;
   list-style: none;
-  border: 1px solid var(--rule);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--paper-deep) 70%, var(--paper)) 0%, var(--paper) 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  padding-inline-start: 8px;
+  border: 1px solid color-mix(in srgb, var(--rule) 55%, var(--paper-deep));
+  background: var(--paper-deep);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 .streak-cell {
   position: relative;
   display: grid;
-  place-items: center;
+  grid-template-rows: auto 1fr auto;
+  align-items: center;
+  justify-items: center;
   aspect-ratio: 1;
-  min-height: 46px;
-  padding: 4px 2px 6px;
-  border: 1px solid color-mix(in srgb, var(--rule) 55%, var(--paper-deep));
+  min-height: 48px;
+  padding: 3px 2px 2px;
+  border: 1px solid color-mix(in srgb, var(--rule) 42%, var(--paper));
   background: var(--paper);
   color: var(--ink);
 }
 .streak-cell-day {
-  font: 700 11px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  justify-self: start;
+  margin-inline-start: 3px;
+  font: 700 10px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
   letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--ink) 72%, var(--paper));
 }
-.streak-cell.has-reward .streak-cell-day {
-  position: absolute;
-  top: 3px;
-  inset-inline-start: 4px;
-  font-size: 9px;
+.streak-cell-prize {
+  display: grid;
+  place-items: center;
+  min-height: 18px;
 }
 .streak-cell-pack {
-  width: 18px;
+  width: 22px;
   height: auto;
   transform: rotate(-8deg);
   filter: drop-shadow(0 1px 1px rgba(26, 31, 28, 0.28));
 }
 .streak-cell-stars {
   color: var(--foil);
-  font: 700 11px/1 "IBM Plex Sans Hebrew", serif;
-  letter-spacing: -0.06em;
+  font: 700 12px/1 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", serif;
+  letter-spacing: -0.04em;
+}
+.streak-cell-stars[data-stars="1"] {
+  color: var(--civic);
+  font-size: 13px;
+}
+.streak-cell-stars[data-stars="3"] {
+  font-size: 11px;
+  letter-spacing: -0.08em;
 }
 .streak-cell-check {
-  position: absolute;
-  inset-inline-end: 2px;
-  bottom: 2px;
+  justify-self: end;
+  margin-inline-end: 1px;
   display: grid;
   place-items: center;
-  width: 12px;
+  width: 14px;
   height: 12px;
   color: #1f6b46;
   pointer-events: none;
 }
+.streak-cell:not(.has-reward) .streak-cell-day {
+  grid-row: 2;
+  justify-self: center;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink);
+}
+.streak-cell:not(.has-reward).is-checked .streak-cell-day {
+  grid-row: 1;
+  justify-self: start;
+  margin-inline-start: 3px;
+  font-size: 10px;
+  color: color-mix(in srgb, var(--ink) 72%, var(--paper));
+}
 .streak-cell.is-checked {
-  background: color-mix(in srgb, #d7eadc 48%, var(--paper));
-  border-color: color-mix(in srgb, #1f6b46 35%, var(--rule));
+  background: color-mix(in srgb, #d7eadc 56%, var(--paper));
+  border-color: color-mix(in srgb, #1f6b46 38%, var(--rule));
 }
 .streak-cell.is-today {
   outline: 2px solid var(--civic);
-  outline-offset: 1px;
+  outline-offset: 0;
+  z-index: 1;
+}
+.streak-cell.is-held {
+  outline: 2px dashed var(--danger-mute);
+  outline-offset: 0;
+}
+.streak-cell.is-claimed .streak-cell-prize {
+  opacity: 0.92;
 }
 .streak-dialog-reward {
   margin: 0 0 14px;
