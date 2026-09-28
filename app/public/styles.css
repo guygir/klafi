@@ -5464,8 +5464,9 @@ body {
   letter-spacing: -0.08em;
 }
 .streak-cell-check {
-  justify-self: end;
-  margin-inline-end: 1px;
+  position: absolute;
+  inset-inline-end: 2px;
+  bottom: 2px;
   display: grid;
   place-items: center;
   width: 14px;
@@ -5473,19 +5474,14 @@ body {
   color: #1f6b46;
   pointer-events: none;
 }
+.streak-cell:not(.has-reward) {
+  grid-template-rows: 1fr;
+}
 .streak-cell:not(.has-reward) .streak-cell-day {
-  grid-row: 2;
   justify-self: center;
   margin: 0;
   font-size: 13px;
   color: var(--ink);
-}
-.streak-cell:not(.has-reward).is-checked .streak-cell-day {
-  grid-row: 1;
-  justify-self: start;
-  margin-inline-start: 3px;
-  font-size: 10px;
-  color: color-mix(in srgb, var(--ink) 72%, var(--paper));
 }
 .streak-cell.is-checked {
   background: color-mix(in srgb, #d7eadc 56%, var(--paper));
