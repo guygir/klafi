@@ -1510,9 +1510,22 @@ test("first enter of a Jerusalem day stamps the visit calendar and grants reward
   assert.equal(home.body.state.visitStreak, 1);
   assert.equal(home.body.state.loginStreak, 0);
   assert.equal(home.body.state.streakCalendar.showPopup, true);
-  assert.equal(home.body.state.streakCalendar.days[0].checked, true);
-  assert.equal(home.body.state.streakCalendar.days[1].reward.stars, 1);
-  assert.equal(home.body.state.streakCalendar.days[4].reward.kind, "pack");
+  assert.equal(home.body.state.streakCalendar.days.length, 35);
+  assert.equal(home.body.state.streakCalendar.days[0].date, "2026-09-27");
+  assert.equal(home.body.state.streakCalendar.days[0].checked, false);
+  assert.equal(home.body.state.streakCalendar.days[0].reward, null);
+  assert.equal(home.body.state.streakCalendar.days.find((cell) => cell.date === "2026-10-01").reward.stars, 1);
+  assert.equal(home.body.state.streakCalendar.days.find((cell) => cell.election).date, "2026-10-27");
+  assert.equal(home.body.state.streakCalendar.days.find((cell) => cell.election).reward.stars, 3);
+  assert.equal(home.body.state.streakCalendar.ladder[0].runDay, 1);
+  assert.equal(home.body.state.streakCalendar.ladder[0].reward, null);
+  assert.equal(home.body.state.streakCalendar.ladder[1].runDay, 2);
+  assert.equal(home.body.state.streakCalendar.ladder[1].reward.stars, 1);
+  assert.equal(home.body.state.streakCalendar.ladder[2].runDay, 4);
+  assert.equal(home.body.state.streakCalendar.ladder[2].reward.stars, 1);
+  assert.equal(home.body.state.streakCalendar.nextDatePrize.date, "2026-10-01");
+  assert.equal(home.body.state.streakCalendar.nextDatePrize.wait, 10);
+  assert.equal(home.body.state.streakCalendar.nextDatePrize.reward.stars, 1);
   const peek = await api(running.base, "/api/state", { token });
   assert.equal(peek.body.visitStreak, 1);
   const ack = await api(running.base, "/api/streak/ack", { token, method: "POST" });
@@ -1528,33 +1541,52 @@ test("first enter of a Jerusalem day stamps the visit calendar and grants reward
   const dayFive = latest;
   assert.equal(dayFive.body.state.visitStreak, 19);
   assert.equal(dayFive.body.state.streakCalendar.day, 19);
-  assert.equal(dayFive.body.state.streakCalendar.days[4].claimed, true);
-  assert.equal(dayFive.body.state.streakCalendar.days[4].held, undefined);
-  assert.equal(dayFive.body.state.streakCalendar.days[4].opened, false);
+  assert.equal(dayFive.body.state.streakCalendar.ladder[0].runDay, 19);
+  assert.equal(dayFive.body.state.streakCalendar.ladder[0].reward, null);
+  assert.equal(dayFive.body.state.streakCalendar.ladder[0].held, undefined);
+  assert.equal(dayFive.body.state.streakCalendar.ladder[1].runDay, 20);
+  assert.equal(dayFive.body.state.streakCalendar.ladder[1].reward.stars, 2);
+  assert.equal(dayFive.body.state.streakCalendar.ladder[2].runDay, 22);
+  assert.equal(dayFive.body.state.streakCalendar.ladder[2].reward.kind, "pack");
+  assert.equal(dayFive.body.state.streakCalendar.nextDatePrize.date, "2026-10-09");
+  assert.equal(dayFive.body.state.streakCalendar.nextDatePrize.waiting, true);
+  assert.equal(dayFive.body.state.streakCalendar.nextDatePrize.reward.stars, 2);
+  assert.deepEqual(
+    dayFive.body.state.streakCalendar.days.filter((cell) => cell.checked).map((cell) => cell.date),
+    ["2026-09-27", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09"],
+  );
   const state = await api(running.base, "/api/state", { token });
   const finishOf = (acquiredBy) => (state.body.instances || []).find((item) => item.acquiredBy === acquiredBy)?.finish;
-  for (const acquiredBy of ["streak-2", "streak-4", "streak-6"]) {
+  for (const acquiredBy of ["streak-2", "streak-4", "streak-8"]) {
     assert.equal(finishOf(acquiredBy), "Common", acquiredBy);
   }
-  for (const acquiredBy of ["streak-8", "streak-12", "streak-14", "streak-16"]) {
-    assert.equal(finishOf(acquiredBy), "Uncommon", acquiredBy);
-  }
-  assert.equal(finishOf("streak-19"), "Rare");
-  const streakPull = (state.body.instances || []).find((item) => item.acquiredBy === "streak-5");
-  assert.ok(streakPull, "day 5 grants a streak pack");
+  assert.equal(finishOf("streak-14"), "Uncommon");
+  assert.equal(finishOf("streak-19"), undefined);
+  assert.equal(finishOf("streak-5"), undefined);
+  assert.equal(finishOf("date-2026-10-01"), "Common");
+  assert.equal(finishOf("date-2026-10-03"), undefined);
+  assert.equal(finishOf("date-2026-10-09"), "Uncommon");
+  assert.equal(finishOf("date-2026-10-10"), undefined);
+  const streakPull = (state.body.instances || []).find((item) => item.acquiredBy === "streak-6");
+  assert.ok(streakPull, "day 6 grants a streak pack");
   assert.equal(streakPull.seenAt, null);
+  const datePack = (state.body.instances || []).find((item) => item.acquiredBy === "date-2026-10-02");
+  assert.ok(datePack, "2 October grants a date pack");
+  assert.equal(datePack.seenAt, null);
   const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
   assert.equal(stored.sessions[token].unseenPulls.includes(streakPull.instanceId), false);
+  assert.equal(stored.sessions[token].unseenPulls.includes(datePack.instanceId), false);
   assert.equal(stored.sessions[token].pendingStreakReward, null);
   const copiesBefore = state.body.inventory[streakPull.cardId] || 0;
-  const opened = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 5 } });
+  const opened = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 6 } });
   assert.equal(opened.status, 200);
   assert.equal(opened.body.mode, "streak-pack");
   assert.equal(opened.body.cards[0].instanceId, streakPull.instanceId);
   assert.equal(opened.body.state.inventory[streakPull.cardId], copiesBefore + 1);
-  assert.equal(opened.body.state.streakCalendar.days[4].opened, true);
+  assert.ok(opened.body.state.instances.find((item) => item.acquiredBy === "streak-6")?.seenAt);
+  assert.equal(opened.body.state.streakCalendar.days.find((cell) => cell.date === "2026-10-02").opened, false);
   assert.equal(opened.body.state.unseenCount, dayFive.body.state.unseenCount);
-  const again = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 5 } });
+  const again = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 6 } });
   assert.equal(again.status, 409);
   assert.equal(again.body.error, "STREAK_REWARD_OPENED");
   const afterReplay = await api(running.base, "/api/state", { token });
@@ -1563,20 +1595,38 @@ test("first enter of a Jerusalem day stamps the visit calendar and grants reward
   assert.equal(oneStar.status, 200);
   assert.equal(oneStar.body.mode, "streak-card");
   assert.equal(oneStar.body.cards[0].finish, "Common");
-  const twoStar = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 8 } });
+  const twoStar = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 14 } });
   assert.equal(twoStar.status, 200);
   assert.equal(twoStar.body.mode, "streak-card");
   assert.equal(twoStar.body.cards[0].finish, "Uncommon");
-  const threeStar = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 19 } });
-  assert.equal(threeStar.status, 200);
-  assert.equal(threeStar.body.mode, "streak-card");
-  assert.equal(threeStar.body.cards[0].finish, "Rare");
-  const denied = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 23 } });
+  const oddDay = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 19 } });
+  assert.equal(oddDay.status, 400);
+  assert.equal(oddDay.body.error, "INVALID_STREAK_DAY");
+  const denied = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 20 } });
   assert.equal(denied.status, 409);
+  assert.equal(denied.body.error, "STREAK_REWARD_UNCLAIMED");
+  const dateOpened = await api(running.base, "/api/streak/open", { token, method: "POST", body: { date: "2026-10-01" } });
+  assert.equal(dateOpened.status, 200);
+  assert.equal(dateOpened.body.mode, "streak-card");
+  assert.equal(dateOpened.body.cards[0].finish, "Common");
+  assert.equal(dateOpened.body.state.streakCalendar.days.find((cell) => cell.date === "2026-10-01").opened, true);
+  const dateAgain = await api(running.base, "/api/streak/open", { token, method: "POST", body: { date: "2026-10-01" } });
+  assert.equal(dateAgain.status, 409);
+  assert.equal(dateAgain.body.error, "STREAK_REWARD_OPENED");
   clock.value = Date.parse("2026-10-11T07:00:00.000Z");
   const missed = await api(running.base, "/api/home", { token });
   assert.equal(missed.body.state.visitStreak, 1);
-  assert.equal(missed.body.state.streakCalendar.days.filter((cell) => cell.checked).length, 1);
+  assert.deepEqual(
+    missed.body.state.streakCalendar.days.filter((cell) => cell.checked).map((cell) => cell.date),
+    ["2026-09-27", "2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09", "2026-10-11"],
+  );
+  assert.equal(missed.body.state.streakCalendar.days.some((cell) => cell.date.startsWith("2026-11")), false);
+  assert.equal(missed.body.state.streakCalendar.days.find((cell) => cell.date === "2026-10-10").checked, false);
+  const missedState = await api(running.base, "/api/state", { token });
+  const missedFinish = (acquiredBy) => (missedState.body.instances || []).find((item) => item.acquiredBy === acquiredBy);
+  assert.ok(missedFinish("date-2026-10-01"));
+  assert.equal(missedFinish("date-2026-10-10"), undefined);
+  assert.equal(missedFinish("date-2026-10-11"), undefined);
 });
 
 test("bootstrap creates a guest session in one request", async (t) => {

@@ -358,7 +358,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /cell\.claimed && cell\.reward && !cell\.opened/);
   assert.match(javascript, /הפרס נלקח/);
   assert.match(css, /\.streak-cell\.is-opened \.streak-cell-prize \{\s*opacity:\s*0\.34/);
-  assert.match(javascript, /כדאי להתחבר כל יום כדי לא לאבד את הרצף!/);
+  assert.doesNotMatch(javascript, /כדאי להתחבר כל יום כדי לא לאבד את הרצף!/);
+  assert.match(html, /לו״ז ופרסים/);
+  assert.match(html, /הפרסים החודש/);
+  assert.match(html, /כמה ימים נכנסת ברצף\?/);
+  assert.match(html, /מתי הפרסים הבאים\?/);
   assert.doesNotMatch(javascript, /מחכה בתא/);
   assert.match(javascript, /function playStreakStamp\(\) \{[\s\S]*?prefersReducedMotion\(\)[\s\S]*?sfx\.play\("streak-stamp"\)/);
   assert.match(javascript, /function openClaimedStreakReward/);

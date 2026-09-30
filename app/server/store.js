@@ -82,9 +82,11 @@ export function normalizeState(value = {}) {
     session.loginStreak ??= 0;
     session.bestLoginStreak ??= session.loginStreak;
     session.visitDay ??= null;
+    session.visitDates ??= [];
     session.visitStreak ??= 0;
     session.bestVisitStreak ??= session.visitStreak;
     session.visitStreakClaims ??= [];
+    session.visitDateClaims ??= [];
     session.pendingStreakReward ??= null;
     session.streakCalendarAckDay ??= null;
     session.streakPrizeSkipped = Boolean(session.streakPrizeSkipped);
@@ -221,9 +223,11 @@ export class JsonStore {
         loginStreak: 0,
         bestLoginStreak: 0,
         visitDay: null,
+        visitDates: [],
         visitStreak: 0,
         bestVisitStreak: 0,
         visitStreakClaims: [],
+        visitDateClaims: [],
         pendingStreakReward: null,
         streakCalendarAckDay: null,
         streakPrizeSkipped: false,
