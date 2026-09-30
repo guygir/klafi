@@ -206,6 +206,7 @@ export class JsonStore {
         tradeCount: 0,
         eventClaims: {},
         favorites: [],
+        hiddenTradeIds: [],
         idleAnchorAt: now,
         nextIdleAt: null,
         unseenPulls: [],
@@ -517,10 +518,25 @@ export class JsonStore {
     });
   }
 
+  async hideTrade({ tradeId, sessionToken }) {
+    return this.exclusive(async () => {
+      const session = this.getSession(sessionToken);
+      const trade = this.state.trades.find((candidate) => candidate.tradeId === tradeId);
+      if (!session || !trade || trade.status !== "open" || trade.ownerToken === sessionToken) return null;
+      session.hiddenTradeIds ??= [];
+      if (!session.hiddenTradeIds.includes(tradeId)) session.hiddenTradeIds.push(tradeId);
+      if (session.hiddenTradeIds.length > 200) session.hiddenTradeIds = session.hiddenTradeIds.slice(-200);
+      await this.persist();
+      return { tradeId };
+    });
+  }
+
   async listTrades(token) {
     const current = this.getSession(token);
+    const hidden = new Set(current?.hiddenTradeIds || []);
     return this.state.trades
       .filter((trade) => trade.status === "open" || trade.ownerToken === token || trade.acceptedBy === token)
+      .filter((trade) => trade.ownerToken === token || !hidden.has(trade.tradeId))
       .map(({ ownerToken, acceptedBy, ...trade }) => {
         const owner = this.getSession(ownerToken);
         return {

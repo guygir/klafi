@@ -6,6 +6,7 @@ import { PostgresStore } from "./postgres-store.js";
 import { generateIdlePull, generatePack, rarityTier } from "./pack-engine.js";
 import {
   cardPullOdds,
+  isPackSetOpen,
   mergePackConfig,
   normalizePackConfig,
   packCardAllowed,
@@ -904,6 +905,18 @@ export async function createKalpiApp({
       )),
     };
   }
+  function cardIsPackPullable(card, currentMs = now()) {
+    if (!card) return false;
+    const pack = normalizePackConfig(studioContent?.gameConfig?.pack);
+    const releaseSets = studioContent?.gameConfig?.releaseSets || [];
+    const release = releaseSets.find((set) => set.id === card.releaseSetId) || null;
+    const packSet = pack.sets.find((set) => set.id === card.releaseSetId) || null;
+    // Sets outside the pack table (legacy foundations/symbols) are not this guard's job.
+    // A configured set must be open and actually pullable: held, weight 0, or locked out.
+    if (!packSet) return true;
+    return isPackSetOpen(packSet, release, currentMs) && packCardAllowed(card, packSet);
+  }
+
   function applyReleaseSets() {
     const sets = studioContent?.gameConfig?.releaseSets || [];
     const pack = normalizePackConfig(studioContent?.gameConfig?.pack);
@@ -1933,6 +1946,10 @@ export async function createKalpiApp({
             json(response, 400, { error: "INVALID_CARD" });
             return;
           }
+          if (!cardIsPackPullable(cardsById.get(input.wantedCardId))) {
+            json(response, 400, { error: "WANTED_NOT_PULLABLE" });
+            return;
+          }
           const result = await store.idempotent(
             token,
             idempotencyKey(request),
@@ -1964,6 +1981,20 @@ export async function createKalpiApp({
           );
           if (result.replayed) response.setHeader("idempotency-replayed", "true");
           json(response, result.status, result.body);
+          return;
+        }
+
+        const tradeHide = url.pathname.match(/^\/api\/trades\/([^/]+)\/hide$/);
+        if (request.method === "POST" && tradeHide) {
+          const hidden = await store.hideTrade({
+            tradeId: tradeHide[1],
+            sessionToken: token,
+          });
+          if (!hidden) {
+            json(response, 404, { error: "TRADE_NOT_HIDEABLE" });
+            return;
+          }
+          json(response, 200, { trades: await store.listTrades(token), simulated: false });
           return;
         }
 

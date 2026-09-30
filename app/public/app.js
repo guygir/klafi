@@ -74,6 +74,7 @@ const model = {
   binderFilter: "ALL",
   binderParty: "",
   binderOwnedOnly: false,
+  binderMissingOnly: false,
   binderPage: 0,
   achievementTier: null,
   communityPage: "trade",
@@ -454,6 +455,34 @@ function usesFullartFrame(card) {
 
 function playerCatalog() {
   return model.catalog.filter((card) => isLiveReleaseSet(card.releaseSetId));
+}
+
+/** Sets the pack pipeline currently opens (shell/gameConfig pack.current, else the same held/weight rules as isPackSetOpen). */
+function openPackReleaseIds(now = Date.now()) {
+  const current = model.gameConfig?.pack?.current?.sets;
+  if (Array.isArray(current)) return current.map((set) => set.id).filter(Boolean);
+  const releases = new Map((model.gameConfig?.releaseSets || []).map((set) => [set.id, set]));
+  return (model.gameConfig?.pack?.sets || []).filter((set) => {
+    if (!set?.id || !(Number(set.weight) > 0)) return false;
+    const release = releases.get(set.id);
+    if (release?.runtimeState === "held") return false;
+    const unlock = release?.runtimeAvailableFrom || release?.plannedPublishAt;
+    if (unlock && Date.parse(unlock) > now) return false;
+    return true;
+  }).map((set) => set.id);
+}
+
+function tradeCatalog() {
+  const open = new Set(openPackReleaseIds());
+  return playerCatalog().filter((card) => open.has(card.releaseSetId));
+}
+
+function tradeWantLabel(card) {
+  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`;
+}
+
+function tradeCardUnowned(cardId) {
+  return (model.serverState?.inventory?.[cardId] ?? 0) <= 0;
 }
 
 function cardDisplayFrame(card) {
@@ -3411,9 +3440,31 @@ function binderPartyPool(cards = []) {
   return model.binderParty ? live.filter((card) => card.set === model.binderParty) : live;
 }
 
-function binderSetChipCount(set, cards, { inventory = null, ownedOnly = false, numberedIds = null, numberedCards = null } = {}) {
+function binderScopeCards() {
+  const openIds = new Set(openBinderReleaseIds());
+  return playerCatalog().filter((card) => openIds.has(card.releaseSetId) && !card.eventOnly);
+}
+
+function binderProgress(inventory = binderInventory()) {
+  const scope = binderScopeCards();
+  const total = scope.length;
+  const owned = scope.filter((card) => Number(inventory?.[card.id]) > 0).length;
+  const percent = total ? Math.round((owned / total) * 100) : 0;
+  return { owned, total, percent };
+}
+
+function binderProgressCopy(owned, total) {
+  return `${owned} מתוך ${total} קלפים במשחק`;
+}
+
+function binderSetChipCount(set, cards, { inventory = null, ownedOnly = false, missingOnly = false, numberedIds = null, numberedCards = null } = {}) {
   const pool = binderPartyPool(cards);
-  const counted = (list) => (ownedOnly && inventory ? list.filter((card) => inventory[card.id]) : list);
+  const counted = (list) => {
+    if (!inventory) return list;
+    if (missingOnly) return list.filter((card) => !inventory[card.id]);
+    if (ownedOnly) return list.filter((card) => inventory[card.id]);
+    return list;
+  };
   if (set === "ALL") return counted(pool).length;
   if (set === "NUMBERED") {
     if (numberedCards) return counted(binderPartyPool(numberedCards)).length;
@@ -3727,7 +3778,7 @@ function renderShowcaseBinder() {
   elements.showcaseGrid.scrollTop = gridY;
 }
 
-function displayCardMarkup(card, surface = "display") {
+function displayCardMarkup(card, surface = "display", { tradeCopies = false } = {}) {
   const preview = surface === "display" && model.dialogNumberedPreview?.cardId === card?.id
     ? model.dialogNumberedPreview
     : null;
@@ -3739,10 +3790,10 @@ function displayCardMarkup(card, surface = "display") {
     count: ownedCountFor(card),
     numberedIndex: stamp?.numberedIndex,
     numberedOf: stamp?.numberedOf,
-  }, { progressiveStage: "portrait", surface });
+  }, { progressiveStage: "portrait", surface, tradeCopies });
 }
 
-function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full" } = {}) {
+function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full", tradeCopies = false } = {}) {
   const presentation = cardPresentation(card, instance);
   const stage = progressiveStage || "portrait";
   const progressive = `progressive-card stage-${stage}`;
@@ -3760,7 +3811,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-meta-end">
               ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
               ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
-              ${copies > 1 ? `<b class="card-copies-tag">×${copies}</b>` : ""}
+              ${copies > 1 ? `<b class="card-copies-tag">${tradeCopies ? `1/${copies}` : `×${copies}`}</b>` : ""}
               ${instance.isNew && !instance.numberedIndex ? '<b class="new-stamp">חדש</b>' : ""}
             </span>
           </div>
@@ -3775,9 +3826,9 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
     </article>`;
 }
 
-function binderCardMarkup(card) {
+function binderCardMarkup(card, { tradeCopies = false } = {}) {
   return `
-    <div class="binder-shared-card">${displayCardMarkup(card, "binder")}</div>`;
+    <div class="binder-shared-card">${displayCardMarkup(card, "binder", { tradeCopies })}</div>`;
 }
 
 function renderPendingWells(count = 6) {
@@ -3790,6 +3841,7 @@ async function openPublicBinder(slug) {
   const payload = await request(`/api/public-binder/${encodeURIComponent(slug)}`);
   model.guestBinder = payload;
   model.binderOwnedOnly = true;
+  model.binderMissingOnly = false;
   showView("binder");
   renderBinder();
 }
@@ -3888,7 +3940,7 @@ function renderBinder() {
     if (model.serverState?.totalCards) {
       const { owned, total, percent } = completion();
       elements.binderPercent.textContent = `${percent}%`;
-      elements.binderCount.textContent = `${owned} מתוך ${total} מתוך כל הקלפים`;
+      elements.binderCount.textContent = binderProgressCopy(owned, total);
     } else {
       elements.binderPercent.textContent = "…";
       elements.binderCount.textContent = "טוענים את הסדרה";
@@ -3917,20 +3969,10 @@ function renderBinder() {
     elements.guestBinderLabel.textContent = guest ? `האלבום של ${model.guestBinder.displayName}` : "";
   }
   if (elements.shareMyBinder) elements.shareMyBinder.hidden = guest;
-  const { owned, total, percent } = guest
-    ? (() => {
-      const guestOwned = Object.keys(inventory).length;
-      const guestTotal = playerCatalog().length || guestOwned;
-      return {
-        owned: guestOwned,
-        total: guestTotal,
-        percent: guestTotal ? Math.round((guestOwned / guestTotal) * 100) : 0,
-      };
-    })()
-    : completion();
+  const { owned, total, percent } = binderProgress(inventory);
   elements.binderPercent.textContent = `${percent}%`;
-  elements.binderPercent.title = `${owned} קלפים שונים מתוך ${total} מתוך כל הקלפים`;
-  elements.binderCount.textContent = `${owned} מתוך ${total} מתוך כל הקלפים`;
+  elements.binderPercent.title = binderProgressCopy(owned, total);
+  elements.binderCount.textContent = binderProgressCopy(owned, total);
   setEmptyNote(
     elements.binderEmpty,
     waitingOwnership ? "טוענים את האוסף…" : "פתחו קלף כדי להתחיל.",
@@ -3978,13 +4020,18 @@ function renderBinder() {
       <input type="checkbox" data-binder-owned ${guest || model.binderOwnedOnly ? "checked" : ""} ${guest ? "disabled" : ""} />
       באוסף
     </label>`,
+    `<label class="filter-owned filter-missing${(!guest && model.binderMissingOnly) ? " active" : ""}">
+      <input type="checkbox" data-binder-missing ${!guest && model.binderMissingOnly ? "checked" : ""} ${guest ? "disabled" : ""} />
+      חסר
+    </label>`,
     `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
     ...setOrder.map((set) => {
       const count = binderSetChipCount(set, playerCards, {
         inventory,
         numberedIds,
         numberedCards: possibleNumberedCards(),
-        ownedOnly: guest || model.binderOwnedOnly,
+        ownedOnly: (guest || model.binderOwnedOnly) && !model.binderMissingOnly,
+        missingOnly: !guest && model.binderMissingOnly,
       });
       const active = model.binderFilter === set;
       return filterSetChip(set, setLabels[set] || set, count, active);
@@ -3998,25 +4045,39 @@ function renderBinder() {
         : model.binderFilter === "NUMBERED" ? numberedIds.has(card.id)
         : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
     const partyOk = !model.binderParty || card.set === model.binderParty;
-    const ownedOk = !(guest || model.binderOwnedOnly) || Boolean(inventory[card.id]);
+    const ownedOk = guest
+      ? Boolean(inventory[card.id])
+      : model.binderMissingOnly
+        ? !inventory[card.id]
+        : (!model.binderOwnedOnly || Boolean(inventory[card.id]));
     return releaseOk && partyOk && ownedOk;
   });
   elements.binderGrid.innerHTML = visible.map((card) => {
     const count = inventory[card.id] ?? 0;
     if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
       if (guest || model.binderFilter === "NUMBERED") return "";
-      return `<div class="binder-slot" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · חסר באוסף`)}">
+      return `<div class="binder-slot is-missing" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)} · חסר באוסף`)}">
+        <span class="missing-name">${escapeHtml(cardTitle(card))}</span>
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
+        <span class="missing-rarity">${escapeHtml(`${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`)}</span>
         ${!guest && model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
       </div>`;
     }
+    const viewerMissing = guest && tradeCardUnowned(card.id);
+    const openLabel = viewerMissing
+      ? `${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)}`
+      : `פתיחת ${cardTitle(card)}, ברשותכם ${count}`;
     return `
       <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
-        <button class="binder-card-open" type="button" data-card-id="${card.id}" aria-label="פתיחת ${escapeHtml(cardTitle(card))}, ברשותכם ${count}">
+        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}" aria-label="${escapeHtml(openLabel)}">
           ${binderCardMarkup(card)}
         </button>
       </div>`;
   }).join("");
+  if (!waitingOwnership && !guest && model.binderMissingOnly) {
+    setEmptyNote(elements.binderEmpty, "אין קלפים חסרים.", { hidden: visible.length > 0 });
+  }
+  concealRenderedTradeThumbs(elements.binderGrid);
   const visibleColumns = window.innerWidth <= 520 ? 3 : window.innerWidth <= 760 ? 5 : 6;
   elements.binderPager.innerHTML = visible.length > visibleColumns
     ? '<span class="binder-scroll-hint">יש עוד קלפים למטה ↓</span>'
@@ -4540,7 +4601,27 @@ function creatorLink() {
 
 function tradeThumbMarkup(card) {
   if (!card) return "";
-  return `<span class="trade-thumb-frame">${binderCardMarkup(card)}</span>`;
+  return `<span class="trade-thumb-frame">${binderCardMarkup(card, { tradeCopies: true })}</span>`;
+}
+
+/** Unowned card: blur art, party, and quote. Name and rarity stay readable. */
+function concealTradeThumb(thumb, card) {
+  const face = thumb.querySelector(".kalpi-card");
+  if (face) face.setAttribute("aria-label", `${cardTitle(card)} · ${rarityNameHe(card.rarity)}`);
+  for (const node of thumb.querySelectorAll(".card-art, .card-party-zone, .card-quote-zone")) {
+    node.style.filter = "blur(8px)";
+    node.setAttribute("aria-hidden", "true");
+    if (node.hasAttribute("aria-label")) node.removeAttribute("aria-label");
+  }
+}
+
+function concealRenderedTradeThumbs(root) {
+  if (!root) return;
+  for (const thumb of root.querySelectorAll(".is-concealed")) {
+    const cardId = thumb.dataset.tradeChoiceCard || thumb.dataset.cardId;
+    const card = model.byId.get(cardId);
+    if (card) concealTradeThumb(thumb, card);
+  }
 }
 
 function tradeHasCards(trade) {
@@ -4549,9 +4630,13 @@ function tradeHasCards(trade) {
 
 function tradeSideMarkup(cardId, card, role) {
   const label = role === "give" ? "נותנים" : "מקבלים";
+  const conceal = Boolean(card) && tradeCardUnowned(cardId);
+  const aria = card
+    ? `${label}: ${cardTitle(card)}${conceal ? ` · ${rarityNameHe(card.rarity)}` : ""}`
+    : `${label}: ${cardId}`;
   return `<div class="trade-side">
     <small>${label}</small>
-    <button type="button" class="trade-thumb" data-trade-choice-card="${escapeHtml(cardId)}" ${card ? "" : "hidden"} aria-label="${label}: ${escapeHtml(card ? cardTitle(card) : cardId)}">
+    <button type="button" class="trade-thumb${conceal ? " is-concealed" : ""}" data-trade-choice-card="${escapeHtml(cardId)}" ${card ? "" : "hidden"} aria-label="${escapeHtml(aria)}">
       ${tradeThumbMarkup(card)}
     </button>
   </div>`;
@@ -4611,6 +4696,7 @@ function renderTradeBoard() {
   elements.tradeBoard.innerHTML = page.length
     ? page.map((trade) => tradeRowMarkup(trade)).join("")
     : `<p class="work-note">${openOffers.length ? "אין הצעות שמתאימות לסינון." : "אין כרגע הצעות פתוחות."}</p>`;
+  concealRenderedTradeThumbs(elements.tradeBoard);
   if (elements.tradeBoardPager) elements.tradeBoardPager.innerHTML = tradeBoardPagerMarkup(model.tradeBoardPage, pages, remaining);
   queueCardTextFit(elements.tradeBoard);
 }
@@ -4625,11 +4711,15 @@ function tradeRowMarkup(trade) {
     day: "2-digit",
     month: "2-digit",
   });
+  const hide = !trade.ownedByCurrent && trade.status === "open"
+    ? `<button type="button" class="trade-offer-action" data-hide-trade="${trade.tradeId}">הסתר</button>`
+    : "";
+  const accept = !trade.ownedByCurrent && trade.canAccept
+    ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}">קבלה</button>`
+    : "";
   const action = trade.ownedByCurrent
     ? `<button type="button" class="trade-offer-action" data-cancel-trade="${trade.tradeId}">ביטול</button>`
-    : trade.canAccept
-      ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}">קבלה</button>`
-      : `<span class="trade-unavailable">אין לכם את ${escapeHtml(wantedCard ? cardTitle(wantedCard) : "הקלף")}</span>`;
+    : (accept || hide) ? `<span class="trade-offer-actions">${accept}${hide}</span>` : "";
   const offeredRole = trade.ownedByCurrent ? "give" : "receive";
   const wantedRole = trade.ownedByCurrent ? "receive" : "give";
   return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}">
@@ -5109,7 +5199,8 @@ function renderGrowth() {
     .map(([label, value]) => `<div class="metric-row"><span>${label}</span><strong>${value}</strong></div>`)
     .join("");
 
-  const ownedCards = liveCards.filter((candidate) => (model.serverState.inventory[candidate.id] ?? 0) > 0);
+  const tradableCards = tradeCatalog();
+  const ownedCards = tradableCards.filter((candidate) => (model.serverState.inventory[candidate.id] ?? 0) > 0);
   const releaseNames = Object.fromEntries((model.gameConfig?.releaseSets || []).map(({ id, nameHe }) => [id, nameHe]));
   const fallbackReleaseNames = {
     foundations: "יסודות",
@@ -5132,17 +5223,18 @@ function renderGrowth() {
   const offeredValue = elements.tradeOfferedCard.value;
   const wantedValue = elements.tradeWantedCard.value;
   elements.tradeOfferedSet.innerHTML = ownedCards.length ? groupedOptions(ownedCards) : '<option value="">אין קלפים</option>';
-  elements.tradeWantedSet.innerHTML = groupedOptions(liveCards);
+  elements.tradeWantedSet.innerHTML = tradableCards.length ? groupedOptions(tradableCards) : '<option value="">אין קלפים</option>';
   if ([...elements.tradeOfferedSet.options].some(({ value }) => value === previousOfferedSet)) elements.tradeOfferedSet.value = previousOfferedSet;
   if ([...elements.tradeWantedSet.options].some(({ value }) => value === previousWantedSet)) elements.tradeWantedSet.value = previousWantedSet;
   const offeredCards = ownedCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeOfferedSet.value));
-  const wantedCards = liveCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
+  const wantedCards = tradableCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
   elements.tradeOfferedCard.innerHTML = offeredCards.length
     ? offeredCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("")
     : '<option value="">קודם אספו קלף</option>';
   if (offeredCards.some(({ id }) => id === offeredValue)) elements.tradeOfferedCard.value = offeredValue;
-  elements.tradeWantedCard.innerHTML = wantedCards
-    .map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("");
+  elements.tradeWantedCard.innerHTML = wantedCards.length
+    ? wantedCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(tradeWantLabel(candidate))}</option>`).join("")
+    : '<option value="">אין קלפים</option>';
   if (wantedCards.some(({ id }) => id === wantedValue)) elements.tradeWantedCard.value = wantedValue;
   for (const select of [elements.tradeOfferedSet, elements.tradeWantedSet, elements.tradeOfferedCard, elements.tradeWantedCard]) {
     const chosen = select.selectedOptions[0];
@@ -5150,21 +5242,27 @@ function renderGrowth() {
   }
   const mine = model.trades.find((trade) => trade.ownedByCurrent && trade.status === "open");
   elements.tradeCreate.disabled = Boolean(mine) || !ownedCards.length;
-  const paintThumb = (thumb, cardId) => {
+  const paintThumb = (thumb, cardId, { concealUnowned = false } = {}) => {
     const selected = model.byId.get(cardId);
     if (!thumb) return;
     thumb.hidden = !selected;
+    thumb.classList.remove("is-concealed");
     if (!selected) {
       thumb.replaceChildren();
       return;
     }
+    const conceal = concealUnowned && tradeCardUnowned(selected.id);
     thumb.dataset.tradeChoiceCard = selected.id;
-    thumb.setAttribute("aria-label", `פתיחת ${cardTitle(selected)}`);
+    thumb.classList.toggle("is-concealed", conceal);
+    thumb.setAttribute("aria-label", conceal
+      ? `${cardTitle(selected)} · ${rarityNameHe(selected.rarity)}`
+      : `פתיחת ${cardTitle(selected)}`);
     thumb.innerHTML = tradeThumbMarkup(selected);
+    if (conceal) concealTradeThumb(thumb, selected);
     queueCardTextFit(thumb);
   };
   paintThumb(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
-  paintThumb(elements.tradeWantedPreview, elements.tradeWantedCard.value);
+  paintThumb(elements.tradeWantedPreview, elements.tradeWantedCard.value, { concealUnowned: true });
   prefetchCardArt([
     card,
     model.byId.get(elements.tradeOfferedCard.value),
@@ -5176,7 +5274,10 @@ function renderGrowth() {
     // The publish button lives in the title row; it goes with the compose form.
     elements.tradeCreate.hidden = Boolean(mine);
     elements.tradeActive.innerHTML = mine ? `${tradeRowMarkup(mine)}<p class="work-note">אפשר הצעה אחת בכל פעם. כשמישהו מקבל, הקלף נכנס לאוסף מיד.</p>` : "";
-    if (mine) queueCardTextFit(elements.tradeActive);
+    if (mine) {
+      concealRenderedTradeThumbs(elements.tradeActive);
+      queueCardTextFit(elements.tradeActive);
+    }
   }
   watchOpenTrade();
   renderTradeBoard();
@@ -6301,6 +6402,18 @@ async function acceptTradeOffer(tradeId) {
   } finally {
     hideWait();
     model.acceptingTrade = false;
+  }
+}
+
+async function hideTradeOffer(tradeId) {
+  showWait("מסתירים את ההצעה…");
+  try {
+    applyTradeResult(await request(`/api/trades/${encodeURIComponent(tradeId)}/hide`, { method: "POST" }));
+    showToast("ההצעה הוסתרה ממך.");
+  } catch {
+    showToast("לא הצלחנו להסתיר את ההצעה.");
+  } finally {
+    hideWait();
   }
 }
 
@@ -7589,7 +7702,8 @@ elements.tradePreview.addEventListener("click", (event) => {
 for (const preview of [elements.tradeOfferedPreview, elements.tradeWantedPreview]) {
   preview.addEventListener("click", (event) => {
     const card = event.target.closest("[data-trade-choice-card]");
-    if (card) openCardDialog(card.dataset.tradeChoiceCard);
+    if (!card || card.classList.contains("is-concealed")) return;
+    openCardDialog(card.dataset.tradeChoiceCard);
   });
 }
 document.querySelector(".today-docket").addEventListener("click", (event) => {
@@ -7614,6 +7728,11 @@ function handleTradeBoardClick(event) {
     cancelTradeOffer(cancel.dataset.cancelTrade);
     return;
   }
+  const hide = event.target.closest("[data-hide-trade]");
+  if (hide) {
+    hideTradeOffer(hide.dataset.hideTrade);
+    return;
+  }
   const accept = event.target.closest("[data-accept-trade]");
   if (accept) {
     acceptTradeOffer(accept.dataset.acceptTrade);
@@ -7621,6 +7740,7 @@ function handleTradeBoardClick(event) {
   }
   const chip = event.target.closest("[data-trade-choice-card]");
   if (chip) {
+    if (chip.classList.contains("is-concealed")) return;
     openCardDialog(chip.dataset.tradeChoiceCard);
     return;
   }
@@ -7797,6 +7917,15 @@ elements.binderFilters.addEventListener("change", (event) => {
   const owned = event.target.closest("[data-binder-owned]");
   if (owned) {
     model.binderOwnedOnly = owned.checked;
+    if (owned.checked) model.binderMissingOnly = false;
+    model.binderPage = 0;
+    renderBinder();
+    return;
+  }
+  const missing = event.target.closest("[data-binder-missing]");
+  if (missing) {
+    model.binderMissingOnly = missing.checked;
+    if (missing.checked) model.binderOwnedOnly = false;
     model.binderPage = 0;
     renderBinder();
     return;
@@ -7847,7 +7976,10 @@ elements.binderGrid.addEventListener("click", (event) => {
     return;
   }
   const button = event.target.closest("[data-card-id]");
-  if (button) openCardDialog(button.dataset.cardId);
+  if (button) {
+    if (button.classList.contains("is-concealed")) return;
+    openCardDialog(button.dataset.cardId);
+  }
 });
 elements.showcaseFilters?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-filter]");

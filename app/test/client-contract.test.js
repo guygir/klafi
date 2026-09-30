@@ -119,7 +119,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /progressiveStage: "blank"/);
   assert.doesNotMatch(javascript, /reveal: stage === "portrait"/);
   assert.match(javascript, /binder-shared-card/);
-  assert.match(javascript, /displayCardMarkup\(card, "binder"\)/);
+  assert.match(javascript, /displayCardMarkup\(card, "binder", \{ tradeCopies \}\)/);
   assert.match(javascript, /studio-shared-card/);
   assert.match(javascript, /function cardPresentation/);
   assert.match(javascript, /function quoteTrustLabel/);
@@ -317,6 +317,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /שחקנים נוספים מחזיקים/);
   assert.match(javascript, /function displayCardMarkup/);
   assert.match(javascript, /card-copies-tag/);
+  assert.match(javascript, /tradeCopies \? `1\/\$\{copies\}` : `×\$\{copies\}`/);
+  assert.match(javascript, /tradeCopies: true/);
+  assert.match(javascript, /function displayCardMarkup\(card, surface = "display", \{ tradeCopies = false \} = \{\}\) \{[\s\S]*?surface, tradeCopies \}/);
+  assert.match(css, /#app \.trade-thumb\.is-concealed \.card-image-zone \.card-art/);
+  assert.match(css, /#app \.binder-card-open\.is-concealed \.card-image-zone \.card-art/);
+
   assert.match(html, /החלפות/);
   assert.match(html, /מלחמת המפלגות/);
   assert.doesNotMatch(html, /כל סדרות המיוחדים/);
@@ -374,6 +380,24 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /#home-view #cooldown-copy\.is-full[^}]*font-variant-numeric:\s*normal/);
   assert.match(javascript, /function openBinderReleaseIds/);
   assert.match(javascript, /hidden = new Set\(\["decisions", "records"\]\)/);
+  assert.match(javascript, /function openPackReleaseIds/);
+  assert.match(javascript, /pack\?\.current\?\.sets/);
+  assert.match(javascript, /runtimeState === "held"/);
+  assert.match(javascript, /function tradeCatalog/);
+  assert.match(javascript, /function tradeWantLabel\(card\) \{\s*return `\$\{cardTitle\(card\)\}/);
+  assert.match(javascript, /tradeWantLabel\(candidate\)/);
+  assert.match(javascript, /const tradableCards = tradeCatalog\(\)/);
+  assert.match(javascript, /ownedCards = tradableCards\.filter/);
+  assert.match(javascript, /concealUnowned: true/);
+  assert.match(javascript, /function concealTradeThumb/);
+  assert.match(javascript, /card\.classList\.contains\("is-concealed"\)/);
+  assert.match(css, /\.trade-thumb\.is-concealed \.card-art/);
+  assert.doesNotMatch(css, /\.trade-thumb\.is-concealed \.card-name-zone/);
+  assert.match(css, /\.trade-thumb\.is-concealed \.card-quote-zone/);
+  assert.doesNotMatch(css, /\.trade-thumb\.is-concealed \.card-rarity-zone/);
+  assert.match(javascript, /function tradeCardUnowned/);
+  assert.match(javascript, /concealRenderedTradeThumbs\(elements\.tradeBoard\)/);
+  assert.match(javascript, /class="trade-thumb\$\{conceal \? " is-concealed" : ""\}"/);
   assert.match(javascript, /const earned = binderBadgeOrder\(visibleEarnedBadges\(\)\);/, "the binder rail shows earned badges from open pages");
   assert.match(javascript, /"party-slot-2": "משנה"/);
   assert.match(html, /id="wait-dialog"/);
@@ -478,7 +502,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function showAcceptedTradeNotice/);
   assert.match(html, /class="trade-thumb"/);
   assert.match(javascript, /class="trade-offer-bar"/);
-  assert.match(javascript, /אין לכם את/);
+  assert.doesNotMatch(javascript, /אין לכם את/);
   assert.match(css, /\.trade-offer-action/);
   assert.match(css, /\.trade-offer-action\.accept/);
   assert.match(javascript, /trade-offer-action accept/);
@@ -724,12 +748,19 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function binderPartyPool/);
   assert.match(javascript, /setLabels\.ALL = "כל הקלפים"/);
   assert.match(javascript, /מתוך כל הקלפים/);
-  assert.match(html, /מתוך כל הקלפים/);
+  assert.match(javascript, /function binderProgressCopy/);
+  assert.match(javascript, /קלפים במשחק/);
+  assert.match(html, /id="binder-count">קלפים במשחק/);
+  assert.doesNotMatch(html, /0 מתוך 14/);
+
   assert.doesNotMatch(javascript, /בסדרה הפעילה/);
   assert.doesNotMatch(javascript, /setLabels\.ALL = "הכול"/);
   assert.doesNotMatch(html, /בסדרה הפעילה/);
   assert.match(javascript, /binderSetChipCount\(set, playerCards, \{ numberedCards \}\)/);
-  assert.match(javascript, /ownedOnly: guest \|\| model\.binderOwnedOnly/);
+  assert.match(javascript, /missingOnly: !guest && model\.binderMissingOnly/);
+  assert.match(javascript, /data-binder-missing/);
+  assert.match(javascript, />\s*חסר\s*<\/label>/);
+
   assert.doesNotMatch(javascript, /escapeHtml\(name\)\} · \$\{count\}/);
   assert.match(javascript, /function catalogCardMarkup/);
   assert.match(javascript, /\/share\/binder/);
@@ -923,6 +954,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /pending.length && !elements.levelDialog.open/);
   assert.match(javascript, /klafi-seen-level-dialog/);
   assert.match(javascript, /function openPublicBinder/);
+  assert.match(javascript, /binder-card-open\$\{viewerMissing \? " is-concealed" : ""\}/);
+  assert.match(javascript, /button\.classList\.contains\("is-concealed"\)/);
+  assert.match(css, /\.binder-card-open\.is-concealed \.card-art/);
+  assert.doesNotMatch(css, /\.binder-card-open\.is-concealed \.card-name-zone/);
+
   assert.match(javascript, /function dismissLevelDialog/);
   assert.match(javascript, /קלף הבונוס כבר נכנס לאוסף/);
   assert.match(javascript, /markLevelSeen\(Math\.min\(\.\.\.pending\)\)/);
@@ -1050,6 +1086,14 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(themeCss, /#app \.kalpi-card\[data-card-frame="fullart-v1"\]/);
   assert.match(css, /dialog-meta-row/);
   assert.match(javascript, /\/api\/trades\/\$\{encodeURIComponent\(tradeId\)\}\/cancel/);
+  assert.match(javascript, /\/api\/trades\/\$\{encodeURIComponent\(tradeId\)\}\/hide/);
+  assert.match(javascript, /data-hide-trade="\$\{trade\.tradeId\}">הסתר</);
+  assert.doesNotMatch(javascript, /הסתרה ממני/);
+  assert.match(javascript, /missing-name/);
+  assert.match(javascript, /missing-rarity/);
+  assert.match(javascript, /data-hide-trade/);
+  assert.doesNotMatch(javascript, /data-hide-trade="\$\{trade\.tradeId\}">ביטול/);
+
   assert.match(javascript, /new ResizeObserver/);
   assert.match(javascript, /data-card-surface/);
   assert.match(themeCss, /aspect-ratio: 63 \/ 96/);
