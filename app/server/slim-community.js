@@ -143,6 +143,12 @@ async function listTrades(db, token, now) {
     [new Date(now).toISOString()],
   );
   const inventory = await sessionInventory(db, token);
+  const hiddenRow = await db.query(
+    `SELECT COALESCE(extras->'hiddenTradeIds', '[]'::jsonb) AS ids
+     FROM kalpi_sessions WHERE token = $1`,
+    [token],
+  );
+  const hidden = new Set(Array.isArray(hiddenRow.rows[0]?.ids) ? hiddenRow.rows[0].ids : []);
   const result = await db.query(
     `SELECT t.*, owner.display_name AS owner_label
      FROM kalpi_trades t
@@ -164,7 +170,7 @@ async function listTrades(db, token, now) {
     );
     for (const row of owners.rows) ownerHasOffered.add(`${row.session_token}:${row.card_id}`);
   }
-  return result.rows.map((row) => ({
+  return result.rows.filter((row) => row.owner_token === token || !hidden.has(row.trade_id)).map((row) => ({
     tradeId: row.trade_id,
     offeredCardId: row.offered_card_id,
     wantedCardId: row.wanted_card_id,

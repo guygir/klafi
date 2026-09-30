@@ -3401,6 +3401,26 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .trade-thumb .binder-shared-card { border-radius: inherit; }
 .trade-thumb .trade-thumb-frame { pointer-events: none; }
+/* Unowned card: blur art, party, and quote. Name and rarity stay sharp. */
+.trade-thumb.is-concealed .card-art,
+.trade-thumb.is-concealed .card-party-zone,
+.trade-thumb.is-concealed .card-quote-zone,
+.binder-card-open.is-concealed .card-art,
+.binder-card-open.is-concealed .card-party-zone,
+.binder-card-open.is-concealed .card-quote-zone,
+/* Fullart sets filter on the art with an #app rule; this must outrank it. */
+#app .trade-thumb.is-concealed .card-image-zone .card-art,
+#app .binder-card-open.is-concealed .card-image-zone .card-art,
+#app .trade-thumb.is-concealed .card-party-zone,
+#app .trade-thumb.is-concealed .card-quote-zone,
+#app .binder-card-open.is-concealed .card-party-zone,
+#app .binder-card-open.is-concealed .card-quote-zone {
+  filter: blur(8px);
+  user-select: none;
+}
+.trade-thumb.is-concealed,
+.binder-card-open.is-concealed { cursor: default; }
+.trade-offer-actions { display: flex; flex: 0 0 auto; gap: 6px; }
 .trade-active { display: grid; gap: 8px; }
 .trade-offer.mine { border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent); }
 .trade-form select,

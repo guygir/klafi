@@ -799,6 +799,72 @@ test("players can see and accept open trades from other collectors", async (t) =
   assert.deepEqual(afterAck.body.pendingTradeNotices, []);
 });
 
+test("a wanted card from a held or zero-weight set is rejected", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-trade-held-test-"));
+  const clock = { value: Date.parse("2026-09-10T18:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const cards = (await api(running.base, "/api/catalog")).body.cards.filter(({ eventOnly }) => !eventOnly);
+  const offered = cards.find((card) => card.releaseSetId === "party-leaders");
+  const openWanted = cards.find((card) => card.releaseSetId === "party-slot-2");
+  const held = (await api(running.base, "/api/catalog")).body.cards.find((card) => card.releaseSetId === "decisions" || card.releaseSetId === "records");
+  assert.ok(offered && openWanted && held);
+  const token = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await api(running.base, "/api/debug/unlock-card", { token, method: "POST", body: { cardId: offered.id } });
+  const rejected = await api(running.base, "/api/trades", {
+    token,
+    method: "POST",
+    body: { offeredCardId: offered.id, wantedCardId: held.id },
+  });
+  assert.equal(rejected.status, 400);
+  assert.equal(rejected.body.error, "WANTED_NOT_PULLABLE");
+  const accepted = await api(running.base, "/api/trades", {
+    token,
+    method: "POST",
+    body: { offeredCardId: offered.id, wantedCardId: openWanted.id },
+  });
+  assert.equal(accepted.status, 201);
+  assert.equal(accepted.body.trade.wantedCardId, openWanted.id);
+});
+
+test("hiding another player's trade keeps it open for everyone else", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-trade-hide-test-"));
+  const clock = { value: Date.parse("2026-09-10T18:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const [offered, wanted] = (await api(running.base, "/api/catalog")).body.cards.filter(({ eventOnly }) => !eventOnly).slice(0, 2);
+  const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const viewer = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const other = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await api(running.base, "/api/debug/unlock-card", { token: owner, method: "POST", body: { cardId: offered.id } });
+  const created = await api(running.base, "/api/trades", {
+    token: owner,
+    method: "POST",
+    body: { offeredCardId: offered.id, wantedCardId: wanted.id },
+  });
+  assert.equal(created.status, 201);
+  const tradeId = created.body.trade.tradeId;
+  const ownHide = await api(running.base, `/api/trades/${tradeId}/hide`, { token: owner, method: "POST" });
+  assert.equal(ownHide.status, 404);
+  const hidden = await api(running.base, `/api/trades/${tradeId}/hide`, { token: viewer, method: "POST" });
+  assert.equal(hidden.status, 200);
+  assert.equal(hidden.body.trades.some((trade) => trade.tradeId === tradeId), false);
+  const again = await api(running.base, "/api/trades", { token: viewer });
+  assert.equal(again.body.trades.some((trade) => trade.tradeId === tradeId), false);
+  const ownerList = await api(running.base, "/api/trades", { token: owner });
+  const ownerTrade = ownerList.body.trades.find((trade) => trade.tradeId === tradeId);
+  assert.equal(ownerTrade.status, "open");
+  assert.equal(ownerTrade.ownedByCurrent, true);
+  const otherList = await api(running.base, "/api/trades", { token: other });
+  assert.equal(otherList.body.trades.some((trade) => trade.tradeId === tradeId && trade.status === "open"), true);
+});
+
 test("only one concurrent accepter can complete a trade", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-trade-race-test-"));
   const clock = { value: Date.parse("2026-09-10T18:00:00.000Z") };

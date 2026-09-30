@@ -60,6 +60,7 @@ function emptySession(token, createdAt) {
     tradeCount: 0,
     eventClaims: {},
     favorites: [],
+    hiddenTradeIds: [],
     idleAnchorAt: createdAt,
     nextIdleAt: null,
     unseenPulls: [],
@@ -111,6 +112,7 @@ function extrasFromSession(session) {
     achievementsEarned: session.achievementsEarned || {},
     publicBinderSlug: session.publicBinderSlug || null,
     stateRevision: Number(session.stateRevision) || 0,
+    hiddenTradeIds: Array.isArray(session.hiddenTradeIds) ? session.hiddenTradeIds.slice(-200) : [],
   };
 }
 
@@ -531,6 +533,7 @@ export class PostgresStore {
       achievementsEarned: extras.achievementsEarned || {},
       publicBinderSlug: extras.publicBinderSlug || null,
       stateRevision: Number(extras.stateRevision) || 0,
+      hiddenTradeIds: Array.isArray(extras.hiddenTradeIds) ? extras.hiddenTradeIds : [],
     };
   }
 
@@ -1092,8 +1095,24 @@ export class PostgresStore {
     };
   }
 
+  async hideTrade({ tradeId, sessionToken }) {
+    const found = await this.pool.query(
+      "SELECT owner_token, status FROM kalpi_trades WHERE trade_id = $1",
+      [tradeId],
+    );
+    const row = found.rows[0];
+    if (!row || row.status !== "open" || row.owner_token === sessionToken) return null;
+    return this.withSession(sessionToken, (session) => {
+      session.hiddenTradeIds ??= [];
+      if (!session.hiddenTradeIds.includes(tradeId)) session.hiddenTradeIds.push(tradeId);
+      if (session.hiddenTradeIds.length > 200) session.hiddenTradeIds = session.hiddenTradeIds.slice(-200);
+      return { tradeId };
+    });
+  }
+
   async listTrades(token) {
     const current = token ? await this.hydrateSession(token) : null;
+    const hidden = new Set(current?.hiddenTradeIds || []);
     const result = await this.pool.query(
       `SELECT t.*, owner.display_name AS owner_label
        FROM kalpi_trades t
@@ -1118,7 +1137,7 @@ export class PostgresStore {
       );
       for (const row of owners.rows) ownerHasOffered.set(`${row.session_token}:${row.card_id}`, true);
     }
-    return result.rows.map((row) => {
+    return result.rows.filter((row) => row.owner_token === token || !hidden.has(row.trade_id)).map((row) => {
       const trade = this.tradeFromRow(row);
       const { ownerToken, acceptedBy, ...publicTrade } = trade;
       return {
