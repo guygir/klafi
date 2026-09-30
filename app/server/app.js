@@ -1739,7 +1739,8 @@ export async function createKalpiApp({
           if (credited?.idleCredited) {
             await store.incrementFaction(store.getSession(token)?.factionId, credited.idleCredited);
           }
-          json(response, 200, await stateForToken(token));
+          const acceptedInstanceIds = [...(credited?.accepted || [])];
+          json(response, 200, { ...(await stateForToken(token)), acceptedInstanceIds });
           return;
         }
 

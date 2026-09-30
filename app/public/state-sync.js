@@ -18,6 +18,63 @@ export function isStaleState(incoming, appliedRevision = 0) {
   return revision != null && revision < (Number(appliedRevision) || 0);
 }
 
+function earliestIdleMs(state) {
+  const times = [];
+  for (const pull of state?.preparedPulls || []) {
+    const at = Date.parse(pull?.availableAt);
+    if (Number.isFinite(at)) times.push(at);
+  }
+  const scheduled = Date.parse(state?.nextIdleAt);
+  if (Number.isFinite(scheduled)) times.push(scheduled);
+  return times.length ? Math.min(...times) : null;
+}
+
+/**
+ * A same-revision home or settle is not a newer write (a no-op settle does not
+ * bump the revision). It must not paint an earlier, due clock over a clock the
+ * client already moved forward. An older revision is left to isStaleState.
+ * A higher revision replaces the clock.
+ */
+export function mergeIdleClock(previous, incoming, appliedRevision = stateRevision(previous)) {
+  if (!incoming || typeof incoming !== "object") return incoming;
+  const incomingRevision = stateRevision(incoming);
+  const applied = Number(appliedRevision) || 0;
+  if (incomingRevision == null || incomingRevision !== applied) return incoming;
+  const previousAt = earliestIdleMs(previous);
+  const incomingAt = earliestIdleMs(incoming);
+  if (previousAt == null || incomingAt == null || previousAt <= incomingAt) return incoming;
+  return {
+    ...incoming,
+    nextIdleAt: previous.nextIdleAt,
+    preparedPulls: previous.preparedPulls || [],
+  };
+}
+
+/** The instance the server still lists as an unseen pull. A cached id that is missing was already opened. */
+export function confirmedIdleInstance(cards, cachedId) {
+  const queue = (Array.isArray(cards) ? cards : []).filter((card) => card?.instanceId);
+  if (!cachedId) return queue[0] || null;
+  return queue.find((card) => card.instanceId === cachedId) || null;
+}
+
+/**
+ * Ids /api/idle/seen actually accepted. A bare 200 with no accepted list confirms nothing.
+ * Refused ids were in this batch and must not be treated as opened.
+ */
+export function seenAckDecision(payload, sentIds = []) {
+  const sent = [...sentIds].map(String).filter(Boolean);
+  const reported = Array.isArray(payload?.acceptedInstanceIds)
+    ? payload.acceptedInstanceIds.map(String)
+    : null;
+  if (!reported) return { accepted: [], refused: [], confirmed: false };
+  const allowed = new Set(reported);
+  return {
+    accepted: sent.filter((id) => allowed.has(id)),
+    refused: sent.filter((id) => !allowed.has(id)),
+    confirmed: true,
+  };
+}
+
 /**
  * Cards the player already opened stay hidden until the server confirms the seen ack. A payload
  * computed before the ack still lists them as ready; drop them from the queue and from the count

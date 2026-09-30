@@ -1,9 +1,9 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
-import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, HOME_SETTLE_HINT, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
+import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, homeSettleHint, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { binderBadgeOrder } from "./badge-order.js";
-import { isStaleState, mergeLeaderboards, overlayPendingSeen, stateRevision } from "./state-sync.js";
+import { confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
 import {
@@ -20,6 +20,10 @@ const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
 // When the server state last arrived (0 = only the localStorage cache so far).
 let stateFreshAt = 0;
+// A failed settle leaves the old due time in place. The one-second tick must not
+// paint the hint again from that stale clock. A newer revision may turn it back on.
+let settleHintSuppressed = false;
+let packConfirming = false;
 let eventPredictionRefreshAt = 0;
 const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
@@ -644,12 +648,26 @@ function noteStateRevision(state) {
   if (revision != null) model.stateRevision = Math.max(model.stateRevision || 0, revision);
 }
 
+function releaseSettleHintIfNewer(state, appliedRevision) {
+  const incoming = stateRevision(state);
+  if (settleHintSuppressed && incoming != null && incoming > (Number(appliedRevision) || 0)) {
+    settleHintSuppressed = false;
+  }
+}
+
+function suppressSettleHint() {
+  settleHintSuppressed = true;
+  renderHomeSettleHint("");
+}
+
 /** Every full/merged server state goes through here so a late, older response cannot win. */
 function setServerState(state, { merge = false } = {}) {
   if (!state || typeof state !== "object") return false;
   if (isStaleState(state, model.stateRevision)) return false;
-  noteStateRevision(state);
-  const { state: shown } = overlayPendingSeen({ state }, pendingIdleSeen());
+  releaseSettleHintIfNewer(state, model.stateRevision);
+  const clockSafe = mergeIdleClock(model.serverState, state, model.stateRevision);
+  noteStateRevision(clockSafe);
+  const { state: shown } = overlayPendingSeen({ state: clockSafe }, pendingIdleSeen());
   model.serverState = merge ? { ...model.serverState, ...shown } : shown;
   return true;
 }
@@ -663,10 +681,12 @@ function applyHomePayload(home) {
   // An older response (e.g. a settle computed before the last open's seen ack) never overwrites newer state.
   if (home.state && isStaleState(home.state, model.stateRevision)) return false;
   if (home.state) {
-    noteStateRevision(home.state);
+    releaseSettleHintIfNewer(home.state, model.stateRevision);
+    const clockSafe = mergeIdleClock(model.serverState, home.state, model.stateRevision);
+    noteStateRevision(clockSafe);
     stateFreshAt = Date.now();
     const previous = model.serverState || {};
-    const overlaid = overlayPendingSeen({ state: home.state, cards: home.cards }, pendingIdleSeen());
+    const overlaid = overlayPendingSeen({ state: clockSafe, cards: home.cards }, pendingIdleSeen());
     const incoming = overlaid.state;
     home = { ...home, cards: overlaid.cards };
     const incomingUnseen = Number(incoming.unseenCount) || 0;
@@ -935,6 +955,8 @@ async function hydrateHome() {
     if (window.__kalpiWarmup) window.__kalpiWarmup.home = null;
     homeHydrate = (warmedHome || request("/api/home")).then(async (home) => {
       applyHomePayload(home);
+      renderProfile();
+      renderHome();
       try {
         const config = await request("/api/game-config");
         if (config) model.gameConfig = { ...model.gameConfig, ...config };
@@ -950,7 +972,6 @@ async function hydrateHome() {
       hydrateCardHolders().catch(() => {});
       prefetchBinderArt(playerCatalog());
       renderProfile();
-      renderHome();
       renderBinder();
       renderAchievements();
       maybeShowTradeNotice();
@@ -1038,14 +1059,17 @@ function flushPendingIdleSeen() {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ instanceIds }),
   }).then((state) => {
-    const acknowledged = new Set(instanceIds);
-    const remaining = pendingIdleSeen().filter((instanceId) => !acknowledged.has(instanceId));
+    const decision = seenAckDecision(state, instanceIds);
+    const acknowledged = new Set(decision.accepted);
+    const finished = new Set(decision.confirmed ? instanceIds.map(String) : []);
+    const remaining = pendingIdleSeen().filter((instanceId) => !finished.has(String(instanceId)));
     localStorage.setItem(PENDING_IDLE_SEEN_KEY, JSON.stringify(remaining));
     const racedParty = model.leaderboards?.dailyChallenge?.targetPartyId;
     const openedRaceCard = racedParty && (state?.instances || [])
       .some(({ instanceId, cardId }) => acknowledged.has(instanceId) && model.byId.get(cardId)?.set === racedParty);
-    model.idleQueue = model.idleQueue.filter(({ instanceId }) => !acknowledged.has(instanceId));
-    applyHomePayload({ state });
+    model.idleQueue = model.idleQueue.filter(({ instanceId }) => !finished.has(String(instanceId)));
+    const { acceptedInstanceIds: _acceptedInstanceIds, ...seenState } = state || {};
+    applyHomePayload({ state: seenState });
     if (openedRaceCard) refreshDailyChallenge();
     renderHome();
     renderBinder();
@@ -1071,14 +1095,19 @@ async function hydrateIdleQueue() {
       if (!model.token) await hydrateHome();
       const warmedSettle = window.__kalpiWarmup?.idleSettle;
       if (window.__kalpiWarmup) window.__kalpiWarmup.idleSettle = null;
-      const settled = await (warmedSettle || request("/api/idle/settle", { method: "POST" }));
-      applyHomePayload({ ...settled, cards: settled.cards || [], state: settled.state });
-      prefetchIdleAssets();
-      renderHome();
-      refreshDailyChallenge();
-      maybeShowTradeNotice();
-      flushPendingIdleSeen().catch(() => {});
-      return settled;
+      try {
+        const settled = await (warmedSettle || request("/api/idle/settle", { method: "POST" }));
+        applyHomePayload({ ...settled, cards: settled.cards || [], state: settled.state });
+        prefetchIdleAssets();
+        renderHome();
+        refreshDailyChallenge();
+        maybeShowTradeNotice();
+        flushPendingIdleSeen().catch(() => {});
+        return settled;
+      } catch (error) {
+        suppressSettleHint();
+        throw error;
+      }
     })().finally(() => {
       idleHydrate = null;
     });
@@ -1259,7 +1288,6 @@ async function bootstrap() {
   if (notifyPermission() === "granted") {
     ensureServiceWorker().then(() => scheduleIdleNotification()).catch(() => {});
   }
-  if (model.token) hydrateExtras().catch(() => {});
   const inboundView = requestedPlayerView();
   if (inboundView && inboundView !== "home") paintPlayerView(inboundView);
   else showView("home");
@@ -1270,11 +1298,11 @@ async function bootstrap() {
     renderAdvocacy();
     renderProfile();
     renderHome();
+    const homePromise = hydrateHome();
     await catalogPromise;
     if (inboundView === "binder") renderBinder();
     renderAchievements();
     renderGrowth();
-    const homePromise = hydrateHome();
     homePromise.then(() => {
       prefetchIdleAssets();
       if (pendingIdleSeen().length) flushPendingIdleSeen().catch(() => {});
@@ -1292,7 +1320,7 @@ async function bootstrap() {
       if (clock.needsSettle || missingDueCard || cachedBufferSize < cap) {
         scheduleIdleRefill({ priority });
       }
-      hydrateExtras().catch(() => {});
+      if (model.token) hydrateExtras().catch(() => {});
       scheduleIdleNotification();
       if (inboundLeagueCode()) consumeInboundLeague().catch(() => {});
     }).catch(() => {});
@@ -2422,8 +2450,13 @@ function renderHome() {
   const idleCapacity = model.serverState?.idleCapacity ?? model.gameConfig?.idle?.capacity ?? IDLE_BACKLOG_CAP;
   elements.collectionCount.textContent = `${owned} מתוך ${total} מתוך כל הקלפים · ${percent}%`;
   elements.collectionProgress.style.width = `${percent}%`;
-  elements.openPack.disabled = !available;
-  elements.openPack.textContent = readyCopy.action;
+  if (packConfirming) {
+    elements.openPack.disabled = true;
+    elements.openPack.textContent = "פותחים…";
+  } else {
+    elements.openPack.disabled = !available;
+    elements.openPack.textContent = readyCopy.action;
+  }
   if (available) {
     preloadPackRipAssets();
     sfx.preload();
@@ -2438,12 +2471,16 @@ function renderHome() {
     .filter(Boolean);
   if (elements.activeRelease) elements.activeRelease.textContent = releaseNames.join(" + ");
   elements.homeTitle.textContent = readyCopy.title;
-  renderHomeSettleHint(readyCopy.settleHint);
+  renderHomeSettleHint(homeSettleHint({ needsSettle: clock.needsSettle, suppressed: settleHintSuppressed }));
   elements.homeCopy.textContent = readyCopy.lede;
   renderSiteCardPeeks();
   renderProgression();
   renderActivity();
-  renderTodayDocket();
+  try {
+    renderTodayDocket();
+  } catch {
+    /* A docket throw must not skip the countdown, which clears a stuck settle hint. */
+  }
   updateCountdown();
   if (elements.openQuiz) elements.openQuiz.hidden = true;
   layoutAdvocacyDock();
@@ -2808,14 +2845,22 @@ function renderProgression({ announce = false } = {}) {
 }
 
 function updateCountdown() {
-  renderTodayDocket();
-  scheduleIdleNotification();
+  try {
+    renderTodayDocket();
+  } catch {
+    /* A docket throw must not leave the settle hint up for this tick. */
+  }
+  try {
+    scheduleIdleNotification();
+  } catch {
+    /* The clock and the settle hint still update. */
+  }
   const view = idleCountdownCopy({
     serverState: model.serverState,
     idleQueueLength: model.idleQueue.length,
   });
   applyIdleCountdown(elements.cooldownCopy, view);
-  renderHomeSettleHint(view.needsSettle ? HOME_SETTLE_HINT : "");
+  renderHomeSettleHint(homeSettleHint({ needsSettle: view.needsSettle, suppressed: settleHintSuppressed }));
   if (elements.headerStatus) elements.headerStatus.hidden = true;
   if (view.needsSettle && !idleHydrate) scheduleIdleRefill({ priority: "urgent" });
   if (view.full) {
@@ -2900,62 +2945,48 @@ async function openIdleReturn(opening = "regular") {
   }
 }
 
-async function openIdleReturnOnce(opening) {
+async function openIdleReturnOnce() {
   if (!model.catalog.length) loadStaticCatalog().catch(() => {});
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
   elements.openPack.textContent = "פותחים…";
   const cached = nextCachedIdleCard();
-  const rip = playHomePackRip({ holdAtEnd: !cached });
+  let rip = null;
+  packConfirming = true;
   try {
-    const settlement = cached && !cached.prepared
-      ? Promise.resolve({ value: { cards: model.idleQueue, state: model.serverState } })
-      : hydrateIdleQueue().then(
-        (value) => ({ value }),
-        (error) => ({ error }),
-      );
-    let selected = cached?.instance;
+    const settled = await hydrateIdleQueue();
+    const selected = confirmedIdleInstance(settled?.cards, cached?.instance?.instanceId);
+    packConfirming = false;
     if (!selected) {
-      const outcome = await settlement;
-      if (outcome.error) throw outcome.error;
-      const settled = outcome.value;
-      selected = settled.cards?.[0];
-    } else if (cached.prepared) {
-      model.serverState.preparedPulls = (model.serverState.preparedPulls || [])
-        .filter(({ instanceId }) => instanceId !== selected.instanceId);
-      model.serverState.inventory = { ...(model.serverState.inventory || {}) };
-      model.serverState.inventory[selected.cardId] = (model.serverState.inventory[selected.cardId] ?? 0) + 1;
-      model.serverState.unseenCount = (model.serverState.unseenCount || 0) + 1;
-      model.serverState.instances = [
-        ...(model.serverState.instances || []),
-        { ...selected, pulledAt: selected.availableAt, seenAt: null },
-      ].slice(-500);
-      applyHomePayload({ state: model.serverState });
-    }
-    if (!selected) {
-      rip.release();
       renderHome();
-      showToast("הקלף הבא עדיין נאסף.");
+      showView("home");
+      const unseen = model.serverState?.unseenCount ?? 0;
+      if (!unseen) showToast("הקלף הבא עדיין נאסף.");
       return;
     }
+    rip = playHomePackRip();
     await rip.finished;
     model.currentPack = {
       packId: `idle-return-${Date.now()}`,
       mode: "idle-return",
       pulledAt: new Date().toISOString(),
       cards: [selected],
-      settlement,
-      preparedReveal: Boolean(cached?.prepared),
+      settlement: Promise.resolve({ value: settled }),
+      preparedReveal: false,
     };
     model.currentCardIndex = 0;
     model.previewMode = false;
     rip.release({ revealing: true });
     showView("pack");
     startWalkout();
-  } catch (error) {
-    rip.release();
+  } catch {
+    packConfirming = false;
+    rip?.release();
     renderHome();
+    showView("home");
     showToast("לא הצלחנו לטעון את הקלפים שנאספו.");
+  } finally {
+    packConfirming = false;
   }
 }
 
@@ -4921,17 +4952,25 @@ async function openClaimedStreakReward(day) {
   const isPack = cell.reward.kind === "pack";
   let rip = null;
   try {
-    if (elements.streakDialog?.open) elements.streakDialog.close();
-    if (!model.catalog.length) await loadStaticCatalog();
-    if (isPack) rip = playHomePackRip();
+    showWait("מביאים את המתנה…");
+    if (elements.streakDialogReward) {
+      elements.streakDialogReward.hidden = false;
+      elements.streakDialogReward.textContent = "מביאים את המתנה…";
+    }
     const pulled = await request("/api/streak/open", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ day: cell.day }),
     });
+    hideWait();
     if (!pulled.cards?.length) throw new Error("EMPTY_STREAK_REWARD");
     if (pulled.state) setServerState(pulled.state, { merge: true });
-    if (isPack) await rip.finished;
+    if (elements.streakDialog?.open) elements.streakDialog.close();
+    if (!model.catalog.length) await loadStaticCatalog();
+    if (isPack) {
+      rip = playHomePackRip();
+      await rip.finished;
+    }
     model.currentPack = {
       packId: pulled.packId || `streak-${cell.day}`,
       mode: "streak",
@@ -4944,6 +4983,7 @@ async function openClaimedStreakReward(day) {
     showView("pack");
     startWalkout();
   } catch (error) {
+    hideWait();
     rip?.release();
     if (error?.message === "STREAK_REWARD_OPENED") {
       renderHome();
@@ -4953,6 +4993,7 @@ async function openClaimedStreakReward(day) {
     renderHome();
     showView("home");
   } finally {
+    hideWait();
     homePackRipBusy = false;
     model.streakRewardOpening = false;
   }

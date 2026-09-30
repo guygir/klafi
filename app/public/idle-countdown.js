@@ -96,6 +96,12 @@ export function idleCountdownCopy({ serverState, idleQueueLength = 0, now = Date
   };
 }
 
+/** The settle hint is only for a due warehouse that is still being asked. Failure and a full warehouse clear it. */
+export function homeSettleHint({ needsSettle = false, suppressed = false } = {}) {
+  if (suppressed || !needsSettle) return "";
+  return HOME_SETTLE_HINT;
+}
+
 export function homeIdleReadyCopy({ unseenCount = 0, available = unseenCount > 0, awaitingSettle = false } = {}) {
   return {
     title: unseenCount > 0

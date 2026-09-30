@@ -7,6 +7,7 @@ import {
   applyIdleCountdown,
   formatCountdown,
   homeIdleReadyCopy,
+  homeSettleHint,
   HOME_SETTLE_HINT,
   idleCountdownCopy,
   idleScheduleIsDue,
@@ -52,6 +53,19 @@ function assertVisibleClock(el, view) {
   assert.doesNotMatch(el.textContent, /00:00:00/);
   assert.equal(view.remaining > 0, true);
 }
+
+test("the settle hint clears on failure, when nothing is due, and when the warehouse is full", () => {
+  assert.equal(homeSettleHint({ needsSettle: true }), HOME_SETTLE_HINT);
+  assert.equal(homeSettleHint({ needsSettle: true, suppressed: true }), "");
+  assert.equal(homeSettleHint({ needsSettle: false, suppressed: false }), "");
+  const full = idleCountdownCopy({
+    serverState: { unseenCount: 8, idleCapacity: 8, nextIdleAt: new Date(NOW - 1000).toISOString() },
+    now: NOW,
+  });
+  assert.equal(full.needsSettle, false);
+  assert.equal(homeSettleHint({ needsSettle: full.needsSettle }), "");
+  assert.equal(full.text, IDLE_FULL_COPY);
+});
 
 test("full idle storage hides the clock and shows the Hebrew full message", () => {
   const { el, view } = paint({
