@@ -168,6 +168,24 @@ test("pages: every page is open; counts per tier", () => {
   assert.ok(state.achievements.every((badge) => !("locked" in badge)), "no page locking");
 });
 
+test("easy tab fraction is unlocked badges on that row over easy badges that exist", async () => {
+  const javascript = await readFile(path.join(appRoot, "public/app.js"), "utf8");
+  const helpers = javascript.slice(javascript.indexOf("const ACHIEVEMENT_TIER_ORDER"), javascript.indexOf("function hebrewBadge("));
+  const counter = javascript.slice(javascript.indexOf("function achievementPageList("), javascript.indexOf("function visibleEarnedBadges("));
+  assert.doesNotMatch(counter, /achievementPages/, "the fraction counts the row, not the stored page summary");
+  assert.match(javascript, /<small>\$\{item\.earned\}\/\$\{item\.total\}<\/small>/);
+  const achievementPageList = new Function(`${helpers}\n${counter}\nreturn achievementPageList;`)();
+  const row = [
+    ...Array.from({ length: 8 }, (_, index) => ({ id: `easy-${index}`, tier: "simple", earned: true })),
+    { id: "easy-hidden", tier: "simple", earned: false, hidden: true },
+    { id: "medium-one", tier: "medium", earned: true },
+  ];
+  const storedSummary = { tier: "simple", total: 9, earned: 6 };
+  const easy = achievementPageList(row).find(({ tier }) => tier === "simple");
+  assert.deepEqual(easy, { tier: "simple", total: 9, earned: 8 });
+  assert.notEqual(easy.earned, storedSummary.earned);
+});
+
 test("tier: missing or unknown is simple; Studio rows keep their tier", () => {
   assert.equal(normalizeAchievementDefinition({ id: "x", rule: "unique", target: 3 }).tier, "simple");
   assert.equal(normalizeAchievementDefinition({ id: "x", rule: "unique", tier: "legendary" }).tier, "simple");

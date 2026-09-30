@@ -4841,10 +4841,10 @@ function achievementList() {
   });
 }
 
-/** Server page summary (tier order); falls back to counting the list. */
+/** Unlocked badges on that tier's row, over the badges that exist on the row.
+ *  A stored page summary is a different set: the row can already show a badge
+ *  earned when a local measure met the target. */
 function achievementPageList(badges = achievementList()) {
-  const server = model.serverState?.achievementPages;
-  if (server?.length) return server;
   return ACHIEVEMENT_TIER_ORDER
     .map((tier) => {
       const items = badges.filter((badge) => achievementTier(badge) === tier);
