@@ -4056,8 +4056,10 @@ function renderBinder() {
     const count = inventory[card.id] ?? 0;
     if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
       if (guest || model.binderFilter === "NUMBERED") return "";
-      return `<div class="binder-slot" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · חסר באוסף`)}">
+      return `<div class="binder-slot is-missing" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)} · חסר באוסף`)}">
+        <span class="missing-name">${escapeHtml(cardTitle(card))}</span>
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
+        <span class="missing-rarity">${escapeHtml(`${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`)}</span>
         ${!guest && model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
       </div>`;
     }
@@ -4710,7 +4712,7 @@ function tradeRowMarkup(trade) {
     month: "2-digit",
   });
   const hide = !trade.ownedByCurrent && trade.status === "open"
-    ? `<button type="button" class="trade-offer-action" data-hide-trade="${trade.tradeId}">הסתרה ממני</button>`
+    ? `<button type="button" class="trade-offer-action" data-hide-trade="${trade.tradeId}">הסתר</button>`
     : "";
   const accept = !trade.ownedByCurrent && trade.canAccept
     ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}">קבלה</button>`

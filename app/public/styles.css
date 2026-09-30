@@ -1284,6 +1284,43 @@ img.mini-art {
   background: linear-gradient(transparent, rgba(26, 31, 28, 0.88));
 }
 
+.binder-slot.is-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.binder-slot.is-missing .missing-name,
+.binder-slot.is-missing .missing-code,
+.binder-slot.is-missing .missing-rarity {
+  position: static;
+  max-width: 100%;
+  transform: none;
+  color: rgba(26, 31, 28, 0.62);
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.binder-slot.is-missing .missing-name {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.binder-slot.is-missing .missing-code,
+.binder-slot.is-missing .missing-rarity {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 .binder-slot .missing-code {
   position: absolute;
   left: 50%;
