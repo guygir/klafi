@@ -5133,10 +5133,14 @@ function prizeCueLine(prize) {
   if (!prize?.reward) return "";
   if (prize.waiting && !prize.opened) {
     if (prize.reward.kind === "pack") {
-      return prize.claimed ? "חבילה מחכה. לחיצה כפולה פותחת אותה." : "היום מחכה חבילה.";
+      return prize.claimed
+        ? "חבילה מחכה. לחיצה כפולה פותחת אותה."
+        : "היום מחכה חבילה. לחיצה כפולה פותחת אותה.";
     }
     const name = streakPrizeName(prize.reward);
-    return prize.claimed ? `${name} מחכה. לחיצה כפולה פותחת אותו.` : `היום מחכה ${name}.`;
+    return prize.claimed
+      ? `${name} מחכה. לחיצה כפולה פותחת אותו.`
+      : `היום מחכה ${name}. לחיצה כפולה פותחת אותו.`;
   }
   if (!prize.wait) return "";
   return `${streakWaitLine(prize.wait)} מגיע הפרס הבא והוא ${streakPrizeName(prize.reward)}.`;
