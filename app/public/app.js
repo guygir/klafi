@@ -1651,7 +1651,7 @@ function streakFireMarkup() {
 function collectorFaceMarkup(entry = {}) {
   const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
   const party = factionParty(entry.factionId);
-  const streak = Number(entry.loginStreak) >= 3 ? Number(entry.loginStreak) : 0;
+  const streak = Number(entry.visitStreak) >= 3 ? Number(entry.visitStreak) : 0;
   return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
 }
 
@@ -1963,7 +1963,7 @@ async function consumeInboundLeague() {
 
 function leagueFaceMarkup(entry = {}) {
   const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
-  const streak = Number(entry.loginStreak) >= 3 ? Number(entry.loginStreak) : 0;
+  const streak = Number(entry.visitStreak) >= 3 ? Number(entry.visitStreak) : 0;
   return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
 }
 
@@ -4367,14 +4367,14 @@ const BADGE_COPY = {
   "binder-half": ["חצי האלבום", "השלימו חצי מהסדרה הפעילה."],
   "faction-pick": ["בחרתי צד", "בחרו מפלגה."],
   "own-name": ["שם משלי", "בחרו שם או אווטאר משלכם."],
-  "streak-seven": ["שבוע רצוף", "פתחו קלפים שבעה ימים ברצף."],
+  "streak-seven": ["שבוע רצוף", "בקרו שבעה ימים ברצף."],
   "league-member": ["חבר בליגה", "היו בליגה עם עוד שחקן לפחות."],
   "rare-three": ["שלושה נדירים", "אספו שלושה קלפים נדירים שונים."],
   "ten-copies": ["עשרה עותקים", "אספו עשרה עותקים של אותו קלף."],
   "numbered-first": ["ממוספר", "אספו קלף הולו ממוספר."],
   "warehouse-full": ["עד אפס מקום", "המחסן הגיע לשמונה קלפים שמחכים."],
   "streak-prize-skip": ["אין מתנות חינם", "סגרתם את לוח הרצף בלי לפתוח את הפרס של היום."],
-  "streak-thirty": ["חודש רצוף", "פתחו קלפים שלושים ימים ברצף."],
+  "streak-thirty": ["חודש רצוף", "בקרו שלושים ימים ברצף."],
 };
 
 const ACHIEVEMENT_TIER_LABELS = Object.freeze({ simple: "הקלים", medium: "הבינוניים", hard: "הקשים" });

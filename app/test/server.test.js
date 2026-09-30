@@ -1102,9 +1102,10 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(leaderboards.status, 200);
   const currentCollector = leaderboards.body.collectors.find(({ current }) => current);
   assert.ok(currentCollector?.avatarId);
-  assert.equal(typeof currentCollector.loginStreak, "number");
+  assert.equal(typeof currentCollector.visitStreak, "number");
   const currentDaily = leaderboards.body.dailyChallenge.leaders.find(({ current }) => current);
   assert.ok(currentDaily?.avatarId);
+  assert.equal(typeof currentDaily.visitStreak, "number");
   const community = await api(running.base, "/api/community", { token });
   assert.equal(community.status, 200);
   assert.equal(community.body.specialWindow, null);
@@ -1480,6 +1481,15 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(nextDay.body.state.loginStreak, 0);
   assert.equal(nextDay.body.state.visitStreak, 2);
   assert.equal(nextDay.body.state.streakCalendar.day, 2);
+  const league = await api(running.base, "/api/leagues", {
+    token: home.body.token,
+    method: "POST",
+    body: { name: "רצף" },
+  });
+  assert.equal(league.status, 201);
+  assert.equal(league.body.league.members.find((entry) => entry.current).visitStreak, 2);
+  const boards = await api(running.base, "/api/leaderboards", { token: home.body.token });
+  assert.equal(boards.body.collectors.find((entry) => entry.current).visitStreak, 2);
   const warm = await api(running.base, "/api/warm");
   assert.deepEqual(warm, { status: 200, body: { status: "ready" } });
   const holders = await api(running.base, "/api/card-holders");

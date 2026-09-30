@@ -195,6 +195,7 @@ async function collectorBoards(db, config, now, token) {
     `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
             s.avatar_id, s.faction_id, s.highest_rank,
             COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+            COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
             s.extras->>'publicBinderSlug' AS binder_slug,
             COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
      FROM kalpi_sessions s
@@ -213,6 +214,7 @@ async function collectorBoards(db, config, now, token) {
         avatarId: row.avatar_id || "kid-boy",
         factionId: row.faction_id || null,
         loginStreak: row.login_streak || 0,
+        visitStreak: row.visit_streak || 0,
         rankLevel: row.highest_rank || 1,
         binderSlug: row.binder_slug || null,
       };

@@ -371,6 +371,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /\/api\/streak\/ack/);
   assert.match(javascript, /Number\(model\.serverState\?\.visitStreak\) \|\| 0/);
   assert.doesNotMatch(javascript, /visitStreak \?\? model\.serverState\?\.loginStreak/);
+  assert.match(javascript, /function collectorFaceMarkup\(entry = \{\}\) \{[\s\S]*?Number\(entry\.visitStreak\) >= 3/);
+  assert.match(javascript, /function leagueFaceMarkup\(entry = \{\}\) \{[\s\S]*?Number\(entry\.visitStreak\) >= 3/);
+  assert.doesNotMatch(javascript, /entry\.loginStreak/);
   assert.match(javascript, /applyIdleCountdown\(elements\.cooldownCopy, view\)/);
   assert.match(javascript, /function idleCountdownCopy/);
   assert.match(javascript, /המחסן מלא\. פתחו קלף כדי שהאיסוף יחזור לרוץ/);

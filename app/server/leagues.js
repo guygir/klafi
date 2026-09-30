@@ -44,6 +44,7 @@ export function publicLeague(league, members, currentToken, origin) {
       current: entry.token === currentToken,
       avatarId: entry.avatarId || "kid-boy",
       loginStreak: entry.loginStreak || 0,
+      visitStreak: entry.visitStreak || 0,
       rankLevel: entry.rankLevel || 1,
     }));
   return {

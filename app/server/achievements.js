@@ -75,9 +75,14 @@ export function collectionStarCount(session, cards) {
   }, 0);
 }
 
-/** The best pack-open streak the player ever reached (loginStreak resets; this never drops). */
+/** Best pack-open run. Still stored. Streak badges read bestVisitStreak. */
 export function bestLoginStreak(session) {
   return Math.max(Number(session?.bestLoginStreak) || 0, Number(session?.loginStreak) || 0);
+}
+
+/** The best visit run the player ever reached (visitStreak resets; this never drops). */
+export function bestVisitStreak(session) {
+  return Math.max(Number(session?.bestVisitStreak) || 0, Number(session?.visitStreak) || 0);
 }
 
 export function hasCustomProfile(session) {
@@ -125,7 +130,7 @@ export function achievementMeasures(session, cards, extra = {}) {
     rank: session.highestRank || 1,
     binderHalf: ownedIdle,
     binderHalfTarget: Math.max(1, Math.ceil(idleEligible.length / 2)),
-    streak: bestLoginStreak(session),
+    streak: bestVisitStreak(session),
     faction: session.factionId ? 1 : 0,
     profile: hasCustomProfile(session) ? 1 : 0,
     rare: cards.filter((card) => card.rarity?.startsWith("Rare") && Number(inventory[card.id]) > 0).length,
