@@ -308,6 +308,15 @@ body:has(#app[data-theme="pack-v2"]) {
   line-height: 1.22;
 }
 
+#app[data-card-frame="tall-v2"] #binder-view .kalpi-card[data-card-surface="binder"] .card-name-zone {
+  font-size: 6.4cqw;
+}
+
+#app[data-card-frame="tall-v2"] #binder-view .kalpi-card[data-card-surface="binder"] .card-quote-zone {
+  font-size: 4.3cqw;
+  padding-bottom: 0.45em;
+}
+
 #app[data-card-frame="tall-v2"] .card-party-zone {
   bottom: 12.2%;
   height: 4%;
@@ -315,6 +324,10 @@ body:has(#app[data-theme="pack-v2"]) {
   color: color-mix(in srgb, var(--pack-umber, #3c3026) 76%, transparent);
   font-size: clamp(7px, 3.55cqw, 12px);
   font-weight: 500;
+}
+
+#app[data-card-frame="tall-v2"] #binder-view .kalpi-card[data-card-surface="binder"] .card-party-zone {
+  font-size: 4.2cqw;
 }
 
 #app[data-card-frame="tall-v2"] .card-face.front .card-name-zone {
@@ -1727,6 +1740,12 @@ body:has(#app[data-theme="pack-v2"]) {
   font-size: clamp(8px, 5.6cqw, 20px);
   font-weight: 600;
   line-height: 1.12;
+}
+
+#app[data-card-frame="fullart-v1"] #binder-view .kalpi-card[data-card-surface="binder"] .card-quote-zone,
+#app #binder-view .kalpi-card[data-card-frame="fullart-v1"][data-card-surface="binder"] .card-quote-zone {
+  font-size: 5.6cqw;
+  padding-bottom: 0.55em;
 }
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-name-zone,

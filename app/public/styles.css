@@ -4253,8 +4253,9 @@ body {
 #binder-view .binder-control-more .filter-sort-label {
   display: inline;
   white-space: nowrap;
-  font-weight: 700;
-  line-height: 1;
+  font-size: inherit;
+  font-weight: 600;
+  line-height: 1.2;
   text-decoration: underline;
   text-underline-offset: 2px;
   flex: 0 0 auto;
@@ -6335,6 +6336,17 @@ body {
   }
 }
 
+/* Binder dropdowns shrink to the filter chips. Other fields stay at 16px so iOS does not zoom. */
+@media (any-pointer: coarse) {
+  #app #binder-view .binder-control-more select {
+    font-family: inherit !important;
+    font-size: inherit !important;
+    font-weight: 600 !important;
+    line-height: 1.2;
+    padding: 0;
+  }
+}
+
 /* Binder filters: the party dropdown and «באוסף» are exactly chip height (32px), so the first row is
    no taller than the chip row. On phones (≤520px) the set chips take a full-width row of their own
    instead of scrolling in the leftover space beside the dropdown. The select keeps 16px text on touch
@@ -6363,6 +6375,9 @@ body {
   height: auto;
   min-height: 0;
   max-width: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
   line-height: 1.2;
   padding: 0;
 }
