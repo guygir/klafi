@@ -18,7 +18,6 @@ try {
 } catch {
   /* The application will replace malformed cache data. */
 }
-const homeDelay = 0;
 function cachedIdleIsDue(cached) {
   const now = Date.now();
   const times = [];
@@ -31,13 +30,12 @@ function cachedIdleIsDue(cached) {
   if (!times.length) return true;
   return times.some((at) => at <= now);
 }
+// Home and settle decide the waiting count, whether a rip may start, and the
+// settle hint. Issue them before catalog and holder reads so those cannot win
+// the connection race. Neither read is a license to open a cached instance.
 const home = lookOnlyShowcase
   ? null
-  : new Promise((resolve) => setTimeout(resolve, homeDelay))
-    .then(() => fetch("/api/home", { cache: "no-store", headers }))
-    .then(json);
-// Home is the first server read. It does not grant due packs. Settle still
-// starts with the first paint so an overnight return does not sit on yesterday's waiting count.
+  : fetch("/api/home", { cache: "no-store", headers }).then(json);
 const idleSettle = !lookOnlyShowcase && token && (!cachedHome || cachedHome.token === token) && cachedIdleIsDue(cachedHome)
   ? fetch("/api/idle/settle", { method: "POST", cache: "no-store", headers }).then(json)
   : null;

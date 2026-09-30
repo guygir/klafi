@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { isStaleState, keepDailyRaceLeaders, mergeLeaderboards, overlayPendingSeen, stateRevision } from "../public/state-sync.js";
+import { confirmedIdleInstance, isStaleState, keepDailyRaceLeaders, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "../public/state-sync.js";
 import { idleCountdownCopy, resumeClockAfterCap } from "../public/idle-countdown.js";
 import { IDLE_INTERVAL_MS, resumeIdleClockAfterCap } from "../server/idle-config.js";
 import { bumpStateRevision } from "../server/store.js";
@@ -12,6 +12,53 @@ import { dailyRaceScore, scoresInDailyRace, visibleDailyRaceLeaders } from "../s
 const here = path.dirname(fileURLToPath(import.meta.url));
 const NOW = Date.parse("2026-09-26T09:00:00.000Z");
 const iso = (ms) => new Date(ms).toISOString();
+
+test("a same revision does not paint a due clock over a newer client clock", () => {
+  const future = iso(NOW + 3 * 60 * 60 * 1000);
+  const due = iso(NOW - 1000);
+  const previous = {
+    revision: 4,
+    unseenCount: 7,
+    nextIdleAt: future,
+    preparedPulls: [{ instanceId: "p", availableAt: future }],
+  };
+  const incoming = {
+    revision: 4,
+    unseenCount: 8,
+    nextIdleAt: due,
+    preparedPulls: [{ instanceId: "old", availableAt: due }],
+  };
+  assert.equal(isStaleState(incoming, 4), false, "equal revision is still applied");
+  assert.equal(isStaleState({ revision: 3 }, 4), true, "an older revision is still ignored");
+  const merged = mergeIdleClock(previous, incoming, 4);
+  assert.equal(merged.nextIdleAt, future);
+  assert.equal(merged.preparedPulls[0].instanceId, "p");
+  assert.equal(merged.unseenCount, 8, "the rest of the same-revision payload still applies");
+  const newer = { ...incoming, revision: 5 };
+  assert.equal(mergeIdleClock(previous, newer, 4).nextIdleAt, due, "a higher revision replaces the clock");
+});
+
+test("the seen route reports the accepted instance ids instead of a bare 200", async () => {
+  const serverJs = await readFile(path.join(here, "../server/app.js"), "utf8");
+  const route = serverJs.slice(serverJs.indexOf('"/api/idle/seen"'), serverJs.indexOf('"/api/quiz"'));
+  assert.match(route, /acceptedInstanceIds/);
+  assert.match(route, /credited\?\.accepted/);
+});
+
+test("a rip confirms the exact instance, and a seen 200 without an accepted list confirms nothing", () => {
+  const cards = [{ instanceId: "live" }, { instanceId: "other" }];
+  assert.equal(confirmedIdleInstance(cards, "live")?.instanceId, "live");
+  assert.equal(confirmedIdleInstance(cards, "already-opened"), null);
+  assert.equal(confirmedIdleInstance(cards, null)?.instanceId, "live");
+  assert.equal(confirmedIdleInstance([], "live"), null);
+  const refused = seenAckDecision({ revision: 4, acceptedInstanceIds: ["live"] }, ["live", "already-opened"]);
+  assert.deepEqual(refused.accepted, ["live"]);
+  assert.deepEqual(refused.refused, ["already-opened"]);
+  assert.equal(refused.confirmed, true);
+  const bare = seenAckDecision({ revision: 4 }, ["live"]);
+  assert.deepEqual(bare.accepted, []);
+  assert.equal(bare.confirmed, false);
+});
 
 test("an older server state never overwrites a newer one", () => {
   assert.equal(stateRevision({ revision: 7 }), 7);
