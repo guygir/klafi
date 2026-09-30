@@ -1106,7 +1106,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(themeCss, /#app \.kalpi-card\[data-card-frame="fullart-v1"\]/);
   assert.match(css, /dialog-meta-row/);
   assert.match(javascript, /\/api\/trades\/\$\{encodeURIComponent\(tradeId\)\}\/cancel/);
-  assert.match(javascript, /\/api\/trades\/\$\{encodeURIComponent\(tradeId\)\}\/hide/);
+  assert.match(javascript, /klafi:hidden-trades/);
+  assert.doesNotMatch(javascript, /\/api\/trades\/\$\{encodeURIComponent\(tradeId\)\}\/hide/);
+  assert.doesNotMatch(javascript, /מסתירים את ההצעה/);
   assert.match(javascript, /data-hide-trade="\$\{trade\.tradeId\}">הסתר</);
   assert.doesNotMatch(javascript, /הסתרה ממני/);
   assert.match(javascript, /missing-name/);

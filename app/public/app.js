@@ -16,6 +16,7 @@ import {
 import { destroyPackRip, mountPackRip, packRipMarkup, preloadPackRipAssets, schedulePackRipPrefetch } from "./packrip.js";
 import { createSfx, revealClipForStage, sfxRarityKey } from "./sfx.js";
 const SESSION_KEY = "kalpi-alpha-session";
+const HIDDEN_TRADES_KEY = "klafi:hidden-trades";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
 // When the server state last arrived (0 = only the localStorage cache so far).
@@ -838,7 +839,7 @@ function applyFullBoot(boot) {
   model.specials = boot.specials;
   model.serverState = boot.idleReturn.state;
   model.idleQueue = boot.idleReturn.cards || [];
-  model.trades = boot.trades || [];
+  setTrades(boot.trades || []);
   model.events = boot.events || [];
   applyCatalog(cards);
   populateRevealTimingInputs();
@@ -1144,7 +1145,7 @@ function kickDueIdleSettle() {
 function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state, specialWindow }) {
   if (events) model.events = events.events || events;
   if (trades) {
-    model.trades = trades.trades || trades;
+    setTrades(trades.trades || trades);
     watchOpenTrade();
   }
   if (leaderboards) model.leaderboards = mergeLeaderboards(model.leaderboards, leaderboards);
@@ -4771,7 +4772,7 @@ function watchOpenTrade() {
 
 function applyTradeResult(result) {
   if (result?.state) setServerState(result.state, { merge: true });
-  if (result?.trades) model.trades = result.trades.trades || result.trades;
+  if (result?.trades) setTrades(result.trades.trades || result.trades);
   watchOpenTrade();
   renderBinder();
   renderGrowth();
@@ -5108,7 +5109,7 @@ async function pollWatchedTrade() {
   if (!model.watchedTrade || document.visibilityState !== "visible" || !model.token) return;
   const payload = await request("/api/trades");
   const trades = payload.trades || payload;
-  model.trades = trades;
+  setTrades(trades);
   const watched = trades.find((trade) => trade.tradeId === model.watchedTrade.tradeId);
   if (watched?.status === "accepted") {
     model.watchedTrade = null;
@@ -6446,16 +6447,43 @@ async function acceptTradeOffer(tradeId) {
   }
 }
 
-async function hideTradeOffer(tradeId) {
-  showWait("מסתירים את ההצעה…");
+function hiddenTradeStorageKey() {
+  return model.token ? `${HIDDEN_TRADES_KEY}:${model.token}` : "";
+}
+
+function readHiddenTradeIds() {
+  const key = hiddenTradeStorageKey();
+  if (!key) return new Set();
   try {
-    applyTradeResult(await request(`/api/trades/${encodeURIComponent(tradeId)}/hide`, { method: "POST" }));
-    showToast("ההצעה הוסתרה ממך.");
+    const ids = JSON.parse(localStorage.getItem(key) || "[]");
+    return new Set(Array.isArray(ids) ? ids.map(String) : []);
   } catch {
-    showToast("לא הצלחנו להסתיר את ההצעה.");
-  } finally {
-    hideWait();
+    return new Set();
   }
+}
+
+function rememberHiddenTrade(tradeId) {
+  const key = hiddenTradeStorageKey();
+  if (!key || !tradeId) return;
+  const ids = [...readHiddenTradeIds()];
+  if (!ids.includes(tradeId)) ids.push(tradeId);
+  try {
+    localStorage.setItem(key, JSON.stringify(ids.slice(-200)));
+  } catch {
+    /* A full or private store still hides the row until the next reload. */
+  }
+}
+
+function setTrades(trades) {
+  const list = Array.isArray(trades) ? trades : [];
+  const hidden = readHiddenTradeIds();
+  model.trades = hidden.size ? list.filter((trade) => !hidden.has(String(trade.tradeId))) : list;
+}
+
+function hideTradeOffer(tradeId) {
+  rememberHiddenTrade(tradeId);
+  model.trades = model.trades.filter((trade) => trade.tradeId !== tradeId);
+  renderTradeBoard();
 }
 
 async function cancelTradeOffer(tradeId) {
