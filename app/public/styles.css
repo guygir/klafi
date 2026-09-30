@@ -3198,6 +3198,38 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   bottom: auto;
   transform: none;
 }
+.card-copies-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.card-recycle {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(196, 163, 90, 0.55);
+  border-radius: 999px;
+  background: rgba(26, 31, 28, 0.55);
+  color: var(--paper);
+  cursor: pointer;
+}
+.card-recycle svg {
+  width: 14px;
+  height: 14px;
+  animation: card-recycle-spin 2.4s linear infinite;
+}
+@keyframes card-recycle-spin { to { transform: rotate(-360deg); } }
+.binder-slot > .binder-recycle {
+  position: absolute;
+  z-index: 6;
+  top: 34px;
+  right: 8px;
+}
+.card-recycle:focus-visible { outline: 2px solid var(--civic-bright); outline-offset: 2px; }
 .card-image-meta .card-code-tag,
 .card-image-meta strong,
 .card-image-meta .card-copies-tag,
@@ -4207,6 +4239,13 @@ body {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+  transform: rotate(calc(var(--cycle-turns, 0) * 180deg));
+}
+#binder-view .filter-cycle.is-turning {
+  transition: transform 0.4s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  #binder-view .filter-cycle.is-turning { transition: none; }
 }
 
 #binder-view .filter-sort select,
@@ -6030,7 +6069,8 @@ body {
   .streak-cell.is-landing .streak-cell-check svg,
   .wait-dialog p::before,
   #home-settle-hint:not([hidden])::before,
-  .empty-note.is-loading::before { animation: none; }
+  .empty-note.is-loading::before,
+  .card-recycle svg { animation: none; }
 }
 
 .level-letter,
