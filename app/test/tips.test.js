@@ -113,7 +113,7 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[3].body, /השם \(הזמני\)/);
   assert.match(PAGE_GUIDES.home[3].body, /ליגות, תחרויות וטבלאות/);
   assert.match(PAGE_GUIDES.home[3].body, /לחץ עליו כדי לשנות/);
-  assert.match(PAGE_GUIDES.home[4].body, /האתגר היומי/);
+  assert.match(PAGE_GUIDES.home[4].body, /מירוץ המפלגות/);
   assert.match(PAGE_GUIDES.home[4].body, /בטופ/);
   assert.equal(PAGE_GUIDES.home[5].ring, ".bottom-nav");
   assert.match(PAGE_GUIDES.home[5].body, /תפריט הניווט/);

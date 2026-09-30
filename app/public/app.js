@@ -2651,14 +2651,11 @@ function renderChallengeRecap() {
 function renderTodayDocket() {
   if (!elements.todayChallengeHook) return;
   const factionId = model.serverState?.factionId || null;
-  const serverRace = factionId && model.leaderboards?.dailyChallenge?.targetPartyId === factionId
-    ? model.leaderboards.dailyChallenge
-    : null;
   const challengeRow = elements.todayChallengeHook.closest(".today-docket-row");
   const challengeLabel = challengeRow?.querySelector(".today-docket-label");
   challengeRow?.classList.toggle("is-no-faction", !factionId);
+  if (challengeLabel) challengeLabel.textContent = "מירוץ המפלגות:";
   if (!factionId) {
-    if (challengeLabel) challengeLabel.textContent = "";
     if (elements.todayChallengeVisual) {
       elements.todayChallengeVisual.dataset.card = "";
       elements.todayChallengeVisual.innerHTML = "";
@@ -2666,11 +2663,14 @@ function renderTodayDocket() {
     elements.todayChallengeHook.textContent = NO_FACTION_COPY;
     elements.todayChallengeMeta.textContent = NO_FACTION_HINT;
   } else {
-    if (challengeLabel) challengeLabel.textContent = "היום אוספים:";
-    const challenge = serverRace || localDailyChallenge();
-    const challengeParty = partyDisplayName(challenge.targetPartyId, challenge.targetPartyNameHe || "");
-    const party = partyRegister().find(({ id }) => id === challenge?.targetPartyId);
-    const challengeCard = model.catalog.find((card) => card.set === challenge?.targetPartyId && card.artKey)
+    const partyName = partyDisplayName(factionId, factionId);
+    const place = (model.leaderboards?.factions || []).findIndex((faction) => faction.partyId === factionId);
+    elements.todayChallengeHook.textContent = place >= 0
+      ? `המפלגה שלך, ${partyName}, במקום ${place + 1}!`
+      : `המפלגה שלך, ${partyName}`;
+    elements.todayChallengeMeta.textContent = "";
+    const party = partyRegister().find(({ id }) => id === factionId);
+    const challengeCard = model.catalog.find((card) => card.set === factionId && card.artKey)
       || {
         id: `${party?.id || "SYS"}-TODAY`,
         set: party?.id || "SYS",
@@ -2684,8 +2684,6 @@ function renderTodayDocket() {
       elements.todayChallengeVisual.style.setProperty("--pip", challengeCard.pip);
       elements.todayChallengeVisual.innerHTML = artMarkup(challengeCard, true);
     }
-    elements.todayChallengeHook.textContent = challengeParty;
-    elements.todayChallengeMeta.textContent = serverRace ? challengeRecap().meta : "";
   }
 
   const leader = model.leaderboards?.collectors?.[0];

@@ -57,7 +57,7 @@ export const PAGE_GUIDES = Object.freeze({
     {
       ring: ".today-docket",
       title: "המרוץ",
-      body: "כאן מופיעים האתגר היומי וטבלת האספנים.\n\nחושבים שתוכלו להיות בטופ?",
+      body: "כאן מופיעים מירוץ המפלגות וטבלת האספנים.\n\nחושבים שתוכלו להיות בטופ?",
     },
     {
       ring: ".bottom-nav",
