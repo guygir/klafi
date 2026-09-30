@@ -968,6 +968,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   const warmupCatalogAt = warmup.indexOf("catalog.json");
   const warmupHoldersAt = warmup.indexOf("/api/card-holders");
   assert.ok(warmupHomeAt >= 0 && warmupSettleAt > warmupHomeAt && warmupCatalogAt > warmupSettleAt && warmupHoldersAt > warmupCatalogAt, "home and settle are issued before catalog and card holders");
+  const ballotPrefetchAt = warmup.indexOf("for (const chip of [\"ballot-paper.png\", ...ballotChips])");
+  assert.ok(ballotPrefetchAt > warmupHoldersAt && warmup.indexOf("Promise.all(crucialWarmup") < ballotPrefetchAt, "ballot images are the last prefetch, after the pack count and the other critical reads");
   assert.match(warmup, /\/api\/idle\/settle/);
   assert.match(warmup, /function cachedIdleIsDue/);
   assert.match(warmup, /idleSettle/);

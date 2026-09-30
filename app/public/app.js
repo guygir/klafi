@@ -5526,6 +5526,32 @@ function renderFactionMembers() {
     : '<p class="work-note">עדיין אף אחד לא בחר במפלגה הזו.</p>';
 }
 
+function partyBallotMarkup(partyId) {
+  const party = factionParty(partyId) || { id: partyId };
+  const name = party.displayNameHe || partyId;
+  const art = factionLetterArt(party);
+  const letters = factionLetters(party);
+  const mark = art
+    ? `<img src="/design-assets/${encodeURIComponent(art)}" alt="${escapeHtml(letters || name)}">`
+    : `<i>${escapeHtml(letters || "")}</i>`;
+  return `<span class="faction-party-ballot" title="${escapeHtml(name)}">${mark}</span>`;
+}
+
+function partyStandingsMarkup(factions, mine) {
+  const peak = Math.max(1, ...factions.map((faction) => Number(faction.stars) || 0));
+  const cols = factions.map((faction, index) => {
+    const stars = Number(faction.stars) || 0;
+    const you = Boolean(mine) && faction.partyId === mine;
+    const height = stars ? Math.max(8, Math.round((stars / peak) * 100)) : 0;
+    const bar = you
+      ? `<b style="height:${height}%; animation-delay:${index * 40}ms"></b>`
+      : `<span class="faction-party-bar" style="height:${height}%; animation-delay:${index * 40}ms"></span>`;
+    return `<div class="challenge-hist-col faction-party-col${you ? " you" : ""}" style="--bar:${height}%">${partyBallotMarkup(faction.partyId)}${bar}</div>`;
+  }).join("");
+  const axis = factions.map((faction) => `<span>${escapeHtml(`${Number(faction.stars) || 0}★`)}</span>`).join("");
+  return `<div class="faction-hist challenge-hist"><div class="challenge-hist-plot faction-hist-plot faction-party-plot" dir="ltr">${cols}</div><div class="challenge-hist-axis" dir="ltr">${axis}</div></div>`;
+}
+
 function renderAllParties() {
   if (!elements.factionMembers) return;
   const title = document.querySelector("#faction-panel-title");
@@ -5538,13 +5564,9 @@ function renderAllParties() {
     note.innerHTML = mine ? "" : noFactionNote();
   }
   if (membersTitle) membersTitle.hidden = false;
-  const scores = (model.leaderboards?.factions || []).map((faction) => ({
-    stars: faction.stars || 0,
-    current: Boolean(mine) && faction.partyId === mine,
-  }));
-  const bins = starContributionBins(scores);
-  elements.factionMembers.innerHTML = bins.length
-    ? factionHistMarkup(bins)
+  const factions = model.leaderboards?.factions || [];
+  elements.factionMembers.innerHTML = factions.length
+    ? partyStandingsMarkup(factions, mine)
     : '<p class="work-note">עדיין אין מפלגה עם כוכבים.</p>';
 }
 
@@ -8277,7 +8299,6 @@ document.querySelector(".today-docket").addEventListener("click", (event) => {
   }
   elements.navButtons.find((button) => button.dataset.nav === hook.dataset.todayNav)?.click();
   if (hook.dataset.communityPage) renderGrowth();
-  if (hook.dataset.communityPage === "challenge") refreshDailyChallenge();
 });
 elements.tradeOfferedSet.addEventListener("change", renderGrowth);
 elements.tradeWantedSet.addEventListener("change", renderGrowth);
@@ -8554,7 +8575,6 @@ elements.communityTabs.addEventListener("click", (event) => {
   model.communityPage = button.dataset.communityPage;
   model.communitySection = communitySectionFor(button.dataset.communityPage);
   renderGrowth();
-  if (model.communityPage === "challenge") refreshDailyChallenge();
   pollWatchedTrade().catch(() => {});
 });
 
