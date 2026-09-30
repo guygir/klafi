@@ -319,7 +319,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /card-copies-tag/);
   assert.match(javascript, /tradeCopies \? `1\/\$\{copies\}` : `×\$\{copies\}`/);
   assert.match(javascript, /tradeCopies: true/);
-  assert.match(javascript, /function displayCardMarkup\(card, surface = "display", \{ tradeCopies = false \} = \{\}\) \{[\s\S]*?surface, tradeCopies \}/);
+  assert.match(javascript, /function displayCardMarkup\(card, surface = "display", \{ tradeCopies = false, recycle = false \} = \{\}\) \{[\s\S]*?surface, tradeCopies, recycle \}/);
   assert.match(css, /#app \.trade-thumb\.is-concealed \.card-image-zone \.card-art/);
   assert.match(css, /#app \.binder-card-open\.is-concealed \.card-image-zone \.card-art/);
 

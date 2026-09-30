@@ -128,7 +128,7 @@ test("client acks the seen card when the reveal starts and guards every server s
   const appJs = await readFile(path.join(here, "../public/app.js"), "utf8");
   const walkout = appJs.slice(appJs.indexOf("function startWalkout()"), appJs.indexOf("function applyCardStage"));
   assert.match(walkout, /acknowledgeRevealedPack\(model\.currentPack\)/);
-  assert.match(appJs, /const SEEN_ACK_MODES = new Set\(\["idle-return", "level-reward", "quiz"\]\)/);
+  assert.match(appJs, /const SEEN_ACK_MODES = new Set\(\["idle-return", "level-reward", "quiz", "recycle"\]\)/);
   // No raw assignment of a server response: all go through setServerState / applyHomePayload.
   assert.doesNotMatch(appJs, /model\.serverState = await request\(/);
   assert.doesNotMatch(appJs, /model\.serverState = \{ \.\.\.model\.serverState, \.\.\.\(await request/);
