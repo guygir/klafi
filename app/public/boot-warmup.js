@@ -56,7 +56,7 @@ window.__kalpiWarmup.catalog.then((catalog) => {
     image.src = `/design-assets/${encodeURIComponent(card.artKey)}`;
   }
 }).catch(() => {});
-for (const chip of [
+const ballotChips = [
   "ballot-letter-ysr.png",
   "ballot-letter-lik.png",
   "ballot-letter-byd.png",
@@ -71,7 +71,9 @@ for (const chip of [
   "ballot-letter-amh.png",
   "ballot-letter-bw.png",
   "ballot-letter-rse.png",
-]) {
+];
+window.__kalpiBallotChips = ballotChips;
+for (const chip of ballotChips) {
   const image = new Image();
   image.decoding = "async";
   image.src = `/design-assets/${encodeURIComponent(chip)}`;

@@ -62,6 +62,12 @@ body:has(#app[data-theme="pack-v2"]) {
   color: var(--pack-seal);
 }
 
+#app[data-theme="pack-v2"] .leaf-toggle,
+#app[data-theme="pack-v2"] .leaf-toggle:hover,
+#app[data-theme="pack-v2"] .leaf-toggle.is-still {
+  color: var(--pack-seal);
+}
+
 #app[data-theme="pack-v2"] .player-name {
   display: inline-flex;
   align-items: center;
@@ -620,7 +626,7 @@ body:has(#app[data-theme="pack-v2"]) {
   border: 0;
   border-top: 1px solid color-mix(in srgb, var(--pack-umber, #3c3026) 18%, transparent);
   border-radius: 0;
-  background: transparent;
+  background: var(--paper);
 }
 
 #app[data-density="airy-v2"] .today-docket-label {
@@ -655,6 +661,7 @@ body:has(#app[data-theme="pack-v2"]) {
   font: 600 11px/1 "IBM Plex Sans Hebrew", sans-serif;
   font-style: normal;
   white-space: nowrap;
+  background: var(--paper);
 }
 
 #app[data-density="airy-v2"] .today-docket-label {
@@ -812,10 +819,6 @@ body:has(#app[data-theme="pack-v2"]) {
   #app[data-density="airy-v2"] .trade-form select { font-size: 16px !important; }
 }
 
-#app[data-density="airy-v2"] .site-card-peeks {
-  display: none;
-}
-
 .visual-config,
 .level-increments {
   display: grid;
@@ -853,10 +856,6 @@ body:has(#app[data-theme="pack-v2"]) {
     grid-template-columns: minmax(0, 1fr) var(--today-pack-w);
     gap: 10px;
     align-items: stretch;
-  }
-
-  #app[data-density="airy-v2"] .site-card-peeks {
-    display: none;
   }
 
   #app[data-density="airy-v2"] .binder-grid {
