@@ -84,7 +84,7 @@ test("firstVisible falls back when boxes are 0x0 and leftover pack hint is recog
 test("each nav page has a first-visit guide; seen pages and mute stop auto-open", () => {
   assert.deepEqual(Object.keys(PAGE_GUIDES), ["home", "pack", "card", "binder", "achievements", "growth", "dialog"]);
   assert.equal(PAGE_GUIDES.home.length, 7);
-  assert.equal(PAGE_GUIDES.binder.length, 3);
+  assert.equal(PAGE_GUIDES.binder.length, 4);
   assert.equal(PAGE_GUIDES.achievements.length, 2);
   assert.equal(PAGE_GUIDES.growth.length, 4);
   assert.equal(PAGE_GUIDES.card.length, 2);
@@ -155,6 +155,10 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.binder[2].body, /סדרה/);
   assert.match(PAGE_GUIDES.binder[2].body, /תנסו ללחוץ על קלף שהשגתם/);
   assert.match(PAGE_GUIDES.binder[2].body, /מקור לציטוט/);
+  assert.match(PAGE_GUIDES.binder[3].title, /גודל השורה/);
+  assert.match(PAGE_GUIDES.binder[3].ring, /#binder-grid/);
+  assert.match(PAGE_GUIDES.binder[3].body, /לצבוט את האלבום/);
+  assert.match(PAGE_GUIDES.binder[3].body, /כל קלף נשאר שלם/);
   assert.doesNotMatch(PAGE_GUIDES.growth[0].body, /שתי קומות/);
   assert.match(PAGE_GUIDES.growth[0].body, /בקהילה ניתן להחליף/);
   assert.match(PAGE_GUIDES.growth[0].body, /הציעו טרייד/);

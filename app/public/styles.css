@@ -4148,6 +4148,154 @@ body {
   visibility: hidden;
 }
 
+#binder-view #binder-filters.filter-strip {
+  flex-direction: column;
+  align-items: stretch;
+  overflow: visible;
+  gap: 6px;
+}
+
+#binder-view .binder-control-line,
+#binder-view .binder-control-more {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#binder-view .binder-control-line > *,
+#binder-view .binder-control-more > * {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  justify-content: center;
+}
+
+#binder-view .filter-sort,
+#binder-view .filter-set-pick,
+#binder-view .binder-control-more .filter-party {
+  justify-content: center;
+  align-items: center;
+}
+
+#binder-view .binder-control-more .filter-sort-label {
+  display: inline;
+  white-space: nowrap;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+#binder-view .filter-list,
+#binder-view .filter-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#binder-view .filter-cycle {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#binder-view .filter-sort select,
+#binder-view .filter-set-pick select,
+#binder-view .binder-control-more .filter-party select {
+  flex: 1 1 auto;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+#binder-view .binder-grid {
+  touch-action: pan-y;
+}
+
+#binder-view.binder-list .binder-grid {
+  grid-auto-rows: max-content;
+}
+
+#binder-view.binder-list .binder-slot {
+  aspect-ratio: auto;
+  height: auto;
+  min-height: 44px;
+  overflow: visible;
+}
+
+#binder-view.binder-list .binder-slot.owned {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+}
+
+#binder-view.binder-list .binder-slot.is-missing {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px 12px;
+  padding: 8px 10px;
+  text-align: start;
+}
+
+#binder-view.binder-list .binder-slot.is-missing .missing-name {
+  display: inline;
+  font-size: 15px;
+  -webkit-line-clamp: unset;
+}
+
+#binder-view.binder-list .binder-card-open {
+  position: relative;
+  inset: auto;
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  align-self: stretch;
+  gap: 6px 12px;
+  width: 100%;
+  min-height: 0;
+  padding: 8px 10px;
+  text-align: start;
+}
+
+#binder-view.binder-list .binder-list-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+#binder-view.binder-list .binder-list-name,
+#binder-view.binder-list .missing-name {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+#binder-view.binder-list .binder-list-code,
+#binder-view.binder-list .binder-list-rarity,
+#binder-view.binder-list .binder-list-copies,
+#binder-view.binder-list .missing-code,
+#binder-view.binder-list .missing-rarity {
+  color: rgba(26, 31, 28, 0.72);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
 .view-pager:empty { display: none; }
 .view-pager button {
   width: 34px;
@@ -5944,6 +6092,19 @@ body {
   padding: 0 2px;
   line-height: 30px;
   max-width: 9.5rem;
+}
+#app #binder-view .binder-control-line > *,
+#app #binder-view .binder-control-more > * {
+  box-sizing: border-box;
+  height: 32px;
+  min-height: 32px;
+}
+#app #binder-view .binder-control-more .filter-party select {
+  height: auto;
+  min-height: 0;
+  max-width: none;
+  line-height: 1.2;
+  padding: 0;
 }
 @media (max-width: 520px) {
   #app #binder-view .filter-strip {

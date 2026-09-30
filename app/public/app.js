@@ -3,6 +3,13 @@ import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ba
 import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, homeSettleHint, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { binderBadgeOrder } from "./badge-order.js";
+import {
+  BINDER_SORT_LABELS,
+  BINDER_SORTS,
+  acquiredAtByCard,
+  binderSortId,
+  sortBinderCards,
+} from "./binder-order.js";
 import { confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
@@ -1569,6 +1576,7 @@ function showView(name) {
     elements.main.focus({ preventScroll: true });
     fitVisibleCardText(elements.main);
     queueBallotLetterFit(elements.main);
+    if (name === "binder") applyBinderColumnStyle();
   });
 }
 
@@ -3966,6 +3974,183 @@ function queueBinderBadgePack() {
   });
 }
 
+const BINDER_COLUMNS_KEY = "kalpi-binder-columns";
+const BINDER_COLUMNS_SET_KEY = "kalpi-binder-columns-user";
+const BINDER_SORT_KEY = "kalpi-binder-sort";
+const BINDER_LIST_KEY = "kalpi-binder-list";
+// A column narrower than this is no longer a full card. The default row uses the
+// largest count that still clears this width, and never fewer than 2.
+const MIN_BINDER_CARD_PX = 64;
+let binderColumnsUser;
+
+function readBinderLocal(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function writeBinderLocal(key, value) {
+  try { localStorage.setItem(key, value); } catch { /* private mode */ }
+}
+
+function userBinderColumns() {
+  if (binderColumnsUser === undefined) {
+    if (readBinderLocal(BINDER_COLUMNS_SET_KEY) !== "1") binderColumnsUser = null;
+    else {
+      const raw = readBinderLocal(BINDER_COLUMNS_KEY);
+      const n = Number(raw);
+      binderColumnsUser = raw != null && raw !== "" && Number.isInteger(n) && n >= 1 ? n : null;
+    }
+  }
+  return binderColumnsUser;
+}
+
+function maxFullBinderColumns(grid) {
+  if (!grid || grid.clientWidth < 48) return 2;
+  let count = 2;
+  while (binderColumnFits(grid, count + 1)) count += 1;
+  return count;
+}
+
+function binderListMode() {
+  return readBinderLocal(BINDER_LIST_KEY) === "1";
+}
+
+function binderSortMode() {
+  return binderSortId(readBinderLocal(BINDER_SORT_KEY));
+}
+
+function binderAcquiredAtMap() {
+  const source = model.guestBinder || model.serverState;
+  if (!source) return {};
+  if (source.acquiredAt && typeof source.acquiredAt === "object") return source.acquiredAt;
+  return acquiredAtByCard(source.instances, source.inventory);
+}
+
+function binderGridGap(grid) {
+  const styles = getComputedStyle(grid);
+  const gap = Number.parseFloat(styles.columnGap || styles.gap);
+  return Number.isFinite(gap) ? gap : 0;
+}
+
+function binderColumnFits(grid, count) {
+  if (!grid || count < 1) return false;
+  const width = grid.clientWidth;
+  if (width < 48) return true;
+  const gap = binderGridGap(grid);
+  const cell = (width - gap * (count - 1)) / count;
+  return cell >= MIN_BINDER_CARD_PX - 0.5;
+}
+
+function resolvedBinderColumns() {
+  if (binderListMode()) return 1;
+  const grid = elements.binderGrid;
+  const chosen = userBinderColumns();
+  if (chosen == null) return maxFullBinderColumns(grid);
+  let count = Math.max(1, chosen);
+  if (!grid || grid.clientWidth < 48) return count;
+  while (count > 1 && !binderColumnFits(grid, count)) count -= 1;
+  return count;
+}
+
+function displayedBinderColumns() {
+  const raw = Number(elements.binderGrid?.style.getPropertyValue("--binder-columns"));
+  if (Number.isInteger(raw) && raw >= 1) return raw;
+  return binderListMode() ? 1 : 2;
+}
+
+function syncBinderMoreHint() {
+  const pager = elements.binderPager;
+  if (!pager) return;
+  const count = model.binderVisibleCount || 0;
+  const columns = displayedBinderColumns();
+  const next = count > columns
+    ? '<span class="binder-scroll-hint">יש עוד קלפים למטה ↓</span>'
+    : "";
+  if (pager.innerHTML !== next) pager.innerHTML = next;
+  syncBinderScrollCue();
+}
+
+function applyBinderColumnStyle() {
+  const grid = elements.binderGrid;
+  if (!grid) return;
+  grid.style.setProperty("--binder-columns", String(resolvedBinderColumns()));
+  syncBinderMoreHint();
+}
+
+function setBinderColumns(count) {
+  const grid = elements.binderGrid;
+  const next = Math.max(1, count);
+  if (binderListMode()) return;
+  if (grid && grid.clientWidth >= 48 && !binderColumnFits(grid, next)) return;
+  binderColumnsUser = next;
+  writeBinderLocal(BINDER_COLUMNS_KEY, String(next));
+  writeBinderLocal(BINDER_COLUMNS_SET_KEY, "1");
+  applyBinderColumnStyle();
+}
+
+function binderListFacts(card, count) {
+  const copies = count > 1 ? `<span class="binder-list-copies">×${count}</span>` : "";
+  return `<span class="binder-list-name">${escapeHtml(cardTitle(card))}</span><span class="binder-list-meta"><span class="binder-list-code">${escapeHtml(cardCode(card))}</span><span class="binder-list-rarity">${escapeHtml(`${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`)}</span>${copies}</span>`;
+}
+
+function binderCycleIcon() {
+  return `<svg class="filter-cycle" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 12a8 8 0 0 1-13.6 5.7"/><path d="M4 12a8 8 0 0 1 13.6-5.7"/><path d="M16.2 4.2H20V8"/><path d="M7.8 19.8H4V16"/></svg>`;
+}
+
+function touchDistance(touches) {
+  const [first, second] = touches;
+  return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY) || 1;
+}
+
+function installBinderPinch(grid) {
+  if (!grid || grid.dataset.pinchReady) return;
+  grid.dataset.pinchReady = "1";
+  let startDistance = 0;
+  let startColumns = 2;
+  let wheelAccum = 0;
+
+  grid.addEventListener("touchstart", (event) => {
+    if (event.touches.length !== 2) return;
+    startDistance = touchDistance(event.touches);
+    startColumns = displayedBinderColumns();
+  }, { passive: true });
+
+  grid.addEventListener("touchmove", (event) => {
+    if (event.touches.length !== 2 || !startDistance) return;
+    event.preventDefault();
+    const ratio = touchDistance(event.touches) / startDistance;
+    const steps = Math.round(Math.log(ratio) / Math.log(1.22));
+    setBinderColumns(startColumns - steps);
+  }, { passive: false });
+
+  grid.addEventListener("touchend", () => { startDistance = 0; }, { passive: true });
+  grid.addEventListener("touchcancel", () => { startDistance = 0; }, { passive: true });
+
+  grid.addEventListener("wheel", (event) => {
+    if (!event.ctrlKey) return;
+    event.preventDefault();
+    wheelAccum += event.deltaY;
+    const threshold = 36;
+    while (wheelAccum >= threshold) {
+      wheelAccum -= threshold;
+      setBinderColumns(displayedBinderColumns() + 1);
+    }
+    while (wheelAccum <= -threshold) {
+      wheelAccum += threshold;
+      setBinderColumns(displayedBinderColumns() - 1);
+    }
+  }, { passive: false });
+
+  grid.addEventListener("gesturestart", (event) => {
+    event.preventDefault();
+    startColumns = displayedBinderColumns();
+  });
+  grid.addEventListener("gesturechange", (event) => {
+    event.preventDefault();
+    const steps = Math.round(Math.log(event.scale || 1) / Math.log(1.22));
+    setBinderColumns(startColumns - steps);
+  });
+}
+
 function renderBinder() {
   const binderView = document.querySelector("#binder-view");
   if (!catalogReady()) {
@@ -4040,14 +4225,22 @@ function renderBinder() {
     playerCards.filter((card) => !card.eventOnly).map((card) => [card.set, cardSetName(card)]),
   )].sort((left, right) => left[1].localeCompare(right[1], "he"));
   if (model.binderParty && !partyOptions.some(([id]) => id === model.binderParty)) model.binderParty = "";
+  const listMode = binderListMode();
+  const listLabel = listMode ? "גריד" : "רשימה";
+  const setOptions = setOrder.map((set) => {
+    const count = binderSetChipCount(set, playerCards, {
+      inventory,
+      numberedIds,
+      numberedCards: possibleNumberedCards(),
+      ownedOnly: (guest || model.binderOwnedOnly) && !model.binderMissingOnly,
+      missingOnly: !guest && model.binderMissingOnly,
+    });
+    const label = setLabels[set] || set;
+    return `<option value="${escapeHtml(set)}"${model.binderFilter === set ? " selected" : ""}>${escapeHtml(label)} · ${count}</option>`;
+  }).join("");
   elements.binderFilters.innerHTML = [
-    `<label class="filter-party${model.binderParty ? " active" : ""}">
-      <span>מפלגה</span>
-      <select data-binder-party aria-label="סינון לפי מפלגה">
-        <option value="">כל המפלגות</option>
-        ${partyOptions.map(([id, name]) => `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)}</option>`).join("")}
-      </select>
-    </label>`,
+    `<div class="binder-control-line">`,
+    `<button type="button" class="filter-list" data-binder-list aria-pressed="${listMode ? "true" : "false"}" aria-label="${listMode ? "הצגה כגריד" : "הצגה כרשימה"}">${binderCycleIcon()}${listLabel}</button>`,
     `<label class="filter-owned${(guest || model.binderOwnedOnly) ? " active" : ""}">
       <input type="checkbox" data-binder-owned ${guest || model.binderOwnedOnly ? "checked" : ""} ${guest ? "disabled" : ""} />
       באוסף
@@ -4056,18 +4249,27 @@ function renderBinder() {
       <input type="checkbox" data-binder-missing ${!guest && model.binderMissingOnly ? "checked" : ""} ${guest ? "disabled" : ""} />
       חסר
     </label>`,
-    `<div class="filter-sets" role="tablist" aria-label="סינון לפי סדרה">`,
-    ...setOrder.map((set) => {
-      const count = binderSetChipCount(set, playerCards, {
-        inventory,
-        numberedIds,
-        numberedCards: possibleNumberedCards(),
-        ownedOnly: (guest || model.binderOwnedOnly) && !model.binderMissingOnly,
-        missingOnly: !guest && model.binderMissingOnly,
-      });
-      const active = model.binderFilter === set;
-      return filterSetChip(set, setLabels[set] || set, count, active);
-    }),
+    `</div>`,
+    `<div class="binder-control-more">`,
+    `<label class="filter-party filter-sort">
+      <span class="filter-sort-label">מיין לפי</span>
+      <select data-binder-sort aria-label="מיין לפי">
+        ${BINDER_SORTS.map((id) => `<option value="${id}"${binderSortMode() === id ? " selected" : ""}>${BINDER_SORT_LABELS[id]}</option>`).join("")}
+      </select>
+    </label>`,
+    `<label class="filter-party${model.binderParty ? " active" : ""}">
+      <span class="filter-sort-label">מפלגה</span>
+      <select data-binder-party aria-label="סינון לפי מפלגה">
+        <option value="">כל המפלגות</option>
+        ${partyOptions.map(([id, name]) => `<option value="${escapeHtml(id)}"${model.binderParty === id ? " selected" : ""}>${escapeHtml(name)}</option>`).join("")}
+      </select>
+    </label>`,
+    `<label class="filter-party filter-set-pick${model.binderFilter !== "ALL" ? " active" : ""}">
+      <span class="filter-sort-label">סדרה</span>
+      <select data-binder-set aria-label="סינון לפי סדרה">
+        ${setOptions}
+      </select>
+    </label>`,
     `</div>`,
   ].join("");
 
@@ -4084,7 +4286,14 @@ function renderBinder() {
         : (!model.binderOwnedOnly || Boolean(inventory[card.id]));
     return releaseOk && partyOk && ownedOk;
   });
-  elements.binderGrid.innerHTML = visible.map((card) => {
+  const ordered = sortBinderCards(visible, {
+    sort: binderSortMode(),
+    catalog: playerCards,
+    acquiredAt: binderAcquiredAtMap(),
+  });
+  binderView?.classList.toggle("binder-list", listMode);
+  model.binderVisibleCount = ordered.length;
+  elements.binderGrid.innerHTML = ordered.map((card) => {
     const count = inventory[card.id] ?? 0;
     if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
       if (guest || model.binderFilter === "NUMBERED") return "";
@@ -4099,6 +4308,14 @@ function renderBinder() {
     const openLabel = viewerMissing
       ? `${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)}`
       : `פתיחת ${cardTitle(card)}, ברשותכם ${count}`;
+    if (listMode) {
+      return `
+      <div class="binder-slot owned binder-list-row" role="listitem" style="--pip:${card.pip}">
+        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}" aria-label="${escapeHtml(openLabel)}">
+          ${binderListFacts(card, count)}
+        </button>
+      </div>`;
+    }
     return `
       <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
         <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}" aria-label="${escapeHtml(openLabel)}">
@@ -4110,10 +4327,7 @@ function renderBinder() {
     setEmptyNote(elements.binderEmpty, "אין קלפים חסרים.", { hidden: visible.length > 0 });
   }
   concealRenderedTradeThumbs(elements.binderGrid);
-  const visibleColumns = window.innerWidth <= 520 ? 3 : window.innerWidth <= 760 ? 5 : 6;
-  elements.binderPager.innerHTML = visible.length > visibleColumns
-    ? '<span class="binder-scroll-hint">יש עוד קלפים למטה ↓</span>'
-    : "";
+  applyBinderColumnStyle();
 
   // Only some medals fit: hard first, then medium, then simple; newest first within a tier.
   const earned = binderBadgeOrder(visibleEarnedBadges());
@@ -7976,6 +8190,13 @@ elements.navButtons.forEach((button) => {
 });
 
 elements.binderFilters.addEventListener("click", (event) => {
+  const listToggle = event.target.closest("[data-binder-list]");
+  if (listToggle) {
+    writeBinderLocal(BINDER_LIST_KEY, binderListMode() ? "0" : "1");
+    model.binderPage = 0;
+    renderBinder();
+    return;
+  }
   const button = event.target.closest("[data-filter]");
   if (!button) return;
   model.binderFilter = button.dataset.filter;
@@ -7999,6 +8220,20 @@ elements.binderFilters.addEventListener("change", (event) => {
     renderBinder();
     return;
   }
+  const sort = event.target.closest("[data-binder-sort]");
+  if (sort) {
+    writeBinderLocal(BINDER_SORT_KEY, binderSortId(sort.value));
+    model.binderPage = 0;
+    renderBinder();
+    return;
+  }
+  const setPick = event.target.closest("[data-binder-set]");
+  if (setPick) {
+    model.binderFilter = setPick.value;
+    model.binderPage = 0;
+    renderBinder();
+    return;
+  }
   const select = event.target.closest("[data-binder-party]");
   if (!select) return;
   model.binderParty = select.value;
@@ -8007,7 +8242,11 @@ elements.binderFilters.addEventListener("change", (event) => {
 });
 
 elements.binderGrid?.addEventListener("scroll", syncBinderScrollCue, { passive: true });
-window.addEventListener("resize", syncBinderScrollCue, { passive: true });
+installBinderPinch(elements.binderGrid);
+window.addEventListener("resize", () => {
+  syncBinderScrollCue();
+  applyBinderColumnStyle();
+}, { passive: true });
 elements.binderPager.addEventListener("click", (event) => {
   const button = event.target.closest('[data-page-target="binder"]');
   if (!button) return;
