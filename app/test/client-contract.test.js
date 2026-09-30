@@ -665,7 +665,16 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.trade-compose \.trade-thumb-frame \{\s*width: var\(--trade-thumb-w\);/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(css, /\.pack-shadow \{\s*display: none;/);
-  assert.match(css, /\.site-card-peeks \{\s*display: none;/);
+  assert.match(css, /\.site-card-peeks \{\s*position: fixed;/);
+  assert.match(css, /@keyframes leaf-fall/);
+  assert.match(html, /site-card-peek is-blank/);
+  assert.match(warmup, /window\.__kalpiBallotChips = ballotChips/);
+  assert.match(html, /#site-card-peeks \.site-ballot img/);
+  assert.match(javascript, /shuffled\(playerCatalog\(\)\.filter\(\(card\) => card\.artKey\)\)/);
+  assert.match(css, /\.site-ballot \{[^}]*aspect-ratio: 2 \/ 3/);
+  assert.match(javascript, /surface: "peek"/);
+  assert.doesNotMatch(javascript, /displayCardMarkup\(leaf\.card, "peek"\)/);
+  assert.doesNotMatch(css, /(^|\n)\.site-card-peeks \{\s*display: none;/);
   assert.match(html, /id="today-challenge-visual"/);
   assert.match(html, /hero-art-knesset\.png/);
   assert.match(javascript, /function renderSiteCardPeeks/);
@@ -801,7 +810,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /4\.2vw/);
   assert.match(javascript, /cardTitle/);
   assert.match(javascript, /cardCode/);
-  assert.match(html, /card-surface-151/);
+  assert.match(html, /card-surface-157/);
   assert.doesNotMatch(html, /id="home-pack-rip"/);
   assert.match(javascript, /function catalogReady/);
   assert.match(javascript, /function loadStaticCatalog/);
@@ -921,7 +930,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /pendingRewards\?\.length \|\|/);
   assert.doesNotMatch(html, /שעון ירושלים/);
   assert.match(html, /theme-pack-v2\.css/);
-  assert.match(html, /card-surface-151/);
+  assert.match(html, /card-surface-157/);
   assert.match(html, /id="report-dialog"/);
   assert.match(html, /id="open-bug-report"/);
   assert.match(html, /id="bug-dialog"/);
@@ -962,6 +971,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function makeStoryImage/);
   assert.match(javascript, /function makeWhatsAppImage/);
   assert.match(javascript, /תראו מה שלפתי בקְלָפִי!/);
+  assert.match(javascript, /function shareIdentityLine/);
+  assert.match(javascript, /\[title, typeLabel, releaseName\]\.filter\(Boolean\)\.join\(", "\)/);
+  assert.doesNotMatch(javascript, /— \$\{title\}/);
   assert.match(javascript, /function paintShareCardFace/);
   assert.match(javascript, /function paintFullartShareIdentity/);
   assert.match(javascript, /SHARE_PULL_LINE/);
@@ -1065,7 +1077,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/walkout-sunburst\.js"/);
   assert.match(javascript, /syncWalkoutSunburst/);
   assert.match(javascript, /exitWalkoutSunburst/);
-  assert.match(html, /walkout-sunburst\.css\?v=card-surface-151/);
+  assert.match(html, /walkout-sunburst\.css\?v=card-surface-157/);
   assert.match(sunburstJs, /SUNBURST_GOLD = "#b38d3f"/);
   assert.match(sunburstJs, /common: \{ rayPairs: 4/);
   assert.match(sunburstJs, /holo: \{ rayPairs: 24/);
@@ -1080,7 +1092,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(sunburstCss, /transform-origin: var\(--sunburst-ox\) var\(--sunburst-oy\)/);
   assert.match(sunburstCss, /prefers-reduced-motion/);
   assert.match(javascript, /from "\.\/packrip\.js"/);
-  assert.match(html, /packrip\.css\?v=card-surface-151/);
+  assert.match(html, /packrip\.css\?v=card-surface-157/);
   assert.match(javascript, /addEventListener\("packrip:done"/);
   assert.match(javascript, /model\.packPhase = "fanned";\s+renderPack\(\);\s+packTimers\.push\(setTimeout\(startWalkout, 550\)\)/);
   assert.doesNotMatch(javascript, /\}, 620\)/);
@@ -1091,6 +1103,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/sfx\.js"/);
   assert.match(javascript, /addEventListener\("packrip:start"[\s\S]{0,80}sfx\.scheduleRip\(event\.detail\.ripAt\)/);
   assert.match(html, /class="masthead-brand">\s*<button class="wordmark"[\s\S]{0,200}<button id="sound-toggle" class="sound-toggle"[^>]*aria-label="השתקת צלילים"/);
+  assert.match(html, /id="leaf-toggle"/);
+  assert.match(html, /הסתרת הרקע/);
+  assert.match(css, /#app\[data-leaves="still"\] \.site-card-peeks \{ display: none; \}/);
+  assert.match(css, /@keyframes leaf-arrow-fall/);
+  assert.match(javascript, /function renderLeafToggle/);
   assert.match(html, /sound-icon-on[\s\S]{0,600}sound-icon-off/);
   assert.doesNotMatch(html, /profile-sound|להשתיק צלילים/);
   assert.match(html, /class="header-debug-reset"[^>]*data-nav="studio"[^>]*data-studio-only[^>]*hidden/);

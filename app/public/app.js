@@ -142,6 +142,7 @@ const elements = {
   restoreStatus: document.querySelector("#profile-restore-status"),
   enableIdleNotify: document.querySelector("#enable-idle-notify"),
   soundToggle: document.querySelector("#sound-toggle"),
+  leafToggle: document.querySelector("#leaf-toggle"),
   homeEnableNotify: document.querySelector("#home-enable-notify"),
   notifyStatus: document.querySelector("#notify-status"),
   leagueNameInput: document.querySelector("#league-name-input"),
@@ -757,6 +758,7 @@ function applyCatalog(cards) {
   const visible = cards.filter((card) => isLiveReleaseSet(card.releaseSetId));
   model.catalog = visible;
   model.byId = new Map(visible.map((card) => [card.id, card]));
+  renderSiteCardPeeks();
 }
 
 function mergeLiveCatalogFields(liveCards = []) {
@@ -2418,26 +2420,31 @@ function renderHome() {
   layoutAdvocacyDock();
 }
 
+function shuffled(list) {
+  const copy = [...list];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swap]] = [copy[swap], copy[index]];
+  }
+  return copy;
+}
+
 function renderSiteCardPeeks() {
-  if (!elements.siteCardPeeks) return;
-  const recentIds = [...(model.serverState?.instances || [])]
-    .reverse()
-    .map(({ cardId }) => cardId);
-  const uniqueRecent = [...new Set(recentIds)]
-    .map((cardId) => model.byId.get(cardId))
-    .filter(Boolean);
-  const variedFallback = ["Symbol", "Quote", "Platform"]
-    .flatMap((type) => model.catalog.filter((card) => card.type === type).slice(0, 2));
-  const cards = [...uniqueRecent.slice(0, 3), ...variedFallback]
-    .filter((card, index, all) => all.findIndex(({ id }) => id === card.id) === index)
-    .slice(0, 6);
-  const signature = cards.map(({ id }) => id).join("|");
-  if (elements.siteCardPeeks.dataset.cards === signature) return;
-  elements.siteCardPeeks.dataset.cards = signature;
-  elements.siteCardPeeks.innerHTML = cards.map((card) => `
-    <div class="site-card-peek">${displayCardMarkup(card, "peek")}</div>
-  `).join("");
-  queueCardTextFit(elements.siteCardPeeks);
+  const host = elements.siteCardPeeks;
+  if (!host || host.dataset.ready === "1" || !catalogReady()) return;
+  const blanks = [...host.querySelectorAll(".site-card-peek.is-blank")];
+  if (!blanks.length) return;
+  const pool = shuffled(playerCatalog().filter((card) => card.artKey));
+  if (!pool.length) return;
+  const chosen = pool.slice(0, blanks.length);
+  prefetchCardArt(chosen);
+  chosen.forEach((card, index) => {
+    const node = blanks[index];
+    node.classList.remove("is-blank");
+    node.innerHTML = cardMarkup(card, { finish: card.rarity, count: 1 }, { progressiveStage: "portrait", surface: "peek" });
+  });
+  host.dataset.ready = "1";
+  queueCardTextFit(host);
 }
 
 function partyRegister() {
@@ -3746,7 +3753,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
-          ${artMarkup(card, false, surface === "display" || surface === "walkout")}
+          ${artMarkup(card, false, surface === "display" || surface === "walkout" || surface === "peek")}
           <div class="card-image-meta">
             <span class="card-code-tag">${escapeHtml(presentation.code)}</span>
             <span class="card-meta-mid"></span>
@@ -6708,14 +6715,22 @@ async function makeShareImage(card) {
 
 const SHARE_PULL_LINE = "תראו מה שלפתי בקְלָפִי!";
 
+function shareIdentityLine(card) {
+  const title = cardTitle(card);
+  const typeLabel = card.typeHe || "קלף";
+  const releaseName = model.gameConfig?.releaseSets?.find(({ id }) => id === card.releaseSetId)?.nameHe
+    || FILTER_SET_SHORT[card.releaseSetId]
+    || "";
+  return [title, typeLabel, releaseName].filter(Boolean).join(", ");
+}
+
 function shareCaption(card) {
   const url = makeDeepLink("card", card.id);
   const quote = String(card.walkout?.text || "").trim();
   const title = cardTitle(card);
-  const trust = cardTrustLine(card);
   return {
     title: `קְלָפִי · ${title}`,
-    text: [SHARE_PULL_LINE, quote, `— ${title}`, trust, url].filter(Boolean).join("\n"),
+    text: [SHARE_PULL_LINE, quote, shareIdentityLine(card), url].filter(Boolean).join("\n"),
     url,
   };
 }
@@ -7041,8 +7056,8 @@ async function paintSharePortrait(card, { width, height }) {
   const captionSize = Math.round(width * 0.042);
   const footerSize = Math.round(width * 0.026);
   const captionTop = pad + captionSize;
-  const trustLine = cardTrustLine(card);
-  const footerBlock = footerSize * (trustLine ? 5.1 : 3.2);
+  const identityLine = shareIdentityLine(card);
+  const footerBlock = footerSize * (identityLine ? 5.1 : 3.2);
   const availTop = captionTop + Math.round(width * 0.038);
   const availBottom = height - pad - footerBlock;
   const availHeight = Math.max(120, availBottom - availTop);
@@ -7065,17 +7080,10 @@ async function paintSharePortrait(card, { width, height }) {
   context.font = `600 ${footerSize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
   context.fillText("קְלָפִי", width / 2, footerY);
   let urlY = footerY + footerSize * 1.35;
-  if (trustLine) {
+  if (identityLine) {
     context.font = `500 ${Math.round(width * 0.018)}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
-    const trustHeight = paintCenteredLines(
-      context,
-      trustLine,
-      width / 2,
-      footerY + footerSize * 1.2,
-      width - pad * 2,
-      Math.round(width * 0.028),
-    );
-    urlY = footerY + footerSize * 1.2 + trustHeight * Math.round(width * 0.028) + footerSize * 0.35;
+    context.fillText(identityLine, width / 2, footerY + footerSize * 1.2);
+    urlY = footerY + footerSize * 2.55;
   }
   context.font = `500 ${Math.round(width * 0.02)}px 'IBM Plex Sans', sans-serif`;
   drawLtrCentered(context, shareUrl.replace(/^https?:\/\//, ""), width / 2, urlY);
@@ -7427,6 +7435,27 @@ elements.soundToggle?.addEventListener("click", () => {
     sfx.play("click");
   }
   renderSoundToggle();
+});
+const LEAVES_KEY = "kalpi-leaves";
+function renderLeafToggle() {
+  const button = elements.leafToggle;
+  const app = document.getElementById("app");
+  if (!button || !app) return;
+  const still = app.dataset.leaves === "still";
+  const label = still ? "הצגת הרקע" : "הסתרת הרקע";
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  button.setAttribute("aria-pressed", String(still));
+  button.classList.toggle("is-still", still);
+}
+renderLeafToggle();
+elements.leafToggle?.addEventListener("click", () => {
+  const app = document.getElementById("app");
+  if (!app) return;
+  const still = app.dataset.leaves !== "still";
+  app.dataset.leaves = still ? "still" : "fall";
+  try { localStorage.setItem(LEAVES_KEY, app.dataset.leaves); } catch { /* private mode */ }
+  renderLeafToggle();
 });
 // Audio needs a gesture on iOS: unlock (and decode the kit) on touches anywhere. Not `once`: a
 // touch pointerdown/touchstart isn't a user activation on iOS (touchend/pointerup/click are), and
