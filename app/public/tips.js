@@ -160,12 +160,12 @@ export const PAGE_GUIDES = Object.freeze({
       body: "לוח של הצעות שאחרים פרסמו. בוחרים הצעה ומאשרים. ניתן לפלטר לפי איזה קלפים אתם רוצים לתת או לקבל כדי לצמצם את האופציות לרלוונטיות בלבד.",
     },
     {
-      ring: "#community-section-race, #community-tab-leagues, #community-tab-collectors, #community-tab-challenge, #community-tab-faction",
+      ring: "#community-section-race, #community-tab-leagues, #community-tab-collectors, #community-section-party",
       ringUnion: true,
       pad: 6,
       radius: 10,
-      title: "המרוץ",
-      body: "אחרי «המרוץ» נפתחים ארבעה מסכים: ליגות - התחרו עם חבריכם - מי האספן הכי טוב?; אספנים - טבלת המובילים של כל השחקנים; האתגר היומי - מי אסף הכי הרבה קלפים מהסיעה הנבחרת של היום; ומפלגות - בואו לראות מי תורם הכי הרבה כוכבים למפלגה שאתם תומכים בה - אולי אלו אתם?",
+      title: "המירוץ",
+      body: "אחרי «המירוץ» נפתחים ליגות - התחרו עם חבריכם - מי האספן הכי טוב?; ואספנים - טבלת המובילים של כל השחקנים. «המפלגה שלי» פותחת את האתגר היומי - מי בחר במפלגה שלכם - ומפלגות - סכום הכוכבים של כל מי שבחר במפלגה. אולי אלו אתם?",
     },
   ]),
   dialog: Object.freeze([

@@ -669,6 +669,14 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.growth-grid > \.work-card\.trade-desk/);
   assert.match(html, /class="faction-pick-row"/);
   assert.match(html, /class="faction-pick-row"[\s\S]*id="faction-select"[\s\S]*id="save-faction"/);
+  const factionPanel = html.slice(html.indexOf('id="community-panel-faction"'), html.indexOf('id="community-panel-collectors"'));
+  assert.doesNotMatch(factionPanel, /id="faction-select"|id="save-faction"/);
+  const profileDialog = html.slice(html.indexOf('id="profile-dialog"'), html.indexOf('id="advocacy-dialog"'));
+  assert.match(profileDialog, /id="faction-select"/);
+  assert.match(profileDialog, /id="save-faction"/);
+  assert.match(profileDialog, />בחירה</);
+  assert.match(javascript, /עוד לא בחרתם מפלגה\./);
+  assert.doesNotMatch(javascript, /dayNumber % partyIds\.length/);
   assert.match(css, /\.faction-pick-row/);
   assert.match(css, /\.growth-grid > \.work-card\.faction-desk/);
   assert.match(css, /\.growth-grid > \.work-card\.daily-challenge-desk/);

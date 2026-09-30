@@ -1,8 +1,8 @@
 /**
- * Daily race ("who collected the most cards of today's party"): a card scores on the Jerusalem day
- * the player OPENED it (seenAt), matching credit-on-open for unique/level/faction (#53). Warehouse
- * cards not yet opened do not score, and a backlog collected overnight scores the day it is opened.
- * Trade moves and debug grants never score.
+ * Daily race: a card scores on the Jerusalem day the player OPENED it (seenAt), matching
+ * credit-on-open for unique/level/faction. Warehouse cards not yet opened do not score, and a
+ * backlog collected overnight scores the day it is opened. Trade moves and debug grants never score.
+ * The party is the viewer's saved faction. This module does not choose that party.
  */
 export const DAILY_RACE_TIME_ZONE = "Asia/Jerusalem";
 
@@ -18,6 +18,13 @@ export function scoresInDailyRace(instance, day) {
   if (acquiredBy.includes("trade") || acquiredBy.includes("debug")) return false;
   const seenMs = Date.parse(instance.seenAt);
   return Number.isFinite(seenMs) && dailyRaceDay(seenMs) === day;
+}
+
+/** The board on this player's screen. No saved party means no race target. */
+export function raceTargetForSavedFaction(factionId, partyIds = []) {
+  const id = factionId || null;
+  if (!id || !partyIds.includes(id)) return null;
+  return id;
 }
 
 export function dailyRaceScore(instances, day, targetPartyId, cardsById) {

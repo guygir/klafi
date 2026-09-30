@@ -7,6 +7,7 @@ import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { openSpecialWindow } from "./special-window.js";
 import { jerusalemDay } from "./numbered.js";
+import { raceTargetForSavedFaction } from "./daily-race.js";
 import { emptyTodayPulse } from "../public/today-pulse.js";
 
 const { Pool } = pg;
@@ -85,13 +86,13 @@ function getPool() {
   return pool;
 }
 
-export function slimDailyChallenge(config, now = Date.now()) {
+export function slimDailyChallenge(config, now = Date.now(), factionId = null) {
   const partyIds = [...new Set((config?.gameConfig?.parties || []).map(({ id }) => id))].sort();
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
-  const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-  const targetPartyId = partyIds.length ? partyIds[dayNumber % partyIds.length] : null;
-  const targetPartyNameHe = (config?.gameConfig?.parties || []).find(({ id }) => id === targetPartyId)?.displayNameHe
-    || targetPartyId;
+  const targetPartyId = raceTargetForSavedFaction(factionId, partyIds);
+  const targetPartyNameHe = targetPartyId
+    ? ((config?.gameConfig?.parties || []).find(({ id }) => id === targetPartyId)?.displayNameHe || targetPartyId)
+    : null;
   return { day, targetPartyId, targetPartyNameHe, leaders: [] };
 }
 
@@ -101,7 +102,7 @@ export function slimLeaderboards(config, collectors = [], factions = [], now = D
     collectorCount: extras.collectorCount ?? collectors.length,
     yourCollectorRank: extras.yourCollectorRank ?? collectors.find((entry) => entry.current)?.rank ?? null,
     factions,
-    dailyChallenge: slimDailyChallenge(config, now),
+    dailyChallenge: slimDailyChallenge(config, now, extras.factionId || null),
     fixture: false,
     label: "Real activity in this local PoC",
   };
@@ -223,7 +224,14 @@ async function collectorBoards(db, config, now, token) {
     .map((entry, index) => ({ ...entry, rank: index + 1 }));
   const { collectors, collectorCount, yourCollectorRank } = takeCollectorBoard(allCollectors);
   const factions = factionStandingsFromCollectors(allCollectors);
-  return slimLeaderboards(config, collectors, factions, now, { collectorCount, yourCollectorRank });
+  const viewerFaction = token
+    ? sessions.rows.find((row) => row.token === token)?.faction_id || null
+    : null;
+  return slimLeaderboards(config, collectors, factions, now, {
+    collectorCount,
+    yourCollectorRank,
+    factionId: viewerFaction,
+  });
 }
 
 async function todayPulse(db, now = Date.now()) {

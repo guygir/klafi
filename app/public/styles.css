@@ -2368,6 +2368,23 @@ img.mini-art {
 .profile-name-label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 600; }
 #profile-name-input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); font: 500 16px/1.2 "IBM Plex Sans Hebrew", sans-serif; text-align: right; }
 .profile-error { min-height: 1.5em; margin: 6px 0 10px; color: var(--danger-mute); }
+.profile-faction {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+.profile-faction h3 { margin: 0 0 8px; }
+.profile-faction p { margin: 0 0 10px; }
+.profile-faction .faction-pick-row { margin-top: 8px; }
+.profile-faction .faction-pick-row select {
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 500 16px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
 .profile-recovery {
   margin-top: 28px;
   padding-top: 18px;
@@ -2390,7 +2407,21 @@ img.mini-art {
   padding-top: 18px;
   border-top: 1px solid var(--rule);
 }
-.profile-notify h3 { margin: 0 0 8px; }
+.no-faction-note {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 8px;
+}
+.no-faction-note strong,
+#challenge-party-hint {
+  display: block;
+}
+.today-docket-row.is-no-faction > strong,
+.today-docket-row.is-no-faction > small {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
 .profile-notify p { margin: 0 0 10px; }
 #enable-idle-notify {
   width: auto;
@@ -2403,11 +2434,17 @@ img.mini-art {
   gap: 4px;
   margin: 2px 0 6px;
 }
-.community-sections {
+.community-sections,
+#community-sections {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 3px;
   margin: 0;
+}
+#community-sections button {
+  min-height: 34px;
+  white-space: normal;
+  line-height: 1.15;
 }
 #community-tabs {
   display: grid;
@@ -2418,8 +2455,9 @@ img.mini-art {
 #community-tabs[data-community-section="market"] {
   grid-template-columns: 1fr 1fr;
 }
-#community-tabs[data-community-section="race"] {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+#community-tabs[data-community-section="race"],
+#community-tabs[data-community-section="party"] {
+  grid-template-columns: 1fr 1fr;
 }
 #community-tabs button[hidden] { display: none; }
 .league-desk .field-label { margin-top: 8px; }
@@ -4596,6 +4634,12 @@ body {
 
 .today-docket-row > small {
   display: none;
+}
+.today-docket-row.is-no-faction > small {
+  display: block;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .contained-tabs {
