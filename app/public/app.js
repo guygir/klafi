@@ -369,6 +369,10 @@ const elements = {
   dialogSource: document.querySelector("#dialog-source"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
   dialogInstagram: document.querySelector("#dialog-instagram"),
+  recycleDialog: document.querySelector("#recycle-dialog"),
+  recycleConfirm: document.querySelector("#recycle-confirm"),
+  recycleCancel: document.querySelector("#recycle-cancel"),
+  closeRecycle: document.querySelector("#close-recycle"),
   shareSheet: document.querySelector("#share-sheet"),
   shareSheetTitle: document.querySelector("#share-sheet-title"),
   shareSheetImage: document.querySelector("#share-sheet-image"),
@@ -3117,7 +3121,7 @@ function setPackAction(label, disabled, hint) {
   elements.packHint.textContent = hint;
 }
 
-const SEEN_ACK_MODES = new Set(["idle-return", "level-reward", "quiz"]);
+const SEEN_ACK_MODES = new Set(["idle-return", "level-reward", "quiz", "recycle"]);
 
 /**
  * Opening a warehouse card = seeing it. Send the seen ack as soon as the reveal starts (the card is
@@ -3820,7 +3824,19 @@ function renderShowcaseBinder() {
   elements.showcaseGrid.scrollTop = gridY;
 }
 
-function displayCardMarkup(card, surface = "display", { tradeCopies = false } = {}) {
+function plainOwnedCount(card) {
+  if (!card) return 0;
+  const inventory = model.serverState?.inventory?.[card.id] ?? 0;
+  const numbered = (model.serverState?.numberedCopies || []).filter((item) => item.cardId === card.id).length;
+  return Math.max(0, inventory - numbered);
+}
+
+function rarityCanRecycle(card) {
+  const rarity = String(card?.rarity || "");
+  return rarity.startsWith("Common") || rarity.startsWith("Uncommon") || rarity.startsWith("Rare");
+}
+
+function displayCardMarkup(card, surface = "display", { tradeCopies = false, recycle = false } = {}) {
   const preview = surface === "display" && model.dialogNumberedPreview?.cardId === card?.id
     ? model.dialogNumberedPreview
     : null;
@@ -3832,10 +3848,31 @@ function displayCardMarkup(card, surface = "display", { tradeCopies = false } = 
     count: ownedCountFor(card),
     numberedIndex: stamp?.numberedIndex,
     numberedOf: stamp?.numberedOf,
-  }, { progressiveStage: "portrait", surface, tradeCopies });
+  }, { progressiveStage: "portrait", surface, tradeCopies, recycle });
 }
 
-function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full", tradeCopies = false } = {}) {
+function canRecycleCard(card) {
+  return Boolean(card)
+    && !model.showcase
+    && !model.guestBinder
+    && plainOwnedCount(card) >= 3
+    && rarityCanRecycle(card);
+}
+
+function recycleIconSvg() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7.5 8.2A5.2 5.2 0 0 1 15.6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15.6 3.6v3.2h-3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.5 15.8A5.2 5.2 0 0 1 8.4 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.4 20.4v-3.2h3.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+function recycleControlMarkup(card, copies) {
+  return `<span class="card-copies-stack"><b class="card-copies-tag">×${copies}</b><button class="card-recycle" type="button" data-recycle-card="${escapeHtml(card.id)}" aria-label="מיחזור">${recycleIconSvg()}</button></span>`;
+}
+
+function binderRecycleButton(card) {
+  if (!canRecycleCard(card)) return "";
+  return `<button class="card-recycle binder-recycle" type="button" data-recycle-card="${escapeHtml(card.id)}" aria-label="מיחזור">${recycleIconSvg()}</button>`;
+}
+
+function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full", tradeCopies = false, recycle = false } = {}) {
   const presentation = cardPresentation(card, instance);
   const stage = progressiveStage || "portrait";
   const progressive = `progressive-card stage-${stage}`;
@@ -3853,7 +3890,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-meta-end">
               ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
               ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
-              ${copies > 1 ? `<b class="card-copies-tag">${tradeCopies ? `1/${copies}` : `×${copies}`}</b>` : ""}
+              ${recycle && copies >= 3 && !tradeCopies ? recycleControlMarkup(card, copies) : copies > 1 ? `<b class="card-copies-tag">${tradeCopies ? `1/${copies}` : `×${copies}`}</b>` : ""}
               ${instance.isNew && !instance.numberedIndex ? '<b class="new-stamp">חדש</b>' : ""}
             </span>
           </div>
@@ -4094,8 +4131,20 @@ function binderListFacts(card, count) {
   return `<span class="binder-list-name">${escapeHtml(cardTitle(card))}</span><span class="binder-list-meta"><span class="binder-list-code">${escapeHtml(cardCode(card))}</span><span class="binder-list-rarity">${escapeHtml(`${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`)}</span>${copies}</span>`;
 }
 
+let binderCycleTurns = 0;
+
 function binderCycleIcon() {
-  return `<svg class="filter-cycle" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 12a8 8 0 0 1-13.6 5.7"/><path d="M4 12a8 8 0 0 1 13.6-5.7"/><path d="M16.2 4.2H20V8"/><path d="M7.8 19.8H4V16"/></svg>`;
+  return `<svg class="filter-cycle" style="--cycle-turns:${binderCycleTurns}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 12a8 8 0 0 1-13.6 5.7"/><path d="M4 12a8 8 0 0 1 13.6-5.7"/><path d="M16.2 4.2H20V8"/><path d="M7.8 19.8H4V16"/></svg>`;
+}
+
+function spinBinderCycleIcon() {
+  const icon = elements.binderFilters?.querySelector(".filter-cycle");
+  if (!icon || binderCycleTurns < 1) return;
+  icon.classList.remove("is-turning");
+  icon.style.setProperty("--cycle-turns", String(binderCycleTurns - 1));
+  icon.getBoundingClientRect();
+  icon.classList.add("is-turning");
+  icon.style.setProperty("--cycle-turns", String(binderCycleTurns));
 }
 
 function touchDistance(touches) {
@@ -4323,6 +4372,7 @@ function renderBinder() {
         <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}" aria-label="${escapeHtml(openLabel)}">
           ${binderCardMarkup(card)}
         </button>
+        ${guest ? "" : binderRecycleButton(card)}
       </div>`;
   }).join("");
   if (!waitingOwnership && !guest && model.binderMissingOnly) {
@@ -6845,9 +6895,10 @@ function renderDialogCard() {
   const ownedCount = model.showcase ? 0 : (model.serverState?.inventory?.[card.id] ?? 0);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
+  const canRecycle = !model.dialogNumbered && canRecycleCard(card);
   elements.dialogCard.innerHTML = model.showcase
     ? catalogCardMarkup(card, "display", model.dialogNumbered)
-    : displayCardMarkup(card);
+    : displayCardMarkup(card, "display", { recycle: canRecycle });
   if (elements.dialogTrust) {
     const line = cardTrustLine(card);
     elements.dialogTrust.textContent = line;
@@ -7999,6 +8050,72 @@ elements.saveAchievements?.addEventListener("click", saveStudioAchievements);
 elements.saveEvents?.addEventListener("click", saveStudioEvents);
 elements.closeProfile.addEventListener("click", () => elements.profileDialog.close());
 elements.profileDialog.addEventListener("close", () => maybeShowDeferredPopups());
+async function playRecyclePull(instance) {
+  if (!instance?.cardId || !model.byId.has(instance.cardId)) {
+    showToast("המיחזור נשמר, אבל לא הצלחנו לפתוח את הקלף.");
+    return;
+  }
+  sfx.unlock();
+  const rip = playHomePackRip();
+  await rip.finished;
+  model.currentPack = {
+    packId: `recycle-${instance.instanceId}`,
+    mode: "recycle",
+    cards: [instance],
+  };
+  model.currentCardIndex = 0;
+  model.previewMode = false;
+  rip.release({ revealing: true });
+  showView("pack");
+  startWalkout();
+}
+
+async function confirmRecycle() {
+  const cardId = model.recycleCardId;
+  if (!cardId || model.recycling) return;
+  model.recycling = true;
+  if (elements.recycleConfirm) elements.recycleConfirm.disabled = true;
+  elements.recycleDialog?.close();
+  showWait("ממחזרים...");
+  try {
+    const [result] = await Promise.all([
+      request("/api/recycle", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ cardId }),
+      }),
+      new Promise((resolve) => setTimeout(resolve, 1600)),
+    ]);
+    setServerState(result.state);
+    hideWait();
+    if (elements.dialog?.open) elements.dialog.close();
+    renderBinder();
+    renderHome();
+    await playRecyclePull(result.granted);
+  } catch (error) {
+    showToast(error.body?.error === "NOT_ENOUGH_COPIES"
+      ? "אין מספיק עותקים רגילים למחזור."
+      : "לא הצלחנו למחזר.");
+  } finally {
+    hideWait();
+    model.recycling = false;
+    if (elements.recycleConfirm) elements.recycleConfirm.disabled = false;
+  }
+}
+
+elements.dialogCard?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-recycle-card]");
+  if (!button) return;
+  event.preventDefault();
+  event.stopPropagation();
+  model.recycleCardId = button.dataset.recycleCard;
+  elements.recycleDialog?.showModal();
+});
+elements.recycleCancel?.addEventListener("click", () => elements.recycleDialog?.close());
+elements.closeRecycle?.addEventListener("click", () => elements.recycleDialog?.close());
+elements.recycleConfirm?.addEventListener("click", () => {
+  confirmRecycle().catch(() => showToast("לא הצלחנו למחזר."));
+});
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
 elements.dialog.addEventListener("close", () => maybeShowTradeNotice());
 elements.dialogReport.addEventListener("click", () => openReportDialog());
@@ -8257,9 +8374,11 @@ elements.navButtons.forEach((button) => {
 elements.binderFilters.addEventListener("click", (event) => {
   const listToggle = event.target.closest("[data-binder-list]");
   if (listToggle) {
+    binderCycleTurns += 1;
     writeBinderLocal(BINDER_LIST_KEY, binderListMode() ? "0" : "1");
     model.binderPage = 0;
     renderBinder();
+    spinBinderCycleIcon();
     return;
   }
   const button = event.target.closest("[data-filter]");
@@ -8343,6 +8462,14 @@ elements.communityTabs.addEventListener("click", (event) => {
 });
 
 elements.binderGrid.addEventListener("click", (event) => {
+  const recycle = event.target.closest("[data-recycle-card]");
+  if (recycle) {
+    event.preventDefault();
+    event.stopPropagation();
+    model.recycleCardId = recycle.dataset.recycleCard;
+    elements.recycleDialog?.showModal();
+    return;
+  }
   const unlock = event.target.closest("[data-debug-unlock]");
   if (unlock) {
     debugUnlockCard(unlock.dataset.debugUnlock);

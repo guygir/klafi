@@ -60,6 +60,7 @@ import { ackTradeNotices, publicTradeNotices } from "./trade-notices.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
 import { acquiredAtByCard } from "../public/binder-order.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
+import { RECYCLE_COPIES, spendPlainCopies } from "./recycle.js";
 import {
   IDLE_BACKLOG_CAP,
   IDLE_INTERVAL_MS,
@@ -2162,6 +2163,55 @@ export async function createKalpiApp({
             trades,
             state: await stateForToken(token),
             simulated: false,
+          });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/recycle") {
+          const input = await readJson(request);
+          const cardId = String(input.cardId || "");
+          const card = cardsById.get(cardId);
+          if (!card) {
+            json(response, 400, { error: "INVALID_CARD" });
+            return;
+          }
+          const bucket = rarityBucket(card);
+          if (!bucket) {
+            json(response, 400, { error: "RECYCLE_NOT_RATED" });
+            return;
+          }
+          const pool = allCards.filter((candidate) =>
+            rarityBucket(candidate) === bucket && cardIsPackPullable(candidate));
+          if (!pool.length) {
+            json(response, 409, { error: "NO_CARD_FOR_RARITY" });
+            return;
+          }
+          const recycled = await store.withSession(token, async (current) => {
+            if ((current.unseenPulls || []).length >= IDLE_BACKLOG_CAP) {
+              return { error: "PULL_CAP_REACHED" };
+            }
+            if (!spendPlainCopies(current, cardId, RECYCLE_COPIES)) {
+              return { error: "NOT_ENOUGH_COPIES" };
+            }
+            const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(current), 0));
+            const instance = await grantCard(current, pull, {
+              acquiredBy: "recycle",
+              pulledAt: new Date(now()).toISOString(),
+            });
+            return { instance };
+          });
+          if (!recycled) {
+            json(response, 401, { error: "INVALID_SESSION" });
+            return;
+          }
+          if (recycled.error) {
+            json(response, 409, { error: recycled.error });
+            return;
+          }
+          json(response, 200, {
+            spentCardId: cardId,
+            granted: recycled.instance,
+            state: await stateForToken(token),
           });
           return;
         }
