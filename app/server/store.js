@@ -659,6 +659,7 @@ export class JsonStore {
         token,
         label: session?.displayName || "שחקן קְלָפִי",
         avatarId: session?.avatarId || "kid-boy",
+        factionId: session?.factionId || null,
         loginStreak: session?.loginStreak || 0,
         visitStreak: session?.visitStreak || 0,
         rankLevel: session?.highestRank || 1,
