@@ -6273,11 +6273,21 @@ body {
 
 .collector-row {
   display: grid;
-  grid-template-columns: 36px 1fr auto;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   overflow: visible;
   padding-block: 10px;
+}
+
+/* #collector-board is a .leaderboard-list, so this flex row wins over the grid above.
+   The name may wrap. The score (stars, count, and שונים) stays on one line. */
+.leaderboard-list > .collector-row > span:not(.collector-face) {
+  min-width: 0;
+}
+.leaderboard-list > .collector-row > strong {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .collector-face {

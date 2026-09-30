@@ -344,7 +344,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="level-avatar-button"[\s\S]*?<\/button>[\s\S]*id="level-streak"/);
   assert.match(html, /id="streak-dialog"/);
   assert.match(html, /id="streak-calendar"/);
-  assert.match(javascript, /const showStreak = streak >= 1/);
+  assert.match(javascript, /const showStreak = streak >= 3/);
   assert.match(javascript, /function maybeShowStreakCalendar/);
   assert.match(javascript, /function openStreakCalendar/);
   assert.match(javascript, /function dismissStreakCalendar/);
@@ -376,7 +376,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /Number\(model\.serverState\?\.visitStreak\) \|\| 0/);
   assert.doesNotMatch(javascript, /visitStreak \?\? model\.serverState\?\.loginStreak/);
   assert.match(javascript, /function collectorFaceMarkup\(entry = \{\}\) \{[\s\S]*?Number\(entry\.visitStreak\) >= 3/);
-  assert.match(javascript, /function leagueFaceMarkup\(entry = \{\}\) \{[\s\S]*?Number\(entry\.visitStreak\) >= 3/);
+  assert.match(javascript, /function leagueFaceMarkup\(entry = \{\}\) \{[\s\S]*?Number\(entry\.visitStreak\) >= 3[\s\S]*?letterChipMarkup\(party\)/);
+  assert.match(css, /\.leaderboard-list > \.collector-row > strong \{[^}]*white-space:\s*nowrap/);
   assert.doesNotMatch(javascript, /entry\.loginStreak/);
   assert.match(javascript, /applyIdleCountdown\(elements\.cooldownCopy, view\)/);
   assert.match(javascript, /function idleCountdownCopy/);

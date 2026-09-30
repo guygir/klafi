@@ -1426,7 +1426,7 @@ export class PostgresStore {
     const cardsById = new Map(cards.map((card) => [card.id, card]));
     if (!memberTokens.length) return [];
     const result = await this.pool.query(
-      `SELECT s.token, s.display_name, s.avatar_id, s.highest_rank,
+      `SELECT s.token, s.display_name, s.avatar_id, s.faction_id, s.highest_rank,
               COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
               COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
               COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
@@ -1446,6 +1446,7 @@ export class PostgresStore {
         token,
         label: row?.display_name || "שחקן קְלָפִי",
         avatarId: row?.avatar_id || "kid-boy",
+        factionId: row?.faction_id || null,
         loginStreak: row?.login_streak || 0,
         visitStreak: row?.visit_streak || 0,
         rankLevel: row?.highest_rank || 1,

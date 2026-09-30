@@ -2010,8 +2010,9 @@ async function consumeInboundLeague() {
 
 function leagueFaceMarkup(entry = {}) {
   const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
+  const party = factionParty(entry.factionId);
   const streak = Number(entry.visitStreak) >= 3 ? Number(entry.visitStreak) : 0;
-  return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
+  return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
 }
 
 // Leagues: one per player (server-enforced). The room is cached per session token so Community opens
@@ -2828,7 +2829,7 @@ function renderProgression({ announce = false } = {}) {
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
   const streak = Number(model.serverState?.visitStreak) || 0;
-  const showStreak = streak >= 1;
+  const showStreak = streak >= 3;
   elements.levelRank.textContent = progression.rank;
   if (elements.levelStreak) {
     elements.levelStreak.hidden = !showStreak;
