@@ -56,6 +56,7 @@ import {
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 import { ackTradeNotices, publicTradeNotices } from "./trade-notices.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
+import { acquiredAtByCard } from "../public/binder-order.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
 import {
   IDLE_BACKLOG_CAP,
@@ -599,6 +600,7 @@ function publicState(session, now, cards, config = {}) {
     dryPacks: session.dryPacks,
     packCount: session.packCount,
     inventory: session.inventory,
+    acquiredAt: acquiredAtByCard(session.instances, session.inventory),
     instances: session.instances,
     favorites: session.favorites ?? [],
     lastPack: session.packs.at(-1) ?? null,

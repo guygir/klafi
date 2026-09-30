@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { acquiredAtByCard } from "../public/binder-order.js";
 
 export function newPublicBinderSlug() {
   return randomBytes(6).toString("hex");
@@ -33,6 +34,7 @@ export function publicBinderView(session) {
     avatarId: session.avatarId || "kid-boy",
     factionId: session.factionId || null,
     inventory,
+    acquiredAt: acquiredAtByCard(session.instances, inventory),
     numberedCopies: (session.instances || [])
       .filter((item) => Number(item?.numberedIndex) > 0)
       .map((item) => ({
