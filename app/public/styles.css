@@ -3264,10 +3264,59 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .binder-slot > .binder-recycle {
   position: absolute;
   z-index: 6;
-  top: 34px;
-  right: 8px;
+  box-sizing: border-box;
+  /* Track the scaled count pill: image inset, the 8cqw badge, then a gap.
+     The extra 2.7cqw centers the circle under ×N. */
+  top: calc(clamp(1px, 0.9cqw, 3px) + clamp(7px, 3.1cqw, 12px) + 3.4cqw + 8cqw + 2cqw);
+  right: calc(clamp(1px, 0.9cqw, 3px) + clamp(7px, 3.1cqw, 12px) + 3.4cqw + 2.7cqw);
+  width: 8cqw;
+  height: 8cqw;
+  border-width: max(1px, 0.4cqw);
+}
+.binder-slot:has(.kalpi-card[data-card-frame="fullart-v1"]) > .binder-recycle {
+  top: calc(3.4cqw + 8cqw + 2cqw);
+  right: calc(3.4cqw + 2.7cqw);
+}
+.binder-slot > .binder-recycle svg {
+  width: 64%;
+  height: 64%;
 }
 .card-recycle:focus-visible { outline: 2px solid var(--civic-bright); outline-offset: 2px; }
+/* Open card dialog only: the code and ×N stay one line at the same height.
+   The recycle control hangs under the count and does not share that line. */
+#app #card-dialog .card-image-meta {
+  align-items: start;
+}
+#app #card-dialog .card-meta-end {
+  align-items: flex-start;
+}
+#app #card-dialog .card-image-meta > .card-code-tag,
+#app #card-dialog .card-copies-stack > .card-copies-tag {
+  flex: 0 0 auto;
+  height: 8cqw;
+  min-height: 8cqw;
+  max-height: 8cqw;
+}
+#app #card-dialog .card-copies-stack {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  height: auto;
+  min-height: 0;
+}
+#app #card-dialog .card-copies-stack > .card-recycle {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  right: auto;
+  z-index: 1;
+  flex: none;
+  margin: 0;
+  transform: translateX(-50%);
+}
 .card-image-meta .card-code-tag,
 .card-image-meta strong,
 .card-image-meta .card-copies-tag,
@@ -4945,6 +4994,75 @@ body {
   width: min(28px, 100%);
 }
 
+#faction-members .faction-hist-plot {
+  height: min(124px, 21dvh);
+  padding-top: 48px;
+}
+
+#faction-members .faction-party-ballot {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--bar, 0%) + 12px);
+  z-index: 1;
+  display: block;
+  width: 16px;
+  height: 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid #111;
+  border-radius: 2px;
+  background: #ead9b4 url("/design-assets/ballot-paper.png") center / cover;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+#faction-members .faction-party-ballot img,
+#faction-members .faction-party-ballot i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 2px 1px;
+  box-sizing: border-box;
+  object-fit: contain;
+  color: #1a2540;
+  font: 700 8px/1 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
+  font-style: normal;
+  text-align: center;
+}
+
+#faction-members .faction-party-col.you > b {
+  font-weight: 800;
+}
+
+#faction-members .faction-party-col.you b::before {
+  content: none;
+}
+
+#faction-members .faction-party-bar {
+  position: relative;
+  display: block;
+  width: min(28px, 100%);
+  margin-inline: auto;
+  min-height: 0;
+  border-radius: 3px 3px 0 0;
+  background: #9aa39b;
+  font-weight: 400;
+  transform: scaleY(0);
+  transform-origin: bottom;
+  animation: fermi-bar-rise 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#faction-members .faction-party-bar::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 1px;
+  height: 8px;
+  background: var(--ink);
+  transform: translateX(-50%);
+}
+
 .faction-hist .challenge-hist-axis span {
   overflow: hidden;
   color: inherit;
@@ -5205,7 +5323,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .challenge-hist-col b,
   .challenge-hist-col.you b::before,
-  .faction-chart-row > i > b {
+  .faction-chart-row > i > b,
+  #faction-members .faction-party-bar {
     animation: none;
     transform: none;
   }
@@ -5800,12 +5919,20 @@ body {
   gap: 10px;
   margin: 0 0 14px;
 }
+.streak-calendar-board {
+  direction: ltr;
+  padding: 8px 8px 28px;
+  padding-inline-start: 8px;
+  border: 1px solid color-mix(in srgb, var(--rule) 55%, var(--paper-deep));
+  background: var(--paper-deep);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
 .streak-weekdays {
   direction: ltr;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 3px;
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   color: var(--ink);
   font: 700 12px/1 "IBM Plex Sans Hebrew", sans-serif;
   text-align: center;
@@ -5817,12 +5944,11 @@ body {
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 3px;
   margin: 0;
-  padding: 8px 8px 28px;
+  padding: 0;
   list-style: none;
-  padding-inline-start: 8px;
-  border: 1px solid color-mix(in srgb, var(--rule) 55%, var(--paper-deep));
-  background: var(--paper-deep);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  border: 0;
+  background: none;
+  box-shadow: none;
 }
 .streak-ladder-wrap {
   display: flex;
@@ -5965,13 +6091,24 @@ body {
 }
 .streak-cell-day {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   justify-self: start;
   align-self: start;
-  margin: 3px 0 0 4px;
-  font: 700 11px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
-  letter-spacing: 0.02em;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  margin: 0 0 0 1px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  font: 700 9px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  letter-spacing: 0;
   color: var(--ink);
+}
+.streak-cell.is-checked .streak-cell-day {
+  background: color-mix(in srgb, var(--civic) 12%, var(--paper));
 }
 .streak-cell-month {
   position: absolute;
@@ -5996,6 +6133,9 @@ body {
   display: grid;
   place-items: center;
   pointer-events: none;
+}
+.streak-cell.has-date-prize .streak-cell-pack {
+  transform: rotate(25deg);
 }
 .streak-cell-pack {
   width: 22px;
@@ -6274,11 +6414,21 @@ body {
 
 .collector-row {
   display: grid;
-  grid-template-columns: 36px 1fr auto;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   overflow: visible;
   padding-block: 10px;
+}
+
+/* #collector-board is a .leaderboard-list, so this flex row wins over the grid above.
+   The name may wrap. The score (stars, count, and שונים) stays on one line. */
+.leaderboard-list > .collector-row > span:not(.collector-face) {
+  min-width: 0;
+}
+.leaderboard-list > .collector-row > strong {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .collector-face {

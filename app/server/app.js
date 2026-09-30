@@ -622,6 +622,10 @@ function publicState(session, now, cards, config = {}) {
     factionId: session.factionId,
     binderSlug: session.publicBinderSlug || null,
     tradeCount: session.tradeCount,
+    eventCounts: {
+      source_opened: Number(session.eventCounts?.source_opened) || 0,
+      share_created: Number(session.eventCounts?.share_created) || 0,
+    },
     ...achievementState(session, cards, config.achievements),
     avatars: publicAvatars(session, config.avatars, progressionState(session, cards, config, now).level),
     avatarId: session.avatarId || "kid-boy",

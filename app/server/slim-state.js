@@ -64,6 +64,10 @@ export function slimPublicState(session, shell, now = Date.now()) {
     pendingTradeNotices: publicTradeNotices(session),
     inventory: session.inventory || {},
     favorites: session.favorites || [],
+    eventCounts: {
+      source_opened: Number(session.eventCounts?.source_opened) || 0,
+      share_created: Number(session.eventCounts?.share_created) || 0,
+    },
     now,
   };
 }

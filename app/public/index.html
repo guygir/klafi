@@ -17,11 +17,11 @@
   <meta property="og:image" content="https://klafi.vercel.app/design-assets/hero-art-kalpi.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>קְלָפִי · KLAFI</title>
-  <script src="/boot-warmup.js?v=card-surface-158"></script>
+  <script src="/boot-warmup.js?v=card-surface-172"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-171" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-173" />
   <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-172" />
   <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-157" />
   <link rel="stylesheet" href="/packrip.css?v=card-surface-157" />
@@ -56,7 +56,7 @@
       <div class="site-leaf site-card-peek is-blank" style="--leaf-x:28%;--leaf-w:132px;--leaf-dur:46s;--leaf-delay:-44.9s;--leaf-rot:16deg;--leaf-sway:5deg;--leaf-drift:29px;--leaf-rest:82%"></div>
     </div>
     <script>
-      (function () {
+      window.__kalpiPaintBallotLeaves = function () {
         const chips = (window.__kalpiBallotChips || []).slice();
         const slips = document.querySelectorAll("#site-card-peeks .site-ballot img");
         for (let index = chips.length - 1; index > 0; index -= 1) {
@@ -67,9 +67,9 @@
         }
         slips.forEach((img, index) => {
           const chip = chips[index];
-          if (chip) img.src = "/design-assets/" + chip;
+          if (chip && !img.getAttribute("src")) img.src = "/design-assets/" + chip;
         });
-      })();
+      };
     </script>
     <header class="masthead">
       <div class="masthead-row">
@@ -773,8 +773,10 @@
     <h2 id="streak-dialog-title">הפרסים החודש</h2>
     <div class="streak-layout">
       <div class="streak-month">
-        <div class="streak-weekdays" aria-hidden="true"><span>א</span><span>ב</span><span>ג</span><span>ד</span><span>ה</span><span>ו</span><span>ש</span></div>
-        <ol id="streak-calendar" class="streak-calendar"></ol>
+        <div class="streak-calendar-board">
+          <div class="streak-weekdays" aria-hidden="true"><span>א</span><span>ב</span><span>ג</span><span>ד</span><span>ה</span><span>ו</span><span>ש</span></div>
+          <ol id="streak-calendar" class="streak-calendar"></ol>
+        </div>
         <p id="streak-calendar-reward" class="streak-dialog-reward">בעוד יום מגיע הפרס הבא והוא קלף נפוץ.</p>
       </div>
       <div class="streak-ladder-wrap">
@@ -909,6 +911,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-172"></script>
+  <script type="module" src="/app.js?v=card-surface-173"></script>
 </body>
 </html>

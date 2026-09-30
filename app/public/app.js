@@ -13,6 +13,7 @@ import {
 import { confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
+import { holdsWantedCard, offersForTradeList } from "./trade-list.js";
 import {
   exitWalkoutSunburst,
   readSunburstRarityOverride,
@@ -721,6 +722,7 @@ function applyHomePayload(home) {
         : (incoming.unseenCount ?? previous.unseenCount ?? 0),
       achievements: incoming.achievements ?? previous.achievements ?? [],
       achievementPages: incoming.achievementPages ?? previous.achievementPages ?? [],
+      eventCounts: incoming.eventCounts ?? previous.eventCounts ?? {},
         loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
         visitStreak: incoming.visitStreak ?? previous.visitStreak ?? 0,
         streakCalendar: incoming.streakCalendar ?? previous.streakCalendar ?? null,
@@ -754,6 +756,7 @@ function applyHomePayload(home) {
         idlePullCount: model.serverState.idlePullCount ?? 0,
         achievements: model.serverState.achievements || [],
         achievementPages: model.serverState.achievementPages || [],
+        eventCounts: model.serverState.eventCounts || {},
       },
     }));
     prefetchAvatars(home.state.avatars);
@@ -2038,8 +2041,9 @@ async function consumeInboundLeague() {
 
 function leagueFaceMarkup(entry = {}) {
   const avatar = (model.serverState?.avatars || model.gameConfig?.avatars || []).find(({ id }) => id === entry.avatarId);
+  const party = factionParty(entry.factionId);
   const streak = Number(entry.visitStreak) >= 3 ? Number(entry.visitStreak) : 0;
-  return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
+  return `<span class="collector-face">${avatar?.art ? `<img src="${avatarUrl(avatar)}" alt="">` : ""}${letterChipMarkup(party)}${streak ? `<em class="collector-streak"><b class="streak-count">${streak}</b>${streakFireMarkup()}</em>` : ""}</span>`;
 }
 
 // Leagues: one per player (server-enforced). The room is cached per session token so Community opens
@@ -2856,7 +2860,7 @@ function renderProgression({ announce = false } = {}) {
   elements.levelNumber.textContent = `רמה ${progression.level}/${progression.totalLevels}`;
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
   const streak = Number(model.serverState?.visitStreak) || 0;
-  const showStreak = streak >= 1;
+  const showStreak = streak >= 3;
   elements.levelRank.textContent = progression.rank;
   if (elements.levelStreak) {
     elements.levelStreak.hidden = !showStreak;
@@ -4753,8 +4757,8 @@ function localAchievementMeasures() {
   return {
     idlePulls: model.serverState?.idlePullCount || unique,
     unique,
-    sources: model.activity?.counts?.source_opened ?? 0,
-    shares: model.activity?.counts?.share_created ?? 0,
+    sources: Number(model.serverState?.eventCounts?.source_opened) || 0,
+    shares: Number(model.serverState?.eventCounts?.share_created) || 0,
     leaders: leaders.length,
     leadersTotal: cards.filter((card) => card.releaseSetId === "party-leaders").length || 1,
     bestSetOwned: bestSet?.owned ?? 0,
@@ -4870,10 +4874,10 @@ function achievementList() {
   });
 }
 
-/** Server page summary (tier order); falls back to counting the list. */
+/** Unlocked badges on that tier's row, over the badges that exist on the row.
+ *  A stored page summary is a different set: the row can already show a badge
+ *  earned when a local measure met the target. */
 function achievementPageList(badges = achievementList()) {
-  const server = model.serverState?.achievementPages;
-  if (server?.length) return server;
   return ACHIEVEMENT_TIER_ORDER
     .map((tier) => {
       const items = badges.filter((badge) => achievementTier(badge) === tier);
@@ -5019,11 +5023,51 @@ function tradeBoardPagerMarkup(page, pages, remaining) {
     <button type="button" data-page-target="trades" data-page="${Math.min(pages - 1, page + 1)}" ${page === pages - 1 ? "disabled" : ""}>עוד ${nextCount}</button>`;
 }
 
+let tradeListRefresh = null;
+
+function scheduleTradeListRefresh(pending) {
+  if (!pending || tradeListRefresh) return;
+  tradeListRefresh = pending.finally(() => {
+    tradeListRefresh = null;
+    renderTradeBoard();
+  }).catch(() => {});
+}
+
+/**
+ * Server inventory already in memory. A localStorage cache (stateFreshAt 0)
+ * is not current: wait for the home fetch already in flight, and do not start
+ * another one. Null means that fetch has not landed yet.
+ */
+function currentTradeInventory() {
+  if (stateFreshAt && model.serverState?.inventory) return model.serverState.inventory;
+  if (homeHydrate) {
+    scheduleTradeListRefresh(homeHydrate);
+    return null;
+  }
+  return model.serverState?.inventory || {};
+}
+
+function listedOpenTrades() {
+  const inventory = currentTradeInventory();
+  const trades = Array.isArray(model.trades) ? model.trades : [];
+  const open = inventory
+    ? offersForTradeList(trades, inventory)
+    : trades.filter((trade) => trade.status === "open" && trade.ownedByCurrent);
+  return open.filter((trade) => tradeHasCards(trade));
+}
+
+function paintOpenTradeCount(offers) {
+  const openTab = document.querySelector("#community-tab-open-trades");
+  if (!openTab) return;
+  const openCount = offers.length;
+  openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";
+}
+
 function renderTradeBoard() {
   if (!elements.tradeBoard) return;
-  const openOffers = model.trades
-    .filter((trade) => trade.status === "open" && tradeHasCards(trade))
+  const openOffers = listedOpenTrades()
     .sort((left, right) => Number(right.ownedByCurrent) - Number(left.ownedByCurrent) || Number(right.canAccept) - Number(left.canAccept));
+  paintOpenTradeCount(openOffers);
   model.tradeBoardOffered = fillTradeBoardFilter(elements.tradeBoardOffered, openOffers, "offeredCardId", model.tradeBoardOffered);
   model.tradeBoardWanted = fillTradeBoardFilter(elements.tradeBoardWanted, openOffers, "wantedCardId", model.tradeBoardWanted);
   if (elements.tradeBoardToolbar) elements.tradeBoardToolbar.hidden = openOffers.length === 0;
@@ -5057,7 +5101,7 @@ function tradeRowMarkup(trade) {
   const hide = !trade.ownedByCurrent && trade.status === "open"
     ? `<button type="button" class="trade-offer-action" data-hide-trade="${trade.tradeId}">הסתר</button>`
     : "";
-  const accept = !trade.ownedByCurrent && trade.canAccept
+  const accept = !trade.ownedByCurrent && holdsWantedCard(model.serverState?.inventory, trade.wantedCardId)
     ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}">קבלה</button>`
     : "";
   const action = trade.ownedByCurrent
@@ -5120,10 +5164,14 @@ function prizeCueLine(prize) {
   if (!prize?.reward) return "";
   if (prize.waiting && !prize.opened) {
     if (prize.reward.kind === "pack") {
-      return prize.claimed ? "חבילה מחכה. לחיצה כפולה פותחת אותה." : "היום מחכה חבילה.";
+      return prize.claimed
+        ? "חבילה מחכה. לחיצה כפולה פותחת אותה."
+        : "היום מחכה חבילה. לחיצה כפולה פותחת אותה.";
     }
     const name = streakPrizeName(prize.reward);
-    return prize.claimed ? `${name} מחכה. לחיצה כפולה פותחת אותו.` : `היום מחכה ${name}.`;
+    return prize.claimed
+      ? `${name} מחכה. לחיצה כפולה פותחת אותו.`
+      : `היום מחכה ${name}. לחיצה כפולה פותחת אותו.`;
   }
   if (!prize.wait) return "";
   return `${streakWaitLine(prize.wait)} מגיע הפרס הבא והוא ${streakPrizeName(prize.reward)}.`;
@@ -5555,6 +5603,37 @@ function renderFactionMembers() {
     : '<p class="work-note">עדיין אף אחד לא בחר במפלגה הזו.</p>';
 }
 
+function partyBallotMarkup(partyId) {
+  const party = factionParty(partyId) || { id: partyId };
+  const name = party.displayNameHe || partyId;
+  const art = factionLetterArt(party);
+  const letters = factionLetters(party);
+  const mark = art
+    ? `<img src="/design-assets/${encodeURIComponent(art)}" alt="${escapeHtml(letters || name)}">`
+    : `<i>${escapeHtml(letters || "")}</i>`;
+  return `<span class="faction-party-ballot" title="${escapeHtml(name)}">${mark}</span>`;
+}
+
+function partyStandingsMarkup(factions, mine) {
+  // The ranking list is tallest first. The chart reads left to right, low to high, like האתגר.
+  const ordered = [...factions].sort((left, right) => (
+    (Number(left.stars) || 0) - (Number(right.stars) || 0)
+    || String(left.partyId || "").localeCompare(String(right.partyId || ""))
+  ));
+  const peak = Math.max(1, ...ordered.map((faction) => Number(faction.stars) || 0));
+  const cols = ordered.map((faction, index) => {
+    const stars = Number(faction.stars) || 0;
+    const you = Boolean(mine) && faction.partyId === mine;
+    const height = stars ? Math.max(8, Math.round((stars / peak) * 100)) : 0;
+    const bar = you
+      ? `<b style="height:${height}%; animation-delay:${index * 40}ms"></b>`
+      : `<span class="faction-party-bar" style="height:${height}%; animation-delay:${index * 40}ms"></span>`;
+    return `<div class="challenge-hist-col faction-party-col${you ? " you" : ""}" style="--bar:${height}%">${partyBallotMarkup(faction.partyId)}${bar}</div>`;
+  }).join("");
+  const axis = ordered.map((faction) => `<span>${escapeHtml(`${Number(faction.stars) || 0}★`)}</span>`).join("");
+  return `<div class="faction-hist challenge-hist"><div class="challenge-hist-plot faction-hist-plot faction-party-plot" dir="ltr">${cols}</div><div class="challenge-hist-axis" dir="ltr">${axis}</div></div>`;
+}
+
 function renderAllParties() {
   if (!elements.factionMembers) return;
   const title = document.querySelector("#faction-panel-title");
@@ -5567,13 +5646,9 @@ function renderAllParties() {
     note.innerHTML = mine ? "" : noFactionNote();
   }
   if (membersTitle) membersTitle.hidden = false;
-  const scores = (model.leaderboards?.factions || []).map((faction) => ({
-    stars: faction.stars || 0,
-    current: Boolean(mine) && faction.partyId === mine,
-  }));
-  const bins = starContributionBins(scores);
-  elements.factionMembers.innerHTML = bins.length
-    ? factionHistMarkup(bins)
+  const factions = model.leaderboards?.factions || [];
+  elements.factionMembers.innerHTML = factions.length
+    ? partyStandingsMarkup(factions, mine)
     : '<p class="work-note">עדיין אין מפלגה עם כוכבים.</p>';
 }
 
@@ -5809,9 +5884,6 @@ function renderGrowth() {
   }
 
   syncCommunityPage();
-  const openCount = model.trades.filter((trade) => trade.status === "open" && !trade.ownedByCurrent).length;
-  const openTab = document.querySelector("#community-tab-open-trades");
-  if (openTab) openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";
   const boardHint = document.querySelector("#trade-board-hint");
   if (boardHint) {
     boardHint.hidden = true;
@@ -8306,7 +8378,6 @@ document.querySelector(".today-docket").addEventListener("click", (event) => {
   }
   elements.navButtons.find((button) => button.dataset.nav === hook.dataset.todayNav)?.click();
   if (hook.dataset.communityPage) renderGrowth();
-  if (hook.dataset.communityPage === "challenge") refreshDailyChallenge();
 });
 elements.tradeOfferedSet.addEventListener("change", renderGrowth);
 elements.tradeWantedSet.addEventListener("change", renderGrowth);
@@ -8583,7 +8654,6 @@ elements.communityTabs.addEventListener("click", (event) => {
   model.communityPage = button.dataset.communityPage;
   model.communitySection = communitySectionFor(button.dataset.communityPage);
   renderGrowth();
-  if (model.communityPage === "challenge") refreshDailyChallenge();
   pollWatchedTrade().catch(() => {});
 });
 

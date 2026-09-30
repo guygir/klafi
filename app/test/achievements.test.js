@@ -168,6 +168,28 @@ test("pages: every page is open; counts per tier", () => {
   assert.ok(state.achievements.every((badge) => !("locked" in badge)), "no page locking");
 });
 
+test("easy tab fraction is unlocked badges on that row over easy badges that exist", async () => {
+  const javascript = await readFile(path.join(appRoot, "public/app.js"), "utf8");
+  const helpers = javascript.slice(javascript.indexOf("const ACHIEVEMENT_TIER_ORDER"), javascript.indexOf("function hebrewBadge("));
+  const counter = javascript.slice(javascript.indexOf("function achievementPageList("), javascript.indexOf("function visibleEarnedBadges("));
+  assert.doesNotMatch(counter, /achievementPages/, "the fraction counts the row, not the stored page summary");
+  assert.match(javascript, /<small>\$\{item\.earned\}\/\$\{item\.total\}<\/small>/);
+  const achievementPageList = new Function(`${helpers}\n${counter}\nreturn achievementPageList;`)();
+  const row = [
+    ...Array.from({ length: 8 }, (_, index) => ({ id: `easy-${index}`, tier: "simple", earned: true })),
+    { id: "easy-hidden", tier: "simple", earned: false, hidden: true },
+    { id: "medium-one", tier: "medium", earned: true },
+  ];
+  const storedSummary = { tier: "simple", total: 9, earned: 6 };
+  const easy = achievementPageList(row).find(({ tier }) => tier === "simple");
+  assert.deepEqual(easy, { tier: "simple", total: 9, earned: 8 });
+  assert.notEqual(easy.earned, storedSummary.earned);
+  const measures = javascript.slice(javascript.indexOf("function localAchievementMeasures"), javascript.indexOf("function localAchievementList"));
+  assert.doesNotMatch(measures, /activity/);
+  assert.match(measures, /sources: Number\(model\.serverState\?\.eventCounts\?\.source_opened\) \|\| 0/);
+  assert.match(measures, /shares: Number\(model\.serverState\?\.eventCounts\?\.share_created\) \|\| 0/);
+});
+
 test("tier: missing or unknown is simple; Studio rows keep their tier", () => {
   assert.equal(normalizeAchievementDefinition({ id: "x", rule: "unique", target: 3 }).tier, "simple");
   assert.equal(normalizeAchievementDefinition({ id: "x", rule: "unique", tier: "legendary" }).tier, "simple");
@@ -223,6 +245,21 @@ async function boot(t) {
   const player = async () => (await api(running.base, "/api/session", { method: "POST" })).body.token;
   return { running, achievementsPath, player };
 }
+
+test("server: source and share badges count this session, not another player's events", async (t) => {
+  const { running, player } = await boot(t);
+  const [mine, other] = [await player(), await player()];
+  const cardId = allCards.find((card) => card.idleEligible && !card.eventOnly).id;
+  await api(running.base, "/api/debug/unlock-card", { token: mine, method: "POST", body: { cardId } });
+  const theirs = await api(running.base, "/api/events", { token: other, method: "POST", body: { type: "source_opened", cardId } });
+  assert.equal(theirs.status, 201);
+  const shared = await api(running.base, "/api/events", { token: mine, method: "POST", body: { type: "share_created", cardId } });
+  assert.equal(shared.status, 201);
+  const state = await api(running.base, "/api/state", { token: mine });
+  assert.deepEqual(state.body.eventCounts, { source_opened: 0, share_created: 1 });
+  assert.equal(state.body.achievements.find(({ id }) => id === "source-check").earned, false);
+  assert.equal(state.body.achievements.find(({ id }) => id === "share-pull").earned, true);
+});
 
 test("server: state carries tiers + pages; a write stamps earnedAt and it survives the measure dropping", async (t) => {
   const { running, player } = await boot(t);

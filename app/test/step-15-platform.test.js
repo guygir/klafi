@@ -121,7 +121,7 @@ test("rooms use a short code, paper QR, shared stars, and stop at 32", async (t)
   assert.equal(created.body.league.seasonLabel, undefined, "leagues have no seasons: no month stamp");
   assert.match(created.body.league.joinUrl, /\?league=/);
   assert.match(created.body.league.qrSvg, /<svg /);
-  assert.equal(created.body.league.members[0].factionId, undefined);
+  assert.equal(created.body.league.members[0].factionId, null);
   assert.equal(typeof created.body.league.members[0].stars, "number");
 
   const guest = await api(running.base, "/api/session", { method: "POST" });

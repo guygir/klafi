@@ -43,6 +43,7 @@ export function publicLeague(league, members, currentToken, origin) {
       ownedUnique: entry.ownedUnique,
       current: entry.token === currentToken,
       avatarId: entry.avatarId || "kid-boy",
+      factionId: entry.factionId || null,
       loginStreak: entry.loginStreak || 0,
       visitStreak: entry.visitStreak || 0,
       rankLevel: entry.rankLevel || 1,

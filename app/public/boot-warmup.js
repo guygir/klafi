@@ -71,8 +71,14 @@ const ballotChips = [
   "ballot-letter-rse.png",
 ];
 window.__kalpiBallotChips = ballotChips;
-for (const chip of ballotChips) {
-  const image = new Image();
-  image.decoding = "async";
-  image.src = `/design-assets/${encodeURIComponent(chip)}`;
-}
+// Letters and ballot paper wait until the pack count and the other critical
+// reads have answered, so they are the last prefetch on entry.
+const crucialWarmup = [home, idleSettle, window.__kalpiWarmup.shell, window.__kalpiWarmup.catalog, window.__kalpiWarmup.holders].filter(Boolean);
+Promise.all(crucialWarmup.map((job) => Promise.resolve(job).catch(() => null))).then(() => {
+  for (const chip of ["ballot-paper.png", ...ballotChips]) {
+    const image = new Image();
+    image.decoding = "async";
+    image.src = `/design-assets/${encodeURIComponent(chip)}`;
+  }
+  window.__kalpiPaintBallotLeaves?.();
+});
