@@ -82,6 +82,7 @@ test("slim home state includes inventory for binder reads", () => {
   assert.equal(state.factionId, null);
   assert.deepEqual(state.pendingTradeNotices, []);
   assert.equal(state.visitStreak, 0);
+  assert.deepEqual(state.eventCounts, { source_opened: 0, share_created: 0 });
   assert.equal(state.streakCalendar.day, 0);
   assert.equal(state.streakCalendar.showPopup, false);
   assert.equal(state.streakCalendar.days.length, 35);

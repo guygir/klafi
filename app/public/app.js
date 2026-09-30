@@ -722,6 +722,7 @@ function applyHomePayload(home) {
         : (incoming.unseenCount ?? previous.unseenCount ?? 0),
       achievements: incoming.achievements ?? previous.achievements ?? [],
       achievementPages: incoming.achievementPages ?? previous.achievementPages ?? [],
+      eventCounts: incoming.eventCounts ?? previous.eventCounts ?? {},
         loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
         visitStreak: incoming.visitStreak ?? previous.visitStreak ?? 0,
         streakCalendar: incoming.streakCalendar ?? previous.streakCalendar ?? null,
@@ -755,6 +756,7 @@ function applyHomePayload(home) {
         idlePullCount: model.serverState.idlePullCount ?? 0,
         achievements: model.serverState.achievements || [],
         achievementPages: model.serverState.achievementPages || [],
+        eventCounts: model.serverState.eventCounts || {},
       },
     }));
     prefetchAvatars(home.state.avatars);
@@ -4726,8 +4728,8 @@ function localAchievementMeasures() {
   return {
     idlePulls: model.serverState?.idlePullCount || unique,
     unique,
-    sources: model.activity?.counts?.source_opened ?? 0,
-    shares: model.activity?.counts?.share_created ?? 0,
+    sources: Number(model.serverState?.eventCounts?.source_opened) || 0,
+    shares: Number(model.serverState?.eventCounts?.share_created) || 0,
     leaders: leaders.length,
     leadersTotal: cards.filter((card) => card.releaseSetId === "party-leaders").length || 1,
     bestSetOwned: bestSet?.owned ?? 0,

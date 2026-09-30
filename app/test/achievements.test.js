@@ -184,6 +184,10 @@ test("easy tab fraction is unlocked badges on that row over easy badges that exi
   const easy = achievementPageList(row).find(({ tier }) => tier === "simple");
   assert.deepEqual(easy, { tier: "simple", total: 9, earned: 8 });
   assert.notEqual(easy.earned, storedSummary.earned);
+  const measures = javascript.slice(javascript.indexOf("function localAchievementMeasures"), javascript.indexOf("function localAchievementList"));
+  assert.doesNotMatch(measures, /activity/);
+  assert.match(measures, /sources: Number\(model\.serverState\?\.eventCounts\?\.source_opened\) \|\| 0/);
+  assert.match(measures, /shares: Number\(model\.serverState\?\.eventCounts\?\.share_created\) \|\| 0/);
 });
 
 test("tier: missing or unknown is simple; Studio rows keep their tier", () => {
@@ -241,6 +245,21 @@ async function boot(t) {
   const player = async () => (await api(running.base, "/api/session", { method: "POST" })).body.token;
   return { running, achievementsPath, player };
 }
+
+test("server: source and share badges count this session, not another player's events", async (t) => {
+  const { running, player } = await boot(t);
+  const [mine, other] = [await player(), await player()];
+  const cardId = allCards.find((card) => card.idleEligible && !card.eventOnly).id;
+  await api(running.base, "/api/debug/unlock-card", { token: mine, method: "POST", body: { cardId } });
+  const theirs = await api(running.base, "/api/events", { token: other, method: "POST", body: { type: "source_opened", cardId } });
+  assert.equal(theirs.status, 201);
+  const shared = await api(running.base, "/api/events", { token: mine, method: "POST", body: { type: "share_created", cardId } });
+  assert.equal(shared.status, 201);
+  const state = await api(running.base, "/api/state", { token: mine });
+  assert.deepEqual(state.body.eventCounts, { source_opened: 0, share_created: 1 });
+  assert.equal(state.body.achievements.find(({ id }) => id === "source-check").earned, false);
+  assert.equal(state.body.achievements.find(({ id }) => id === "share-pull").earned, true);
+});
 
 test("server: state carries tiers + pages; a write stamps earnedAt and it survives the measure dropping", async (t) => {
   const { running, player } = await boot(t);

@@ -133,6 +133,7 @@ export function sessionFromHomeRow(row) {
     streakCalendarAckDay: extras.streakCalendarAckDay || null,
     streakPrizeSkipped: Boolean(extras.streakPrizeSkipped),
     stateRevision: Number(extras.stateRevision) || 0,
+    eventCounts: extras.eventCounts || {},
   };
 }
 
