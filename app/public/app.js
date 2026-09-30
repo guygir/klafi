@@ -13,6 +13,7 @@ import {
 import { confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
+import { holdsWantedCard, offersForTradeList } from "./trade-list.js";
 import {
   exitWalkoutSunburst,
   readSunburstRarityOverride,
@@ -4991,11 +4992,51 @@ function tradeBoardPagerMarkup(page, pages, remaining) {
     <button type="button" data-page-target="trades" data-page="${Math.min(pages - 1, page + 1)}" ${page === pages - 1 ? "disabled" : ""}>עוד ${nextCount}</button>`;
 }
 
+let tradeListRefresh = null;
+
+function scheduleTradeListRefresh(pending) {
+  if (!pending || tradeListRefresh) return;
+  tradeListRefresh = pending.finally(() => {
+    tradeListRefresh = null;
+    renderTradeBoard();
+  }).catch(() => {});
+}
+
+/**
+ * Server inventory already in memory. A localStorage cache (stateFreshAt 0)
+ * is not current: wait for the home fetch already in flight, and do not start
+ * another one. Null means that fetch has not landed yet.
+ */
+function currentTradeInventory() {
+  if (stateFreshAt && model.serverState?.inventory) return model.serverState.inventory;
+  if (homeHydrate) {
+    scheduleTradeListRefresh(homeHydrate);
+    return null;
+  }
+  return model.serverState?.inventory || {};
+}
+
+function listedOpenTrades() {
+  const inventory = currentTradeInventory();
+  const trades = Array.isArray(model.trades) ? model.trades : [];
+  const open = inventory
+    ? offersForTradeList(trades, inventory)
+    : trades.filter((trade) => trade.status === "open" && trade.ownedByCurrent);
+  return open.filter((trade) => tradeHasCards(trade));
+}
+
+function paintOpenTradeCount(offers) {
+  const openTab = document.querySelector("#community-tab-open-trades");
+  if (!openTab) return;
+  const openCount = offers.length;
+  openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";
+}
+
 function renderTradeBoard() {
   if (!elements.tradeBoard) return;
-  const openOffers = model.trades
-    .filter((trade) => trade.status === "open" && tradeHasCards(trade))
+  const openOffers = listedOpenTrades()
     .sort((left, right) => Number(right.ownedByCurrent) - Number(left.ownedByCurrent) || Number(right.canAccept) - Number(left.canAccept));
+  paintOpenTradeCount(openOffers);
   model.tradeBoardOffered = fillTradeBoardFilter(elements.tradeBoardOffered, openOffers, "offeredCardId", model.tradeBoardOffered);
   model.tradeBoardWanted = fillTradeBoardFilter(elements.tradeBoardWanted, openOffers, "wantedCardId", model.tradeBoardWanted);
   if (elements.tradeBoardToolbar) elements.tradeBoardToolbar.hidden = openOffers.length === 0;
@@ -5029,7 +5070,7 @@ function tradeRowMarkup(trade) {
   const hide = !trade.ownedByCurrent && trade.status === "open"
     ? `<button type="button" class="trade-offer-action" data-hide-trade="${trade.tradeId}">הסתר</button>`
     : "";
-  const accept = !trade.ownedByCurrent && trade.canAccept
+  const accept = !trade.ownedByCurrent && holdsWantedCard(model.serverState?.inventory, trade.wantedCardId)
     ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}">קבלה</button>`
     : "";
   const action = trade.ownedByCurrent
@@ -5803,9 +5844,6 @@ function renderGrowth() {
   }
 
   syncCommunityPage();
-  const openCount = model.trades.filter((trade) => trade.status === "open" && !trade.ownedByCurrent).length;
-  const openTab = document.querySelector("#community-tab-open-trades");
-  if (openTab) openTab.textContent = openCount ? `הצעות פתוחות · ${openCount}` : "הצעות פתוחות";
   const boardHint = document.querySelector("#trade-board-hint");
   if (boardHint) {
     boardHint.hidden = true;
