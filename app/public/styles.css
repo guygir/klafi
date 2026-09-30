@@ -4944,6 +4944,75 @@ body {
   width: min(28px, 100%);
 }
 
+#faction-members .faction-hist-plot {
+  height: min(124px, 21dvh);
+  padding-top: 48px;
+}
+
+#faction-members .faction-party-ballot {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--bar, 0%) + 12px);
+  z-index: 1;
+  display: block;
+  width: 16px;
+  height: 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid #111;
+  border-radius: 2px;
+  background: #ead9b4 url("/design-assets/ballot-paper.png") center / cover;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+#faction-members .faction-party-ballot img,
+#faction-members .faction-party-ballot i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 2px 1px;
+  box-sizing: border-box;
+  object-fit: contain;
+  color: #1a2540;
+  font: 700 8px/1 "Noto Serif Hebrew", "IBM Plex Sans Hebrew", sans-serif;
+  font-style: normal;
+  text-align: center;
+}
+
+#faction-members .faction-party-col.you > b {
+  font-weight: 800;
+}
+
+#faction-members .faction-party-col.you b::before {
+  content: none;
+}
+
+#faction-members .faction-party-bar {
+  position: relative;
+  display: block;
+  width: min(28px, 100%);
+  margin-inline: auto;
+  min-height: 0;
+  border-radius: 3px 3px 0 0;
+  background: #9aa39b;
+  font-weight: 400;
+  transform: scaleY(0);
+  transform-origin: bottom;
+  animation: fermi-bar-rise 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#faction-members .faction-party-bar::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 1px;
+  height: 8px;
+  background: var(--ink);
+  transform: translateX(-50%);
+}
+
 .faction-hist .challenge-hist-axis span {
   overflow: hidden;
   color: inherit;
@@ -5204,7 +5273,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .challenge-hist-col b,
   .challenge-hist-col.you b::before,
-  .faction-chart-row > i > b {
+  .faction-chart-row > i > b,
+  #faction-members .faction-party-bar {
     animation: none;
     transform: none;
   }

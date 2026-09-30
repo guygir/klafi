@@ -86,7 +86,7 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.equal(PAGE_GUIDES.home.length, 7);
   assert.equal(PAGE_GUIDES.binder.length, 4);
   assert.equal(PAGE_GUIDES.achievements.length, 2);
-  assert.equal(PAGE_GUIDES.growth.length, 4);
+  assert.equal(PAGE_GUIDES.growth.length, 5);
   assert.equal(PAGE_GUIDES.card.length, 2);
   assert.equal(PAGE_GUIDES.dialog.length, 2);
   assert.match(PAGE_GUIDES.home[0].title, /המטרה/);
@@ -167,11 +167,14 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.growth[1].body, /הצעה להחלפה/);
   assert.match(PAGE_GUIDES.growth[2].body, /הצעות/);
   assert.match(PAGE_GUIDES.growth[2].body, /לפלטר/);
-  assert.match(PAGE_GUIDES.growth[3].ring, /community-section-race|community-tab-leagues|community-tab-challenge/);
+  assert.match(PAGE_GUIDES.growth[3].ring, /community-section-race/);
+  assert.doesNotMatch(PAGE_GUIDES.growth[3].ring, /community-tab-leagues|community-tab-challenge/);
   assert.match(PAGE_GUIDES.growth[3].body, /ליגות/);
-  assert.match(PAGE_GUIDES.growth[3].body, /האתגר היומי/);
-  assert.match(PAGE_GUIDES.growth[3].body, /מפלגות/);
-  assert.match(PAGE_GUIDES.growth[3].body, /אולי אלו אתם/);
+  assert.match(PAGE_GUIDES.growth[3].body, /אספנים/);
+  assert.match(PAGE_GUIDES.growth[4].ring, /community-section-party/);
+  assert.match(PAGE_GUIDES.growth[4].body, /האתגר/);
+  assert.match(PAGE_GUIDES.growth[4].body, /מפלגות/);
+  assert.match(PAGE_GUIDES.growth[4].body, /אולי אלו אתם/);
   assert.match(PAGE_GUIDES.achievements[0].ring, /achievement-tiers/);
   assert.match(PAGE_GUIDES.achievements[0].body, /הקלים/);
   assert.match(PAGE_GUIDES.achievements[0].body, /המשימות על הפרק/);
