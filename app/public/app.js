@@ -5580,8 +5580,13 @@ function partyBallotMarkup(partyId) {
 }
 
 function partyStandingsMarkup(factions, mine) {
-  const peak = Math.max(1, ...factions.map((faction) => Number(faction.stars) || 0));
-  const cols = factions.map((faction, index) => {
+  // The ranking list is tallest first. The chart reads left to right, low to high, like האתגר.
+  const ordered = [...factions].sort((left, right) => (
+    (Number(left.stars) || 0) - (Number(right.stars) || 0)
+    || String(left.partyId || "").localeCompare(String(right.partyId || ""))
+  ));
+  const peak = Math.max(1, ...ordered.map((faction) => Number(faction.stars) || 0));
+  const cols = ordered.map((faction, index) => {
     const stars = Number(faction.stars) || 0;
     const you = Boolean(mine) && faction.partyId === mine;
     const height = stars ? Math.max(8, Math.round((stars / peak) * 100)) : 0;
@@ -5590,7 +5595,7 @@ function partyStandingsMarkup(factions, mine) {
       : `<span class="faction-party-bar" style="height:${height}%; animation-delay:${index * 40}ms"></span>`;
     return `<div class="challenge-hist-col faction-party-col${you ? " you" : ""}" style="--bar:${height}%">${partyBallotMarkup(faction.partyId)}${bar}</div>`;
   }).join("");
-  const axis = factions.map((faction) => `<span>${escapeHtml(`${Number(faction.stars) || 0}★`)}</span>`).join("");
+  const axis = ordered.map((faction) => `<span>${escapeHtml(`${Number(faction.stars) || 0}★`)}</span>`).join("");
   return `<div class="faction-hist challenge-hist"><div class="challenge-hist-plot faction-hist-plot faction-party-plot" dir="ltr">${cols}</div><div class="challenge-hist-axis" dir="ltr">${axis}</div></div>`;
 }
 
