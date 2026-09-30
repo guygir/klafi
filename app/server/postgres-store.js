@@ -1159,6 +1159,7 @@ export class PostgresStore {
       `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
               s.avatar_id, s.faction_id, s.highest_rank,
               COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+              COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
               s.extras->>'publicBinderSlug' AS binder_slug,
               COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
        FROM kalpi_sessions s
@@ -1177,6 +1178,7 @@ export class PostgresStore {
           avatarId: row.avatar_id || "kid-boy",
           factionId: row.faction_id || null,
           loginStreak: row.login_streak || 0,
+          visitStreak: row.visit_streak || 0,
           rankLevel: row.highest_rank || 1,
           binderSlug: row.binder_slug || null,
         };
@@ -1197,6 +1199,7 @@ export class PostgresStore {
       `SELECT i.session_token, s.display_name, i.card_id, i.acquired_by,
               s.avatar_id, s.faction_id, s.highest_rank,
               COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+              COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
               s.extras->>'publicBinderSlug' AS binder_slug
        FROM kalpi_instances i
        JOIN kalpi_sessions s ON s.token = i.session_token
@@ -1213,6 +1216,7 @@ export class PostgresStore {
         avatarId: row.avatar_id || "kid-boy",
         factionId: row.faction_id || null,
         loginStreak: row.login_streak || 0,
+        visitStreak: row.visit_streak || 0,
         rankLevel: row.highest_rank || 1,
         binderSlug: row.binder_slug || null,
         cards: 0,
@@ -1231,6 +1235,7 @@ export class PostgresStore {
         avatarId: current?.avatar_id || "kid-boy",
         factionId: current?.faction_id || null,
         loginStreak: current?.login_streak || 0,
+        visitStreak: current?.visit_streak || 0,
         rankLevel: current?.highest_rank || 1,
         binderSlug: current?.binder_slug || null,
         cards: 0,
@@ -1412,6 +1417,7 @@ export class PostgresStore {
     const result = await this.pool.query(
       `SELECT s.token, s.display_name, s.avatar_id, s.highest_rank,
               COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+              COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
               COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
        FROM kalpi_sessions s
        LEFT JOIN kalpi_inventory i ON i.session_token = s.token
@@ -1430,6 +1436,7 @@ export class PostgresStore {
         label: row?.display_name || "שחקן קְלָפִי",
         avatarId: row?.avatar_id || "kid-boy",
         loginStreak: row?.login_streak || 0,
+        visitStreak: row?.visit_streak || 0,
         rankLevel: row?.highest_rank || 1,
         ...leagueMemberScore(session, cardsById),
       };

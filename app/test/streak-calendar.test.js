@@ -27,6 +27,7 @@ test("visit streak counts Jerusalem days and resets after a gap", () => {
   assert.equal(session.visitStreak, 2);
   assert.equal(applyVisitStreak(session, monday + 3 * DAY).stamped, true);
   assert.equal(session.visitStreak, 1);
+  assert.equal(session.bestVisitStreak, 2);
   assert.equal(session.visitStreakClaims.length, 0);
 });
 

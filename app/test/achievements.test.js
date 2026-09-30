@@ -61,6 +61,10 @@ test("achievements.json: pages 9 / 9 / 8 rows (hard expands to one badge per pul
   assert.deepEqual(byTier.medium, ["collector-ten", "three-parties", "twenty-stars", "trade-match", "rank-three", "streak-seven", "league-member", "rare-three", "streak-prize-skip"]);
   assert.deepEqual(byTier.hard, ["set-complete", "commons-complete", "five-leaders", "fifty-stars", "trade-three", "numbered-first", "streak-thirty", "ten-copies"]);
   assert.equal(catalog.find(({ id }) => id === "rare-three").target, 3);
+  assert.equal(catalog.find(({ id }) => id === "streak-seven").nameHe, "שבוע רצוף");
+  assert.equal(catalog.find(({ id }) => id === "streak-seven").descriptionHe, "בקרו שבעה ימים ברצף.");
+  assert.equal(catalog.find(({ id }) => id === "streak-thirty").nameHe, "חודש רצוף");
+  assert.equal(catalog.find(({ id }) => id === "streak-thirty").descriptionHe, "בקרו שלושים ימים ברצף.");
   assert.deepEqual(catalog.find(({ id }) => id === "ten-copies"), { id: "ten-copies", nameHe: "עשרה עותקים", descriptionHe: "אספו עשרה עותקים של אותו קלף.", rule: "duplicate", target: 10, tier: "hard" });
   for (const removed of ["favorite-first", "source-three", "event-first", "event-three", "binder-half", "set-chase", "league-top", "first-rare", "share-three", "streak-two"]) {
     assert.ok(!catalog.some(({ id }) => id === removed), `${removed} is not in the catalog`);
@@ -105,8 +109,9 @@ test("set badges: one per pullable release set, named from the release sets, in 
 });
 
 test("new measures read existing session data", () => {
-  assert.equal(achievementMeasures(session({ loginStreak: 3, bestLoginStreak: 9 }), CARDS).streak, 9);
-  assert.equal(achievementMeasures(session({ loginStreak: 4 }), CARDS).streak, 4, "old sessions without a best use the current run");
+  assert.equal(achievementMeasures(session({ visitStreak: 3, bestVisitStreak: 9, loginStreak: 40, bestLoginStreak: 40 }), CARDS).streak, 9);
+  assert.equal(achievementMeasures(session({ visitStreak: 4 }), CARDS).streak, 4, "old sessions without a best use the current visit run");
+  assert.equal(achievementMeasures(session({ loginStreak: 12, bestLoginStreak: 20 }), CARDS).streak, 0, "the pack-open streak is not the badge");
   assert.equal(achievementMeasures(session({ factionId: "A" }), CARDS).faction, 1);
   assert.equal(achievementMeasures(session(), CARDS).faction, 0);
   assert.equal(hasCustomProfile(session()), false, "default «שחקן xxxx» + kid-boy is not custom");
@@ -327,6 +332,10 @@ test("client: three open tabs, tier art, no unlock toast, copy + icon for every 
   assert.match(tips, /ring: "#achievement-tiers"/);
   assert.match(tips, /ring: "#achievement-grid, #achievements-empty"/);
   assert.match(tips, /שלושה עמודים של הישגים אפשריים: הקלים, הבינוניים והקשים/);
+  assert.match(javascript, /"streak-seven": \["שבוע רצוף", "בקרו שבעה ימים ברצף\."\]/);
+  assert.match(javascript, /"streak-thirty": \["חודש רצוף", "בקרו שלושים ימים ברצף\."\]/);
+  assert.doesNotMatch(javascript, /פתחו קלפים שבעה/);
+  assert.doesNotMatch(javascript, /פתחו קלפים שלושים/);
   assert.match(css, /\.achievement-tiers button \{\s*display: inline-flex;\s*flex-flow: row nowrap;\s*align-items: center;/);
   assert.match(css, /\.achievement-tiers button small \{\s*font: 600 12px\/1 ui-monospace/);
   const art = javascript.slice(javascript.indexOf("function badgeArtwork("), javascript.indexOf("const ACHIEVEMENT_RULES"));

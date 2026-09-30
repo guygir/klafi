@@ -118,7 +118,7 @@
     {
       "id": "streak-seven",
       "nameHe": "שבוע רצוף",
-      "descriptionHe": "פתחו קלפים שבעה ימים ברצף.",
+      "descriptionHe": "בקרו שבעה ימים ברצף.",
       "rule": "streak",
       "target": 7,
       "tier": "medium"
@@ -200,7 +200,7 @@
     {
       "id": "streak-thirty",
       "nameHe": "חודש רצוף",
-      "descriptionHe": "פתחו קלפים שלושים ימים ברצף.",
+      "descriptionHe": "בקרו שלושים ימים ברצף.",
       "rule": "streak",
       "target": 30,
       "tier": "hard"

@@ -564,6 +564,7 @@ export class JsonStore {
         avatarId: session.avatarId || "kid-boy",
         factionId: session.factionId || null,
         loginStreak: session.loginStreak || 0,
+        visitStreak: session.visitStreak || 0,
         rankLevel: session.highestRank || 1,
         binderSlug: session.publicBinderSlug || null,
       }))
@@ -582,6 +583,7 @@ export class JsonStore {
         avatarId: session.avatarId || "kid-boy",
         factionId: session.factionId || null,
         loginStreak: session.loginStreak || 0,
+        visitStreak: session.visitStreak || 0,
         rankLevel: session.highestRank || 1,
         binderSlug: session.publicBinderSlug || null,
         cards: dailyRaceScore(session.instances, day, targetPartyId, cardsById),
@@ -651,6 +653,7 @@ export class JsonStore {
         label: session?.displayName || "שחקן קְלָפִי",
         avatarId: session?.avatarId || "kid-boy",
         loginStreak: session?.loginStreak || 0,
+        visitStreak: session?.visitStreak || 0,
         rankLevel: session?.highestRank || 1,
         ...score,
       };
