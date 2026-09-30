@@ -1454,6 +1454,30 @@ function describeError(error) {
   return "האוסף נשמר. נסו שוב.";
 }
 
+/** Binder text uses the rarity mark's card-width unit, not a pixel floor. */
+function fitBinderTextLikeRarity(element, role, isFullart) {
+  const rarityCqw = isFullart ? 3.5 : 4.2;
+  const design = isFullart
+    ? { name: 8, party: rarityCqw, quote: 5.6 }
+    : { name: 6.4, party: rarityCqw, quote: 4.3 };
+  const start = design[role] ?? rarityCqw;
+  const slop = role === "quote" ? 0 : 1;
+  const fits = (cqw) => {
+    element.style.fontSize = `${cqw}cqw`;
+    return element.scrollHeight <= element.clientHeight + slop
+      && element.scrollWidth <= element.clientWidth + slop;
+  };
+  if (fits(start)) return;
+  let low = 1.5;
+  let high = start;
+  for (let index = 0; index < 12; index += 1) {
+    const mid = (low + high) / 2;
+    if (fits(mid)) low = mid;
+    else high = mid;
+  }
+  element.style.fontSize = `${fits(low) ? low : 1.5}cqw`;
+}
+
 function fitCardText(element) {
   const frame = element.closest(".kalpi-card");
   const isFullart = frame?.dataset.cardFrame === "fullart-v1";
@@ -1462,7 +1486,11 @@ function fitCardText(element) {
   const frameWidth = frame?.clientWidth ?? 0;
   if (!frameWidth || !element.clientWidth || !element.clientHeight) return;
   const role = element.dataset.fitCardText;
-  const scale = (isFullart
+  if (frame?.dataset.cardSurface === "binder") {
+    fitBinderTextLikeRarity(element, role, isFullart);
+    return;
+  }
+  let scale = (isFullart
     ? {
       quote: { low: 0.024, high: 0.058, floor: compact ? 6 : 7, ceiling: compact ? 13 : 20 },
       party: { low: 0.03, high: 0.042, floor: compact ? 8 : 10, ceiling: 12 },
@@ -4361,6 +4389,7 @@ function renderBinder() {
     sort: binderSortMode(),
     catalog: playerCards,
     acquiredAt: binderAcquiredAtMap(),
+    inventory,
   });
   binderView?.classList.toggle("binder-list", listMode);
   model.binderVisibleCount = ordered.length;

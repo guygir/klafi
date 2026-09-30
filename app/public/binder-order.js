@@ -4,7 +4,7 @@
  * when that instance has no pulledAt. Unowned cards are omitted: they have no date.
  */
 
-export const BINDER_SORTS = Object.freeze(["slot", "name", "date-new", "date-old", "rarity"]);
+export const BINDER_SORTS = Object.freeze(["slot", "name", "date-new", "date-old", "rarity", "copies"]);
 
 export const BINDER_SORT_LABELS = Object.freeze({
   slot: "מספר בסדרה",
@@ -12,6 +12,7 @@ export const BINDER_SORT_LABELS = Object.freeze({
   "date-new": "חדש",
   "date-old": "ישן",
   rarity: "נדירות",
+  copies: "כמות",
 });
 
 export function binderSortId(value) {
@@ -37,6 +38,13 @@ export function listSlotNumber(card) {
 
 function binderCardTitle(card) {
   return String(card?.titleHe || card?.hebrewTitle || card?.title || "");
+}
+
+/** Copies held. Missing keys and non-counts are 0 (a missing card). Never invent a count. */
+export function binderHeldCount(card, inventory) {
+  const count = Number(inventory?.[card?.id]);
+  if (!Number.isFinite(count) || count <= 0) return 0;
+  return count;
 }
 
 /** First time each release set appears in the catalog array. */
@@ -99,6 +107,9 @@ export function compareBinderCards(left, right, ctx) {
   } else if (sort === "rarity") {
     const rarity = raritySortRank(left.rarity) - raritySortRank(right.rarity);
     if (rarity) return rarity;
+  } else if (sort === "copies") {
+    const copies = binderHeldCount(right, ctx.inventory) - binderHeldCount(left, ctx.inventory);
+    if (copies) return copies;
   }
   return compareSeriesNumber(left, right, ctx);
 }
@@ -124,12 +135,13 @@ export function acquiredAtByCard(instances = [], inventory = null) {
   return out;
 }
 
-export function sortBinderCards(cards, { sort = "slot", catalog = cards, acquiredAt = {} } = {}) {
+export function sortBinderCards(cards, { sort = "slot", catalog = cards, acquiredAt = {}, inventory = {} } = {}) {
   const ctx = {
     sort: binderSortId(sort),
     releaseIndex: releaseIndexFromCatalog(catalog),
     catalogIndex: catalogIndex(catalog),
     acquiredAt,
+    inventory,
   };
   return [...(cards || [])].sort((left, right) => compareBinderCards(left, right, ctx));
 }
