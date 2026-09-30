@@ -248,8 +248,15 @@ test("slim community payload stays off the fat catalog", () => {
   const challenge = slimDailyChallenge({
     gameConfig: { parties: [{ id: "LIK", displayNameHe: "הליכוד" }, { id: "YSR", displayNameHe: "יש עתיד" }] },
   }, Date.parse("2026-09-18T12:00:00+03:00"));
-  assert.equal(challenge.targetPartyId, "LIK");
-  assert.equal(challenge.targetPartyNameHe, "הליכוד");
+  assert.equal(challenge.targetPartyId, null);
+  assert.equal(challenge.targetPartyNameHe, null);
+  assert.deepEqual(challenge.leaders, []);
+  const saved = slimDailyChallenge({
+    gameConfig: { parties: [{ id: "LIK", displayNameHe: "הליכוד" }, { id: "YSR", displayNameHe: "יש עתיד" }] },
+  }, Date.parse("2026-09-18T12:00:00+03:00"), "YSR");
+  assert.equal(saved.targetPartyId, "YSR");
+  assert.equal(saved.targetPartyNameHe, "יש עתיד");
+  assert.deepEqual(saved.leaders, []);
 });
 
 

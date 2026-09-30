@@ -297,15 +297,16 @@
         <div class="community-nav">
           <div id="community-sections" class="contained-tabs community-sections" role="tablist" aria-label="אזורי הקהילה">
             <button id="community-section-market" type="button" role="tab" aria-selected="true" aria-controls="community-tabs" data-community-section="market" class="active">החלפות</button>
-            <button id="community-section-race" type="button" role="tab" aria-selected="false" aria-controls="community-tabs" data-community-section="race">המרוץ</button>
+            <button id="community-section-race" type="button" role="tab" aria-selected="false" aria-controls="community-tabs" data-community-section="race">המירוץ</button>
+            <button id="community-section-party" type="button" role="tab" aria-selected="false" aria-controls="community-tabs" data-community-section="party">המפלגה שלי</button>
           </div>
           <div id="community-tabs" class="contained-tabs" role="tablist" aria-label="מסכי הקהילה" data-community-section="market">
             <button id="community-tab-trade" type="button" role="tab" aria-selected="true" aria-controls="community-panel-trade" tabindex="0" data-community-page="trade" data-community-section="market" class="active">החלפות</button>
             <button id="community-tab-open-trades" type="button" role="tab" aria-selected="false" aria-controls="community-panel-open-trades" tabindex="-1" data-community-page="open-trades" data-community-section="market">הצעות פתוחות</button>
             <button id="community-tab-leagues" type="button" role="tab" aria-selected="false" aria-controls="community-panel-leagues" tabindex="-1" data-community-page="leagues" data-community-section="race">ליגות</button>
             <button id="community-tab-collectors" type="button" role="tab" aria-selected="false" aria-controls="community-panel-collectors" tabindex="-1" data-community-page="collectors" data-community-section="race">אספנים</button>
-            <button id="community-tab-challenge" type="button" role="tab" aria-selected="false" aria-controls="community-panel-challenge" tabindex="-1" data-community-page="challenge" data-community-section="race">האתגר</button>
-            <button id="community-tab-faction" type="button" role="tab" aria-selected="false" aria-controls="community-panel-faction" tabindex="-1" data-community-page="faction" data-community-section="race">מפלגות</button>
+            <button id="community-tab-challenge" type="button" role="tab" aria-selected="false" aria-controls="community-panel-challenge" tabindex="-1" data-community-page="challenge" data-community-section="party">האתגר</button>
+            <button id="community-tab-faction" type="button" role="tab" aria-selected="false" aria-controls="community-panel-faction" tabindex="-1" data-community-page="faction" data-community-section="party">מפלגות</button>
           </div>
         </div>
         <div class="growth-grid">
@@ -380,14 +381,10 @@
           </article>
           <article id="community-panel-faction" class="work-card faction-desk" role="tabpanel" aria-labelledby="community-tab-faction" tabindex="0">
             <p class="work-kicker">מלחמת המפלגות</p>
-            <h2>לאיזו מפלגה ייכנסו כוכבי האוסף?</h2>
-            <div class="faction-pick-row">
-              <label class="field-label" for="faction-select">בחירה אנונימית</label>
-              <select id="faction-select"></select>
-              <button id="save-faction" class="primary-action" type="button">בחירה</button>
-            </div>
+            <h2 id="faction-panel-title">כוכבי כל המפלגות</h2>
+            <div id="faction-pick-note" class="no-faction-note" hidden></div>
             <p id="faction-cec-note" class="work-note">נקודות המפלגה מגיעות מכוכבי האוסף של מי שבחר בה.</p>
-            <h3 class="faction-board-title" id="faction-members-title">מי הביא הכי הרבה כוכבים למפלגה?</h3>
+            <h3 class="faction-board-title" id="faction-members-title">איך מתחלקים הכוכבים בין המפלגות?</h3>
             <div id="faction-members" class="faction-member-board" aria-live="polite"></div>
             <div id="faction-board" class="leaderboard-list" hidden></div>
           </article>
@@ -417,7 +414,12 @@
             <div id="league-rooms" class="league-rooms"></div>
           </article>
           <article id="community-panel-challenge" class="work-card daily-challenge-desk" role="tabpanel" aria-labelledby="community-tab-challenge" tabindex="0">
-            <p class="work-kicker">האתגר היומי</p>
+            <p class="work-kicker">האתגר</p>
+            <h2 id="challenge-panel-title">עוד לא בחרתם מפלגה.</h2>
+            <p id="challenge-party-hint" class="work-note">כדי לבחור מפלגה כנסו לפרופיל שלכם על ידי לחיצה על האוואטר</p>
+            <h3 class="faction-board-title" id="challenge-members-title" hidden>מי הביא הכי הרבה כוכבים למפלגה?</h3>
+            <div id="challenge-members" class="faction-member-board" aria-live="polite"></div>
+            <div hidden>
             <div class="challenge-hero">
               <div class="challenge-you">
                 <div id="daily-challenge-leader-art" class="daily-challenge-leader-art" aria-hidden="true"></div>
@@ -431,6 +433,7 @@
             </div>
             <div id="daily-challenge-recap" class="challenge-recap" hidden></div>
             <div id="daily-challenge-board" class="leaderboard-list"></div>
+            </div>
           </article>
         </div>
       </section>
@@ -778,6 +781,15 @@
       <p id="profile-error" class="profile-error" role="alert"></p>
       <button class="primary-action" type="submit">שמרו את הפרופיל</button>
     </form>
+    <section class="profile-faction" aria-labelledby="profile-faction-title">
+      <h3 id="profile-faction-title">המפלגה</h3>
+      <p>לאיזו מפלגה ייכנסו כוכבי האוסף?</p>
+      <div class="faction-pick-row">
+        <label class="field-label" for="faction-select">בחירה אנונימית</label>
+        <select id="faction-select"></select>
+        <button id="save-faction" class="primary-action" type="button">בחירה</button>
+      </div>
+    </section>
     <section class="profile-binder-share" aria-labelledby="profile-binder-share-title">
       <h3 id="profile-binder-share-title">האלבום הציבורי</h3>
       <p>קישור לאלבום שלכם. מי שיש לו את הקישור רואה את הקלפים שנאספו — בלי קוד השחזור.</p>

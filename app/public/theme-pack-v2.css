@@ -581,6 +581,12 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-density="airy-v2"] .growth-grid .work-kicker {
   display: none;
 }
+#app[data-density="airy-v2"] .today-docket-row.is-no-faction > small {
+  display: block;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
 
 #app[data-density="airy-v2"] #growth-view > .workspace-head {
   display: flex;
@@ -775,6 +781,9 @@ body:has(#app[data-theme="pack-v2"]) {
   gap: 4px;
   margin-bottom: 6px;
 }
+#app[data-density="airy-v2"] #community-sections {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 #app[data-density="airy-v2"] #community-tabs {
   display: grid;
   overflow: visible;
@@ -782,8 +791,9 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-density="airy-v2"] #community-tabs[data-community-section="market"] {
   grid-template-columns: 1fr 1fr;
 }
-#app[data-density="airy-v2"] #community-tabs[data-community-section="race"] {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+#app[data-density="airy-v2"] #community-tabs[data-community-section="race"],
+#app[data-density="airy-v2"] #community-tabs[data-community-section="party"] {
+  grid-template-columns: 1fr 1fr;
 }
 
 #app[data-density="airy-v2"] .contained-tabs button {
@@ -907,6 +917,9 @@ body:has(#app[data-theme="pack-v2"]) {
     overflow: visible;
   }
 
+  #app[data-density="airy-v2"] #community-sections {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   #app[data-density="airy-v2"] #community-tabs {
     display: grid;
     overflow: visible;
@@ -914,8 +927,9 @@ body:has(#app[data-theme="pack-v2"]) {
   #app[data-density="airy-v2"] #community-tabs[data-community-section="market"] {
     grid-template-columns: 1fr 1fr;
   }
-  #app[data-density="airy-v2"] #community-tabs[data-community-section="race"] {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  #app[data-density="airy-v2"] #community-tabs[data-community-section="race"],
+  #app[data-density="airy-v2"] #community-tabs[data-community-section="party"] {
+    grid-template-columns: 1fr 1fr;
   }
 
   #app[data-density="airy-v2"] .contained-tabs button {

@@ -1653,6 +1653,7 @@ function renderProfile() {
   prefetchAvatars();
   renderAvatarSeal();
   renderNotifyControl();
+  fillFactionSelect();
 }
 
 function factionParty(factionId = model.serverState?.factionId) {
@@ -1949,11 +1950,14 @@ function scheduleIdleNotification() {
 
 const COMMUNITY_SECTIONS = {
   market: ["trade", "open-trades"],
-  race: ["leagues", "collectors", "challenge", "faction"],
+  race: ["leagues", "collectors"],
+  party: ["challenge", "faction"],
 };
 
 function communitySectionFor(page) {
-  return COMMUNITY_SECTIONS.race.includes(page) ? "race" : "market";
+  if (COMMUNITY_SECTIONS.race.includes(page)) return "race";
+  if (COMMUNITY_SECTIONS.party.includes(page)) return "party";
+  return "market";
 }
 
 function showCommunitySection(section) {
@@ -2532,21 +2536,19 @@ function partyRegister() {
   return [...parties.values()];
 }
 
+const NO_FACTION_COPY = "עוד לא בחרתם מפלגה.";
+const NO_FACTION_HINT = "כדי לבחור מפלגה כנסו לפרופיל שלכם על ידי לחיצה על האוואטר";
+
 function localDailyChallenge(now = Date.now()) {
-  const partyIds = [...new Set(
-    (model.catalog.length
-      ? model.catalog.filter(({ set }) => set && set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set)
-      : (model.gameConfig?.parties || []).map(({ id }) => id)
-    ),
-  )].sort();
-  if (!partyIds.length) return null;
+  const factionId = model.serverState?.factionId || null;
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
-  const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-  const targetPartyId = partyIds[dayNumber % partyIds.length];
+  if (!factionId) {
+    return { day, targetPartyId: null, targetPartyNameHe: null, leaders: [] };
+  }
   return {
     day,
-    targetPartyId,
-    targetPartyNameHe: partyDisplayName(targetPartyId, "") || targetPartyId,
+    targetPartyId: factionId,
+    targetPartyNameHe: partyDisplayName(factionId, "") || factionId,
     leaders: [],
   };
 }
@@ -2562,7 +2564,9 @@ function partyDisplayName(partyId, fallback = "הסיעה היומית") {
 }
 
 function challengeRecap() {
-  const leaders = model.leaderboards?.dailyChallenge?.leaders || [];
+  const factionId = model.serverState?.factionId || null;
+  const challenge = model.leaderboards?.dailyChallenge;
+  const leaders = factionId && challenge?.targetPartyId === factionId ? (challenge.leaders || []) : [];
   const current = leaders.find(({ current }) => current);
   const ranked = [...leaders].sort((a, b) => b.cards - a.cards);
   const place = current ? ranked.findIndex((entry) => entry.current) + 1 : null;
@@ -2627,31 +2631,43 @@ function renderChallengeRecap() {
 
 function renderTodayDocket() {
   if (!elements.todayChallengeHook) return;
-  const challenge = model.leaderboards?.dailyChallenge || (model.extrasReady ? null : localDailyChallenge());
-  const challengeParty = challenge
-    ? partyDisplayName(challenge.targetPartyId, challenge.targetPartyNameHe || "")
-    : "טוענים…";
-  const challengeLeaders = challenge?.leaders?.slice(0, 3) || [];
-  const challengeLeader = challengeLeaders[0];
-  const challengeCurrent = challenge?.leaders?.find(({ current }) => current);
-  const party = partyRegister().find(({ id }) => id === challenge?.targetPartyId);
-  const challengeCard = model.catalog.find((card) => card.set === challenge?.targetPartyId && card.artKey)
-    || {
-      id: `${party?.id || "SYS"}-TODAY`,
-      set: party?.id || "SYS",
-      titleHe: party?.requestedLetters?.[0] || "קְלָפִי",
-      type: "Symbol",
-      artKey: null,
-      pip: party?.pip || "#1f4f4a",
-    };
-  if (elements.todayChallengeVisual.dataset.card !== challengeCard.id) {
-    elements.todayChallengeVisual.dataset.card = challengeCard.id;
-    elements.todayChallengeVisual.style.setProperty("--pip", challengeCard.pip);
-    elements.todayChallengeVisual.innerHTML = artMarkup(challengeCard, true);
+  const factionId = model.serverState?.factionId || null;
+  const serverRace = factionId && model.leaderboards?.dailyChallenge?.targetPartyId === factionId
+    ? model.leaderboards.dailyChallenge
+    : null;
+  const challengeRow = elements.todayChallengeHook.closest(".today-docket-row");
+  const challengeLabel = challengeRow?.querySelector(".today-docket-label");
+  challengeRow?.classList.toggle("is-no-faction", !factionId);
+  if (!factionId) {
+    if (challengeLabel) challengeLabel.textContent = "";
+    if (elements.todayChallengeVisual) {
+      elements.todayChallengeVisual.dataset.card = "";
+      elements.todayChallengeVisual.innerHTML = "";
+    }
+    elements.todayChallengeHook.textContent = NO_FACTION_COPY;
+    elements.todayChallengeMeta.textContent = NO_FACTION_HINT;
+  } else {
+    if (challengeLabel) challengeLabel.textContent = "היום אוספים:";
+    const challenge = serverRace || localDailyChallenge();
+    const challengeParty = partyDisplayName(challenge.targetPartyId, challenge.targetPartyNameHe || "");
+    const party = partyRegister().find(({ id }) => id === challenge?.targetPartyId);
+    const challengeCard = model.catalog.find((card) => card.set === challenge?.targetPartyId && card.artKey)
+      || {
+        id: `${party?.id || "SYS"}-TODAY`,
+        set: party?.id || "SYS",
+        titleHe: party?.requestedLetters?.[0] || "קְלָפִי",
+        type: "Symbol",
+        artKey: null,
+        pip: party?.pip || "#1f4f4a",
+      };
+    if (elements.todayChallengeVisual.dataset.card !== challengeCard.id) {
+      elements.todayChallengeVisual.dataset.card = challengeCard.id;
+      elements.todayChallengeVisual.style.setProperty("--pip", challengeCard.pip);
+      elements.todayChallengeVisual.innerHTML = artMarkup(challengeCard, true);
+    }
+    elements.todayChallengeHook.textContent = challengeParty;
+    elements.todayChallengeMeta.textContent = serverRace ? challengeRecap().meta : "";
   }
-  elements.todayChallengeHook.textContent = challengeParty;
-  const recap = challengeRecap();
-  elements.todayChallengeMeta.textContent = recap.meta;
 
   const leader = model.leaderboards?.collectors?.[0];
   const currentCollector = model.leaderboards?.collectors?.find(({ current }) => current);
@@ -5130,7 +5146,7 @@ async function refreshDailyChallenge() {
     const boards = await request("/api/leaderboards");
     model.leaderboards = mergeLeaderboards(model.leaderboards, boards);
     renderTodayDocket();
-    if (model.communityPage === "challenge" || model.communityPage === "collectors") renderGrowth();
+    if (model.communityPage === "challenge" || model.communityPage === "collectors" || model.communityPage === "faction") renderGrowth();
   } catch {
     /* Race board stays on the last server snapshot. */
   }
@@ -5151,22 +5167,64 @@ function factionHistMarkup(bins) {
   </div>`;
 }
 
+function noFactionNote() {
+  return `<p class="work-note no-faction-note"><strong>${NO_FACTION_COPY}</strong><span>${NO_FACTION_HINT}</span></p>`;
+}
+
 function renderFactionMembers() {
-  if (!elements.factionMembers) return;
-  const partyId = elements.factionSelect?.value || "";
+  const board = document.querySelector("#challenge-members");
+  const title = document.querySelector("#challenge-panel-title");
+  const hint = document.querySelector("#challenge-party-hint");
+  const membersTitle = document.querySelector("#challenge-members-title");
+  if (!board) return;
+  const partyId = model.serverState?.factionId || "";
+  if (!partyId) {
+    if (title) title.textContent = NO_FACTION_COPY;
+    if (hint) {
+      hint.hidden = false;
+      hint.textContent = NO_FACTION_HINT;
+    }
+    if (membersTitle) membersTitle.hidden = true;
+    board.innerHTML = "";
+    return;
+  }
+  if (title) title.textContent = partyDisplayName(partyId, partyId);
+  if (hint) {
+    hint.hidden = true;
+    hint.textContent = "";
+  }
+  if (membersTitle) membersTitle.hidden = false;
   const entry = (model.leaderboards?.factions || []).find((faction) => faction.partyId === partyId);
   const scores = entry?.scores || (entry?.members || []).map((member) => ({
     stars: member.stars || 0,
     current: Boolean(member.current),
   }));
-  if (!partyId) {
-    elements.factionMembers.innerHTML = '<p class="work-note">בחרו מפלגה כדי לראות איפה אתם עומדים.</p>';
-    return;
+  const bins = starContributionBins(scores);
+  board.innerHTML = bins.length
+    ? factionHistMarkup(bins)
+    : '<p class="work-note">עדיין אף אחד לא בחר במפלגה הזו.</p>';
+}
+
+function renderAllParties() {
+  if (!elements.factionMembers) return;
+  const title = document.querySelector("#faction-panel-title");
+  const note = document.querySelector("#faction-pick-note");
+  const membersTitle = document.querySelector("#faction-members-title");
+  const mine = model.serverState?.factionId || "";
+  if (title) title.textContent = "כוכבי כל המפלגות";
+  if (note) {
+    note.hidden = Boolean(mine);
+    note.innerHTML = mine ? "" : noFactionNote();
   }
+  if (membersTitle) membersTitle.hidden = false;
+  const scores = (model.leaderboards?.factions || []).map((faction) => ({
+    stars: faction.stars || 0,
+    current: Boolean(mine) && faction.partyId === mine,
+  }));
   const bins = starContributionBins(scores);
   elements.factionMembers.innerHTML = bins.length
     ? factionHistMarkup(bins)
-    : '<p class="work-note">עדיין אף אחד לא בחר במפלגה הזו.</p>';
+    : '<p class="work-note">עדיין אין מפלגה עם כוכבים.</p>';
 }
 
 function syncCommunityPage() {
@@ -5323,20 +5381,10 @@ function renderGrowth() {
   watchOpenTrade();
   renderTradeBoard();
 
-  const selectedFaction = model.serverState.factionId;
-  const parties = partyRegister();
-  elements.factionSelect.innerHTML = [
-    '<option value="">ללא מפלגה</option>',
-    ...parties.map((party) => {
-      const letters = (party.finalLetters || party.requestedLetters || []).join(" / ");
-      return `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml([
-        party.displayNameHe,
-        letters,
-      ].filter(Boolean).join(" · "))}</option>`;
-    }),
-  ].join("");
+  fillFactionSelect();
   if (elements.factionBoard) elements.factionBoard.innerHTML = "";
   renderFactionMembers();
+  renderAllParties();
   const collectorEntries = (model.leaderboards?.collectors || []).slice(0, 10);
   const collectorTotal = Number(model.leaderboards?.collectorCount) || collectorEntries.length;
   const currentCollector = collectorEntries.find(({ current }) => current);
@@ -5362,28 +5410,53 @@ function renderGrowth() {
       }).join("")
     : '<p class="work-note">הטבלה מחכה לשחקן הראשון.</p>';
 
-  const challenge = model.leaderboards?.dailyChallenge || (model.extrasReady ? null : localDailyChallenge());
+  const factionId = model.serverState?.factionId || null;
+  const serverRace = factionId && model.leaderboards?.dailyChallenge?.targetPartyId === factionId
+    ? model.leaderboards.dailyChallenge
+    : null;
+  const challenge = factionId ? (serverRace || localDailyChallenge()) : null;
   const challengeDate = challenge?.day ? new Date(`${challenge.day}T12:00:00`).toLocaleDateString("he-IL", { day: "numeric", month: "numeric" }) : "";
-  const challengeLeaderCard = model.catalog.find((card) =>
-    card.set === challenge?.targetPartyId && card.releaseSetId === "party-leaders");
+  const challengeLeaderCard = factionId
+    ? model.catalog.find((card) => card.set === factionId && card.releaseSetId === "party-leaders")
+    : null;
   elements.dailyChallengeLeaderArt.innerHTML = challengeLeaderCard ? artMarkup(challengeLeaderCard, true) : "";
   elements.dailyChallengeLeaderArt.style.setProperty("--pip", challengeLeaderCard?.pip || "#1f4f4a");
   if (elements.dailyChallengeDate) {
     elements.dailyChallengeDate.textContent = challengeDate ? `היום ${challengeDate}` : "היום";
   }
-  if (elements.dailyChallengeTitle) {
-    elements.dailyChallengeTitle.textContent = "מי אסף היום הכי הרבה קלפים של";
+  if (!factionId) {
+    if (elements.dailyChallengeTitle) elements.dailyChallengeTitle.textContent = NO_FACTION_COPY;
+    if (elements.dailyChallengeParty) elements.dailyChallengeParty.textContent = "";
+    if (elements.dailyChallengeScore) elements.dailyChallengeScore.innerHTML = "";
+    if (elements.dailyChallengeRecap) {
+      elements.dailyChallengeRecap.hidden = true;
+      elements.dailyChallengeRecap.innerHTML = "";
+    }
+    elements.dailyChallengeBoard.innerHTML = `<p class="work-note">${NO_FACTION_COPY}</p>`;
+  } else {
+    if (elements.dailyChallengeTitle) {
+      elements.dailyChallengeTitle.textContent = "מי אסף היום הכי הרבה קלפים של";
+    }
+    if (elements.dailyChallengeParty) {
+      elements.dailyChallengeParty.textContent = partyDisplayName(challenge?.targetPartyId);
+    }
+    if (!serverRace) {
+      if (elements.dailyChallengeScore) elements.dailyChallengeScore.innerHTML = "";
+      if (elements.dailyChallengeRecap) {
+        elements.dailyChallengeRecap.hidden = true;
+        elements.dailyChallengeRecap.innerHTML = "";
+      }
+      elements.dailyChallengeBoard.innerHTML = "";
+    } else {
+      renderChallengeRecap();
+      const raceLeaders = serverRace.leaders || [];
+      const raceScored = raceLeaders.some((entry) => Number(entry.cards) > 0);
+      const raceNote = raceScored
+        ? ""
+        : `<p class="work-note">${raceLeaders.length ? "עוד אף אחד לא אסף מהסיעה של היום — הקלף הראשון שתפתחו ישים אתכם בראש." : "עוד אף אחד לא אסף מהסיעה של היום."}</p>`;
+      elements.dailyChallengeBoard.innerHTML = raceLeaders.slice(0, 10).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${raceScored ? `${index + 1}. ` : ""}${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("") + raceNote;
+    }
   }
-  if (elements.dailyChallengeParty) {
-    elements.dailyChallengeParty.textContent = partyDisplayName(challenge?.targetPartyId);
-  }
-  renderChallengeRecap();
-  const raceLeaders = challenge?.leaders || [];
-  const raceScored = raceLeaders.some((entry) => Number(entry.cards) > 0);
-  const raceNote = raceScored
-    ? ""
-    : `<p class="work-note">${raceLeaders.length ? "עוד אף אחד לא אסף מהסיעה של היום — הקלף הראשון שתפתחו ישים אתכם בראש." : "עוד אף אחד לא אסף מהסיעה של היום."}</p>`;
-  elements.dailyChallengeBoard.innerHTML = raceLeaders.slice(0, 10).map((entry, index) => `<div class="collector-row${entry.current ? " current-player" : ""}">${collectorFaceMarkup(entry)}<span>${raceScored ? `${index + 1}. ` : ""}${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span><strong>${entry.cards} קלפים</strong></div>`).join("") + raceNote;
 
   syncCommunityPage();
   const openCount = model.trades.filter((trade) => trade.status === "open" && !trade.ownedByCurrent).length;
@@ -5394,6 +5467,28 @@ function renderGrowth() {
     boardHint.hidden = true;
     boardHint.textContent = "";
   }
+}
+
+function fillFactionSelect() {
+  if (!elements.factionSelect || !model.serverState) return;
+  const saved = model.serverState.factionId || "";
+  const dialogOpen = Boolean(elements.profileDialog?.open);
+  const pending = elements.factionSelect.value;
+  const keepPending = dialogOpen
+    && elements.factionSelect.options.length > 1
+    && pending !== saved;
+  const selectedFaction = keepPending ? pending : saved;
+  const parties = partyRegister();
+  elements.factionSelect.innerHTML = [
+    '<option value="">ללא מפלגה</option>',
+    ...parties.map((party) => {
+      const letters = (party.finalLetters || party.requestedLetters || []).join(" / ");
+      return `<option value="${party.id}"${selectedFaction === party.id ? " selected" : ""}>${escapeHtml([
+        party.displayNameHe,
+        letters,
+      ].filter(Boolean).join(" · "))}</option>`;
+    }),
+  ].join("");
 }
 
 function pullCountCopy(count) {
@@ -6481,7 +6576,9 @@ async function saveFaction() {
     }));
     renderProfile();
     renderBinder();
+    renderTodayDocket();
     renderGrowth();
+    await refreshDailyChallenge();
     showToast(model.serverState.factionId ? "המפלגה נשמרה. כוכבי האוסף נספרים למפלגה." : "בחירת המפלגה בוטלה.");
   } catch {
     showToast("לא הצלחנו לשמור את המפלגה.");

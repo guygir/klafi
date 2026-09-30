@@ -8,7 +8,7 @@ import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { jerusalemDay, moveOwnedCard, rollNumberedStamp } from "./numbered.js";
 import { emptyTodayPulse } from "../public/today-pulse.js";
 import { takeCollectorBoard } from "./collector-board.js";
-import { visibleDailyRaceLeaders } from "./daily-race.js";
+import { raceTargetForSavedFaction, visibleDailyRaceLeaders } from "./daily-race.js";
 import {
   LEAGUE_MAX,
   leagueMemberScore,
@@ -1190,12 +1190,15 @@ export class PostgresStore {
 
     const partyIds = [...new Set(cards.filter(({ set }) => set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set))].sort();
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
-    const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-    const targetPartyId = partyIds.length ? partyIds[dayNumber % partyIds.length] : null;
-    // Race score = cards of today's party OPENED today (seen_at, Jerusalem day); see daily-race.js.
+    const viewerFaction = currentToken
+      ? sessions.rows.find((row) => row.token === currentToken)?.faction_id || null
+      : null;
+    const targetPartyId = raceTargetForSavedFaction(viewerFaction, partyIds);
+    // Race score = cards of the saved party OPENED today (seen_at, Jerusalem day); see daily-race.js.
     // Half-open range [Jerusalem midnight, next Jerusalem midnight) so kalpi_instances_seen_at_idx
     // (migration 007) applies; equal to (seen_at AT TIME ZONE 'Asia/Jerusalem')::date = $1, DST included.
-    const packRows = await this.pool.query(
+    // No saved party: no board, and no scan.
+    const packRows = targetPartyId ? await this.pool.query(
       `SELECT i.session_token, s.display_name, i.card_id, i.acquired_by,
               s.avatar_id, s.faction_id, s.highest_rank,
               COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
@@ -1207,7 +1210,7 @@ export class PostgresStore {
          AND i.seen_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Jerusalem'
          AND i.seen_at < ($1::date + 1)::timestamp AT TIME ZONE 'Asia/Jerusalem'`,
       [day],
-    );
+    ) : { rows: [] };
     const dailyCounts = new Map();
     for (const row of packRows.rows) {
       const existing = dailyCounts.get(row.session_token) || {
@@ -1227,7 +1230,7 @@ export class PostgresStore {
       if (scores) existing.cards += 1;
       dailyCounts.set(row.session_token, existing);
     }
-    if (currentToken && !dailyCounts.has(currentToken)) {
+    if (targetPartyId && currentToken && !dailyCounts.has(currentToken)) {
       const current = sessions.rows.find((row) => row.token === currentToken);
       dailyCounts.set(currentToken, {
         label: current?.display_name || "שחקן קְלָפִי",
@@ -1242,8 +1245,10 @@ export class PostgresStore {
       });
     }
     const allDailyParty = [...dailyCounts.values()].sort((a, b) => b.cards - a.cards);
-    const dailyParty = visibleDailyRaceLeaders(allDailyParty);
-    const targetPartyNameHe = cards.find((card) => card.set === targetPartyId)?.setNameHe || targetPartyId;
+    const dailyParty = targetPartyId ? visibleDailyRaceLeaders(allDailyParty) : [];
+    const targetPartyNameHe = targetPartyId
+      ? (cards.find((card) => card.set === targetPartyId)?.setNameHe || targetPartyId)
+      : null;
     return {
       collectors,
       collectorCount,

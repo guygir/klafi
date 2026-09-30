@@ -1121,6 +1121,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(likFaction.packs, currentCollector.stars);
   assert.ok(likFaction.members.some(({ current }) => current));
   assert.equal(leaderboards.body.dailyChallenge.day, "2026-09-03");
+  assert.equal(leaderboards.body.dailyChallenge.targetPartyId, "LIK");
   assert.equal(leaderboards.body.dailyChallenge.targetPartyNameHe, catalog.body.cards.find(({ set }) => set === leaderboards.body.dailyChallenge.targetPartyId)?.setNameHe);
   assert.match(leaderboards.body.dailyChallenge.targetPartyNameHe, /[א-ת]/);
   const currentChallengeEntry = leaderboards.body.dailyChallenge.leaders.find(({ current }) => current);
@@ -1161,7 +1162,8 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   const tomorrow = await api(running.base, "/api/packs/daily", { token, method: "POST" });
   assert.equal(tomorrow.status, 201);
   const tomorrowBoards = await api(running.base, "/api/leaderboards", { token });
-  assert.notEqual(tomorrowBoards.body.dailyChallenge.targetPartyId, leaderboards.body.dailyChallenge.targetPartyId);
+  assert.equal(tomorrowBoards.body.dailyChallenge.targetPartyId, "LIK");
+  assert.equal(leaderboards.body.dailyChallenge.targetPartyId, "LIK");
 });
 
 test("active event grants one persistent Special card per day", async (t) => {
@@ -1415,8 +1417,9 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   const rz = publicConfig.body.parties.find(({ id }) => id === "RZ");
   assert.equal(rz.displayNameHe, "הציונות הדתית וזהות");
   const publicBoards = await api(running.base, "/api/leaderboards", { token: created.body.token });
-  assert.match(publicBoards.body.dailyChallenge.targetPartyNameHe, /[א-ת]/);
-  assert.notEqual(publicBoards.body.dailyChallenge.targetPartyNameHe, publicBoards.body.dailyChallenge.targetPartyId);
+  assert.equal(publicBoards.body.dailyChallenge.targetPartyId, null);
+  assert.equal(publicBoards.body.dailyChallenge.targetPartyNameHe, null);
+  assert.deepEqual(publicBoards.body.dailyChallenge.leaders, []);
   assert.equal((await fetch(`${running.base}/project-docs/presentation/poc-response/index.html`)).status, 404);
   const health = await fetch(`${running.base}/api/health`);
   assert.equal(health.status, 200);
@@ -2146,12 +2149,14 @@ test("daily race scores today's party cards on the day they are opened, not when
   const catalog = await api(running.base, "/api/catalog");
   const setOf = new Map(catalog.body.cards.map(({ id, set }) => [id, set]));
   const { body: { token } } = await api(running.base, "/api/session", { method: "POST" });
+  assert.equal((await api(running.base, "/api/faction", { token, method: "POST", body: { factionId: "LIK" } })).status, 200);
   await api(running.base, "/api/idle/settle", { token, method: "POST" }); // starters collected yesterday 20:00
   clock.value = Date.parse("2026-09-27T09:00:00+03:00");
   const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
   const unopened = await api(running.base, "/api/leaderboards", { token });
   const { targetPartyId, day } = unopened.body.dailyChallenge;
   assert.equal(day, "2026-09-27");
+  assert.equal(targetPartyId, "LIK");
   assert.equal(unopened.body.dailyChallenge.leaders.find(({ current }) => current).cards, 0, "collected but unopened cards do not score");
   await api(running.base, "/api/idle/seen", { token, method: "POST", body: { instanceIds: settled.body.cards.map(({ instanceId }) => instanceId) } });
   const opened = await api(running.base, "/api/leaderboards", { token });
@@ -2163,6 +2168,7 @@ test("daily race scores today's party cards on the day they are opened, not when
   clock.value = Date.parse("2026-09-28T00:05:00+03:00");
   const tomorrow = await api(running.base, "/api/leaderboards", { token });
   assert.equal(tomorrow.body.dailyChallenge.leaders.find(({ current }) => current).cards, 0, "the race resets at Jerusalem midnight");
+  assert.equal(tomorrow.body.dailyChallenge.targetPartyId, "LIK");
 });
 
 test("Studio-set cards (set-5) count in league stars and the owned-card quiz, not only cards.json", async (t) => {
@@ -2284,7 +2290,12 @@ test("daily race hides players on 0 except the requesting player", async (t) => 
   const scorer = await session();
   const idle = await session();
   const viewer = await session();
+  const choose = (token) => api(running.base, "/api/faction", { token, method: "POST", body: { factionId: "LIK" } });
+  assert.equal((await choose(scorer)).status, 200);
+  assert.equal((await choose(idle)).status, 200);
+  assert.equal((await choose(viewer)).status, 200);
   const { targetPartyId } = (await api(running.base, "/api/leaderboards", { token: scorer })).body.dailyChallenge;
+  assert.equal(targetPartyId, "LIK");
   // Give the scorer one opened, race-eligible card of today's party (not a debug grant).
   const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
   assert.ok(stored.sessions[scorer], "sessions persist to state.json");
@@ -2305,8 +2316,39 @@ test("daily race hides players on 0 except the requesting player", async (t) => 
   const community = (await api(again.base, "/api/community", { token: idle })).body.leaderboards.dailyChallenge.leaders;
   assert.deepEqual(community.filter((entry) => !entry.current && entry.cards === 0), [], "/api/community hides zeros too");
   assert.equal(community.filter(({ current }) => current).length, 1);
-  const guest = (await api(again.base, "/api/leaderboards")).body.dailyChallenge.leaders;
-  assert.deepEqual(guest.map(({ cards }) => cards), [1], "without a session only scorers show");
+  const guest = (await api(again.base, "/api/leaderboards")).body.dailyChallenge;
+  assert.equal(guest.targetPartyId, null);
+  assert.deepEqual(guest.leaders, [], "no session has no saved party, so there is no board");
+});
+
+test("daily race board targets the saved faction and a player with no faction does not get another party", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-race-faction-"));
+  const clock = { value: Date.parse("2026-09-26T12:00:00+03:00") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const session = async () => (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const lik = await session();
+  const ysr = await session();
+  const none = await session();
+  assert.equal((await api(running.base, "/api/faction", { token: lik, method: "POST", body: { factionId: "LIK" } })).body.factionId, "LIK");
+  assert.equal((await api(running.base, "/api/faction", { token: ysr, method: "POST", body: { factionId: "YSR" } })).body.factionId, "YSR");
+  const likBoard = (await api(running.base, "/api/leaderboards", { token: lik })).body.dailyChallenge;
+  const ysrBoard = (await api(running.base, "/api/leaderboards", { token: ysr })).body.dailyChallenge;
+  const noneBoard = (await api(running.base, "/api/leaderboards", { token: none })).body.dailyChallenge;
+  assert.equal(likBoard.day, ysrBoard.day);
+  assert.equal(likBoard.targetPartyId, "LIK");
+  assert.equal(ysrBoard.targetPartyId, "YSR");
+  assert.notEqual(likBoard.targetPartyId, ysrBoard.targetPartyId);
+  assert.match(likBoard.targetPartyNameHe, /[א-ת]/);
+  assert.equal(noneBoard.targetPartyId, null);
+  assert.equal(noneBoard.targetPartyNameHe, null);
+  assert.deepEqual(noneBoard.leaders, []);
+  const community = (await api(running.base, "/api/community", { token: lik })).body.leaderboards.dailyChallenge;
+  assert.equal(community.targetPartyId, "LIK");
+  assert.ok(Array.isArray(community.leaders));
 });
 
 test("opening a card at the full warehouse restarts the timer at exactly 3h from the open", async (t) => {

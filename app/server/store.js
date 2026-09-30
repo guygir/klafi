@@ -15,7 +15,7 @@ import {
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
 import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
 import { takeCollectorBoard } from "./collector-board.js";
-import { dailyRaceScore, visibleDailyRaceLeaders } from "./daily-race.js";
+import { dailyRaceScore, raceTargetForSavedFaction, visibleDailyRaceLeaders } from "./daily-race.js";
 
 /**
  * Per-session write counter. Every state payload carries it as `revision`, so a client can drop a
@@ -574,23 +574,26 @@ export class JsonStore {
     const factions = factionStandingsFromCollectors(allCollectors);
     const partyIds = [...new Set(cards.filter(({ set }) => set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set))].sort();
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
-    const dayNumber = [...day].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-    const targetPartyId = partyIds.length ? partyIds[dayNumber % partyIds.length] : null;
-    const allDailyParty = Object.entries(this.state.sessions)
-      .map(([token, session]) => ({
-        label: session.displayName,
-        current: token === currentToken,
-        avatarId: session.avatarId || "kid-boy",
-        factionId: session.factionId || null,
-        loginStreak: session.loginStreak || 0,
-        visitStreak: session.visitStreak || 0,
-        rankLevel: session.highestRank || 1,
-        binderSlug: session.publicBinderSlug || null,
-        cards: dailyRaceScore(session.instances, day, targetPartyId, cardsById),
-      }))
-      .sort((a, b) => b.cards - a.cards);
-    const dailyParty = visibleDailyRaceLeaders(allDailyParty);
-    const targetPartyNameHe = cards.find((card) => card.set === targetPartyId)?.setNameHe || targetPartyId;
+    const targetPartyId = raceTargetForSavedFaction(this.getSession(currentToken)?.factionId, partyIds);
+    const allDailyParty = targetPartyId
+      ? Object.entries(this.state.sessions)
+        .map(([token, session]) => ({
+          label: session.displayName,
+          current: token === currentToken,
+          avatarId: session.avatarId || "kid-boy",
+          factionId: session.factionId || null,
+          loginStreak: session.loginStreak || 0,
+          visitStreak: session.visitStreak || 0,
+          rankLevel: session.highestRank || 1,
+          binderSlug: session.publicBinderSlug || null,
+          cards: dailyRaceScore(session.instances, day, targetPartyId, cardsById),
+        }))
+        .sort((a, b) => b.cards - a.cards)
+      : [];
+    const dailyParty = targetPartyId ? visibleDailyRaceLeaders(allDailyParty) : [];
+    const targetPartyNameHe = targetPartyId
+      ? (cards.find((card) => card.set === targetPartyId)?.setNameHe || targetPartyId)
+      : null;
     return {
       collectors,
       collectorCount,

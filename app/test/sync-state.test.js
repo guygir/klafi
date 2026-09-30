@@ -178,10 +178,31 @@ test("postgres daily race reads a sargable Jerusalem-day seen_at range backed by
   const { PostgresStore } = await import("../server/postgres-store.js");
   const store = new PostgresStore("postgres://qa@127.0.0.1:1/none");
   const queries = [];
-  store.pool.query = async (sql, params = []) => { queries.push({ sql, params }); return { rows: [], rowCount: 0 }; };
+  store.pool.query = async (sql, params = []) => {
+    queries.push({ sql, params });
+    if (/FROM kalpi_sessions s/.test(sql) && /kalpi_inventory/.test(sql)) {
+      return {
+        rows: [{
+          token: "viewer",
+          display_name: "p",
+          idle_pull_count: 0,
+          pack_count: 0,
+          avatar_id: "kid-boy",
+          faction_id: "LIK",
+          highest_rank: 1,
+          login_streak: 0,
+          visit_streak: 0,
+          binder_slug: null,
+          inventory: {},
+        }],
+        rowCount: 1,
+      };
+    }
+    return { rows: [], rowCount: 0 };
+  };
   const cards = [{ id: "SET5-01", set: "LIK", rarity: "Common" }, { id: "YB-01", set: "YB", rarity: "Common" }];
-  // 23:30 UTC on Sep 26 is already Sep 27 in Jerusalem.
-  await store.leaderboardSummary(cards, Date.parse("2026-09-26T23:30:00.000Z"), null);
+  // 23:30 UTC on Sep 26 is already Sep 27 in Jerusalem. The board is the saved party.
+  await store.leaderboardSummary(cards, Date.parse("2026-09-26T23:30:00.000Z"), "viewer");
   const race = queries.find(({ sql }) => /FROM kalpi_instances i/.test(sql) && /seen_at/.test(sql));
   assert.ok(race, "the race query ran");
   assert.deepEqual(race.params, ["2026-09-27"]);
