@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=card-surface-170" />
+  <link rel="stylesheet" href="/styles.css?v=card-surface-171" />
   <link rel="stylesheet" href="/theme-pack-v2.css?v=card-surface-170" />
   <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-157" />
   <link rel="stylesheet" href="/packrip.css?v=card-surface-157" />
@@ -754,15 +754,30 @@
     <button id="trade-notice-ok" class="primary-action" type="button">הבנתי</button>
   </dialog>
 
-  <dialog id="streak-dialog" class="policy-dialog streak-dialog" aria-labelledby="streak-dialog-title" aria-describedby="streak-dialog-copy">
+  <dialog id="streak-dialog" class="policy-dialog streak-dialog" aria-labelledby="streak-dialog-title">
     <button id="close-streak-dialog" class="dialog-close" type="button" aria-label="סגירה">×</button>
-    <p class="eyebrow" id="streak-dialog-kicker">רצף יומי</p>
-    <h2 id="streak-dialog-title">יום 1 ברצף</h2>
-    <p id="streak-dialog-copy">כדאי להתחבר כל יום כדי לא לאבד את הרצף!
-אתה מתחבר כבר יום אחד ברצף.
-בעוד יום מגיע הפרס הבא והוא קלף נפוץ.</p>
-    <ol id="streak-calendar" class="streak-calendar"></ol>
-    <p id="streak-dialog-reward" class="streak-dialog-reward" hidden></p>
+    <p class="eyebrow" id="streak-dialog-kicker">לו״ז ופרסים</p>
+    <h2 id="streak-dialog-title">הפרסים החודש</h2>
+    <div class="streak-layout">
+      <div class="streak-month">
+        <div class="streak-weekdays" aria-hidden="true"><span>א</span><span>ב</span><span>ג</span><span>ד</span><span>ה</span><span>ו</span><span>ש</span></div>
+        <ol id="streak-calendar" class="streak-calendar"></ol>
+        <p id="streak-calendar-reward" class="streak-dialog-reward">בעוד יום מגיע הפרס הבא והוא קלף נפוץ.</p>
+      </div>
+      <div class="streak-ladder-wrap">
+        <div class="streak-ladder-board">
+          <div class="streak-ladder-col">
+            <p class="streak-ladder-label" id="streak-ladder-label">כמה ימים נכנסת ברצף?</p>
+            <ol id="streak-ladder" class="streak-ladder" aria-labelledby="streak-ladder-label"></ol>
+          </div>
+          <div class="streak-ladder-col">
+            <p class="streak-ladder-label" id="streak-upcoming-label">מתי הפרסים הבאים?</p>
+            <ol id="streak-ladder-next" class="streak-ladder streak-ladder-next" aria-labelledby="streak-upcoming-label"></ol>
+          </div>
+        </div>
+        <p id="streak-dialog-reward" class="streak-dialog-reward">בעוד יום מגיע הפרס הבא והוא קלף נפוץ.</p>
+      </div>
+    </div>
     <button id="streak-dialog-ok" class="primary-action" type="button">הבנתי</button>
   </dialog>
 
@@ -872,6 +887,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-170"></script>
+  <script type="module" src="/app.js?v=card-surface-171"></script>
 </body>
 </html>

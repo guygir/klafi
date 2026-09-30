@@ -84,7 +84,7 @@ test("slim home state includes inventory for binder reads", () => {
   assert.equal(state.visitStreak, 0);
   assert.equal(state.streakCalendar.day, 0);
   assert.equal(state.streakCalendar.showPopup, false);
-  assert.equal(state.streakCalendar.days.length, 30);
+  assert.equal(state.streakCalendar.days.length, 35);
 });
 
 test("slim home state keeps a selected faction on the player", () => {
