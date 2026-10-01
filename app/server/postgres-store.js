@@ -10,8 +10,10 @@ import {
   jerusalemDay,
   moveOwnedCard,
   numberPoolFromStored,
+  regularCopyCount,
   returnNumberedIndex,
   rollNumberedStamp,
+  takePlainInstanceForCard,
 } from "./numbered.js";
 import { emptyTodayPulse } from "../public/today-pulse.js";
 import { takeCollectorBoard } from "./collector-board.js";
@@ -963,7 +965,7 @@ export class PostgresStore {
          WHERE owner_token = $1 AND offered_card_id = $2 AND status = 'open' AND expires_at > $3`,
         [sessionToken, offeredCardId, createdAt],
       );
-      if ((session.inventory[offeredCardId] ?? 0) <= reserved.rows[0].count) return null;
+      if (regularCopyCount(session, offeredCardId) <= reserved.rows[0].count) return null;
       const trade = {
         tradeId: randomUUID(),
         ownerToken: sessionToken,
@@ -993,11 +995,12 @@ export class PostgresStore {
       );
       const trade = this.tradeFromRow(tradeRow.rows[0]);
       const session = await this.loadSession(sessionToken, { forUpdate: true });
-      if (!trade || trade.ownerToken !== sessionToken || trade.status !== "open" || !session?.inventory[trade.offeredCardId]) {
+      if (!trade || trade.ownerToken !== sessionToken || trade.status !== "open" || regularCopyCount(session, trade.offeredCardId) < 1) {
         return null;
       }
       const previous = structuredClone(session);
       session.inventory[trade.offeredCardId] -= 1;
+      takePlainInstanceForCard(session, trade.offeredCardId);
       if (!session.inventory[trade.offeredCardId]) delete session.inventory[trade.offeredCardId];
       session.inventory[trade.wantedCardId] = (session.inventory[trade.wantedCardId] ?? 0) + 1;
       session.instances.push({
@@ -1036,7 +1039,7 @@ export class PostgresStore {
       }
       const owner = await this.loadSession(trade.ownerToken);
       const accepter = await this.loadSession(sessionToken);
-      if (!owner?.inventory[trade.offeredCardId] || !accepter?.inventory[trade.wantedCardId]) return null;
+      if (regularCopyCount(owner, trade.offeredCardId) < 1 || regularCopyCount(accepter, trade.wantedCardId) < 1) return null;
       const previousOwner = structuredClone(owner);
       const previousAccepter = structuredClone(accepter);
       moveOwnedCard(owner, accepter, trade.offeredCardId, {
@@ -1142,11 +1145,21 @@ export class PostgresStore {
     const ownerHasOffered = new Map();
     if (offeredIds.length) {
       const owners = await this.pool.query(
-        `SELECT session_token, card_id FROM kalpi_inventory
-         WHERE (session_token, card_id) IN (
-           SELECT owner_token, offered_card_id FROM kalpi_trades
-           WHERE status = 'open' AND owner_token <> $1
-         )`,
+        `SELECT inventory.session_token, inventory.card_id
+         FROM kalpi_inventory AS inventory
+         LEFT JOIN (
+           SELECT session_token, card_id, COUNT(*)::int AS numbered
+           FROM kalpi_instances
+           WHERE numbered_index > 0
+           GROUP BY session_token, card_id
+         ) AS numbered
+           ON numbered.session_token = inventory.session_token
+          AND numbered.card_id = inventory.card_id
+         WHERE inventory.copies > COALESCE(numbered.numbered, 0)
+           AND (inventory.session_token, inventory.card_id) IN (
+             SELECT owner_token, offered_card_id FROM kalpi_trades
+             WHERE status = 'open' AND owner_token <> $1
+           )`,
         [token],
       );
       for (const row of owners.rows) ownerHasOffered.set(`${row.session_token}:${row.card_id}`, true);
@@ -1162,7 +1175,7 @@ export class PostgresStore {
         canAccept: trade.status === "open"
           && ownerToken !== token
           && Boolean(ownerHasOffered.get(`${ownerToken}:${trade.offeredCardId}`))
-          && Boolean(current?.inventory[trade.wantedCardId]),
+          && regularCopyCount(current, trade.wantedCardId) > 0,
       };
     });
   }

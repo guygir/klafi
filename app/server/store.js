@@ -7,8 +7,10 @@ import {
   jerusalemDay,
   moveOwnedCard,
   numberPoolFromStored,
+  regularCopyCount,
   returnNumberedIndex,
   rollNumberedStamp,
+  takePlainInstanceForCard,
 } from "./numbered.js";
 import { countTodayPulse } from "../public/today-pulse.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
@@ -420,7 +422,7 @@ export class JsonStore {
         && trade.offeredCardId === offeredCardId
         && trade.status === "open"
         && Date.parse(trade.expiresAt || 0) > Date.parse(createdAt)).length;
-      if ((session.inventory[offeredCardId] ?? 0) <= reservedCopies) return null;
+      if (regularCopyCount(session, offeredCardId) <= reservedCopies) return null;
       const trade = {
         tradeId: randomUUID(),
         ownerToken: sessionToken,
@@ -443,10 +445,11 @@ export class JsonStore {
     return this.exclusive(async () => {
       const trade = this.state.trades.find((candidate) => candidate.tradeId === tradeId);
       const session = this.getSession(sessionToken);
-      if (!trade || trade.ownerToken !== sessionToken || trade.status !== "open" || !session?.inventory[trade.offeredCardId]) {
+      if (!trade || trade.ownerToken !== sessionToken || trade.status !== "open" || regularCopyCount(session, trade.offeredCardId) < 1) {
         return null;
       }
       session.inventory[trade.offeredCardId] -= 1;
+      takePlainInstanceForCard(session, trade.offeredCardId);
       if (!session.inventory[trade.offeredCardId]) delete session.inventory[trade.offeredCardId];
       session.inventory[trade.wantedCardId] = (session.inventory[trade.wantedCardId] ?? 0) + 1;
       session.instances.push({
@@ -472,7 +475,8 @@ export class JsonStore {
       const owner = trade ? this.getSession(trade.ownerToken) : null;
       const accepter = this.getSession(sessionToken);
       if (!trade || trade.status !== "open" || Date.parse(trade.expiresAt || 0) <= Date.parse(acceptedAt) || trade.ownerToken === sessionToken
-        || !owner?.inventory[trade.offeredCardId] || !accepter?.inventory[trade.wantedCardId]) {
+        || regularCopyCount(owner, trade.offeredCardId) < 1
+        || regularCopyCount(accepter, trade.wantedCardId) < 1) {
         return null;
       }
       moveOwnedCard(owner, accepter, trade.offeredCardId, {
@@ -557,8 +561,8 @@ export class JsonStore {
           acceptedByCurrent: acceptedBy === token,
           canAccept: trade.status === "open"
             && ownerToken !== token
-            && Boolean(owner?.inventory[trade.offeredCardId])
-            && Boolean(current?.inventory[trade.wantedCardId]),
+            && regularCopyCount(owner, trade.offeredCardId) > 0
+            && regularCopyCount(current, trade.wantedCardId) > 0,
         };
       });
   }

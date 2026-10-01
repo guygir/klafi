@@ -4254,10 +4254,10 @@ body {
   align-items: center;
   justify-content: center;
   width: auto;
-  flex: 0 0 16px;
-  height: 16px;
+  flex: 0 0 auto;
+  height: auto;
   margin: 2px 0 0;
-  min-height: 0;
+  min-height: 16px;
   padding: 0 12px;
   background: none;
   pointer-events: none;
@@ -4675,6 +4675,61 @@ body {
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
+}
+
+.binder-scroll-arrow {
+  display: inline-flex;
+  margin-inline: 3px;
+  vertical-align: -1px;
+}
+
+.binder-scroll-arrow i {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  animation: leaf-arrow-fall 1.15s ease-in infinite;
+}
+
+.binder-scroll-arrow i::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.binder-scroll-pinch {
+  position: relative;
+  display: inline-block;
+  width: 17px;
+  height: 13px;
+  margin-inline: 2px;
+  vertical-align: -3px;
+}
+
+.binder-scroll-pinch svg {
+  position: absolute;
+  inset: 0;
+  width: 17px;
+  height: 13px;
+  opacity: 0;
+  animation: binder-pinch-cycle 1.28s linear infinite;
+}
+
+.binder-scroll-pinch svg:nth-child(2) { animation-delay: -0.96s; }
+.binder-scroll-pinch svg:nth-child(3) { animation-delay: -0.64s; }
+.binder-scroll-pinch svg:nth-child(4) { animation-delay: -0.32s; }
+
+@keyframes binder-pinch-cycle {
+  0%, 24% { opacity: 1; }
+  25%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .binder-scroll-arrow i { animation: none; opacity: 0.75; }
+  .binder-scroll-pinch svg { animation: none; opacity: 0; }
+  .binder-scroll-pinch svg:last-child { opacity: 1; }
 }
 
 .binder-grid > .binder-slot {

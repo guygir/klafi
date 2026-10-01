@@ -122,10 +122,13 @@ test("login streak counts Jerusalem days and resets after a gap", () => {
   assert.equal(jerusalemDay(monday), "2026-09-21");
 });
 
-test("trades move the numbered instance instead of minting a new stamp", () => {
+test("a trade moves a regular copy and leaves the numbered stamp", () => {
   const from = {
-    inventory: { "SET5-01": 1 },
-    instances: [{ instanceId: "a", cardId: "SET5-01", numberedIndex: 1, numberedOf: 1, finish: "Holo" }],
+    inventory: { "SET5-01": 2 },
+    instances: [
+      { instanceId: "plain", cardId: "SET5-01", finish: "Common" },
+      { instanceId: "a", cardId: "SET5-01", numberedIndex: 1, numberedOf: 1, finish: "Holo" },
+    ],
   };
   const to = { inventory: {}, instances: [] };
   const moved = moveOwnedCard(from, to, "SET5-01", {
@@ -134,13 +137,30 @@ test("trades move the numbered instance instead of minting a new stamp", () => {
     finish: "Common",
     instanceId: "fresh",
   });
-  assert.equal(moved.instanceId, "a");
-  assert.equal(from.inventory["SET5-01"], undefined);
+  assert.equal(moved.instanceId, "plain");
+  assert.equal(from.inventory["SET5-01"], 1);
+  assert.deepEqual(from.instances.map((item) => item.instanceId), ["a"]);
   assert.equal(to.inventory["SET5-01"], 1);
-  assert.equal(to.instances[0].numberedIndex, 1);
-  assert.equal(to.instances[0].numberedOf, 1);
+  assert.equal(to.instances[0].numberedIndex, undefined);
   assert.equal(to.instances[0].acquiredBy, "trade-accepted");
-  assert.equal(takeInstanceForCard(to, "SET5-01")?.instanceId, "a");
+});
+
+test("a numbered-only copy cannot be given in a trade", () => {
+  const from = {
+    inventory: { "SET5-01": 1 },
+    instances: [{ instanceId: "a", cardId: "SET5-01", numberedIndex: 1, numberedOf: 1, finish: "Holo" }],
+  };
+  const to = { inventory: {}, instances: [] };
+  assert.equal(moveOwnedCard(from, to, "SET5-01", {
+    acquiredBy: "trade-accepted",
+    pulledAt: "2026-09-21T12:00:00.000Z",
+    finish: "Common",
+    instanceId: "fresh",
+  }), null);
+  assert.equal(from.inventory["SET5-01"], 1);
+  assert.equal(from.instances[0].instanceId, "a");
+  assert.equal(to.instances.length, 0);
+  assert.equal(takeInstanceForCard(from, "SET5-01")?.instanceId, "a");
 });
 
 test("holder tally counts distinct live sessions, not extra copies", () => {
@@ -192,4 +212,54 @@ test("numbered pulls keep the player name and stamp so the card dialog can link 
     { cardId: "C1", displayName: "דני", index: 1, of: 5, binderSlug: null },
     { cardId: "C1", displayName: "ג׳וזפין", index: 2, of: 5, binderSlug: "josephine" },
   ]);
+});
+
+test("an open trade needs a regular copy on both sides and keeps numbered stamps", async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), "kalpi-trade-numbered-"));
+  const store = new JsonStore(path.join(dir, "state.json"));
+  await store.init();
+  const now = "2026-10-01T12:00:00.000Z";
+  const later = "2026-10-02T12:00:00.000Z";
+  const owner = await store.createSession(now);
+  const accepter = await store.createSession(now);
+  const offer = {
+    sessionToken: owner,
+    offeredCardId: "SET5-06",
+    wantedCardId: "SET5-01",
+    createdAt: now,
+    expiresAt: later,
+  };
+  store.getSession(owner).inventory["SET5-06"] = 1;
+  store.getSession(owner).instances.push({ instanceId: "owner-numbered", cardId: "SET5-06", numberedIndex: 2, numberedOf: 4, finish: "Holo" });
+  assert.equal(await store.createTrade(offer), null);
+
+  store.getSession(owner).inventory["SET5-06"] = 2;
+  store.getSession(owner).instances.push({ instanceId: "owner-plain", cardId: "SET5-06", finish: "Common" });
+  store.getSession(accepter).inventory["SET5-01"] = 1;
+  store.getSession(accepter).instances.push({ instanceId: "accepter-numbered", cardId: "SET5-01", numberedIndex: 1, numberedOf: 1, finish: "Holo" });
+  const trade = await store.createTrade(offer);
+  assert.equal(typeof trade.tradeId, "string");
+  assert.equal(await store.acceptTrade({
+    tradeId: trade.tradeId,
+    sessionToken: accepter,
+    acceptedAt: now,
+    offeredFinish: "Common",
+    wantedFinish: "Common",
+  }), null);
+
+  store.getSession(accepter).inventory["SET5-01"] = 2;
+  store.getSession(accepter).instances.push({ instanceId: "accepter-plain", cardId: "SET5-01", finish: "Common" });
+  const accepted = await store.acceptTrade({
+    tradeId: trade.tradeId,
+    sessionToken: accepter,
+    acceptedAt: now,
+    offeredFinish: "Common",
+    wantedFinish: "Common",
+  });
+  assert.equal(accepted.status, "accepted");
+  assert.equal(store.getSession(owner).instances.some((item) => item.instanceId === "owner-numbered"), true);
+  assert.equal(store.getSession(owner).instances.some((item) => item.instanceId === "accepter-plain"), true);
+  assert.equal(store.getSession(accepter).instances.some((item) => item.instanceId === "accepter-numbered"), true);
+  assert.equal(store.getSession(accepter).instances.some((item) => item.instanceId === "owner-plain"), true);
+  await rm(dir, { recursive: true, force: true });
 });
