@@ -47,6 +47,7 @@ export function publicLeague(league, members, currentToken, origin) {
       loginStreak: entry.loginStreak || 0,
       visitStreak: entry.visitStreak || 0,
       rankLevel: entry.rankLevel || 1,
+      binderSlug: entry.binderSlug || null,
     }));
   return {
     code: league.code,

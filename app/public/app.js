@@ -27,6 +27,7 @@ const SESSION_KEY = "kalpi-alpha-session";
 const HIDDEN_TRADES_KEY = "klafi:hidden-trades";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
+const TODAY_BOARDS_KEY = "kalpi-today-boards";
 // When the server state last arrived (0 = only the localStorage cache so far).
 let stateFreshAt = 0;
 // A failed settle leaves the old due time in place. The one-second tick must not
@@ -763,6 +764,36 @@ function applyHomePayload(home) {
   }
 }
 
+function rememberTodayBoards(leaderboards) {
+  if (!model.token || !leaderboards) return;
+  try {
+    localStorage.setItem(TODAY_BOARDS_KEY, JSON.stringify({
+      token: model.token,
+      leaderboards,
+    }));
+  } catch {
+    /* A full store still shows the boards already in memory. */
+  }
+}
+
+function setLeaderboards(incoming) {
+  if (!incoming) return;
+  model.leaderboards = mergeLeaderboards(model.leaderboards, incoming);
+  rememberTodayBoards(model.leaderboards);
+}
+
+function applyCachedTodayBoards() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(TODAY_BOARDS_KEY) || "null");
+    if (!cached?.leaderboards) return;
+    const token = model.token || localStorage.getItem(SESSION_KEY);
+    if (!token || cached.token !== token) return;
+    model.leaderboards = mergeLeaderboards(null, cached.leaderboards);
+  } catch {
+    localStorage.removeItem(TODAY_BOARDS_KEY);
+  }
+}
+
 function applyCachedHome() {
   try {
     const cached = JSON.parse(localStorage.getItem(HOME_CACHE_KEY) || "null");
@@ -851,7 +882,7 @@ function applyFullBoot(boot) {
   model.gameConfig = boot.gameConfig;
   applyStudioAccess(boot.studioContent);
   applyVisualConfig();
-  model.leaderboards = mergeLeaderboards(null, boot.leaderboards);
+  setLeaderboards(boot.leaderboards);
   model.specials = boot.specials;
   model.serverState = boot.idleReturn.state;
   model.idleQueue = boot.idleReturn.cards || [];
@@ -867,6 +898,7 @@ function applyFullBoot(boot) {
 let catalogHydrate = null;
 let homeHydrate = null;
 let extrasHydrate = null;
+let todayBoardsHydrate = null;
 let idleHydrate = null;
 let idleRefillTimer = null;
 let idleSeenHydrate = null;
@@ -1158,13 +1190,28 @@ function kickDueIdleSettle() {
   });
 }
 
+function hydrateTodayBoards() {
+  if (model.showcase) return Promise.resolve(null);
+  if (!todayBoardsHydrate) {
+    const imagesQueued = window.__kalpiWarmup?.imagesQueued || Promise.resolve();
+    todayBoardsHydrate = Promise.all([imagesQueued, binderArtQueued]).then(() => request("/api/community")).then((payload) => {
+      if (payload) {
+        applyExtrasPayload(payload);
+        renderHome();
+      }
+      return payload;
+    }).catch(() => null);
+  }
+  return todayBoardsHydrate;
+}
+
 function applyExtrasPayload({ events, trades, leaderboards, activity, specials, state, specialWindow }) {
   if (events) model.events = events.events || events;
   if (trades) {
     setTrades(trades.trades || trades);
     watchOpenTrade();
   }
-  if (leaderboards) model.leaderboards = mergeLeaderboards(model.leaderboards, leaderboards);
+  if (leaderboards) setLeaderboards(leaderboards);
   if (activity) model.activity = activity;
   if (specials) model.specials = specials;
   if (specialWindow !== undefined) model.specialWindow = specialWindow;
@@ -1196,7 +1243,7 @@ async function hydrateExtras() {
         }
       }
       const jobs = [
-        ["community", () => request("/api/community")],
+        ["community", () => hydrateTodayBoards()],
       ];
       // Prefetch the league room with the community extras so the Leagues tab opens on it.
       if (model.token) jobs.push(["leagues", () => hydrateLeagues()]);
@@ -1207,8 +1254,8 @@ async function hydrateExtras() {
       await Promise.all(jobs.map(async ([key, run]) => {
         try {
           const payload = await run();
-          if (key === "leagues") return;
-          applyExtrasPayload(key === "community" ? payload : { [key]: payload });
+          if (key === "leagues" || key === "community" || !payload) return;
+          applyExtrasPayload({ [key]: payload });
           paintExtras();
         } catch {
           /* One slow or failed extra must not keep badges/community on Loading. */
@@ -1302,6 +1349,7 @@ async function bootstrap() {
   }
   applyCachedHome();
   kickDueIdleSettle();
+  applyCachedTodayBoards();
   if (notifyPermission() === "granted") {
     ensureServiceWorker().then(() => scheduleIdleNotification()).catch(() => {});
   }
@@ -2145,7 +2193,7 @@ function renderLeagues() {
         ${(league.members || []).map((entry) => `
           <li class="${entry.current ? "current-player" : ""}">
             ${leagueFaceMarkup(entry)}
-            <span>${entry.rank}. ${escapeHtml(entry.label)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
+            <span>${entry.rank}. ${binderNameMarkup(entry)}${entry.current ? "" : ` <button type="button" class="report-link inline" data-report-name="${escapeHtml(entry.label)}">דיווח</button>`}</span>
             <strong>★${entry.stars} · ${entry.ownedUnique} שונים</strong>
           </li>`).join("")}
       </ol>
@@ -2307,6 +2355,7 @@ async function restoreSessionFromCode() {
       localStorage.removeItem(PENDING_MUTATIONS_KEY);
       localStorage.removeItem(PENDING_IDLE_SEEN_KEY);
       localStorage.removeItem(HOME_CACHE_KEY);
+      localStorage.removeItem(TODAY_BOARDS_KEY);
     } catch {
       /* Recovery still switches the live session. */
     }
@@ -2315,6 +2364,7 @@ async function restoreSessionFromCode() {
     model.idleQueue = [];
     model.extrasReady = false;
     extrasHydrate = null;
+    todayBoardsHydrate = null;
     homeHydrate = null;
     applyHomePayload({ token, state });
     fillRecoveryCode();
@@ -2859,11 +2909,13 @@ function renderProgression({ announce = false } = {}) {
   elements.levelNumber.setAttribute("aria-label", `רמה ${progression.level} מתוך ${progression.totalLevels} שפתוחות כרגע`);
   const streak = Number(model.serverState?.visitStreak) || 0;
   const showStreak = streak >= 3;
+  // The today avatar flame is the door to the rewards calendar, so it returns from the first visit day.
+  const showTodayStreak = streak >= 1;
   elements.levelRank.textContent = progression.rank;
   if (elements.levelStreak) {
-    elements.levelStreak.hidden = !showStreak;
-    if (elements.levelStreakCount) elements.levelStreakCount.textContent = showStreak ? String(streak) : "";
-    elements.levelStreak.setAttribute("aria-label", showStreak ? `רצף ${streak} · לוח הפרסים` : "לוח הרצף");
+    elements.levelStreak.hidden = !showTodayStreak;
+    if (elements.levelStreakCount) elements.levelStreakCount.textContent = showTodayStreak ? String(streak) : "";
+    elements.levelStreak.setAttribute("aria-label", showTodayStreak ? `רצף ${streak} · לוח הפרסים` : "לוח הרצף");
   }
   if (elements.playerStreak) {
     elements.playerStreak.hidden = !showStreak;
@@ -3120,7 +3172,7 @@ async function openBibiDebugPack() {
   try {
     model.currentPack = await request("/api/packs/bibi-demo", { method: "POST" });
     setServerState(await request("/api/state"));
-    model.leaderboards = mergeLeaderboards(model.leaderboards, await request("/api/leaderboards"));
+    setLeaderboards(await request("/api/leaderboards"));
     model.currentCardIndex = 0;
     model.previewMode = false;
     model.currentPack.cards = model.currentPack.cards.slice(0, 1);
@@ -3272,7 +3324,7 @@ async function handlePackAction() {
       renderGrowth();
       renderProgression({ announce: true });
     } else {
-      model.leaderboards = mergeLeaderboards(model.leaderboards, await request("/api/leaderboards"));
+      setLeaderboards(await request("/api/leaderboards"));
       renderHome();
       renderBinder();
       renderGrowth();
@@ -3494,14 +3546,25 @@ function artMarkup(card, mini = false, eager = false) {
   return `<div class="${className} placeholder" role="img" aria-label="איור זמני של ${escapeHtml(cardTitle(card))}" data-mark="${escapeHtml(placeholderMark(card))}"></div>`;
 }
 
+let markBinderArtQueued = () => {};
+let binderArtQueued = new Promise((resolve) => {
+  markBinderArtQueued = () => {
+    markBinderArtQueued = () => {};
+    resolve();
+  };
+});
+
 function prefetchBinderArt(cards = []) {
   const list = cards.filter((card) => artUrl(card));
   prefetchCardArt(list.slice(0, 12));
   const rest = list.slice(12);
-  if (!rest.length) return;
-  const run = () => prefetchCardArt(rest);
-  if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 2500 });
-  else setTimeout(run, 200);
+  const finish = () => {
+    if (rest.length) prefetchCardArt(rest);
+    markBinderArtQueued();
+  };
+  if (!rest.length) finish();
+  else if (typeof requestIdleCallback === "function") requestIdleCallback(finish, { timeout: 2500 });
+  else setTimeout(finish, 200);
 }
 
 const FILTER_SET_SHORT = {
@@ -5274,7 +5337,8 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
     const rung = (cell) => {
       const openable = Boolean(cell.claimed && cell.reward && !cell.opened);
       const taken = Boolean(cell.opened && cell.reward);
-      const dayLabel = streakRunDayLabel(cell.runDay);
+      const runDay = Math.max(1, Math.round(Number(cell.runDay) || 1));
+      const dayLabel = streakRunDayLabel(runDay);
       const label = openable
         ? ` tabindex="0" title="לחיצה כפולה לפתיחה" aria-label="${dayLabel}, לחיצה כפולה לפתיחה"`
         : taken
@@ -5539,8 +5603,9 @@ async function pollWatchedTrade() {
 
 async function refreshDailyChallenge() {
   try {
+    await Promise.all([window.__kalpiWarmup?.imagesQueued || Promise.resolve(), binderArtQueued]);
     const boards = await request("/api/leaderboards");
-    model.leaderboards = mergeLeaderboards(model.leaderboards, boards);
+    setLeaderboards(boards);
     renderTodayDocket();
     if (model.communityPage === "challenge" || model.communityPage === "collectors" || model.communityPage === "faction") renderGrowth();
   } catch {

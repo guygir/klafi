@@ -345,6 +345,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="streak-dialog"/);
   assert.match(html, /id="streak-calendar"/);
   assert.match(javascript, /const showStreak = streak >= 3/);
+  assert.match(javascript, /const showTodayStreak = streak >= 1/);
+  assert.match(javascript, /elements\.levelStreak\.hidden = !showTodayStreak/);
   assert.match(javascript, /function maybeShowStreakCalendar/);
   assert.match(javascript, /function openStreakCalendar/);
   assert.match(javascript, /function dismissStreakCalendar/);
