@@ -1129,7 +1129,8 @@ export async function createKalpiApp({
   async function settleIdleSession(current, currentMs, pool) {
     current.unseenPulls ??= [];
     await grantPendingStreakReward(current);
-    await grantPendingDatePrize(current);
+    const sealed = sealPastPrizes(current, new Date(currentMs).toISOString(), jerusalemDay(currentMs));
+    if (sealed) syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
     current.preparedPulls = (current.preparedPulls || [])
       .filter((pull) => pull?.instanceId && pull?.cardId && Number.isFinite(Date.parse(pull.availableAt)))
       .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));
@@ -1315,6 +1316,31 @@ export async function createKalpiApp({
     return credited;
   }
 
+  /** A granted prize from an earlier day. Today's gift stays unopened until the double-click. */
+  function isPastPrize(acquiredBy, today, streakDay) {
+    const acquired = String(acquiredBy || "");
+    const dateMatch = acquired.match(/^date-(\d{4}-\d{2}-\d{2})$/);
+    if (dateMatch) return dateMatch[1] !== today;
+    const streakMatch = acquired.match(/^streak-(\d+)$/);
+    if (streakMatch) return Number(streakMatch[1]) !== streakDay;
+    return false;
+  }
+
+  function unseenPastPrize(session, today, streakDay) {
+    return (session.instances || []).some((instance) => instance && !instance.seenAt && isPastPrize(instance.acquiredBy, today, streakDay));
+  }
+
+  /** The green stamp means the gift was taken. Past grants are credited and closed, not reopened. */
+  function sealPastPrizes(session, seenAt, today = session.visitDay) {
+    const streakDay = calendarDay(session.visitStreak);
+    let credited = 0;
+    for (const instance of session.instances || []) {
+      if (!isPastPrize(instance?.acquiredBy, today, streakDay)) continue;
+      if (creditStreakInstance(session, instance, seenAt)) credited += 1;
+    }
+    return credited;
+  }
+
   async function grantRewardInstance(session, reward, { acquiredBy, packPrefix }) {
     const currentMs = now();
     const pool = streakRewardPool(activeIdleCards(allCards, currentMs), reward);
@@ -1352,6 +1378,8 @@ export async function createKalpiApp({
     });
     if (!instance) return null;
     session.visitStreakClaims = [...new Set([...session.visitStreakClaims, rewardDay])];
+    const credited = creditStreakInstance(session, instance, new Date(now()).toISOString());
+    if (credited) syncProgression(session, allCards, studioContent?.gameConfig?.progression, now());
     return instance;
   }
 
@@ -1375,18 +1403,21 @@ export async function createKalpiApp({
     const session = store.getSession(token);
     if (!session) return;
     const today = jerusalemDay(now());
+    const sameDay = session.visitDay === today;
     const day = calendarDay(session.visitStreak);
-    const streakDue = Boolean(streakRewardForDay(day)) && !(session.visitStreakClaims || []).includes(day);
-    const dateDue = Boolean(datePrizeFor(today)) && !(session.visitDateClaims || []).includes(today);
-    if (session.visitDay === today && !session.pendingStreakReward && !streakDue && !dateDue) return;
+    const streakDue = sameDay && Boolean(streakRewardForDay(day)) && !(session.visitStreakClaims || []).includes(day);
+    const seal = sameDay && unseenPastPrize(session, today, day);
+    if (sameDay && !session.pendingStreakReward && !streakDue && !seal) return;
     await store.withSession(token, async (current) => {
       const stamped = applyVisitStreak(current, now());
+      const seenAt = new Date(now()).toISOString();
       if (stamped.reset) {
-        const credited = creditAbandonedStreakRewards(current, new Date(now()).toISOString());
+        const credited = creditAbandonedStreakRewards(current, seenAt);
         if (credited) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
       }
+      const sealed = sealPastPrizes(current, seenAt);
+      if (sealed) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
       await grantPendingStreakReward(current);
-      await grantPendingDatePrize(current);
     });
   }
 
@@ -2092,40 +2123,27 @@ export async function createKalpiApp({
         if (request.method === "POST" && url.pathname === "/api/streak/open") {
           const input = await readJson(request);
           const date = /^\d{4}-\d{2}-\d{2}$/.test(String(input.date || "")) ? String(input.date) : "";
-          const day = Math.round(Number(input.day));
-          const reward = date ? datePrizeFor(date) : streakRewardForDay(day);
-          if (!reward) {
-            json(response, 400, { error: "INVALID_STREAK_DAY" });
-            return;
-          }
-          const opened = await store.withSession(token, (current) => {
-            const claims = date ? current.visitDateClaims : current.visitStreakClaims;
-            const claimKey = date || day;
-            if (!(claims || []).includes(claimKey)) return { error: "unclaimed" };
-            const acquiredBy = date ? dateAcquiredBy(date) : streakAcquiredBy(current.visitStreak, day);
-            const instance = (current.instances || []).find((item) => item.acquiredBy === acquiredBy);
-            if (!instance) return { error: "missing" };
-            if (instance.seenAt) return { error: "opened" };
+          const opened = await store.withSession(token, async (current) => {
+            if (!date || date !== current.visitDay) return { already: true };
+            const reward = datePrizeFor(date);
+            if (!reward) return { already: true };
+            const acquiredBy = dateAcquiredBy(date);
+            const existing = (current.instances || []).find((item) => item.acquiredBy === acquiredBy);
+            if (existing?.seenAt || (current.visitDateClaims || []).includes(date)) return { already: true };
+            const instance = await grantPendingDatePrize(current);
+            if (!instance) return { already: true };
             const credited = creditStreakInstance(current, instance, new Date(now()).toISOString());
             if (credited) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
             ackStreakCalendar(current);
             return { instance, reward };
           });
-          if (!opened || opened.error === "unclaimed") {
-            json(response, 409, { error: "STREAK_REWARD_UNCLAIMED" });
-            return;
-          }
-          if (opened.error === "missing") {
-            json(response, 404, { error: "STREAK_REWARD_MISSING" });
-            return;
-          }
-          if (opened.error === "opened") {
-            json(response, 409, { error: "STREAK_REWARD_OPENED" });
+          if (!opened || opened.already) {
+            json(response, 200, { already: true, state: await stateForToken(token) });
             return;
           }
           json(response, 200, {
             mode: opened.reward.kind === "pack" ? "streak-pack" : "streak-card",
-            packId: date ? `date-open-${date}` : `streak-open-${day}`,
+            packId: `date-open-${date}`,
             cards: [opened.instance],
             state: await stateForToken(token),
           });

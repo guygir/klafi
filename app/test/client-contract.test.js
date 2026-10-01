@@ -356,8 +356,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /המחסן מלא\. פתחו קלף כדי לקבל את הפרס/);
   assert.doesNotMatch(javascript, /נכנס למחסן/);
   assert.match(javascript, /function streakCheckMarkup\(ringsOnly = false\) \{[\s\S]*?<svg viewBox="0 0 64 64">/);
-  assert.match(javascript, /streakCheckMarkup\(Boolean\(cell\.reward\) && !cell\.opened\)/);
-  assert.match(javascript, /cell\.claimed && cell\.reward && !cell\.opened/);
+  assert.match(javascript, /function todayDateOpenable\(cell\) \{\s*return Boolean\(cell\?\.current && cell\.reward && !datePrizeGranted\(cell\)\);\s*\}/);
+  assert.match(javascript, /streakCheckMarkup\(false\)/);
+  assert.doesNotMatch(javascript, /streakCheckMarkup\(Boolean\(cell\.reward\) && !cell\.opened\)/);
+  assert.match(javascript, /\.streak-cell\.is-today\.is-openable/);
+  assert.doesNotMatch(javascript, /streakLadder\?\.addEventListener\("dblclick"/);
   assert.match(javascript, /הפרס נלקח/);
   assert.match(css, /\.streak-cell\.is-opened \.streak-cell-prize \{\s*opacity:\s*0\.34/);
   assert.doesNotMatch(javascript, /כדאי להתחבר כל יום כדי לא לאבד את הרצף!/);
@@ -367,7 +370,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /מתי הפרסים הבאים\?/);
   assert.doesNotMatch(javascript, /מחכה בתא/);
   assert.match(javascript, /function playStreakStamp\(\) \{[\s\S]*?prefersReducedMotion\(\)[\s\S]*?sfx\.play\("streak-stamp"\)/);
-  assert.match(javascript, /function openClaimedStreakReward/);
+  assert.match(javascript, /function openTodayDatePrize/);
   assert.match(javascript, /\/api\/streak\/open/);
   assert.match(javascript, /streakCalendar\?\.addEventListener\("dblclick"/);
   assert.doesNotMatch(javascript, /M2 3\.2 7 11\.4 12 3\.2/);
@@ -952,7 +955,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   const openSettleAt = openOnce.indexOf("await hydrateIdleQueue()");
   const openRipAt = openOnce.indexOf("playHomePackRip(");
   assert.ok(openSettleAt >= 0 && openRipAt > openSettleAt, "the rip waits until settle confirms the instance");
-  const streakOpen = javascript.slice(javascript.indexOf("async function openClaimedStreakReward"), javascript.indexOf("async function ackStreakCalendar"));
+  const streakOpen = javascript.slice(javascript.indexOf("async function openTodayDatePrize"), javascript.indexOf("async function ackStreakCalendar"));
   const streakWaitAt = streakOpen.indexOf("מביאים את המתנה…");
   const streakPostAt = streakOpen.indexOf("/api/streak/open");
   const streakRipAt = streakOpen.indexOf("playHomePackRip(");
