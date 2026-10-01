@@ -356,8 +356,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /המחסן מלא\. פתחו קלף כדי לקבל את הפרס/);
   assert.doesNotMatch(javascript, /נכנס למחסן/);
   assert.match(javascript, /function streakCheckMarkup\(ringsOnly = false\) \{[\s\S]*?<svg viewBox="0 0 64 64">/);
-  assert.match(javascript, /streakCheckMarkup\(Boolean\(cell\.reward\) && !cell\.opened\)/);
-  assert.match(javascript, /cell\.claimed && cell\.reward && !cell\.opened/);
+  assert.match(javascript, /function streakPrizeOpenable\(cell\) \{\s*return Boolean\(cell\?\.current && cell\.reward && !cell\.opened && !streakPrizeTaken\(cell\)\);\s*\}/);
+  assert.match(javascript, /streakCheckMarkup\(false\)/);
+  assert.doesNotMatch(javascript, /streakCheckMarkup\(Boolean\(cell\.reward\) && !cell\.opened\)/);
+  assert.match(javascript, /\.streak-cell\.is-openable/);
+  assert.match(javascript, /STREAK_REWARD_CLOSED/);
   assert.match(javascript, /הפרס נלקח/);
   assert.match(css, /\.streak-cell\.is-opened \.streak-cell-prize \{\s*opacity:\s*0\.34/);
   assert.doesNotMatch(javascript, /כדאי להתחבר כל יום כדי לא לאבד את הרצף!/);

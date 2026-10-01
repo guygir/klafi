@@ -6146,12 +6146,15 @@ body {
   align-self: center;
   justify-self: center;
 }
-.streak-ladder-rung.has-reward.is-claimed:not(.is-opened) {
+.streak-ladder-rung.has-reward.is-openable {
   cursor: pointer;
 }
-.streak-ladder-rung.has-reward.is-claimed:not(.is-opened):focus-visible {
+.streak-ladder-rung.has-reward.is-openable:focus-visible {
   outline: 2px solid var(--civic);
   outline-offset: 1px;
+}
+.streak-ladder-rung.is-opened {
+  cursor: default;
 }
 .streak-ladder-rung.is-opened .streak-cell-prize {
   opacity: 0.34;
@@ -6217,8 +6220,12 @@ body {
 #streak-calendar-reward {
   margin-top: 6px;
 }
-.streak-cell.has-date-prize.is-claimed:not(.is-opened) {
+.streak-cell.has-date-prize.is-openable {
   cursor: pointer;
+}
+.streak-cell.has-date-prize.is-openable:focus-visible {
+  outline: 2px solid var(--civic);
+  outline-offset: 1px;
 }
 .streak-cell-prize {
   position: absolute;
@@ -6279,13 +6286,6 @@ body {
   0% { opacity: 0; transform: rotate(-16deg) scale(1.12); }
   70% { opacity: 0.7; transform: rotate(-6deg) scale(0.98); }
   100% { opacity: 0.58; transform: rotate(-8deg) scale(1); }
-}
-.streak-cell.is-claimed.has-reward:not(.is-opened) {
-  cursor: pointer;
-}
-.streak-cell.is-claimed.has-reward:not(.is-opened):focus-visible {
-  outline: 2px solid var(--civic);
-  outline-offset: 1px;
 }
 .streak-cell.is-opened {
   cursor: default;
