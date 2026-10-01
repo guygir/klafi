@@ -119,7 +119,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /progressiveStage: "blank"/);
   assert.doesNotMatch(javascript, /reveal: stage === "portrait"/);
   assert.match(javascript, /binder-shared-card/);
-  assert.match(javascript, /displayCardMarkup\(card, "binder", \{ tradeCopies \}\)/);
+  assert.match(javascript, /displayCardMarkup\(card, "binder", \{ tradeCopies, plain, stamp, count \}\)/);
   assert.match(javascript, /studio-shared-card/);
   assert.match(javascript, /function cardPresentation/);
   assert.match(javascript, /function quoteTrustLabel/);
@@ -319,7 +319,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /card-copies-tag/);
   assert.match(javascript, /tradeCopies \? `1\/\$\{copies\}` : `×\$\{copies\}`/);
   assert.match(javascript, /tradeCopies: true/);
-  assert.match(javascript, /function displayCardMarkup\(card, surface = "display", \{ tradeCopies = false, recycle = false \} = \{\}\) \{[\s\S]*?surface, tradeCopies, recycle \}/);
+  assert.match(javascript, /function displayCardMarkup\(card, surface = "display", \{ tradeCopies = false, recycle = false, plain = false, stamp = null, count = null \} = \{\}\) \{[\s\S]*?surface, tradeCopies, recycle \}/);
   assert.match(css, /#app \.trade-thumb\.is-concealed \.card-image-zone \.card-art/);
   assert.match(css, /#app \.binder-card-open\.is-concealed \.card-image-zone \.card-art/);
 
@@ -683,10 +683,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.faction-pick-row/);
   assert.match(css, /\.growth-grid > \.work-card\.faction-desk/);
   assert.match(css, /\.growth-grid > \.work-card\.daily-challenge-desk/);
-  // The "more cards" cue has its own 16px row under the grid (no overlay on card names) and hides
+  // The "more cards" cue has its own row under the grid (no overlay on card names) and hides
   // at the end of the grid; the grid does not row-snap (short phones could not reach the last row).
   assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*position:\s*static/);
-  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*flex:\s*0 0 16px/);
+  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*flex:\s*0 0 auto/);
+  assert.match(css, /#binder-pager\.binder-scroll-dock \{[^}]*min-height:\s*16px/);
   assert.match(css, /#binder-view\.binder-at-end #binder-pager \.binder-scroll-hint \{[^}]*visibility:\s*hidden/);
   assert.match(css, /#binder-view\.view\.active \.binder-grid \{[^}]*scroll-snap-type:\s*none/);
   assert.match(javascript, /function syncBinderScrollCue/);

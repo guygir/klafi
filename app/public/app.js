@@ -3946,18 +3946,20 @@ function rarityCanRecycle(card) {
   return rarity.startsWith("Common") || rarity.startsWith("Uncommon") || rarity.startsWith("Rare");
 }
 
-function displayCardMarkup(card, surface = "display", { tradeCopies = false, recycle = false } = {}) {
+function displayCardMarkup(card, surface = "display", { tradeCopies = false, recycle = false, plain = false, stamp = null, count = null } = {}) {
   const preview = surface === "display" && model.dialogNumberedPreview?.cardId === card?.id
     ? model.dialogNumberedPreview
     : null;
-  const stamp = preview
+  const resolved = preview
     ? { numberedIndex: preview.index, numberedOf: preview.of, finish: "Holo" }
-    : stampForCard(card);
+    : plain
+      ? null
+      : (stamp || stampForCard(card));
   return cardMarkup(card, {
-    finish: stamp?.finish || card.rarity,
-    count: ownedCountFor(card),
-    numberedIndex: stamp?.numberedIndex,
-    numberedOf: stamp?.numberedOf,
+    finish: resolved?.finish || card.rarity,
+    count: Number.isInteger(count) ? count : ownedCountFor(card),
+    numberedIndex: resolved?.numberedIndex,
+    numberedOf: resolved?.numberedOf,
   }, { progressiveStage: "portrait", surface, tradeCopies, recycle });
 }
 
@@ -4015,9 +4017,35 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
     </article>`;
 }
 
-function binderCardMarkup(card, { tradeCopies = false } = {}) {
+function binderCardMarkup(card, { tradeCopies = false, plain = false, stamp = null, count = null } = {}) {
   return `
-    <div class="binder-shared-card">${displayCardMarkup(card, "binder", { tradeCopies })}</div>`;
+    <div class="binder-shared-card">${displayCardMarkup(card, "binder", { tradeCopies, plain, stamp, count })}</div>`;
+}
+
+function binderNumberedCopies() {
+  return (model.guestBinder || model.serverState)?.numberedCopies || [];
+}
+
+function binderNumberedCount(cardId) {
+  return binderNumberedCopies().filter((item) => item.cardId === cardId && Number(item.numberedIndex) > 0).length;
+}
+
+function binderRegularInventory(inventory = binderInventory()) {
+  const regular = { ...inventory };
+  for (const item of binderNumberedCopies()) {
+    if (!(Number(item?.numberedIndex) > 0) || !regular[item.cardId]) continue;
+    regular[item.cardId] -= 1;
+    if (regular[item.cardId] <= 0) delete regular[item.cardId];
+  }
+  return regular;
+}
+
+function binderRegularCount(cardId) {
+  return binderRegularInventory()[cardId] ?? 0;
+}
+
+function binderStamp(card) {
+  return binderNumberedCopies().find((item) => item.cardId === card?.id && Number(item.numberedIndex) > 0) || null;
 }
 
 function renderPendingWells(count = 6) {
@@ -4129,7 +4157,7 @@ const BINDER_SORT_KEY = "kalpi-binder-sort";
 const BINDER_LIST_KEY = "kalpi-binder-list";
 const BINDER_CHROME_KEY = "kalpi-binder-chrome";
 // A column narrower than this is no longer a full card. Pinching out cannot go below it.
-// The default row is the largest card that still fits a whole card in the visible grid.
+// The default is one of those column steps: the largest card that still sits fully above the nav.
 const MIN_BINDER_CARD_PX = 64;
 let binderColumnsUser;
 
@@ -4153,19 +4181,37 @@ function userBinderColumns() {
   return binderColumnsUser;
 }
 
-function fitBinderCardWidth(grid) {
+function binderRowLimit(grid) {
+  const rect = grid.getBoundingClientRect();
   const styles = getComputedStyle(grid);
-  const pad = (Number.parseFloat(styles.paddingTop) || 0) + (Number.parseFloat(styles.paddingBottom) || 0);
-  const height = Math.max(0, grid.clientHeight - pad);
-  return height * (63 / 96);
+  const padTop = Number.parseFloat(styles.paddingTop) || 0;
+  const padBottom = Number.parseFloat(styles.paddingBottom) || 0;
+  const navTop = document.querySelector(".top-nav-row")?.getBoundingClientRect().top;
+  const viewportBottom = window.visualViewport?.height || window.innerHeight;
+  const visibleBottom = Math.min(
+    rect.top + grid.clientHeight,
+    Number.isFinite(navTop) ? navTop : viewportBottom,
+    viewportBottom,
+  );
+  return Math.max(0, visibleBottom - Math.max(rect.top, 0) - padTop - padBottom);
+}
+
+function binderCardHeightForColumns(grid, count) {
+  const styles = getComputedStyle(grid);
+  const padX = (Number.parseFloat(styles.paddingLeft) || 0) + (Number.parseFloat(styles.paddingRight) || 0);
+  const gap = binderGridGap(grid);
+  const width = (Math.max(0, grid.clientWidth - padX) - gap * (count - 1)) / count;
+  return width * (96 / 63);
 }
 
 function maxFullBinderColumns(grid) {
-  if (!grid || grid.clientWidth < 48 || grid.clientHeight < 80) return 2;
-  const gap = binderGridGap(grid);
-  const cardWidth = fitBinderCardWidth(grid);
-  if (cardWidth < MIN_BINDER_CARD_PX) return 2;
-  return Math.max(1, Math.floor((grid.clientWidth + gap) / (cardWidth + gap)));
+  if (!grid || grid.clientWidth < 48) return 2;
+  const limit = binderRowLimit(grid);
+  if (limit < 48) return 2;
+  let count = 1;
+  while (count < 8 && binderCardHeightForColumns(grid, count) > limit + 0.5) count += 1;
+  while (count > 1 && !binderColumnFits(grid, count)) count -= 1;
+  return count;
 }
 
 function binderListMode() {
@@ -4215,13 +4261,45 @@ function displayedBinderColumns() {
   return binderListMode() ? 1 : 2;
 }
 
+function binderPinchMark() {
+  const outline = [[73,46],[78,46],[83,46],[88,50],[93,55],[98,60],[102,65],[105,70],[109,75],[112,80],[117,85],[122,90],[127,95],[132,100],[135,105],[132,110],[129,115],[124,120],[119,122],[114,123],[109,118],[104,114],[99,111],[94,110],[89,110],[84,109],[79,108],[74,106],[69,104],[64,101],[59,98],[54,95],[49,92],[44,90],[39,87],[34,84],[29,81],[24,76],[24,71],[29,68],[34,68],[39,70],[44,72],[48,71],[47,66],[43,64],[38,63],[33,62],[28,63],[23,61],[18,58],[18,53],[23,50],[28,51],[33,51],[38,51],[43,50],[48,50],[53,50],[58,49],[63,49],[68,47]];
+  const closeShift = { 37: 0.65, 38: 1, 39: 0.9, 40: 0.7, 41: 0.45, 42: 0.25, 43: 0.1, 44: -0.1, 45: -0.3, 46: -0.5, 47: -0.7, 48: -0.9, 49: -1, 50: -1.05, 51: -0.4 };
+  const indexPoints = new Set([45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57]);
+  const thumbPoints = new Set([37, 38, 39, 40]);
+  const rotate = (point, pivot, degrees) => {
+    const rad = degrees * Math.PI / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const dx = point[0] - pivot[0];
+    const dy = point[1] - pivot[1];
+    return [pivot[0] + dx * cos - dy * sin, pivot[1] + dx * sin + dy * cos];
+  };
+  const frames = [
+    { index: 30, thumb: -8, spread: 0 },
+    { index: 15, thumb: -4, spread: 0 },
+    { index: 0, thumb: 0, spread: 0 },
+    { index: 0, thumb: 0, spread: -2 },
+  ];
+  const framesHtml = frames.map((frame) => {
+    const d = outline.map((point, index) => {
+      let [x, y] = point;
+      if (indexPoints.has(index)) [x, y] = rotate(point, [52, 55], frame.index);
+      else if (thumbPoints.has(index)) [x, y] = rotate(point, [50, 72], frame.thumb);
+      y += (closeShift[index] || 0) * frame.spread;
+      return `${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(" L ");
+    return `<svg viewBox="14 30 126 100" aria-hidden="true"><path fill="currentColor" d="M ${d} Z"/></svg>`;
+  }).join("");
+  return `<span class="binder-scroll-pinch" aria-hidden="true">${framesHtml}</span>`;
+}
+
 function syncBinderMoreHint() {
   const pager = elements.binderPager;
   if (!pager) return;
   const count = model.binderVisibleCount || 0;
   const columns = displayedBinderColumns();
   const next = count > columns
-    ? '<span class="binder-scroll-hint">יש עוד קלפים למטה ↓</span>'
+    ? `<span class="binder-scroll-hint">גלול למטה <span class="binder-scroll-arrow" aria-hidden="true"><i></i></span> או צבוט ${binderPinchMark()} כדי לראות קלפים נוספים</span>`
     : "";
   if (pager.innerHTML !== next) pager.innerHTML = next;
   syncBinderScrollCue();
@@ -4230,13 +4308,9 @@ function syncBinderMoreHint() {
 function applyBinderColumnStyle() {
   const grid = elements.binderGrid;
   if (!grid) return;
-  const fitted = userBinderColumns() == null && !binderListMode() && grid.clientHeight >= 80;
-  grid.classList.toggle("binder-row-fit", fitted);
-  if (fitted) {
-    grid.style.setProperty("--binder-card-width", `${Math.floor(fitBinderCardWidth(grid))}px`);
-  } else {
-    grid.style.removeProperty("--binder-card-width");
-  }
+  grid.classList.remove("binder-row-fit");
+  grid.style.removeProperty("--binder-card-width");
+  grid.style.removeProperty("--binder-row-height");
   grid.style.setProperty("--binder-columns", String(resolvedBinderColumns()));
   syncBinderMoreHint();
 }
@@ -4405,12 +4479,11 @@ function renderBinder() {
 
   const playerCards = playerCatalog();
   const releaseOrder = openBinderReleaseIds();
-  const numberedIds = new Set(((guest ? model.guestBinder?.numberedCopies : null)
-    || model.serverState?.numberedCopies
-    || model.serverState?.instances
-    || [])
+  const numberedIds = new Set(binderNumberedCopies()
     .filter((item) => item.numberedIndex)
     .map((item) => item.cardId));
+  const regularInventory = binderRegularInventory(inventory);
+  const numberedView = model.binderFilter === "NUMBERED";
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
   if (numberedIds.size) setOrder.push("NUMBERED");
   if (model.binderFilter.startsWith("RELEASE:") && !releaseOrder.includes(model.binderFilter.slice(8))) {
@@ -4436,9 +4509,8 @@ function renderBinder() {
   const listLabel = listMode ? "גריד" : "רשימה";
   const setOptions = setOrder.map((set) => {
     const count = binderSetChipCount(set, playerCards, {
-      inventory,
+      inventory: set === "NUMBERED" ? inventory : regularInventory,
       numberedIds,
-      numberedCards: possibleNumberedCards(),
       ownedOnly: (guest || model.binderOwnedOnly) && !model.binderMissingOnly,
       missingOnly: !guest && model.binderMissingOnly,
     });
@@ -4486,23 +4558,27 @@ function renderBinder() {
         : model.binderFilter === "NUMBERED" ? numberedIds.has(card.id)
         : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
     const partyOk = !model.binderParty || card.set === model.binderParty;
+    const slotInventory = numberedView ? inventory : regularInventory;
     const ownedOk = guest
-      ? Boolean(inventory[card.id])
+      ? Boolean(slotInventory[card.id])
       : model.binderMissingOnly
-        ? !inventory[card.id]
-        : (!model.binderOwnedOnly || Boolean(inventory[card.id]));
+        ? !slotInventory[card.id]
+        : (!model.binderOwnedOnly || Boolean(slotInventory[card.id]));
     return releaseOk && partyOk && ownedOk;
   });
   const ordered = sortBinderCards(visible, {
     sort: binderSortMode(),
     catalog: playerCards,
     acquiredAt: binderAcquiredAtMap(),
-    inventory,
+    inventory: numberedView ? inventory : regularInventory,
   });
   binderView?.classList.toggle("binder-list", listMode);
   model.binderVisibleCount = ordered.length;
   elements.binderGrid.innerHTML = ordered.map((card) => {
-    const count = inventory[card.id] ?? 0;
+    const count = numberedView ? binderNumberedCount(card.id) : (regularInventory[card.id] ?? 0);
+    const face = numberedView
+      ? binderCardMarkup(card, { stamp: binderStamp(card), count })
+      : binderCardMarkup(card, { plain: true, count });
     if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
       if (guest || model.binderFilter === "NUMBERED") return "";
       return `<div class="binder-slot is-missing" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)} · חסר באוסף`)}">
@@ -4519,15 +4595,15 @@ function renderBinder() {
     if (listMode) {
       return `
       <div class="binder-slot owned binder-list-row" role="listitem" style="--pip:${card.pip}">
-        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}" aria-label="${escapeHtml(openLabel)}">
+        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}"${numberedView ? ' data-numbered="1"' : ' data-binder-plain="1"'} aria-label="${escapeHtml(openLabel)}">
           ${binderListFacts(card, count)}
         </button>
       </div>`;
     }
     return `
       <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
-        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}" aria-label="${escapeHtml(openLabel)}">
-          ${binderCardMarkup(card)}
+        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}"${numberedView ? ' data-numbered="1"' : ' data-binder-plain="1"'} aria-label="${escapeHtml(openLabel)}">
+          ${face}
         </button>
         ${guest ? "" : binderRecycleButton(card)}
       </div>`;
@@ -5150,13 +5226,23 @@ function scheduleTradeListRefresh(pending) {
  * is not current: wait for the home fetch already in flight, and do not start
  * another one. Null means that fetch has not landed yet.
  */
+function regularTradeInventory(state = model.serverState) {
+  const inventory = { ...(state?.inventory || {}) };
+  for (const item of state?.numberedCopies || []) {
+    if (!(Number(item?.numberedIndex) > 0) || !item.cardId || !inventory[item.cardId]) continue;
+    inventory[item.cardId] -= 1;
+    if (inventory[item.cardId] <= 0) delete inventory[item.cardId];
+  }
+  return inventory;
+}
+
 function currentTradeInventory() {
-  if (stateFreshAt && model.serverState?.inventory) return model.serverState.inventory;
+  if (stateFreshAt && model.serverState?.inventory) return regularTradeInventory();
   if (homeHydrate) {
     scheduleTradeListRefresh(homeHydrate);
     return null;
   }
-  return model.serverState?.inventory || {};
+  return model.serverState?.inventory ? regularTradeInventory() : {};
 }
 
 function listedOpenTrades() {
@@ -5213,7 +5299,8 @@ function tradeRowMarkup(trade) {
   const hide = !trade.ownedByCurrent && trade.status === "open"
     ? `<button type="button" class="trade-offer-action" data-hide-trade="${trade.tradeId}">הסתר</button>`
     : "";
-  const accept = !trade.ownedByCurrent && holdsWantedCard(model.serverState?.inventory, trade.wantedCardId)
+  const acceptInventory = currentTradeInventory();
+  const accept = acceptInventory && !trade.ownedByCurrent && holdsWantedCard(acceptInventory, trade.wantedCardId)
     ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}">קבלה</button>`
     : "";
   const action = trade.ownedByCurrent
@@ -5838,7 +5925,7 @@ function renderGrowth() {
     .join("");
 
   const tradableCards = tradeCatalog();
-  const ownedCards = tradableCards.filter((candidate) => (model.serverState.inventory[candidate.id] ?? 0) > 0);
+  const ownedCards = tradableCards.filter((candidate) => plainOwnedCount(candidate) > 0);
   const releaseNames = Object.fromEntries((model.gameConfig?.releaseSets || []).map(({ id, nameHe }) => [id, nameHe]));
   const fallbackReleaseNames = {
     foundations: "יסודות",
@@ -7180,10 +7267,11 @@ async function debugUnlockCard(cardId) {
   }
 }
 
-function openCardDialog(cardId, numbered = false) {
+function openCardDialog(cardId, numbered = false, { plain = false } = {}) {
   model.dialogCardId = cardId;
   model.dialogBack = false;
   model.dialogNumbered = Boolean(numbered);
+  model.dialogPlain = Boolean(plain) && !numbered;
   model.dialogNumberedPreview = null;
   renderDialogCard();
   elements.dialog.showModal();
@@ -7204,13 +7292,24 @@ function openNumberedPreview(cardId, index, of) {
 
 function renderDialogCard() {
   const card = model.byId.get(model.dialogCardId);
-  const ownedCount = model.showcase ? 0 : (model.serverState?.inventory?.[card.id] ?? 0);
+  const ownedCount = model.showcase
+    ? 0
+    : model.dialogPlain
+      ? binderRegularCount(card.id)
+      : model.dialogNumbered
+        ? Math.max(binderNumberedCount(card.id), 1)
+        : (model.serverState?.inventory?.[card.id] ?? 0);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
-  const canRecycle = !model.dialogNumbered && canRecycleCard(card);
+  const canRecycle = !model.dialogNumbered && !model.dialogPlain && canRecycleCard(card);
   elements.dialogCard.innerHTML = model.showcase
     ? catalogCardMarkup(card, "display", model.dialogNumbered)
-    : displayCardMarkup(card, "display", { recycle: canRecycle });
+    : displayCardMarkup(card, "display", {
+      recycle: canRecycle,
+      plain: model.dialogPlain,
+      stamp: model.dialogNumbered ? binderStamp(card) : null,
+      count: model.dialogPlain ? binderRegularCount(card.id) : model.dialogNumbered ? binderNumberedCount(card.id) : null,
+    });
   if (elements.dialogTrust) {
     const line = cardTrustLine(card);
     elements.dialogTrust.textContent = line;
@@ -8744,6 +8843,7 @@ window.addEventListener("resize", () => {
   syncBinderScrollCue();
   applyBinderColumnStyle();
 }, { passive: true });
+window.visualViewport?.addEventListener("resize", () => applyBinderColumnStyle(), { passive: true });
 elements.binderPager.addEventListener("click", (event) => {
   const button = event.target.closest('[data-page-target="binder"]');
   if (!button) return;
@@ -8790,7 +8890,7 @@ elements.binderGrid.addEventListener("click", (event) => {
   const button = event.target.closest("[data-card-id]");
   if (button) {
     if (button.classList.contains("is-concealed")) return;
-    openCardDialog(button.dataset.cardId);
+    openCardDialog(button.dataset.cardId, button.hasAttribute("data-numbered"), { plain: button.hasAttribute("data-binder-plain") });
   }
 });
 elements.showcaseFilters?.addEventListener("click", (event) => {

@@ -133,6 +133,12 @@ export function numberedCopies(instances = []) {
   return (instances || []).filter((item) => Number(item?.numberedIndex) > 0);
 }
 
+export function regularCopyCount(session, cardId) {
+  const inventory = Math.max(0, Number(session?.inventory?.[cardId] || 0));
+  const numbered = (session?.instances || []).filter((item) => item?.cardId === cardId && Number(item.numberedIndex) > 0).length;
+  return Math.max(0, inventory - numbered);
+}
+
 export function takeInstanceForCard(session, cardId) {
   const instances = session.instances || [];
   const pick = [...instances].reverse().find((item) => item.cardId === cardId && item.numberedIndex)
@@ -142,12 +148,21 @@ export function takeInstanceForCard(session, cardId) {
   return pick;
 }
 
+export function takePlainInstanceForCard(session, cardId) {
+  const instances = session.instances || [];
+  const pick = [...instances].reverse().find((item) => item.cardId === cardId && !(Number(item.numberedIndex) > 0));
+  if (!pick) return null;
+  session.instances = instances.filter((item) => item.instanceId !== pick.instanceId);
+  return pick;
+}
+
 export function moveOwnedCard(from, to, cardId, { acquiredBy, pulledAt, finish, instanceId }) {
+  if (regularCopyCount(from, cardId) < 1) return null;
   from.inventory[cardId] -= 1;
   if (!from.inventory[cardId]) delete from.inventory[cardId];
   const isNew = !to.inventory[cardId];
   to.inventory[cardId] = (to.inventory[cardId] ?? 0) + 1;
-  const instance = takeInstanceForCard(from, cardId);
+  const instance = takePlainInstanceForCard(from, cardId);
   to.instances.push(instance
     ? {
       ...instance,
