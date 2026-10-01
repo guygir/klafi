@@ -1953,8 +1953,10 @@ test("numbered stamps are idle-only set-5 holos by list slot and streaks count J
   const copy = stamped.body.cards.find((item) => item.acquiredBy === "idle") || stamped.body.cards[0];
   assert.match(copy.cardId, /^SET5-/);
   assert.equal(copy.finish, "Holo");
-  assert.equal(copy.numberedIndex, 1);
   assert.ok(copy.numberedOf >= 1);
+  const firstPool = Array.from({ length: copy.numberedOf }, (_, index) => index + 1);
+  const firstAt = Math.min(firstPool.length - 1, Math.floor(0.99 * firstPool.length));
+  assert.equal(copy.numberedIndex, firstPool[firstAt]);
   assert.equal(stamped.body.state.numberedCopies.length, 1);
 
   const late = await api(running.base, "/api/idle/settle", {
@@ -1969,7 +1971,9 @@ test("numbered stamps are idle-only set-5 holos by list slot and streaks count J
     assert.equal((late.body.state.numberedCopies || []).length, 0);
   } else {
     assert.equal(lateCopy.finish, "Holo");
-    assert.equal(lateCopy.numberedIndex, 2);
+    const rest = firstPool.filter((_, index) => index !== firstAt);
+    const secondAt = Math.min(rest.length - 1, Math.floor(0.99 * rest.length));
+    assert.equal(lateCopy.numberedIndex, rest[secondAt]);
     assert.equal(lateCopy.numberedOf, copy.numberedOf);
   }
 

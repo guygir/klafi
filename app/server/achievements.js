@@ -136,6 +136,7 @@ export function achievementMeasures(session, cards, extra = {}) {
     rare: cards.filter((card) => card.rarity?.startsWith("Rare") && Number(inventory[card.id]) > 0).length,
     numbered: (session.instances || []).filter((item) => Number(item?.numberedIndex) > 0).length,
     warehouseFull: (session.unseenPulls?.length || 0) >= IDLE_BACKLOG_CAP ? 1 : 0,
+    binderOne: Number(session.eventCounts?.binder_one_column) > 0 ? 1 : 0,
     streakPrizeSkipped: session.streakPrizeSkipped ? 1 : 0,
     league: extra.league ? 1 : 0,
     setOwned: cards.reduce((owned, card) => {

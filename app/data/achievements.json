@@ -76,6 +76,15 @@
       "hidden": true
     },
     {
+      "id": "see-nothing",
+      "nameHe": "לא רואה כלום",
+      "descriptionHe": "הגדילו את האלבום עד שקלף אחד ממלא את השורה.",
+      "rule": "binderOne",
+      "target": 1,
+      "tier": "simple",
+      "hidden": true
+    },
+    {
       "id": "collector-ten",
       "nameHe": "עשרה שונים",
       "descriptionHe": "אספו עשרה קלפים שונים.",

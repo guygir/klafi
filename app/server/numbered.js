@@ -56,6 +56,55 @@ export function rollNumberedStamp(minted, max, every = DEFAULT_NUMBERED_EVERY, r
   return { index: have + 1, of: cap };
 }
 
+/** Numbers still available. A legacy issued count means 1..issued are already out. */
+export function openNumberPool(issued, max) {
+  const cap = Math.max(0, Math.round(Number(max) || 0));
+  const have = Math.min(cap, Math.max(0, Math.round(Number(issued) || 0)));
+  const pool = [];
+  for (let n = have + 1; n <= cap; n += 1) pool.push(n);
+  return pool;
+}
+
+export function normalizeNumberPool(value, max) {
+  const cap = Math.max(0, Math.round(Number(max) || 0));
+  if (!Array.isArray(value)) return null;
+  const seen = new Set();
+  const pool = [];
+  for (const item of value) {
+    const n = Math.round(Number(item));
+    if (!Number.isInteger(n) || n < 1 || n > cap || seen.has(n)) continue;
+    seen.add(n);
+    pool.push(n);
+  }
+  pool.sort((left, right) => left - right);
+  return pool;
+}
+
+export function numberPoolFromStored(stored, max) {
+  const cap = Math.max(0, Math.round(Number(max) || 0));
+  return normalizeNumberPool(stored, cap) || openNumberPool(stored, cap);
+}
+
+/** Removes one remaining number at random. The same random stream the chance roll uses stays deterministic in tests. */
+export function drawNumberedIndex(pool, random = Math.random) {
+  if (!pool?.length) return null;
+  const roll = Number(typeof random === "function" ? random() : random);
+  const unit = Number.isFinite(roll) ? Math.min(0.999999, Math.max(0, roll)) : 0;
+  const at = Math.min(pool.length - 1, Math.floor(unit * pool.length));
+  return {
+    index: pool[at],
+    pool: pool.filter((_, index) => index !== at),
+  };
+}
+
+export function returnNumberedIndex(pool, index, max) {
+  const cap = Math.max(0, Math.round(Number(max) || 0));
+  const n = Math.round(Number(index));
+  const current = normalizeNumberPool(pool, cap) || [];
+  if (!Number.isInteger(n) || n < 1 || n > cap || current.includes(n)) return current;
+  return [...current, n].sort((left, right) => left - right);
+}
+
 export function stampMax(card) {
   const slot = Number(card?.listSlot);
   return Number.isInteger(slot) && slot > 0 ? slot : 0;

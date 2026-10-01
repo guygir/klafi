@@ -5,7 +5,14 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { cardHolderSnapshotFresh, normalizeState } from "./store.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
-import { jerusalemDay, moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import {
+  drawNumberedIndex,
+  jerusalemDay,
+  moveOwnedCard,
+  numberPoolFromStored,
+  returnNumberedIndex,
+  rollNumberedStamp,
+} from "./numbered.js";
 import { emptyTodayPulse } from "../public/today-pulse.js";
 import { takeCollectorBoard } from "./collector-board.js";
 import { raceTargetForSavedFaction, visibleDailyRaceLeaders } from "./daily-race.js";
@@ -30,6 +37,7 @@ const MIGRATIONS = [
   ["006_numbered_grant_cadence", "006_numbered_grant_cadence.sql"],
   ["007_instances_seen_at_index", "007_instances_seen_at_index.sql"],
   ["008_numbered_chance", "008_numbered_chance.sql"],
+  ["009_numbered_pool", "009_numbered_pool.sql"],
 ];
 
 function iso(value) {
@@ -1269,24 +1277,52 @@ export class PostgresStore {
   async claimNumberedStamp(key, max, every = 30) {
     const cap = Math.max(0, Math.round(Number(max) || 0));
     if (!cap) return null;
-    const current = await this.executor().query(
-      "SELECT issued FROM kalpi_numbered_issued WHERE stamp_key = $1",
-      [key],
-    );
-    const have = current.rows[0]?.issued || 0;
-    if (!rollNumberedStamp(have, cap, every, this.numberedRandom)) return null;
-    const result = await this.executor().query(
-      `INSERT INTO kalpi_numbered_issued (stamp_key, issued)
-       VALUES ($1, 1)
-       ON CONFLICT (stamp_key) DO UPDATE
-       SET issued = kalpi_numbered_issued.issued + 1
-       WHERE kalpi_numbered_issued.issued < $2
-       RETURNING issued`,
-      [key, cap],
-    );
-    const minted = result.rows[0]?.issued;
-    if (!minted) return null;
-    return { index: minted, of: cap };
+    const draw = async (db) => {
+      const current = await db.query(
+        "SELECT issued, remaining FROM kalpi_numbered_issued WHERE stamp_key = $1 FOR UPDATE",
+        [key],
+      );
+      const row = current.rows[0];
+      const pool = numberPoolFromStored(row?.remaining ?? row?.issued ?? 0, cap);
+      if (!rollNumberedStamp(cap - pool.length, cap, every, this.numberedRandom)) return null;
+      const drawn = drawNumberedIndex(pool, this.numberedRandom);
+      if (!drawn) return null;
+      await db.query(
+        `INSERT INTO kalpi_numbered_issued (stamp_key, issued, remaining)
+         VALUES ($1, $2, $3::jsonb)
+         ON CONFLICT (stamp_key) DO UPDATE
+         SET issued = EXCLUDED.issued,
+             remaining = EXCLUDED.remaining`,
+        [key, cap - drawn.pool.length, JSON.stringify(drawn.pool)],
+      );
+      return { index: drawn.index, of: cap };
+    };
+    if (this.transaction.getStore()) return draw(this.executor());
+    return this.exclusive(() => draw(this.executor()));
+  }
+
+  async returnNumberedStamp(key, index, max) {
+    const cap = Math.max(0, Math.round(Number(max) || 0));
+    if (!cap) return [];
+    const putBack = async (db) => {
+      const current = await db.query(
+        "SELECT issued, remaining FROM kalpi_numbered_issued WHERE stamp_key = $1 FOR UPDATE",
+        [key],
+      );
+      const row = current.rows[0];
+      const pool = returnNumberedIndex(numberPoolFromStored(row?.remaining ?? row?.issued ?? 0, cap), index, cap);
+      await db.query(
+        `INSERT INTO kalpi_numbered_issued (stamp_key, issued, remaining)
+         VALUES ($1, $2, $3::jsonb)
+         ON CONFLICT (stamp_key) DO UPDATE
+         SET issued = EXCLUDED.issued,
+             remaining = EXCLUDED.remaining`,
+        [key, cap - pool.length, JSON.stringify(pool)],
+      );
+      return pool;
+    };
+    if (this.transaction.getStore()) return putBack(this.executor());
+    return this.exclusive(() => putBack(this.executor()));
   }
 
   async ensureHolderSnapshotTable() {

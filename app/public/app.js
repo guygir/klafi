@@ -238,6 +238,7 @@ const elements = {
   communitySections: document.querySelector("#community-sections"),
   earnedBadgeRail: document.querySelector("#earned-badge-rail"),
   earnedBadgeList: document.querySelector("#earned-badge-list"),
+  binderChromeToggle: document.querySelector("#binder-chrome-toggle"),
   levelNumber: document.querySelector("#level-number"),
   levelTeaser: document.querySelector("#level-teaser"),
   levelRank: document.querySelector("#level-rank"),
@@ -4126,8 +4127,9 @@ const BINDER_COLUMNS_KEY = "kalpi-binder-columns";
 const BINDER_COLUMNS_SET_KEY = "kalpi-binder-columns-user";
 const BINDER_SORT_KEY = "kalpi-binder-sort";
 const BINDER_LIST_KEY = "kalpi-binder-list";
-// A column narrower than this is no longer a full card. The default row uses the
-// largest count that still clears this width, and never fewer than 2.
+const BINDER_CHROME_KEY = "kalpi-binder-chrome";
+// A column narrower than this is no longer a full card. Pinching out cannot go below it.
+// The default row is the largest card that still fits a whole card in the visible grid.
 const MIN_BINDER_CARD_PX = 64;
 let binderColumnsUser;
 
@@ -4151,11 +4153,19 @@ function userBinderColumns() {
   return binderColumnsUser;
 }
 
+function fitBinderCardWidth(grid) {
+  const styles = getComputedStyle(grid);
+  const pad = (Number.parseFloat(styles.paddingTop) || 0) + (Number.parseFloat(styles.paddingBottom) || 0);
+  const height = Math.max(0, grid.clientHeight - pad);
+  return height * (63 / 96);
+}
+
 function maxFullBinderColumns(grid) {
-  if (!grid || grid.clientWidth < 48) return 2;
-  let count = 2;
-  while (binderColumnFits(grid, count + 1)) count += 1;
-  return count;
+  if (!grid || grid.clientWidth < 48 || grid.clientHeight < 80) return 2;
+  const gap = binderGridGap(grid);
+  const cardWidth = fitBinderCardWidth(grid);
+  if (cardWidth < MIN_BINDER_CARD_PX) return 2;
+  return Math.max(1, Math.floor((grid.clientWidth + gap) / (cardWidth + gap)));
 }
 
 function binderListMode() {
@@ -4220,8 +4230,44 @@ function syncBinderMoreHint() {
 function applyBinderColumnStyle() {
   const grid = elements.binderGrid;
   if (!grid) return;
+  const fitted = userBinderColumns() == null && !binderListMode() && grid.clientHeight >= 80;
+  grid.classList.toggle("binder-row-fit", fitted);
+  if (fitted) {
+    grid.style.setProperty("--binder-card-width", `${Math.floor(fitBinderCardWidth(grid))}px`);
+  } else {
+    grid.style.removeProperty("--binder-card-width");
+  }
   grid.style.setProperty("--binder-columns", String(resolvedBinderColumns()));
   syncBinderMoreHint();
+}
+
+let binderOneNoted = false;
+
+function noteBinderOneColumn() {
+  if (binderOneNoted || model.showcase || !model.token) return;
+  if (binderListMode() || userBinderColumns() !== 1 || resolvedBinderColumns() !== 1) return;
+  binderOneNoted = true;
+  recordEvent("binder_one_column").catch(() => { binderOneNoted = false; });
+}
+
+function binderChromeCollapsed() {
+  return readBinderLocal(BINDER_CHROME_KEY) === "0";
+}
+
+function applyBinderChrome() {
+  const view = document.querySelector("#binder-view");
+  const collapsed = binderChromeCollapsed();
+  view?.classList.toggle("is-chrome-collapsed", collapsed);
+  const button = elements.binderChromeToggle;
+  if (!button) return;
+  button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  button.textContent = collapsed ? "↓ פתיחת התפריט ↓" : "↑ קיפול התפריט ↑";
+  button.setAttribute("aria-label", collapsed ? "פתיחת התפריט" : "קיפול התפריט");
+}
+
+function toggleBinderChrome() {
+  writeBinderLocal(BINDER_CHROME_KEY, binderChromeCollapsed() ? "1" : "0");
+  applyBinderChrome();
 }
 
 function setBinderColumns(count) {
@@ -4233,6 +4279,7 @@ function setBinderColumns(count) {
   writeBinderLocal(BINDER_COLUMNS_KEY, String(next));
   writeBinderLocal(BINDER_COLUMNS_SET_KEY, "1");
   applyBinderColumnStyle();
+  noteBinderOneColumn();
 }
 
 function binderListFacts(card, count) {
@@ -4490,6 +4537,7 @@ function renderBinder() {
   }
   concealRenderedTradeThumbs(elements.binderGrid);
   applyBinderColumnStyle();
+  applyBinderChrome();
 
   // Only some medals fit: hard first, then medium, then simple; newest first within a tier.
   const earned = binderBadgeOrder(visibleEarnedBadges());
@@ -4595,6 +4643,7 @@ function badgeArtwork(id, { tier = "simple", earned = true, sheen = false, secre
     "streak-thirty": '<path d="M24 12.5c1.2 4.2 6.5 6.4 6.5 12.5a6.5 6.5 0 0 1-13 0c0-3.2 1.8-5.4 3.2-7.4.8 2 1.9 3.2 3.3 3.5-1.2-3-.9-5.9 0-8.6z"/>',
     "ten-copies": '<rect x="13" y="19" width="11" height="15" rx="1"/><rect x="18.5" y="16.5" width="11" height="15" rx="1"/><rect x="24" y="14" width="11" height="15" rx="1"/><path d="M27 19v6M30 19h2.5v6H30z"/>',
     "warehouse-full": '<path d="M15 20h18v14H15zM18 20v-4h12v4M19 25h10M19 29h7"/>',
+    "see-nothing": '<rect x="17" y="13" width="14" height="22" rx="1.5"/><path d="M20 19h8M20 23h8M20 27h5"/>',
     "streak-prize-skip": '<path d="M16 24h16v11H16zM16 28h16M24 24v11M19.5 24c0-2.4 2.2-3.6 4.5-2.2 2.3-1.4 4.5-.2 4.5 2.2"/>',
   }[id] || (String(id).startsWith("set-complete:")
     ? '<rect x="14" y="17" width="12" height="16" rx="1"/><rect x="20" y="14" width="12" height="16" rx="1"/><path d="M23.5 22.5l2.5 2.5 4.5-5"/>'
@@ -4648,6 +4697,7 @@ const ACHIEVEMENT_RULES = [
   ["rare", "קלפים נדירים"],
   ["numbered", "קלפים ממוספרים"],
   ["warehouseFull", "מחסן מלא עד הסוף"],
+  ["binderOne", "קלף אחד בשורה"],
   ["streakPrizeSkipped", "דילוג על פרס בלוח הרצף"],
   ["league", "חבר בליגה"],
   ["setComplete", "סדרה מלאה (תג לכל סדרה)"],
@@ -4781,6 +4831,7 @@ const BADGE_COPY = {
   "ten-copies": ["עשרה עותקים", "אספו עשרה עותקים של אותו קלף."],
   "numbered-first": ["ממוספר", "אספו קלף הולו ממוספר."],
   "warehouse-full": ["עד אפס מקום", "המחסן הגיע לשמונה קלפים שמחכים."],
+  "see-nothing": ["לא רואה כלום", "הגדילו את האלבום עד שקלף אחד ממלא את השורה."],
   "streak-prize-skip": ["אין מתנות חינם", "סגרתם את לוח הרצף בלי לפתוח את הפרס של היום."],
   "streak-thirty": ["חודש רצוף", "בקרו שלושים ימים ברצף."],
 };
@@ -8398,6 +8449,8 @@ elements.claimLevel.addEventListener("click", async () => {
   }
 });
 elements.shareMyBinder?.addEventListener("click", copyMyBinderLink);
+elements.binderChromeToggle?.addEventListener("click", toggleBinderChrome);
+applyBinderChrome();
 elements.copyBinderShare?.addEventListener("click", copyMyBinderLink);
 elements.closeGuestBinder?.addEventListener("click", closePublicBinder);
 elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);

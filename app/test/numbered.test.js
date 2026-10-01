@@ -13,6 +13,9 @@ import {
   stampEligible,
   stampFromGrant,
   grantCadenceToMinted,
+  drawNumberedIndex,
+  numberPoolFromStored,
+  returnNumberedIndex,
   rollNumberedStamp,
   stampKey,
   stampMax,
@@ -60,6 +63,45 @@ test("numbered stamps roll 1/N until the print run is gone", () => {
   assert.deepEqual(rollNumberedStamp(2, 3, 25, () => 0), { index: 3, of: 3 });
   assert.equal(rollNumberedStamp(3, 3, 25, () => 0), null);
   assert.deepEqual(rollNumberedStamp(0, 2, 1, () => 0.99), { index: 1, of: 2 });
+});
+
+test("numbered print runs are a pool: a pull takes one number at random, and a return puts it back", () => {
+  assert.deepEqual(numberPoolFromStored(2, 4), [3, 4]);
+  assert.deepEqual(numberPoolFromStored([1, 4, 4, 9], 4), [1, 4]);
+  const pool = numberPoolFromStored(0, 4);
+  const first = drawNumberedIndex(pool, () => 0.99);
+  assert.equal(first.index, 4);
+  assert.deepEqual(first.pool, [1, 2, 3]);
+  const second = drawNumberedIndex(first.pool, () => 0);
+  assert.equal(second.index, 1);
+  assert.deepEqual(returnNumberedIndex(second.pool, 4, 4), [2, 3, 4]);
+  assert.deepEqual(returnNumberedIndex([2, 3, 4], 4, 4), [2, 3, 4]);
+});
+
+test("a legacy counter of 2 out of 4 can take 1 back, and the next pull can be 1/4 again", async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-return-"));
+  const store = new JsonStore(path.join(dir, "state.json"), { numberedRandom: () => 0 });
+  await store.init();
+  store.state.numberedIssued["SET5-06"] = 2;
+  assert.deepEqual(await store.returnNumberedStamp("SET5-06", 1, 4), [1, 3, 4]);
+  const again = await store.claimNumberedStamp("SET5-06", 4, 1);
+  assert.equal(again.index, 1);
+  assert.equal(again.of, 4);
+  assert.deepEqual(store.state.numberedIssued["SET5-06"], [3, 4]);
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("file store keeps the remaining numbers, so a returned 1/4 can be drawn again", async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), "kalpi-numbered-pool-"));
+  const store = new JsonStore(path.join(dir, "state.json"), { numberedRandom: () => 0 });
+  await store.init();
+  const stamp = await store.claimNumberedStamp("SET5-06", 4, 1);
+  assert.equal(stamp.index, 1);
+  assert.deepEqual(store.state.numberedIssued["SET5-06"], [2, 3, 4]);
+  assert.deepEqual(await store.returnNumberedStamp("SET5-06", 1, 4), [1, 2, 3, 4]);
+  const again = await store.claimNumberedStamp("SET5-06", 4, 1);
+  assert.equal(again.index, 1);
+  await rm(dir, { recursive: true, force: true });
 });
 
 test("login streak counts Jerusalem days and resets after a gap", () => {
