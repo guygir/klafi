@@ -111,6 +111,7 @@ const VISUAL_OPTIONS = Object.freeze({
 const CLIENT_EVENTS = new Set([
   "back_completed",
   "binder_reached",
+  "binder_one_column",
   "share_created",
   "source_opened",
   "referral_opened",

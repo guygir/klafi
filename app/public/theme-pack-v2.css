@@ -783,6 +783,11 @@ body:has(#app[data-theme="pack-v2"]) {
   --binder-columns: 2;
 }
 
+#app[data-density="airy-v2"] #binder-view .binder-grid.binder-row-fit {
+  grid-template-columns: repeat(var(--binder-columns), var(--binder-card-width)) !important;
+  justify-content: center;
+}
+
 #app[data-density="airy-v2"] .achievement-grid {
   gap: 8px;
 }

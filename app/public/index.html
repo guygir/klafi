@@ -256,23 +256,28 @@
           <span id="guest-binder-label">אלבום ציבורי</span>
           <button type="button" id="close-guest-binder">חזרה לאוסף שלי</button>
         </p>
-        <div id="earned-badge-rail" class="earned-badge-rail" aria-label="התגים וההתקדמות">
-          <div class="binder-stats-row">
-            <div class="binder-total">
-              <strong id="binder-percent">0%</strong>
-              <span id="binder-count">קלפים במשחק</span>
+        <div id="binder-chrome" class="binder-chrome">
+          <div class="binder-chrome-clip">
+            <div id="earned-badge-rail" class="earned-badge-rail" aria-label="התגים וההתקדמות">
+              <div class="binder-stats-row">
+                <div class="binder-total">
+                  <strong id="binder-percent">0%</strong>
+                  <span id="binder-count">קלפים במשחק</span>
+                </div>
+                <button type="button" id="share-my-binder" class="tips-replay">שיתוף האלבום</button>
+              </div>
             </div>
-            <button type="button" id="share-my-binder" class="tips-replay">שיתוף האלבום</button>
+            <div id="earned-badge-list" class="earned-badge-list binder-badge-row" aria-label="תגי האוסף"></div>
+            <div class="binder-head">
+              <div>
+                <p class="eyebrow" id="binder-eyebrow">האוסף שלי</p>
+                <h1 id="binder-title">הקלפים שאספתם.</h1>
+              </div>
+            </div>
+            <div id="binder-filters" class="filter-strip" aria-label="סינון האוסף לפי סדרה או מפלגה"></div>
           </div>
         </div>
-        <div id="earned-badge-list" class="earned-badge-list binder-badge-row" aria-label="תגי האוסף"></div>
-        <div class="binder-head">
-          <div>
-            <p class="eyebrow" id="binder-eyebrow">האוסף שלי</p>
-            <h1 id="binder-title">הקלפים שאספתם.</h1>
-          </div>
-        </div>
-        <div id="binder-filters" class="filter-strip" aria-label="סינון האוסף לפי סדרה או מפלגה"></div>
+        <button type="button" id="binder-chrome-toggle" class="binder-chrome-toggle" aria-expanded="true" aria-controls="binder-chrome" aria-label="קיפול התפריט">↑ קיפול התפריט ↑</button>
         <div id="binder-grid" class="binder-grid" role="list"></div>
         <div id="binder-pager" class="view-pager binder-scroll-dock" aria-label="עמודי האוסף"></div>
         <p id="binder-empty" class="empty-note" hidden>פתחו קלף כדי להתחיל.</p>

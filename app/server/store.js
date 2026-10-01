@@ -2,7 +2,14 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { jerusalemDay, moveOwnedCard, rollNumberedStamp } from "./numbered.js";
+import {
+  drawNumberedIndex,
+  jerusalemDay,
+  moveOwnedCard,
+  numberPoolFromStored,
+  returnNumberedIndex,
+  rollNumberedStamp,
+} from "./numbered.js";
 import { countTodayPulse } from "../public/today-pulse.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import {
@@ -642,12 +649,27 @@ export class JsonStore {
   }
 
   async claimNumberedStamp(key, max, every = 30) {
+    const cap = Math.max(0, Math.round(Number(max) || 0));
+    if (!cap) return null;
     this.state.numberedIssued ??= {};
-    const have = this.state.numberedIssued[key] || 0;
-    const stamp = rollNumberedStamp(have, max, every, this.numberedRandom);
-    if (!stamp) return null;
-    this.state.numberedIssued[key] = stamp.index;
-    return stamp;
+    const pool = numberPoolFromStored(this.state.numberedIssued[key], cap);
+    if (!rollNumberedStamp(cap - pool.length, cap, every, this.numberedRandom)) return null;
+    const drawn = drawNumberedIndex(pool, this.numberedRandom);
+    if (!drawn) return null;
+    this.state.numberedIssued[key] = drawn.pool;
+    return { index: drawn.index, of: cap };
+  }
+
+  async returnNumberedStamp(key, index, max) {
+    const cap = Math.max(0, Math.round(Number(max) || 0));
+    if (!cap) return [];
+    return this.exclusive(async () => {
+      this.state.numberedIssued ??= {};
+      const pool = returnNumberedIndex(numberPoolFromStored(this.state.numberedIssued[key], cap), index, cap);
+      this.state.numberedIssued[key] = pool;
+      await this.persist();
+      return pool;
+    });
   }
 
   scoreLeagueMembers(memberTokens, cards = []) {
