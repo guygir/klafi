@@ -663,6 +663,7 @@ export class JsonStore {
         loginStreak: session?.loginStreak || 0,
         visitStreak: session?.visitStreak || 0,
         rankLevel: session?.highestRank || 1,
+        binderSlug: session?.publicBinderSlug || null,
         ...score,
       };
     });

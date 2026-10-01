@@ -6032,16 +6032,24 @@ body {
   z-index: 3;
   justify-self: center;
   align-self: start;
-  width: 100%;
-  margin: 4px 0 0;
-  font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
-  font-weight: 700;
-  font-size: min(12px, 20cqi);
-  line-height: 1;
-  letter-spacing: 0;
-  text-align: center;
-  white-space: nowrap;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 16px;
+  min-height: 16px;
+  margin: 2px 0 0;
+  padding: 3px 7px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
   color: var(--ink);
+  font: 700 9px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.streak-ladder-rung.is-current .streak-ladder-day {
+  background: color-mix(in srgb, var(--civic) 12%, var(--paper));
 }
 .streak-ladder-none {
   min-height: 14px;
@@ -6049,8 +6057,10 @@ body {
   font: 600 12px/1 "IBM Plex Sans Hebrew", sans-serif;
 }
 .streak-ladder-rung .streak-cell-prize {
-  position: absolute;
-  inset: 0;
+  position: static;
+  inset: auto;
+  align-self: center;
+  justify-self: center;
 }
 .streak-ladder-rung.has-reward.is-claimed:not(.is-opened) {
   cursor: pointer;

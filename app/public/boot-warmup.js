@@ -46,13 +46,16 @@ window.__kalpiWarmup = {
   idleSettle,
   holders: fetch("/api/card-holders").then(json).catch(() => null),
 };
-window.__kalpiWarmup.catalog.then((catalog) => {
+function prefetchPlayableArt(catalog) {
   for (const card of catalog?.cards || []) {
     if (!card?.artKey || !PLAYABLE_ART_SET_IDS.includes(card.releaseSetId)) continue;
     const image = new Image();
     image.decoding = "async";
     image.src = `/design-assets/${encodeURIComponent(card.artKey)}`;
   }
+}
+window.__kalpiWarmup.catalog.then((catalog) => {
+  prefetchPlayableArt(catalog);
 }).catch(() => {});
 const ballotChips = [
   "ballot-letter-ysr.png",
@@ -72,7 +75,12 @@ const ballotChips = [
 ];
 window.__kalpiBallotChips = ballotChips;
 // Letters and ballot paper wait until the pack count and the other critical
-// reads have answered, so they are the last prefetch on entry.
+// reads have answered, so they are the last prefetch on entry. Today's boards
+// wait for this mark and refresh after the images are already requested.
+let markImagesQueued = () => {};
+window.__kalpiWarmup.imagesQueued = new Promise((resolve) => {
+  markImagesQueued = resolve;
+});
 const crucialWarmup = [home, idleSettle, window.__kalpiWarmup.shell, window.__kalpiWarmup.catalog, window.__kalpiWarmup.holders].filter(Boolean);
 Promise.all(crucialWarmup.map((job) => Promise.resolve(job).catch(() => null))).then(() => {
   for (const chip of ["ballot-paper.png", ...ballotChips]) {
@@ -81,4 +89,6 @@ Promise.all(crucialWarmup.map((job) => Promise.resolve(job).catch(() => null))).
     image.src = `/design-assets/${encodeURIComponent(chip)}`;
   }
   window.__kalpiPaintBallotLeaves?.();
+}).finally(() => {
+  markImagesQueued();
 });
