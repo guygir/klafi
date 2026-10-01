@@ -6146,14 +6146,7 @@ body {
   align-self: center;
   justify-self: center;
 }
-.streak-ladder-rung.has-reward.is-openable {
-  cursor: pointer;
-}
-.streak-ladder-rung.has-reward.is-openable:focus-visible {
-  outline: 2px solid var(--civic);
-  outline-offset: 1px;
-}
-.streak-ladder-rung.is-opened {
+.streak-ladder-rung {
   cursor: default;
 }
 .streak-ladder-rung.is-opened .streak-cell-prize {

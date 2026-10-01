@@ -5445,15 +5445,12 @@ function streakLadderClasses(cell) {
   ].filter(Boolean).join(" ");
 }
 
-/** The green stamp means the gift was taken. A past claim is closed; today stays open until the double-click. */
-function streakPrizeTaken(cell) {
-  if (!cell?.reward) return false;
-  if (cell.opened) return true;
-  return Boolean(cell.claimed && !cell.current);
+function datePrizeGranted(cell) {
+  return Boolean(cell?.reward && (cell.claimed || cell.opened));
 }
 
-function streakPrizeOpenable(cell) {
-  return Boolean(cell?.current && cell.reward && !cell.opened && !streakPrizeTaken(cell));
+function todayDateOpenable(cell) {
+  return Boolean(cell?.current && cell.reward && !datePrizeGranted(cell));
 }
 
 function paintStreakCalendar(calendar, { stamp = false } = {}) {
@@ -5463,8 +5460,8 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
   if (elements.streakDialogTitle) elements.streakDialogTitle.textContent = "הפרסים החודש";
   if (elements.streakCalendar) {
     elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => {
-      const openable = streakPrizeOpenable(cell);
-      const taken = streakPrizeTaken(cell);
+      const openable = todayDateOpenable(cell);
+      const granted = datePrizeGranted(cell);
       const monthName = String(cell.date || "").slice(5, 7) === "09" ? "בספטמבר" : "באוקטובר";
       const election = cell.election ? `<span class="streak-cell-election">יום הבחירות</span>` : "";
       const month = cell.monthChip ? `<span class="streak-cell-month">${cell.monthChip}</span>` : "";
@@ -5472,16 +5469,16 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
         ? ` aria-label="${cell.day} ${monthName}, יום הבחירות"`
         : openable
           ? ` tabindex="0" title="לחיצה כפולה לפתיחה" aria-label="${cell.day} ${monthName}, לחיצה כפולה לפתיחה"`
-          : taken
+          : granted
             ? ` aria-label="${cell.day} ${monthName}, הפרס נלקח"`
             : ` aria-label="${cell.day} ${monthName}"`;
       return `
-      <li class="${streakCellClasses({ ...cell, reward: null })}${cell.election ? " is-election" : ""}${cell.reward ? " has-date-prize" : ""}${cell.claimed ? " is-claimed" : ""}${taken && !cell.opened ? " is-opened" : ""}${openable ? " is-openable" : ""}${stamp && cell.current ? " is-landing" : ""}" data-date="${cell.date}"${aria}>
+      <li class="${streakCellClasses({ ...cell, reward: null })}${cell.election ? " is-election" : ""}${cell.reward ? " has-date-prize" : ""}${cell.claimed ? " is-claimed" : ""}${granted && !cell.opened ? " is-opened" : ""}${openable ? " is-openable" : ""}${stamp && cell.current ? " is-landing" : ""}" data-date="${cell.date}"${aria}>
         <span class="streak-cell-day">${cell.day}</span>
         ${month}
         ${election}
         ${cell.reward ? streakRewardMarkup(cell.reward) : ""}
-        ${(cell.checked && !cell.reward) || taken ? streakCheckMarkup(false) : ""}
+        ${(cell.checked && !cell.reward) || granted ? streakCheckMarkup(false) : ""}
       </li>`;
     }).join("");
   }
@@ -5490,24 +5487,18 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
     const today = ladder.filter((cell) => cell.current);
     const upcoming = today.length ? ladder.filter((cell) => !cell.current) : ladder.slice(1);
     const rung = (cell) => {
-      const openable = streakPrizeOpenable(cell);
-      const taken = streakPrizeTaken(cell);
       const runDay = Math.max(1, Math.round(Number(cell.runDay) || 1));
       const dayLabel = streakRunDayLabel(runDay);
-      const label = openable
-        ? ` tabindex="0" title="לחיצה כפולה לפתיחה" aria-label="${dayLabel}, לחיצה כפולה לפתיחה"`
-        : taken
-          ? ` aria-label="${dayLabel}, הפרס נלקח"`
-          : ` aria-label="${dayLabel}"`;
+      const taken = Boolean(cell.opened && cell.reward);
+      const label = taken ? ` aria-label="${dayLabel}, הפרס נלקח"` : ` aria-label="${dayLabel}"`;
       const prize = cell.reward
         ? streakRewardMarkup(cell.reward)
         : `<span class="streak-ladder-none">${cell.current ? "היום" : ""}</span>`;
-      const takenStamp = taken ? streakCheckMarkup(false) : "";
       return `
-      <li class="${streakLadderClasses(cell)}${openable ? " is-openable" : ""}" data-day="${cell.cycleDay}"${label}>
+      <li class="${streakLadderClasses(cell)}" data-day="${cell.cycleDay}"${label}>
         <span class="streak-ladder-day">${dayLabel}</span>
         ${prize}
-        ${takenStamp}
+        ${taken ? streakCheckMarkup(false) : ""}
       </li>`;
     };
     elements.streakLadder.innerHTML = (today.length ? today : ladder.slice(0, 1)).map(rung).join("");
@@ -5551,31 +5542,19 @@ async function dismissStreakCalendar() {
   queueMicrotask(() => maybeShowTradeNotice());
 }
 
-function streakRewardCell(event) {
-  return event.target?.closest?.(".streak-ladder-rung.is-openable, .streak-cell.is-openable");
+function todayDateCell(event) {
+  return event.target?.closest?.(".streak-cell.is-today.is-openable");
 }
 
-async function openClaimedDatePrize(date) {
+async function openTodayDatePrize(date) {
   const calendar = model.serverState?.streakCalendar;
   const cell = calendar?.days?.find((item) => item.date === date);
-  if (!streakPrizeOpenable(cell) || homePackRipBusy) return;
+  if (!todayDateOpenable(cell) || homePackRipBusy) return;
   await openServerPrize({
     body: { date: cell.date },
     reward: cell.reward,
     packId: `date-${cell.date}`,
     line: elements.streakCalendarReward,
-  });
-}
-
-async function openClaimedStreakReward(day) {
-  const calendar = model.serverState?.streakCalendar;
-  const cell = calendar?.ladder?.find((item) => item.current && item.cycleDay === Number(day));
-  if (!streakPrizeOpenable(cell) || homePackRipBusy) return;
-  await openServerPrize({
-    body: { day: cell.cycleDay },
-    reward: cell.reward,
-    packId: `streak-${cell.cycleDay}`,
-    line: elements.streakDialogReward,
   });
 }
 
@@ -5594,6 +5573,11 @@ async function openServerPrize({ body, reward, packId, line }) {
       body: JSON.stringify(body),
     });
     hideWait();
+    if (pulled.already) {
+      if (pulled.state) setServerState(pulled.state, { merge: true });
+      if (elements.streakDialog?.open && model.serverState?.streakCalendar) paintStreakCalendar(model.serverState.streakCalendar);
+      return;
+    }
     if (!pulled.cards?.length) throw new Error("EMPTY_STREAK_REWARD");
     if (pulled.state) setServerState(pulled.state, { merge: true });
     if (elements.streakDialog?.open) elements.streakDialog.close();
@@ -8322,24 +8306,13 @@ elements.levelStreak?.addEventListener("click", (event) => {
 elements.streakDialogOk?.addEventListener("click", () => dismissStreakCalendar());
 elements.closeStreakDialog?.addEventListener("click", () => dismissStreakCalendar());
 function activateStreakReward(event) {
-  const cell = streakRewardCell(event);
-  if (!cell) return;
+  const cell = todayDateCell(event);
+  if (!cell?.dataset.date) return;
   event.preventDefault();
-  if (cell.dataset.date) openClaimedDatePrize(cell.dataset.date);
-  else openClaimedStreakReward(cell.dataset.day);
+  openTodayDatePrize(cell.dataset.date);
 }
 elements.streakCalendar?.addEventListener("dblclick", activateStreakReward);
-elements.streakLadder?.addEventListener("dblclick", activateStreakReward);
-elements.streakLadderNext?.addEventListener("dblclick", activateStreakReward);
 elements.streakCalendar?.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter") return;
-  activateStreakReward(event);
-});
-elements.streakLadder?.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter") return;
-  activateStreakReward(event);
-});
-elements.streakLadderNext?.addEventListener("keydown", (event) => {
   if (event.key !== "Enter") return;
   activateStreakReward(event);
 });
