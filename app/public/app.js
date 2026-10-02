@@ -60,6 +60,7 @@ function playerDialogOpen() {
     elements.streakDialog,
     elements.waitDialog,
     elements.shareSheet,
+    elements.heardYouDialog,
   ].some((dialog) => dialog?.open);
 }
 const model = {
@@ -158,6 +159,10 @@ const elements = {
   enableIdleNotify: document.querySelector("#enable-idle-notify"),
   soundToggle: document.querySelector("#sound-toggle"),
   leafToggle: document.querySelector("#leaf-toggle"),
+  openHeardYou: document.querySelector("#open-heard-you"),
+  heardYouDialog: document.querySelector("#heard-you-dialog"),
+  closeHeardYou: document.querySelector("#close-heard-you"),
+  heardYouOk: document.querySelector("#heard-you-ok"),
   homeEnableNotify: document.querySelector("#home-enable-notify"),
   notifyStatus: document.querySelector("#notify-status"),
   leagueNameInput: document.querySelector("#league-name-input"),
@@ -5557,6 +5562,7 @@ function maybeShowStreakCalendar({ force = false } = {}) {
 function maybeShowDeferredPopups() {
   if (maybeShowStreakCalendar()) return true;
   maybeShowTradeNotice();
+  maybeShowHeardYou();
   return false;
 }
 
@@ -5721,7 +5727,10 @@ async function dismissTradeNotice() {
     delete dialog.dataset.receivedCardId;
     delete dialog.dataset.givenCardId;
   }
-  queueMicrotask(() => maybeShowTradeNotice());
+  queueMicrotask(() => {
+    maybeShowTradeNotice();
+    maybeShowHeardYou();
+  });
 }
 
 async function ackPendingTradeNotice(id) {
@@ -8342,7 +8351,10 @@ elements.streakCalendar?.addEventListener("keydown", (event) => {
   activateStreakReward(event);
 });
 elements.streakDialog?.addEventListener("close", () => {
-  ackStreakCalendar().then(() => queueMicrotask(() => maybeShowTradeNotice()));
+  ackStreakCalendar().then(() => queueMicrotask(() => {
+    maybeShowTradeNotice();
+    maybeShowHeardYou();
+  }));
 });
 elements.addAchievement?.addEventListener("click", () => {
   if (!elements.studioAchievements) return;
@@ -8397,6 +8409,39 @@ elements.leafToggle?.addEventListener("click", () => {
   app.dataset.leaves = still ? "still" : "fall";
   try { localStorage.setItem(LEAVES_KEY, app.dataset.leaves); } catch { /* private mode */ }
   renderLeafToggle();
+});
+const HEARD_YOU_KEY = "klafi-heard-you-seen";
+function heardYouSeen() {
+  try { return localStorage.getItem(HEARD_YOU_KEY) === "1"; } catch { return true; }
+}
+function markHeardYouSeen() {
+  try { localStorage.setItem(HEARD_YOU_KEY, "1"); } catch { /* private mode */ }
+}
+function maybeShowHeardYou({ force = false } = {}) {
+  const dialog = elements.heardYouDialog;
+  if (!dialog || dialog.open) return Boolean(dialog?.open);
+  if (!force && heardYouSeen()) return false;
+  if (!force && (model.showcase || elements.waitDialog?.open || tipsBusy() || playerDialogOpen())) return false;
+  dialog.showModal();
+  return true;
+}
+function dismissHeardYou() {
+  markHeardYouSeen();
+  if (elements.heardYouDialog?.open) elements.heardYouDialog.close();
+}
+elements.openHeardYou?.addEventListener("click", () => maybeShowHeardYou({ force: true }));
+elements.closeHeardYou?.addEventListener("click", dismissHeardYou);
+elements.heardYouOk?.addEventListener("click", dismissHeardYou);
+elements.heardYouDialog?.addEventListener("click", (event) => {
+  if (event.target === elements.heardYouDialog) dismissHeardYou();
+});
+elements.heardYouDialog?.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  dismissHeardYou();
+});
+elements.heardYouDialog?.addEventListener("close", () => {
+  markHeardYouSeen();
+  queueMicrotask(() => maybeShowDeferredPopups());
 });
 // Audio needs a gesture on iOS: unlock (and decode the kit) on touches anywhere. Not `once`: a
 // touch pointerdown/touchstart isn't a user activation on iOS (touchend/pointerup/click are), and
@@ -9073,6 +9118,7 @@ bootstrap().then(async () => {
   }
   klafiTips.maybeStart();
   if (!tipsBusy()) maybeShowStreakCalendar();
+  if (!tipsBusy()) maybeShowHeardYou();
 });
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));

@@ -64,7 +64,9 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-theme="pack-v2"] .leaf-toggle,
 #app[data-theme="pack-v2"] .leaf-toggle:hover,
-#app[data-theme="pack-v2"] .leaf-toggle.is-still {
+#app[data-theme="pack-v2"] .leaf-toggle.is-still,
+#app[data-theme="pack-v2"] .heard-you-toggle,
+#app[data-theme="pack-v2"] .heard-you-toggle:hover {
   color: var(--pack-seal);
 }
 
