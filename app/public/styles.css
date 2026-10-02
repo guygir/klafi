@@ -159,6 +159,8 @@ button:focus-visible {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+/* Bell ink sits ~1.5px closer than the speaker; this restores the same gap as portrait-to-sound. */
+.heard-you-toggle { margin-inline-start: -6.54px; }
 .leaf-toggle:hover,
 .heard-you-toggle:hover { color: var(--civic); }
 .leaf-toggle:focus-visible,
