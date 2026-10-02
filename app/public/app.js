@@ -1479,7 +1479,7 @@ function handleInboundLink() {
 function showSharedCard(cardId, isTradeIntent = false) {
   const card = model.byId.get(cardId);
   elements.sharedTitle.textContent = cardTitle(card);
-  elements.sharedCard.innerHTML = displayCardMarkup(card);
+  elements.sharedCard.innerHTML = displayCardMarkup(card, "share");
   elements.sharedNotice.textContent = isTradeIntent
     ? "זו תצוגה של הצעת החלפה. הבעלות לא השתנתה, והקלף לא נכנס לאוסף שלכם."
     : "זו תצוגת שיתוף בלבד. הקלף לא נכנס לאוסף שלכם.";
@@ -1648,7 +1648,9 @@ function showView(name) {
   if (name === "studio" && !studioViewAllowed()) name = "home";
   model.holdGeneration += 1;
   persistPlayerView(name);
-  document.querySelector("#app").classList.toggle("home-active", name === "home");
+  const shell = document.querySelector("#app");
+  shell.classList.toggle("home-active", name === "home");
+  shell.classList.toggle("share-active", name === "shared");
   for (const view of elements.views) {
     view.classList.toggle("active", view.id === `${name}-view`);
   }
@@ -4006,7 +4008,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-meta-end">
               ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
               ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
-              ${recycle && copies >= 3 && !tradeCopies ? recycleControlMarkup(card, copies) : copies > 1 ? `<b class="card-copies-tag">${tradeCopies ? `1/${copies}` : `×${copies}`}</b>` : ""}
+              ${recycle && copies >= 3 && !tradeCopies ? recycleControlMarkup(card, copies) : copies > 1 && surface !== "share" ? `<b class="card-copies-tag">${tradeCopies ? `1/${copies}` : `×${copies}`}</b>` : ""}
               ${instance.isNew && !instance.numberedIndex ? '<b class="new-stamp">חדש</b>' : ""}
             </span>
           </div>
