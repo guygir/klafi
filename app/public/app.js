@@ -7339,7 +7339,7 @@ function renderDialogCard() {
         : (model.serverState?.inventory?.[card.id] ?? 0);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
-  const canRecycle = !model.dialogNumbered && !model.dialogPlain && canRecycleCard(card);
+  const canRecycle = !model.dialogNumbered && canRecycleCard(card);
   elements.dialogCard.innerHTML = model.showcase
     ? catalogCardMarkup(card, "display", model.dialogNumbered)
     : displayCardMarkup(card, "display", {
