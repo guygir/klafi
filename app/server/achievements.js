@@ -138,6 +138,7 @@ export function achievementMeasures(session, cards, extra = {}) {
     warehouseFull: (session.unseenPulls?.length || 0) >= IDLE_BACKLOG_CAP ? 1 : 0,
     binderOne: Number(session.eventCounts?.binder_one_column) > 0 ? 1 : 0,
     streakPrizeSkipped: session.streakPrizeSkipped ? 1 : 0,
+    recycle: Number(session.eventCounts?.card_recycled) > 0 ? 1 : 0,
     league: extra.league ? 1 : 0,
     setOwned: cards.reduce((owned, card) => {
       if (card.idleEligible && !card.eventOnly && card.releaseSetId && Number(inventory[card.id]) > 0) {

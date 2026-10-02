@@ -219,7 +219,7 @@
             <p class="eyebrow" id="pack-step">קלף אחד</p>
             <h1 id="pack-heading">קורעים את החבילה.</h1>
           </div>
-          <span id="pack-counter" class="pack-counter">0 / 1</span>
+          <span id="pack-counter" class="pack-counter" hidden></span>
         </div>
         <div id="rip-stage" class="rip-stage" aria-live="polite"></div>
         <div class="action-dock">
@@ -355,19 +355,23 @@
           <article id="community-panel-open-trades" class="work-card open-trades-desk" role="tabpanel" aria-labelledby="community-tab-open-trades" tabindex="0" hidden>
             <p class="work-kicker">הצעות פתוחות</p>
             <h2>הצעות ששחקנים אחרים פרסמו.</h2>
-            <p class="work-note">זה הלוח הציבורי — גם ההצעה שלכם, אם פרסמתם. בוחרים הצעה ומאשרים, ורק אז הקלפים מתחלפים. בלי אישור אף קלף לא זז, וקלף ששותף איתכם לא נכנס לאוסף.</p>
-            <div id="trade-board-toolbar" class="trade-board-toolbar" hidden>
-              <label>מקבלים
-                <select id="trade-board-offered" aria-label="סינון לפי הקלף שאתם מקבלים">
-                  <option value="">הכול</option>
-                </select>
-              </label>
-              <label>נותנים
-                <select id="trade-board-wanted" aria-label="סינון לפי הקלף שאתם נותנים">
-                  <option value="">הכול</option>
-                </select>
-              </label>
+            <div id="trade-board-chrome">
+              <div class="binder-chrome-clip">
+                <div id="trade-board-toolbar" class="trade-board-toolbar" hidden>
+                  <label>מקבלים
+                    <select id="trade-board-offered" aria-label="סינון לפי הקלף שאתם מקבלים">
+                      <option value="">הכול</option>
+                    </select>
+                  </label>
+                  <label>נותנים
+                    <select id="trade-board-wanted" aria-label="סינון לפי הקלף שאתם נותנים">
+                      <option value="">הכול</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
             </div>
+            <button type="button" id="trade-board-chrome-toggle" class="binder-chrome-toggle" aria-expanded="true" aria-controls="trade-board-chrome" aria-label="קיפול התפריט" hidden>↑ קיפול התפריט ↑</button>
             <div id="trade-board" class="trade-board"></div>
             <div id="trade-board-pager" class="view-pager trade-board-pager" aria-label="עמודי ההצעות"></div>
           </article>
@@ -400,8 +404,8 @@
           </article>
           <article id="community-panel-leagues" class="work-card league-desk" role="tabpanel" aria-labelledby="community-tab-leagues" tabindex="0" hidden>
             <p class="work-kicker">הליגה שלכם</p>
-            <h2 id="community-leagues-title">אותה טבלה — רק בחדר קטן יותר.</h2>
-            <p class="work-note">הכוכבים כבר נספרים בשרת. פותחים ליגה, או נכנסים עם קוד ו־QR.</p>
+            <h2 id="community-leagues-title">התחרו עם חברים</h2>
+            <p class="work-note">פותחים ליגה, או נכנסים עם קוד ו־QR.</p>
             <details class="league-setup" open hidden>
               <summary>פתיחה או הצטרפות</summary>
               <label class="field-label" for="league-name-input">שם הליגה</label>
@@ -421,7 +425,7 @@
           <article id="community-panel-challenge" class="work-card daily-challenge-desk" role="tabpanel" aria-labelledby="community-tab-challenge" tabindex="0">
             <p class="work-kicker">האתגר</p>
             <h2 id="challenge-panel-title">עוד לא בחרתם מפלגה.</h2>
-            <p id="challenge-party-hint" class="work-note">כדי לבחור מפלגה כנסו לפרופיל שלכם על ידי לחיצה על האוואטר</p>
+            <p id="challenge-party-hint" class="work-note">(לחצו על האוואטר)</p>
             <h3 class="faction-board-title" id="challenge-members-title" hidden>מי הביא הכי הרבה כוכבים למפלגה?</h3>
             <div id="challenge-members" class="faction-member-board" aria-live="polite"></div>
             <div hidden>
@@ -695,7 +699,7 @@
 
   <dialog id="report-dialog" class="policy-dialog report-dialog" aria-labelledby="report-dialog-title" aria-describedby="report-card-label">
     <button id="close-report" class="dialog-close" type="button" aria-label="סגירת הדיווח">×</button>
-    <p class="eyebrow">תיקון פתוח</p>
+    <p class="eyebrow">כולי אוזן</p>
     <h2 id="report-dialog-title">ראיתם טעות?</h2>
     <p class="lede">כתבו מה מצאתם — זה נפתח כפנייה בגיטהאב, כמו דיווח באג.</p>
     <p id="report-card-label" class="report-card-label"></p>
@@ -718,7 +722,7 @@
 
   <dialog id="bug-dialog" class="policy-dialog report-dialog" aria-labelledby="bug-dialog-title">
     <button id="close-bug" class="dialog-close" type="button" aria-label="סגירת הדיווח">×</button>
-    <p class="eyebrow">תיקון פתוח</p>
+    <p class="eyebrow">כולי אוזן</p>
     <h2 id="bug-dialog-title">דיווח באג</h2>
     <p id="bug-dialog-lede" class="lede">כתבו מה לא עבד — זה נפתח כפנייה בגיטהאב.</p>
     <form id="bug-form">
@@ -824,7 +828,7 @@
     </section>
     <section class="profile-binder-share" aria-labelledby="profile-binder-share-title">
       <h3 id="profile-binder-share-title">האלבום הציבורי</h3>
-      <p>קישור לאלבום שלכם. מי שיש לו את הקישור רואה את הקלפים שנאספו — בלי קוד השחזור.</p>
+      <p>קישור לאלבום שלכם.</p>
       <label class="profile-name-label" for="binder-share-url">קישור לאלבום</label>
       <div class="copy-field profile-recovery-row">
         <input id="binder-share-url" dir="ltr" readonly spellcheck="false" autocomplete="off" />
@@ -833,7 +837,7 @@
     </section>
     <section class="profile-recovery" aria-labelledby="profile-recovery-title">
       <h3 id="profile-recovery-title">קוד שחזור</h3>
-      <p>האוסף שייך לקוד הזה, לא למייל. מי שיש לו את הקוד יכול לפתוח את אותו אוסף במכשיר אחר.</p>
+      <p>מי שיש לו את הקוד יכול לפתוח את אותו אוסף במכשיר אחר.</p>
       <label class="profile-name-label" for="profile-recovery-code">הקוד של המכשיר הזה</label>
       <div class="copy-field profile-recovery-row">
         <input id="profile-recovery-code" dir="ltr" readonly spellcheck="false" autocomplete="off" />
@@ -859,18 +863,18 @@
   <dialog id="advocacy-dialog" class="policy-dialog" aria-labelledby="advocacy-sponsor" aria-describedby="advocacy-full">
     <button id="close-advocacy" class="dialog-close" type="button" aria-label="סגירת הגילוי הנאות">×</button>
     <p class="eyebrow">גילוי נאות</p>
-    <h2 id="advocacy-sponsor">קְלָפִי</h2>
-    <p id="advocacy-full"></p>
+    <h2 id="advocacy-sponsor">מאיפה הגיע <b class="klafi-word">קְלָפִי</b>?</h2>
+    <p id="advocacy-full"><b class="klafi-word">קְלָפִי</b> נבנתה על ידי <a href="https://www.linkedin.com/in/guy-girmonsky-661b61247" target="_blank" rel="noopener">Guy Girmonsky</a> בגייםג׳אם של <a href="https://www.reimagine-israel.tech/gamejam" target="_blank" rel="noopener">Reimagine Israel</a>, עם המטרה לעודד הצבעה ואוריינות פוליטית.</p>
+    <h3>הפיתיון</h3>
+    <p>להנגיש בעזרת משחק אספנות שקלפים שמלא בדופאמין, בביסים קטנים, כל פעם קצת אינפורמציה בנוגע לפוליטיקאים שכולנו אוהבים (לשנוא?) בבחירות הקרובות. בעידן שבו ה-Attention span שואף לאפס, והרצון לקחת חלק, או אפילו בצורה בסיסית יותר — להבין מה קורה סביבנו, דועך עבור חלק ניכר מהאוכלוסייה — צריך למצוא דרך אחרת להנגיש את המידע החשוב ולעודד הצבעה דרך הפיכת הנושא האפור הפוליטי לנושא ויראלי, מהנה, ממכר. למען הסר ספק, המשחק כן בעל אג׳נדה פוליטית, אבל — כל הציטוטים עם מקור, שום דבר לא מומצא. זו המציאות העגומה שלנו… אני רק השליח.</p>
     <h3>איך התוכן נבחר?</h3>
-    <ol id="advocacy-phases"></ol>
+    <p id="advocacy-phases">מכל פוליטיקאי נלקח ציטוט. לכל ציטוט יש מקור.</p>
     <section id="advocacy-trust" class="advocacy-trust" aria-labelledby="advocacy-trust-title">
       <p class="eyebrow">איך לקרוא את הקלף</p>
       <h3 id="advocacy-trust-title">מה מסמנת הכוכבית?</h3>
       <p>כוכבית על ציטוט אומרת שהנוסח קוצר, או שזה ניסוח מיוחס — לא תמלול מילה במילה.</p>
       <p>ההקשר המלא, התאריך והמקור נפתחים מקישור המקור שעל הקלף.</p>
-      <p>כשסטטוס האותיות של הרשימה רלוונטי, הוא מגיע ממאגר ועדת הבחירות — לא מומצא במשחק.</p>
     </section>
-    <p class="policy-lock">אותם כללי משחק ואותו תוכן לכולם. הפעילות שמוצגת נמדדת בפועל.</p>
   </dialog>
 
   <dialog id="wait-dialog" class="policy-dialog wait-dialog" aria-live="assertive" aria-busy="true">

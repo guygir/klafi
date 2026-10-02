@@ -78,7 +78,7 @@ test("full idle storage hides the clock and shows the Hebrew full message", () =
   assert.equal(view.full, true);
   assert.equal(el.hidden, false);
   assert.equal(el.textContent, IDLE_FULL_COPY);
-  assert.match(el.textContent, /המחסן מלא/);
+  assert.match(el.textContent, /אין מקום לאגור עוד חבילות/);
   assert.doesNotMatch(el.textContent, CLOCK_DIGITS);
   assert.equal(el.classList.contains("is-full"), true);
   assert.equal(el.classList.contains("is-clock"), false);
@@ -211,7 +211,7 @@ function assertFullWarehouse(el, view, unseen, cap = 8) {
   assert.equal(view.cap, cap);
   assert.equal(view.needsSettle, false);
   assert.equal(el.textContent, IDLE_FULL_COPY);
-  assert.match(el.textContent, /המחסן מלא/);
+  assert.match(el.textContent, /אין מקום לאגור עוד חבילות/);
   assert.doesNotMatch(el.textContent, CLOCK_DIGITS);
   assert.equal(el.classList.contains("is-full"), true);
   assert.equal(el.classList.contains("is-clock"), false);

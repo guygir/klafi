@@ -1,6 +1,6 @@
 export const IDLE_INTERVAL_MS = 3 * 60 * 60 * 1000;
 export const IDLE_BACKLOG_CAP = 8;
-export const IDLE_FULL_COPY = "המחסן מלא. פתחו קלף כדי שהאיסוף יחזור לרוץ.";
+export const IDLE_FULL_COPY = "אין מקום לאגור עוד חבילות. אתם לא יודעים שהנדל״ן יקר פה?";
 export const HOME_SETTLE_HINT = "(רגע, אני טוען… אולי מגיע לכם עוד?)";
 
 export function timeUntil(iso, now = Date.now()) {

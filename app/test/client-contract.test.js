@@ -289,7 +289,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function populateReleaseSets/);
   assert.match(javascript, /function readStudioPack/);
   assert.match(javascript, /data-pack-weight/);
-  assert.match(html, /האוסף שייך לקוד הזה, לא למייל/);
+  assert.match(html, /מי שיש לו את הקוד יכול לפתוח את אותו אוסף במכשיר אחר/);
+  assert.doesNotMatch(html, /האוסף שייך לקוד הזה, לא למייל/);
   assert.match(javascript, /\/api\/studio\/config/);
   assert.match(javascript, /updateStudioCardPreview/);
   assert.match(javascript, /\["quote\.displayText", "art\.artKey"\]/);
@@ -386,7 +387,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /entry\.loginStreak/);
   assert.match(javascript, /applyIdleCountdown\(elements\.cooldownCopy, view\)/);
   assert.match(javascript, /function idleCountdownCopy/);
-  assert.match(javascript, /המחסן מלא\. פתחו קלף כדי שהאיסוף יחזור לרוץ/);
+  assert.match(javascript, /אין מקום לאגור עוד חבילות\. אתם לא יודעים שהנדל״ן יקר פה\?/);
   assert.doesNotMatch(javascript, /הבא בעוד \$\{clock\}/);
   assert.match(html, /id="cooldown-copy"[^>]*class="next-pack-clock is-clock"/);
   assert.match(css, /#home-view #cooldown-copy\.is-clock/);
@@ -736,7 +737,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="profile-restore-input"/);
   assert.match(html, /id="copy-recovery-code"/);
   assert.match(html, /id="restore-recovery-code"/);
-  assert.match(html, /האוסף שייך לקוד הזה/);
+  assert.match(html, /קישור לאלבום שלכם/);
+  assert.doesNotMatch(html, /מי שיש לו את הקישור רואה את הקלפים שנאספו/);
   assert.match(javascript, /function restoreSessionFromCode/);
   assert.match(javascript, /function copyRecoveryCode/);
   assert.match(javascript, /SESSION_TOKEN_PATTERN/);
@@ -753,7 +755,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(html, /id="open-trust-legend"|class="trust-info"/);
   assert.doesNotMatch(css, /\.trust-info/);
   assert.doesNotMatch(javascript, /openTrustLegend|trustDialog/);
-  assert.match(html, /<dialog id="advocacy-dialog"[\s\S]*?<section id="advocacy-trust"[\s\S]*?<h3 id="advocacy-trust-title">מה מסמנת הכוכבית\?<\/h3>[\s\S]*?כוכבית על ציטוט אומרת שהנוסח קוצר[\s\S]*?ממאגר ועדת הבחירות — לא מומצא במשחק\.<\/p>[\s\S]*?<\/dialog>/);
+  assert.match(html, /<dialog id="advocacy-dialog"[\s\S]*?<section id="advocacy-trust"[\s\S]*?<h3 id="advocacy-trust-title">מה מסמנת הכוכבית\?<\/h3>[\s\S]*?כוכבית על ציטוט אומרת שהנוסח קוצר[\s\S]*?<\/dialog>/);
+  assert.match(html, />Reimagine Israel</);
+  assert.match(html, /למען הסר ספק, המשחק כן בעל אג׳נדה פוליטית, אבל — כל הציטוטים עם מקור, שום דבר לא מומצא\. זו המציאות העגומה שלנו… אני רק השליח\./);
+  assert.doesNotMatch(html, />reimagine israel</);
+  assert.doesNotMatch(html, /ממאגר ועדת הבחירות — לא מומצא במשחק/);
   assert.match(html, /home-title-row/);
   assert.doesNotMatch(html, /id="trust-dialog"/);
   // iOS zooms into focused fields under 16px (bug/report pop-ups focus a field on open).
@@ -1035,7 +1041,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(themeCss, /#pack-view \.walkout-content \{[\s\S]*?place-items: center;/);
   assert.match(themeCss, /#pack-view \.walkout \.kalpi-card \{[\s\S]*?max-height: calc\(100% - 38px\);/);
   assert.match(javascript, /הציטוט קוצר/);
-  assert.match(javascript, /ממתינה לבדיקת ועדת הבחירות/);
+  assert.doesNotMatch(javascript, /ממתינה לבדיקת ועדת הבחירות/);
   assert.match(html, /data-theme="pack-v2"/);
   assert.match(html, /id="visual-theme"/);
   assert.match(html, /id="visual-card-frame"/);
