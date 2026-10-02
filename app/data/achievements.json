@@ -158,6 +158,15 @@
       "hidden": true
     },
     {
+      "id": "recycle-card",
+      "nameHe": "שומר על איכות הסביבה",
+      "descriptionHe": "מיחזרתם קלף.",
+      "rule": "recycle",
+      "target": 1,
+      "tier": "medium",
+      "hidden": true
+    },
+    {
       "id": "set-complete",
       "nameHe": "סדרה מלאה",
       "descriptionHe": "אספו את כל הקלפים בסדרה.",

@@ -290,6 +290,8 @@ const elements = {
   tradeWantedCard: document.querySelector("#trade-wanted-card"),
   tradeCreate: document.querySelector("#trade-create"),
   tradeBoard: document.querySelector("#trade-board"),
+  tradeBoardChrome: document.querySelector("#trade-board-chrome"),
+  tradeBoardChromeToggle: document.querySelector("#trade-board-chrome-toggle"),
   tradeBoardToolbar: document.querySelector("#trade-board-toolbar"),
   tradeBoardOffered: document.querySelector("#trade-board-offered"),
   tradeBoardWanted: document.querySelector("#trade-board-wanted"),
@@ -1407,12 +1409,6 @@ async function bootstrap() {
 
 function renderAdvocacy() {
   requestAnimationFrame(layoutAdvocacyDock);
-  const profile = model.editorial?.advocacy;
-  if (!profile) return;
-  if (elements.advocacyShort) elements.advocacyShort.textContent = "";
-  elements.advocacySponsor.textContent = `בחסות ${profile.sponsor}`;
-  elements.advocacyFull.textContent = "קְלָפִי מתחילה בהיכרות עובדתית, ממשיכה לעמדות ולהחלטות, ואחר כך מפרסמת גם סדרות ביקורת לפי קו עריכתי גלוי. בחירת הציטוטים אינה ניטרלית — בכל קלף מופיעים המקור והסיווג.";
-    elements.advocacyPhases.innerHTML = "<li><strong>היכרות —</strong> מנהיגים ומשנים.</li><li><strong>עומק —</strong> עמדות, החלטות ורקורדים.</li><li><strong>ביקורת —</strong> סדרות שמסומנות במפורש.</li><li><strong>מקור —</strong> לכל קלף מצורף קישור; ניסוח מחדש מסומן בכוכבית.</li>";
 }
 
 async function recordEvent(type, details = {}) {
@@ -2638,7 +2634,7 @@ function partyRegister() {
 }
 
 const NO_FACTION_COPY = "עוד לא בחרתם מפלגה.";
-const NO_FACTION_HINT = "כדי לבחור מפלגה כנסו לפרופיל שלכם על ידי לחיצה על האוואטר";
+const NO_FACTION_HINT = "(לחצו על האוואטר)";
 
 function localDailyChallenge(now = Date.now()) {
   const factionId = model.serverState?.factionId || null;
@@ -2742,8 +2738,9 @@ function renderTodayDocket() {
       elements.todayChallengeVisual.dataset.card = "";
       elements.todayChallengeVisual.innerHTML = "";
     }
-    elements.todayChallengeHook.textContent = NO_FACTION_COPY;
-    elements.todayChallengeMeta.textContent = NO_FACTION_HINT;
+    elements.todayChallengeHook.innerHTML = `${NO_FACTION_COPY} <span class="today-faction-hint">${NO_FACTION_HINT}</span>`;
+    elements.todayChallengeMeta.textContent = "";
+    elements.todayChallengeMeta.hidden = true;
   } else {
     const partyName = partyDisplayName(factionId, factionId);
     const place = (model.leaderboards?.factions || []).findIndex((faction) => faction.partyId === factionId);
@@ -2751,6 +2748,7 @@ function renderTodayDocket() {
       ? `המפלגה שלך, ${partyName}, במקום ${place + 1}!`
       : `המפלגה שלך, ${partyName}`;
     elements.todayChallengeMeta.textContent = "";
+    elements.todayChallengeMeta.hidden = true;
     const party = partyRegister().find(({ id }) => id === factionId);
     const challengeCard = model.catalog.find((card) => card.set === factionId && card.artKey)
       || {
@@ -3021,7 +3019,7 @@ function playHomePackRip() {
   model.packPhase = "tearing";
   elements.packStep.textContent = "קלף אחד";
   elements.packHeading.textContent = "קורעים את החבילה.";
-  elements.packCounter.textContent = "0 / 1";
+  paintPackCounter(0, 1);
   const signal = renderSealedPackRip();
   const player = packRip;
   setPackAction("פותחים…", true, "");
@@ -3193,11 +3191,18 @@ async function openBibiDebugPack() {
   }
 }
 
+function paintPackCounter(shown, total) {
+  if (!elements.packCounter) return;
+  const single = !(Number(total) > 1);
+  elements.packCounter.hidden = single;
+  elements.packCounter.textContent = single ? "" : `${shown} / ${total}`;
+}
+
 function renderPack() {
   const phase = model.packPhase;
   const count = model.currentPack?.cards.length ?? 1;
   const isDemo = model.currentPack?.mode?.includes("demo");
-  elements.packCounter.textContent = `${Math.min(model.currentCardIndex + (phase === "complete-card" ? 1 : 0), count)} / ${count}`;
+  paintPackCounter(Math.min(model.currentCardIndex + (phase === "complete-card" ? 1 : 0), count), count);
 
     if (phase === "sealed") {
     elements.packStep.textContent = isDemo ? "חבילת הדגמה" : "קלף אחד";
@@ -3468,7 +3473,7 @@ function renderWalkoutStage() {
   elements.packStep.textContent = model.currentPack.mode === "studio-debug"
     ? STUDIO_DEBUG_LABEL
     : `קלף ${model.currentCardIndex + 1}`;
-  elements.packCounter.textContent = `${model.currentCardIndex + 1} / ${model.currentPack.cards.length}`;
+  paintPackCounter(model.currentCardIndex + 1, model.currentPack.cards.length);
   elements.packHeading.textContent = {
     blank: "",
     quote: "",
@@ -3664,23 +3669,14 @@ function partyTrustLabel(card) {
     requested: "אותיות מבוקשות",
     disputed: "אותיות במחלוקת",
   }[party.letterStatus] || "אותיות הרשימה";
-  const filingStatus = party.finalLetters?.length
-    ? "אותיות שאושרו במאגר"
-    : party.filingStatus === "submitted-pending-cec-review"
-      ? "הרשימה הוגשה; במאגר היא עדיין ממתינה לבדיקת ועדת הבחירות"
-      : "סטטוס הרשימה עדיין לא אומת במאגר";
-  const asOf = formatTrustDate(party.asOfDate);
-  return [filingStatus, letters ? `${letterStatus}: ${letters}` : "", asOf ? `נכון ל־${asOf}` : ""]
+  const filingStatus = party.finalLetters?.length ? "אותיות שאושרו במאגר" : "";
+  return [filingStatus, letters ? `${letterStatus}: ${letters}` : ""]
     .filter(Boolean)
     .join(" · ");
 }
 
 function partyStatusShort(party) {
   if (party?.finalLetters?.length) return "אותיות מאושרות במאגר";
-  if (party?.filingStatus === "submitted-pending-cec-review") {
-    const asOf = formatTrustDate(party.asOfDate);
-    return `במאגר: הוגשה וממתינה לבדיקת ועדת הבחירות${asOf ? ` (${asOf})` : ""}`;
-  }
   return "";
 }
 
@@ -4347,6 +4343,28 @@ function toggleBinderChrome() {
   applyBinderChrome();
 }
 
+const TRADE_CHROME_KEY = "kalpi-trade-chrome";
+
+function tradeBoardChromeCollapsed() {
+  return readBinderLocal(TRADE_CHROME_KEY) === "0";
+}
+
+function applyTradeBoardChrome() {
+  const panel = document.querySelector("#community-panel-open-trades");
+  const collapsed = tradeBoardChromeCollapsed();
+  panel?.classList.toggle("is-chrome-collapsed", collapsed);
+  const button = elements.tradeBoardChromeToggle;
+  if (!button) return;
+  button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  button.textContent = collapsed ? "↓ פתיחת התפריט ↓" : "↑ קיפול התפריט ↑";
+  button.setAttribute("aria-label", collapsed ? "פתיחת התפריט" : "קיפול התפריט");
+}
+
+function toggleTradeBoardChrome() {
+  writeBinderLocal(TRADE_CHROME_KEY, tradeBoardChromeCollapsed() ? "1" : "0");
+  applyTradeBoardChrome();
+}
+
 function setBinderColumns(count) {
   const grid = elements.binderGrid;
   const next = Math.max(1, count);
@@ -4724,6 +4742,7 @@ function badgeArtwork(id, { tier = "simple", earned = true, sheen = false, secre
     "warehouse-full": '<path d="M15 20h18v14H15zM18 20v-4h12v4M19 25h10M19 29h7"/>',
     "see-nothing": '<rect x="17" y="13" width="14" height="22" rx="1.5"/><path d="M20 19h8M20 23h8M20 27h5"/>',
     "streak-prize-skip": '<path d="M16 24h16v11H16zM16 28h16M24 24v11M19.5 24c0-2.4 2.2-3.6 4.5-2.2 2.3-1.4 4.5-.2 4.5 2.2"/>',
+    "recycle-card": '<path d="M29 16.5A8.5 8.5 0 1 0 32.2 28l-2.2-1.2A6.2 6.2 0 1 1 28 18.2V21l5-3.2-4-1.3z"/>',
   }[id] || (String(id).startsWith("set-complete:")
     ? '<rect x="14" y="17" width="12" height="16" rx="1"/><rect x="20" y="14" width="12" height="16" rx="1"/><path d="M23.5 22.5l2.5 2.5 4.5-5"/>'
     : '<circle cx="24" cy="24" r="5"/>');
@@ -4778,6 +4797,7 @@ const ACHIEVEMENT_RULES = [
   ["warehouseFull", "מחסן מלא עד הסוף"],
   ["binderOne", "קלף אחד בשורה"],
   ["streakPrizeSkipped", "דילוג על פרס בלוח הרצף"],
+  ["recycle", "מיחזור קלף"],
   ["league", "חבר בליגה"],
   ["setComplete", "סדרה מלאה (תג לכל סדרה)"],
 ];
@@ -4912,6 +4932,7 @@ const BADGE_COPY = {
   "warehouse-full": ["עד אפס מקום", "המחסן הגיע לשמונה קלפים שמחכים."],
   "see-nothing": ["לא רואה כלום", "הגדילו את האלבום עד שקלף אחד ממלא את השורה."],
   "streak-prize-skip": ["אין מתנות חינם", "סגרתם את לוח הרצף בלי לפתוח את הפרס של היום."],
+  "recycle-card": ["שומר על איכות הסביבה", "מיחזרתם קלף."],
   "streak-thirty": ["חודש רצוף", "בקרו שלושים ימים ברצף."],
 };
 
@@ -5271,7 +5292,11 @@ function renderTradeBoard() {
   paintOpenTradeCount(openOffers);
   model.tradeBoardOffered = fillTradeBoardFilter(elements.tradeBoardOffered, openOffers, "offeredCardId", model.tradeBoardOffered);
   model.tradeBoardWanted = fillTradeBoardFilter(elements.tradeBoardWanted, openOffers, "wantedCardId", model.tradeBoardWanted);
-  if (elements.tradeBoardToolbar) elements.tradeBoardToolbar.hidden = openOffers.length === 0;
+  const showTradeFilters = openOffers.length > 0;
+  if (elements.tradeBoardChrome) elements.tradeBoardChrome.hidden = !showTradeFilters;
+  if (elements.tradeBoardChromeToggle) elements.tradeBoardChromeToggle.hidden = !showTradeFilters;
+  if (elements.tradeBoardToolbar) elements.tradeBoardToolbar.hidden = !showTradeFilters;
+  applyTradeBoardChrome();
   const filtered = openOffers.filter((trade) => (
     (!model.tradeBoardOffered || trade.offeredCardId === model.tradeBoardOffered)
     && (!model.tradeBoardWanted || trade.wantedCardId === model.tradeBoardWanted)
@@ -8543,6 +8568,8 @@ elements.claimLevel.addEventListener("click", async () => {
 elements.shareMyBinder?.addEventListener("click", copyMyBinderLink);
 elements.binderChromeToggle?.addEventListener("click", toggleBinderChrome);
 applyBinderChrome();
+elements.tradeBoardChromeToggle?.addEventListener("click", toggleTradeBoardChrome);
+applyTradeBoardChrome();
 elements.copyBinderShare?.addEventListener("click", copyMyBinderLink);
 elements.closeGuestBinder?.addEventListener("click", closePublicBinder);
 elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);

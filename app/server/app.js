@@ -2221,6 +2221,8 @@ export async function createKalpiApp({
               acquiredBy: "recycle",
               pulledAt: new Date(now()).toISOString(),
             });
+            current.eventCounts ??= {};
+            current.eventCounts.card_recycled = (Number(current.eventCounts.card_recycled) || 0) + 1;
             return { instance };
           });
           if (!recycled) {

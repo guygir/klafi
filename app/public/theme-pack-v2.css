@@ -594,11 +594,15 @@ body:has(#app[data-theme="pack-v2"]) {
 #app[data-density="airy-v2"] .growth-grid .work-kicker {
   display: none;
 }
-#app[data-density="airy-v2"] .today-docket-row.is-no-faction > small {
-  display: block;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+#app[data-theme="pack-v2"] .klafi-word {
+  color: var(--pack-seal);
+  font-family: "Noto Serif Hebrew", serif;
+  font-weight: 700;
+}
+
+#advocacy-dialog a {
+  color: var(--civic);
+  font-weight: 600;
 }
 
 #app[data-density="airy-v2"] #growth-view > .workspace-head {
