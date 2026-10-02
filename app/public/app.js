@@ -5562,7 +5562,6 @@ function maybeShowStreakCalendar({ force = false } = {}) {
 function maybeShowDeferredPopups() {
   if (maybeShowStreakCalendar()) return true;
   maybeShowTradeNotice();
-  maybeShowHeardYou();
   return false;
 }
 
@@ -5729,7 +5728,6 @@ async function dismissTradeNotice() {
   }
   queueMicrotask(() => {
     maybeShowTradeNotice();
-    maybeShowHeardYou();
   });
 }
 
@@ -8353,7 +8351,6 @@ elements.streakCalendar?.addEventListener("keydown", (event) => {
 elements.streakDialog?.addEventListener("close", () => {
   ackStreakCalendar().then(() => queueMicrotask(() => {
     maybeShowTradeNotice();
-    maybeShowHeardYou();
   }));
 });
 elements.addAchievement?.addEventListener("click", () => {
@@ -9118,7 +9115,6 @@ bootstrap().then(async () => {
   }
   klafiTips.maybeStart();
   if (!tipsBusy()) maybeShowStreakCalendar();
-  if (!tipsBusy()) maybeShowHeardYou();
 });
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
