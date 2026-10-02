@@ -143,7 +143,8 @@ button:focus-visible {
 .sound-toggle.muted .sound-icon-off { display: block; }
 .sound-toggle.muted { color: var(--civic); }
 
-.leaf-toggle {
+.leaf-toggle,
+.heard-you-toggle {
   display: inline-grid;
   place-items: center;
   flex: 0 0 auto;
@@ -158,8 +159,10 @@ button:focus-visible {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.leaf-toggle:hover { color: var(--civic); }
-.leaf-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+.leaf-toggle:hover,
+.heard-you-toggle:hover { color: var(--civic); }
+.leaf-toggle:focus-visible,
+.heard-you-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 .leaf-toggle.is-still .leaf-arrow { display: none; }
 .leaf-arrow {
   transform-box: fill-box;
@@ -2353,6 +2356,13 @@ img.mini-art {
   height: auto;
   aspect-ratio: 63 / 96;
 }
+
+.heard-you-dialog { width: min(460px, calc(100% - 24px)); }
+.heard-you-list {
+  margin: 4px 0 18px;
+  padding-inline-start: 1.25em;
+}
+.heard-you-list li + li { margin-top: 8px; }
 .policy-dialog h2 { margin-bottom: 10px; font-size: 30px; }
 #level-dialog-title { line-height: 1.25; text-wrap: pretty; }
 #level-dialog-title .level-rank-name { white-space: nowrap; }

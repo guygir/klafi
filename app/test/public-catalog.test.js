@@ -179,41 +179,31 @@ test("Vercel copies live card art including Set 5", async () => {
   assert.ok(liveBytes < 50 * 1024 * 1024, `live Vercel art should stay slim (${liveBytes})`);
 });
 
-test("within each live set a specific Common is about twice a specific Rare", async () => {
+test("public sets use flat 70/22/8 and set 5 is twice each other open set", async () => {
   const [catalog, studio] = await Promise.all([
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
   ]);
-  const open = studio.gameConfig.releaseSets.map((set) => ({
-    ...set,
-    runtimeState: "active",
-    runtimeAvailableFrom: "2026-01-01T00:00:00.000Z",
-  }));
-  const pack = {
-    ...studio.gameConfig.pack,
-    sets: studio.gameConfig.pack.sets.map((set) => (
-      ["decisions", "records"].includes(set.id) ? { ...set, includeEventCards: true } : set
-    )),
-  };
+  const byId = new Map(studio.gameConfig.pack.sets.map((set) => [set.id, set]));
+  assert.equal(byId.get("party-leaders").weight, 1);
+  assert.equal(byId.get("party-slot-2").weight, 1);
+  assert.equal(byId.get("set-5").weight, 2);
+  assert.equal(byId.get("decisions").weight, 0);
+  assert.equal(byId.get("records").weight, 0);
+  for (const id of ["party-leaders", "party-slot-2", "set-5"]) {
+    assert.deepEqual(byId.get(id).rarities, { Common: 70, Uncommon: 22, Rare: 8 });
+  }
   const odds = cardPullOdds({
-    pack,
-    releaseSets: open,
+    pack: studio.gameConfig.pack,
+    releaseSets: studio.gameConfig.releaseSets,
     cards: catalog.cards,
     now: Date.parse("2026-09-20T12:00:00.000Z"),
   });
-  for (const setId of LIVE_RELEASE_SET_IDS) {
-    const rows = odds.filter((row) => row.releaseSetId === setId);
-    const byTier = { Common: [], Uncommon: [], Rare: [] };
-    for (const row of rows) byTier[row.rarity].push(row.probability);
-    if (!byTier.Common.length || !byTier.Rare.length) continue;
-    const pC = byTier.Common[0];
-    const pR = byTier.Rare[0];
-    assert.ok(Math.abs(pC / pR - 2) < 0.2, `${setId} C/R ${pC / pR}`);
-    if (byTier.Uncommon.length) {
-      const pU = byTier.Uncommon[0];
-      assert.ok(Math.abs(pU / pR - 1.5) < 0.2, `${setId} U/R ${pU / pR}`);
-    }
-  }
+  const report = rarityOrderReport(odds);
+  assert.equal(report.holds, true, JSON.stringify(report));
+  const set5 = odds.find((row) => row.releaseSetId === "set-5" && row.rarity === "Common");
+  const leaders = odds.find((row) => row.releaseSetId === "party-leaders" && row.rarity === "Common");
+  assert.ok(set5.probability > leaders.probability);
 });
 
 test("current live pack keeps any specific Rare harder than any specific Common", async () => {
