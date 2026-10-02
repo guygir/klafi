@@ -6732,3 +6732,39 @@ body {
 .badge-artwork.badge-tier-unearned .badge-tier-star { fill: none; stroke: #8f918b; stroke-width: 1.15; }
 .achievement-seal,
 #binder-view .badge-medallion { overflow: visible; }
+
+/* Shared link is a one-screen popup. The shell is one viewport with overflow hidden,
+   so a width-driven card clips the quote. Drop the level strip and bottom nav, and
+   size the card from the leftover height (63:96). */
+#app.share-active.app-shell {
+  grid-template-rows: auto minmax(0, 1fr);
+  padding-bottom: 0;
+}
+#app.share-active .level-strip,
+#app.share-active .top-nav-row {
+  display: none !important;
+}
+#app.share-active #main {
+  padding-bottom: 0;
+}
+#app.share-active #shared-view.active {
+  min-height: 0;
+  overflow: hidden;
+}
+#app.share-active #shared-view.active > :not(.shared-card) {
+  flex: 0 0 auto;
+}
+#app.share-active #shared-view .shared-card {
+  container-type: size;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: min(100%, 370px);
+  margin-inline: auto;
+  display: grid;
+  place-items: center;
+}
+#app.share-active #shared-view .shared-card .kalpi-card {
+  width: min(100%, calc(100cqh * 63 / 96));
+  max-width: 100%;
+  height: auto;
+}
