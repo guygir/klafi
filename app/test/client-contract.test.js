@@ -119,7 +119,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /progressiveStage: "blank"/);
   assert.doesNotMatch(javascript, /reveal: stage === "portrait"/);
   assert.match(javascript, /binder-shared-card/);
-  assert.match(javascript, /displayCardMarkup\(card, "binder", \{ tradeCopies, plain, stamp, count \}\)/);
+  assert.match(javascript, /displayCardMarkup\(card, "binder", \{ tradeCopies, plain, stamp, count, warnLastCopy \}\)/);
   assert.match(javascript, /studio-shared-card/);
   assert.match(javascript, /function cardPresentation/);
   assert.match(javascript, /function quoteTrustLabel/);
@@ -319,8 +319,16 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function displayCardMarkup/);
   assert.match(javascript, /card-copies-tag/);
   assert.match(javascript, /tradeCopies \? `1\/\$\{copies\}` : `×\$\{copies\}`/);
+  assert.match(javascript, /tradeCopies \? copies >= 1 : copies > 1/);
+  assert.match(javascript, /const lastCopyWarning = tradeCopies && warnLastCopy && copies === 1/);
+  assert.match(javascript, /יש לך רק עותק אחד!/);
+  assert.match(javascript, /is-last-copy/);
+  assert.match(javascript, /warnLastCopy: role === "give"/);
+  assert.match(javascript, /showToast\(LAST_COPY_TOAST\)/);
+  assert.match(javascript, /lastCopyChipFrom/);
+  assert.match(css, /\.card-copies-tag\.is-last-copy/);
   assert.match(javascript, /tradeCopies: true/);
-  assert.match(javascript, /function displayCardMarkup\(card, surface = "display", \{ tradeCopies = false, recycle = false, plain = false, stamp = null, count = null \} = \{\}\) \{[\s\S]*?surface, tradeCopies, recycle \}/);
+  assert.match(javascript, /function displayCardMarkup\(card, surface = "display", \{ tradeCopies = false, recycle = false, plain = false, stamp = null, count = null, warnLastCopy = false \} = \{\}\) \{[\s\S]*?surface, tradeCopies, recycle, warnLastCopy \}/);
   assert.match(css, /#app \.trade-thumb\.is-concealed \.card-image-zone \.card-art/);
   assert.match(css, /#app \.binder-card-open\.is-concealed \.card-image-zone \.card-art/);
 
@@ -416,8 +424,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /pack\?\.current\?\.sets/);
   assert.match(javascript, /runtimeState === "held"/);
   assert.match(javascript, /function tradeCatalog/);
-  assert.match(javascript, /function tradeWantLabel\(card\) \{\s*return `\$\{cardTitle\(card\)\}/);
-  assert.match(javascript, /tradeWantLabel\(candidate\)/);
+  assert.match(javascript, /function tradeWantLabel\(card\) \{\s*return `\$\{cardTitle\(card\)\} · \$\{cardCode\(card\)\} · \$\{rarityMark\(card\.rarity\)\} \$\{rarityNameHe\(card\.rarity\)\} · \$\{ownedCountFor\(card\)\}x`/);
+  assert.match(javascript, /tradeOfferedCard[\s\S]{0,400}tradeWantLabel\(candidate\)/);
+  assert.match(javascript, /tradeWantedCard[\s\S]{0,240}tradeWantLabel\(candidate\)/);
+  assert.doesNotMatch(html, /הצעות ששחקנים אחרים פרסמו/);
+  assert.match(html, /id="trade-board"/);
   assert.match(javascript, /const tradableCards = tradeCatalog\(\)/);
   assert.match(javascript, /ownedCards = tradableCards\.filter/);
   assert.match(javascript, /concealUnowned: true/);
