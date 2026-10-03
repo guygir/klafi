@@ -4759,8 +4759,12 @@ function renderBinder() {
     }
     elements.binderFilters.innerHTML = "";
     elements.binderPager.innerHTML = "";
-    elements.binderGrid.innerHTML = catalogFailed ? "" : renderPendingWells();
-    delete elements.binderGrid.dataset.binderReady;
+    // A grid already on screen keeps its card nodes. Empty wells are only for a first build.
+    const keepPaintedGrid = elements.binderGrid?.dataset.binderReady === "1";
+    if (!keepPaintedGrid && elements.binderGrid) {
+      elements.binderGrid.innerHTML = catalogFailed ? "" : renderPendingWells();
+      delete elements.binderGrid.dataset.binderReady;
+    }
     setEmptyNote(elements.binderEmpty, pendingCopy("טוענים את האלבום…", "לא הצלחנו לטעון את האלבום."), {
       pending: !catalogFailed,
       failed: catalogFailed,
@@ -9080,6 +9084,21 @@ elements.studioReportList?.addEventListener("click", (event) => {
   });
 });
 
+let binderGridCheckQueued = false;
+
+function queueBinderGridCheck() {
+  if (binderGridCheckQueued) return;
+  binderGridCheckQueued = true;
+  // The frame callback runs before paint, so the card walk is the task after it.
+  // A microtask, or the walk inside that frame callback, would still block the switch.
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      binderGridCheckQueued = false;
+      renderBinder();
+    }, 0);
+  });
+}
+
 elements.navButtons.forEach((button) => {
   button.addEventListener("click", () => {
     if (model.showcase) {
@@ -9087,15 +9106,18 @@ elements.navButtons.forEach((button) => {
       return;
     }
     if (button.dataset.nav === "binder") {
+      // Cached #binder-view (display until .active) paints this frame. The grid
+      // walk happens after that paint and patches in place only when the plan changed.
+      showView("binder");
+      queueBinderGridCheck();
       loadStaticCatalog().catch(() => {});
       hydrateExtras().catch(() => {});
-    } else if (button.dataset.nav !== "home") hydrateExtras().catch(() => {});
+      return;
+    }
+    if (button.dataset.nav !== "home") hydrateExtras().catch(() => {});
     if (button.dataset.nav === "home") {
       renderHome();
       showView("home");
-    } else if (button.dataset.nav === "binder") {
-      renderBinder();
-      showView("binder");
     } else if (button.dataset.nav === "achievements") {
       renderAchievements();
       showView("achievements");
