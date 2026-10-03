@@ -102,3 +102,35 @@ test("the binder paints from the grid plan and inventory writes patch it in the 
   assert.match(home, /syncBinderGridInventory\(/);
   assert.ok(home.indexOf("localStorage.setItem(HOME_CACHE_KEY") < home.indexOf("syncBinderGridInventory("));
 });
+
+test("the binder tab shows the cached grid before it verifies the cards", async () => {
+  const source = await readFile(appJsPath, "utf8");
+  const queueStart = source.indexOf("function queueBinderGridCheck(");
+  const queueEnd = source.indexOf("elements.navButtons.forEach", queueStart);
+  assert.ok(queueStart > 0 && queueEnd > queueStart);
+  const queue = source.slice(queueStart, queueEnd);
+  assert.match(queue, /requestAnimationFrame\(/);
+  assert.match(queue, /setTimeout\(/);
+  assert.match(queue, /renderBinder\(\)/);
+  assert.ok(queue.indexOf("requestAnimationFrame(") < queue.indexOf("setTimeout("));
+  assert.ok(queue.indexOf("setTimeout(") < queue.indexOf("renderBinder()"));
+  assert.doesNotMatch(queue, /queueMicrotask/);
+  const navStart = source.indexOf("elements.navButtons.forEach", queueEnd - 1);
+  const navEnd = source.indexOf("elements.binderFilters.addEventListener", navStart);
+  const nav = source.slice(navStart, navEnd);
+  const branchStart = nav.indexOf('button.dataset.nav === "binder"');
+  assert.ok(branchStart > 0);
+  const branch = nav.slice(branchStart, nav.indexOf("return;", branchStart));
+  assert.match(branch, /showView\("binder"\)/);
+  assert.match(branch, /queueBinderGridCheck\(\)/);
+  assert.ok(branch.indexOf('showView("binder")') < branch.indexOf("queueBinderGridCheck()"));
+  assert.doesNotMatch(branch, /renderBinder\(\)/);
+  assert.doesNotMatch(branch, /binderGrid\.innerHTML/);
+  const renderStart = source.indexOf("function renderBinder(");
+  const renderEnd = source.indexOf("function syncBinderScrollCue(", renderStart);
+  const render = source.slice(renderStart, renderEnd);
+  const pending = render.slice(0, render.indexOf("const filterX"));
+  assert.match(pending, /keepPaintedGrid/);
+  assert.match(pending, /binderReady === "1"/);
+  assert.ok(pending.indexOf("keepPaintedGrid") < pending.indexOf("renderPendingWells()"));
+});
