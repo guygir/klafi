@@ -2873,8 +2873,10 @@ function pickLevelCheer() {
 
 function fillLevelDialog(progression, fromLevel) {
   const toLevel = fromLevel + 1;
-  const fromRank = rankNameAtLevel(fromLevel) || progression.rank;
-  const toRank = rankNameAtLevel(toLevel) || progression.nextRank || progression.rank;
+  const fromRank = rankNameAtLevel(fromLevel);
+  const toRank = rankNameAtLevel(toLevel);
+  // A missing ladder name must not become the current title and the next one.
+  if (!fromRank || !toRank) return false;
   elements.levelDialogTitle.innerHTML = `התקדמת <span class="level-rank-name">מ${escapeHtml(fromRank)}</span> <span class="level-rank-name">ל${escapeHtml(toRank)}</span>`;
   if (elements.levelDialogCheer) elements.levelDialogCheer.textContent = pickLevelCheer();
   const items = levelUnlockItems(fromLevel, toLevel);
@@ -2883,6 +2885,7 @@ function fillLevelDialog(progression, fromLevel) {
     elements.levelUnlocks.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   }
   elements.levelDialogReward.textContent = items.length ? "קלף הבונוס כבר נכנס לאוסף." : (progression.reward || "");
+  return true;
 }
 
 function prefetchLevelReward(cards = []) {
@@ -2927,7 +2930,9 @@ function openPendingLevelDialog() {
   const progression = model.serverState?.progression;
   const pending = progression?.pendingRewards || [];
   if (!progression || !pending.length) return;
-  fillLevelDialog(progression, Math.min(...pending) - 1);
+  // The on-screen title can use the cached rank while shell names load.
+  // This popup waits, so an empty name list cannot print the next rank.
+  if (!fillLevelDialog(progression, Math.min(...pending) - 1)) return;
   if (!elements.levelDialog.open) elements.levelDialog.showModal();
   startLevelRewardGrant().catch(() => {});
 }
@@ -2985,7 +2990,7 @@ function renderProgression({ announce = false } = {}) {
     model.renderedLevel = Math.max(seen, progression.level);
   } else if (pending.length && !elements.levelDialog.open) {
     openPendingLevelDialog();
-    markLevelSeen(Math.min(...pending));
+    if (elements.levelDialog.open) markLevelSeen(Math.min(...pending));
   } else if (!seen && !pending.length) {
     markLevelSeen(progression.level);
   } else {
