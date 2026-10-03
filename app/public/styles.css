@@ -4731,8 +4731,8 @@ body {
   inset: 0;
   width: 17px;
   height: 13px;
-  opacity: 0;
-  animation: binder-pinch-cycle 1.28s linear infinite;
+  visibility: hidden;
+  animation: binder-pinch-cycle 1.28s steps(4, end) infinite;
 }
 
 .binder-scroll-pinch svg:nth-child(2) { animation-delay: -0.96s; }
@@ -4740,14 +4740,14 @@ body {
 .binder-scroll-pinch svg:nth-child(4) { animation-delay: -0.32s; }
 
 @keyframes binder-pinch-cycle {
-  0%, 24% { opacity: 1; }
-  25%, 100% { opacity: 0; }
+  0% { visibility: visible; }
+  25%, 100% { visibility: hidden; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .binder-scroll-arrow i { animation: none; opacity: 0.75; }
-  .binder-scroll-pinch svg { animation: none; opacity: 0; }
-  .binder-scroll-pinch svg:last-child { opacity: 1; }
+  .binder-scroll-pinch svg { animation: none; visibility: hidden; }
+  .binder-scroll-pinch svg:last-child { visibility: visible; }
 }
 
 .binder-grid > .binder-slot {
