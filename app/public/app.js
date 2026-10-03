@@ -8755,7 +8755,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Changelog eyebrow version. Next merged PR: change this one line to v1.<pr>. */
-const HEARD_YOU_VERSION = "v1.127";
+const HEARD_YOU_VERSION = "v1.128";
 if (elements.heardYouVersion) elements.heardYouVersion.textContent = `(${HEARD_YOU_VERSION})`;
 
 function heardYouSeen() {
