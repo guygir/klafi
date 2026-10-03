@@ -508,7 +508,7 @@ function tradeCatalog() {
 }
 
 function tradeWantLabel(card) {
-  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`;
+  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)} · ${ownedCountFor(card)}x`;
 }
 
 function tradeCardUnowned(cardId) {
@@ -4021,7 +4021,7 @@ function rarityCanRecycle(card) {
   return rarity.startsWith("Common") || rarity.startsWith("Uncommon") || rarity.startsWith("Rare");
 }
 
-function displayCardMarkup(card, surface = "display", { tradeCopies = false, recycle = false, plain = false, stamp = null, count = null } = {}) {
+function displayCardMarkup(card, surface = "display", { tradeCopies = false, recycle = false, plain = false, stamp = null, count = null, warnLastCopy = false } = {}) {
   const preview = surface === "display" && model.dialogNumberedPreview?.cardId === card?.id
     ? model.dialogNumberedPreview
     : null;
@@ -4035,7 +4035,7 @@ function displayCardMarkup(card, surface = "display", { tradeCopies = false, rec
     count: Number.isInteger(count) ? count : ownedCountFor(card),
     numberedIndex: resolved?.numberedIndex,
     numberedOf: resolved?.numberedOf,
-  }, { progressiveStage: "portrait", surface, tradeCopies, recycle });
+  }, { progressiveStage: "portrait", surface, tradeCopies, recycle, warnLastCopy });
 }
 
 function canRecycleCard(card) {
@@ -4059,11 +4059,14 @@ function binderRecycleButton(card) {
   return `<button class="card-recycle binder-recycle" type="button" data-recycle-card="${escapeHtml(card.id)}" aria-label="מיחזור">${recycleIconSvg()}</button>`;
 }
 
-function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full", tradeCopies = false, recycle = false } = {}) {
+const LAST_COPY_TOAST = "יש לך רק עותק אחד!";
+
+function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full", tradeCopies = false, recycle = false, warnLastCopy = false } = {}) {
   const presentation = cardPresentation(card, instance);
   const stage = progressiveStage || "portrait";
   const progressive = `progressive-card stage-${stage}`;
   const copies = Number(instance.count ?? 0);
+  const lastCopyWarning = tradeCopies && warnLastCopy && copies === 1;
   const frame = cardDisplayFrame(card);
   return `
     <article class="kalpi-card ${presentation.finishClass} ${progressive} ${reveal ? "reveal" : ""}" data-card-surface="${escapeHtml(surface)}" data-card-frame="${escapeHtml(frame)}" style="--pip:${presentation.pip}" aria-label="קלף ${escapeHtml(presentation.title)}${instance.numberedIndex ? `. ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}` : ""}${presentation.trustLabel ? `. ${escapeHtml(presentation.trustLabel)}` : ""}">
@@ -4077,7 +4080,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
             <span class="card-meta-end">
               ${frame === "fullart-v1" ? "" : `<strong aria-label="${presentation.rarityName}">${presentation.rarityMark}</strong>`}
               ${instance.numberedIndex ? `<b class="card-numbered-tag" aria-label="ממוספר ${instance.numberedIndex} מתוך ${instance.numberedOf}">${instance.numberedIndex}/${instance.numberedOf}</b>` : ""}
-              ${recycle && copies >= 3 && !tradeCopies ? recycleControlMarkup(card, copies) : copies > 1 && surface !== "share" ? `<b class="card-copies-tag">${tradeCopies ? `1/${copies}` : `×${copies}`}</b>` : ""}
+              ${recycle && copies >= 3 && !tradeCopies ? recycleControlMarkup(card, copies) : (tradeCopies ? copies >= 1 : copies > 1) && surface !== "share" ? `<b class="card-copies-tag${lastCopyWarning ? " is-last-copy" : ""}"${lastCopyWarning ? ` data-tooltip="${LAST_COPY_TOAST}" tabindex="0"` : ""}>${tradeCopies ? `1/${copies}` : `×${copies}`}</b>` : ""}
               ${instance.isNew && !instance.numberedIndex ? '<b class="new-stamp">חדש</b>' : ""}
             </span>
           </div>
@@ -4092,9 +4095,9 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
     </article>`;
 }
 
-function binderCardMarkup(card, { tradeCopies = false, plain = false, stamp = null, count = null } = {}) {
+function binderCardMarkup(card, { tradeCopies = false, plain = false, stamp = null, count = null, warnLastCopy = false } = {}) {
   return `
-    <div class="binder-shared-card">${displayCardMarkup(card, "binder", { tradeCopies, plain, stamp, count })}</div>`;
+    <div class="binder-shared-card">${displayCardMarkup(card, "binder", { tradeCopies, plain, stamp, count, warnLastCopy })}</div>`;
 }
 
 function binderNumberedCopies() {
@@ -5234,9 +5237,9 @@ function creatorLink() {
   return url.toString();
 }
 
-function tradeThumbMarkup(card) {
+function tradeThumbMarkup(card, { warnLastCopy = false } = {}) {
   if (!card) return "";
-  return `<span class="trade-thumb-frame">${binderCardMarkup(card, { tradeCopies: true })}</span>`;
+  return `<span class="trade-thumb-frame">${binderCardMarkup(card, { tradeCopies: true, warnLastCopy })}</span>`;
 }
 
 /** Unowned card: blur art, party, and quote. Name and rarity stay readable. */
@@ -5272,7 +5275,7 @@ function tradeSideMarkup(cardId, card, role) {
   return `<div class="trade-side">
     <small>${label}</small>
     <button type="button" class="trade-thumb${conceal ? " is-concealed" : ""}" data-trade-choice-card="${escapeHtml(cardId)}" ${card ? "" : "hidden"} aria-label="${escapeHtml(aria)}">
-      ${tradeThumbMarkup(card)}
+      ${tradeThumbMarkup(card, { warnLastCopy: role === "give" })}
     </button>
   </div>`;
 }
@@ -5730,11 +5733,11 @@ function cardTitleHe(cardId) {
   return model.byId.get(cardId)?.titleHe || "";
 }
 
-function paintTradeNoticeThumb(node, cardId) {
+function paintTradeNoticeThumb(node, cardId, { warnLastCopy = false } = {}) {
   const card = model.byId.get(cardId);
   if (!node) return;
   node.hidden = !card;
-  node.innerHTML = card ? tradeThumbMarkup(card) : "";
+  node.innerHTML = card ? tradeThumbMarkup(card, { warnLastCopy }) : "";
   if (card) queueCardTextFit(node);
 }
 
@@ -5749,7 +5752,7 @@ function showAcceptedTradeNotice({ otherName, receivedCardId, givenCardId, notic
   if (elements.tradeNoticeTitle) elements.tradeNoticeTitle.textContent = lines.title;
   if (elements.tradeNoticeCopy) elements.tradeNoticeCopy.textContent = lines.who;
   paintTradeNoticeThumb(elements.tradeNoticeReceived, receivedCardId);
-  paintTradeNoticeThumb(elements.tradeNoticeGiven, givenCardId);
+  paintTradeNoticeThumb(elements.tradeNoticeGiven, givenCardId, { warnLastCopy: true });
   dialog.dataset.noticeId = noticeId || "";
   dialog.dataset.receivedCardId = receivedCardId || "";
   dialog.dataset.givenCardId = givenCardId || "";
@@ -6045,7 +6048,7 @@ function renderGrowth() {
   const offeredCards = ownedCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeOfferedSet.value));
   const wantedCards = tradableCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
   elements.tradeOfferedCard.innerHTML = offeredCards.length
-    ? offeredCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(cardTitle(candidate))} · ${escapeHtml(cardCode(candidate))}</option>`).join("")
+    ? offeredCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(tradeWantLabel(candidate))}</option>`).join("")
     : '<option value="">קודם אספו קלף</option>';
   if (offeredCards.some(({ id }) => id === offeredValue)) elements.tradeOfferedCard.value = offeredValue;
   elements.tradeWantedCard.innerHTML = wantedCards.length
@@ -6058,7 +6061,7 @@ function renderGrowth() {
   }
   const mine = model.trades.find((trade) => trade.ownedByCurrent && trade.status === "open");
   elements.tradeCreate.disabled = Boolean(mine) || !ownedCards.length;
-  const paintThumb = (thumb, cardId, { concealUnowned = false } = {}) => {
+  const paintThumb = (thumb, cardId, { concealUnowned = false, warnLastCopy = false } = {}) => {
     const selected = model.byId.get(cardId);
     if (!thumb) return;
     thumb.hidden = !selected;
@@ -6073,11 +6076,11 @@ function renderGrowth() {
     thumb.setAttribute("aria-label", conceal
       ? `${cardTitle(selected)} · ${rarityNameHe(selected.rarity)}`
       : `פתיחת ${cardTitle(selected)}`);
-    thumb.innerHTML = tradeThumbMarkup(selected);
+    thumb.innerHTML = tradeThumbMarkup(selected, { warnLastCopy });
     if (conceal) concealTradeThumb(thumb, selected);
     queueCardTextFit(thumb);
   };
-  paintThumb(elements.tradeOfferedPreview, elements.tradeOfferedCard.value);
+  paintThumb(elements.tradeOfferedPreview, elements.tradeOfferedCard.value, { warnLastCopy: true });
   paintThumb(elements.tradeWantedPreview, elements.tradeWantedCard.value, { concealUnowned: true });
   prefetchCardArt([
     card,
@@ -7594,6 +7597,30 @@ async function submitBugReport(event) {
     if (elements.submitBug) elements.submitBug.disabled = false;
   }
 }
+
+function fineHoverPointer() {
+  return Boolean(window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches);
+}
+
+function lastCopyChipFrom(target) {
+  return target?.closest?.(".card-copies-tag.is-last-copy") || null;
+}
+
+document.addEventListener("pointerover", (event) => {
+  if (!fineHoverPointer()) return;
+  const chip = lastCopyChipFrom(event.target);
+  if (!chip || (event.relatedTarget && chip.contains(event.relatedTarget))) return;
+  showToast(LAST_COPY_TOAST);
+});
+
+document.addEventListener("click", (event) => {
+  if (fineHoverPointer()) return;
+  const chip = lastCopyChipFrom(event.target);
+  if (!chip) return;
+  event.preventDefault();
+  event.stopPropagation();
+  showToast(LAST_COPY_TOAST);
+}, true);
 
 function showToast(message, ms = 2200) {
   if (elements.toastTitle) {
