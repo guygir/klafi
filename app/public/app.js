@@ -11,7 +11,7 @@ import {
   sortBinderCards,
 } from "./binder-order.js";
 import { confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
-import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref } from "./tips.js";
+import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
 import { holdsWantedCard, offersForTradeList } from "./trade-list.js";
 import {
@@ -272,10 +272,10 @@ const elements = {
   closeTradeNotice: document.querySelector("#close-trade-notice"),
   streakDialog: document.querySelector("#streak-dialog"),
   streakDialogTitle: document.querySelector("#streak-dialog-title"),
-  streakDialogReward: document.querySelector("#streak-dialog-reward"),
-  streakCalendarReward: document.querySelector("#streak-calendar-reward"),
+  streakCalendarRedeem: document.querySelector("#streak-calendar-redeem"),
   streakCalendar: document.querySelector("#streak-calendar"),
   streakLadder: document.querySelector("#streak-ladder"),
+  streakLadderRedeem: document.querySelector("#streak-ladder-redeem"),
   streakLadderNext: document.querySelector("#streak-ladder-next"),
   streakDialogOk: document.querySelector("#streak-dialog-ok"),
   closeStreakDialog: document.querySelector("#close-streak-dialog"),
@@ -1014,33 +1014,84 @@ async function hydrateHome() {
     const warmedHome = window.__kalpiWarmup?.home;
     if (window.__kalpiWarmup) window.__kalpiWarmup.home = null;
     homeHydrate = (warmedHome || request("/api/home")).then(async (home) => {
-      applyHomePayload(home);
+      const applied = applyHomePayload(home);
       renderProfile();
       renderHome();
-      try {
-        const config = await request("/api/game-config");
-        if (config) model.gameConfig = { ...model.gameConfig, ...config };
-      } catch {
-        /* Shell parties stay until the live register arrives. */
-      }
-      try {
-        const live = await request("/api/catalog");
-        mergeLiveCatalogFields(live.cards || []);
-      } catch {
-        /* Static catalog.json stays until the live list slots arrive. */
-      }
-      hydrateCardHolders().catch(() => {});
-      prefetchBinderArt(playerCatalog());
-      renderProfile();
-      renderBinder();
-      renderAchievements();
-      maybeShowTradeNotice();
+      // A later Jerusalem day opens as soon as home is fresh. Day one waits for the tutorial.
+      if (applied !== false && !streakPopupWaitsForTutorial()) maybeShowStreakCalendar();
       return home;
     }).finally(() => {
       homeHydrate = null;
     });
   }
   return homeHydrate;
+}
+
+function calendarPrefetchNeeded() {
+  const calendar = model.serverState?.streakCalendar;
+  if (!calendar || streakPopupWaitsForTutorial()) return false;
+  if (calendar.showPopup) return true;
+  const today = (calendar.days || []).find((cell) => cell.current);
+  if (today?.reward && !today.opened) return true;
+  const rung = (calendar.ladder || []).find((cell) => cell.current);
+  return Boolean(rung?.reward && !rung.opened);
+}
+
+async function refreshBinderLive() {
+  try {
+    const config = await request("/api/game-config");
+    if (config) model.gameConfig = { ...model.gameConfig, ...config };
+  } catch {
+    /* Shell parties stay until the live register arrives. */
+  }
+  try {
+    const live = await request("/api/catalog");
+    mergeLiveCatalogFields(live.cards || []);
+  } catch {
+    /* Static catalog.json stays until the live list slots arrive. */
+  }
+  hydrateCardHolders().catch(() => {});
+  renderProfile();
+  renderBinder();
+  renderAchievements();
+  maybeShowTradeNotice();
+}
+
+let afterTodayPrefetch = null;
+async function prefetchAfterToday() {
+  if (afterTodayPrefetch) return afterTodayPrefetch;
+  afterTodayPrefetch = (async () => {
+    // Packs were refreshed with home. Their art is next, then the calendar if it is needed.
+    await loadStaticCatalog().catch(() => null);
+    prefetchIdleAssets();
+    if (calendarPrefetchNeeded()) {
+      const calendar = model.serverState?.streakCalendar;
+      if (calendar) paintStreakCalendar(calendar);
+    }
+    // Binder stays on the cached inventory. Queue its art, then refresh boards, then recheck the binder.
+    renderBinder();
+    prefetchBinderArt(playerCatalog());
+    if (pendingIdleSeen().length) flushPendingIdleSeen().catch(() => {});
+    if (pendingReports().length) flushPendingReports().catch(() => {});
+    const clock = idleCountdownCopy({
+      serverState: model.serverState,
+      idleQueueLength: model.idleQueue.length,
+    });
+    const cap = model.serverState?.idleCapacity || model.gameConfig?.idle?.capacity || IDLE_BACKLOG_CAP;
+    const cachedBufferSize = model.idleQueue.length + (model.serverState?.preparedPulls || []).length;
+    const missingDueCard = clock.needsSettle || cachedDueCount() > 0;
+    const priority = clock.needsSettle || !cachedBufferSize
+      ? "urgent"
+      : cachedDueCount() > 1 ? "backlog" : "buffered";
+    if (clock.needsSettle || missingDueCard || cachedBufferSize < cap) {
+      scheduleIdleRefill({ priority });
+    }
+    if (model.token) hydrateExtras().catch(() => {});
+    refreshBinderLive();
+    scheduleIdleNotification();
+    if (inboundLeagueCode()) consumeInboundLeague().catch(() => {});
+  })();
+  return afterTodayPrefetch;
 }
 
 function dropUnknownIdleHead() {
@@ -1160,7 +1211,7 @@ async function hydrateIdleQueue() {
         applyHomePayload({ ...settled, cards: settled.cards || [], state: settled.state });
         prefetchIdleAssets();
         renderHome();
-        refreshDailyChallenge();
+        if (!streakPopupWaitsForTutorial()) maybeShowStreakCalendar();
         maybeShowTradeNotice();
         flushPendingIdleSeen().catch(() => {});
         return settled;
@@ -1204,8 +1255,7 @@ function kickDueIdleSettle() {
 function hydrateTodayBoards() {
   if (model.showcase) return Promise.resolve(null);
   if (!todayBoardsHydrate) {
-    const imagesQueued = window.__kalpiWarmup?.imagesQueued || Promise.resolve();
-    todayBoardsHydrate = Promise.all([imagesQueued, binderArtQueued]).then(() => request("/api/community")).then((payload) => {
+    todayBoardsHydrate = request("/api/community").then((payload) => {
       if (payload) {
         applyExtrasPayload(payload);
         renderHome();
@@ -1367,41 +1417,19 @@ async function bootstrap() {
   const inboundView = requestedPlayerView();
   if (inboundView && inboundView !== "home") paintPlayerView(inboundView);
   else showView("home");
-  const catalogPromise = loadStaticCatalog().catch(() => null);
   const extrasNeeded = inboundView && inboundView !== "home" && inboundView !== "binder";
   try {
     await loadShell();
     renderAdvocacy();
     renderProfile();
     renderHome();
-    const homePromise = hydrateHome();
-    await catalogPromise;
-    if (inboundView === "binder") renderBinder();
+    renderBinder();
     renderAchievements();
     renderGrowth();
-    homePromise.then(() => {
-      prefetchIdleAssets();
-      if (pendingIdleSeen().length) flushPendingIdleSeen().catch(() => {});
-      if (pendingReports().length) flushPendingReports().catch(() => {});
-      const clock = idleCountdownCopy({
-        serverState: model.serverState,
-        idleQueueLength: model.idleQueue.length,
-      });
-      const cap = model.serverState?.idleCapacity || model.gameConfig?.idle?.capacity || IDLE_BACKLOG_CAP;
-      const cachedBufferSize = model.idleQueue.length + (model.serverState?.preparedPulls || []).length;
-      const missingDueCard = clock.needsSettle || cachedDueCount() > 0;
-      const priority = clock.needsSettle || !cachedBufferSize
-        ? "urgent"
-        : cachedDueCount() > 1 ? "backlog" : "buffered";
-      if (clock.needsSettle || missingDueCard || cachedBufferSize < cap) {
-        scheduleIdleRefill({ priority });
-      }
-      if (model.token) hydrateExtras().catch(() => {});
-      scheduleIdleNotification();
-      if (inboundLeagueCode()) consumeInboundLeague().catch(() => {});
-    }).catch(() => {});
-    if (extrasNeeded) await homePromise.then(() => hydrateExtras()).catch(() => null);
-    else homePromise.catch(() => null);
+    const homePromise = hydrateHome();
+    const afterToday = homePromise.then(() => prefetchAfterToday());
+    if (extrasNeeded) await afterToday.catch(() => null);
+    else afterToday.catch(() => {});
   } catch (error) {
     try {
       await hydrateCatalog();
@@ -5388,56 +5416,6 @@ function streakRewardMarkup(reward) {
   return `<span class="streak-cell-prize"><span class="streak-cell-stars" data-stars="${stars}" aria-label="${labels[stars]}">${glyphs}</span></span>`;
 }
 
-function streakPrizeName(reward) {
-  if (reward?.kind === "pack") return "חבילה";
-  const labels = { 1: "קלף נפוץ", 2: "קלף לא נפוץ", 3: "קלף נדיר" };
-  return labels[reward?.stars] || "קלף נפוץ";
-}
-
-function prizeCueLine(prize) {
-  if (!prize?.reward) return "";
-  if (prize.waiting && !prize.opened) {
-    if (prize.reward.kind === "pack") {
-      return prize.claimed
-        ? "חבילה מחכה. לחיצה כפולה פותחת אותה."
-        : "היום מחכה חבילה. לחיצה כפולה פותחת אותה.";
-    }
-    const name = streakPrizeName(prize.reward);
-    return prize.claimed
-      ? `${name} מחכה. לחיצה כפולה פותחת אותו.`
-      : `היום מחכה ${name}. לחיצה כפולה פותחת אותו.`;
-  }
-  if (!prize.wait) return "";
-  return `${streakWaitLine(prize.wait)} מגיע הפרס הבא והוא ${streakPrizeName(prize.reward)}.`;
-}
-
-function streakRewardLine(calendar) {
-  const ladder = calendar?.ladder || [];
-  const current = ladder.find((cell) => cell.current) || null;
-  if (current?.reward && !current.opened) {
-    return prizeCueLine({ reward: current.reward, waiting: true, claimed: current.claimed, opened: false });
-  }
-  const next = ladder.find((cell) => cell.reward && !cell.current);
-  return prizeCueLine(next ? { reward: next.reward, wait: next.wait } : null);
-}
-
-function datePrizeLine(calendar) {
-  return prizeCueLine(calendar?.nextDatePrize);
-}
-
-function paintPrizeLine(node, line) {
-  if (!node) return;
-  node.hidden = !line;
-  node.textContent = line;
-}
-
-function streakWaitLine(days) {
-  const n = Math.max(1, Number(days) || 1);
-  if (n === 1) return "בעוד יום";
-  if (n === 2) return "בעוד יומיים";
-  return `בעוד ${n} ימים`;
-}
-
 function streakCellClasses(cell) {
   return [
     "streak-cell",
@@ -5494,18 +5472,17 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
     elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => {
       const openable = todayDateOpenable(cell);
       const granted = datePrizeGranted(cell);
+      const dormant = Boolean(cell.reward && !openable && calendar.today && cell.date < calendar.today);
       const monthName = String(cell.date || "").slice(5, 7) === "09" ? "בספטמבר" : "באוקטובר";
       const election = cell.election ? `<span class="streak-cell-election">יום הבחירות</span>` : "";
       const month = cell.monthChip ? `<span class="streak-cell-month">${cell.monthChip}</span>` : "";
       const aria = cell.election
         ? ` aria-label="${cell.day} ${monthName}, יום הבחירות"`
-        : openable
-          ? ` tabindex="0" title="לחיצה כפולה לפתיחה" aria-label="${cell.day} ${monthName}, לחיצה כפולה לפתיחה"`
-          : granted
-            ? ` aria-label="${cell.day} ${monthName}, הפרס נלקח"`
-            : ` aria-label="${cell.day} ${monthName}"`;
+        : granted
+          ? ` aria-label="${cell.day} ${monthName}, הפרס נלקח"`
+          : ` aria-label="${cell.day} ${monthName}"`;
       return `
-      <li class="${streakCellClasses({ ...cell, reward: null })}${cell.election ? " is-election" : ""}${cell.reward ? " has-date-prize" : ""}${cell.claimed ? " is-claimed" : ""}${granted && !cell.opened ? " is-opened" : ""}${openable ? " is-openable" : ""}${stamp && cell.current ? " is-landing" : ""}" data-date="${cell.date}"${aria}>
+      <li class="${streakCellClasses({ ...cell, reward: null })}${cell.election ? " is-election" : ""}${cell.reward ? " has-date-prize" : ""}${cell.claimed ? " is-claimed" : ""}${granted && !cell.opened ? " is-opened" : ""}${openable ? " is-openable" : ""}${dormant ? " is-dormant" : ""}${stamp && cell.current ? " is-landing" : ""}" data-date="${cell.date}"${aria}>
         <span class="streak-cell-day">${cell.day}</span>
         ${month}
         ${election}
@@ -5522,12 +5499,15 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
       const runDay = Math.max(1, Math.round(Number(cell.runDay) || 1));
       const dayLabel = streakRunDayLabel(runDay);
       const taken = Boolean(cell.opened && cell.reward);
-      const label = taken ? ` aria-label="${dayLabel}, הפרס נלקח"` : ` aria-label="${dayLabel}"`;
+      const openable = Boolean(cell.current && cell.reward && !cell.opened);
+      const label = taken
+        ? ` aria-label="${dayLabel}, הפרס נלקח"`
+        : ` aria-label="${dayLabel}"`;
       const prize = cell.reward
         ? streakRewardMarkup(cell.reward)
         : `<span class="streak-ladder-none">${cell.current ? "היום" : ""}</span>`;
       return `
-      <li class="${streakLadderClasses(cell)}" data-day="${cell.cycleDay}"${label}>
+      <li class="${streakLadderClasses(cell)}${openable ? " is-openable" : ""}" data-day="${cell.cycleDay}"${label}>
         <span class="streak-ladder-day">${dayLabel}</span>
         ${prize}
         ${taken ? streakCheckMarkup(false) : ""}
@@ -5536,9 +5516,24 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
     elements.streakLadder.innerHTML = (today.length ? today : ladder.slice(0, 1)).map(rung).join("");
     if (elements.streakLadderNext) elements.streakLadderNext.innerHTML = upcoming.map(rung).join("");
   }
-  paintPrizeLine(elements.streakCalendarReward, datePrizeLine(calendar));
-  paintPrizeLine(elements.streakDialogReward, streakRewardLine(calendar));
+  const todayCell = (calendar.days || []).find((cell) => cell.current) || null;
+  paintRedeemButton(elements.streakCalendarRedeem, {
+    openable: todayDateOpenable(todayCell),
+    taken: Boolean(todayCell && datePrizeGranted(todayCell)),
+  });
+  const todayRung = (calendar.ladder || []).find((cell) => cell.current) || null;
+  paintRedeemButton(elements.streakLadderRedeem, {
+    openable: Boolean(todayRung?.reward && !todayRung.opened),
+    taken: Boolean(todayRung?.opened && todayRung.reward),
+  });
   if (stamp) playStreakStamp();
+}
+
+function paintRedeemButton(button, { openable, taken }) {
+  if (!button) return;
+  button.disabled = !openable;
+  button.classList.toggle("is-ready", Boolean(openable));
+  button.textContent = openable ? "לחץ לקבלת הפרס!" : (taken ? "נלקח" : "אין היום פרס");
 }
 
 function openStreakCalendar({ force = false, calendar, stamp = false } = {}) {
@@ -5549,8 +5544,18 @@ function openStreakCalendar({ force = false, calendar, stamp = false } = {}) {
   return true;
 }
 
+function streakPopupWaitsForTutorial() {
+  const streak = Number(model.serverState?.visitStreak) || 0;
+  // The first visit day still opens after the tutorial, not under it.
+  if (streak <= 1) return true;
+  if (tipsBusy()) return true;
+  if (readTipsPref() === "off") return false;
+  const homeActive = Boolean(document.querySelector("#home-view")?.classList.contains("active"));
+  return shouldAutoOpenPage(readSeenPages(), "home", { homeActive });
+}
+
 function maybeShowStreakCalendar({ force = false } = {}) {
-  if (model.showcase || model.streakNoticeBusy) return false;
+  if (model.showcase || model.streakNoticeBusy || revealInProgress()) return false;
   if (!force && !stateFreshAt) return false;
   if (elements.waitDialog?.open || (!force && tipsBusy())) return false;
   if (elements.streakDialog?.open) return true;
@@ -5574,8 +5579,15 @@ async function dismissStreakCalendar() {
   queueMicrotask(() => maybeShowTradeNotice());
 }
 
-function todayDateCell(event) {
-  return event.target?.closest?.(".streak-cell.is-today.is-openable");
+async function openTodayLadderPrize(day) {
+  const calendar = model.serverState?.streakCalendar;
+  const cell = (calendar?.ladder || []).find((item) => item.current) || null;
+  if (!cell?.reward || cell.opened || String(cell.cycleDay) !== String(day) || homePackRipBusy) return;
+  await openServerPrize({
+    body: { day: cell.cycleDay },
+    reward: cell.reward,
+    packId: `streak-${cell.runDay}`,
+  });
 }
 
 async function openTodayDatePrize(date) {
@@ -5586,19 +5598,19 @@ async function openTodayDatePrize(date) {
     body: { date: cell.date },
     reward: cell.reward,
     packId: `date-${cell.date}`,
-    line: elements.streakCalendarReward,
   });
 }
 
-async function openServerPrize({ body, reward, packId, line }) {
+async function openServerPrize({ body, reward, packId }) {
   sfx.unlock();
   homePackRipBusy = true;
   model.streakRewardOpening = true;
   const isPack = reward?.kind === "pack";
   let rip = null;
   try {
-    if (!elements.streakDialog?.open) showWait("מביאים את המתנה…");
-    paintPrizeLine(line, "מביאים את המתנה…");
+    if (elements.streakDialog?.open) elements.streakDialog.close();
+    // Loading popup first. The rip page is the reveal, not the wait.
+    showWait(isPack ? "פותחים…" : "מביאים את המתנה…");
     const pulled = await request("/api/streak/open", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -5606,6 +5618,7 @@ async function openServerPrize({ body, reward, packId, line }) {
     });
     hideWait();
     if (pulled.already) {
+      rip?.release();
       if (pulled.state) setServerState(pulled.state, { merge: true });
       if (elements.streakDialog?.open && model.serverState?.streakCalendar) paintStreakCalendar(model.serverState.streakCalendar);
       return;
@@ -5779,7 +5792,6 @@ async function pollWatchedTrade() {
 
 async function refreshDailyChallenge() {
   try {
-    await Promise.all([window.__kalpiWarmup?.imagesQueued || Promise.resolve(), binderArtQueued]);
     const boards = await request("/api/leaderboards");
     setLeaderboards(boards);
     renderTodayDocket();
@@ -8339,16 +8351,15 @@ elements.levelStreak?.addEventListener("click", (event) => {
 });
 elements.streakDialogOk?.addEventListener("click", () => dismissStreakCalendar());
 elements.closeStreakDialog?.addEventListener("click", () => dismissStreakCalendar());
-function activateStreakReward(event) {
-  const cell = todayDateCell(event);
-  if (!cell?.dataset.date) return;
-  event.preventDefault();
-  openTodayDatePrize(cell.dataset.date);
-}
-elements.streakCalendar?.addEventListener("dblclick", activateStreakReward);
-elements.streakCalendar?.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter") return;
-  activateStreakReward(event);
+elements.streakCalendarRedeem?.addEventListener("click", () => {
+  if (elements.streakCalendarRedeem.disabled) return;
+  const cell = (model.serverState?.streakCalendar?.days || []).find((item) => item.current);
+  if (cell?.date) openTodayDatePrize(cell.date);
+});
+elements.streakLadderRedeem?.addEventListener("click", () => {
+  if (elements.streakLadderRedeem.disabled) return;
+  const cell = (model.serverState?.streakCalendar?.ladder || []).find((item) => item.current);
+  if (cell) openTodayLadderPrize(cell.cycleDay);
 });
 elements.streakDialog?.addEventListener("close", () => {
   ackStreakCalendar().then(() => queueMicrotask(() => {

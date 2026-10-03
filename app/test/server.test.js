@@ -1542,6 +1542,29 @@ test("first enter of a Jerusalem day stamps the visit calendar and grants reward
     const iso = day.toISOString().slice(0, 10);
     clock.value = Date.parse(`${iso}T07:00:00.000Z`);
     latest = await api(running.base, "/api/home", { token });
+    if (latest.body.state.visitStreak !== 6) continue;
+    const rung = latest.body.state.streakCalendar.ladder[0];
+    assert.equal(rung.runDay, 6);
+    assert.equal(rung.reward.kind, "pack");
+    assert.equal(rung.claimed, true);
+    assert.equal(rung.opened, false, "day 6 pack stays unopened at grant");
+    const beforeOpen = await api(running.base, "/api/state", { token });
+    const granted = (beforeOpen.body.instances || []).find((item) => item.acquiredBy === "streak-6");
+    assert.ok(granted, "day 6 grants a streak pack");
+    assert.equal(granted.seenAt, null, "a streak pack is not stamped seen until it is opened");
+    const storedNow = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+    assert.equal(storedNow.sessions[token].unseenPulls.includes(granted.instanceId), false);
+    const openedPack = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 6 } });
+    assert.equal(openedPack.status, 200);
+    assert.equal(openedPack.body.mode, "streak-pack");
+    assert.equal(openedPack.body.cards.length, 1);
+    assert.ok(openedPack.body.cards[0].seenAt);
+    assert.equal(openedPack.body.state.streakCalendar.ladder[0].opened, true);
+    const copies = openedPack.body.state.inventory[openedPack.body.cards[0].cardId];
+    const openedAgain = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 6 } });
+    assert.equal(openedAgain.body.already, true);
+    const afterOpen = await api(running.base, "/api/state", { token });
+    assert.equal(afterOpen.body.inventory[openedPack.body.cards[0].cardId], copies);
   }
   const dayFive = latest;
   assert.equal(dayFive.body.state.visitStreak, 19);
@@ -1579,7 +1602,7 @@ test("first enter of a Jerusalem day stamps the visit calendar and grants reward
   assert.equal(finishOf("date-2026-10-10"), undefined);
   const streakPull = (state.body.instances || []).find((item) => item.acquiredBy === "streak-6");
   assert.ok(streakPull, "day 6 grants a streak pack");
-  assert.ok(streakPull.seenAt, "a streak pack is stamped when it is granted");
+  assert.ok(streakPull.seenAt, "opening the day 6 pack stamps seenAt");
   const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
   assert.equal(stored.sessions[token].unseenPulls.includes(streakPull.instanceId), false);
   assert.equal(stored.sessions[token].pendingStreakReward, null);
