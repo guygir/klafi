@@ -10,6 +10,7 @@ import {
   binderSortId,
   sortBinderCards,
 } from "./binder-order.js";
+import { binderOpenReleaseIds, binderReleaseOk } from "./binder-filter.js";
 import { confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
@@ -3666,11 +3667,7 @@ const FILTER_SET_SHORT = {
 function openBinderReleaseIds() {
   const catalog = model.catalog || [];
   const hidden = new Set(["decisions", "records"]);
-  return (model.gameConfig?.releaseSets || [])
-    .map(({ id, runtimeState }) => ({ id, runtimeState }))
-    .filter(({ id }) => isLiveReleaseSet(id) && !hidden.has(id))
-    .filter(({ id }) => catalog.some((card) => card.releaseSetId === id && !card.eventOnly))
-    .map(({ id }) => id);
+  return binderOpenReleaseIds(model.gameConfig?.releaseSets, catalog, LIVE_RELEASE_SET_IDS, hidden);
 }
 
 function filterSetChip(set, label, count, active) {
@@ -3993,9 +3990,9 @@ function renderShowcaseBinder() {
   const sourceCards = numberedView ? numberedCards : playerCards;
   const visible = sourceCards.filter((card) => {
     if (numberedView) return !model.binderParty || card.set === model.binderParty;
-    const releaseOk = model.binderFilter === "ALL"
-      || (model.binderFilter === "SPECIALS" ? card.eventOnly
-        : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
+    const releaseOk = binderReleaseOk(card, model.binderFilter, {
+      openReleaseIds: releaseOrder,
+    });
     const partyOk = !model.binderParty || card.set === model.binderParty;
     return releaseOk && partyOk;
   });
@@ -4653,10 +4650,10 @@ function renderBinder() {
   ].join("");
 
   const visible = playerCards.filter((card) => {
-    const releaseOk = model.binderFilter === "ALL"
-      || (model.binderFilter === "SPECIALS" ? card.eventOnly
-        : model.binderFilter === "NUMBERED" ? numberedIds.has(card.id)
-        : model.binderFilter.startsWith("RELEASE:") && card.releaseSetId === model.binderFilter.slice(8));
+    const releaseOk = binderReleaseOk(card, model.binderFilter, {
+      openReleaseIds: releaseOrder,
+      numberedIds,
+    });
     const partyOk = !model.binderParty || card.set === model.binderParty;
     const slotInventory = numberedView ? inventory : regularInventory;
     const ownedOk = guest
