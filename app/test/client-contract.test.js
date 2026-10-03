@@ -920,6 +920,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /home\.hidden = unsupported \|\| granted \|\| denied/);
   assert.match(javascript, /קלף הבונוס כבר נכנס לאוסף/);
   assert.match(javascript, /התקדמת <span class="level-rank-name">מ\$\{escapeHtml\(fromRank\)\}<\/span> <span class="level-rank-name">ל\$\{escapeHtml\(toRank\)\}<\/span>/);
+  assert.doesNotMatch(javascript, /rankNameAtLevel\(toLevel\) \|\| progression\.nextRank/);
+  assert.match(javascript, /if \(!fillLevelDialog\(progression, Math\.min\(\.\.\.pending\) - 1\)\) return;/);
+  assert.match(javascript, /if \(elements\.levelDialog\.open\) markLevelSeen\(Math\.min\(\.\.\.pending\)\)/);
   assert.match(javascript, /const LEVEL_CHEERS = Object\.freeze\(\[/);
   assert.match(javascript, /פששש…/);
   assert.match(javascript, /ידעתי שתצליח!/);
