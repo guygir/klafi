@@ -11,6 +11,7 @@ import {
   sortBinderCards,
 } from "./binder-order.js";
 import { binderOpenReleaseIds, binderReleaseOk } from "./binder-filter.js";
+import { binderInventorySignature, binderSlotSignature, planBinderGrid } from "./binder-grid.js";
 import { confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
@@ -694,7 +695,9 @@ function setServerState(state, { merge = false } = {}) {
   const clockSafe = mergeIdleClock(model.serverState, state, model.stateRevision);
   noteStateRevision(clockSafe);
   const { state: shown } = overlayPendingSeen({ state: clockSafe }, pendingIdleSeen());
+  const previousState = model.serverState;
   model.serverState = merge ? { ...model.serverState, ...shown } : shown;
+  syncBinderGridInventory(previousState, model.serverState);
   return true;
 }
 
@@ -774,6 +777,7 @@ function applyHomePayload(home) {
       },
     }));
     prefetchAvatars(home.state.avatars);
+    syncBinderGridInventory(previous, model.serverState);
   }
 }
 
@@ -4532,6 +4536,216 @@ function installBinderPinch(grid) {
   });
 }
 
+
+let binderInventorySyncing = false;
+
+function syncBinderGridInventory(previous, next) {
+  if (binderInventorySyncing) return;
+  if (binderInventorySignature(previous) === binderInventorySignature(next)) return;
+  if (!catalogReady() || model.showcase) return;
+  binderInventorySyncing = true;
+  try {
+    renderBinder();
+  } finally {
+    binderInventorySyncing = false;
+  }
+}
+
+function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, guest, listMode }) {
+  const count = numberedView ? binderNumberedCount(card.id) : (regularInventory[card.id] ?? 0);
+  if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
+    if (guest || model.binderFilter === "NUMBERED") return null;
+    return {
+      card,
+      mode: "missing",
+      count: 0,
+      recycle: false,
+      concealed: false,
+      extra: !guest && model.studioContent?.studioEnabled ? "debug" : "",
+    };
+  }
+  const concealed = Boolean(guest && tradeCardUnowned(card.id));
+  if (listMode) {
+    return {
+      card,
+      mode: numberedView ? "numbered-list" : "list",
+      count,
+      recycle: false,
+      concealed,
+      extra: "",
+    };
+  }
+  return {
+    card,
+    mode: numberedView ? "numbered" : "owned",
+    count,
+    recycle: !guest && Boolean(binderRecycleButton(card)),
+    concealed,
+    extra: "",
+  };
+}
+
+function binderSlotSignatureFor(spec) {
+  return binderSlotSignature({
+    mode: spec.mode,
+    cardId: spec.card.id,
+    count: spec.count,
+    recycle: spec.recycle,
+    concealed: spec.concealed,
+    extra: spec.extra || "",
+  });
+}
+
+function binderSlotMarkup(spec) {
+  const { card, mode, count, concealed } = spec;
+  const key = escapeHtml(`${mode}:${card.id}`);
+  if (mode === "missing") {
+    return `<div class="binder-slot is-missing" role="listitem" data-binder-key="${key}" data-card-id="${card.id}" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)} · חסר באוסף`)}">
+        <span class="missing-name">${escapeHtml(cardTitle(card))}</span>
+        <span class="missing-code">${escapeHtml(cardCode(card))}</span>
+        <span class="missing-rarity">${escapeHtml(`${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`)}</span>
+        ${spec.extra === "debug" ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
+      </div>`;
+  }
+  const openLabel = concealed
+    ? `${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)}`
+    : `פתיחת ${cardTitle(card)}, ברשותכם ${count}`;
+  const viewerMissing = concealed;
+  const numbered = mode === "numbered" || mode === "numbered-list";
+  const numberedAttr = numbered ? ' data-numbered="1"' : ' data-binder-plain="1"';
+  if (mode === "list" || mode === "numbered-list") {
+    return `
+      <div class="binder-slot owned binder-list-row" role="listitem" style="--pip:${card.pip}" data-binder-key="${key}" data-binder-count="${count}">
+        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}"${numberedAttr} aria-label="${escapeHtml(openLabel)}">
+          ${binderListFacts(card, count)}
+        </button>
+      </div>`;
+  }
+  const face = mode === "numbered"
+    ? binderCardMarkup(card, { stamp: binderStamp(card), count })
+    : binderCardMarkup(card, { plain: true, count });
+  return `
+      <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}" data-binder-key="${key}" data-binder-count="${count}">
+        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}"${numberedAttr} aria-label="${escapeHtml(openLabel)}">
+          ${face}
+        </button>
+        ${spec.recycle ? binderRecycleButton(card) : ""}
+      </div>`;
+}
+
+function elementFromHtml(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html.trim();
+  return template.content.firstElementChild;
+}
+
+function syncListCopies(node, count) {
+  const meta = node.querySelector(".binder-list-meta");
+  let copies = node.querySelector(".binder-list-copies");
+  if (count > 1) {
+    if (!copies && meta) {
+      copies = document.createElement("span");
+      copies.className = "binder-list-copies";
+      meta.appendChild(copies);
+    }
+    if (copies) copies.textContent = `×${count}`;
+  } else if (copies) copies.remove();
+}
+
+function syncCardCopiesTag(node, count) {
+  const end = node.querySelector(".card-meta-end");
+  let tag = end?.querySelector(":scope > .card-copies-tag") || node.querySelector(".card-meta-end > .card-copies-tag");
+  if (!tag) tag = [...(end?.children || [])].find((child) => child.classList?.contains("card-copies-tag")) || null;
+  if (count > 1) {
+    if (!tag && end) {
+      tag = document.createElement("b");
+      tag.className = "card-copies-tag";
+      const stamp = end.querySelector(".new-stamp");
+      end.insertBefore(tag, stamp);
+    }
+    if (tag) tag.textContent = `×${count}`;
+  } else if (tag) tag.remove();
+}
+
+function syncBinderRecycle(node, spec) {
+  const current = node.querySelector(":scope > .binder-recycle") || [...node.children].find((child) => child.classList?.contains("binder-recycle"));
+  if (spec.recycle) {
+    if (!current) node.insertAdjacentHTML("beforeend", binderRecycleButton(spec.card));
+  } else if (current) current.remove();
+}
+
+function clearConcealedArt(node) {
+  for (const art of node.querySelectorAll(".card-art, .card-party-zone, .card-quote-zone")) {
+    art.style.filter = "";
+    art.removeAttribute("aria-hidden");
+  }
+}
+
+function syncBinderSlot(node, spec) {
+  const button = node.querySelector(".binder-card-open");
+  if (button && spec.mode !== "missing") {
+    const openLabel = spec.concealed
+      ? `${cardTitle(spec.card)} · ${cardCode(spec.card)} · ${rarityNameHe(spec.card.rarity)}`
+      : `פתיחת ${cardTitle(spec.card)}, ברשותכם ${spec.count}`;
+    button.setAttribute("aria-label", openLabel);
+    button.classList.toggle("is-concealed", spec.concealed);
+    if (!spec.concealed) clearConcealedArt(button);
+  }
+  if (spec.mode === "list" || spec.mode === "numbered-list") {
+    syncListCopies(node, spec.count);
+    return;
+  }
+  if (spec.mode === "missing") return;
+  syncCardCopiesTag(node, spec.count);
+  syncBinderRecycle(node, spec);
+  node.dataset.binderCount = String(spec.count);
+}
+
+function paintBinderGrid(specs) {
+  const grid = elements.binderGrid;
+  if (!grid) return;
+  const slotNodes = [...grid.children].filter((node) => node.classList?.contains("binder-slot"));
+  const keyed = slotNodes.filter((node) => node.dataset.binderKey);
+  const ready = grid.dataset.binderReady === "1"
+    && keyed.length === slotNodes.length
+    && !slotNodes.some((node) => node.classList.contains("is-loading"));
+  const existing = ready
+    ? keyed.map((node) => ({ key: node.dataset.binderKey, sig: node.dataset.binderSig || "" }))
+    : [];
+  const next = specs.map((spec) => ({
+    key: `${spec.mode}:${spec.card.id}`,
+    sig: binderSlotSignatureFor(spec),
+    spec,
+  }));
+  const plan = planBinderGrid(existing, next);
+  if (ready && plan.unchanged) return;
+  if (!ready) {
+    grid.innerHTML = next.map((slot) => binderSlotMarkup(slot.spec)).join("");
+    const built = [...grid.children].filter((node) => node.classList?.contains("binder-slot"));
+    next.forEach((slot, index) => {
+      if (built[index]) built[index].dataset.binderSig = slot.sig;
+    });
+    grid.dataset.binderReady = "1";
+  } else {
+    const byKey = new Map(keyed.map((node) => [node.dataset.binderKey, node]));
+    const fragment = document.createDocumentFragment();
+    plan.order.forEach((step, index) => {
+      const spec = next[index].spec;
+      let node = step.action === "keep" ? byKey.get(step.key) : null;
+      const recreate = !node || (step.sigChanged && (spec.mode === "missing" || spec.mode === "numbered" || spec.mode === "numbered-list"));
+      if (recreate) node = elementFromHtml(binderSlotMarkup(spec));
+      else if (step.sigChanged) syncBinderSlot(node, spec);
+      if (node) {
+        node.dataset.binderSig = next[index].sig;
+        fragment.appendChild(node);
+      }
+    });
+    grid.replaceChildren(fragment);
+  }
+  concealRenderedTradeThumbs(grid);
+  queueCardTextFit(grid);
+}
+
 function renderBinder() {
   const binderView = document.querySelector("#binder-view");
   if (!catalogReady()) {
@@ -4546,6 +4760,7 @@ function renderBinder() {
     elements.binderFilters.innerHTML = "";
     elements.binderPager.innerHTML = "";
     elements.binderGrid.innerHTML = catalogFailed ? "" : renderPendingWells();
+    delete elements.binderGrid.dataset.binderReady;
     setEmptyNote(elements.binderEmpty, pendingCopy("טוענים את האלבום…", "לא הצלחנו לטעון את האלבום."), {
       pending: !catalogFailed,
       failed: catalogFailed,
@@ -4674,40 +4889,13 @@ function renderBinder() {
   });
   binderView?.classList.toggle("binder-list", listMode);
   model.binderVisibleCount = ordered.length;
-  elements.binderGrid.innerHTML = ordered.map((card) => {
-    const count = numberedView ? binderNumberedCount(card.id) : (regularInventory[card.id] ?? 0);
-    const face = numberedView
-      ? binderCardMarkup(card, { stamp: binderStamp(card), count })
-      : binderCardMarkup(card, { plain: true, count });
-    if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
-      if (guest || model.binderFilter === "NUMBERED") return "";
-      return `<div class="binder-slot is-missing" role="listitem" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)} · חסר באוסף`)}">
-        <span class="missing-name">${escapeHtml(cardTitle(card))}</span>
-        <span class="missing-code">${escapeHtml(cardCode(card))}</span>
-        <span class="missing-rarity">${escapeHtml(`${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`)}</span>
-        ${!guest && model.studioContent?.studioEnabled ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
-      </div>`;
-    }
-    const viewerMissing = guest && tradeCardUnowned(card.id);
-    const openLabel = viewerMissing
-      ? `${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)}`
-      : `פתיחת ${cardTitle(card)}, ברשותכם ${count}`;
-    if (listMode) {
-      return `
-      <div class="binder-slot owned binder-list-row" role="listitem" style="--pip:${card.pip}">
-        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}"${numberedView ? ' data-numbered="1"' : ' data-binder-plain="1"'} aria-label="${escapeHtml(openLabel)}">
-          ${binderListFacts(card, count)}
-        </button>
-      </div>`;
-    }
-    return `
-      <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}">
-        <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}"${numberedView ? ' data-numbered="1"' : ' data-binder-plain="1"'} aria-label="${escapeHtml(openLabel)}">
-          ${face}
-        </button>
-        ${guest ? "" : binderRecycleButton(card)}
-      </div>`;
-  }).join("");
+  paintBinderGrid(ordered.map((card) => binderSlotSpec(card, {
+    numberedView,
+    regularInventory,
+    numberedIds,
+    guest,
+    listMode,
+  })).filter(Boolean));
   if (!waitingOwnership && !guest && model.binderMissingOnly) {
     setEmptyNote(elements.binderEmpty, "אין קלפים חסרים.", { hidden: visible.length > 0 });
   }
