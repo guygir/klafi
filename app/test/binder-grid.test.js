@@ -133,4 +133,17 @@ test("the binder tab shows the cached grid before it verifies the cards", async 
   assert.match(pending, /keepPaintedGrid/);
   assert.match(pending, /binderReady === "1"/);
   assert.ok(pending.indexOf("keepPaintedGrid") < pending.indexOf("renderPendingWells()"));
+  assert.match(queue, /binderReady !== "1"/);
+  assert.ok(queue.indexOf("renderBinder()") < queue.indexOf("fillBinderCardArt()"));
+  assert.match(source, /data-binder-art/);
+  assert.match(source, /deferArt: true/);
+  const showStart = source.indexOf("function showView(");
+  const showEnd = source.indexOf("function showError(", showStart);
+  const show = source.slice(showStart, showEnd);
+  const binderBranch = show.indexOf('name === "binder"');
+  assert.ok(binderBranch > 0);
+  assert.ok(show.indexOf("fitVisibleCardText(", binderBranch) > show.indexOf("return;", binderBranch));
+  const navBranch = source.slice(source.indexOf('button.dataset.nav === "binder"'), source.indexOf("loadStaticCatalog().catch", source.indexOf('button.dataset.nav === "binder"')));
+  assert.doesNotMatch(navBranch, /fillBinderCardArt\(/);
+  assert.doesNotMatch(navBranch, /renderBinder\(/);
 });

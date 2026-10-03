@@ -119,7 +119,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /progressiveStage: "blank"/);
   assert.doesNotMatch(javascript, /reveal: stage === "portrait"/);
   assert.match(javascript, /binder-shared-card/);
-  assert.match(javascript, /displayCardMarkup\(card, "binder", \{ tradeCopies, plain, stamp, count, warnLastCopy \}\)/);
+  assert.match(javascript, /displayCardMarkup\(card, "binder", \{ tradeCopies, plain, stamp, count, warnLastCopy, deferArt \}\)/);
   assert.match(javascript, /studio-shared-card/);
   assert.match(javascript, /function cardPresentation/);
   assert.match(javascript, /function quoteTrustLabel/);
@@ -328,7 +328,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /lastCopyChipFrom/);
   assert.match(css, /\.card-copies-tag\.is-last-copy/);
   assert.match(javascript, /tradeCopies: true/);
-  assert.match(javascript, /function displayCardMarkup\(card, surface = "display", \{ tradeCopies = false, recycle = false, plain = false, stamp = null, count = null, warnLastCopy = false \} = \{\}\) \{[\s\S]*?surface, tradeCopies, recycle, warnLastCopy \}/);
+  assert.match(javascript, /function displayCardMarkup\(card, surface = "display", \{ tradeCopies = false, recycle = false, plain = false, stamp = null, count = null, warnLastCopy = false, deferArt = false \} = \{\}\) \{[\s\S]*?surface, tradeCopies, recycle, warnLastCopy, deferArt \}/);
   assert.match(css, /#app \.trade-thumb\.is-concealed \.card-image-zone \.card-art/);
   assert.match(css, /#app \.binder-card-open\.is-concealed \.card-image-zone \.card-art/);
 
