@@ -18,6 +18,23 @@ try {
 } catch {
   /* The application will replace malformed cache data. */
 }
+// The party portrait is one image. Ask for it before the card list, which stays behind Today.
+let cachedPortrait = null;
+try {
+  cachedPortrait = JSON.parse(localStorage.getItem("kalpi-party-portrait") || "null");
+} catch {
+  cachedPortrait = null;
+}
+if (
+  cachedPortrait?.artKey
+  && cachedHome?.state?.factionId
+  && cachedPortrait.factionId === cachedHome.state.factionId
+) {
+  const partyPortrait = new Image();
+  partyPortrait.decoding = "async";
+  partyPortrait.fetchPriority = "high";
+  partyPortrait.src = `/design-assets/${encodeURIComponent(cachedPortrait.artKey)}`;
+}
 function cachedIdleIsDue(cached) {
   const now = Date.now();
   const times = [];

@@ -4740,10 +4740,8 @@ body {
 .binder-scroll-pinch svg:nth-child(4) { animation-delay: -0.32s; }
 
 @keyframes binder-pinch-cycle {
-  /* Hold past the 0.32s (25%) stagger so the next pose is already
-     opaque before this one fades. 24% ended ~13ms early and blanked. */
-  0%, 27% { opacity: 1; }
-  30%, 100% { opacity: 0; }
+  0%, 24% { opacity: 1; }
+  25%, 100% { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
