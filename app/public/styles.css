@@ -2365,6 +2365,8 @@ img.mini-art {
   padding-inline-start: 1.25em;
 }
 .heard-you-list li + li { margin-top: 8px; }
+/* Same gray 10px face as .today-faction-hint (the no-party "(לחצו על האוואטר)"); drop the eyebrow tracking. */
+#heard-you-dialog .eyebrow .today-faction-hint { letter-spacing: normal; }
 .policy-dialog h2 { margin-bottom: 10px; font-size: 30px; }
 #level-dialog-title { line-height: 1.25; text-wrap: pretty; }
 #level-dialog-title .level-rank-name { white-space: nowrap; }
@@ -4763,6 +4765,9 @@ body {
 
 .binder-grid > .binder-slot {
   scroll-snap-align: start;
+  /* Off-screen owned cards must not join the tab switch layout or image decode. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 180px;
 }
 
 .app-shell.home-active .level-identity small {

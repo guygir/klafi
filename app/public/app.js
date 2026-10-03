@@ -166,6 +166,7 @@ const elements = {
   heardYouDialog: document.querySelector("#heard-you-dialog"),
   closeHeardYou: document.querySelector("#close-heard-you"),
   heardYouOk: document.querySelector("#heard-you-ok"),
+  heardYouVersion: document.querySelector("#heard-you-version"),
   homeEnableNotify: document.querySelector("#home-enable-notify"),
   notifyStatus: document.querySelector("#notify-status"),
   leagueNameInput: document.querySelector("#league-name-input"),
@@ -1729,9 +1730,18 @@ function showView(name) {
   if (!model.showcase) klafiTips.sync();
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
+    // Binder text-fit walks every owned card and would run before the first paint.
+    // Pictures and the column measure start only after that paint.
+    if (name === "binder") {
+      setTimeout(() => {
+        applyBinderColumnStyle();
+        fitOnscreenBinderText();
+        fillBinderCardArt();
+      }, 0);
+      return;
+    }
     fitVisibleCardText(elements.main);
     queueBallotLetterFit(elements.main);
-    if (name === "binder") applyBinderColumnStyle();
   });
 }
 
@@ -3629,14 +3639,72 @@ function rarityNameHe(rarity) {
   return "נפוץ";
 }
 
-function artMarkup(card, mini = false, eager = false) {
+function artMarkup(card, mini = false, eager = false, { deferSrc = false } = {}) {
   const className = mini ? "mini-art" : "card-art";
   const url = artUrl(card);
+  if (url && deferSrc) {
+    // No src yet: a hidden grid of owned images decodes when the tab becomes visible.
+    return `<span class="${className} binder-art-pending" data-binder-art="${escapeHtml(url)}" role="img" aria-label="איור של ${escapeHtml(cardTitle(card))}"></span>`;
+  }
   if (url) {
     const load = eager ? 'fetchpriority="high"' : 'loading="lazy"';
     return `<img class="${className}" src="${url}" alt="" decoding="async" ${load} aria-label="איור של ${escapeHtml(cardTitle(card))}">`;
   }
   return `<div class="${className} placeholder" role="img" aria-label="איור זמני של ${escapeHtml(cardTitle(card))}" data-mark="${escapeHtml(placeholderMark(card))}"></div>`;
+}
+
+let binderArtFillGen = 0;
+
+function binderViewShown() {
+  return document.querySelector("#binder-view")?.classList.contains("active");
+}
+
+/** Assign cached art after the binder is on screen. Off-screen slots wait a frame. */
+function fillBinderCardArt(root = elements.binderGrid) {
+  if (!binderViewShown() || !root) return;
+  const pending = [...root.querySelectorAll("[data-binder-art]")].filter((node) => {
+    const url = node.dataset.binderArt;
+    return url && node.getAttribute("src") !== url;
+  });
+  if (!pending.length) return;
+  const gen = ++binderArtFillGen;
+  const apply = (node) => {
+    const url = node.dataset.binderArt;
+    if (!url || !node.isConnected || node.getAttribute("src") === url) return;
+    if (node.tagName === "IMG") {
+      node.decoding = "async";
+      node.loading = "lazy";
+      node.src = url;
+      return;
+    }
+    const image = document.createElement("img");
+    image.className = "card-art";
+    image.alt = "";
+    image.decoding = "async";
+    image.loading = "lazy";
+    const label = node.getAttribute("aria-label");
+    if (label) image.setAttribute("aria-label", label);
+    image.dataset.binderArt = url;
+    image.src = url;
+    node.replaceWith(image);
+  };
+  const step = () => {
+    if (gen !== binderArtFillGen || !binderViewShown()) return;
+    pending.splice(0, 6).forEach(apply);
+    if (pending.length) requestAnimationFrame(step);
+  };
+  step();
+}
+
+function fitOnscreenBinderText(root = elements.binderGrid) {
+  if (!binderViewShown() || !root) return;
+  const gridBox = root.getBoundingClientRect();
+  if (gridBox.height < 2) return;
+  for (const slot of root.querySelectorAll(":scope > .binder-slot")) {
+    const box = slot.getBoundingClientRect();
+    if (box.bottom <= gridBox.top || box.top >= gridBox.bottom) continue;
+    fitVisibleCardText(slot);
+  }
 }
 
 let markBinderArtQueued = () => {};
@@ -4025,7 +4093,7 @@ function rarityCanRecycle(card) {
   return rarity.startsWith("Common") || rarity.startsWith("Uncommon") || rarity.startsWith("Rare");
 }
 
-function displayCardMarkup(card, surface = "display", { tradeCopies = false, recycle = false, plain = false, stamp = null, count = null, warnLastCopy = false } = {}) {
+function displayCardMarkup(card, surface = "display", { tradeCopies = false, recycle = false, plain = false, stamp = null, count = null, warnLastCopy = false, deferArt = false } = {}) {
   const preview = surface === "display" && model.dialogNumberedPreview?.cardId === card?.id
     ? model.dialogNumberedPreview
     : null;
@@ -4039,7 +4107,7 @@ function displayCardMarkup(card, surface = "display", { tradeCopies = false, rec
     count: Number.isInteger(count) ? count : ownedCountFor(card),
     numberedIndex: resolved?.numberedIndex,
     numberedOf: resolved?.numberedOf,
-  }, { progressiveStage: "portrait", surface, tradeCopies, recycle, warnLastCopy });
+  }, { progressiveStage: "portrait", surface, tradeCopies, recycle, warnLastCopy, deferArt });
 }
 
 function canRecycleCard(card) {
@@ -4065,7 +4133,7 @@ function binderRecycleButton(card) {
 
 const LAST_COPY_TOAST = "יש לך רק עותק אחד!";
 
-function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full", tradeCopies = false, recycle = false, warnLastCopy = false } = {}) {
+function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = null, surface = "full", tradeCopies = false, recycle = false, warnLastCopy = false, deferArt = false } = {}) {
   const presentation = cardPresentation(card, instance);
   const stage = progressiveStage || "portrait";
   const progressive = `progressive-card stage-${stage}`;
@@ -4077,7 +4145,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
       <section class="card-face front">
         <span class="card-pip" aria-hidden="true"></span>
         <div class="card-image-zone">
-          ${artMarkup(card, false, surface === "display" || surface === "walkout" || surface === "peek")}
+          ${artMarkup(card, false, surface === "display" || surface === "walkout" || surface === "peek", { deferSrc: deferArt })}
           <div class="card-image-meta">
             <span class="card-code-tag">${escapeHtml(presentation.code)}</span>
             <span class="card-meta-mid"></span>
@@ -4099,9 +4167,9 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
     </article>`;
 }
 
-function binderCardMarkup(card, { tradeCopies = false, plain = false, stamp = null, count = null, warnLastCopy = false } = {}) {
+function binderCardMarkup(card, { tradeCopies = false, plain = false, stamp = null, count = null, warnLastCopy = false, deferArt = false } = {}) {
   return `
-    <div class="binder-shared-card">${displayCardMarkup(card, "binder", { tradeCopies, plain, stamp, count, warnLastCopy })}</div>`;
+    <div class="binder-shared-card">${displayCardMarkup(card, "binder", { tradeCopies, plain, stamp, count, warnLastCopy, deferArt })}</div>`;
 }
 
 function binderNumberedCopies() {
@@ -4622,8 +4690,8 @@ function binderSlotMarkup(spec) {
       </div>`;
   }
   const face = mode === "numbered"
-    ? binderCardMarkup(card, { stamp: binderStamp(card), count })
-    : binderCardMarkup(card, { plain: true, count });
+    ? binderCardMarkup(card, { stamp: binderStamp(card), count, deferArt: true })
+    : binderCardMarkup(card, { plain: true, count, deferArt: true });
   return `
       <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}" data-binder-key="${key}" data-binder-count="${count}">
         <button class="binder-card-open${viewerMissing ? " is-concealed" : ""}" type="button" data-card-id="${card.id}"${numberedAttr} aria-label="${escapeHtml(openLabel)}">
@@ -4744,6 +4812,11 @@ function paintBinderGrid(specs) {
   }
   concealRenderedTradeThumbs(grid);
   queueCardTextFit(grid);
+  if (binderViewShown()) {
+    requestAnimationFrame(() => {
+      setTimeout(() => fillBinderCardArt(grid), 0);
+    });
+  }
 }
 
 function renderBinder() {
@@ -8681,6 +8754,10 @@ elements.leafToggle?.addEventListener("click", () => {
   renderLeafToggle();
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
+/** Changelog eyebrow version. Next merged PR: change this one line to v1.<pr>. */
+const HEARD_YOU_VERSION = "v1.127";
+if (elements.heardYouVersion) elements.heardYouVersion.textContent = `(${HEARD_YOU_VERSION})`;
+
 function heardYouSeen() {
   try { return localStorage.getItem(HEARD_YOU_KEY) === "1"; } catch { return true; }
 }
@@ -9094,7 +9171,12 @@ function queueBinderGridCheck() {
   requestAnimationFrame(() => {
     setTimeout(() => {
       binderGridCheckQueued = false;
-      renderBinder();
+      // The cached grid is already visible. Build it from cache only if it was never painted.
+      // Server disagreement still goes through syncBinderGridInventory after that response.
+      if (elements.binderGrid?.dataset.binderReady !== "1") renderBinder();
+      applyBinderColumnStyle();
+      fitOnscreenBinderText();
+      fillBinderCardArt();
     }, 0);
   });
 }
@@ -9106,8 +9188,7 @@ elements.navButtons.forEach((button) => {
       return;
     }
     if (button.dataset.nav === "binder") {
-      // Cached #binder-view (display until .active) paints this frame. The grid
-      // walk happens after that paint and patches in place only when the plan changed.
+      // Show the grid that is already built. No filter walk and no image src in this turn.
       showView("binder");
       queueBinderGridCheck();
       loadStaticCatalog().catch(() => {});
