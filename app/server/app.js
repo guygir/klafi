@@ -1316,7 +1316,7 @@ export async function createKalpiApp({
     return credited;
   }
 
-  /** A granted prize from an earlier day. Today's gift stays unopened until the double-click. */
+  /** A granted prize from an earlier day. Today's gift stays unopened until the player redeems it. */
   function isPastPrize(acquiredBy, today, streakDay) {
     const acquired = String(acquiredBy || "");
     const dateMatch = acquired.match(/^date-(\d{4}-\d{2}-\d{2})$/);
@@ -1378,8 +1378,7 @@ export async function createKalpiApp({
     });
     if (!instance) return null;
     session.visitStreakClaims = [...new Set([...session.visitStreakClaims, rewardDay])];
-    const credited = creditStreakInstance(session, instance, new Date(now()).toISOString());
-    if (credited) syncProgression(session, allCards, studioContent?.gameConfig?.progression, now());
+    // Leave the prize unseen until the player opens it, so a pack can still play the rip.
     return instance;
   }
 
@@ -2123,15 +2122,32 @@ export async function createKalpiApp({
         if (request.method === "POST" && url.pathname === "/api/streak/open") {
           const input = await readJson(request);
           const date = /^\d{4}-\d{2}-\d{2}$/.test(String(input.date || "")) ? String(input.date) : "";
+          const ladderDay = Number.isInteger(Number(input.day)) && Number(input.day) > 0 ? Number(input.day) : 0;
           const opened = await store.withSession(token, async (current) => {
-            if (!date || date !== current.visitDay) return { already: true };
-            const reward = datePrizeFor(date);
+            if (date) {
+              if (date !== current.visitDay) return { already: true };
+              const reward = datePrizeFor(date);
+              if (!reward) return { already: true };
+              const acquiredBy = dateAcquiredBy(date);
+              const existing = (current.instances || []).find((item) => item.acquiredBy === acquiredBy);
+              if (existing?.seenAt || (current.visitDateClaims || []).includes(date)) return { already: true };
+              const instance = await grantPendingDatePrize(current);
+              if (!instance) return { already: true };
+              const credited = creditStreakInstance(current, instance, new Date(now()).toISOString());
+              if (credited) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
+              ackStreakCalendar(current);
+              return { instance, reward };
+            }
+            if (!ladderDay) return { already: true };
+            const rewardDay = calendarDay(current.visitStreak);
+            if (ladderDay !== rewardDay) return { already: true };
+            const reward = streakRewardForDay(rewardDay);
             if (!reward) return { already: true };
-            const acquiredBy = dateAcquiredBy(date);
-            const existing = (current.instances || []).find((item) => item.acquiredBy === acquiredBy);
-            if (existing?.seenAt || (current.visitDateClaims || []).includes(date)) return { already: true };
-            const instance = await grantPendingDatePrize(current);
-            if (!instance) return { already: true };
+            const acquiredBy = streakAcquiredBy(current.visitStreak, rewardDay);
+            let instance = (current.instances || []).find((item) => item.acquiredBy === acquiredBy);
+            if (instance?.seenAt) return { already: true };
+            if (!instance) instance = await grantPendingStreakReward(current);
+            if (!instance || instance.seenAt) return { already: true };
             const credited = creditStreakInstance(current, instance, new Date(now()).toISOString());
             if (credited) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
             ackStreakCalendar(current);
@@ -2143,7 +2159,7 @@ export async function createKalpiApp({
           }
           json(response, 200, {
             mode: opened.reward.kind === "pack" ? "streak-pack" : "streak-card",
-            packId: `date-open-${date}`,
+            packId: date ? `date-open-${date}` : `streak-open-${ladderDay}`,
             cards: [opened.instance],
             state: await stateForToken(token),
           });

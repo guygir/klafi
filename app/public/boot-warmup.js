@@ -30,21 +30,24 @@ function cachedIdleIsDue(cached) {
   if (!times.length) return true;
   return times.some((at) => at <= now);
 }
-// Home and settle decide the waiting count, whether a rip may start, and the
-// settle hint. Issue them before catalog and holder reads so those cannot win
-// the connection race. Neither read is a license to open a cached instance.
+// Today first: home (packs + calendar) and a due settle. Catalog and holder
+// reads are the binder, so they wait until those responses are in and cannot
+// win the connection. Neither read is a license to open a cached instance.
 const home = lookOnlyShowcase
   ? null
   : fetch("/api/home", { cache: "no-store", headers }).then(json);
 const idleSettle = !lookOnlyShowcase && token && (!cachedHome || cachedHome.token === token) && cachedIdleIsDue(cachedHome)
   ? fetch("/api/idle/settle", { method: "POST", cache: "no-store", headers }).then(json)
   : null;
+const todayScreenReady = Promise.all(
+  [home, idleSettle].filter(Boolean).map((job) => Promise.resolve(job).catch(() => null)),
+);
 window.__kalpiWarmup = {
   shell: fetch(`/shell.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json),
-  catalog: fetch(`/catalog.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json),
   home,
   idleSettle,
-  holders: fetch("/api/card-holders").then(json).catch(() => null),
+  catalog: todayScreenReady.then(() => fetch(`/catalog.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json)),
+  holders: todayScreenReady.then(() => fetch("/api/card-holders").then(json).catch(() => null)),
 };
 function prefetchPlayableArt(catalog) {
   for (const card of catalog?.cards || []) {
@@ -75,8 +78,8 @@ const ballotChips = [
 ];
 window.__kalpiBallotChips = ballotChips;
 // Letters and ballot paper wait until the pack count and the other critical
-// reads have answered, so they are the last prefetch on entry. Today's boards
-// wait for this mark and refresh after the images are already requested.
+// reads have answered, so they are the last prefetch on entry. Leaderboards
+// do not wait on this mark; they refresh after the binder is queued.
 let markImagesQueued = () => {};
 window.__kalpiWarmup.imagesQueued = new Promise((resolve) => {
   markImagesQueued = resolve;
