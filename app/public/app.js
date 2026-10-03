@@ -27,6 +27,7 @@ const SESSION_KEY = "kalpi-alpha-session";
 const HIDDEN_TRADES_KEY = "klafi:hidden-trades";
 const STUDIO_KEY = "kalpi-studio-secret";
 const HOME_CACHE_KEY = "kalpi-home-cache";
+const PARTY_PORTRAIT_KEY = "kalpi-party-portrait";
 const TODAY_BOARDS_KEY = "kalpi-today-boards";
 // When the server state last arrived (0 = only the localStorage cache so far).
 let stateFreshAt = 0;
@@ -805,7 +806,36 @@ function applyCachedTodayBoards() {
   }
 }
 
+function readPartyPortrait() {
+  try {
+    const value = JSON.parse(localStorage.getItem(PARTY_PORTRAIT_KEY) || "null");
+    if (!value?.artKey || !value?.factionId) return null;
+    return value;
+  } catch {
+    localStorage.removeItem(PARTY_PORTRAIT_KEY);
+    return null;
+  }
+}
+
+function rememberPartyPortrait(factionId, card) {
+  if (!factionId || !card?.artKey) return;
+  const next = {
+    factionId,
+    cardId: card.id,
+    artKey: card.artKey,
+    pip: card.pip || "",
+    titleHe: card.titleHe || card.title || "",
+  };
+  model.partyPortrait = next;
+  try {
+    localStorage.setItem(PARTY_PORTRAIT_KEY, JSON.stringify(next));
+  } catch {
+    /* A full store must not block the portrait already on screen. */
+  }
+}
+
 function applyCachedHome() {
+  model.partyPortrait = readPartyPortrait();
   try {
     const cached = JSON.parse(localStorage.getItem(HOME_CACHE_KEY) || "null");
     if (!cached?.state) return;
@@ -2785,19 +2815,28 @@ function renderTodayDocket() {
     elements.todayChallengeMeta.textContent = "";
     elements.todayChallengeMeta.hidden = true;
     const party = partyRegister().find(({ id }) => id === factionId);
-    const challengeCard = model.catalog.find((card) => card.set === factionId && card.artKey)
-      || {
-        id: `${party?.id || "SYS"}-TODAY`,
-        set: party?.id || "SYS",
-        titleHe: party?.requestedLetters?.[0] || "קְלָפִי",
-        type: "Symbol",
-        artKey: null,
-        pip: party?.pip || "#1f4f4a",
-      };
+    const fromCatalog = model.catalog.find((card) => card.set === factionId && card.artKey);
+    if (fromCatalog) rememberPartyPortrait(factionId, fromCatalog);
+    const cached = model.partyPortrait?.factionId === factionId ? model.partyPortrait : null;
+    const challengeCard = fromCatalog || (cached?.artKey ? {
+      id: cached.cardId,
+      set: factionId,
+      titleHe: cached.titleHe,
+      type: "Symbol",
+      artKey: cached.artKey,
+      pip: cached.pip || party?.pip || "#1f4f4a",
+    } : {
+      id: `${party?.id || "SYS"}-TODAY`,
+      set: party?.id || "SYS",
+      titleHe: party?.requestedLetters?.[0] || "קְלָפִי",
+      type: "Symbol",
+      artKey: null,
+      pip: party?.pip || "#1f4f4a",
+    });
     if (elements.todayChallengeVisual.dataset.card !== challengeCard.id) {
       elements.todayChallengeVisual.dataset.card = challengeCard.id;
       elements.todayChallengeVisual.style.setProperty("--pip", challengeCard.pip);
-      elements.todayChallengeVisual.innerHTML = artMarkup(challengeCard, true);
+      elements.todayChallengeVisual.innerHTML = artMarkup(challengeCard, true, true);
     }
   }
 

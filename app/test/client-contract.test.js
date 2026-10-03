@@ -1004,6 +1004,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   const warmupCatalogAt = warmup.indexOf("catalog.json");
   const warmupHoldersAt = warmup.indexOf("/api/card-holders");
   assert.ok(warmupHomeAt >= 0 && warmupSettleAt > warmupHomeAt && warmupCatalogAt > warmupSettleAt && warmupHoldersAt > warmupCatalogAt, "home and settle are issued before catalog and card holders");
+  const warmupPortraitAt = warmup.indexOf("kalpi-party-portrait");
+  assert.ok(warmupPortraitAt >= 0 && warmupPortraitAt < warmupCatalogAt, "the saved party portrait is requested before the card list");
   assert.match(warmup, /const todayScreenReady = Promise\.all/);
   assert.match(warmup, /todayScreenReady\.then\(\(\) => fetch\(`\/catalog\.json/);
   assert.match(warmup, /todayScreenReady\.then\(\(\) => fetch\("\/api\/card-holders"\)/);
