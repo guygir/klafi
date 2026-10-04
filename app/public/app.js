@@ -3570,7 +3570,7 @@ function maybeShowRecycleTip() {
         const host = elements.recycleTipCard.getBoundingClientRect();
         const box = hot.getBoundingClientRect();
         arrow.style.top = `${box.top - host.top + box.height / 2}px`;
-        arrow.style.left = `${host.width + 8}px`;
+        arrow.style.left = `${box.right - host.left + 8}px`;
       });
     }
     queueCardTextFit(elements.recycleTipCard);
@@ -8860,9 +8860,23 @@ elements.leafToggle?.addEventListener("click", () => {
   renderLeafToggle();
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
-/** Changelog eyebrow version. Next merged PR: change this one line to v1.<pr>. */
+/** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
 const HEARD_YOU_VERSION = "v1.130";
-if (elements.heardYouVersion) elements.heardYouVersion.textContent = `(${HEARD_YOU_VERSION})`;
+const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
+
+function paintHeardYouVersion(version) {
+  const tag = String(version || "").trim();
+  if (elements.heardYouVersion && tag) elements.heardYouVersion.textContent = `(${tag})`;
+}
+paintHeardYouVersion(HEARD_YOU_VERSION);
+
+function refreshHeardYouVersion() {
+  fetch(HEARD_YOU_RELEASE_URL, { headers: { Accept: "application/vnd.github+json" } })
+    .then((response) => (response.ok ? response.json() : null))
+    .then((release) => paintHeardYouVersion(release?.tag_name))
+    .catch(() => {});
+}
+refreshHeardYouVersion();
 
 function heardYouSeen() {
   try { return localStorage.getItem(HEARD_YOU_KEY) === "1"; } catch { return true; }

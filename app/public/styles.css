@@ -2294,13 +2294,34 @@ img.mini-art {
 }
 
 
-#recycle-tip { width: min(420px, calc(100% - 24px)); }
+#recycle-tip {
+  width: min(420px, calc(100vw - 24px));
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+}
 #recycle-tip #recycle-tip-copy {
   margin: 0 0 16px;
   font: 400 13px/1.5 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
 }
-#recycle-tip .recycle-tip-card { position: relative; width: min(220px, 68%); margin: 4px auto 14px; pointer-events: none; }
-#recycle-tip .recycle-tip-card .kalpi-card { position: relative; width: 100%; }
+#recycle-tip .recycle-tip-card {
+  position: relative;
+  width: 100%;
+  margin: 4px auto 14px;
+  padding-inline: 20px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+#recycle-tip .recycle-tip-card .kalpi-card {
+  position: relative;
+  width: min(220px, 100%, calc((100dvh - 300px) * 63 / 96));
+  height: auto;
+}
+#recycle-tip .card-image-zone { overflow: visible; }
+#recycle-tip .card-image-meta { inset: 12px 12px auto; }
+#recycle-tip .card-copies-stack > .card-recycle { margin: 8px; }
+
 #recycle-tip .card-image-zone::before {
   content: "";
   position: absolute;

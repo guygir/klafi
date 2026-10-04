@@ -1301,6 +1301,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(debugDone, /request\(|rememberPendingIdleSeen|flushPendingIdleSeen/);
   assert.match(javascript, /studioDebugPull\?\.addEventListener\("click", runStudioDebugPull\)/);
 
+  // Changelog version comes from the latest GitHub release, with a baked fallback.
+  assert.match(javascript, /const HEARD_YOU_VERSION = "v1\.\d+"/);
+  assert.match(javascript, /https:\/\/api\.github\.com\/repos\/guygir\/klafi\/releases\/latest/);
+  assert.match(javascript, /paintHeardYouVersion\(release\?\.tag_name\)/);
+
   const studioStart = html.indexOf('<section id="studio-view"');
   const errorStart = html.indexOf('<section id="error-view"');
   const playerHtml = `${html.slice(0, studioStart)}${html.slice(errorStart)}`;
