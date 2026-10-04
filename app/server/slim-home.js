@@ -5,6 +5,7 @@ import { slimPublicState } from "./slim-state.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { newPublicBinderSlug } from "./public-binder.js";
 import { applyVisitStreak, visitStreakExtras } from "./streak-calendar.js";
+import { newReferralCode, normalizeInviteCode, referralStarGate } from "./referral.js";
 
 const { Pool } = pg;
 const SECURITY_HEADERS = Object.freeze({
@@ -134,6 +135,8 @@ export function sessionFromHomeRow(row) {
     streakPrizeSkipped: Boolean(extras.streakPrizeSkipped),
     stateRevision: Number(extras.stateRevision) || 0,
     eventCounts: extras.eventCounts || {},
+    referralCode: normalizeInviteCode(extras.referralCode),
+    numberedByCard: row.numbered_state || {},
   };
 }
 
@@ -145,7 +148,18 @@ async function loadSession(db, token) {
          SELECT jsonb_object_agg(inventory.card_id, inventory.copies)
          FROM kalpi_inventory AS inventory
          WHERE inventory.session_token = session.token
-       ), '{}'::jsonb) AS inventory_state
+       ), '{}'::jsonb) AS inventory_state,
+       COALESCE((
+         SELECT jsonb_object_agg(numbered.card_id, numbered.copies)
+         FROM (
+           SELECT card_id, COUNT(*)::int AS copies
+           FROM kalpi_instances
+           WHERE session_token = session.token
+             AND numbered_index > 0
+             AND seen_at IS NOT NULL
+           GROUP BY card_id
+         ) AS numbered
+       ), '{}'::jsonb) AS numbered_state
      FROM kalpi_sessions AS session
      WHERE session.token = $1`,
     [token],
@@ -153,14 +167,40 @@ async function loadSession(db, token) {
   return sessionFromHomeRow(sessionResult.rows[0]);
 }
 
-async function createSession(db, now) {
+async function tokenForReferralCode(db, code) {
+  const normalized = normalizeInviteCode(code);
+  if (!normalized) return null;
+  const found = await db.query(
+    `SELECT token FROM kalpi_sessions WHERE extras->>'referralCode' = $1 LIMIT 1`,
+    [normalized],
+  );
+  return found.rows[0]?.token || null;
+}
+
+async function freshReferralCode(db) {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const code = newReferralCode();
+    if (!(await tokenForReferralCode(db, code))) return code;
+  }
+  return newReferralCode();
+}
+
+async function createSession(db, now, inviteCode) {
   const token = randomUUID();
   const createdAt = new Date(now).toISOString();
   const publicBinderSlug = newPublicBinderSlug();
+  const referralCode = await freshReferralCode(db);
+  const invitedBy = await tokenForReferralCode(db, inviteCode);
+  const extras = {
+    publicBinderSlug,
+    referralCode,
+    invitedBy: invitedBy && invitedBy !== token ? invitedBy : null,
+    referralRewardedAt: null,
+  };
   await db.query(
     `INSERT INTO kalpi_sessions (token, display_name, created_at, idle_anchor_at, extras)
      VALUES ($1,$2,$3,$3,$4::jsonb)`,
-    [token, `שחקן ${token.slice(0, 4)}`, createdAt, JSON.stringify({ publicBinderSlug })],
+    [token, `שחקן ${token.slice(0, 4)}`, createdAt, JSON.stringify(extras)],
   );
   return {
     token,
@@ -178,6 +218,7 @@ async function createSession(db, now) {
       pendingTradeNotices: [],
       favorites: [],
       publicBinderSlug,
+      referralCode,
       factionId: null,
       loginStreak: 0,
       visitDay: null,
@@ -200,15 +241,23 @@ export async function handleSlimHome(request, response) {
       return;
     }
     const [config] = await Promise.all([loadShell(), ensureReady(db)]);
+    const requestUrl = new URL(request.url || "/", "http://localhost");
     let token = bearer(request);
     let session = token ? await loadSession(db, token) : null;
     if (!session) {
-      ({ token, session } = await createSession(db, Date.now()));
+      ({ token, session } = await createSession(db, Date.now(), requestUrl.searchParams.get("invite")));
     } else if (!session.publicBinderSlug) {
       session.publicBinderSlug = newPublicBinderSlug();
       await db.query(
         `UPDATE kalpi_sessions SET extras = COALESCE(extras, '{}'::jsonb) || $2::jsonb WHERE token = $1`,
         [token, JSON.stringify({ publicBinderSlug: session.publicBinderSlug })],
+      );
+    }
+    if (session && !session.referralCode) {
+      session.referralCode = await freshReferralCode(db);
+      await db.query(
+        `UPDATE kalpi_sessions SET extras = COALESCE(extras, '{}'::jsonb) || $2::jsonb, updated_at = NOW() WHERE token = $1`,
+        [token, JSON.stringify({ referralCode: session.referralCode })],
       );
     }
     const visit = applyVisitStreak(session, Date.now());

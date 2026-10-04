@@ -1,3 +1,5 @@
+import { collectionStars } from "./stars.js";
+
 export const LIVE_RELEASE_SET_IDS = Object.freeze([
   "party-leaders",
   "party-slot-2",
@@ -29,14 +31,6 @@ export function cardIndexFromCatalog(cards = []) {
   }));
 }
 
-export function collectionStarCount(inventory = {}, cardIndex = []) {
-  const byId = new Map(cardIndex.map((card) => [card.id, card]));
-  return Object.keys(inventory).reduce((sum, cardId) => {
-    const card = byId.get(cardId);
-    if (!card) return sum;
-    if (card.rarity === "Promotion") return sum + 5;
-    if (card.rarity.startsWith("Rare")) return sum + 3;
-    if (card.rarity.startsWith("Uncommon")) return sum + 2;
-    return sum + 1;
-  }, 0);
+export function collectionStarCount(inventory = {}, cardIndex = [], numberedByCard = {}) {
+  return collectionStars(inventory, cardIndex, numberedByCard, { unknown: "skip" });
 }

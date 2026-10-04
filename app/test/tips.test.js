@@ -84,7 +84,7 @@ test("firstVisible falls back when boxes are 0x0 and leftover pack hint is recog
 
 test("each nav page has a first-visit guide; seen pages and mute stop auto-open", () => {
   assert.deepEqual(Object.keys(PAGE_GUIDES), ["home", "pack", "card", "binder", "achievements", "growth", "dialog"]);
-  assert.equal(PAGE_GUIDES.home.length, 7);
+  assert.equal(PAGE_GUIDES.home.length, 8);
   assert.equal(PAGE_GUIDES.binder.length, 4);
   assert.equal(PAGE_GUIDES.achievements.length, 2);
   assert.equal(PAGE_GUIDES.growth.length, 5);
@@ -114,17 +114,25 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.match(PAGE_GUIDES.home[3].body, /השם \(הזמני\)/);
   assert.match(PAGE_GUIDES.home[3].body, /ליגות, תחרויות וטבלאות/);
   assert.match(PAGE_GUIDES.home[3].body, /לחץ עליו כדי לשנות/);
-  assert.match(PAGE_GUIDES.home[4].body, /מירוץ המפלגות/);
-  assert.match(PAGE_GUIDES.home[4].body, /בטופ/);
-  assert.equal(PAGE_GUIDES.home[5].ring, ".bottom-nav");
-  assert.match(PAGE_GUIDES.home[5].body, /תפריט הניווט/);
-  assert.match(PAGE_GUIDES.home[5].body, /לדווח על באגים/);
-  assert.match(PAGE_GUIDES.home[5].body, /לבקש פיצ׳רים/);
-  assert.equal(PAGE_GUIDES.home[5].ringUnion, undefined);
-  assert.equal(PAGE_GUIDES.home[5].place, "above");
-  assert.equal(PAGE_GUIDES.home[6].ring, "#open-pack");
-  assert.equal(PAGE_GUIDES.home[6].title, "יאללה, בואו נפתח!");
-  assert.equal(PAGE_GUIDES.home[6].body, "יאללה, בואו נפתח!");
+  assert.equal(PAGE_GUIDES.home[4].title, "הזמנת חברים");
+  assert.match(PAGE_GUIDES.home[4].body, /הזמנת חברים/);
+  assert.match(PAGE_GUIDES.home[4].body, /העתיקו את הקישור ושלחו לחברים/);
+  assert.match(PAGE_GUIDES.home[4].body, /משתמש חדש שנכנס למשחק לראשונה/);
+  assert.match(PAGE_GUIDES.home[4].body, /חבילה מתנה/);
+  assert.match(PAGE_GUIDES.home[4].body, /\*\*15★\*\*/);
+  assert.equal(PAGE_GUIDES.home[4].ring, "#profile-panel-invite");
+  assert.equal(PAGE_GUIDES.home[4].profilePanel, "invite");
+  assert.match(PAGE_GUIDES.home[5].body, /מירוץ המפלגות/);
+  assert.match(PAGE_GUIDES.home[5].body, /בטופ/);
+  assert.equal(PAGE_GUIDES.home[6].ring, ".bottom-nav");
+  assert.match(PAGE_GUIDES.home[6].body, /תפריט הניווט/);
+  assert.match(PAGE_GUIDES.home[6].body, /לדווח על באגים/);
+  assert.match(PAGE_GUIDES.home[6].body, /לבקש פיצ׳רים/);
+  assert.equal(PAGE_GUIDES.home[6].ringUnion, undefined);
+  assert.equal(PAGE_GUIDES.home[6].place, "above");
+  assert.equal(PAGE_GUIDES.home[7].ring, "#open-pack");
+  assert.equal(PAGE_GUIDES.home[7].title, "יאללה, בואו נפתח!");
+  assert.equal(PAGE_GUIDES.home[7].body, "יאללה, בואו נפתח!");
   assert.equal(CARD_CALLOUTS.length, 5);
   assert.deepEqual(CARD_CALLOUTS.map(({ label }) => label), ["ציטוט", "שם", "מפלגה", "נדירות", "סדרה"]);
   assert.equal(PAGE_GUIDES.card[0].callouts, CARD_CALLOUTS);

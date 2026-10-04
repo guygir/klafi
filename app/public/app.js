@@ -160,7 +160,7 @@ const elements = {
   restoreInput: document.querySelector("#profile-restore-input"),
   restoreButton: document.querySelector("#restore-recovery-code"),
   restoreStatus: document.querySelector("#profile-restore-status"),
-  enableIdleNotify: document.querySelector("#enable-idle-notify"),
+  profileSections: document.querySelector("#profile-sections"),
   soundToggle: document.querySelector("#sound-toggle"),
   leafToggle: document.querySelector("#leaf-toggle"),
   openHeardYou: document.querySelector("#open-heard-you"),
@@ -169,7 +169,6 @@ const elements = {
   heardYouOk: document.querySelector("#heard-you-ok"),
   heardYouVersion: document.querySelector("#heard-you-version"),
   homeEnableNotify: document.querySelector("#home-enable-notify"),
-  notifyStatus: document.querySelector("#notify-status"),
   leagueNameInput: document.querySelector("#league-name-input"),
   createLeague: document.querySelector("#create-league"),
   leagueJoinInput: document.querySelector("#league-join-input"),
@@ -237,6 +236,12 @@ const elements = {
   closeGuestBinder: document.querySelector("#close-guest-binder"),
   binderShareUrl: document.querySelector("#binder-share-url"),
   copyBinderShare: document.querySelector("#copy-binder-share"),
+  inviteShareUrl: document.querySelector("#invite-share-url"),
+  inviteNote: document.querySelector("#profile-invite-note"),
+  copyInviteShare: document.querySelector("#copy-invite-share"),
+  profileReferralsDrop: document.querySelector("#profile-referrals-drop"),
+  profileReferralsTitle: document.querySelector("#profile-referrals-title"),
+  profileReferrals: document.querySelector("#profile-referrals"),
   binderFilters: document.querySelector("#binder-filters"),
   binderGrid: document.querySelector("#binder-grid"),
   binderPager: document.querySelector("#binder-pager"),
@@ -652,10 +657,16 @@ async function ensureSession() {
       return;
     } catch (error) {
       if (error.status !== 401) throw error;
+      model.token = null;
     }
   }
 
-  const { token } = await request("/api/session", { method: "POST" });
+  const invite = inboundInviteCode();
+  const { token } = await request("/api/session", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(invite ? { invite } : {}),
+  });
   model.token = token;
   model.stateRevision = 0;
   localStorage.setItem(SESSION_KEY, token);
@@ -1054,7 +1065,7 @@ async function hydrateHome() {
   if (!homeHydrate) {
     const warmedHome = window.__kalpiWarmup?.home;
     if (window.__kalpiWarmup) window.__kalpiWarmup.home = null;
-    homeHydrate = (warmedHome || request("/api/home")).then(async (home) => {
+    homeHydrate = (warmedHome || request(withInvite("/api/home"))).then(async (home) => {
       const applied = applyHomePayload(home);
       renderProfile();
       renderHome();
@@ -1385,7 +1396,7 @@ async function hydrateCatalog() {
   try {
     return await loadStaticCatalog();
   } catch {
-    const boot = await request("/api/bootstrap");
+    const boot = await request(withInvite("/api/bootstrap"));
     applyFullBoot(boot);
     paintExtras();
     handleInboundLink();
@@ -1827,6 +1838,27 @@ function renderProfile() {
   if (elements.binderShareUrl) {
     elements.binderShareUrl.value = publicBinderShareUrl(model.serverState.binderSlug);
   }
+  const inviteStars = Number(model.serverState?.referralStars) || 15;
+  if (elements.inviteNote) {
+    const stars = document.createElement("strong");
+    stars.append(document.createTextNode(String(inviteStars)));
+    const icon = document.createElement("b");
+    icon.className = "tip-star";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "★";
+    const spoken = document.createElement("span");
+    spoken.className = "visually-hidden";
+    spoken.textContent = " כוכבים";
+    stars.append(icon, spoken);
+    elements.inviteNote.replaceChildren(
+      document.createTextNode("חבר חדש שמגיע ל-"),
+      stars,
+      document.createTextNode(" מביא לכם חבילה."),
+    );
+  }
+  if (elements.inviteShareUrl) {
+    elements.inviteShareUrl.value = inviteShareUrl(model.serverState.referralCode);
+  }
   if (elements.levelAvatar && avatar) {
     elements.levelAvatar.src = avatarUrl(avatar);
     elements.levelAvatar.alt = avatar.nameHe || "";
@@ -1978,7 +2010,21 @@ function fillRecoveryCode() {
   if (elements.restoreStatus) elements.restoreStatus.textContent = "";
 }
 
+function showProfilePanel(panel = "faction") {
+  document.querySelectorAll(".profile-panel").forEach((section) => {
+    section.hidden = section.id !== `profile-panel-${panel}`;
+  });
+  elements.profileSections?.querySelectorAll("[data-profile-panel]").forEach((button) => {
+    const active = button.dataset.profilePanel === panel;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+}
+
 function openProfileDialog() {
+  renderProfile();
+  showProfilePanel("faction");
+  loadReferrals();
   elements.profileNameInput.value = model.serverState?.displayName || "";
   model.selectedAvatarId = model.serverState?.avatarId || "kid-boy";
   elements.profileError.textContent = "";
@@ -2016,33 +2062,21 @@ function notifyPermission() {
   return "Notification" in window ? Notification.permission : "unsupported";
 }
 
+const IDLE_NOTIFY_TOAST = "באייפון צריך קודם להוסיף למסך הבית, כדי לקבל התראות כשהדף סגור. התראה אחת תישלח כשהקלף מוכן.";
+
 function renderNotifyControl() {
   const permission = notifyPermission();
   const home = elements.homeEnableNotify;
-  const profile = elements.enableIdleNotify;
   const unsupported = permission === "unsupported";
-  const granted = permission === "granted";
   const denied = permission === "denied";
-  if (profile) {
-    profile.hidden = unsupported || granted;
-    profile.textContent = denied ? "התראות חסומות בדפדפן" : "להפעיל התראות";
-    profile.disabled = denied;
-  }
   if (home) {
-    home.hidden = granted;
+    home.hidden = false;
     home.textContent = denied
       ? "התראות חסומות בדפדפן"
       : unsupported
         ? "התראות לא זמינות כאן"
-        : "להפעיל התראות";
+        : "התראות";
     home.disabled = false;
-  }
-  if (elements.notifyStatus) {
-    elements.notifyStatus.textContent = unsupported
-      ? "הדפדפן הזה לא תומך בהתראות."
-      : granted
-        ? "התראה אחת תישלח כשהקלף מוכן."
-        : "אפשר לשחק גם בלי התראות — האוסף עדיין נשמר. באייפון: הוסיפו למסך הבית ואז הפעילו התראות.";
   }
 }
 
@@ -4316,6 +4350,108 @@ function binderInventory() {
   return model.guestBinder?.inventory || model.serverState?.inventory || {};
 }
 
+function inboundInviteCode() {
+  const code = new URLSearchParams(location.search).get("invite") || "";
+  return /^[A-Za-z0-9-]{6,16}$/.test(code) ? code : "";
+}
+
+function withInvite(path) {
+  const invite = inboundInviteCode();
+  if (!invite) return path;
+  const join = path.includes("?") ? "&" : "?";
+  return `${path}${join}invite=${encodeURIComponent(invite)}`;
+}
+
+function inviteShareUrl(code) {
+  if (!code) return "";
+  const url = new URL("/", location.origin);
+  url.searchParams.set("invite", code);
+  return url.toString();
+}
+
+function copyInviteLink() {
+  const link = inviteShareUrl(model.serverState?.referralCode);
+  if (!link) {
+    showToast("קישור ההזמנה עדיין לא מוכן.");
+    return;
+  }
+  copyText(link).then((copied) => {
+    showToast(copied ? "קישור ההזמנה הועתק." : "העתיקו את הקישור מהשדה.");
+  });
+}
+
+function renderReferralList(referrals = []) {
+  const list = elements.profileReferrals;
+  const drop = elements.profileReferralsDrop;
+  if (!list || !drop) return;
+  const gate = Number(model.serverState?.referralStars) || 15;
+  const wasOpen = drop.open;
+  list.replaceChildren();
+  drop.hidden = referrals.length === 0;
+  drop.open = wasOpen && referrals.length > 0;
+  if (elements.profileReferralsTitle) {
+    const waiting = referrals.some((row) => row.ready);
+    elements.profileReferralsTitle.textContent = referrals.length
+      ? `החברים שהזמנתם (${referrals.length})${waiting ? " · חבילה ממתינה" : ""}`
+      : "החברים שהזמנתם";
+  }
+  for (const row of referrals) {
+    const item = document.createElement("li");
+    item.className = "profile-referral";
+    const name = document.createElement("span");
+    name.textContent = row.name || "שחקן";
+    const detail = document.createElement("small");
+    detail.textContent = `${row.stars}/${gate} ★`;
+    const button = document.createElement("button");
+    button.type = "button";
+    if (row.claimed) {
+      button.disabled = true;
+      button.textContent = "כבר קיבלתם";
+    } else if (!row.ready) {
+      button.disabled = true;
+      button.textContent = "עוד לא";
+    } else {
+      button.textContent = "קבלו חבילה";
+      button.addEventListener("click", () => claimReferralReward(row.code, button));
+    }
+    item.append(name, detail, button);
+    list.append(item);
+  }
+}
+
+async function loadReferrals() {
+  if (!model.token || !elements.profileReferrals) return;
+  try {
+    const body = await request("/api/referrals");
+    renderReferralList(body.referrals || []);
+  } catch {
+    /* The invite link still works when the list cannot load. */
+  }
+}
+
+async function claimReferralReward(code, button) {
+  if (button) button.disabled = true;
+  try {
+    const body = await request("/api/referrals/claim", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    if (body.state) {
+      model.serverState = body.state;
+      model.stateRevision = stateRevision(body.state) ?? model.stateRevision;
+      renderHome();
+      renderBinder();
+      renderProfile();
+    }
+    renderReferralList(body.referrals || []);
+    showToast("החבילה נכנסה לאוסף.");
+  } catch {
+    if (button) button.disabled = false;
+    showToast("החבילה עדיין לא מוכנה.");
+  }
+}
+
 function copyMyBinderLink() {
   const slug = model.serverState?.binderSlug;
   const link = publicBinderShareUrl(slug);
@@ -5072,7 +5208,7 @@ function renderBinder() {
 
   // Only some medals fit: hard first, then medium, then simple; newest first within a tier.
   const earned = binderBadgeOrder(visibleEarnedBadges());
-  const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · מיוחד = 5";
+  const starExplanation = "כוכבי אוסף · נפוץ = 1 · לא נפוץ = 2 · נדיר = 3 · ממוספר = 4 · מיוחד = 5";
   const starCount = localStarCount();
   const starCounter = `<span class="collection-star-count" tabindex="0" title="${starExplanation}" data-tooltip="${starExplanation}" aria-label="${starCount} כוכבי אוסף. ${starExplanation}"><b aria-hidden="true">★</b><strong>${starCount}</strong></span>`;
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
@@ -8817,8 +8953,10 @@ elements.addAchievement?.addEventListener("click", () => {
 });
 elements.profileForm.addEventListener("submit", saveProfile);
 elements.copyRecovery?.addEventListener("click", copyRecoveryCode);
-elements.enableIdleNotify?.addEventListener("click", () => {
-  requestIdleNotifications().catch(() => {});
+elements.profileSections?.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("[data-profile-panel]") : null;
+  if (!button) return;
+  showProfilePanel(button.dataset.profilePanel);
 });
 // Header speaker: aria-pressed = muted. Label names the action the next tap performs.
 function renderSoundToggle() {
@@ -8924,6 +9062,7 @@ document.addEventListener("click", (event) => {
   sfx.play("click");
 }, { capture: true }); // capture: runs before handlers that disable the button
 elements.homeEnableNotify?.addEventListener("click", () => {
+  showToast(IDLE_NOTIFY_TOAST, 6000);
   requestIdleNotifications().catch(() => {});
 });
 elements.createLeague?.addEventListener("click", () => {
@@ -9086,6 +9225,7 @@ applyBinderChrome();
 elements.tradeBoardChromeToggle?.addEventListener("click", toggleTradeBoardChrome);
 applyTradeBoardChrome();
 elements.copyBinderShare?.addEventListener("click", copyMyBinderLink);
+elements.copyInviteShare?.addEventListener("click", copyInviteLink);
 elements.closeGuestBinder?.addEventListener("click", closePublicBinder);
 elements.dialogWhatsapp.addEventListener("click", shareToWhatsApp);
 elements.dialogInstagram.addEventListener("click", shareToInstagram);

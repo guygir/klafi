@@ -26,6 +26,8 @@ import {
   normalizeLeagueCode,
 } from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
+import { newReferralCode, normalizeInviteCode } from "./referral.js";
+import { collectionStars } from "./stars.js";
 import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
 
 const { Pool } = pg;
@@ -40,18 +42,13 @@ const MIGRATIONS = [
   ["007_instances_seen_at_index", "007_instances_seen_at_index.sql"],
   ["008_numbered_chance", "008_numbered_chance.sql"],
   ["009_numbered_pool", "009_numbered_pool.sql"],
+  ["010_referral_code", "010_referral_code.sql"],
+  ["011_referral_invited_by", "011_referral_invited_by.sql"],
 ];
 
 function iso(value) {
   if (!value) return null;
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
-}
-
-function cardStars(card) {
-  if (card?.rarity === "Promotion") return 5;
-  if (card?.rarity?.startsWith("Rare")) return 3;
-  if (card?.rarity?.startsWith("Uncommon")) return 2;
-  return 1;
 }
 
 function emptySession(token, createdAt) {
@@ -97,6 +94,9 @@ function emptySession(token, createdAt) {
     streakPrizeSkipped: false,
     achievementsEarned: {},
     publicBinderSlug: ensurePublicBinderSlug({}),
+    referralCode: null,
+    invitedBy: null,
+    referralRewardedAt: null,
   };
 }
 
@@ -125,6 +125,9 @@ function extrasFromSession(session) {
     streakPrizeSkipped: Boolean(session.streakPrizeSkipped),
     achievementsEarned: session.achievementsEarned || {},
     publicBinderSlug: session.publicBinderSlug || null,
+    referralCode: normalizeInviteCode(session.referralCode),
+    invitedBy: session.invitedBy || null,
+    referralRewardedAt: session.referralRewardedAt || null,
     stateRevision: Number(session.stateRevision) || 0,
     hiddenTradeIds: Array.isArray(session.hiddenTradeIds) ? session.hiddenTradeIds.slice(-200) : [],
   };
@@ -548,6 +551,9 @@ export class PostgresStore {
       streakPrizeSkipped: Boolean(extras.streakPrizeSkipped),
       achievementsEarned: extras.achievementsEarned || {},
       publicBinderSlug: extras.publicBinderSlug || null,
+      referralCode: normalizeInviteCode(extras.referralCode),
+      invitedBy: extras.invitedBy || null,
+      referralRewardedAt: extras.referralRewardedAt || null,
       stateRevision: Number(extras.stateRevision) || 0,
       hiddenTradeIds: Array.isArray(extras.hiddenTradeIds) ? extras.hiddenTradeIds : [],
     };
@@ -711,10 +717,55 @@ export class PostgresStore {
     });
   }
 
-  async createSession(now) {
+  async tokenForReferralCode(code) {
+    const normalized = normalizeInviteCode(code);
+    if (!normalized) return null;
+    const found = await this.executor().query(
+      `SELECT token FROM kalpi_sessions WHERE extras->>'referralCode' = $1 LIMIT 1`,
+      [normalized],
+    );
+    return found.rows[0]?.token || null;
+  }
+
+  async freshReferralCode() {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const code = newReferralCode();
+      if (!(await this.tokenForReferralCode(code))) return code;
+    }
+    return newReferralCode();
+  }
+
+  async listInvited(inviterToken) {
+    if (!inviterToken) return [];
+    const found = await this.executor().query(
+      `SELECT token FROM kalpi_sessions WHERE extras->>'invitedBy' = $1`,
+      [inviterToken],
+    );
+    const sessions = [];
+    for (const row of found.rows) {
+      const session = await this.loadSession(row.token);
+      if (session?.invitedBy === inviterToken) sessions.push(session);
+    }
+    return sessions;
+  }
+
+  async ensureReferralCode(token) {
+    const session = this.getSession(token) || await this.loadSession(token);
+    if (!session) return null;
+    if (session.referralCode) return session.referralCode;
+    return this.withSession(token, async (current) => {
+      if (!current.referralCode) current.referralCode = await this.freshReferralCode();
+      return current.referralCode;
+    });
+  }
+
+  async createSession(now, { inviteCode } = {}) {
     return this.exclusive(async () => {
       const token = randomUUID();
+      const invitedBy = await this.tokenForReferralCode(inviteCode);
       const session = emptySession(token, now);
+      session.referralCode = await this.freshReferralCode();
+      session.invitedBy = invitedBy && invitedBy !== token ? invitedBy : null;
       await this.insertSessionRow(this.executor(), token, session);
       this.remember(token, session);
       return token;
@@ -1182,24 +1233,38 @@ export class PostgresStore {
 
   async leaderboardSummary(cards = [], now = Date.now(), currentToken = null) {
     const cardsById = new Map(cards.map((card) => [card.id, card]));
-    const sessions = await this.pool.query(
-      `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
-              s.avatar_id, s.faction_id, s.highest_rank,
-              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
-              COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
-              s.extras->>'publicBinderSlug' AS binder_slug,
-              COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
-       FROM kalpi_sessions s
-       LEFT JOIN kalpi_inventory i ON i.session_token = s.token
-       GROUP BY s.token`,
-    );
+    const [sessions, numbered] = await Promise.all([
+      this.pool.query(
+        `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
+                s.avatar_id, s.faction_id, s.highest_rank,
+                COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+                COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
+                s.extras->>'publicBinderSlug' AS binder_slug,
+                COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
+         FROM kalpi_sessions s
+         LEFT JOIN kalpi_inventory i ON i.session_token = s.token
+         GROUP BY s.token`,
+      ),
+      this.pool.query(
+        `SELECT session_token, card_id, COUNT(*)::int AS copies
+         FROM kalpi_instances
+         WHERE numbered_index > 0 AND seen_at IS NOT NULL
+         GROUP BY session_token, card_id`,
+      ),
+    ]);
+    const numberedByToken = new Map();
+    for (const row of numbered.rows) {
+      const bag = numberedByToken.get(row.session_token) || {};
+      bag[row.card_id] = row.copies;
+      numberedByToken.set(row.session_token, bag);
+    }
     const allCollectors = sessions.rows
       .map((row) => {
         const inventory = row.inventory || {};
         return {
           label: row.display_name,
           ownedUnique: Object.keys(inventory).length,
-          stars: Object.keys(inventory).reduce((sum, cardId) => sum + cardStars(cardsById.get(cardId)), 0),
+          stars: collectionStars(inventory, cardsById, numberedByToken.get(row.token) || {}),
           packs: row.idle_pull_count ?? row.pack_count,
           current: row.token === currentToken,
           avatarId: row.avatar_id || "kid-boy",
@@ -1474,23 +1539,39 @@ export class PostgresStore {
   async scoreLeagueMembers(memberTokens, cards = []) {
     const cardsById = new Map(cards.map((card) => [card.id, card]));
     if (!memberTokens.length) return [];
-    const result = await this.pool.query(
-      `SELECT s.token, s.display_name, s.avatar_id, s.faction_id, s.highest_rank,
-              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
-              COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
-              s.extras->>'publicBinderSlug' AS binder_slug,
-              COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
-       FROM kalpi_sessions s
-       LEFT JOIN kalpi_inventory i ON i.session_token = s.token
-       WHERE s.token = ANY($1)
-       GROUP BY s.token`,
-      [memberTokens],
-    );
+    const [result, numbered] = await Promise.all([
+      this.pool.query(
+        `SELECT s.token, s.display_name, s.avatar_id, s.faction_id, s.highest_rank,
+                COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+                COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
+                s.extras->>'publicBinderSlug' AS binder_slug,
+                COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
+         FROM kalpi_sessions s
+         LEFT JOIN kalpi_inventory i ON i.session_token = s.token
+         WHERE s.token = ANY($1)
+         GROUP BY s.token`,
+        [memberTokens],
+      ),
+      this.pool.query(
+        `SELECT session_token, card_id, COUNT(*)::int AS copies
+         FROM kalpi_instances
+         WHERE numbered_index > 0 AND seen_at IS NOT NULL AND session_token = ANY($1)
+         GROUP BY session_token, card_id`,
+        [memberTokens],
+      ),
+    ]);
+    const numberedByToken = new Map();
+    for (const row of numbered.rows) {
+      const bag = numberedByToken.get(row.session_token) || {};
+      bag[row.card_id] = row.copies;
+      numberedByToken.set(row.session_token, bag);
+    }
     const byToken = new Map(result.rows.map((row) => [row.token, row]));
     return memberTokens.map((token) => {
       const row = byToken.get(token);
       const session = {
         inventory: row?.inventory || {},
+        numberedByCard: numberedByToken.get(token) || {},
       };
       return {
         token,

@@ -237,5 +237,6 @@ test("recycle spends three of one card, draws that rarity, and moves stars only 
   assert.equal(kept.body.state.inventory[cost.id], 1);
   assert.equal(kept.body.state.numberedCopies.filter((item) => item.cardId === cost.id).length, 1);
   assert.equal(kept.body.granted.numberedIndex, undefined);
-  assert.equal(kept.body.state.starCount, starsOf(cost), "the leftover stamped copy still holds the stars");
+  assert.equal(kept.body.state.starCount, 4, "the leftover stamped copy is worth four stars");
+  assert.equal(await boardStars(keepStampToken), 4);
 });

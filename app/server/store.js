@@ -22,6 +22,8 @@ import {
   normalizeLeagueCode,
 } from "./leagues.js";
 import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-binder.js";
+import { newReferralCode, normalizeInviteCode } from "./referral.js";
+import { collectionStars, numberedHeldByCard } from "./stars.js";
 import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
 import { takeCollectorBoard } from "./collector-board.js";
 import { dailyRaceScore, raceTargetForSavedFaction, visibleDailyRaceLeaders } from "./daily-race.js";
@@ -100,15 +102,11 @@ export function normalizeState(value = {}) {
     session.streakCalendarAckDay ??= null;
     session.streakPrizeSkipped = Boolean(session.streakPrizeSkipped);
     session.achievementsEarned ??= {};
+    session.referralCode = normalizeInviteCode(session.referralCode);
+    session.invitedBy ??= null;
+    session.referralRewardedAt ??= null;
   }
   return state;
-}
-
-function cardStars(card) {
-  if (card?.rarity === "Promotion") return 5;
-  if (card?.rarity?.startsWith("Rare")) return 3;
-  if (card?.rarity?.startsWith("Uncommon")) return 2;
-  return 1;
 }
 
 export function tallyCardHolders(sessions = {}) {
@@ -199,9 +197,43 @@ export class JsonStore {
     return null;
   }
 
-  async createSession(now) {
+  tokenForReferralCode(code) {
+    const normalized = normalizeInviteCode(code);
+    if (!normalized) return null;
+    const found = Object.entries(this.state.sessions).find(([, session]) => session.referralCode === normalized);
+    return found?.[0] || null;
+  }
+
+  freshReferralCode() {
+    const taken = new Set(
+      Object.values(this.state.sessions).map((session) => session.referralCode).filter(Boolean),
+    );
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const code = newReferralCode();
+      if (!taken.has(code)) return code;
+    }
+    return newReferralCode();
+  }
+
+  async listInvited(inviterToken) {
+    if (!inviterToken) return [];
+    return Object.values(this.state.sessions).filter((session) => session.invitedBy === inviterToken);
+  }
+
+  async ensureReferralCode(token) {
+    const session = this.getSession(token);
+    if (!session) return null;
+    if (session.referralCode) return session.referralCode;
+    return this.withSession(token, (current) => {
+      if (!current.referralCode) current.referralCode = this.freshReferralCode();
+      return current.referralCode;
+    });
+  }
+
+  async createSession(now, { inviteCode } = {}) {
     return this.exclusive(async () => {
       const token = randomUUID();
+      const invitedBy = this.tokenForReferralCode(inviteCode);
       this.state.sessions[token] = {
         displayName: `שחקן ${token.slice(0, 4)}`,
         avatarId: "kid-boy",
@@ -242,6 +274,9 @@ export class JsonStore {
         streakPrizeSkipped: false,
         achievementsEarned: {},
         publicBinderSlug: ensurePublicBinderSlug({}),
+        referralCode: this.freshReferralCode(),
+        invitedBy: invitedBy && invitedBy !== token ? invitedBy : null,
+        referralRewardedAt: null,
       };
       await this.persist();
       return token;
@@ -573,7 +608,7 @@ export class JsonStore {
       .map(([token, session]) => ({
         label: session.displayName,
         ownedUnique: Object.keys(session.inventory).length,
-        stars: Object.keys(session.inventory).reduce((sum, cardId) => sum + cardStars(cardsById.get(cardId)), 0),
+        stars: collectionStars(session.inventory, cardsById, numberedHeldByCard(session)),
         packs: session.idlePullCount ?? session.packCount,
         current: token === currentToken,
         avatarId: session.avatarId || "kid-boy",

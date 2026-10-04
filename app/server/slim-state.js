@@ -3,6 +3,7 @@ import { levelThresholds } from "./progression.js";
 import { IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY } from "./idle-config.js";
 import { publicTradeNotices } from "./trade-notices.js";
 import { publicStreakCalendar } from "./streak-calendar.js";
+import { referralStarGate } from "./referral.js";
 
 export function slimPublicState(session, shell, now = Date.now()) {
   const idleIds = new Set(shell.idleCardIds || []);
@@ -29,7 +30,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     avatars,
     ownedUnique: unique,
     ownedUniqueAll: Object.keys(inventory).length,
-    starCount: collectionStarCount(inventory, shell.cardIndex || []),
+    starCount: collectionStarCount(inventory, shell.cardIndex || [], session.numberedByCard || {}),
     totalCards: idleTotal,
     unseenCount: session.unseenPulls?.length ?? 0,
     revision: Number(session.stateRevision) || 0,
@@ -46,6 +47,8 @@ export function slimPublicState(session, shell, now = Date.now()) {
     streakCalendar: publicStreakCalendar(session),
     factionId: session.factionId || null,
     binderSlug: session.publicBinderSlug || null,
+    referralCode: session.referralCode || null,
+    referralStars: referralStarGate(shell.gameConfig),
     numberedCopies: (session.instances || []).filter((item) => Number(item?.numberedIndex) > 0),
     progression: {
       level,

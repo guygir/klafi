@@ -5,6 +5,10 @@ const lookOnlyShowcase = (() => {
 })();
 const token = lookOnlyShowcase ? null : localStorage.getItem("kalpi-alpha-session");
 const headers = token ? { authorization: `Bearer ${token}` } : {};
+const inboundInvite = new URLSearchParams(location.search).get("invite") || "";
+const homePath = inboundInvite && /^[A-Za-z0-9-]{6,16}$/.test(inboundInvite)
+  ? `/api/home?invite=${encodeURIComponent(inboundInvite)}`
+  : "/api/home";
 const staticDataVersion = "visible-sets-4";
 const PLAYABLE_ART_SET_IDS = ["party-leaders", "party-slot-2", "set-5", "set-6"];
 const json = async (response) => {
@@ -52,7 +56,7 @@ function cachedIdleIsDue(cached) {
 // win the connection. Neither read is a license to open a cached instance.
 const home = lookOnlyShowcase
   ? null
-  : fetch("/api/home", { cache: "no-store", headers }).then(json);
+  : fetch(homePath, { cache: "no-store", headers }).then(json);
 const idleSettle = !lookOnlyShowcase && token && (!cachedHome || cachedHome.token === token) && cachedIdleIsDue(cachedHome)
   ? fetch("/api/idle/settle", { method: "POST", cache: "no-store", headers }).then(json)
   : null;

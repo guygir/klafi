@@ -55,6 +55,9 @@
       "teaser": "האם תגיעו לדרגת ראש הממשלה?",
       "reward": "קלף בונוס מיידי"
     },
+    "referral": {
+      "stars": 15
+    },
     "pack": {
       "pityAfter": 4,
       "sets": [

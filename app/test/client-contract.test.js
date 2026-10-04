@@ -688,7 +688,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /נכנסתם לליגה/);
   assert.match(html, /rel="manifest"/);
   assert.match(html, /manifest\.webmanifest/);
-  assert.match(html, /id="enable-idle-notify"/);
+  assert.match(javascript, /באייפון צריך קודם להוסיף למסך הבית, כדי לקבל התראות כשהדף סגור/);
+  assert.match(html, /id="home-enable-notify"/);
+  assert.match(html, /id="profile-tab-faction"/);
+  assert.match(html, /id="profile-tab-invite"/);
   assert.match(html, /id="create-league"/);
   assert.match(html, /id="join-league"/);
   assert.match(html, /id="league-rooms"/);
@@ -945,7 +948,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(idleCountdownJs, /export const HOME_SETTLE_HINT = "\(רגע, אני טוען… אולי מגיע לכם עוד\?\)"/);
   assert.doesNotMatch(javascript, /newlySettledCount !== 1/);
   assert.doesNotMatch(tipsJs, /מתחילים עם קלף אחד|חבילה אחת מוכנה|יש קלף במחסן\?/);
-  assert.match(javascript, /home\.hidden = granted/);
+  assert.match(javascript, /home\.hidden = false/);
+  assert.doesNotMatch(javascript, /home\.hidden = granted/);
   assert.doesNotMatch(javascript, /home\.hidden = unsupported \|\| granted \|\| denied/);
   assert.match(javascript, /קלף הבונוס כבר נכנס לאוסף/);
   assert.match(javascript, /התקדמת <span class="level-rank-name">מ\$\{escapeHtml\(fromRank\)\}<\/span> <span class="level-rank-name">ל\$\{escapeHtml\(toRank\)\}<\/span>/);
@@ -1028,7 +1032,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(warmup, /cache: "force-cache"/);
   assert.doesNotMatch(warmup, /Math\.random\(\) \* 8000/);
   assert.doesNotMatch(warmup, /setTimeout\([\s\S]{0,180}\/api\/home/);
-  const warmupHomeAt = warmup.indexOf('fetch("/api/home"');
+  const warmupHomeAt = warmup.indexOf("fetch(homePath");
   const warmupSettleAt = warmup.indexOf('fetch("/api/idle/settle"');
   const warmupCatalogAt = warmup.indexOf("catalog.json");
   const warmupHoldersAt = warmup.indexOf("/api/card-holders");

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import pg from "pg";
-import { collectionStarCount } from "./visible-sets.js";
+import { collectionStars } from "./stars.js";
 import { takeCollectorBoard } from "./collector-board.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
@@ -192,24 +192,38 @@ async function listTrades(db, token, now) {
 
 async function collectorBoards(db, config, now, token) {
   const cardIndex = config.cardIndex || [];
-  const sessions = await db.query(
-    `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
-            s.avatar_id, s.faction_id, s.highest_rank,
-            COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
-            COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
-            s.extras->>'publicBinderSlug' AS binder_slug,
-            COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
-     FROM kalpi_sessions s
-     LEFT JOIN kalpi_inventory i ON i.session_token = s.token
-     GROUP BY s.token`,
-  );
+  const [sessions, numbered] = await Promise.all([
+    db.query(
+      `SELECT s.token, s.display_name, s.idle_pull_count, s.pack_count,
+              s.avatar_id, s.faction_id, s.highest_rank,
+              COALESCE((s.extras->>'loginStreak')::integer, 0) AS login_streak,
+              COALESCE((s.extras->>'visitStreak')::integer, 0) AS visit_streak,
+              s.extras->>'publicBinderSlug' AS binder_slug,
+              COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
+       FROM kalpi_sessions s
+       LEFT JOIN kalpi_inventory i ON i.session_token = s.token
+       GROUP BY s.token`,
+    ),
+    db.query(
+      `SELECT session_token, card_id, COUNT(*)::int AS copies
+       FROM kalpi_instances
+       WHERE numbered_index > 0 AND seen_at IS NOT NULL
+       GROUP BY session_token, card_id`,
+    ),
+  ]);
+  const numberedByToken = new Map();
+  for (const row of numbered.rows) {
+    const bag = numberedByToken.get(row.session_token) || {};
+    bag[row.card_id] = row.copies;
+    numberedByToken.set(row.session_token, bag);
+  }
   const allCollectors = sessions.rows
     .map((row) => {
       const inventory = row.inventory || {};
       return {
         label: row.display_name,
         ownedUnique: Object.keys(inventory).length,
-        stars: collectionStarCount(inventory, cardIndex),
+        stars: collectionStars(inventory, cardIndex, numberedByToken.get(row.token) || {}, { unknown: "skip" }),
         packs: row.idle_pull_count ?? row.pack_count,
         current: row.token === token,
         avatarId: row.avatar_id || "kid-boy",

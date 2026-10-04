@@ -5,6 +5,7 @@
  */
 
 import { IDLE_BACKLOG_CAP } from "./idle-config.js";
+import { collectionStars, numberedHeldByCard } from "./stars.js";
 
 export const ACHIEVEMENT_TIERS = Object.freeze(["simple", "medium", "hard"]);
 /** A catalog row with this rule and no setId expands to one badge per pullable release set. */
@@ -68,14 +69,7 @@ export function expandAchievementCatalog(catalog = [], cards = [], releaseSets =
 }
 
 export function collectionStarCount(session, cards) {
-  const byId = new Map(cards.map((card) => [card.id, card]));
-  return Object.keys(session.inventory || {}).reduce((sum, cardId) => {
-    const card = byId.get(cardId);
-    if (card?.rarity === "Promotion") return sum + 5;
-    if (card?.rarity?.startsWith("Rare")) return sum + 3;
-    if (card?.rarity?.startsWith("Uncommon")) return sum + 2;
-    return sum + 1;
-  }, 0);
+  return collectionStars(session?.inventory, cards, numberedHeldByCard(session));
 }
 
 /** Best pack-open run. Still stored. Streak badges read bestVisitStreak. */
