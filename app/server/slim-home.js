@@ -245,7 +245,7 @@ export async function handleSlimHome(request, response) {
     let token = bearer(request);
     let session = token ? await loadSession(db, token) : null;
     if (!session) {
-      ({ token, session } = await createSession(db, Date.now(), requestUrl.searchParams.get("invite")));
+      ({ token, session } = await createSession(db, Date.now(), requestUrl.searchParams.get("invite") || requestUrl.searchParams.get("ref")));
     } else if (!session.publicBinderSlug) {
       session.publicBinderSlug = newPublicBinderSlug();
       await db.query(

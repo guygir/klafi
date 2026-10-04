@@ -1592,7 +1592,7 @@ export async function createKalpiApp({
         const createdAt = new Date(now()).toISOString();
         const input = await readJson(request);
         const token = await store.createSession(createdAt, {
-          inviteCode: input.invite || url.searchParams.get("invite"),
+          inviteCode: input.invite || url.searchParams.get("invite") || url.searchParams.get("ref"),
         });
         json(response, 201, { token });
         return;
@@ -1708,7 +1708,7 @@ export async function createKalpiApp({
         await store.hydrateSession(token);
         if (!store.getSession(token)) {
           token = await store.createSession(new Date(now()).toISOString(), {
-            inviteCode: url.searchParams.get("invite"),
+            inviteCode: url.searchParams.get("invite") || url.searchParams.get("ref"),
           });
         }
         await store.ensureReferralCode(token);
@@ -1721,7 +1721,7 @@ export async function createKalpiApp({
         await store.hydrateSession(token);
         if (!store.getSession(token)) {
           token = await store.createSession(new Date(now()).toISOString(), {
-            inviteCode: url.searchParams.get("invite"),
+            inviteCode: url.searchParams.get("invite") || url.searchParams.get("ref"),
           });
         }
         await store.ensureBinderSlug(token);

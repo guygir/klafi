@@ -374,3 +374,69 @@ test("a referral link on first entrance uses the configured star gate", async ()
     await rm(dataDir, { recursive: true, force: true });
   }
 });
+
+test("a shared card ref is the invite on a new player's first entrance", async () => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-referral-share-"));
+  const studio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
+  studio.gameConfig.referral = { stars: 1 };
+  const studioPath = path.join(dataDir, "studio.json");
+  await writeFile(studioPath, JSON.stringify(studio));
+  const clock = { value: Date.parse("2026-10-04T12:00:00+03:00") };
+  const running = await start(dataDir, clock, studioPath);
+  try {
+    const sharer = await api(running.base, "/api/home");
+    const code = sharer.body.state.referralCode;
+    const cardId = "LIK-M01-Q01";
+    const landing = await fetch(`${running.base}/share/${cardId}?ref=${code}`);
+    const html = await landing.text();
+    assert.equal(landing.status, 200);
+    assert.match(html, new RegExp(`ref=${code}`));
+    assert.match(html, new RegExp(`card=${cardId}`));
+
+    const arrived = await api(running.base, `/api/home?ref=${code}`);
+    const inviteeToken = arrived.body.token;
+    assert.notEqual(inviteeToken, sharer.body.token);
+    const invitee = await api(running.base, "/api/state", { token: inviteeToken });
+    let list = await api(running.base, "/api/referrals", { token: sharer.body.token });
+    const row = list.body.referrals.find((item) => item.code === invitee.body.referralCode);
+    assert.equal(row.ready, false);
+    assert.equal(row.claimed, false);
+
+    const other = await api(running.base, "/api/home");
+    const stayed = await api(running.base, `/api/home?ref=${other.body.state.referralCode}`, { token: inviteeToken });
+    assert.equal(stayed.body.token, inviteeToken);
+    const otherList = await api(running.base, "/api/referrals", { token: other.body.token });
+    assert.equal(otherList.body.referrals.length, 0);
+    list = await api(running.base, "/api/referrals", { token: sharer.body.token });
+    assert.equal(list.body.referrals.some((item) => item.code === invitee.body.referralCode), true);
+
+    const stranger = await api(running.base, "/api/home?ref=ZZZZZZZZ");
+    list = await api(running.base, "/api/referrals", { token: sharer.body.token });
+    assert.equal(list.body.referrals.some((item) => item.code === stranger.body.state.referralCode), false);
+
+    const catalog = await api(running.base, "/api/catalog");
+    const card = catalog.body.cards.find((item) => item.rarity === "Common");
+    const unlocked = await api(running.base, "/api/debug/unlock-card", {
+      token: inviteeToken,
+      method: "POST",
+      body: { cardId: card.id },
+    });
+    assert.equal(unlocked.body.starCount, 1);
+    const claimed = await api(running.base, "/api/referrals/claim", {
+      token: sharer.body.token,
+      method: "POST",
+      body: { code: invitee.body.referralCode },
+    });
+    assert.equal(claimed.status, 200);
+    assert.equal(referralPacks(claimed.body.state, invitee.body.referralCode).length, 1);
+    const again = await api(running.base, "/api/referrals/claim", {
+      token: sharer.body.token,
+      method: "POST",
+      body: { code: invitee.body.referralCode },
+    });
+    assert.equal(again.status, 409);
+  } finally {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  }
+});

@@ -5,8 +5,24 @@ const lookOnlyShowcase = (() => {
 })();
 const token = lookOnlyShowcase ? null : localStorage.getItem("kalpi-alpha-session");
 const headers = token ? { authorization: `Bearer ${token}` } : {};
-const inboundInvite = new URLSearchParams(location.search).get("invite") || "";
-const homePath = inboundInvite && /^[A-Za-z0-9-]{6,16}$/.test(inboundInvite)
+const PENDING_INVITE_KEY = "klafi-pending-invite";
+function pendingInvite() {
+  const params = new URLSearchParams(location.search);
+  const fromUrl = params.get("invite") || params.get("ref") || "";
+  const fresh = /^[A-Za-z0-9-]{6,16}$/.test(fromUrl) ? fromUrl : "";
+  try {
+    if (token) {
+      sessionStorage.removeItem(PENDING_INVITE_KEY);
+      return "";
+    }
+    if (fresh) sessionStorage.setItem(PENDING_INVITE_KEY, fresh);
+    return fresh || sessionStorage.getItem(PENDING_INVITE_KEY) || "";
+  } catch {
+    return fresh;
+  }
+}
+const inboundInvite = pendingInvite();
+const homePath = inboundInvite
   ? `/api/home?invite=${encodeURIComponent(inboundInvite)}`
   : "/api/home";
 const staticDataVersion = "visible-sets-4";

@@ -670,6 +670,7 @@ async function ensureSession() {
   model.token = token;
   model.stateRevision = 0;
   localStorage.setItem(SESSION_KEY, token);
+  clearPendingInvite();
   setServerState(await request("/api/state"));
 }
 
@@ -723,6 +724,7 @@ function applyHomePayload(home) {
     if (model.token && home.token !== model.token) model.stateRevision = 0;
     model.token = home.token;
     localStorage.setItem(SESSION_KEY, home.token);
+    clearPendingInvite();
   }
   // An older response (e.g. a settle computed before the last open's seen ack) never overwrites newer state.
   if (home.state && isStaleState(home.state, model.stateRevision)) return false;
@@ -4350,9 +4352,30 @@ function binderInventory() {
   return model.guestBinder?.inventory || model.serverState?.inventory || {};
 }
 
+const PENDING_INVITE_KEY = "klafi-pending-invite";
+function captureInboundInvite() {
+  const params = new URLSearchParams(location.search);
+  const fromUrl = params.get("invite") || params.get("ref") || "";
+  const fresh = /^[A-Za-z0-9-]{6,16}$/.test(fromUrl) ? fromUrl : "";
+  try {
+    if (localStorage.getItem(SESSION_KEY)) {
+      sessionStorage.removeItem(PENDING_INVITE_KEY);
+      return "";
+    }
+    if (fresh) sessionStorage.setItem(PENDING_INVITE_KEY, fresh);
+    return fresh || sessionStorage.getItem(PENDING_INVITE_KEY) || "";
+  } catch {
+    return fresh;
+  }
+}
+let pendingInviteCode = captureInboundInvite();
 function inboundInviteCode() {
-  const code = new URLSearchParams(location.search).get("invite") || "";
-  return /^[A-Za-z0-9-]{6,16}$/.test(code) ? code : "";
+  if (model.token) return "";
+  return pendingInviteCode;
+}
+function clearPendingInvite() {
+  pendingInviteCode = "";
+  try { sessionStorage.removeItem(PENDING_INVITE_KEY); } catch { /* private mode */ }
 }
 
 function withInvite(path) {
@@ -8836,7 +8859,8 @@ function referralCode() {
 
 function makeDeepLink(kind, cardId) {
   const url = new URL(`/share/${encodeURIComponent(cardId)}`, location.origin);
-  url.searchParams.set("ref", referralCode());
+  const code = model.serverState?.referralCode;
+  if (code) url.searchParams.set("ref", code);
   if (kind === "gift") url.searchParams.set("gift", "1");
   return url.toString();
 }
@@ -8999,7 +9023,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.130";
+const HEARD_YOU_VERSION = "v1.4";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {
