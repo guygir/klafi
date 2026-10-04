@@ -4,6 +4,7 @@ export const LIVE_RELEASE_SET_IDS = Object.freeze([
   "decisions",
   "records",
   "set-5",
+  "set-6",
 ]);
 
 export function isLiveReleaseSet(id) {

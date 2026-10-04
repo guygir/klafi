@@ -13,7 +13,7 @@ import {
 import { binderOpenReleaseIds, binderReleaseOk } from "./binder-filter.js";
 import { binderInventorySignature, binderSlotSignature, planBinderGrid } from "./binder-grid.js";
 import { confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
-import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage } from "./tips.js";
+import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
 import { holdsWantedCard, offersForTradeList } from "./trade-list.js";
 import {
@@ -42,8 +42,8 @@ const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
-const STATIC_DATA_VERSION = "visible-sets-3";
-const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5"];
+const STATIC_DATA_VERSION = "visible-sets-4";
+const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5", "set-6"];
 const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 
@@ -64,6 +64,7 @@ function playerDialogOpen() {
     elements.waitDialog,
     elements.shareSheet,
     elements.heardYouDialog,
+    elements.recycleTip,
   ].some((dialog) => dialog?.open);
 }
 const model = {
@@ -367,6 +368,10 @@ const elements = {
   numberedEvery: document.querySelector("#numbered-every"),
   numberedTip: document.querySelector("#numbered-tip"),
   numberedTipDismiss: document.querySelector("#numbered-tip-dismiss"),
+  recycleTip: document.querySelector("#recycle-tip"),
+  recycleTipCard: document.querySelector("#recycle-tip-card"),
+  recycleTipDismiss: document.querySelector("#recycle-tip-dismiss"),
+  closeRecycleTip: document.querySelector("#close-recycle-tip"),
   copyPackPrompts: document.querySelector("#copy-pack-prompts"),
   editorialSample: document.querySelector("#editorial-sample"),
   reviewFilter: document.querySelector("#review-filter"),
@@ -1728,6 +1733,8 @@ function showView(name) {
   }
   elements.bottomNav.hidden = model.showcase || !["home", "binder", "achievements", "growth"].includes(name);
   if (!model.showcase) klafiTips.sync();
+  if (name === "binder") maybeShowRecycleTip();
+  else hideRecycleTip();
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
     // Binder text-fit walks every owned card and would run before the first paint.
@@ -3489,6 +3496,89 @@ function hideNumberedTip() {
   setNumberedTipTargets(false);
 }
 
+function recycleTipTargets() {
+  if (!binderViewShown() || elements.dialog?.open) return [];
+  return [...document.querySelectorAll("#binder-view .binder-recycle")];
+}
+
+function setRecycleTipTargets(on) {
+  document.querySelectorAll(".binder-recycle.numbered-tip-target").forEach((node) => {
+    node.classList.remove("numbered-tip-target");
+  });
+  if (!on) return;
+  for (const node of recycleTipTargets()) node.classList.add("numbered-tip-target");
+}
+
+function recycleTipSubject() {
+  let card = null;
+  let count = 0;
+  for (const item of model.catalog) {
+    const plain = plainOwnedCount(item);
+    if (plain >= 3 && rarityCanRecycle(item) && plain > count) {
+      card = item;
+      count = plain;
+    }
+  }
+  return card ? { card, count } : null;
+}
+
+function hideRecycleTip() {
+  if (elements.recycleTip?.open) elements.recycleTip.close();
+  setRecycleTipTargets(false);
+}
+
+function maxPlainOwned() {
+  let maxPlain = 0;
+  for (const card of model.catalog) {
+    const count = plainOwnedCount(card);
+    if (count > maxPlain) maxPlain = count;
+  }
+  return maxPlain;
+}
+
+function maybeShowRecycleTip() {
+  const tip = elements.recycleTip;
+  if (!tip || model.showcase || model.guestBinder) {
+    hideRecycleTip();
+    return;
+  }
+  const packActive = Boolean(document.querySelector("#pack-view")?.classList.contains("active"));
+  const dialogOpen = Boolean(elements.dialog?.open);
+  const show = shouldShowRecycleTip({
+    view: binderViewShown() ? "binder" : "",
+    dialogOpen,
+    packActive,
+    tipsOff: readTipsPref() === "off",
+    seen: Boolean(readSeenPages().recycle),
+    maxPlain: maxPlainOwned(),
+  }) && model.catalog.some((card) => canRecycleCard(card));
+  if (!show) {
+    hideRecycleTip();
+    return;
+  }
+  const pick = recycleTipSubject();
+  if (elements.recycleTipCard && pick) {
+    elements.recycleTipCard.innerHTML = displayCardMarkup(pick.card, "display", { recycle: true, plain: true, count: pick.count });
+    const hot = elements.recycleTipCard.querySelector(".card-recycle");
+    hot?.classList.add("recycle-tip-hot");
+    const arrow = document.createElement("span");
+    arrow.className = "recycle-tip-arrow";
+    arrow.setAttribute("aria-hidden", "true");
+    elements.recycleTipCard.append(arrow);
+    if (hot) {
+      requestAnimationFrame(() => {
+        const host = elements.recycleTipCard.getBoundingClientRect();
+        const box = hot.getBoundingClientRect();
+        arrow.style.top = `${box.top - host.top + box.height / 2}px`;
+        arrow.style.left = `${host.width + 8}px`;
+      });
+    }
+    queueCardTextFit(elements.recycleTipCard);
+  }
+  setRecycleTipTargets(false);
+  if (!tip.open) tip.showModal();
+}
+
 function maybeShowNumberedTip() {
   const tip = elements.numberedTip;
   if (!tip || model.showcase) {
@@ -4997,6 +5087,7 @@ function renderBinder() {
   if (nextStrip) nextStrip.scrollLeft = filterX;
   if (elements.binderGrid) elements.binderGrid.scrollTop = gridY;
   syncBinderScrollCue();
+  maybeShowRecycleTip();
 }
 
 // The "more cards" cue sits in its own row under the grid; hide its text once the last row is in view.
@@ -5080,11 +5171,13 @@ function badgeArtwork(id, { tier = "simple", earned = true, sheen = false, secre
     "streak-seven": '<rect x="15" y="16" width="18" height="17" rx="1.5"/><path d="M15 21h18M19 13.5v5M29 13.5v5M20 25h8l-4.5 6"/>',
     "league-member": '<circle cx="19" cy="19" r="3"/><circle cx="29" cy="19" r="3"/><path d="M13 32c.7-4 3-6 6-6s5.3 2 6 6M23 32c.7-4 3-6 6-6s5.3 2 6 6"/>',
     "rare-three": '<path d="M17.5 17h13l4.5 6-11 12-11-12z"/><path d="M13 23h22M21 17l-2 6 5 12 5-12-2-6"/>',
+    "regevist": '<rect x="14" y="18" width="8" height="12" rx="1"/><rect x="20" y="15" width="8" height="12" rx="1"/><rect x="26" y="18" width="8" height="12" rx="1"/>',
     "numbered-first": '<path d="M21.5 14l-3 20M30 14l-3 20M15.5 20.5h18M14.5 27.5h18"/>',
     "streak-thirty": '<path d="M24 12.5c1.2 4.2 6.5 6.4 6.5 12.5a6.5 6.5 0 0 1-13 0c0-3.2 1.8-5.4 3.2-7.4.8 2 1.9 3.2 3.3 3.5-1.2-3-.9-5.9 0-8.6z"/>',
     "ten-copies": '<rect x="13" y="19" width="11" height="15" rx="1"/><rect x="18.5" y="16.5" width="11" height="15" rx="1"/><rect x="24" y="14" width="11" height="15" rx="1"/><path d="M27 19v6M30 19h2.5v6H30z"/>',
     "warehouse-full": '<path d="M15 20h18v14H15zM18 20v-4h12v4M19 25h10M19 29h7"/>',
     "see-nothing": '<rect x="17" y="13" width="14" height="22" rx="1.5"/><path d="M20 19h8M20 23h8M20 27h5"/>',
+    "shearit-haplata": '<rect x="13" y="20" width="7" height="10" rx="1"/><rect x="20.5" y="17" width="7" height="10" rx="1"/><rect x="28" y="21" width="7" height="10" rx="1"/>',
     "streak-prize-skip": '<path d="M16 24h16v11H16zM16 28h16M24 24v11M19.5 24c0-2.4 2.2-3.6 4.5-2.2 2.3-1.4 4.5-.2 4.5 2.2"/>',
     "recycle-card": '<path d="M29 16.5A8.5 8.5 0 1 0 32.2 28l-2.2-1.2A6.2 6.2 0 1 1 28 18.2V21l5-3.2-4-1.3z"/>',
   }[id] || (String(id).startsWith("set-complete:")
@@ -5144,6 +5237,7 @@ const ACHIEVEMENT_RULES = [
   ["recycle", "מיחזור קלף"],
   ["league", "חבר בליגה"],
   ["setComplete", "סדרה מלאה (תג לכל סדרה)"],
+  ["ownCards", "קלפים מסוימים"],
 ];
 
 function achievementEditorMarkup(badge = {}) {
@@ -5162,6 +5256,7 @@ function achievementEditorMarkup(badge = {}) {
         </label>
         <label>יעד <input data-ach-field="target" type="number" min="0" max="200" value="${badge.target ?? 1}" /></label>
         <label>נסתר עד שמשיגים <input data-ach-field="hidden" type="checkbox"${badge.hidden ? " checked" : ""} /></label>
+        <input type="hidden" data-ach-field="cardIds" value="${escapeHtml((badge.cardIds || []).join(","))}" />
         <label>עמוד
           <select data-ach-field="tier">
             ${ACHIEVEMENT_TIER_ORDER.map((tier) => `<option value="${tier}"${achievementTier(badge) === tier ? " selected" : ""}>${ACHIEVEMENT_TIER_LABELS[tier]}</option>`).join("")}
@@ -5203,6 +5298,14 @@ async function saveStudioAchievements() {
     target: Number(row.querySelector('[data-ach-field="target"]').value) || 0,
     tier: row.querySelector('[data-ach-field="tier"]')?.value || "simple",
     hidden: Boolean(row.querySelector('[data-ach-field="hidden"]')?.checked),
+    ...((row.querySelector('[data-ach-field="cardIds"]')?.value || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean)
+      .slice(0, 12)
+      .length
+      ? { cardIds: (row.querySelector('[data-ach-field="cardIds"]')?.value || "").split(",").map((id) => id.trim()).filter(Boolean).slice(0, 12) }
+      : {}),
   }));
   try {
     const saved = await request("/api/studio/achievements", {
@@ -5271,10 +5374,12 @@ const BADGE_COPY = {
   "streak-seven": ["שבוע רצוף", "בקרו שבעה ימים ברצף."],
   "league-member": ["חבר בליגה", "היו בליגה עם עוד שחקן לפחות."],
   "rare-three": ["שלושה נדירים", "אספו שלושה קלפים נדירים שונים."],
+  "regevist": ["רגביסט", "אספו את שלושת קלפי מירי רגב בליכודיאדה."],
   "ten-copies": ["עשרה עותקים", "אספו עשרה עותקים של אותו קלף."],
   "numbered-first": ["ממוספר", "אספו קלף הולו ממוספר."],
   "warehouse-full": ["עד אפס מקום", "המחסן הגיע לשמונה קלפים שמחכים."],
   "see-nothing": ["לא רואה כלום", "הגדילו את האלבום עד שקלף אחד ממלא את השורה."],
+  "shearit-haplata": ["שארית הפלטה", "אספו את כל הפוליטיקאים ללא מיקום בליכודיאדה."],
   "streak-prize-skip": ["אין מתנות חינם", "סגרתם את לוח הרצף בלי לפתוח את הפרס של היום."],
   "recycle-card": ["שומר על איכות הסביבה", "מיחזרתם קלף."],
   "streak-thirty": ["חודש רצוף", "בקרו שלושים ימים ברצף."],
@@ -7636,6 +7741,7 @@ function openCardDialog(cardId, numbered = false, { plain = false } = {}) {
   elements.dialog.showModal();
   queueCardTextFit(elements.dialog);
   maybeShowNumberedTip();
+  maybeShowRecycleTip();
 }
 
 function openNumberedPreview(cardId, index, of) {
@@ -8938,7 +9044,10 @@ elements.recycleConfirm?.addEventListener("click", () => {
   confirmRecycle().catch(() => showToast("לא הצלחנו למחזר."));
 });
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
-elements.dialog.addEventListener("close", () => maybeShowTradeNotice());
+elements.dialog.addEventListener("close", () => {
+  maybeShowTradeNotice();
+  maybeShowRecycleTip();
+});
 elements.dialogReport.addEventListener("click", () => openReportDialog());
 elements.closeReport.addEventListener("click", () => elements.reportDialog.close());
 elements.reportForm.addEventListener("submit", submitCorrectionReport);
@@ -9098,6 +9207,16 @@ elements.numberedEvery?.addEventListener("change", saveLevelIncrements);
 elements.numberedTipDismiss?.addEventListener("click", () => {
   markPageSeen("numbered");
   hideNumberedTip();
+});
+function dismissRecycleTip() {
+  markPageSeen("recycle");
+  hideRecycleTip();
+}
+elements.recycleTipDismiss?.addEventListener("click", dismissRecycleTip);
+elements.closeRecycleTip?.addEventListener("click", dismissRecycleTip);
+elements.recycleTip?.addEventListener("cancel", () => {
+  markPageSeen("recycle");
+  setRecycleTipTargets(false);
 });
 elements.saveReleaseSets?.addEventListener("click", saveReleaseSets);
 elements.studioPartyTabs.addEventListener("click", (event) => {

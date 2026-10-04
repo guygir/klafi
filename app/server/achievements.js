@@ -27,6 +27,9 @@ export function normalizeAchievementDefinition(item) {
     target: Math.max(0, Math.round(Number(item.target) || 0)),
     tier: normalizeTier(item.tier),
     ...(item.setId ? { setId: String(item.setId) } : {}),
+    ...(Array.isArray(item.cardIds) && item.cardIds.length
+      ? { cardIds: item.cardIds.map((id) => String(id)).filter(Boolean).slice(0, 12) }
+      : {}),
     ...(item.hidden ? { hidden: true } : {}),
   };
 }
@@ -140,6 +143,7 @@ export function achievementMeasures(session, cards, extra = {}) {
     streakPrizeSkipped: session.streakPrizeSkipped ? 1 : 0,
     recycle: Number(session.eventCounts?.card_recycled) > 0 ? 1 : 0,
     league: extra.league ? 1 : 0,
+    ownedIds,
     setOwned: cards.reduce((owned, card) => {
       if (card.idleEligible && !card.eventOnly && card.releaseSetId && Number(inventory[card.id]) > 0) {
         owned[card.releaseSetId] = (owned[card.releaseSetId] || 0) + 1;
@@ -160,6 +164,12 @@ function ruleTarget(definition, measures) {
 
 function ruleValue(definition, measures) {
   if (definition.rule === SET_COMPLETE_RULE) return measures.setOwned?.[definition.setId] || 0;
+  if (definition.rule === "ownCards") {
+    const owned = measures.ownedIds;
+    const ids = Array.isArray(definition.cardIds) ? definition.cardIds : [];
+    if (!owned) return 0;
+    return ids.filter((id) => owned.has(id)).length;
+  }
   const raw = {
     bestSet: measures.bestSetOwned,
   }[definition.rule] ?? measures[definition.rule];

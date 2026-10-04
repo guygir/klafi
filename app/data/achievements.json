@@ -85,6 +85,21 @@
       "hidden": true
     },
     {
+      "id": "shearit-haplata",
+      "nameHe": "שארית הפלטה",
+      "descriptionHe": "אספו את כל הפוליטיקאים ללא מיקום בליכודיאדה.",
+      "rule": "ownCards",
+      "target": 5,
+      "tier": "simple",
+      "cardIds": [
+        "SET6-01",
+        "SET6-03",
+        "SET6-09",
+        "SET6-14",
+        "SET6-18"
+      ]
+    },
+    {
       "id": "collector-ten",
       "nameHe": "עשרה שונים",
       "descriptionHe": "אספו עשרה קלפים שונים.",
@@ -147,6 +162,19 @@
       "rule": "rare",
       "target": 3,
       "tier": "medium"
+    },
+    {
+      "id": "regevist",
+      "nameHe": "רגביסט",
+      "descriptionHe": "אספו את שלושת קלפי מירי רגב בליכודיאדה.",
+      "rule": "ownCards",
+      "target": 3,
+      "tier": "medium",
+      "cardIds": [
+        "SET6-02",
+        "SET6-05",
+        "SET6-06"
+      ]
     },
     {
       "id": "streak-prize-skip",
