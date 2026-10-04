@@ -88,22 +88,62 @@ function findSet5Match(candidate, parties = [], members = []) {
   };
 }
 
-export function runtimeSet5Card(candidate, extras = {}) {
-  const { party, member } = findSet5Match(candidate, extras.parties, extras.members);
+const MOMENT_SETS = Object.freeze({
+  "set-5": {
+    idPrefix: "SET5",
+    letters: SET5_LETTERS,
+    nameHe: SET5_NAME_HE,
+    nameEn: SET5_NAME_EN,
+    releaseSetId: "set-5",
+    releaseOrder: 5,
+    binderGroup: "set-5",
+    sourceIdPrefix: "set5",
+    indexField: "set5Index",
+    fallbackSet: "set-5",
+    why: "Selected for Set 5 from the accepted quote pool.",
+    rationale: "Accepted Set 5 quote with approved art.",
+  },
+  "set-6": {
+    idPrefix: "SET6",
+    letters: "ליכוד",
+    nameHe: "ליכודיאדה",
+    nameEn: "Likudiada",
+    releaseSetId: "set-6",
+    releaseOrder: 12,
+    binderGroup: "set-6",
+    sourceIdPrefix: "set6",
+    indexField: "set6Index",
+    fallbackSet: "LIK",
+    why: "Selected for Set 6 from the accepted Likud quote pool.",
+    rationale: "Accepted Set 6 quote with approved art.",
+  },
+});
+
+export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
+  const meta = MOMENT_SETS[setId] || MOMENT_SETS["set-5"];
+  const matched = findSet5Match(candidate, extras.parties, extras.members);
+  const member = matched.member;
+  const party = matched.party
+    || (extras.parties || []).find((item) => item.id === meta.fallbackSet)
+    || null;
   const critical = new Set(extras.criticalBloc || []);
   const treatment = party && critical.has(party.id) ? "critical" : "favorable";
   const index = Number(candidate.n) || 0;
-  const slot = Number(member?.slot);
+  const fromCandidate = Number(candidate.listSlot);
+  const fromMember = Number(member?.slot);
+  const slot = Number.isInteger(fromCandidate) && fromCandidate > 0 ? fromCandidate : fromMember;
   const listSlot = Number.isInteger(slot) && slot > 0 ? slot : null;
   const sourceUrl = (candidate.sources || []).find(Boolean) || "";
   const context = candidate.notes || candidate.art?.note || "";
+  const setLabel = party?.displayNameHe || meta.nameHe;
+  const unplacedHe = candidate.gender === "f" ? "לא ממוקמת" : "לא ממוקם";
   return {
-    id: `SET5-${String(index).padStart(2, "0")}`,
-    set: party?.id || "set-5",
-    setName: party?.displayNameEn || SET5_NAME_EN,
-    setNameHe: party?.displayNameHe || SET5_NAME_HE,
-    letters: (party?.finalLetters || party?.requestedLetters || [SET5_LETTERS])[0],
-    displayCode: `${SET5_LETTERS}-${String(index).padStart(2, "0")}`,
+    id: `${meta.idPrefix}-${String(index).padStart(2, "0")}`,
+    set: party?.id || meta.fallbackSet,
+    setName: party?.displayNameEn || meta.nameEn,
+    setNameHe: party?.displayNameHe || meta.nameHe,
+    letters: (party?.finalLetters || party?.requestedLetters || [meta.letters])[0],
+    displayCode: `${meta.letters}-${String(index).padStart(2, "0")}`,
     pip: party?.pip || "#1B3A6B",
     title: candidate.nameEn,
     titleHe: candidate.nameHe,
@@ -111,26 +151,26 @@ export function runtimeSet5Card(candidate, extras = {}) {
     type: "Quote",
     typeHe: "ציטוט",
     rarity: candidate.rarity || "Common",
-    subtitle: listSlot ? `מקום ${listSlot} · ${party?.displayNameHe || SET5_NAME_HE}` : `${SET5_NAME_HE} · ${party?.displayNameHe || ""}`.replace(/ · $/, ""),
-    subtitleHe: listSlot ? `מקום ${listSlot}` : SET5_NAME_HE,
+    subtitle: listSlot ? `מקום ${listSlot} · ${setLabel}` : (setId === "set-6" ? unplacedHe : `${meta.nameHe} · ${party?.displayNameHe || ""}`.replace(/ · $/, "")),
+    subtitleHe: listSlot ? `מקום ${listSlot}` : (setId === "set-6" ? unplacedHe : meta.nameHe),
     body: context,
-    whyItMatters: candidate.notes || "Selected for Set 5 from the accepted quote pool.",
+    whyItMatters: candidate.notes || meta.why,
     source: sourceUrl || "Source pending",
     listSlot,
-    set5Index: index,
+    [meta.indexField]: index,
     membershipNote: String(member?.membershipNote || "").trim(),
     artKey: candidate.art?.artKey || null,
     walkout: {
       kind: "quote",
       text: candidate.displayText,
       speaker: candidate.nameHe,
-      date: "",
-      sourceId: `set5-${String(index).padStart(2, "0")}`,
+      date: candidate.date || "",
+      sourceId: `${meta.sourceIdPrefix}-${String(index).padStart(2, "0")}`,
       sourceLabel: sourceUrl || "Source pending",
       sourceUrl,
       context,
       quoteStatus: candidate.quoteStatus || "exact",
-      selectionRationale: candidate.notes || "Accepted Set 5 quote with approved art.",
+      selectionRationale: candidate.notes || meta.rationale,
       flavorDisclosure: "editorial-symbolism-not-evidence",
       releasePhase: treatment === "critical" ? "contrast" : "constructive",
       editorialRole: treatment,
@@ -139,19 +179,28 @@ export function runtimeSet5Card(candidate, extras = {}) {
     eventOnly: false,
     packEligible: true,
     idleEligible: false,
-    releaseSetId: "set-5",
-    releaseOrder: 5,
+    releaseSetId: meta.releaseSetId,
+    releaseOrder: meta.releaseOrder,
     releaseTier: "objective",
     releaseState: "active",
     availableFrom: null,
-    binderGroup: "set-5",
+    binderGroup: meta.binderGroup,
     subjectSet: null,
   };
 }
 
-export function catalogExtrasFromStudio(studio, set5) {
+export function runtimeSet5Card(candidate, extras = {}) {
+  return runtimeMomentCard(candidate, extras, "set-5");
+}
+
+export function runtimeSet6Card(candidate, extras = {}) {
+  return runtimeMomentCard(candidate, extras, "set-6");
+}
+
+export function catalogExtrasFromStudio(studio, set5, set6) {
   return {
     set5: set5 || { candidates: [] },
+    set6: set6 || { candidates: [] },
     parties: studio?.parties || [],
     members: studio?.members || [],
     criticalBloc: studio?.editorialPolicy?.criticalBloc || [],
@@ -187,10 +236,12 @@ export function attachMembershipNotes(cards, members = []) {
 
 export function expandPublicCatalog(cards, specials = { sets: [], cards: [] }, extras = {}) {
   const set5Cards = (extras.set5?.candidates || []).map((candidate) => runtimeSet5Card(candidate, extras));
+  const set6Cards = (extras.set6?.candidates || []).map((candidate) => runtimeSet6Card(candidate, extras));
   const expanded = [
     ...cards,
     ...(specials.cards || []).map((card) => runtimeSpecialCard(card, specials)),
     ...set5Cards,
+    ...set6Cards,
   ];
   return attachMembershipNotes(expanded, extras.members || []);
 }

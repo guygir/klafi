@@ -1406,9 +1406,10 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   assert.equal(boot.status, 200);
   assert.equal(boot.body.studioContent, null);
   assert.equal(boot.body.gameConfig.parties.find(({ id }) => id === "RZ").displayNameHe, "הציונות הדתית וזהות");
-  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-leaders").weight, 1);
-  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-slot-2").weight, 1);
-  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-5").weight, 2);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-leaders").weight, 17);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-slot-2").weight, 18);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-5").weight, 35);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-6").weight, 30);
   assert.deepEqual(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-leaders").rarities, { Common: 70, Uncommon: 22, Rare: 8 });
   assert.deepEqual(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-5").rarities, { Common: 70, Uncommon: 22, Rare: 8 });
   assert.deepEqual(boot.body.gameConfig.pack.current.sets.map(({ id }) => id), []);

@@ -55,10 +55,16 @@ const CARDS = [
   { id: "r2", set: "B", rarity: "Rare Holo", idleEligible: true },
 ];
 
-test("achievements.json: pages 10 / 10 / 8 rows (hard expands to one badge per pullable set)", () => {
+test("achievements.json: pages 11 / 11 / 8 rows (hard expands to one badge per pullable set)", () => {
   const byTier = Object.fromEntries(ACHIEVEMENT_TIERS.map((tier) => [tier, catalog.filter((item) => item.tier === tier).map(({ id }) => id)]));
-  assert.deepEqual(byTier.simple, ["first-rip", "register-five", "source-check", "share-pull", "first-double", "idle-eight", "faction-pick", "own-name", "warehouse-full", "see-nothing"]);
-  assert.deepEqual(byTier.medium, ["collector-ten", "three-parties", "twenty-stars", "trade-match", "rank-three", "streak-seven", "league-member", "rare-three", "streak-prize-skip", "recycle-card"]);
+  assert.deepEqual(byTier.simple, ["first-rip", "register-five", "source-check", "share-pull", "first-double", "idle-eight", "faction-pick", "own-name", "warehouse-full", "see-nothing", "shearit-haplata"]);
+  const shearit = catalog.find(({ id }) => id === "shearit-haplata");
+  assert.equal(shearit.target, 5);
+  assert.deepEqual(shearit.cardIds, ["SET6-01", "SET6-03", "SET6-09", "SET6-14", "SET6-18"]);
+  assert.equal(byTier.simple.length, 11);
+  assert.equal(byTier.medium.length, 11);
+  assert.equal(byTier.hard.length, 8);
+  assert.deepEqual(byTier.medium, ["collector-ten", "three-parties", "twenty-stars", "trade-match", "rank-three", "streak-seven", "league-member", "rare-three", "regevist", "streak-prize-skip", "recycle-card"]);
   assert.deepEqual(byTier.hard, ["set-complete", "commons-complete", "five-leaders", "fifty-stars", "trade-three", "numbered-first", "streak-thirty", "ten-copies"]);
   assert.equal(catalog.find(({ id }) => id === "rare-three").target, 3);
   assert.equal(catalog.find(({ id }) => id === "streak-seven").nameHe, "שבוע רצוף");
@@ -71,7 +77,7 @@ test("achievements.json: pages 10 / 10 / 8 rows (hard expands to one badge per p
   }
   const measures = achievementMeasures(session(), allCards);
   for (const item of catalog) {
-    assert.ok(item.rule in measures || ["bestSet", "setComplete"].includes(item.rule), `${item.id}: unknown rule ${item.rule}`);
+    assert.ok(item.rule in measures || ["bestSet", "setComplete", "ownCards"].includes(item.rule), `${item.id}: unknown rule ${item.rule}`);
   }
   assert.equal(catalog.find(({ id }) => id === "numbered-first").hidden, true);
   assert.equal(catalog.find(({ id }) => id === "warehouse-full").hidden, true);
@@ -275,12 +281,12 @@ test("server: state carries tiers + pages; a write stamps earnedAt and it surviv
   const token = await player();
   const fresh = await api(running.base, "/api/state", { token });
   assert.deepEqual(fresh.body.achievementPages, [
-    { tier: "simple", total: 10, earned: 0 },
-    { tier: "medium", total: 10, earned: 0 },
-    { tier: "hard", total: 10, earned: 0 },
+    { tier: "simple", total: 11, earned: 0 },
+    { tier: "medium", total: 11, earned: 0 },
+    { tier: "hard", total: 11, earned: 0 },
   ]);
   const setBadges = fresh.body.achievements.filter(({ setId }) => setId);
-  assert.deepEqual(setBadges.map(({ id }) => id), ["set-complete:party-leaders", "set-complete:party-slot-2", "set-complete:set-5"], "sets 1, 2 and 5 are the pullable ones");
+  assert.deepEqual(setBadges.map(({ id }) => id), ["set-complete:party-leaders", "set-complete:party-slot-2", "set-complete:set-5", "set-complete:set-6"], "sets 1, 2, 5 and 6 are the pullable ones");
   assert.ok(setBadges.every(({ tier, target }) => tier === "hard" && target > 1));
   const revision = fresh.body.revision;
   const again = await api(running.base, "/api/state", { token });
@@ -341,7 +347,7 @@ test("server: Studio save keeps each badge's tier (missing = simple)", async (t)
   assert.equal(saved.body.achievements.find(({ id }) => id === "ten-copies").tier, "hard");
   const onDisk = JSON.parse(await readFile(achievementsPath, "utf8")).achievements;
   assert.deepEqual(onDisk.map(({ tier }) => tier), saved.body.achievements.map(({ tier }) => tier));
-  assert.equal(onDisk.filter(({ tier }) => tier === "medium").length, 10);
+  assert.equal(onDisk.filter(({ tier }) => tier === "medium").length, 11);
 });
 
 test("client: three open tabs, tier art, no unlock toast, copy + icon for every badge", async () => {
@@ -407,4 +413,20 @@ test("binder strip: earned only, hard > medium > simple, newest first within a t
   ];
   assert.deepEqual(binderBadgeOrder(badges).map(({ id }) => id), ["h-new", "h-old", "m-new", "untiered", "s-new", "s-old", "s-live"]);
   assert.deepEqual(binderBadgeOrder([]), []);
+});
+
+test("רגביסט unlocks only when all three Miri Regev set-6 cards are owned", () => {
+  const badge = catalog.find(({ id }) => id === "regevist");
+  assert.equal(badge.nameHe, "רגביסט");
+  assert.equal(badge.tier, "medium");
+  assert.equal(badge.rule, "ownCards");
+  assert.deepEqual(badge.cardIds, ["SET6-02", "SET6-05", "SET6-06"]);
+  const cards = badge.cardIds.map((id) => ({ id, rarity: "Common", idleEligible: true, releaseSetId: "set-6" }));
+  const two = achievementProgress(badge, achievementMeasures(session({ inventory: { "SET6-02": 1, "SET6-05": 1 } }), cards));
+  assert.equal(two.earned, false);
+  assert.equal(two.progress, 2);
+  const three = achievementProgress(badge, achievementMeasures(session({ inventory: { "SET6-02": 1, "SET6-05": 1, "SET6-06": 1 } }), cards));
+  assert.equal(three.earned, true);
+  assert.equal(three.name, "רגביסט");
+  assert.equal(three.progress, 3);
 });

@@ -16,13 +16,14 @@ const publicDir = path.resolve(here, "../public");
 const projectRoot = path.resolve(here, "../..");
 
 async function loadCatalogSources() {
-  const [cards, specials, studio, set5] = await Promise.all([
+  const [cards, specials, studio, set5, set6] = await Promise.all([
     readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set5-wip-pool.json"), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "docs/intake/research/set6-wip-pool.json"), "utf8").then(JSON.parse),
   ]);
-  return { cards, specials, studio, set5, extras: catalogExtrasFromStudio(studio, set5) };
+  return { cards, specials, studio, set5, set6, extras: catalogExtrasFromStudio(studio, set5, set6) };
 }
 
 test("static catalog.json matches the public card expansion", async () => {
@@ -185,12 +186,13 @@ test("public sets use flat 70/22/8 and set 5 is twice each other open set", asyn
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
   ]);
   const byId = new Map(studio.gameConfig.pack.sets.map((set) => [set.id, set]));
-  assert.equal(byId.get("party-leaders").weight, 1);
-  assert.equal(byId.get("party-slot-2").weight, 1);
-  assert.equal(byId.get("set-5").weight, 2);
+  assert.equal(byId.get("party-leaders").weight, 17);
+  assert.equal(byId.get("party-slot-2").weight, 18);
+  assert.equal(byId.get("set-5").weight, 35);
+  assert.equal(byId.get("set-6").weight, 30);
   assert.equal(byId.get("decisions").weight, 0);
   assert.equal(byId.get("records").weight, 0);
-  for (const id of ["party-leaders", "party-slot-2", "set-5"]) {
+  for (const id of ["party-leaders", "party-slot-2", "set-5", "set-6"]) {
     assert.deepEqual(byId.get(id).rarities, { Common: 70, Uncommon: 22, Rare: 8 });
   }
   const odds = cardPullOdds({
@@ -294,6 +296,35 @@ test("Set 5 ships as live Quote cards with party pips and pull rarities", async 
   assert.equal(extras.set5.candidates.length, 23);
   await Promise.all(live.map(({ artKey }) =>
     readFile(path.resolve(here, "../../docs/design/assets", artKey))));
+});
+
+test("Set 6 ships as live Quote cards with Likud codes and 10/5/3 rarities", async () => {
+  const [{ set6 }, catalog] = await Promise.all([
+    loadCatalogSources(),
+    readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
+  ]);
+  const live = catalog.cards.filter(({ releaseSetId }) => releaseSetId === "set-6");
+  assert.equal(live.length, 18);
+  assert.equal(set6.candidates.length, 18);
+  assert.deepEqual(live.map(({ displayCode }) => displayCode),
+    Array.from({ length: 18 }, (_, index) => `ליכוד-${String(index + 1).padStart(2, "0")}`));
+  assert.equal(live.at(-1).displayCode, "ליכוד-18");
+  const counts = { Common: 0, Uncommon: 0, Rare: 0 };
+  for (const card of live) counts[card.rarity] += 1;
+  assert.deepEqual(counts, { Common: 10, Uncommon: 5, Rare: 3 });
+  const hadar = live.find(({ id }) => id === "SET6-18");
+  assert.equal(hadar.titleHe, "הדר מוכתר");
+  assert.equal(hadar.rarity, "Uncommon");
+  assert.equal(hadar.subtitleHe, "לא ממוקמת");
+  assert.equal(live.find(({ id }) => id === "SET6-09").subtitleHe, "לא ממוקמת");
+  assert.equal(live.find(({ id }) => id === "SET6-01").subtitleHe, "לא ממוקם");
+  assert.equal(hadar.setNameHe, "הליכוד");
+  assert.equal(hadar.listSlot, null);
+  assert.equal(hadar.walkout.text, "למי תהיה פה דירה בישראל? … היא על שמי, אבל של אבא שלי.");
+  assert.equal(live.find(({ id }) => id === "SET6-11").rarity, "Common");
+  const rares = live.filter(({ rarity }) => rarity === "Rare").map(({ titleHe }) => titleHe).sort();
+  assert.deepEqual(rares, ["ישראל כץ", "מירי רגב", "שלמה קרעי"]);
+  await readFile(path.resolve(here, "../../docs/design/assets", hadar.artKey));
 });
 
 test("Sets 1 and 2 ship complete art-backed catalogs", async () => {

@@ -2156,6 +2156,11 @@ img.mini-art {
 .card-dialog::backdrop { background: rgba(26, 31, 28, 0.72); backdrop-filter: blur(5px); }
 .card-dialog .kalpi-card { width: min(var(--card-width), 100%); margin: 0 auto; }
 
+.dialog-close:focus,
+.dialog-close:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
 .dialog-close {
   position: absolute;
   top: 9px;
@@ -2288,6 +2293,52 @@ img.mini-art {
   box-shadow: var(--shadow);
 }
 
+
+#recycle-tip { width: min(420px, calc(100% - 24px)); }
+#recycle-tip #recycle-tip-copy {
+  margin: 0 0 16px;
+  font: 400 13px/1.5 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
+#recycle-tip .recycle-tip-card { position: relative; width: min(220px, 68%); margin: 4px auto 14px; pointer-events: none; }
+#recycle-tip .recycle-tip-card .kalpi-card { position: relative; width: 100%; }
+#recycle-tip .card-image-zone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: rgba(26, 31, 28, 0.42);
+  pointer-events: none;
+}
+#recycle-tip .card-identity-stack { opacity: 0.5; }
+#recycle-tip .card-image-meta { z-index: 4; }
+#recycle-tip .card-recycle.recycle-tip-hot {
+  position: relative;
+  z-index: 5;
+  background: var(--pack-gold, #c4a35a);
+  color: #1a1f1c;
+  border-color: #fff8e6;
+  outline: 2px solid #fff8e6;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(196, 163, 90, 0.55), 0 0 14px 3px rgba(196, 163, 90, 0.95);
+}
+#recycle-tip .recycle-tip-arrow {
+  position: absolute;
+  z-index: 4;
+  width: 22px;
+  height: 2px;
+  background: var(--pack-gold, #c4a35a);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+#recycle-tip .recycle-tip-arrow::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  border: 5px solid transparent;
+  border-right-color: var(--pack-gold, #c4a35a);
+  transform: translate(-100%, -50%);
+}
 .policy-dialog::backdrop { background: rgba(26, 31, 28, 0.72); backdrop-filter: blur(5px); }
 .wait-dialog {
   width: min(280px, calc(100% - 48px));

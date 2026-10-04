@@ -274,6 +274,21 @@ export function shouldAutoOpenPage(seen, page, flags = {}) {
   return Boolean(page && PAGE_GUIDES[page]?.length && !seen?.["*"] && !seen?.[page]);
 }
 
+/** One-time binder callout. Same seen-page + tips-off gates as the numbered tip. */
+export function shouldShowRecycleTip({
+  view = "",
+  dialogOpen = false,
+  packActive = false,
+  tipsOff = false,
+  seen = false,
+  maxPlain = 0,
+} = {}) {
+  if (tipsOff || seen) return false;
+  if (packActive || dialogOpen) return false;
+  if (view !== "binder") return false;
+  return Number(maxPlain) >= 3;
+}
+
 export function activeGuidePage(flags, seen = {}) {
   if (flags?.cardRevealed && !seen?.card && !seen?.["*"]) return "card";
   if (flags?.dialogOpen) return "dialog";

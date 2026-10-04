@@ -1,0 +1,382 @@
+{
+  "id": "set6-wip-pool",
+  "status": "live-release",
+  "asOfDate": "2026-10-04",
+  "note": "Set 6 is wired into the live catalog the same way set-5 is: release set `set-6` (ליכודיאדה). Cards expand as Quote cards with Likud pips, display codes ליכוד-01–18, and the assigned pull rarities. Every card has a source. List slots follow the Likud list filed for the 26th Knesset. Gallant, Distel-Atbaryan, Vaturi and Hadar Mukhtar stay unnumbered because they are not on that list.",
+  "sourceDocument": null,
+  "candidates": [
+    {
+      "n": 1,
+      "nameHe": "יואב גלנט",
+      "nameEn": "Yoav Gallant",
+      "displayText": "בזמן שהם בחזית, נתניהו דוקר אותם בגב.",
+      "quoteStatus": "shortened",
+      "date": "2026-02-07",
+      "sources": [
+        "https://www.inn.co.il/news/689455"
+      ],
+      "existingStudioRef": null,
+      "notes": "פגוש את העיתונות, 7 בפברואר 2026. על נתניהו, הרמטכ״ל וראש השב״כ. המשפט המלא ממשיך: וממריד את כל שרי הממשלה נגדם.",
+      "art": {
+        "artKey": "hero-art-yoav-gallant-knife.jpg",
+        "status": "approved",
+        "sha256": "e626afe75fcb0a5427e8186fb9015cf44f05207747acbae6f6683d4699515c3f",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common"
+    },
+    {
+      "n": 2,
+      "nameHe": "מירי רגב",
+      "nameEn": "Miri Regev",
+      "displayText": "מה שווה התאגיד אם אנחנו לא שולטים בו?",
+      "quoteStatus": "exact",
+      "date": "2016-07-31",
+      "sources": [
+        "https://www.globes.co.il/news/article.aspx?did=1001142865"
+      ],
+      "existingStudioRef": "LIK-M05",
+      "notes": "ישיבת ממשלה, יולי 2016, על תאגיד השידור. גלובס מצטט את עמית סגל.",
+      "art": {
+        "artKey": "hero-art-miri-regev-switch.jpg",
+        "status": "approved",
+        "sha256": "7870826a9e920dede1e095116bdeb94f44d006e5240a637be19a357f9b7ebcc1",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common"
+    },
+    {
+      "n": 3,
+      "nameHe": "יואב גלנט",
+      "nameEn": "Yoav Gallant",
+      "displayText": "יש לנו ראש ממשלה שקרן, ראש הממשלה משקר.",
+      "quoteStatus": "exact",
+      "date": "2026-02-07",
+      "sources": [
+        "https://www.inn.co.il/news/689455"
+      ],
+      "existingStudioRef": null,
+      "notes": "פגוש את העיתונות, 7 בפברואר 2026, על נתניהו.",
+      "art": {
+        "artKey": "hero-art-yoav-gallant-pinocchio.jpg",
+        "status": "approved",
+        "sha256": "54648c593ac97158bb77f8abe9e38287a3047e1c124ce2a00f6f9f89f79781f3",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Uncommon"
+    },
+    {
+      "n": 4,
+      "nameHe": "דוד אמסלם",
+      "nameEn": "David Amsalem",
+      "displayText": "אני כן יכול לקבוע שרוב הגזענים הם אשכנזים. זה בוודאות.",
+      "quoteStatus": "exact",
+      "date": "2022-02-07",
+      "sources": [
+        "https://www.mako.co.il/tv-morning-news/articles/Article-4ebf64736f2de71027.htm"
+      ],
+      "existingStudioRef": null,
+      "notes": "חדשות הבוקר עם ניב רסקין, 7 בפברואר 2022. הציטוט המדויק מופיע בכתבה. ציטוט הנעליים הוא כתבה נפרדת ולא על הקלף.",
+      "art": {
+        "artKey": "hero-art-david-amsalem-laughing.jpg",
+        "status": "approved",
+        "sha256": "7a36118176c4ab16396c51574809a88f6559a03055a95901181050ddf7c9d053",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common",
+      "listSlot": 19
+    },
+    {
+      "n": 5,
+      "nameHe": "מירי רגב",
+      "nameEn": "Miri Regev",
+      "displayText": "אין כאבי בטן למקרי אונס, ואין כאבי בטן עם נשים מוכות ואין כאבי בטן עם חיילים.",
+      "quoteStatus": "exact",
+      "date": "",
+      "sources": [
+        "https://www.ynet.co.il/news/article/syt2f45dc"
+      ],
+      "existingStudioRef": "LIK-M05",
+      "notes": "ישיבת סיעת הליכוד. ההקלטה מצוטטת ב-ynet.",
+      "art": {
+        "artKey": "hero-art-miri-regev-folders.jpg",
+        "status": "approved",
+        "sha256": "e626288ba9df88a9534c0b0da3104477c22d1738947c82d553d0874505d87e3e",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Uncommon"
+    },
+    {
+      "n": 6,
+      "nameHe": "מירי רגב",
+      "nameEn": "Miri Regev",
+      "displayText": "אמרתי שהסודנים הם סרטן, רבין אמר את זה על ההתנחלויות ולא קרה לו כלום… לא הרגו אותו בתקשורת!",
+      "quoteStatus": "shortened",
+      "date": "2014-02-27",
+      "sources": [
+        "https://www.globes.co.il/news/article.aspx?did=1000920467"
+      ],
+      "existingStudioRef": "LIK-M05",
+      "notes": "המתנחל, 27 בפברואר 2014. נוסח הקלף של גיא, לא ציטוט רצוף מהכתבה.",
+      "art": {
+        "artKey": "hero-art-miri-regev-rabin.jpg",
+        "status": "approved",
+        "sha256": "50b4290f6e39abaf71a23c38ce89cd4b8614fa9e8fa5680ac3839131be2daf88",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Rare"
+    },
+    {
+      "n": 7,
+      "nameHe": "אמיר אוחנה",
+      "nameEn": "Amir Ohana",
+      "displayText": "נו, וחשבתם שגנב הדעת השקרן הזה יפרסם את כל התגובה?",
+      "quoteStatus": "exact",
+      "date": "2019-07-29",
+      "sources": [
+        "https://x.com/AmirOhana/status/1155894569340477441",
+        "https://www.zman.co.il/24083/"
+      ],
+      "existingStudioRef": "LIK-M03",
+      "notes": "ציוץ של אוחנה, 29 ביולי 2019, עם תמונה ולא וידאו. הזמן מצטט את הציוץ.",
+      "art": {
+        "artKey": "hero-art-amir-ohana-torn-page.jpg",
+        "status": "approved",
+        "sha256": "5c3a90a9a283da291cdac884302792d73c49ef2f0ec83ef29373c3fe237a3484",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common"
+    },
+    {
+      "n": 8,
+      "nameHe": "יואב קיש",
+      "nameEn": "Yoav Kisch",
+      "displayText": "אנחנו לא סופרים אתכם.",
+      "quoteStatus": "shortened",
+      "date": "2021-06-28",
+      "sources": [
+        "https://www.bhol.co.il/news/1243718",
+        "https://video.bhol.co.il/storage/oldvideos/0/36/0_y0ufdr4b_0_fz9adq9a_2.mp4",
+        "https://www.kore.co.il/viewArticle/84754",
+        "https://www.kikar.co.il/political-news/395335"
+      ],
+      "existingStudioRef": null,
+      "notes": "מליאת הכנסת, 28 ביוני 2021, לחברי ממשלת השינוי. הווידאו מוטמע בכתבה של בחדרי חרדים והועלה בערב הנאום. המשפט על הקלף קוצר מ״אתם צבועים! אנחנו לא סופרים אתכם.״",
+      "art": {
+        "artKey": "hero-art-yoav-kisch-counting.jpg",
+        "status": "approved",
+        "sha256": "cb07988cdbb8fa559b179cf1ef76d5d71aa5fb20be0bdc45b4a7c4b6540baa1a",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common",
+      "listSlot": 10
+    },
+    {
+      "n": 9,
+      "nameHe": "גלית דיסטל אטבריאן",
+      "nameEn": "Galit Distel Atbaryan",
+      "displayText": "אני כבר לא מזדעזעת וזה המשפחות שלכם שנשרפו שם.",
+      "quoteStatus": "exact",
+      "date": "2023-03-14",
+      "sources": [
+        "https://e.walla.co.il/item/3566135"
+      ],
+      "existingStudioRef": null,
+      "notes": "נאום מדוכן הכנסת אל האופוזיציה. וואלה תיארה את הנאום כשלשום ביחס לכתבה מ-16 במרץ 2023.",
+      "art": {
+        "artKey": "hero-art-galit-distel-podium.jpg",
+        "status": "approved",
+        "sha256": "da06d6cc2d36e082381840b5de0d8e9024027865ed5d7d69e8c9d4b37ce6d194",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common",
+      "gender": "f"
+    },
+    {
+      "n": 10,
+      "nameHe": "דוד ביטן",
+      "nameEn": "David Bitan",
+      "displayText": "הייתי מעדיף שהערבים לא ינהרו לקלפיות ולא יגיעו בכלל לקלפי.",
+      "quoteStatus": "shortened",
+      "date": "2016-12-10",
+      "sources": [
+        "https://www.globes.co.il/news/article.aspx?did=1001166018"
+      ],
+      "existingStudioRef": null,
+      "notes": "שבתרבות במבשרת ציון, 10 בדצמבר 2016. המשפט המלא ממשיך על 97 אחוז.",
+      "art": {
+        "artKey": "hero-art-david-bitan-ballot.jpg",
+        "status": "approved",
+        "sha256": "e122d18353252008d84167a6114f52e1f29a87ead3c014c444fc876898ffde56",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common",
+      "listSlot": 22
+    },
+    {
+      "n": 11,
+      "nameHe": "מיקי זוהר",
+      "nameEn": "Miki Zohar",
+      "displayText": "למה מי את בכלל? את תעני לי כמו ילדה טובה.",
+      "quoteStatus": "exact",
+      "date": "",
+      "sources": [
+        "https://www.ynet.co.il/news/article/S1uTxMD200"
+      ],
+      "existingStudioRef": "LIK-M12",
+      "notes": "ועדה מסדרת, אל עידית סילמן.",
+      "art": {
+        "artKey": "hero-art-miki-zohar-silman.jpg",
+        "status": "approved",
+        "sha256": "c1821bf8309a5c158a80fecdd0af73a617b89360bdeca230815c00f8cf9ce2cb",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common"
+    },
+    {
+      "n": 12,
+      "nameHe": "בועז ביסמוט",
+      "nameEn": "Boaz Bismuth",
+      "displayText": "אתה לא יכול להכריח אנשים להתגייס לצבא. מה, תשים אותם בכלא. איזה שטויות.",
+      "quoteStatus": "exact",
+      "date": "2025-12-04",
+      "sources": [
+        "https://www.inn.co.il/news/684594"
+      ],
+      "existingStudioRef": null,
+      "notes": "ריאיון ל״משפחה״, דיווח ב-4 בדצמבר 2025, על גיוס חרדים.",
+      "art": {
+        "artKey": "hero-art-boaz-bismuth-jail.jpg",
+        "status": "approved",
+        "sha256": "cabcefd31da6052fcc0a2b8e279d1042136fad7fd2348d7df1f7edf822aa2d2a",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common",
+      "listSlot": 21
+    },
+    {
+      "n": 13,
+      "nameHe": "בועז ביסמוט",
+      "nameEn": "Boaz Bismuth",
+      "displayText": "יש בקואליציה כמה וכמה חברי כנסת בודדים שאין להם עתיד מזהיר בפוליטיקה הישראלית.",
+      "quoteStatus": "exact",
+      "date": "2026-05-18",
+      "sources": [
+        "https://www.c14.co.il/article/1559852"
+      ],
+      "existingStudioRef": null,
+      "notes": "ערוץ 14, ״שבע״, ליטל שמש, 18 במאי 2026.",
+      "art": {
+        "artKey": "hero-art-boaz-bismuth-studio.jpg",
+        "status": "approved",
+        "sha256": "a1711749c77dd677d0d995322b3866a944fc2f7223f8b92a8e4c42eb5119a25a",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Uncommon",
+      "listSlot": 21
+    },
+    {
+      "n": 14,
+      "nameHe": "ניסים ואטורי",
+      "nameEn": "Nissim Vaturi",
+      "displayText": "כן. מה אתם מצפים שנעשה?",
+      "quoteStatus": "exact",
+      "date": "2025-03-02",
+      "sources": [
+        "https://www.bhol.co.il/news/1687933"
+      ],
+      "existingStudioRef": null,
+      "notes": "על חטופים שמתו.",
+      "art": {
+        "artKey": "hero-art-nissim-vaturi-tunnel.jpg",
+        "status": "approved",
+        "sha256": "0be626a784d84147d279f2d13a87763641a9b95a4268c8b867544bfa288136f4",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Common"
+    },
+    {
+      "n": 15,
+      "nameHe": "שלמה קרעי",
+      "nameEn": "Shlomo Karhi",
+      "displayText": "יש מושג הלכתי: 'אישה קטלנית'.",
+      "quoteStatus": "exact",
+      "date": "2026-07-16",
+      "sources": [
+        "https://news.walla.co.il/item/3853468"
+      ],
+      "existingStudioRef": null,
+      "notes": "מדוכן הכנסת, אל מירב בן ארי.",
+      "art": {
+        "artKey": "hero-art-shlomo-karhi-silhouette.jpg",
+        "status": "approved",
+        "sha256": "26ba2082d9c101dd2d0bd1bef0f1fdd80643c813bc3a0db586b448984e324edf",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Uncommon",
+      "listSlot": 23
+    },
+    {
+      "n": 16,
+      "nameHe": "שלמה קרעי",
+      "nameEn": "Shlomo Karhi",
+      "displayText": "בדקתי, 'טראמפ' בגימטריה זה 'משיח בן דוד'",
+      "quoteStatus": "shortened",
+      "date": "2025-02-11",
+      "sources": [
+        "https://www.jdn.co.il/news/2352872"
+      ],
+      "existingStudioRef": null,
+      "notes": "פודקאסט מעריב, 11 בפברואר 2025. נוסח הקלף של גיא, בלי מרכאות סוגרות.",
+      "art": {
+        "artKey": "hero-art-shlomo-karhi-424.jpg",
+        "status": "approved",
+        "sha256": "2fc9542434fcfb5f11217128a646682f512a0cc97d421fb3a5af632961c364d0",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Rare",
+      "listSlot": 23
+    },
+    {
+      "n": 17,
+      "nameHe": "ישראל כץ",
+      "nameEn": "Israel Katz",
+      "displayText": "אם בבלגיה ימשיכו לאכול את השוקולד... הם לא יוכלו להילחם בטרור",
+      "quoteStatus": "shortened",
+      "date": "2016-03-23",
+      "sources": [
+        "https://www.mako.co.il/news-military/israel-q1_2016/Article-0186bd56392a351004.htm"
+      ],
+      "existingStudioRef": "LIK-M06",
+      "notes": "רשת ב׳, 23 במרץ 2016. המשפט המלא ארוך מדי למסגרת הציטוט, אז הקלף נושא את הקיצור של גיא.",
+      "art": {
+        "artKey": "hero-art-israel-katz-chocolate.jpg",
+        "status": "approved",
+        "sha256": "4f2d6e15a175676cd6e50aa972afdd024ae38deeda5e7e73f189a9c3e6a49d16",
+        "note": "1122x1402 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Rare"
+    },
+    {
+      "n": 18,
+      "nameHe": "הדר מוכתר",
+      "nameEn": "Hadar Mukhtar",
+      "displayText": "למי תהיה פה דירה בישראל? … היא על שמי, אבל של אבא שלי.",
+      "quoteStatus": "shortened",
+      "date": "2022-09-19",
+      "sources": [
+        "https://www.globes.co.il/news/article.aspx?did=1001424962"
+      ],
+      "existingStudioRef": null,
+      "notes": "לא משפט אחד. חלק א׳ שלה, כיפה: «למי תהיה פה דירה בישראל?», לא «לא תהיה לי דירה בחיים חוץ מירושה». חלק ב׳ הוא חיבור: גלובס «היא על שמי, אבל לא שלי» (לשירית אביטן כהן, 19 בספטמבר 2022) עם וואלה «הדירה שייכת לאבא שלי». אינה ברשימת הליכוד שהוגשה לכנסת ה-26, ולכן לא ממוקם.",
+      "art": {
+        "artKey": "hero-art-hadar-mukhtar.jpg",
+        "status": "approved",
+        "sha256": "21b050a88c9827e79a1776a91835677f4b3bdcb929cdffc256f25f3648a1072a",
+        "note": "1086x1448 JPEG, copied as supplied, no recompression."
+      },
+      "rarity": "Uncommon",
+      "gender": "f"
+    }
+  ]
+}

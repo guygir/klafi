@@ -29,6 +29,7 @@ import {
   readTipsPref,
   shouldAutoOpen,
   shouldAutoOpenPage,
+  shouldShowRecycleTip,
   stepViewReady,
   writeTipsPref,
 } from "../public/tips.js";
@@ -302,4 +303,57 @@ test("coachmark card stays clear of the measured bottom nav", () => {
   const top = Number.parseFloat(card.style.top);
   assert.ok(Number.isFinite(top));
   assert.ok(top + 190 <= 853, `card bottom ${top + 190} overlaps nav at 853`);
+});
+
+test("recycle tip opens only on the binder once a plain stack hits 3", () => {
+  const open = (overrides = {}) => shouldShowRecycleTip({
+    view: "binder",
+    dialogOpen: false,
+    packActive: false,
+    tipsOff: false,
+    seen: false,
+    maxPlain: 3,
+    ...overrides,
+  });
+  assert.equal(open(), true);
+  assert.equal(open({ maxPlain: 1 }), false);
+  assert.equal(open({ maxPlain: 2 }), false);
+  assert.equal(open({ view: "home", maxPlain: 5 }), false);
+  assert.equal(open({ view: "pack", maxPlain: 5 }), false);
+  assert.equal(open({ packActive: true, maxPlain: 5 }), false);
+  assert.equal(open({ dialogOpen: true, maxPlain: 5 }), false);
+  assert.equal(open({ tipsOff: true }), false);
+
+  const store = {};
+  const env = {
+    document: { cookie: "" },
+    localStorage: {
+      getItem: (key) => store[key] ?? null,
+      setItem: (key, value) => { store[key] = value; },
+    },
+  };
+  const fromStorage = (overrides = {}) => shouldShowRecycleTip({
+    view: "binder",
+    maxPlain: 3,
+    tipsOff: readTipsPref(env) === "off",
+    seen: Boolean(readSeenPages(env).recycle),
+    ...overrides,
+  });
+  assert.equal(fromStorage(), true);
+  markPageSeen("recycle", env);
+  assert.equal(readSeenPages(env).recycle, true);
+  assert.equal(fromStorage(), false);
+  assert.equal(fromStorage({ view: "binder", maxPlain: 4 }), false, "stays hidden after reload");
+  writeTipsPref("off", env);
+  const fresh = {
+    document: { cookie: env.document.cookie },
+    localStorage: env.localStorage,
+  };
+  assert.equal(readTipsPref(fresh), "off");
+  assert.equal(shouldShowRecycleTip({
+    view: "binder",
+    maxPlain: 3,
+    tipsOff: readTipsPref(fresh) === "off",
+    seen: Boolean(readSeenPages(fresh).recycle),
+  }), false);
 });

@@ -824,13 +824,16 @@ export async function createKalpiApp({
   const set5 = docsDir
     ? await readJsonFile(path.join(docsDir, "intake/research/set5-wip-pool.json"), { candidates: [] })
     : { candidates: [] };
+  const set6 = docsDir
+    ? await readJsonFile(path.join(docsDir, "intake/research/set6-wip-pool.json"), { candidates: [] })
+    : { candidates: [] };
   let presentationContent = presentationContentPath
     ? JSON.parse(await readFile(presentationContentPath, "utf8"))
     : { schemaVersion: 1, deckId: "poc-response", updatedAt: null, fields: {} };
   const events = eventsPath ? JSON.parse(await readFile(eventsPath, "utf8")) : { events: [] };
   let achievementCatalog = achievementsPath ? JSON.parse(await readFile(achievementsPath, "utf8")) : { achievements: [] };
   let avatarCatalog = avatarsPath ? JSON.parse(await readFile(avatarsPath, "utf8")) : { avatars: [] };
-  const allCards = expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studioContent, set5));
+  const allCards = expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studioContent, set5, set6));
   const cardsById = new Map(allCards.map((card) => [card.id, card]));
   const partyIds = new Set(cards.filter(({ set }) => set !== "SYS").map(({ set }) => set));
   // Quiz questions ask "which list?", so only party-aligned cards qualify, but from the
