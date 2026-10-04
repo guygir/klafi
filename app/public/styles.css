@@ -2913,6 +2913,15 @@ img.mini-art {
 }
 
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.in-dialog {
+  position: absolute;
+  z-index: 8;
+  bottom: 14px;
+  width: max-content;
+  max-width: calc(100% - 28px);
+  padding: 8px 12px;
+  font-size: 12px;
+}
 
 @media (max-width: 760px) {
   .app-shell { padding: 0 16px 100px; }

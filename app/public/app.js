@@ -8152,17 +8152,28 @@ document.addEventListener("click", (event) => {
   showToast(LAST_COPY_TOAST);
 }, true);
 
+const toastHome = elements.toast?.parentElement || null;
+
 function showToast(message, ms = 2200) {
+  const toast = elements.toast;
+  if (!toast) return;
   if (elements.toastTitle) {
     elements.toastTitle.hidden = true;
     elements.toastTitle.textContent = "";
   }
   if (elements.toastCopy) elements.toastCopy.textContent = message;
-  else if (elements.toast) elements.toast.textContent = message;
-  elements.toast?.classList.add("show");
+  else toast.textContent = message;
+  const host = document.activeElement?.closest("dialog[open]")
+    || [...document.querySelectorAll("dialog[open]")].at(-1)
+    || null;
+  if (host) host.append(toast);
+  else if (toastHome && toast.parentElement !== toastHome) toastHome.append(toast);
+  toast.classList.toggle("in-dialog", Boolean(host));
+  toast.classList.add("show");
   clearTimeout(showToast.timeout);
   showToast.timeout = setTimeout(() => {
-    elements.toast?.classList.remove("show");
+    toast.classList.remove("show", "in-dialog");
+    if (toastHome && toast.parentElement !== toastHome) toastHome.append(toast);
   }, ms);
 }
 
