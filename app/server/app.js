@@ -60,6 +60,7 @@ import { ackTradeNotices, publicTradeNotices } from "./trade-notices.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
 import { acquiredAtByCard } from "../public/binder-order.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
+import { normalizeInviteCode, referralMarker, referralStarGate } from "./referral.js";
 import { RECYCLE_COPIES, spendPlainCopies } from "./recycle.js";
 import {
   IDLE_BACKLOG_CAP,
@@ -622,6 +623,8 @@ function publicState(session, now, cards, config = {}) {
     idlePullCount: session.idlePullCount ?? 0,
     factionId: session.factionId,
     binderSlug: session.publicBinderSlug || null,
+    referralCode: session.referralCode || null,
+    referralStars: Number(config.referralStars) || referralStarGate({}),
     tradeCount: session.tradeCount,
     eventCounts: {
       source_opened: Number(session.eventCounts?.source_opened) || 0,
@@ -957,6 +960,7 @@ export async function createKalpiApp({
     achievements: playerAchievements(),
     avatars: avatarCatalog.avatars || [],
     quizEnabled,
+    referralStars: referralStarGate(studioContent?.gameConfig),
   });
   const stateFor = (session) => publicState(session, now(), allCards, runtimeProgression());
   /**
@@ -984,6 +988,87 @@ export async function createKalpiApp({
   async function stateForToken(token) {
     await stampEarnedAchievements(token);
     return stateFor(store.getSession(token));
+  }
+
+  /**
+   * One inviter, many invitees. Each invitee stores invitedBy.
+   * The pack is claimed from the referrals list, once, after the star gate.
+   * Nothing is dropped into the waiting queue.
+   */
+  async function listReferralRows(inviterToken) {
+    const gate = referralStarGate(studioContent?.gameConfig);
+    const invited = await store.listInvited(inviterToken);
+    return invited
+      .filter((session) => session?.referralCode && session.invitedBy === inviterToken)
+      .map((session) => {
+        const stars = collectionStarCount(session, allCards);
+        const claimed = Boolean(session.referralRewardedAt);
+        return {
+          code: session.referralCode,
+          name: session.displayName || "שחקן",
+          stars,
+          ready: stars >= gate && !claimed,
+          claimed,
+        };
+      })
+      .sort((left, right) => Number(right.ready) - Number(left.ready) || right.stars - left.stars || left.name.localeCompare(right.name, "he"));
+  }
+
+  async function claimReferral(inviterToken, code) {
+    const normalized = normalizeInviteCode(code);
+    if (!normalized) return { status: 400, body: { error: "INVALID_INVITE" } };
+    const inviteeToken = await store.tokenForReferralCode(normalized);
+    if (!inviteeToken || inviteeToken === inviterToken) {
+      return { status: 404, body: { error: "REFERRAL_NOT_FOUND" } };
+    }
+    await store.hydrateSession(inviteeToken);
+    await store.hydrateSession(inviterToken);
+    const gate = referralStarGate(studioContent?.gameConfig);
+    const marker = referralMarker(normalized);
+    if (!marker) return { status: 400, body: { error: "INVALID_INVITE" } };
+    const outcome = await store.withSession(inviteeToken, async (invitee) => {
+      if (invitee.invitedBy !== inviterToken) return "missing";
+      if (invitee.referralRewardedAt) return "claimed";
+      if (collectionStarCount(invitee, allCards) < gate) return "early";
+      const granted = await store.withSession(inviterToken, async (inviter) => {
+        if ((inviter.instances || []).some((item) => item?.acquiredBy === marker)) return "exists";
+        const pool = activeIdleCards(allCards, now());
+        if (!pool.length) return "empty";
+        const pulledAt = new Date(now()).toISOString();
+        const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(inviter), inviter.idleDuplicateStreak || 0));
+        const instance = await grantCard(inviter, pull, {
+          acquiredBy: marker,
+          pulledAt,
+          creditNow: true,
+          warehouse: false,
+        });
+        inviter.packs ??= [];
+        inviter.packs.push({
+          packId: `referral-${instance.instanceId}`,
+          mode: "referral",
+          pulledAt,
+          nextDailyAt: null,
+          cards: [instance],
+        });
+        inviter.packs = inviter.packs.slice(-100);
+        return "granted";
+      });
+      if (granted !== "granted" && granted !== "exists") return granted;
+      invitee.referralRewardedAt = new Date(now()).toISOString();
+      return granted;
+    });
+    if (outcome === "missing" || outcome == null) return { status: 404, body: { error: "REFERRAL_NOT_FOUND" } };
+    if (outcome === "early") return { status: 409, body: { error: "REFERRAL_NOT_READY" } };
+    if (outcome === "claimed") return { status: 409, body: { error: "REFERRAL_CLAIMED" } };
+    if (outcome === "empty") return { status: 503, body: { error: "NO_ACTIVE_RELEASE" } };
+    return {
+      status: 200,
+      body: {
+        claimed: true,
+        referrals: await listReferralRows(inviterToken),
+        state: stateFor(store.getSession(inviterToken)),
+      },
+    };
   }
 
   function publicGameConfig() {
@@ -1014,6 +1099,7 @@ export async function createKalpiApp({
         },
       },
       parties: publicPartyRegister(studioContent, cards),
+      referral: { stars: referralStarGate(studioContent?.gameConfig) },
       achievements: achievementCatalog.achievements || [],
       avatars: avatarCatalog.avatars || [],
     };
@@ -1504,7 +1590,10 @@ export async function createKalpiApp({
 
       if (request.method === "POST" && url.pathname === "/api/session") {
         const createdAt = new Date(now()).toISOString();
-        const token = await store.createSession(createdAt);
+        const input = await readJson(request);
+        const token = await store.createSession(createdAt, {
+          inviteCode: input.invite || url.searchParams.get("invite"),
+        });
         json(response, 201, { token });
         return;
       }
@@ -1618,8 +1707,11 @@ export async function createKalpiApp({
         let token = bearer(request);
         await store.hydrateSession(token);
         if (!store.getSession(token)) {
-          token = await store.createSession(new Date(now()).toISOString());
+          token = await store.createSession(new Date(now()).toISOString(), {
+            inviteCode: url.searchParams.get("invite"),
+          });
         }
+        await store.ensureReferralCode(token);
         json(response, 200, await buildBootstrap(token, studioRequest));
         return;
       }
@@ -1628,9 +1720,12 @@ export async function createKalpiApp({
         let token = bearer(request);
         await store.hydrateSession(token);
         if (!store.getSession(token)) {
-          token = await store.createSession(new Date(now()).toISOString());
+          token = await store.createSession(new Date(now()).toISOString(), {
+            inviteCode: url.searchParams.get("invite"),
+          });
         }
         await store.ensureBinderSlug(token);
+        await store.ensureReferralCode(token);
         await stampVisitAndGrant(token);
         json(response, 200, { token, state: stateFor(store.getSession(token)) });
         return;
@@ -1709,6 +1804,21 @@ export async function createKalpiApp({
         if (request.method === "GET" && url.pathname === "/api/state") {
           await store.ensureBinderSlug(token);
           json(response, 200, stateFor(store.getSession(token)));
+          return;
+        }
+
+        if (request.method === "GET" && url.pathname === "/api/referrals") {
+          json(response, 200, {
+            stars: referralStarGate(studioContent?.gameConfig),
+            referrals: await listReferralRows(token),
+          });
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/referrals/claim") {
+          const input = await readJson(request);
+          const result = await claimReferral(token, input?.code);
+          json(response, result.status, result.body);
           return;
         }
 

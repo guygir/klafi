@@ -1,3 +1,5 @@
+import { collectionStars, numberedHeldByCard } from "./stars.js";
+
 export const LEAGUE_MAX = 32;
 /** League names are capped (in code points) so the room header stays one or two lines. */
 export const LEAGUE_NAME_MAX = 20;
@@ -23,13 +25,7 @@ export function normalizeLeagueCode(value) {
 export function leagueMemberScore(session, cardsById) {
   const inventory = session?.inventory || {};
   const ownedUnique = Object.keys(inventory).filter((cardId) => Number(inventory[cardId]) > 0).length;
-  const stars = Object.keys(inventory).reduce((sum, cardId) => {
-    const card = cardsById.get(cardId);
-    if (card?.rarity === "Promotion") return sum + 5;
-    if (card?.rarity?.startsWith("Rare")) return sum + 3;
-    if (card?.rarity?.startsWith("Uncommon")) return sum + 2;
-    return sum + 1;
-  }, 0);
+  const stars = collectionStars(inventory, cardsById, numberedHeldByCard(session));
   return { ownedUnique, stars };
 }
 

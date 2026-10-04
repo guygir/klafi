@@ -55,6 +55,15 @@ export const PAGE_GUIDES = Object.freeze({
       body: "כאן התמונה שלכם שתופיע בטבלאות הניקוד, ביחד עם המפלגה בה אתם תומכים (אם תרצו לסמן), ורצף הכניסות שלכם מופיעים. לחיצה פותחת את הפרופיל לעריכה. זה השם (הזמני) שלך שיופיע בליגות, תחרויות וטבלאות - לחץ עליו כדי לשנות.",
     },
     {
+      ring: "#profile-panel-invite",
+      pad: 10,
+      radius: 12,
+      place: "above",
+      profilePanel: "invite",
+      title: "הזמנת חברים",
+      body: "רוצים להזמין חבר? לחצו על «הזמנת חברים». העתיקו את הקישור ושלחו לחברים. משתמש חדש שנכנס למשחק לראשונה מהקישור, ומגיע ל-**15★**, מזכה אתכם בחבילה מתנה!",
+    },
+    {
       ring: ".today-docket",
       title: "המרוץ",
       body: "כאן מופיעים מירוץ המפלגות וטבלת האספנים.\n\nחושבים שתוכלו להיות בטופ?",
@@ -652,7 +661,7 @@ export function placeCard(card, ring, to, prefer = "", view = viewportBox(), doc
     card.style.top = `${top}px`;
     return;
   }
-  const above = clamp(ring.left + (ring.width - width) / 2, ring.top - height - 12);
+  const above = clamp(ring.left + (ring.width - width) / 2, ring.top - height - 18);
   const spots = [
     ...(prefer === "above" ? [above] : []),
     { left: vw - width - pad, top: pad },
@@ -748,7 +757,7 @@ export function attachKlafiTips(env = globalThis) {
     return { sync() {}, maybeStart() {}, replay() {}, getState() { return { mode: null, started: false, step: 1, parked: false, page: null }; } };
   }
 
-  const state = { mode: null, started: false, step: 1, parked: false, page: null, paintTries: 0 };
+  const state = { mode: null, started: false, step: 1, parked: false, page: null, paintTries: 0, openedProfile: false };
   let drawTimer = 0;
   let settleTimer = 0;
 
@@ -775,7 +784,66 @@ export function attachKlafiTips(env = globalThis) {
 
   function host() {
     const dialog = doc.querySelector("#card-dialog");
-    return dialog?.open ? dialog : doc.body;
+    if (dialog?.open) return dialog;
+    const step = currentSteps()[state.step - 1];
+    const profile = doc.querySelector("#profile-dialog");
+    if (step?.profilePanel && profile?.open) return profile;
+    return doc.body;
+  }
+
+  function fillCoachBody(text) {
+    body.replaceChildren();
+    for (const part of String(text || "").split(/(\*\*[^*]+\*\*)/g)) {
+      if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+        const raw = part.slice(2, -2);
+        const strong = doc.createElement("strong");
+        const starAt = raw.indexOf("★");
+        if (starAt === -1) {
+          strong.textContent = raw;
+        } else {
+          if (starAt > 0) strong.append(doc.createTextNode(raw.slice(0, starAt)));
+          const icon = doc.createElement("b");
+          icon.className = "tip-star";
+          icon.setAttribute("aria-hidden", "true");
+          icon.textContent = "★";
+          strong.append(icon);
+          const rest = raw.slice(starAt + 1);
+          if (rest) strong.append(doc.createTextNode(rest));
+          const spoken = doc.createElement("span");
+          spoken.className = "visually-hidden";
+          spoken.textContent = " כוכבים";
+          strong.append(spoken);
+        }
+        body.append(strong);
+      } else if (part) {
+        body.append(doc.createTextNode(part));
+      }
+    }
+  }
+
+  function closeOpenedProfile() {
+    if (!state.openedProfile) return;
+    const dialog = doc.querySelector("#profile-dialog");
+    if (dialog?.open) dialog.close();
+    state.openedProfile = false;
+  }
+
+  function syncProfileStep(step) {
+    const dialog = doc.querySelector("#profile-dialog");
+    if (!dialog) return;
+    if (!step?.profilePanel) {
+      closeOpenedProfile();
+      return;
+    }
+    if (!dialog.open) {
+      doc.querySelector("#player-name")?.click();
+      state.openedProfile = true;
+    }
+    if (!dialog.open && typeof dialog.showModal === "function") dialog.showModal();
+    const tab = doc.querySelector(`[data-profile-panel="${step.profilePanel}"]`);
+    if (tab && tab.getAttribute("aria-selected") !== "true") tab.click();
+    doc.querySelector("#profile-name-input")?.blur();
+    doc.querySelector(`#profile-panel-${step.profilePanel}`)?.scrollIntoView({ block: "center", inline: "nearest" });
   }
 
   function park() {
@@ -818,6 +886,7 @@ export function attachKlafiTips(env = globalThis) {
       if (forceOff || mute?.checked) persistOff();
       else persistOn();
     }
+    closeOpenedProfile();
     state.mode = null;
     state.started = false;
     state.parked = false;
@@ -836,13 +905,14 @@ export function attachKlafiTips(env = globalThis) {
       park();
       return;
     }
+    syncProfileStep(step);
     const dest = host();
     if (dest && overlay.parentElement !== dest) dest.append(overlay);
     state.parked = false;
     overlay.hidden = false;
     overlay.setAttribute("aria-hidden", "false");
     title.textContent = step.title;
-    body.textContent = step.body;
+    fillCoachBody(step.body);
     card.classList.toggle("is-top", step.place === "top");
     if (legend) {
       if (step.callouts?.length && !step.hideLegend) {

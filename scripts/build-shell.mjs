@@ -5,6 +5,7 @@ import { catalogExtrasFromStudio, expandPublicCatalog } from "../app/server/publ
 import { publicIdleConfig } from "../app/server/idle-config.js";
 import { cardPullOdds, normalizePackConfig, packCardAllowed, rarityBucket, rarityOrderReport, resolvePackTable } from "../app/server/pack-config.js";
 import { cardIndexFromCatalog, isLiveReleaseSet, visiblePlayerCards, visibleReleaseSets } from "../app/server/visible-sets.js";
+import { referralStarGate } from "../app/server/referral.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cards = JSON.parse(await readFile(path.join(root, "app/data/cards.json"), "utf8"));
@@ -67,6 +68,7 @@ const shell = {
       reward: studio.gameConfig?.progression?.reward || "קלף בונוס מיידי",
     },
     idle: publicIdleConfig(),
+    referral: { stars: referralStarGate(studio.gameConfig) },
     releaseSets: visibleReleaseSets(studio.gameConfig?.releaseSets || []),
     pack: (() => {
       const pack = {
