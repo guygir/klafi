@@ -3999,14 +3999,9 @@ function cardPresentation(card, instance = {}) {
   const listSlot = Number(card?.listSlot);
   const slotLabel = Number.isInteger(listSlot) && listSlot > 0 ? `מקום ${listSlot}` : "";
   const membershipNote = String(card.membershipNote || "").trim();
-  const paraphraseAttribution = card.type === "Quote"
-    && card.walkout?.quoteStatus === "attributed-paraphrase"
-    && String(card.walkout?.speaker || "").trim()
-    ? `מיוחס ל־${String(card.walkout.speaker).trim()}`
-    : "";
   return {
     title: cardTitle(card),
-    subtitle: [slotLabel || card.subtitleHe || card.subtitle || "", membershipNote, paraphraseAttribution].filter(Boolean).join(" · "),
+    subtitle: [slotLabel || card.subtitleHe || card.subtitle || "", membershipNote].filter(Boolean).join(" · "),
     quote: displayedCardQuote(card),
     rawQuote: String(card.walkout?.text || "").trim(),
     code: cardCode(card),
