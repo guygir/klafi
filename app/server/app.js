@@ -673,6 +673,9 @@ function publicIdleState(session, now, cards, config = {}) {
     streakCalendar: publicStreakCalendar(session),
     factionId: session.factionId || null,
     numberedCopies: numberedCopies(session.instances),
+    // The binder's חדש/ישן sort reads this. Idle settle/seen replace the client state, so a
+    // freshly revealed card (often from the newest set) must carry its date here too.
+    acquiredAt: acquiredAtByCard(session.instances, session.inventory),
     pendingTradeNotices: publicTradeNotices(session),
   };
 }
@@ -1026,12 +1029,18 @@ export async function createKalpiApp({
     const gate = referralStarGate(studioContent?.gameConfig);
     const marker = referralMarker(normalized);
     if (!marker) return { status: 400, body: { error: "INVALID_INVITE" } };
+    // The granted copy goes back to the client so the claim plays the normal in-place pack reveal.
+    let rewardInstance = null;
     const outcome = await store.withSession(inviteeToken, async (invitee) => {
       if (invitee.invitedBy !== inviterToken) return "missing";
       if (invitee.referralRewardedAt) return "claimed";
       if (collectionStarCount(invitee, allCards) < gate) return "early";
       const granted = await store.withSession(inviterToken, async (inviter) => {
-        if ((inviter.instances || []).some((item) => item?.acquiredBy === marker)) return "exists";
+        const existing = (inviter.instances || []).find((item) => item?.acquiredBy === marker);
+        if (existing) {
+          rewardInstance = existing;
+          return "exists";
+        }
         const pool = activeIdleCards(allCards, now());
         if (!pool.length) return "empty";
         const pulledAt = new Date(now()).toISOString();
@@ -1051,6 +1060,7 @@ export async function createKalpiApp({
           cards: [instance],
         });
         inviter.packs = inviter.packs.slice(-100);
+        rewardInstance = instance;
         return "granted";
       });
       if (granted !== "granted" && granted !== "exists") return granted;
@@ -1065,6 +1075,9 @@ export async function createKalpiApp({
       status: 200,
       body: {
         claimed: true,
+        mode: "referral",
+        packId: rewardInstance ? `referral-${rewardInstance.instanceId}` : `referral-${normalized}`,
+        cards: rewardInstance ? [rewardInstance] : [],
         referrals: await listReferralRows(inviterToken),
         state: stateFor(store.getSession(inviterToken)),
       },

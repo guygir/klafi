@@ -137,7 +137,18 @@ export function sessionFromHomeRow(row) {
     eventCounts: extras.eventCounts || {},
     referralCode: normalizeInviteCode(extras.referralCode),
     numberedByCard: row.numbered_state || {},
+    acquiredAt: acquiredAtFromRow(row.acquired_state),
   };
+}
+
+/** Earliest pulledAt/seenAt per owned card, as ISO strings (same shape as acquiredAtByCard). */
+function acquiredAtFromRow(value) {
+  const out = {};
+  for (const [cardId, raw] of Object.entries(value || {})) {
+    const ms = Date.parse(raw);
+    if (cardId && Number.isFinite(ms)) out[cardId] = new Date(ms).toISOString();
+  }
+  return out;
 }
 
 async function loadSession(db, token) {
@@ -159,7 +170,21 @@ async function loadSession(db, token) {
              AND seen_at IS NOT NULL
            GROUP BY card_id
          ) AS numbered
-       ), '{}'::jsonb) AS numbered_state
+       ), '{}'::jsonb) AS numbered_state,
+       COALESCE((
+         SELECT jsonb_object_agg(acquired.card_id, acquired.first_at)
+         FROM (
+           SELECT instance.card_id, MIN(COALESCE(instance.pulled_at, instance.seen_at)) AS first_at
+           FROM kalpi_instances AS instance
+           JOIN kalpi_inventory AS owned
+             ON owned.session_token = instance.session_token
+            AND owned.card_id = instance.card_id
+            AND owned.copies > 0
+           WHERE instance.session_token = session.token
+             AND COALESCE(instance.pulled_at, instance.seen_at) IS NOT NULL
+           GROUP BY instance.card_id
+         ) AS acquired
+       ), '{}'::jsonb) AS acquired_state
      FROM kalpi_sessions AS session
      WHERE session.token = $1`,
     [token],

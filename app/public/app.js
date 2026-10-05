@@ -781,6 +781,7 @@ function applyHomePayload(home) {
         progression: model.serverState.progression,
         avatars: model.serverState.avatars,
         inventory: model.serverState.inventory || {},
+        acquiredAt: model.serverState.acquiredAt || {},
         favorites: model.serverState.favorites || [],
         starCount: model.serverState.starCount,
         loginStreak: model.serverState.loginStreak || 0,
@@ -2689,7 +2690,9 @@ function renderHome() {
     elements.idleStorage.hidden = true;
     elements.idleStorage.textContent = `${unseen}/${idleCapacity}`;
   }
-  const activeReleaseIds = [...new Set(model.catalog.filter(({ idleEligible }) => idleEligible).map(({ releaseSetId }) => releaseSetId))];
+  // Same sets the pack opens (shell/game-config pack.current). The static catalog's idleEligible
+  // flag only marks the first two sets, so it would hide newer sets like ליכודיאדה.
+  const activeReleaseIds = openPackReleaseIds();
   const releaseNames = activeReleaseIds
     .map((id) => model.gameConfig?.releaseSets?.find((release) => release.id === id)?.nameHe)
     .filter(Boolean);
@@ -3858,6 +3861,7 @@ const FILTER_SET_SHORT = {
   "party-leaders": "מנהיגים",
   "party-slot-2": "משנה",
   "set-5": "רגעים",
+  "set-6": "ליכודיאדה",
   "decisions": "החלטות",
   "records": "הישגים",
 };
@@ -4453,25 +4457,58 @@ async function loadReferrals() {
 }
 
 async function claimReferralReward(code, button) {
+  if (homePackRipBusy) return;
+  sfx.unlock();
   if (button) button.disabled = true;
+  homePackRipBusy = true;
+  let rip = null;
   try {
+    // Same path as any other pack: "opening…" wait, then the rip and reveal in place.
+    showWait("פותחים…");
     const body = await request("/api/referrals/claim", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ code }),
     });
-    if (body.state) {
-      model.serverState = body.state;
-      model.stateRevision = stateRevision(body.state) ?? model.stateRevision;
+    hideWait();
+    if (body.state) setServerState(body.state);
+    renderReferralList(body.referrals || []);
+    if (!model.catalog.length) await loadStaticCatalog();
+    const cards = (body.cards || []).filter(({ cardId }) => cardId && model.byId.has(cardId));
+    if (!cards.length) {
+      // Credited on the server but nothing to reveal here: still show it in the binder.
+      if (elements.profileDialog?.open) elements.profileDialog.close();
       renderHome();
       renderBinder();
-      renderProfile();
+      showView("binder");
+      showToast("החבילה נכנסה לאוסף.");
+      return;
     }
-    renderReferralList(body.referrals || []);
-    showToast("החבילה נכנסה לאוסף.");
-  } catch {
+    // Start the rip first so closing the profile does not let a deferred popup jump in.
+    rip = playHomePackRip();
+    if (elements.profileDialog?.open) elements.profileDialog.close();
+    await rip.finished;
+    model.currentPack = {
+      packId: body.packId || `referral-${cards[0].instanceId}`,
+      mode: "referral",
+      pulledAt: cards[0].pulledAt || new Date().toISOString(),
+      cards,
+    };
+    model.currentCardIndex = 0;
+    model.previewMode = false;
+    rip.release({ revealing: true });
+    showView("pack");
+    startWalkout();
+  } catch (error) {
+    hideWait();
+    rip?.release();
     if (button) button.disabled = false;
-    showToast("החבילה עדיין לא מוכנה.");
+    const errorCode = error?.body?.error || error?.message || "";
+    showToast(errorCode === "REFERRAL_CLAIMED" ? "כבר קיבלתם את החבילה הזאת." : "החבילה עדיין לא מוכנה.");
+    loadReferrals();
+  } finally {
+    hideWait();
+    homePackRipBusy = false;
   }
 }
 
@@ -4624,8 +4661,10 @@ function binderSortMode() {
 function binderAcquiredAtMap() {
   const source = model.guestBinder || model.serverState;
   if (!source) return {};
-  if (source.acquiredAt && typeof source.acquiredAt === "object") return source.acquiredAt;
-  return acquiredAtByCard(source.instances, source.inventory);
+  const server = source.acquiredAt && typeof source.acquiredAt === "object" ? source.acquiredAt : {};
+  const fromInstances = acquiredAtByCard(source.instances, source.inventory);
+  // Server dates win; instances only fill cards the server map has not dated yet.
+  return { ...fromInstances, ...server };
 }
 
 function binderGridGap(grid) {
