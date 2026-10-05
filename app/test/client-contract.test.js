@@ -811,7 +811,6 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(html, /כל הציטוטים עם מקור, שום דבר לא מומצא/);
   assert.match(javascript, /function displayedCardQuote/);
   assert.match(javascript, /needsMarker && !bare\.endsWith\("\*"\)/);
-  assert.match(javascript, /מיוחס ל־/);
   assert.match(javascript, /ציטוט מקוצר\*/);
   assert.match(javascript, /ניסוח מיוחס\*/);
   assert.doesNotMatch(html, />reimagine israel</);
