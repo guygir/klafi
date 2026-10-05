@@ -161,6 +161,8 @@ test("referral pack is paid once to the inviter at 15 collection stars", async (
     });
     assert.ok(seen.body.starCount > 0);
     assert.ok(seen.body.starCount < 15);
+    // Idle seen replaces the client state; it must date the revealed cards for the binder sort.
+    for (const pulled of settled.body.cards) assert.ok(seen.body.acquiredAt?.[pulled.cardId], `undated ${pulled.cardId}`);
     inviterNow = await api(running.base, "/api/state", { token: inviter.body.token });
     assert.equal(referralPacks(inviterNow.body, seen.body.referralCode).length, 0);
     const tooSoon = await api(running.base, "/api/referrals/claim", {
@@ -235,6 +237,18 @@ test("referral pack is paid once to the inviter at 15 collection stars", async (
     assert.equal(claimed.body.state.unseenCount, unseenBefore);
     assert.equal(claimed.body.state.lastPack.mode, "referral");
     assert.equal(paid[0].cardId, claimed.body.state.lastPack.cards[0].cardId);
+    // The claim hands back the granted copy so the client plays the normal in-place reveal.
+    assert.equal(claimed.body.mode, "referral");
+    assert.equal(claimed.body.cards.length, 1);
+    assert.equal(claimed.body.cards[0].instanceId, paid[0].instanceId);
+    assert.equal(claimed.body.cards[0].cardId, paid[0].cardId);
+    assert.equal(claimed.body.packId, `referral-${paid[0].instanceId}`);
+    assert.ok(claimed.body.state.inventory[paid[0].cardId] >= 1);
+    assert.ok(claimed.body.state.acquiredAt[paid[0].cardId]);
+    // Still there on a fresh read (a refresh).
+    const reread = await api(running.base, "/api/state", { token: inviter.body.token });
+    assert.equal(referralPacks(reread.body, state.referralCode).length, 1);
+    assert.ok(reread.body.inventory[paid[0].cardId] >= 1);
     const claimedRow = claimed.body.referrals.find((item) => item.code === state.referralCode);
     assert.equal(claimedRow.claimed, true);
     assert.equal(claimedRow.ready, false);

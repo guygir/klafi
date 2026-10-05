@@ -113,3 +113,42 @@ test("unowned has no date: earliest pulledAt, else seenAt, and missing cards are
   assert.equal(view.acquiredAt.UNOWNED, undefined);
   assert.equal(Object.hasOwn(view.acquiredAt, "UNOWNED"), false);
 });
+
+test("slim home carries acquiredAt so חדש/ישן sorts every set (set-6 included) after a refresh", async () => {
+  const { sessionFromHomeRow } = await import("../server/slim-home.js");
+  const { slimPublicState } = await import("../server/slim-state.js");
+  const session = sessionFromHomeRow({
+    display_name: "בודק",
+    avatar_id: "kid-boy",
+    created_at: "2026-09-01T00:00:00.000Z",
+    highest_rank: 1,
+    inventory_state: { OLD: 1, NEWEST: 1 },
+    acquired_state: {
+      OLD: "2026-09-10T09:00:00+00:00",
+      NEWEST: "2026-10-05T09:00:00.5+00:00",
+      BAD: "not-a-date",
+    },
+    extras: {},
+  });
+  assert.equal(session.acquiredAt.OLD, "2026-09-10T09:00:00.000Z");
+  assert.equal(session.acquiredAt.NEWEST, "2026-10-05T09:00:00.500Z");
+  assert.equal(Object.hasOwn(session.acquiredAt, "BAD"), false);
+  const state = slimPublicState(session, { idleCardIds: [], gameConfig: {} });
+  assert.deepEqual(state.acquiredAt, session.acquiredAt);
+
+  const catalog = [
+    card("OLD", { releaseSetId: leaders }),
+    card("MISSING", { releaseSetId: deputies }),
+    card("NEWEST", { releaseSetId: "set-6" }),
+  ];
+  assert.deepEqual(
+    sortBinderCards(catalog, { sort: "date-new", catalog, acquiredAt: state.acquiredAt }).map((item) => item.id),
+    ["NEWEST", "OLD", "MISSING"],
+  );
+  assert.deepEqual(
+    sortBinderCards(catalog, { sort: "date-old", catalog, acquiredAt: state.acquiredAt }).map((item) => item.id),
+    ["OLD", "NEWEST", "MISSING"],
+  );
+  const empty = slimPublicState(sessionFromHomeRow({ display_name: "x", extras: {} }), { idleCardIds: [], gameConfig: {} });
+  assert.deepEqual(empty.acquiredAt, {});
+});
