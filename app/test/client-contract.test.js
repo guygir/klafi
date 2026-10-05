@@ -805,9 +805,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(html, /id="open-trust-legend"|class="trust-info"/);
   assert.doesNotMatch(css, /\.trust-info/);
   assert.doesNotMatch(javascript, /openTrustLegend|trustDialog/);
-  assert.match(html, /<dialog id="advocacy-dialog"[\s\S]*?<section id="advocacy-trust"[\s\S]*?<h3 id="advocacy-trust-title">מה מסמנת הכוכבית\?<\/h3>[\s\S]*?כוכבית על ציטוט אומרת שהנוסח קוצר[\s\S]*?<\/dialog>/);
+  assert.match(html, /<dialog id="advocacy-dialog"[\s\S]*?<section id="advocacy-trust"[\s\S]*?<h3 id="advocacy-trust-title">מה מסמנת הכוכבית\?<\/h3>[\s\S]*?כוכבית על ציטוט אומרת שהנוסח קוצר[\s\S]*?בלי כוכבית = נוסח מדויק[\s\S]*?האיורים של הפוליטיקאים נוצרו דיגיטלית ואינם תיעוד מקורי\.[\s\S]*?<\/dialog>/);
   assert.match(html, />Reimagine Israel</);
-  assert.match(html, /למען הסר ספק, המשחק כן בעל אג׳נדה פוליטית, אבל — כל הציטוטים עם מקור, שום דבר לא מומצא\. זו המציאות העגומה שלנו… אני רק השליח\./);
+  assert.match(html, /למען הסר ספק, המשחק כן בעל אג׳נדה פוליטית, אבל — כל ציטוט עם מקור, ואפשר לבדוק אותו בקישור\. זו המציאות העגומה שלנו… אני רק השליח\./);
+  assert.doesNotMatch(html, /כל הציטוטים עם מקור, שום דבר לא מומצא/);
+  assert.match(javascript, /function displayedCardQuote/);
+  assert.match(javascript, /needsMarker && !bare\.endsWith\("\*"\)/);
+  assert.match(javascript, /מיוחס ל־/);
+  assert.match(javascript, /ציטוט מקוצר\*/);
+  assert.match(javascript, /ניסוח מיוחס\*/);
   assert.doesNotMatch(html, />reimagine israel</);
   assert.doesNotMatch(html, /ממאגר ועדת הבחירות — לא מומצא במשחק/);
   assert.match(html, /home-title-row/);
