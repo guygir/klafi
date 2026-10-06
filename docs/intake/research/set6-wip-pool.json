@@ -15,6 +15,7 @@
       "sources": [
         "https://www.inn.co.il/news/689455"
       ],
+      "sourceLabel": "גלנט: יש לנו ראש ממשלה שקרן",
       "existingStudioRef": null,
       "notes": "פגוש את העיתונות, 7 בפברואר 2026. על נתניהו, הרמטכ״ל וראש השב״כ. המשפט המלא ממשיך: וממריד את כל שרי הממשלה נגדם.",
       "art": {
@@ -35,6 +36,7 @@
       "sources": [
         "https://www.globes.co.il/news/article.aspx?did=1001142865"
       ],
+      "sourceLabel": "מירי רגב: \"מה שווה תאגיד השידור אם אנו לא שולטים בו?\"",
       "existingStudioRef": "LIK-M05",
       "notes": "ישיבת ממשלה, יולי 2016, על תאגיד השידור. גלובס מצטט את עמית סגל.",
       "art": {
@@ -55,6 +57,7 @@
       "sources": [
         "https://www.inn.co.il/news/689455"
       ],
+      "sourceLabel": "גלנט: יש לנו ראש ממשלה שקרן",
       "existingStudioRef": null,
       "notes": "פגוש את העיתונות, 7 בפברואר 2026, על נתניהו.",
       "art": {
@@ -75,6 +78,7 @@
       "sources": [
         "https://www.mako.co.il/tv-morning-news/articles/Article-4ebf64736f2de71027.htm"
       ],
+      "sourceLabel": "דודי אמסלם: \"רוב הגזענים הם אשכנזים, בוודאות\"",
       "existingStudioRef": null,
       "notes": "חדשות הבוקר עם ניב רסקין, 7 בפברואר 2022. הציטוט המדויק מופיע בכתבה. ציטוט הנעליים הוא כתבה נפרדת ולא על הקלף.",
       "art": {
@@ -96,6 +100,7 @@
       "sources": [
         "https://www.ynet.co.il/news/article/syt2f45dc"
       ],
+      "sourceLabel": "ח\"כ רגב ל-ynet: \"אין לי על מה להתנצל. מי שהקליט שיתנצל\"",
       "existingStudioRef": "LIK-M05",
       "notes": "ישיבת סיעת הליכוד. ההקלטה מצוטטת ב-ynet.",
       "art": {
@@ -116,6 +121,7 @@
       "sources": [
         "https://www.globes.co.il/news/article.aspx?did=1000920467"
       ],
+      "sourceLabel": "מירי רגב: \"רבין אמר שההתנחלויות סרטן ולא קרה לו כלום\"",
       "existingStudioRef": "LIK-M05",
       "notes": "המתנחל, 27 בפברואר 2014. נוסח הקלף של גיא, לא ציטוט רצוף מהכתבה.",
       "art": {
@@ -137,6 +143,7 @@
         "https://x.com/AmirOhana/status/1155894569340477441",
         "https://www.zman.co.il/24083/"
       ],
+      "sourceLabel": "אמיר אוחנה ב-X: \"נו, וחשבתם שגנב הדעת השקרן הזה יפרסם את כל התגובה?\"",
       "existingStudioRef": "LIK-M03",
       "notes": "ציוץ של אוחנה, 29 ביולי 2019, עם תמונה ולא וידאו. הזמן מצטט את הציוץ.",
       "art": {
@@ -160,6 +167,7 @@
         "https://www.kore.co.il/viewArticle/84754",
         "https://www.kikar.co.il/political-news/395335"
       ],
+      "sourceLabel": "הח\"כ הטיח בלפיד: \"מושחת, שקרן וצבוע\"",
       "existingStudioRef": null,
       "notes": "מליאת הכנסת, 28 ביוני 2021, לחברי ממשלת השינוי. הווידאו מוטמע בכתבה של בחדרי חרדים והועלה בערב הנאום. המשפט על הקלף קוצר מ״אתם צבועים! אנחנו לא סופרים אתכם.״",
       "art": {
@@ -181,6 +189,7 @@
       "sources": [
         "https://e.walla.co.il/item/3566135"
       ],
+      "sourceLabel": "גלית דיסטל: \"בערוץ 13 מחכים שנחטוף כדור\"",
       "existingStudioRef": null,
       "notes": "נאום מדוכן הכנסת אל האופוזיציה. וואלה תיארה את הנאום כשלשום ביחס לכתבה מ-16 במרץ 2023.",
       "art": {
@@ -202,6 +211,7 @@
       "sources": [
         "https://www.globes.co.il/news/article.aspx?did=1001166018"
       ],
+      "sourceLabel": "יו\"ר הקואליציה ביטן: \"הייתי מעדיף שהערבים לא יגיעו לקלפי בכלל\"",
       "existingStudioRef": null,
       "notes": "שבתרבות במבשרת ציון, 10 בדצמבר 2016. המשפט המלא ממשיך על 97 אחוז.",
       "art": {
@@ -223,6 +233,7 @@
       "sources": [
         "https://www.ynet.co.il/news/article/S1uTxMD200"
       ],
+      "sourceLabel": "ח\"כ זוהר ליו\"ר הקואליציה: \"תעני לי כמו ילדה טובה\"",
       "existingStudioRef": "LIK-M12",
       "notes": "ועדה מסדרת, אל עידית סילמן.",
       "art": {
@@ -243,6 +254,7 @@
       "sources": [
         "https://www.inn.co.il/news/684594"
       ],
+      "sourceLabel": "ביסמוט התראיין לעיתון החרדי ועורר סערה",
       "existingStudioRef": null,
       "notes": "ריאיון ל״משפחה״, דיווח ב-4 בדצמבר 2025, על גיוס חרדים.",
       "art": {
@@ -264,6 +276,7 @@
       "sources": [
         "https://www.c14.co.il/article/1559852"
       ],
+      "sourceLabel": "ביסמוט במתקפה על ח\"כים ממפלגתו: \"אין להם עתיד בפוליטיקה\"",
       "existingStudioRef": null,
       "notes": "ערוץ 14, ״שבע״, ליטל שמש, 18 במאי 2026.",
       "art": {
@@ -285,6 +298,7 @@
       "sources": [
         "https://www.bhol.co.il/news/1687933"
       ],
+      "sourceLabel": "סערה: ח\"כ ואטורי השווה את הריאיון עם שורד השבי אלי שרעבי לתעמולת חמאס",
       "existingStudioRef": null,
       "notes": "על חטופים שמתו.",
       "art": {
@@ -305,6 +319,7 @@
       "sources": [
         "https://news.walla.co.il/item/3853468"
       ],
+      "sourceLabel": "קרעי לח\"כ מיקי לוי: \"אין לך רשות לומר קדיש\"",
       "existingStudioRef": null,
       "notes": "מדוכן הכנסת, אל מירב בן ארי.",
       "art": {
@@ -326,6 +341,7 @@
       "sources": [
         "https://www.jdn.co.il/news/2352872"
       ],
+      "sourceLabel": "קרעי אופטימי: דונלד טראמפ בגימטריה זה 'משיח בן דוד'",
       "existingStudioRef": null,
       "notes": "פודקאסט מעריב, 11 בפברואר 2025. נוסח הקלף של גיא, בלי מרכאות סוגרות.",
       "art": {
@@ -347,6 +363,7 @@
       "sources": [
         "https://www.mako.co.il/news-military/israel-q1_2016/Article-0186bd56392a351004.htm"
       ],
+      "sourceLabel": "השר כץ: \"אם הבלגים ימשיכו לאכול שוקולד, לא יוכלו להילחם בטרור\"",
       "existingStudioRef": "LIK-M06",
       "notes": "רשת ב׳, 23 במרץ 2016. המשפט המלא ארוך מדי למסגרת הציטוט, אז הקלף נושא את הקיצור של גיא.",
       "art": {
@@ -367,6 +384,7 @@
       "sources": [
         "https://www.globes.co.il/news/article.aspx?did=1001424962"
       ],
+      "sourceLabel": "רשות המסים פתחה בבדיקת הדירה של הדר מוכתר",
       "existingStudioRef": null,
       "notes": "לא משפט אחד. חלק א׳ שלה, כיפה: «למי תהיה פה דירה בישראל?», לא «לא תהיה לי דירה בחיים חוץ מירושה». חלק ב׳ הוא חיבור: גלובס «היא על שמי, אבל לא שלי» (לשירית אביטן כהן, 19 בספטמבר 2022) עם וואלה «הדירה שייכת לאבא שלי». אינה ברשימת הליכוד שהוגשה לכנסת ה-26, ולכן לא ממוקם.",
       "art": {

@@ -134,6 +134,8 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
   const slot = Number.isInteger(fromCandidate) && fromCandidate > 0 ? fromCandidate : fromMember;
   const listSlot = Number.isInteger(slot) && slot > 0 ? slot : null;
   const sourceUrl = (candidate.sources || []).find(Boolean) || "";
+  // Human-readable receipt label (usually the source headline); fall back to the raw URL.
+  const sourceLabel = String(candidate.sourceLabel || "").trim() || sourceUrl || "Source pending";
   const context = candidate.notes || candidate.art?.note || "";
   const setLabel = party?.displayNameHe || meta.nameHe;
   const unplacedHe = candidate.gender === "f" ? "לא ממוקמת" : "לא ממוקם";
@@ -155,7 +157,7 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
     subtitleHe: listSlot ? `מקום ${listSlot}` : (setId === "set-6" ? unplacedHe : meta.nameHe),
     body: context,
     whyItMatters: candidate.notes || meta.why,
-    source: sourceUrl || "Source pending",
+    source: sourceLabel,
     listSlot,
     [meta.indexField]: index,
     membershipNote: String(member?.membershipNote || "").trim(),
@@ -166,7 +168,7 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
       speaker: candidate.nameHe,
       date: candidate.date || "",
       sourceId: `${meta.sourceIdPrefix}-${String(index).padStart(2, "0")}`,
-      sourceLabel: sourceUrl || "Source pending",
+      sourceLabel,
       sourceUrl,
       context,
       quoteStatus: candidate.quoteStatus || "exact",
