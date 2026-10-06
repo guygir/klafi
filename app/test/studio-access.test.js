@@ -139,3 +139,56 @@ test("studio allowlist parsing: default, raw ids, and sha256 digests", () => {
   assert.equal(DEFAULT_STUDIO_USER_HASHES.length, 1);
   assert.match(DEFAULT_STUDIO_USER_HASHES[0], /^[0-9a-f]{64}$/);
 });
+
+test("studio debug pull: an optional cardId pulls exactly that catalog card and saves nothing", async (t) => {
+  const { running, owner, other } = await withOwner(t, { studioSecretEnabled: false });
+  const catalog = (await api(running.base, "/api/catalog")).body.cards;
+  const chosen = catalog.find((card) => card.releaseSetId === "set-6") || catalog.at(-1);
+  const stateBefore = await api(running.base, "/api/state", { token: owner });
+
+  const pulled = await api(running.base, "/api/studio/debug-pull", {
+    method: "POST",
+    body: { rarity: 1, cardId: chosen.id },
+    token: owner,
+  });
+  assert.equal(pulled.status, 200);
+  assert.equal(pulled.body.mode, "studio-debug");
+  assert.equal(pulled.body.debug, true);
+  assert.equal(pulled.body.cardId, chosen.id);
+  assert.equal(pulled.body.cards.length, 1);
+  const [instance] = pulled.body.cards;
+  assert.equal(instance.cardId, chosen.id, "rarity is ignored when a card is chosen");
+  assert.equal(instance.acquiredBy, "studio-debug");
+  assert.equal(instance.isNew, false);
+  assert.equal(instance.seenAt, null);
+  assert.match(instance.instanceId, /^studio-debug-/);
+
+  for (const card of catalog.slice(0, 5)) {
+    const each = await api(running.base, "/api/studio/debug-pull", { method: "POST", body: { cardId: card.id }, token: owner });
+    assert.equal(each.status, 200, card.id);
+    assert.equal(each.body.cards[0].cardId, card.id);
+  }
+
+  const unknown = await api(running.base, "/api/studio/debug-pull", { method: "POST", body: { cardId: "NOPE-404" }, token: owner });
+  assert.equal(unknown.status, 400);
+  assert.equal(unknown.body.error, "UNKNOWN_CARD");
+
+  for (const token of [other, undefined]) {
+    const denied = await api(running.base, "/api/studio/debug-pull", { method: "POST", body: { cardId: chosen.id }, token });
+    assert.equal(denied.status, 404, token ? "non-allowlisted" : "anonymous");
+  }
+
+  const random = await api(running.base, "/api/studio/debug-pull", { method: "POST", body: { rarity: 2 }, token: owner });
+  assert.equal(random.status, 200, "no cardId keeps the rarity pull");
+  assert.equal(random.body.rarity, 2);
+  assert.equal("cardId" in random.body, false);
+  assert.equal(random.body.cards[0].finish, "Uncommon");
+  const blank = await api(running.base, "/api/studio/debug-pull", { method: "POST", body: { rarity: 3, cardId: "" }, token: owner });
+  assert.equal(blank.status, 200, "an empty cardId falls back to the rarity pull");
+  assert.equal(blank.body.cards[0].finish, "Rare");
+
+  const stateAfter = await api(running.base, "/api/state", { token: owner });
+  assert.deepEqual(stateAfter.body.inventory, stateBefore.body.inventory, "inventory unchanged");
+  assert.deepEqual(stateAfter.body, stateBefore.body, "player state untouched");
+  assert.ok(!stateAfter.body.instances?.some(({ acquiredBy }) => acquiredBy === "studio-debug"));
+});

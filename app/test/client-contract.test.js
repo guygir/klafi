@@ -1309,6 +1309,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(debugDone, /showView\("studio"\)/);
   assert.doesNotMatch(debugDone, /request\(|rememberPendingIdleSeen|flushPendingIdleSeen/);
   assert.match(javascript, /studioDebugPull\?\.addEventListener\("click", runStudioDebugPull\)/);
+  // Optional specific-card picker: empty = random by rarity; a chosen card is sent as cardId.
+  assert.match(html, /<legend>קלף מסוים \(לא חובה\)<\/legend>[\s\S]{0,300}list="studio-debug-card-options"/);
+  assert.match(html, /<datalist id="studio-debug-card-options"><\/datalist>/);
+  assert.match(debugPull, /cardId \? \{ rarity, cardId \} : \{ rarity \}/);
+  assert.match(debugPull, /UNKNOWN_CARD" \? "הקלף לא נמצא\."/);
 
   // Changelog version comes from the latest GitHub release, with a baked fallback.
   assert.match(javascript, /const HEARD_YOU_VERSION = "v1\.\d+"/);
