@@ -72,6 +72,7 @@ const model = {
   stateRevision: 0,
   editorial: null,
   studioContent: null,
+  studioAccess: false,
   gameConfig: {
     revealTiming: { quote: 400, party: 1800, name: 1800, portrait: 2000 },
     visual: { theme: "pack-v2", cardFrame: "tall-v2", density: "airy-v2", quoteReveal: "ink-v2" },
@@ -541,7 +542,6 @@ function captureStudioSecret() {
   const key = url.searchParams.get("studioKey");
   if (!key) return;
   localStorage.setItem(STUDIO_KEY, key);
-  applyStudioAccess({ studioEnabled: true, debugEnabled: model.studioContent?.debugEnabled });
   url.searchParams.delete("studioKey");
   history.replaceState({}, "", url);
 }
@@ -720,6 +720,8 @@ function setServerState(state, { merge = false } = {}) {
 }
 
 function applyHomePayload(home) {
+  // The server marks home with studio: true only for allowlisted identities.
+  if (home.studio) model.studioAccess = true;
   if (home.token) {
     if (model.token && home.token !== model.token) model.stateRevision = 0;
     model.token = home.token;
@@ -973,7 +975,7 @@ let catalogFailed = false;
 const PLAYER_VIEWS = ["home", "binder", "achievements", "growth", "studio"];
 
 function studioViewAllowed() {
-  return Boolean(model.studioContent?.studioEnabled || studioSecret());
+  return Boolean(model.studioContent?.studioEnabled);
 }
 
 function catalogReady() {
@@ -1363,7 +1365,7 @@ async function hydrateExtras() {
       ];
       // Prefetch the league room with the community extras so the Leagues tab opens on it.
       if (model.token) jobs.push(["leagues", () => hydrateLeagues()]);
-      if (studioSecret()) {
+      if (studioSecret() || model.studioAccess) {
         jobs.push(["events", () => request("/api/events")]);
         jobs.push(["specials", () => request("/api/specials")]);
       }
@@ -1377,13 +1379,14 @@ async function hydrateExtras() {
           /* One slow or failed extra must not keep badges/community on Loading. */
         }
       }));
-      if (studioSecret()) {
+      if (studioSecret() || model.studioAccess) {
         try {
           model.studioContent = await request("/api/studio/content");
-          applyStudioAccess(model.studioContent);
         } catch {
-          /* Studio stays closed without the secret. */
+          /* The server decides: Studio stays closed for everyone else. */
+          model.studioContent = null;
         }
+        applyStudioAccess(model.studioContent);
       }
       model.extrasReady = true;
       paintExtras();
@@ -2471,6 +2474,9 @@ async function restoreSessionFromCode() {
       headers: { authorization: `Bearer ${token}` },
     });
     model.token = token;
+    model.studioAccess = false;
+    model.studioContent = null;
+    applyStudioAccess(null);
     model.leagues = [];
     model.leaguesKnown = false;
     model.leaguesCacheToken = null;
@@ -7645,7 +7651,7 @@ async function saveReleaseSets() {
 }
 
 function renderStudio() {
-  if (studioSecret()) hydrateStudioReports().catch(() => {});
+  if (studioViewAllowed()) hydrateStudioReports().catch(() => {});
   if (elements.studioShareBinderLink) {
     const shareUrl = new URL("/share/binder", location.origin);
     elements.studioShareBinderLink.href = shareUrl.href;
@@ -7728,7 +7734,7 @@ function renderStudioReports() {
 }
 
 async function hydrateStudioReports() {
-  if (!studioSecret()) return;
+  if (!studioViewAllowed()) return;
   const payload = await request("/api/studio/reports");
   model.reports = payload.reports || [];
   renderStudioReports();
