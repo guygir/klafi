@@ -1,5 +1,6 @@
 import { readFile, rename, stat, writeFile } from "node:fs/promises";
 import { randomInt, randomUUID, timingSafeEqual } from "node:crypto";
+import { parseStudioUserIds, studioSecretPathEnabled, studioUserAllowed } from "./studio-access.js";
 import path from "node:path";
 import { CARD_HOLDER_SYNC_MS, JsonStore } from "./store.js";
 import { PostgresStore } from "./postgres-store.js";
@@ -813,6 +814,8 @@ export async function createKalpiApp({
   debugEnabled = false,
   quizEnabled = false,
   studioSecret = process.env.STUDIO_SECRET || null,
+  studioSecretEnabled = studioSecretPathEnabled(),
+  studioUserIds = process.env.STUDIO_USER_IDS,
   now = () => Date.now(),
   numberedRandom = Math.random,
   rng = randomInt,
@@ -826,6 +829,7 @@ export async function createKalpiApp({
   const samples = await readJsonFile(samplesPath, []);
   const demoPack = await readJsonFile(demoPackPath, null);
   let studioContent = await readJsonFile(studioContentPath, null);
+  const studioUserHashes = parseStudioUserIds(studioUserIds);
   const specials = await readJsonFile(specialsPath, { sets: [] });
   const set5 = docsDir
     ? await readJsonFile(path.join(docsDir, "intake/research/set5-wip-pool.json"), { candidates: [] })
@@ -1578,7 +1582,20 @@ export async function createKalpiApp({
     try {
       const url = new URL(request.url, "http://localhost");
       const debugRequest = debugEnabled && isLoopbackRequest(request);
-      const studioRequest = debugRequest || secretsMatch(studioSecretFrom(request), studioSecret);
+      const studioBySecret = debugRequest
+        || (studioSecretEnabled && secretsMatch(studioSecretFrom(request), studioSecret));
+      // Studio identity: the bearer session token must be allowlisted AND be a real session.
+      let studioDecision = null;
+      const studioRequest = () => {
+        studioDecision ??= (async () => {
+          if (studioBySecret) return true;
+          const token = bearer(request);
+          if (!studioUserAllowed(token, studioUserHashes)) return false;
+          await store.hydrateSession(token);
+          return Boolean(store.getSession(token));
+        })();
+        return studioDecision;
+      };
       if (!debugRequest) {
         response.setHeader(
           "content-security-policy",
@@ -1649,7 +1666,7 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/studio/content") {
-        if (!studioRequest || !studioContent) {
+        if (!(await studioRequest()) || !studioContent) {
           json(response, 404, { error: "NOT_FOUND" });
           return;
         }
@@ -1658,7 +1675,7 @@ export async function createKalpiApp({
       }
 
       if (request.method === "POST" && url.pathname === "/api/studio/debug-pull") {
-        if (!studioRequest) {
+        if (!(await studioRequest())) {
           json(response, 404, { error: "NOT_FOUND" });
           return;
         }
@@ -1685,7 +1702,7 @@ export async function createKalpiApp({
       }
 
       if (request.method === "GET" && url.pathname === "/api/studio/reports") {
-        if (!studioRequest) {
+        if (!(await studioRequest())) {
           json(response, 404, { error: "NOT_FOUND" });
           return;
         }
@@ -1695,7 +1712,7 @@ export async function createKalpiApp({
 
       const studioReport = url.pathname.match(/^\/api\/studio\/reports\/([^/]+)$/);
       if (request.method === "POST" && studioReport) {
-        if (!studioRequest) {
+        if (!(await studioRequest())) {
           json(response, 404, { error: "NOT_FOUND" });
           return;
         }
@@ -1725,7 +1742,7 @@ export async function createKalpiApp({
           });
         }
         await store.ensureReferralCode(token);
-        json(response, 200, await buildBootstrap(token, studioRequest));
+        json(response, 200, await buildBootstrap(token, await studioRequest()));
         return;
       }
 
@@ -1740,7 +1757,11 @@ export async function createKalpiApp({
         await store.ensureBinderSlug(token);
         await store.ensureReferralCode(token);
         await stampVisitAndGrant(token);
-        json(response, 200, { token, state: stateFor(store.getSession(token)) });
+        json(response, 200, {
+          token,
+          state: stateFor(store.getSession(token)),
+          ...(studioUserAllowed(token, studioUserHashes) ? { studio: true } : {}),
+        });
         return;
       }
 
@@ -2396,7 +2417,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/debug/unlock-card") {
-          if (!studioRequest) {
+          if (!(await studioRequest())) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
@@ -2473,7 +2494,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/content") {
-          if (!studioRequest || !studioContent) {
+          if (!(await studioRequest()) || !studioContent) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
@@ -2530,7 +2551,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/specials") {
-          if (!studioRequest || !specialsPath) {
+          if (!(await studioRequest()) || !specialsPath) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
@@ -2599,7 +2620,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/config") {
-          if (!studioRequest || !studioContent) {
+          if (!(await studioRequest()) || !studioContent) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
@@ -2654,7 +2675,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/achievements") {
-          if (!studioRequest || !achievementsPath) {
+          if (!(await studioRequest()) || !achievementsPath) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }
@@ -2674,7 +2695,7 @@ export async function createKalpiApp({
         }
 
         if (request.method === "POST" && url.pathname === "/api/studio/events") {
-          if (!studioRequest || !eventsPath) {
+          if (!(await studioRequest()) || !eventsPath) {
             json(response, 404, { error: "NOT_FOUND" });
             return;
           }

@@ -6,6 +6,7 @@ import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { newPublicBinderSlug } from "./public-binder.js";
 import { applyVisitStreak, visitStreakExtras } from "./streak-calendar.js";
 import { newReferralCode, normalizeInviteCode, referralStarGate } from "./referral.js";
+import { studioUserAllowed } from "./studio-access.js";
 
 const { Pool } = pg;
 const SECURITY_HEADERS = Object.freeze({
@@ -292,7 +293,11 @@ export async function handleSlimHome(request, response) {
         [token, JSON.stringify(visitStreakExtras(session))],
       );
     }
-    json(response, 200, { token, state: slimPublicState(session, config) });
+    json(response, 200, {
+      token,
+      state: slimPublicState(session, config),
+      ...(studioUserAllowed(token) ? { studio: true } : {}),
+    });
   } catch (error) {
     json(response, 500, { error: "SERVER_ERROR", detail: error.code || error.message });
   }
