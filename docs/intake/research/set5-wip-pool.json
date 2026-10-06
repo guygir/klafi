@@ -14,6 +14,7 @@
       "sources": [
         "https://www.youtube.com/watch?v=Q2cUoglR1yk"
       ],
+      "sourceLabel": "בנימין נתניהו ביוטיוב: \"שלטון הימין בסכנה - חייבים לצאת ולהצביע מחל\"",
       "existingStudioRef": "LIK-M01-Q02",
       "art": {
         "artKey": "hero-art-benjamin-netanyahu-arab-voters.jpg",
@@ -33,6 +34,7 @@
       "sources": [
         "https://lahav.substack.com/p/i-reported-on-netanyahu-green-lighting"
       ],
+      "sourceLabel": "להב הרכוב ב-Substack: \"I reported on Netanyahu green-lighting Gaza aid - but there's more to the story\"",
       "existingStudioRef": "LIK-M01-Q03",
       "notes": "Attributed report, not a recording. Preserve attribution and shortened marker. Already lives in Studio as LIK-M01-Q03; dedupe at prune time.",
       "art": {
@@ -53,6 +55,7 @@
       "sources": [
         "https://www.mako.co.il/news-politics/2024_q2/Article-1ff19495b64ef81027.htm"
       ],
+      "sourceLabel": "מירי רגב מתגאה בתפקוד הממשלה: \"כל כך הרבה אנשים במלונות, תודה לאל\"",
       "existingStudioRef": "LIK-M05-Q01",
       "art": {
         "artKey": "hero-art-miri-regev-hotels.jpg",
@@ -69,8 +72,12 @@
       "nameEn": "Israel Katz",
       "displayText": "הורדוס לא הצליח להפוך את ישראל למרכז הסחר הבין־לאומי של האימפריה הרומית כפי שתכנן. אני הצלחתי.*",
       "quoteStatus": "shortened",
-      "sources": [],
-      "sourcePending": true,
+      "date": "2020-11-12",
+      "sources": [
+        "https://www.ynet.co.il/economy/article/S13Xw005YP",
+        "https://www.calcalist.co.il/local/articles/0,7340,L-3871373,00.html"
+      ],
+      "sourceLabel": "כץ ממשיך לתקוף לכל עבר: \"בעניין הנמלים אני גדול יותר מהורדוס\"",
       "existingStudioRef": null,
       "notes": "Guy called this a Banger. Use the existing Studio Herod/port concept. Shortened marker.",
       "art": {
@@ -88,8 +95,12 @@
       "nameEn": "Orit Strock",
       "displayText": "אנחנו חיים בתקופה של נס*",
       "quoteStatus": "shortened",
-      "sources": [],
-      "sourcePending": true,
+      "date": "2024-07-07",
+      "sources": [
+        "https://www.walla.co.il/news/politics/3675829",
+        "https://www.ynet.co.il/news/article/hyqqkiwdr"
+      ],
+      "sourceLabel": "אורית סטרוק: \"אנחנו חיים בתקופה של נס\"",
       "existingStudioRef": null,
       "notes": "Display is the accepted opening only. The beep-beep remainder is dropped; the art has no baked-in beep. Metadata must retain that it is edited/shortened from her settlement-construction remarks.",
       "art": {
@@ -111,6 +122,7 @@
         "https://www.mako.co.il/news-military/6361323ddea5a810/Article-c66a26f977c8b81027.htm",
         "https://www.mako.co.il/news-law/2026_q3/Article-65b83474f2eaf91027.htm"
       ],
+      "sourceLabel": "האמירה המקוממת של חה\"כ שמחה רוטמן",
       "existingStudioRef": "RZ-M04-Q03",
       "notes": "Reported from a closed Constitution Committee prep meeting, reported 2023-11-01. He retracted in the room and denied it later; in July 2026 his libel suit was dismissed and the court found N12 proved truth. Preserve all of this in metadata.",
       "art": {
@@ -131,6 +143,7 @@
       "sources": [
         "https://www.ynet.co.il/news/article/rjqi80d11ex"
       ],
+      "sourceLabel": "טלי גוטליב: \"כל חטוף הוא שטוף מוח מחמאס\"",
       "existingStudioRef": "OTZ-M02-Q02",
       "art": {
         "artKey": "hero-art-tally-gotliv-hostages.jpg",
@@ -147,9 +160,12 @@
       "nameEn": "Amichai Eliyahu",
       "displayText": "הממשלה דוהרת לזה שעזה נמחקת, תודה להשם שאנחנו מוחקים את הרוע הזה. כל עזה תהיה יהודית.",
       "quoteStatus": "exact",
+      "date": "2025-07-24",
       "sources": [
-        "https://kol-barama.co.il/item/%D7%94%D7%A9%D7%A8-%D7%90%D7%9C%D7%99%D7%94%D7%95-"
+        "https://kol-barama.co.il/item/%d7%94%d7%a9%d7%a8-%d7%90%d7%9c%d7%99%d7%94%d7%95-%d7%94%d7%9e%d7%9e%d7%a9%d7%9c%d7%94-%d7%93%d7%95%d7%94%d7%a8%d7%aa-%d7%9c%d7%96%d7%94-%d7%a9%d7%a2%d7%96%d7%94-%d7%a0%d7%9e%d7%97%d7%a7%d7%aa/",
+        "https://www.ynet.co.il/news/article/bycf1121pll"
       ],
+      "sourceLabel": "השר אליהו: \"הממשלה דוהרת לזה שעזה נמחקת - היא תהיה יהודית\"",
       "existingStudioRef": "OTZ-M04-Q03",
       "notes": "Keep this one only. אין דבר כזה בלתי מעורבים בעזה was explicitly dropped.",
       "art": {
@@ -170,6 +186,7 @@
       "sources": [
         "https://www.mako.co.il/tv-people/articles/Article-0fc26d494fed881026.htm"
       ],
+      "sourceLabel": "חבר הכנסת פינדרוס: \"הפלורליסט פה זה אני, אי אפשר לחיות בהפקרות\"",
       "existingStudioRef": "UTJ-M03-Q02",
       "notes": "Target is LGBT people/movement. The bare tail was rejected as unclear. Shortened marker.",
       "art": {
@@ -187,8 +204,11 @@
       "nameEn": "Ofer Winter",
       "displayText": "אתה רמטכ״ל מבולבל, אתה כפוף לראש הממשלה ולדרג המדיני.*",
       "quoteStatus": "shortened",
-      "sources": [],
-      "sourcePending": true,
+      "date": "2024-12-12",
+      "sources": [
+        "https://www.c14.co.il/article/1071013"
+      ],
+      "sourceLabel": "וינטר חשף: רה\"מ רצה למנות אותו למזכ\"צ, הלוי ביקש ממנו לפרוש",
       "existingStudioRef": null,
       "notes": "Addressed to/recounted about Herzi Halevi. Winter's outburst is verified; the IDF disputed the underlying exchange he described. Preserve dispute metadata.",
       "art": {
@@ -206,9 +226,11 @@
       "nameEn": "Bezalel Smotrich",
       "displayText": "אף אחד לא ייתן לנו להמית שני מיליון אזרחים ברעב, למרות שאולי זה צודק ומוסרי.*",
       "quoteStatus": "shortened",
+      "date": "2024-08-05",
       "sources": [
-        "https://www.timesofisrael.com/smotrich-it-may-be-justified-to-starve-2-million-g"
+        "https://www.timesofisrael.com/smotrich-it-may-be-justified-to-starve-2-million-gazans-but-world-wont-let-us/"
       ],
+      "sourceLabel": "Times of Israel: \"Smotrich: It may be ‘justified’ to starve 2 million Gazans, but world won’t let us\"",
       "existingStudioRef": "RZ-M01-Q03",
       "notes": "Already lives in Studio as RZ-M01-Q03; dedupe at prune time.",
       "art": {
@@ -226,8 +248,11 @@
       "nameEn": "Naama Lazimi",
       "displayText": "הוא הכריז מלחמה על ישראל הדמוקרטית ועל מערכות השלטון והחוק. כל מסגור אחר חוטא לאמת.",
       "quoteStatus": "exact",
-      "sources": [],
-      "sourcePending": true,
+      "date": "2026-07-05",
+      "sources": [
+        "https://www.ynet.co.il/news/article/rybuu11u7mx"
+      ],
+      "sourceLabel": "לזימי: \"נתניהו הוא ראש ארגון פשע שחטף מדינה. הוא צריך להיעצר על המרדה\"",
       "existingStudioRef": null,
       "notes": "Moved into Set 5 rather than replacing her live Set 2 card.",
       "art": {
@@ -245,8 +270,11 @@
       "nameEn": "Rafi Ben Shitrit",
       "displayText": "הדרג המדיני מבקש לקבור את האמת.",
       "quoteStatus": "exact",
-      "sources": [],
-      "sourcePending": true,
+      "date": "2026-07-07",
+      "sources": [
+        "https://www.ynet.co.il/news/article/hk00im757fe"
+      ],
+      "sourceLabel": "רפי בן שטרית, שבנו נפל ב-7/10: \"הדרג המדיני מבקש לקבור את האמת\"",
       "existingStudioRef": null,
       "notes": "Moved into Set 5 rather than replacing his live Set 2 card.",
       "art": {
@@ -267,6 +295,7 @@
       "sources": [
         "https://zoha.org.il/146643/"
       ],
+      "sourceLabel": "יוסף ג'בארין: הכי רחוקה מנתניהו – חד\"ש היא האלטרנטיבה למדיניות הימין",
       "existingStudioRef": "JNT-M01-Q03",
       "notes": "Moved into Set 5 rather than replacing his live Set 1 card.",
       "art": {
@@ -284,9 +313,12 @@
       "nameEn": "Ahmed Tibi",
       "displayText": "להשיל את השוני ולגלום גלימה אחת ויחידה: גלימתו האנושית... ולהיות בן אנוש. בן אנוש בלבד.*",
       "quoteStatus": "shortened",
+      "date": "2010-01-27",
       "sources": [
-        "https://www.haaretz.co.il/news/education/2010-01-28/ty-article/0000017f-eb9f-d0f"
+        "https://www.mako.co.il/news-military/politics/Article-93018ab427b7621004.htm",
+        "https://www.haaretz.co.il/news/education/2010-01-28/ty-article/0000017f-eb9f-d0f7-a9ff-efdff1de0000"
       ],
+      "sourceLabel": "מה טיבי חושב על יום השואה?",
       "existingStudioRef": "JNT-M02-Q02",
       "art": {
         "artKey": "hero-art-ahmad-tibi-human-cloak.jpg",
@@ -306,6 +338,7 @@
       "sources": [
         "https://www.ice.co.il/opinions/news/article/1053114"
       ],
+      "sourceLabel": "לא צדקה אלא צדק: הגיע הזמן לתת לנשים השכולות את שמגיע להן",
       "existingStudioRef": "BW-M02-Q03",
       "art": {
         "artKey": "hero-art-pnina-tamano-shata-justice.jpg",
@@ -325,6 +358,7 @@
       "sources": [
         "https://www.ynet.co.il/economy/article/r1puvezc1x"
       ],
+      "sourceLabel": "בעקבות תחקיר ynet: \"חוק הקופאיות\" אושר בקריאה ראשונה",
       "existingStudioRef": "DEM-M04-Q03",
       "art": {
         "artKey": "hero-art-efrat-rayten-strong-society.jpg",
@@ -344,6 +378,7 @@
       "sources": [
         "https://news.walla.co.il/item/3701292"
       ],
+      "sourceLabel": "יאיר גולן: \"לנתניהו אין אסטרטגיה\"",
       "existingStudioRef": "DEM-M01-Q03",
       "art": {
         "artKey": "hero-art-yair-golan-political-security.jpg",
@@ -360,8 +395,12 @@
       "nameEn": "Miri Regev",
       "displayText": "קודם כל, אין מה להילחץ, אתם נמצאים בחו״ל, תיהנו.",
       "quoteStatus": "exact",
-      "sources": [],
-      "sourcePending": true,
+      "date": "2025-06-16",
+      "sources": [
+        "https://www.ynet.co.il/news/article/hkhfbdt7gl",
+        "https://x.com/kann_news/status/1934571892880429336"
+      ],
+      "sourceLabel": "מירי רגב לישראלים שתקועים בחו\"ל: \"קודם כל, אין מה להילחץ, אתם נמצאים בחו\"ל, תיהנו\"",
       "existingStudioRef": null,
       "notes": "Accepted addition from video review.",
       "art": {
@@ -379,8 +418,12 @@
       "nameEn": "May Golan",
       "displayText": "קוקוריקו, זה מה שאת, תרנגולת קרקרנית.",
       "quoteStatus": "exact",
-      "sources": [],
-      "sourcePending": true,
+      "date": "2023-03-05",
+      "sources": [
+        "https://www.c14.co.il/article/763643",
+        "https://www.ice.co.il/local-news/news/article/943265"
+      ],
+      "sourceLabel": "\"קוקוריקו, את תרנגולת קרקרנית\": השרה גולן במתקפה נגד ח\"כ בן ארי",
       "existingStudioRef": null,
       "notes": "Addressed to Merav Ben Ari. Drop the edited די לקרקר tail. May Golan has no Studio member record yet.",
       "art": {
@@ -398,8 +441,12 @@
       "nameEn": "Simcha Rothman",
       "displayText": "בעל מלון דתי יוכל לסרב לארח הומואים? אם זה פוגע ברגשותיו הדתיים - כן.",
       "quoteStatus": "exact",
-      "sources": [],
-      "sourcePending": true,
+      "date": "2022-12-25",
+      "sources": [
+        "https://www.kan.org.il/content/kan-news/politic/244753/",
+        "https://www.ynet.co.il/news/article/bjhw11qsts"
+      ],
+      "sourceLabel": "רוטמן לכאן רשת ב: בעל מלון יוכל לסרב לארח הומואים",
       "existingStudioRef": null,
       "notes": "First sentence is interviewer framing; second is Rothman's answer. Metadata must not present the full combined line as one verbatim Rothman quote. Accepted addition from video review.",
       "art": {
@@ -417,8 +464,11 @@
       "nameEn": "Ahmad Tibi",
       "displayText": "מי גנב לנו את הפלאפל והזעתר והחומוס?",
       "quoteStatus": "exact",
-      "sources": [],
-      "sourcePending": true,
+      "date": "2023-09-05",
+      "sources": [
+        "https://www.youtube.com/watch?v=9XRaE7yzsnA"
+      ],
+      "sourceLabel": "ערוץ כנסת: אחמד טיבי על חשבון שר האוצר סמוטריץ' - \"מי גנב לנו את הפלאפל והזעתר והחומוס?\"",
       "existingStudioRef": null,
       "notes": "Accepted addition from video review.",
       "art": {
@@ -441,6 +491,7 @@
         "https://www.srugim.co.il/1306258-%D7%93%D7%A8%D7%A2%D7%99-%D7%95%D7%95%D7%99%D7%93%D7%95%D7%99-%D7%9E%D7%A4%D7%AA%D7%99%D7%A2-%D7%94%D7%AA%D7%A7%D7%95%D7%A4%D7%94-%D7%91%D7%9B%D7%9C%D7%90-%D7%9E%D7%94%D7%98%D7%95%D7%91%D7%95%D7%AA-%D7%91%D7%97%D7%99%D7%99%D7%95",
         "https://www.babli.co.il/ultra-orthodox/tg8zu0"
       ],
+      "sourceLabel": "דין תורה בין רעיית דרעי למרן הרב עובדיה יוסף",
       "existingStudioRef": null,
       "notes": "ראיון לעודד הרוש בתוכנית ״שיחה״, ערוץ 14, 7.6.2026. דרעי ישב בכלא מעשיהו 2000–2002 לאחר הרשעה בשוחד.",
       "art": {

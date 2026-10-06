@@ -11,27 +11,35 @@ The accepted 23-card pool is live in the binder, pack table, and Vercel catalog 
 3. Miri Regev - `דברים מדהימים! כל כך הרבה תושבים במלונות במימון המדינה.`
 4. Israel Katz - `הורדוס לא הצליח להפוך את ישראל למרכז הסחר הבין־לאומי של האימפריה הרומית כפי שתכנן. אני הצלחתי.*`
    - Guy called this a "Banger". Use the existing Studio Herod/port concept. Shortened marker.
+   - Source: ynet, 12.11.2020 (Katz's Facebook reply: `נכון, אבל לא הצליח להפוך את ישראל למרכז הסחר הבין לאומי של האימפריה הרומית כפי שתכנן. אני הצלחתי, ...`) https://www.ynet.co.il/economy/article/S13Xw005YP
 5. Orit Strock - `אנחנו חיים בתקופה של נס*`
    - Accepted opening only. Beep-beep remainder dropped; art has no baked-in beep. Metadata must retain that it is edited/shortened from her settlement-construction remarks.
+   - Source: Walla, 7.7.2024 (headline quotes `אנחנו חיים בתקופה של נס`; the Galatz recording says `אצלי זה כמו תקופה של נס`) https://www.walla.co.il/news/politics/3675829 and ynet https://www.ynet.co.il/news/article/hyqqkiwdr
 6. Simcha Rothman - `הדם של האחים הלל ויגל יניב ז״ל, שנרצחו בחווארה, אדום יותר מדם הנרצחים ב־7 באוקטובר.`
    - Reported from a closed Constitution Committee prep meeting, reported 2023-11-01. He retracted in the room and denied it later; in July 2026 his libel suit was dismissed and the court found N12 proved truth. Preserve all of this in metadata.
    - Sources: https://www.mako.co.il/news-military/6361323ddea5a810/Article-c66a26f977c8b81027.htm and https://www.mako.co.il/news-law/2026_q3/Article-65b83474f2eaf91027.htm
 7. Tally Gotliv - `כל חטוף הוא שטוף מוח מחמאס. כל חטוף מדבר את מה שחמאס משמיע להם.`
 8. Amichai Eliyahu - `הממשלה דוהרת לזה שעזה נמחקת, תודה להשם שאנחנו מוחקים את הרוע הזה. כל עזה תהיה יהודית.`
+   - Source: Kol Barama radio, 24.7.2025 (previous truncated URL fixed) and ynet https://www.ynet.co.il/news/article/bycf1121pll
    - Keep this one only. `אין דבר כזה בלתי מעורבים בעזה` was explicitly dropped.
 9. Yitzhak Pindrus - `הדבר הכי מסוכן למדינת ישראל - יותר מדאעש, יותר מחיזבאללה, יותר מחמאס - זה הפריצות בעריות.*`
    - Target is LGBT people/movement. The bare tail was rejected as unclear. Shortened marker.
    - Source: https://www.mako.co.il/tv-people/articles/Article-0fc26d494fed881026.htm
 10. Ofer Winter - `אתה רמטכ״ל מבולבל, אתה כפוף לראש הממשלה ולדרג המדיני.*`
     - Addressed to/recounted about Herzi Halevi. Winter's outburst is verified; the IDF disputed the underlying exchange he described. Preserve dispute metadata.
+    - Source: Channel 14, 12.12.2024, quoting his Kan interview https://www.c14.co.il/article/1071013
 11. Bezalel Smotrich - `אף אחד לא ייתן לנו להמית שני מיליון אזרחים ברעב, למרות שאולי זה צודק ומוסרי.*`
+    - Source: Times of Israel, 5.8.2024 https://www.timesofisrael.com/smotrich-it-may-be-justified-to-starve-2-million-gazans-but-world-wont-let-us/
 12. Naama Lazimi - `הוא הכריז מלחמה על ישראל הדמוקרטית ועל מערכות השלטון והחוק. כל מסגור אחר חוטא לאמת.`
     - Moved into Set 5 rather than replacing Set 2.
+    - Source: ynet, 5.7.2026 (her X post) https://www.ynet.co.il/news/article/rybuu11u7mx
 13. Rafi Ben Shitrit - `הדרג המדיני מבקש לקבור את האמת.`
     - Moved into Set 5 rather than replacing Set 2.
+    - Source: ynet, 7.7.2026 (ynet studio interview) https://www.ynet.co.il/news/article/hk00im757fe
 14. Yousef Jabareen - `העתיד של כולנו לא נמצא בפחד, במלחמות ובהסתה, אלא בשותפות יהודית־ערבית אמיצה.*`
     - Moved into Set 5 rather than replacing Set 1.
 15. Ahmed Tibi - `להשיל את השוני ולגלום גלימה אחת ויחידה: גלימתו האנושית... ולהיות בן אנוש. בן אנוש בלבד.*`
+    - Source: N12, International Holocaust Remembrance Day Knesset speech 27.1.2010 https://www.mako.co.il/news-military/politics/Article-93018ab427b7621004.htm (Haaretz URL fixed from a truncated id: https://www.haaretz.co.il/news/education/2010-01-28/ty-article/0000017f-eb9f-d0f7-a9ff-efdff1de0000)
 16. Pnina Tamano-Shata - `לא צדקה אלא צדק; לא רחמים אלא הכרה.`
 17. Efrat Rayten - `חברה חזקה מגינה על החלש מפני ניצול כוח ושררה.`
 18. Yair Golan - `רק הסדרים מדיניים מביאים ביטחון בראייה ארוכת טווח.`
@@ -39,10 +47,14 @@ The accepted 23-card pool is live in the binder, pack table, and Vercel catalog 
 ## Accepted additions from video review
 
 19. Miri Regev - `קודם כל, אין מה להילחץ, אתם נמצאים בחו״ל, תיהנו.`
+    - Source: ynet, 16.6.2025 https://www.ynet.co.il/news/article/hkhfbdt7gl (video: Kan News on X https://x.com/kann_news/status/1934571892880429336)
 20. May Golan - `קוקוריקו, זה מה שאת, תרנגולת קרקרנית.` Addressed to Merav Ben Ari. Drop the edited `די לקרקר` tail.
+    - Source: Channel 14, Knesset plenary 5.3.2023 https://www.c14.co.il/article/763643 (also ice https://www.ice.co.il/local-news/news/article/943265)
 21. Simcha Rothman - `בעל מלון דתי יוכל לסרב לארח הומואים? אם זה פוגע ברגשותיו הדתיים - כן.`
     - First sentence is interviewer framing; second is Rothman's answer. Metadata must not present the full combined line as one verbatim Rothman quote.
+    - Source: Kan News, Kan Reshet Bet interview 25.12.2022 (`כשנשאל אם בעל מלון דתי יוכל לסרב לארח הומואים הוא השיב: "אם זה פוגע ברגשותיו הדתיים - כן"`) https://www.kan.org.il/content/kan-news/politic/244753/
 22. Ahmad Tibi - `מי גנב לנו את הפלאפל והזעתר והחומוס?`
+    - Source: Knesset Channel 99 on YouTube, 5.9.2023 https://www.youtube.com/watch?v=9XRaE7yzsnA
 
 ## Later additions
 
