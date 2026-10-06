@@ -81,3 +81,13 @@ test("static catalog.json receipts match the runtime catalog", async () => {
     assert.equal(published.walkout?.sourceLabel, card.walkout?.sourceLabel, `${card.id} sourceLabel drifted`);
   }
 });
+
+test("research pools drop the sourcePending flag once a source is attached", async () => {
+  for (const file of ["set5-wip-pool.json", "set6-wip-pool.json"]) {
+    const pool = JSON.parse(await readFile(path.join(projectRoot, "docs/intake/research", file), "utf8"));
+    const stale = pool.candidates
+      .filter((candidate) => candidate.sourcePending && (candidate.sources || []).some(Boolean))
+      .map((candidate) => candidate.n);
+    assert.deepEqual(stale, [], `${file} candidates still flagged sourcePending: ${stale.join(", ")}`);
+  }
+});
