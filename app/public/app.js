@@ -674,6 +674,9 @@ async function ensureSession() {
   setServerState(await request("/api/state"));
 }
 
+// ?view=studio lands on home until the server confirms Studio; remember it so we can open Studio then.
+let pendingStudioDeepLink = new URLSearchParams(location.search).get("view") === "studio";
+
 function applyStudioAccess(studioContent = model.studioContent) {
   document.querySelectorAll("[data-debug-only]").forEach((element) => {
     element.hidden = !studioContent?.debugEnabled;
@@ -684,6 +687,11 @@ function applyStudioAccess(studioContent = model.studioContent) {
   if (document.querySelector("#studio-view")?.classList.contains("active") && !studioViewAllowed()) {
     renderHome();
     showView("home");
+  }
+  if (pendingStudioDeepLink && studioContent) {
+    pendingStudioDeepLink = false;
+    const onHome = !document.querySelector(".view.active") || document.querySelector("#home-view")?.classList.contains("active");
+    if (studioViewAllowed() && onHome) paintPlayerView("studio");
   }
 }
 
