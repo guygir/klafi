@@ -1366,6 +1366,22 @@ export async function createKalpiApp({
     });
   }
 
+  /**
+   * Studio debug pull of one chosen catalog card: same instance shape and no-save semantics as
+   * studioDebugPull. A numbered-eligible card previews copy 1 without claiming a stamp.
+   */
+  function studioDebugPullCard(card) {
+    const pulledAt = new Date(now()).toISOString();
+    const stamp = stampEligible(card, numberedSetIds()) ? { index: 1, of: stampMax(card) } : null;
+    return pullInstance({ cardId: card.id, finish: rarityTier(card) }, {
+      instanceId: `studio-debug-${randomUUID()}`,
+      pulledAt,
+      isNew: false,
+      acquiredBy: "studio-debug",
+      stamp,
+    });
+  }
+
   async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID(), creditNow = false, warehouse = true }) {
     const isNew = !grantedCopyCounts(session)[pull.cardId];
     if (creditNow) {
@@ -1680,6 +1696,25 @@ export async function createKalpiApp({
           return;
         }
         const input = await readJson(request);
+        const cardId = typeof input?.cardId === "string" ? input.cardId.trim() : "";
+        if (cardId) {
+          const card = cardsById.get(cardId);
+          if (!card) {
+            json(response, 400, { error: "UNKNOWN_CARD" });
+            return;
+          }
+          const instance = studioDebugPullCard(card);
+          json(response, 200, {
+            packId: `studio-debug-${Date.now()}`,
+            mode: "studio-debug",
+            debug: true,
+            rarity: null,
+            cardId: card.id,
+            pulledAt: instance.pulledAt,
+            cards: [instance],
+          });
+          return;
+        }
         const rarity = normalizeDebugRarity(input?.rarity);
         if (rarity === undefined) {
           json(response, 400, { error: "INVALID_RARITY" });

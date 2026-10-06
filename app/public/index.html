@@ -496,6 +496,11 @@
               <label><input type="radio" name="studio-debug-rarity" value="3" /> 3 · נדיר ★★★</label>
               <label><input type="radio" name="studio-debug-rarity" value="4" /> 4 · ממוספר ★★★★</label>
             </fieldset>
+            <fieldset class="studio-debug-rarity studio-debug-card">
+              <legend>קלף מסוים (לא חובה)</legend>
+              <input id="studio-debug-card" type="search" list="studio-debug-card-options" dir="rtl" autocomplete="off" placeholder="ריק = אקראי לפי דרגה · חיפוש לפי שם, סט או מזהה" aria-label="קלף מסוים למשיכת בדיקה" />
+              <datalist id="studio-debug-card-options"></datalist>
+            </fieldset>
             <button id="studio-debug-pull-button" class="primary-action" type="button">משיכת בדיקה</button>
             <p id="studio-debug-pull-status" class="work-note" role="status"></p>
           </article>
@@ -955,6 +960,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=card-surface-190"></script>
+  <script type="module" src="/app.js?v=card-surface-191"></script>
 </body>
 </html>

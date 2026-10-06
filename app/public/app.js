@@ -341,6 +341,8 @@ const elements = {
   runGuidedDemo: document.querySelector("#run-guided-demo"),
   studioDebugPull: document.querySelector("#studio-debug-pull-button"),
   studioDebugPullStatus: document.querySelector("#studio-debug-pull-status"),
+  studioDebugCard: document.querySelector("#studio-debug-card"),
+  studioDebugCardOptions: document.querySelector("#studio-debug-card-options"),
   debugResetPack: document.querySelector("#debug-reset-pack"),
   studioContentSummary: document.querySelector("#studio-content-summary"),
   studioPartyTabs: document.querySelector("#studio-party-tabs"),
@@ -3261,8 +3263,30 @@ async function openIdleReturnOnce() {
 
 const STUDIO_DEBUG_LABEL = "משיכת בדיקה · לא נשמר";
 
-// Studio debug pull: the server picks a card of the chosen rarity without saving anything; the
-// client plays the normal rip -> walkout -> sunburst -> sounds path and never calls save/seen.
+function studioDebugCardLabel(card) {
+  const setShort = FILTER_SET_SHORT[card.releaseSetId] || card.releaseSetId || "";
+  return [cardTitle(card), setShort, cardSetName(card), rarityNameHe(card.rarity), card.id].filter(Boolean).join(" · ");
+}
+
+// Optional specific-card picker: datalist of every catalog card; empty = random by rarity.
+function renderStudioDebugCardOptions() {
+  const list = elements.studioDebugCardOptions;
+  if (!list || !model.catalog.length || list.childElementCount === model.catalog.length) return;
+  list.innerHTML = model.catalog
+    .map((card) => `<option value="${escapeHtml(studioDebugCardLabel(card))}"></option>`)
+    .join("");
+}
+
+function studioDebugCardId() {
+  const value = elements.studioDebugCard?.value.trim() || "";
+  if (!value) return null;
+  const match = model.catalog.find((card) => card.id === value || studioDebugCardLabel(card) === value);
+  return match ? match.id : value;
+}
+
+// Studio debug pull: the server picks a card of the chosen rarity (or the chosen card) without
+// saving anything; the client plays the normal rip -> walkout -> sunburst -> sounds path and
+// never calls save/seen.
 async function runStudioDebugPull() {
   sfx.unlock();
   if (homePackRipBusy) return;
@@ -3275,12 +3299,13 @@ async function runStudioDebugPull() {
   let rip = null;
   try {
     if (!model.catalog.length) await loadStaticCatalog();
+    const cardId = studioDebugCardId();
     rip = playHomePackRip();
     elements.packStep.textContent = STUDIO_DEBUG_LABEL;
     const pulled = await request("/api/studio/debug-pull", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ rarity }),
+      body: JSON.stringify(cardId ? { rarity, cardId } : { rarity }),
     });
     if (!pulled.cards?.every(({ cardId }) => model.byId.has(cardId))) throw new Error("CARD_NOT_IN_CATALOG");
     await rip.finished;
@@ -3295,7 +3320,8 @@ async function runStudioDebugPull() {
     showView("studio");
     const message = error.status === 404 ? "משיכת בדיקה זמינה רק לעורכי Studio."
       : error.status === 409 ? "אין קלף זמין בדרגה הזאת."
-        : "משיכת הבדיקה נכשלה.";
+        : error.status === 400 && error.message === "UNKNOWN_CARD" ? "הקלף לא נמצא."
+          : "משיכת הבדיקה נכשלה.";
     if (elements.studioDebugPullStatus) elements.studioDebugPullStatus.textContent = message;
     showToast(message);
   } finally {
@@ -7660,6 +7686,7 @@ async function saveReleaseSets() {
 
 function renderStudio() {
   if (studioViewAllowed()) hydrateStudioReports().catch(() => {});
+  renderStudioDebugCardOptions();
   if (elements.studioShareBinderLink) {
     const shareUrl = new URL("/share/binder", location.origin);
     elements.studioShareBinderLink.href = shareUrl.href;
@@ -9429,6 +9456,7 @@ elements.copyCreatorLink.addEventListener("click", async () => {
 });
 elements.runGuidedDemo.addEventListener("click", runGuidedDemo);
 elements.studioDebugPull?.addEventListener("click", runStudioDebugPull);
+elements.studioDebugCard?.addEventListener("focus", renderStudioDebugCardOptions);
 elements.debugResetPack.addEventListener("click", resetDailyPack);
 elements.headerDebugReset.addEventListener("click", resetDailyPack);
 elements.playStudioReveal.addEventListener("click", playStudioReveal);
