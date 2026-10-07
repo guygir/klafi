@@ -86,17 +86,37 @@ window.__kalpiWarmup = {
   catalog: todayScreenReady.then(() => fetch(`/catalog.json?v=${staticDataVersion}`, { cache: "force-cache" }).then(json)),
   holders: todayScreenReady.then(() => fetch("/api/card-holders").then(json).catch(() => null)),
 };
-function prefetchPlayableArt(catalog) {
-  for (const card of catalog?.cards || []) {
-    if (!card?.artKey || !PLAYABLE_ART_SET_IDS.includes(card.releaseSetId)) continue;
-    const image = new Image();
-    image.decoding = "async";
-    image.src = `/design-assets/${encodeURIComponent(card.artKey)}`;
-  }
+function artImage(card, priority) {
+  const image = new Image();
+  image.decoding = "async";
+  if (priority) image.fetchPriority = priority;
+  const done = new Promise((resolve) => {
+    image.onload = resolve;
+    image.onerror = resolve;
+  });
+  image.src = `/design-assets/${encodeURIComponent(card.artKey)}`;
+  return done;
 }
-window.__kalpiWarmup.catalog.then((catalog) => {
-  prefetchPlayableArt(catalog);
-}).catch(() => {});
+let releaseArt = () => {};
+const artRelease = new Promise((resolve) => { releaseArt = resolve; });
+window.__kalpiWarmup.releaseArt = () => releaseArt();
+// Waiting warehouse cards first (high priority, capped wait), then the rest of the playable art,
+// so the next reveal's face is not queued behind ~70 binder images on a slow connection.
+async function prefetchPlayableArt(catalog) {
+  const cards = (catalog?.cards || []).filter((card) => card?.artKey && PLAYABLE_ART_SET_IDS.includes(card.releaseSetId));
+  const [homeBody, settleBody] = await Promise.all([home, idleSettle].map((job) => Promise.resolve(job).catch(() => null)));
+  const waitingIds = new Set([
+    ...(settleBody?.cards || homeBody?.cards || []),
+    ...(settleBody?.state?.preparedPulls || homeBody?.state?.preparedPulls || []),
+  ].map((item) => item?.cardId).filter(Boolean).slice(0, 3));
+  const first = cards.filter((card) => waitingIds.has(card.id));
+  // Unknown yet (e.g. a brand-new player's starters arrive with the app's first settle): the app
+  // releases the bulk once that card art is in (window.__kalpiWarmup.releaseArt), capped.
+  const waitFor = first.length ? Promise.all(first.map((card) => artImage(card, "high"))) : artRelease;
+  await Promise.race([waitFor, new Promise((resolve) => setTimeout(resolve, first.length ? 4000 : 6000))]);
+  for (const card of cards) if (!waitingIds.has(card.id)) artImage(card);
+}
+window.__kalpiWarmup.catalog.then((catalog) => prefetchPlayableArt(catalog)).catch(() => {});
 const ballotChips = [
   "ballot-letter-ysr.png",
   "ballot-letter-lik.png",

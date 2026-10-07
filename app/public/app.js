@@ -12,6 +12,7 @@ import {
 } from "./binder-order.js";
 import { binderOpenReleaseIds, binderReleaseOk } from "./binder-filter.js";
 import { binderInventorySignature, binderSlotSignature, planBinderGrid } from "./binder-grid.js";
+import { ART_GATE_TIMEOUT_MS, createArtPreloader } from "./card-art.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
@@ -1193,20 +1194,30 @@ function artUrl(card) {
   return card?.artKey ? `/design-assets/${encodeURIComponent(card.artKey)}` : "";
 }
 
+const cardArt = createArtPreloader();
+
 function prefetchCardArt(cards = []) {
   for (const card of cards) {
     const url = artUrl(card);
-    if (!url) continue;
-    const image = new Image();
-    image.decoding = "async";
-    image.src = url;
+    if (url) cardArt.preload(url);
   }
+}
+
+/** Wait (capped) until the reveal's card art is loaded and decoded. Never throws. */
+function cardArtGate(instances = [], { timeoutMs = ART_GATE_TIMEOUT_MS } = {}) {
+  const urls = (instances || []).map((item) => artUrl(model.byId.get(item?.cardId) || item)).filter(Boolean);
+  return cardArt.ready(urls, { timeoutMs }).catch(() => ({ status: "error" }));
+}
+
+function cardArtReady(instances = []) {
+  return (instances || []).every((item) => cardArt.isReady(artUrl(model.byId.get(item?.cardId) || item)));
 }
 
 function prefetchIdleAssets() {
   if (!model.catalog.length) return;
   const pulls = [...model.idleQueue, ...(model.serverState?.preparedPulls || [])]
     .map(({ cardId }) => model.byId.get(cardId));
+  warehouseArtFirst();
   prefetchCardArt([
     ...pulls,
     ...playerCatalog().slice(0, 4),
@@ -1302,6 +1313,7 @@ async function hydrateIdleQueue() {
           revision: stateRevision(settled.state) ?? model.stateRevision,
         };
         prefetchIdleAssets();
+        warehouseArtFirst().finally(() => window.__kalpiWarmup?.releaseArt?.());
         renderHome();
         if (!streakPopupWaitsForTutorial()) maybeShowStreakCalendar();
         maybeShowTradeNotice();
@@ -1313,6 +1325,9 @@ async function hydrateIdleQueue() {
       }
     })().finally(() => {
       idleHydrate = null;
+      const waiters = settleWaiters;
+      settleWaiters = [];
+      waiters.forEach((resolve) => resolve());
     });
   }
   return idleHydrate;
@@ -2763,9 +2778,19 @@ function shuffled(list) {
   return copy;
 }
 
+let siteCardPeeksQueued = false;
+
 function renderSiteCardPeeks() {
   const host = elements.siteCardPeeks;
-  if (!host || host.dataset.ready === "1" || !catalogReady()) return;
+  if (!host || host.dataset.ready === "1" || !catalogReady() || siteCardPeeksQueued) return;
+  // Decorative background cards: let the waiting warehouse cards' art go first (capped).
+  siteCardPeeksQueued = true;
+  warehouseArtFirst().finally(() => paintSiteCardPeeks(host));
+}
+
+function paintSiteCardPeeks(host) {
+  siteCardPeeksQueued = false;
+  if (!host || host.dataset.ready === "1") return;
   const blanks = [...host.querySelectorAll(".site-card-peek.is-blank")];
   if (!blanks.length) return;
   const pool = shuffled(playerCatalog().filter((card) => card.artKey));
@@ -3272,6 +3297,11 @@ async function openIdleReturnOnce() {
       if (!unseen) showToast("הקלף הבא עדיין נאסף.");
       return;
     }
+    // Never start the rip before the card face can paint (slow networks): capped wait, "פותחים…" meanwhile.
+    if (!cardArtReady([selected])) {
+      elements.openPack.textContent = "פותחים…";
+      await cardArtGate([selected]);
+    }
     rip = playHomePackRip();
     await rip.finished;
     model.currentPack = {
@@ -3345,7 +3375,9 @@ async function runStudioDebugPull() {
       body: JSON.stringify(cardId ? { rarity, cardId } : { rarity }),
     });
     if (!pulled.cards?.every(({ cardId }) => model.byId.has(cardId))) throw new Error("CARD_NOT_IN_CATALOG");
+    prefetchCardArt(pulled.cards.map(({ cardId }) => model.byId.get(cardId)));
     await rip.finished;
+    await cardArtGate(pulled.cards);
     model.currentPack = { ...pulled, mode: "studio-debug", debug: true };
     model.currentCardIndex = 0;
     model.previewMode = false;
@@ -3397,6 +3429,7 @@ async function openBibiDebugPack() {
     model.currentPack.cards = model.currentPack.cards.slice(0, 1);
     const rip = playHomePackRip();
     await rip.finished;
+    await cardArtGate(model.currentPack.cards);
     rip.release({ revealing: true });
     showView("pack");
     startWalkout();
@@ -3921,7 +3954,42 @@ let binderArtQueued = new Promise((resolve) => {
   };
 });
 
+/** Next warehouse cards' art, fetched first and at high priority so a reveal never waits behind the binder. */
+let settleWaiters = [];
+
+function nextSettleDone() {
+  if (idleHydrate) return idleHydrate.catch(() => null);
+  return new Promise((resolve) => settleWaiters.push(resolve));
+}
+
+/** A settle is (or should be) on its way that will tell us which cards are waiting. */
+function waitingCardsUnknown() {
+  if (idleHydrate) return true;
+  const clock = idleCountdownCopy({ serverState: model.serverState, idleQueueLength: model.idleQueue.length });
+  const unseen = Number(model.serverState?.unseenCount) || 0;
+  return Boolean(model.token && !lastIdleSettle && (clock.needsSettle || unseen > model.idleQueue.length || model.assumedStarterWarehouse));
+}
+
+async function warehouseArtFirst() {
+  if (waitingCardsUnknown()) {
+    await Promise.race([nextSettleDone(), new Promise((resolve) => setTimeout(resolve, 4000))]);
+  }
+  // Before the catalog lands the waiting cards' art keys are unknown: wait for it (capped), don't release early.
+  if (!model.catalog.length && (model.idleQueue.length || (model.serverState?.preparedPulls || []).length)) {
+    await Promise.race([loadStaticCatalog().catch(() => null), new Promise((resolve) => setTimeout(resolve, 4000))]);
+  }
+  const due = [...model.idleQueue, ...(model.serverState?.preparedPulls || [])]
+    .map(({ cardId }) => model.byId.get(cardId)).filter(Boolean).slice(0, 3);
+  for (const card of due) cardArt.preload(artUrl(card), { priority: "high" });
+  return cardArt.ready(due.map(artUrl), { timeoutMs: 4000 });
+}
+
 function prefetchBinderArt(cards = []) {
+  // Binder bulk art waits (capped) for the waiting cards' art so they are not queued behind ~80 images.
+  warehouseArtFirst().finally(() => queueBinderArt(cards));
+}
+
+function queueBinderArt(cards = []) {
   const list = cards.filter((card) => artUrl(card));
   prefetchCardArt(list.slice(0, 12));
   const rest = list.slice(12);
@@ -4565,6 +4633,7 @@ async function claimReferralReward(code, button) {
     rip = playHomePackRip();
     if (elements.profileDialog?.open) elements.profileDialog.close();
     await rip.finished;
+    await cardArtGate(cards);
     model.currentPack = {
       packId: body.packId || `referral-${cards[0].instanceId}`,
       mode: "referral",
@@ -6326,6 +6395,7 @@ async function openServerPrize({ body, reward, packId }) {
       rip = playHomePackRip();
       await rip.finished;
     }
+    await cardArtGate(pulled.cards);
     model.currentPack = {
       packId: pulled.packId || packId,
       mode: "streak",
@@ -9296,6 +9366,7 @@ async function playRecyclePull(instance) {
   sfx.unlock();
   const rip = playHomePackRip();
   await rip.finished;
+  await cardArtGate([instance]);
   model.currentPack = {
     packId: `recycle-${instance.instanceId}`,
     mode: "recycle",
