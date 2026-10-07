@@ -221,3 +221,16 @@ test("closing the table on an unopened prize marks the skip; opening it does not
   const quiet = { visitDay: "2026-09-21", visitStreak: 1, visitStreakClaims: [], instances: [] };
   assert.equal(noteSkippedStreakPrize(quiet), false);
 });
+
+test("calendar popup is suppressed on day 1 and auto-opens from day 2", () => {
+  const monday = Date.parse("2026-09-21T07:00:00.000Z");
+  const session = {};
+  applyVisitStreak(session, monday);
+  assert.equal(publicStreakCalendar(session).streak, 1);
+  assert.equal(publicStreakCalendar(session).showPopup, false);
+  applyVisitStreak(session, monday + 24 * 60 * 60 * 1000);
+  assert.equal(publicStreakCalendar(session).streak, 2);
+  assert.equal(publicStreakCalendar(session).showPopup, true);
+  assert.equal(ackStreakCalendar(session), true);
+  assert.equal(publicStreakCalendar(session).showPopup, false);
+});

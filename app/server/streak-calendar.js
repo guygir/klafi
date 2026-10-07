@@ -287,7 +287,8 @@ export function publicStreakCalendar(session) {
     cycleDay: calendarDay(streak),
     today,
     closed: Boolean(today && today > ELECTION_GRID_END),
-    showPopup: Boolean(today && session?.streakCalendarAckDay !== today),
+    // Day 1 is the tutorial day: no auto popup until the second visit day.
+    showPopup: Boolean(today && streak >= 2 && session?.streakCalendarAckDay !== today),
     days: ELECTION_GRID_DATES.map((date) => {
       const reward = datePrizeFor(date);
       const granted = reward ? instances.find((item) => item?.acquiredBy === dateAcquiredBy(date)) : null;
