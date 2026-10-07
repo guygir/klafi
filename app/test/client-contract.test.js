@@ -1329,6 +1329,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
 
   // Changelog version comes from the latest GitHub release, with a baked fallback.
   assert.match(javascript, /const HEARD_YOU_VERSION = "v1\.\d+"/);
+  const showCalendar = javascript.slice(javascript.indexOf("function maybeShowStreakCalendar"), javascript.indexOf("function maybeShowDeferredPopups"));
+  assert.match(showCalendar, /if \(!force && calendarStreakDay\(calendar\) <= 1\) return false;/, "day 1 never auto-opens the calendar");
+  assert.ok(showCalendar.indexOf("calendarStreakDay(calendar) <= 1") < showCalendar.indexOf("openStreakCalendar("), "suppression runs before opening");
+  assert.match(javascript, /openStreakCalendar\(\{ force: true \}\)/, "header button still force-opens on day 1");
   assert.match(javascript, /https:\/\/api\.github\.com\/repos\/guygir\/klafi\/releases\/latest/);
   assert.match(javascript, /paintHeardYouVersion\(release\?\.tag_name\)/);
 

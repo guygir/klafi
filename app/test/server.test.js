@@ -1474,7 +1474,7 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(home.body.state.loginStreak, 0);
   assert.equal(home.body.state.visitStreak, 1);
   assert.equal(home.body.state.streakCalendar.day, 1);
-  assert.equal(home.body.state.streakCalendar.showPopup, true);
+  assert.equal(home.body.state.streakCalendar.showPopup, false, "no calendar popup on a player's first day");
   assert.equal(home.body.state.progression.rank, "אזרח סקרן");
   assert.equal(home.body.catalog, undefined);
   assert.equal(typeof home.body.state.inventory, "object");
@@ -1487,6 +1487,7 @@ test("home route creates a guest session without the full catalog", async (t) =>
   assert.equal(nextDay.body.state.loginStreak, 0);
   assert.equal(nextDay.body.state.visitStreak, 2);
   assert.equal(nextDay.body.state.streakCalendar.day, 2);
+  assert.equal(nextDay.body.state.streakCalendar.showPopup, true, "day 2 auto-opens the calendar");
   const league = await api(running.base, "/api/leagues", {
     token: home.body.token,
     method: "POST",
@@ -1515,7 +1516,7 @@ test("first enter of a Jerusalem day stamps the visit calendar and grants reward
   const token = home.body.token;
   assert.equal(home.body.state.visitStreak, 1);
   assert.equal(home.body.state.loginStreak, 0);
-  assert.equal(home.body.state.streakCalendar.showPopup, true);
+  assert.equal(home.body.state.streakCalendar.showPopup, false);
   assert.equal(home.body.state.streakCalendar.days.length, 35);
   assert.equal(home.body.state.streakCalendar.days[0].date, "2026-09-27");
   assert.equal(home.body.state.streakCalendar.days[0].checked, false);

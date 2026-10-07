@@ -6235,12 +6235,16 @@ function openStreakCalendar({ force = false, calendar, stamp = false } = {}) {
 
 function streakPopupWaitsForTutorial() {
   const streak = Number(model.serverState?.visitStreak) || 0;
-  // The first visit day still opens after the tutorial, not under it.
+  // Day 1 never auto-opens (maybeShowStreakCalendar); keep the post-hydrate path quiet too.
   if (streak <= 1) return true;
   if (tipsBusy()) return true;
   if (readTipsPref() === "off") return false;
   const homeActive = Boolean(document.querySelector("#home-view")?.classList.contains("active"));
   return shouldAutoOpenPage(readSeenPages(), "home", { homeActive });
+}
+
+function calendarStreakDay(calendar) {
+  return Number(calendar?.streak ?? model.serverState?.visitStreak) || 0;
 }
 
 function maybeShowStreakCalendar({ force = false } = {}) {
@@ -6251,6 +6255,8 @@ function maybeShowStreakCalendar({ force = false } = {}) {
   if (!force && playerDialogOpen()) return false;
   const calendar = model.serverState?.streakCalendar;
   if (!calendar) return false;
+  // A player's first day is the tutorial day: no auto popup. The header button (force) still opens it.
+  if (!force && calendarStreakDay(calendar) <= 1) return false;
   if (!force && !calendar.showPopup) return false;
   return openStreakCalendar({ force, calendar, stamp: !force && Boolean(calendar.showPopup) });
 }
