@@ -12,7 +12,7 @@ import {
 } from "./binder-order.js";
 import { binderOpenReleaseIds, binderReleaseOk } from "./binder-filter.js";
 import { binderInventorySignature, binderSlotSignature, planBinderGrid } from "./binder-grid.js";
-import { confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
+import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
 import { holdsWantedCard, offersForTradeList } from "./trade-list.js";
@@ -1266,6 +1266,24 @@ function flushPendingIdleSeen() {
   return idleSeenHydrate;
 }
 
+let lastIdleSettle = null;
+
+function instantOpenDecision(cachedId) {
+  const clock = idleCountdownCopy({ serverState: model.serverState, idleQueueLength: model.idleQueue.length });
+  return canOpenFromLastSettle({
+    lastSettle: lastIdleSettle,
+    now: Date.now(),
+    pendingSeen: pendingIdleSeen(),
+    cachedId,
+    needsSettle: clock.needsSettle,
+    settleInFlight: Boolean(idleHydrate),
+    token: model.token,
+    revision: model.stateRevision,
+    queuedIds: model.idleQueue.map(({ instanceId }) => instanceId),
+    windowMs: Number(window.__kalpiInstantOpenWindowMs) || undefined,
+  });
+}
+
 async function hydrateIdleQueue() {
   if (model.showcase) return null;
   if (!idleHydrate) {
@@ -1275,7 +1293,14 @@ async function hydrateIdleQueue() {
       if (window.__kalpiWarmup) window.__kalpiWarmup.idleSettle = null;
       try {
         const settled = await (warmedSettle || request("/api/idle/settle", { method: "POST" }));
-        applyHomePayload({ ...settled, cards: settled.cards || [], state: settled.state });
+        const applied = applyHomePayload({ ...settled, cards: settled.cards || [], state: settled.state });
+        // Remember the answer so an open right after this settle can skip a second round trip.
+        lastIdleSettle = applied === false ? null : {
+          payload: settled,
+          at: Date.now(),
+          token: model.token,
+          revision: stateRevision(settled.state) ?? model.stateRevision,
+        };
         prefetchIdleAssets();
         renderHome();
         if (!streakPopupWaitsForTutorial()) maybeShowStreakCalendar();
@@ -3220,13 +3245,25 @@ async function openIdleReturnOnce() {
   if (!model.catalog.length) loadStaticCatalog().catch(() => {});
   elements.openPack.disabled = true;
   if (elements.openPackFancy) elements.openPackFancy.disabled = true;
-  elements.openPack.textContent = "פותחים…";
   const cached = nextCachedIdleCard();
+  const cachedId = cached?.instance?.instanceId;
+  // Fast path: the last home settle already confirmed this card and nothing could have changed.
+  const instant = instantOpenDecision(cachedId);
+  if (!instant.fast) elements.openPack.textContent = "פותחים…";
   let rip = null;
-  packConfirming = true;
+  packConfirming = !instant.fast;
   try {
-    const settled = await hydrateIdleQueue();
-    const selected = confirmedIdleInstance(settled?.cards, cached?.instance?.instanceId);
+    let settled;
+    let selected;
+    if (instant.fast) {
+      settled = lastIdleSettle.payload;
+      selected = instant.card;
+    } else {
+      settled = await hydrateIdleQueue();
+      // A stale settle must not re-reveal a card already opened (pending seen ack).
+      const unopened = overlayPendingSeen({ state: settled?.state || {}, cards: settled?.cards || [] }, pendingIdleSeen()).cards;
+      selected = confirmedIdleInstance(unopened, cachedId);
+    }
     packConfirming = false;
     if (!selected) {
       renderHome();

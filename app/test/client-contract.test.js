@@ -1019,7 +1019,19 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(openOnce, /inventory\[selected\.cardId\]/);
   const openSettleAt = openOnce.indexOf("await hydrateIdleQueue()");
   const openRipAt = openOnce.indexOf("playHomePackRip(");
-  assert.ok(openSettleAt >= 0 && openRipAt > openSettleAt, "the rip waits until settle confirms the instance");
+  assert.ok(openSettleAt >= 0 && openRipAt > openSettleAt, "the slow path's rip waits until settle confirms the instance");
+  // Fast path: decision first; settle only on the slow branch; "פותחים…" only when slow.
+  const decideAt = openOnce.indexOf("instantOpenDecision(cachedId)");
+  const fastBranchAt = openOnce.indexOf("if (instant.fast) {");
+  const elseAt = openOnce.indexOf("} else {", fastBranchAt);
+  assert.ok(decideAt >= 0 && fastBranchAt > decideAt && elseAt > fastBranchAt, "open decides fast vs slow before any settle");
+  assert.doesNotMatch(openOnce.slice(fastBranchAt, elseAt), /hydrateIdleQueue|\/api\/idle\/settle/, "fast path never settles again");
+  assert.ok(openSettleAt > elseAt, "settle is only awaited on the slow branch");
+  assert.match(openOnce, /if \(!instant\.fast\) elements\.openPack\.textContent = "פותחים…"/);
+  assert.match(openOnce, /overlayPendingSeen\(\{ state: settled\?\.state \|\| \{\}, cards: settled\?\.cards \|\| \[\] \}, pendingIdleSeen\(\)\)\.cards/);
+  assert.match(openOnce, /settlement: Promise\.resolve\(\{ value: settled \}\)/);
+  assert.match(javascript, /lastIdleSettle = applied === false \? null :/);
+  assert.match(javascript, /settleInFlight: Boolean\(idleHydrate\)/);
   const streakOpen = javascript.slice(javascript.indexOf("async function openTodayDatePrize"), javascript.indexOf("async function ackStreakCalendar"));
   const streakWaitAt = streakOpen.indexOf("מביאים את המתנה…");
   const streakPostAt = streakOpen.indexOf("/api/streak/open");

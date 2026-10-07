@@ -118,3 +118,45 @@ export function mergeLeaderboards(previous, incoming) {
   if (!incoming) return incoming ?? null;
   return hideZeroRaceEntries(keepDailyRaceLeaders(previous, incoming));
 }
+
+/** How long a home settle may vouch for the next open without asking the server again. */
+export const INSTANT_OPEN_WINDOW_MS = 90_000;
+
+/**
+ * Pure decision for opening a warehouse card: can the last applied /api/idle/settle answer
+ * stand in for a fresh one? Conservative: any doubt returns { fast: false } (the old
+ * "פותחים…" + settle flow runs). On fast, `card` is the confirmed instance to reveal.
+ */
+export function canOpenFromLastSettle({
+  lastSettle = null,
+  now = Date.now(),
+  pendingSeen = [],
+  cachedId = null,
+  needsSettle = false,
+  settleInFlight = false,
+  token = null,
+  revision = 0,
+  queuedIds = null,
+  windowMs = INSTANT_OPEN_WINDOW_MS,
+} = {}) {
+  const slow = (reason) => ({ fast: false, reason, card: null });
+  if (!lastSettle || !lastSettle.payload) return slow("no-settle");
+  if (settleInFlight) return slow("in-flight");
+  if (needsSettle) return slow("clock-due");
+  if (!cachedId) return slow("no-cached-card");
+  if (!token || lastSettle.token !== token) return slow("token-changed");
+  const age = now - Number(lastSettle.at);
+  if (!Number.isFinite(age) || age < 0 || age > windowMs) return slow("stale");
+  const { cards } = overlayPendingSeen(
+    { state: lastSettle.payload.state || {}, cards: lastSettle.payload.cards || [] },
+    pendingSeen,
+  );
+  const card = confirmedIdleInstance(cards, cachedId);
+  if (!card) return slow((pendingSeen || []).includes(cachedId) ? "already-opened" : "not-in-settle");
+  // A newer state applied since this settle (e.g. a seen ack) is fine only if the card is still queued locally.
+  const settleRevision = Number(lastSettle.revision) || 0;
+  if ((Number(revision) || 0) > settleRevision) {
+    if (!Array.isArray(queuedIds) || !queuedIds.includes(cachedId)) return slow("newer-state");
+  }
+  return { fast: true, reason: "resolved", card };
+}
