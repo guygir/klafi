@@ -1,14 +1,18 @@
 /** Granted copies include warehouse (unseen) instances so pity/uniques do not re-roll the same card. */
 export function grantedCopyCounts(session) {
+  // Regular copies only: a numbered copy does not make a card "owned" (pity, חדש, unowned pools).
   const counts = {};
+  const numbered = {};
   for (const instance of session.instances || []) {
     if (!instance?.cardId) continue;
-    counts[instance.cardId] = (counts[instance.cardId] ?? 0) + 1;
+    const bag = Number(instance.numberedIndex) > 0 ? numbered : counts;
+    bag[instance.cardId] = (bag[instance.cardId] ?? 0) + 1;
   }
   for (const [cardId, copies] of Object.entries(session.inventory || {})) {
-    const n = Number(copies) || 0;
+    const n = Math.max(0, (Number(copies) || 0) - (numbered[cardId] ?? 0));
     if (n > (counts[cardId] ?? 0)) counts[cardId] = n;
   }
+  for (const cardId of Object.keys(counts)) if (!counts[cardId]) delete counts[cardId];
   return counts;
 }
 

@@ -1,3 +1,5 @@
+import { numberedHeldByCard } from "./stars.js";
+
 export function jerusalemDay(ms) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(ms));
 }
@@ -133,10 +135,34 @@ export function numberedCopies(instances = []) {
   return (instances || []).filter((item) => Number(item?.numberedIndex) > 0);
 }
 
+/** Numbered copies the player holds (opened). A waiting warehouse copy is not shown or subtracted yet. */
+export function heldNumberedCopies(session) {
+  if (Array.isArray(session?.numberedCopies)) return session.numberedCopies;
+  const unseen = new Set(session?.unseenPulls || []);
+  return numberedCopies(session?.instances).filter((item) => !unseen.has(item.instanceId));
+}
+
+/**
+ * Guy's rule: a numbered copy is not a regular copy. Regular copies = owned inventory minus the
+ * numbered copies the player holds (seen; a waiting warehouse copy is not in inventory yet).
+ * Every count of "owned", "missing", "unique", set progress, trades, and recycling reads this.
+ */
+export function regularInventory(inventory = {}, numberedByCard = {}) {
+  const regular = {};
+  for (const [cardId, copies] of Object.entries(inventory || {})) {
+    const owned = Math.max(0, Math.round(Number(copies) || 0));
+    const numbered = Math.min(owned, Math.max(0, Math.round(Number(numberedByCard?.[cardId]) || 0)));
+    if (owned - numbered > 0) regular[cardId] = owned - numbered;
+  }
+  return regular;
+}
+
+export function regularInventoryOf(session) {
+  return regularInventory(session?.inventory, numberedHeldByCard(session));
+}
+
 export function regularCopyCount(session, cardId) {
-  const inventory = Math.max(0, Number(session?.inventory?.[cardId] || 0));
-  const numbered = (session?.instances || []).filter((item) => item?.cardId === cardId && Number(item.numberedIndex) > 0).length;
-  return Math.max(0, inventory - numbered);
+  return regularInventoryOf(session)[cardId] || 0;
 }
 
 export function takeInstanceForCard(session, cardId) {
@@ -160,7 +186,7 @@ export function moveOwnedCard(from, to, cardId, { acquiredBy, pulledAt, finish, 
   if (regularCopyCount(from, cardId) < 1) return null;
   from.inventory[cardId] -= 1;
   if (!from.inventory[cardId]) delete from.inventory[cardId];
-  const isNew = !to.inventory[cardId];
+  const isNew = !regularCopyCount(to, cardId);
   to.inventory[cardId] = (to.inventory[cardId] ?? 0) + 1;
   const instance = takePlainInstanceForCard(from, cardId);
   to.instances.push(instance

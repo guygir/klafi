@@ -13,6 +13,7 @@ import {
 import { binderOpenReleaseIds, binderReleaseOk } from "./binder-filter.js";
 import { binderInventorySignature, binderSlotSignature, planBinderGrid } from "./binder-grid.js";
 import { ART_GATE_TIMEOUT_MS, createArtPreloader } from "./card-art.js";
+import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
@@ -524,7 +525,12 @@ function tradeCatalog() {
 }
 
 function tradeWantLabel(card) {
-  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)} · ${ownedCountFor(card)}x`;
+  // Regular copies only: a numbered copy is never offered or counted in a trade.
+  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)} · ${plainOwnedCount(card)}x`;
+}
+
+function myRegularInventory() {
+  return regularInventoryFrom(model.serverState?.inventory, model.serverState?.numberedCopies);
 }
 
 function tradeCardUnowned(cardId) {
@@ -1832,16 +1838,11 @@ function completion() {
 }
 
 function localStarCount() {
-  const inventory = model.serverState?.inventory || {};
   const cards = playerCatalog();
   if (!cards.length) return model.serverState?.starCount ?? 0;
-  return cards.reduce((sum, card) => {
-    if (!inventory[card.id]) return sum;
-    if (card.rarity === "Promotion") return sum + 5;
-    if (card.rarity?.startsWith("Rare")) return sum + 3;
-    if (card.rarity?.startsWith("Uncommon")) return sum + 2;
-    return sum + 1;
-  }, 0);
+  const playable = new Set(cards.map(({ id }) => id));
+  const inventory = Object.fromEntries(Object.entries(model.serverState?.inventory || {}).filter(([id]) => playable.has(id)));
+  return collectionStarsFrom(inventory, model.serverState?.numberedCopies, model.byId);
 }
 
 function pageSizeForCards() {
@@ -4032,7 +4033,7 @@ function binderScopeCards() {
   return playerCatalog().filter((card) => openIds.has(card.releaseSetId) && !card.eventOnly);
 }
 
-function binderProgress(inventory = binderInventory()) {
+function binderProgress(inventory = binderRegularInventory()) {
   const scope = binderScopeCards();
   const total = scope.length;
   const owned = scope.filter((card) => Number(inventory?.[card.id]) > 0).length;
@@ -4172,7 +4173,7 @@ function cardPresentation(card, instance = {}) {
 }
 
 function ownedCountFor(card) {
-  return model.serverState?.inventory?.[card.id] ?? 0;
+  return plainOwnedCount(card);
 }
 
 function stampForCard(card) {
@@ -4358,9 +4359,7 @@ function renderShowcaseBinder() {
 
 function plainOwnedCount(card) {
   if (!card) return 0;
-  const inventory = model.serverState?.inventory?.[card.id] ?? 0;
-  const numbered = (model.serverState?.numberedCopies || []).filter((item) => item.cardId === card.id).length;
-  return Math.max(0, inventory - numbered);
+  return myRegularInventory()[card.id] ?? 0;
 }
 
 function rarityCanRecycle(card) {
@@ -4456,13 +4455,7 @@ function binderNumberedCount(cardId) {
 }
 
 function binderRegularInventory(inventory = binderInventory()) {
-  const regular = { ...inventory };
-  for (const item of binderNumberedCopies()) {
-    if (!(Number(item?.numberedIndex) > 0) || !regular[item.cardId]) continue;
-    regular[item.cardId] -= 1;
-    if (regular[item.cardId] <= 0) delete regular[item.cardId];
-  }
-  return regular;
+  return regularInventoryFrom(inventory, binderNumberedCopies());
 }
 
 function binderRegularCount(cardId) {
@@ -5293,7 +5286,8 @@ function renderBinder() {
     elements.guestBinderLabel.textContent = guest ? `האלבום של ${model.guestBinder.displayName}` : "";
   }
   if (elements.shareMyBinder) elements.shareMyBinder.hidden = guest;
-  const { owned, total, percent } = binderProgress(inventory);
+  // x of y / %: regular copies only (a numbered-only card is still missing).
+  const { owned, total, percent } = binderProgress(binderRegularInventory(inventory));
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = binderProgressCopy(owned, total);
   elements.binderCount.textContent = binderProgressCopy(owned, total);
@@ -5747,7 +5741,7 @@ function hebrewBadge(badge) {
 }
 
 function localAchievementMeasures() {
-  const inventory = model.serverState?.inventory || {};
+  const inventory = myRegularInventory();
   const ownedIds = Object.keys(inventory);
   const unique = ownedIds.length;
   const cards = playerCatalog();
@@ -5953,7 +5947,8 @@ function creatorLink() {
 
 function tradeThumbMarkup(card, { warnLastCopy = false } = {}) {
   if (!card) return "";
-  return `<span class="trade-thumb-frame">${binderCardMarkup(card, { tradeCopies: true, warnLastCopy })}</span>`;
+  // A trade moves a regular copy: never show a numbered stamp; the count is regular copies.
+  return `<span class="trade-thumb-frame">${binderCardMarkup(card, { tradeCopies: true, warnLastCopy, plain: true, count: plainOwnedCount(card) })}</span>`;
 }
 
 /** Unowned card: blur art, party, and quote. Name and rarity stay readable. */
@@ -6044,13 +6039,7 @@ function scheduleTradeListRefresh(pending) {
  * another one. Null means that fetch has not landed yet.
  */
 function regularTradeInventory(state = model.serverState) {
-  const inventory = { ...(state?.inventory || {}) };
-  for (const item of state?.numberedCopies || []) {
-    if (!(Number(item?.numberedIndex) > 0) || !item.cardId || !inventory[item.cardId]) continue;
-    inventory[item.cardId] -= 1;
-    if (inventory[item.cardId] <= 0) delete inventory[item.cardId];
-  }
-  return inventory;
+  return regularInventoryFrom(state?.inventory, state?.numberedCopies);
 }
 
 function currentTradeInventory() {
@@ -6718,10 +6707,10 @@ function renderGrowth() {
   model.serverState.inventory ??= {};
   setEmptyNote(elements.growthEmpty, "", { hidden: true });
   const liveCards = playerCatalog();
-  const duplicate = liveCards.find((card) => (model.serverState.inventory[card.id] ?? 0) > 1);
-  const owned = liveCards.find((card) => (model.serverState.inventory[card.id] ?? 0) > 0);
+  const duplicate = liveCards.find((candidate) => plainOwnedCount(candidate) > 1);
+  const owned = liveCards.find((candidate) => plainOwnedCount(candidate) > 0);
   const card = duplicate ?? owned ?? liveCards[0];
-  const count = model.serverState.inventory[card.id] ?? 0;
+  const count = plainOwnedCount(card);
   const isLive = count > 1;
   elements.tradePreview.dataset.cardId = card.id;
   elements.tradePreview.dataset.liveDuplicate = String(isLive);
@@ -8115,7 +8104,7 @@ function renderDialogCard() {
       ? binderRegularCount(card.id)
       : model.dialogNumbered
         ? Math.max(binderNumberedCount(card.id), 1)
-        : (model.serverState?.inventory?.[card.id] ?? 0);
+        : plainOwnedCount(card);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
   const canRecycle = !model.dialogNumbered && canRecycleCard(card);

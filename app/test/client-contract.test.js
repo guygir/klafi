@@ -424,7 +424,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /pack\?\.current\?\.sets/);
   assert.match(javascript, /runtimeState === "held"/);
   assert.match(javascript, /function tradeCatalog/);
-  assert.match(javascript, /function tradeWantLabel\(card\) \{\s*return `\$\{cardTitle\(card\)\} · \$\{cardCode\(card\)\} · \$\{rarityMark\(card\.rarity\)\} \$\{rarityNameHe\(card\.rarity\)\} · \$\{ownedCountFor\(card\)\}x`/);
+  assert.match(javascript, /function tradeWantLabel\(card\) \{\s*\/\/[^\n]*\n\s*return `\$\{cardTitle\(card\)\} · \$\{cardCode\(card\)\} · \$\{rarityMark\(card\.rarity\)\} \$\{rarityNameHe\(card\.rarity\)\} · \$\{plainOwnedCount\(card\)\}x`/);
   assert.match(javascript, /tradeOfferedCard[\s\S]{0,400}tradeWantLabel\(candidate\)/);
   assert.match(javascript, /tradeWantedCard[\s\S]{0,240}tradeWantLabel\(candidate\)/);
   assert.doesNotMatch(html, /הצעות ששחקנים אחרים פרסמו/);

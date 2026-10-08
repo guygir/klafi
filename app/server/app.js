@@ -24,6 +24,9 @@ import {
   normalizeNumberedEvery,
   normalizeNumberedSets,
   numberedCopies,
+  heldNumberedCopies,
+  regularCopyCount,
+  regularInventoryOf,
   stampEligible,
   stampFromGrant,
   stampKey,
@@ -546,7 +549,7 @@ function progressionConfig(config = {}, activeReleaseIds = null) {
 function progressionState(session, cards, config = {}, current = Date.now()) {
   const eligible = activeIdleCards(cards, current);
   const eligibleIds = new Set(eligible.map(({ id }) => id));
-  const unique = Object.keys(session.inventory).filter((id) => eligibleIds.has(id)).length;
+  const unique = Object.keys(regularInventoryOf(session)).filter((id) => eligibleIds.has(id)).length;
   const activeReleaseIds = [...new Set(eligible.map(({ releaseSetId }) => releaseSetId).filter(Boolean))];
   const { ranks, totalLevels, campaignLevels, reward, thresholdExponent } = progressionConfig(config, activeReleaseIds);
   const thresholds = levelThresholds(eligible.length, totalLevels, thresholdExponent);
@@ -610,8 +613,8 @@ function publicState(session, now, cards, config = {}) {
     instances: session.instances,
     favorites: session.favorites ?? [],
     lastPack: session.packs.at(-1) ?? null,
-    ownedUnique: Object.keys(session.inventory).filter((id) => eligibleCards.some((card) => card.id === id)).length,
-    ownedUniqueAll: Object.keys(session.inventory).length,
+    ownedUnique: Object.keys(regularInventoryOf(session)).filter((id) => eligibleCards.some((card) => card.id === id)).length,
+    ownedUniqueAll: Object.keys(regularInventoryOf(session)).length,
     starCount: collectionStarCount(session, cards),
     totalCards: eligibleCards.length,
     nextIdleAt: session.nextIdleAt,
@@ -638,7 +641,7 @@ function publicState(session, now, cards, config = {}) {
     loginDay: session.loginDay || null,
     visitStreak: session.visitStreak || 0,
     streakCalendar: publicStreakCalendar(session),
-    numberedCopies: numberedCopies(session.instances),
+    numberedCopies: heldNumberedCopies(session),
     progression: progressionState(session, cards, config, now),
     quizAvailable: Boolean(config.quizEnabled)
       && Boolean(Object.keys(session.inventory || {}).length)
@@ -657,7 +660,7 @@ function publicIdleState(session, now, cards, config = {}) {
     avatarId: session.avatarId || "kid-boy",
     inventory: session.inventory,
     favorites: session.favorites ?? [],
-    ownedUnique: Object.keys(session.inventory).filter((id) => eligibleIds.has(id)).length,
+    ownedUnique: Object.keys(regularInventoryOf(session)).filter((id) => eligibleIds.has(id)).length,
     totalCards: eligibleCards.length,
     nextIdleAt: session.nextIdleAt,
     idleIntervalMs: IDLE_INTERVAL_MS,
@@ -673,7 +676,7 @@ function publicIdleState(session, now, cards, config = {}) {
     visitStreak: session.visitStreak || 0,
     streakCalendar: publicStreakCalendar(session),
     factionId: session.factionId || null,
-    numberedCopies: numberedCopies(session.instances),
+    numberedCopies: heldNumberedCopies(session),
     // The binder's חדש/ישן sort reads this. Idle settle/seen replace the client state, so a
     // freshly revealed card (often from the newest set) must carry its date here too.
     acquiredAt: acquiredAtByCard(session.instances, session.inventory),
@@ -2505,7 +2508,7 @@ export async function createKalpiApp({
             }
             const pool = (event.cardIds || []).map((id) => cardsById.get(id)).filter(Boolean);
             if (!pool.length) return { status: 500, body: { error: "EMPTY_EVENT" } };
-            const unowned = pool.filter((card) => !currentSession.inventory[card.id]);
+            const unowned = pool.filter((card) => !regularCopyCount(currentSession, card.id));
             const card = (unowned.length ? unowned : pool)[rng((unowned.length ? unowned : pool).length)];
             const pulledAt = new Date(current).toISOString();
             const instance = {
@@ -2513,7 +2516,7 @@ export async function createKalpiApp({
               cardId: card.id,
               finish: "Promotion",
               pulledAt,
-              isNew: !currentSession.inventory[card.id],
+              isNew: !regularCopyCount(currentSession, card.id),
               acquiredBy: "event",
             };
             currentSession.inventory[card.id] = (currentSession.inventory[card.id] ?? 0) + 1;
@@ -2845,7 +2848,7 @@ export async function createKalpiApp({
             json(response, 403, { error: "CARD_NOT_OWNED" });
             return;
           }
-          if (input.type === "gift_preview_created" && (session.inventory[input.cardId] ?? 0) < 2) {
+          if (input.type === "gift_preview_created" && regularCopyCount(session, input.cardId) < 2) {
             json(response, 403, { error: "DUPLICATE_REQUIRED" });
             return;
           }

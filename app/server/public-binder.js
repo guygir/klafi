@@ -1,5 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { acquiredAtByCard } from "../public/binder-order.js";
+import { heldNumberedCopies, regularInventory } from "./numbered.js";
+import { numberedHeldByCard } from "./stars.js";
 
 export function newPublicBinderSlug() {
   return randomBytes(6).toString("hex");
@@ -35,13 +37,12 @@ export function publicBinderView(session) {
     factionId: session.factionId || null,
     inventory,
     acquiredAt: acquiredAtByCard(session.instances, inventory),
-    numberedCopies: (session.instances || [])
-      .filter((item) => Number(item?.numberedIndex) > 0)
+    numberedCopies: heldNumberedCopies(session)
       .map((item) => ({
         cardId: item.cardId,
         numberedIndex: item.numberedIndex,
         numberedOf: item.numberedOf || null,
       })),
-    ownedUnique: Object.keys(inventory).length,
+    ownedUnique: Object.keys(regularInventory(inventory, numberedHeldByCard(session))).length,
   };
 }

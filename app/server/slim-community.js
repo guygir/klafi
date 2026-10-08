@@ -6,7 +6,7 @@ import { takeCollectorBoard } from "./collector-board.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { openSpecialWindow } from "./special-window.js";
-import { jerusalemDay } from "./numbered.js";
+import { jerusalemDay, regularInventory } from "./numbered.js";
 import { raceTargetForSavedFaction } from "./daily-race.js";
 import { emptyTodayPulse } from "../public/today-pulse.js";
 
@@ -128,13 +128,22 @@ function iso(value) {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
 
+/** Regular copies only (Guy's rule: a numbered copy is not a regular, tradeable copy). */
 async function sessionInventory(db, token) {
   if (!token) return {};
-  const result = await db.query(
-    "SELECT card_id, copies FROM kalpi_inventory WHERE session_token = $1",
-    [token],
+  const [owned, numbered] = await Promise.all([
+    db.query("SELECT card_id, copies FROM kalpi_inventory WHERE session_token = $1", [token]),
+    db.query(
+      `SELECT card_id, COUNT(*)::int AS copies FROM kalpi_instances
+       WHERE session_token = $1 AND numbered_index > 0 AND seen_at IS NOT NULL
+       GROUP BY card_id`,
+      [token],
+    ),
+  ]);
+  return regularInventory(
+    Object.fromEntries(owned.rows.map((row) => [row.card_id, row.copies])),
+    Object.fromEntries(numbered.rows.map((row) => [row.card_id, row.copies])),
   );
-  return Object.fromEntries(result.rows.map((row) => [row.card_id, row.copies]));
 }
 
 async function listTrades(db, token, now) {
@@ -162,11 +171,21 @@ async function listTrades(db, token, now) {
   const ownerHasOffered = new Set();
   if (result.rows.some((row) => row.status === "open" && row.owner_token !== token)) {
     const owners = await db.query(
-      `SELECT session_token, card_id FROM kalpi_inventory
-       WHERE (session_token, card_id) IN (
-         SELECT owner_token, offered_card_id FROM kalpi_trades
-         WHERE status = 'open' AND owner_token <> $1
-       )`,
+      `SELECT inventory.session_token, inventory.card_id
+       FROM kalpi_inventory AS inventory
+       LEFT JOIN (
+         SELECT session_token, card_id, COUNT(*)::int AS numbered
+         FROM kalpi_instances
+         WHERE numbered_index > 0 AND seen_at IS NOT NULL
+         GROUP BY session_token, card_id
+       ) AS numbered
+         ON numbered.session_token = inventory.session_token
+        AND numbered.card_id = inventory.card_id
+       WHERE inventory.copies > COALESCE(numbered.numbered, 0)
+         AND (inventory.session_token, inventory.card_id) IN (
+           SELECT owner_token, offered_card_id FROM kalpi_trades
+           WHERE status = 'open' AND owner_token <> $1
+         )`,
       [token],
     );
     for (const row of owners.rows) ownerHasOffered.add(`${row.session_token}:${row.card_id}`);
@@ -222,7 +241,7 @@ async function collectorBoards(db, config, now, token) {
       const inventory = row.inventory || {};
       return {
         label: row.display_name,
-        ownedUnique: Object.keys(inventory).length,
+        ownedUnique: Object.keys(regularInventory(inventory, numberedByToken.get(row.token) || {})).length,
         stars: collectionStars(inventory, cardIndex, numberedByToken.get(row.token) || {}, { unknown: "skip" }),
         packs: row.idle_pull_count ?? row.pack_count,
         current: row.token === token,

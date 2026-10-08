@@ -1,4 +1,5 @@
 import { collectionStars, numberedHeldByCard } from "./stars.js";
+import { regularInventory } from "./numbered.js";
 
 export const LEAGUE_MAX = 32;
 /** League names are capped (in code points) so the room header stays one or two lines. */
@@ -24,7 +25,7 @@ export function normalizeLeagueCode(value) {
 
 export function leagueMemberScore(session, cardsById) {
   const inventory = session?.inventory || {};
-  const ownedUnique = Object.keys(inventory).filter((cardId) => Number(inventory[cardId]) > 0).length;
+  const ownedUnique = Object.keys(regularInventory(inventory, numberedHeldByCard(session))).length;
   const stars = collectionStars(inventory, cardsById, numberedHeldByCard(session));
   return { ownedUnique, stars };
 }

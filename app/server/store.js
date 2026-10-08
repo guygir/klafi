@@ -8,6 +8,7 @@ import {
   moveOwnedCard,
   numberPoolFromStored,
   regularCopyCount,
+  regularInventory,
   returnNumberedIndex,
   rollNumberedStamp,
   takePlainInstanceForCard,
@@ -113,8 +114,9 @@ export function tallyCardHolders(sessions = {}) {
   const holders = {};
   const numberedHolders = {};
   for (const session of Object.values(sessions || {})) {
-    // One live session with many copies still counts as one holder.
-    for (const [cardId, copies] of Object.entries(session.inventory || {})) {
+    // One live session with many copies still counts as one holder. Regular copies only:
+    // a numbered-only owner counts in numberedHolders, not as a holder of the card.
+    for (const [cardId, copies] of Object.entries(regularInventory(session.inventory, numberedHeldByCard(session)))) {
       if (Number(copies) > 0) holders[cardId] = (holders[cardId] || 0) + 1;
     }
     const seen = new Set();
@@ -492,7 +494,7 @@ export class JsonStore {
         cardId: trade.wantedCardId,
         finish,
         pulledAt: acceptedAt,
-        isNew: session.inventory[trade.wantedCardId] === 1,
+        isNew: regularCopyCount(session, trade.wantedCardId) === 1,
         acquiredBy: "simulated-trade",
       });
       session.tradeCount += 1;
@@ -607,7 +609,7 @@ export class JsonStore {
     const allCollectors = Object.entries(this.state.sessions)
       .map(([token, session]) => ({
         label: session.displayName,
-        ownedUnique: Object.keys(session.inventory).length,
+        ownedUnique: Object.keys(regularInventory(session.inventory, numberedHeldByCard(session))).length,
         stars: collectionStars(session.inventory, cardsById, numberedHeldByCard(session)),
         packs: session.idlePullCount ?? session.packCount,
         current: token === currentToken,

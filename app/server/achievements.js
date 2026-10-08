@@ -6,6 +6,7 @@
 
 import { IDLE_BACKLOG_CAP } from "./idle-config.js";
 import { collectionStars, numberedHeldByCard } from "./stars.js";
+import { regularInventoryOf } from "./numbered.js";
 
 export const ACHIEVEMENT_TIERS = Object.freeze(["simple", "medium", "hard"]);
 /** A catalog row with this rule and no setId expands to one badge per pullable release set. */
@@ -94,7 +95,8 @@ export function hasCustomProfile(session) {
  * known where that data is loaded (league room): { league: 0|1 }.
  */
 export function achievementMeasures(session, cards, extra = {}) {
-  const inventory = session.inventory || {};
+  // Numbered copies are not regular copies: badges, set progress, and duplicates count regular only.
+  const inventory = regularInventoryOf(session);
   const ownedIds = new Set(Object.keys(inventory));
   const unique = ownedIds.size;
   const collectible = cards.filter((card) => card.idleEligible || card.eventOnly || ownedIds.has(card.id));

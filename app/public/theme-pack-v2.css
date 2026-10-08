@@ -225,17 +225,17 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
 #app[data-card-frame="tall-v2"] .kalpi-card.numbered:not([data-card-surface="walkout"]) .card-image-meta .card-numbered-tag {
-  width: clamp(26px, 11.4cqw, 36px);
-  min-width: clamp(26px, 11.4cqw, 36px);
-  height: clamp(26px, 11.4cqw, 36px);
-  min-height: clamp(26px, 11.4cqw, 36px);
+  width: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
+  min-width: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
+  height: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
+  min-height: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
   padding: 0;
   border: max(1.5px, 0.55cqw) solid #b42318;
   border-radius: 50%;
   background:
     radial-gradient(circle at 38% 30%, #fff8f2 0 38%, #f6d4cb 100%);
   color: #8a1610;
-  font: 800 clamp(8px, 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  font: 800 clamp(min(8px, 4.8cqw), 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
   box-shadow:
     inset 0 0 0 max(1px, 0.35cqw) #f8e4dc,
     inset 0 0 0 max(2.4px, 0.9cqw) #b42318;
@@ -1608,17 +1608,17 @@ body:has(#app[data-theme="pack-v2"]) {
 
 #app[data-card-frame="fullart-v1"] .kalpi-card.numbered .card-image-meta .card-numbered-tag,
 #app .kalpi-card.numbered[data-card-frame="fullart-v1"] .card-image-meta .card-numbered-tag {
-  width: clamp(26px, 11.4cqw, 36px);
-  min-width: clamp(26px, 11.4cqw, 36px);
-  height: clamp(26px, 11.4cqw, 36px);
-  min-height: clamp(26px, 11.4cqw, 36px);
+  width: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
+  min-width: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
+  height: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
+  min-height: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
   padding: 0;
   border: max(1.5px, 0.55cqw) solid #b42318;
   border-radius: 50%;
   background:
     radial-gradient(circle at 38% 30%, #fff8f2 0 38%, #f6d4cb 100%);
   color: #8a1610;
-  font: 800 clamp(8px, 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  font: 800 clamp(min(8px, 4.8cqw), 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
   box-shadow:
     inset 0 0 0 max(1px, 0.35cqw) #f8e4dc,
     inset 0 0 0 max(2.4px, 0.9cqw) #b42318;
