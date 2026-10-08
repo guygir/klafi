@@ -13,7 +13,8 @@ import {
 import { binderOpenReleaseIds, binderReleaseOk } from "./binder-filter.js";
 import { binderInventorySignature, binderSlotSignature, planBinderGrid } from "./binder-grid.js";
 import { ART_GATE_TIMEOUT_MS, createArtPreloader } from "./card-art.js";
-import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision } from "./state-sync.js";
+import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
+import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
 import { holdsWantedCard, offersForTradeList } from "./trade-list.js";
@@ -71,6 +72,10 @@ function playerDialogOpen() {
 const model = {
   token: localStorage.getItem(SESSION_KEY),
   stateRevision: 0,
+  // Revision of the payload that last supplied each late field (achievements; see state-sync.js).
+  lateFieldRevisions: {},
+  // A live server payload (not the home cache) supplied the achievements list this page load.
+  achievementsLive: false,
   editorial: null,
   studioContent: null,
   studioAccess: false,
@@ -130,6 +135,9 @@ const model = {
   tradeBoardOffered: "",
   tradeBoardWanted: "",
 };
+// Server achievements list request (see ensureServerAchievements).
+let achievementsFetch = null;
+let achievementsFetchFailedAt = 0;
 let showcaseTimers = [];
 let packTimers = [];
 // One pack-rip at a time: the live player and an AbortController for its packrip:* listeners.
@@ -524,7 +532,12 @@ function tradeCatalog() {
 }
 
 function tradeWantLabel(card) {
-  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)} · ${ownedCountFor(card)}x`;
+  // Regular copies only: a numbered copy is never offered or counted in a trade.
+  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)} · ${plainOwnedCount(card)}x`;
+}
+
+function myRegularInventory() {
+  return regularInventoryFrom(model.serverState?.inventory, model.serverState?.numberedCopies);
 }
 
 function tradeCardUnowned(cardId) {
@@ -716,16 +729,42 @@ function suppressSettleHint() {
   renderHomeSettleHint("");
 }
 
+/**
+ * Late fields (the achievements list) by per-field freshness, also from a payload that is stale for
+ * cards and packs. `next` is the state being applied (the current one when `incoming` is stale).
+ */
+function applyLateFields(previous, next, incoming) {
+  const result = withLateFields(previous, next, incoming, model.lateFieldRevisions);
+  model.lateFieldRevisions = result.revisions;
+  model.serverState = result.state;
+  if (result.applied.includes("achievements")) model.achievementsLive = true;
+  return result.applied;
+}
+
+/** A stale payload still fills the achievements list; repaint where it shows. */
+function fillLateFieldsFromStale(incoming) {
+  if (!applyLateFields(model.serverState, model.serverState, incoming).length) return;
+  repaintAchievementSurfaces();
+}
+
+function repaintAchievementSurfaces() {
+  if (elements.achievementGrid?.closest(".view")?.classList.contains("active")) renderAchievements();
+  if (elements.binderGrid?.closest(".view")?.classList.contains("active")) renderBinder();
+}
+
 /** Every full/merged server state goes through here so a late, older response cannot win. */
 function setServerState(state, { merge = false } = {}) {
   if (!state || typeof state !== "object") return false;
-  if (isStaleState(state, model.stateRevision)) return false;
+  if (isStaleState(state, model.stateRevision)) {
+    fillLateFieldsFromStale(state);
+    return false;
+  }
   releaseSettleHintIfNewer(state, model.stateRevision);
   const clockSafe = mergeIdleClock(model.serverState, state, model.stateRevision);
   noteStateRevision(clockSafe);
   const { state: shown } = overlayPendingSeen({ state: clockSafe }, pendingIdleSeen());
   const previousState = model.serverState;
-  model.serverState = merge ? { ...model.serverState, ...shown } : shown;
+  applyLateFields(previousState, merge ? { ...model.serverState, ...shown } : shown, state);
   syncBinderGridInventory(previousState, model.serverState);
   return true;
 }
@@ -739,8 +778,12 @@ function applyHomePayload(home) {
     localStorage.setItem(SESSION_KEY, home.token);
     clearPendingInvite();
   }
-  // An older response (e.g. a settle computed before the last open's seen ack) never overwrites newer state.
-  if (home.state && isStaleState(home.state, model.stateRevision)) return false;
+  // An older response (e.g. a settle computed before the last open's seen ack) never overwrites newer
+  // state. Its achievements list may still fill in (a settle can land before home on a cold load).
+  if (home.state && isStaleState(home.state, model.stateRevision)) {
+    fillLateFieldsFromStale(home.state);
+    return false;
+  }
   if (home.state) {
     releaseSettleHintIfNewer(home.state, model.stateRevision);
     const clockSafe = mergeIdleClock(model.serverState, home.state, model.stateRevision);
@@ -766,13 +809,12 @@ function applyHomePayload(home) {
       unseenCount: keepAssumed
         ? (Number(previous.unseenCount) || starterReady)
         : (incoming.unseenCount ?? previous.unseenCount ?? 0),
-      achievements: incoming.achievements ?? previous.achievements ?? [],
-      achievementPages: incoming.achievementPages ?? previous.achievementPages ?? [],
       eventCounts: incoming.eventCounts ?? previous.eventCounts ?? {},
         loginStreak: incoming.loginStreak ?? previous.loginStreak ?? 0,
         visitStreak: incoming.visitStreak ?? previous.visitStreak ?? 0,
         streakCalendar: incoming.streakCalendar ?? previous.streakCalendar ?? null,
     };
+    applyLateFields(previous, model.serverState, incoming);
     if (elements.streakDialog?.open && model.serverState.streakCalendar && !model.streakRewardOpening) {
       paintStreakCalendar(model.serverState.streakCalendar);
     }
@@ -1802,6 +1844,8 @@ function showView(name) {
   if (!model.showcase) klafiTips.sync();
   if (name === "binder") maybeShowRecycleTip();
   else hideRecycleTip();
+  // Badges render before the view turns active; ask for the server list once it is on screen.
+  if (name === "achievements" || name === "binder") ensureServerAchievements();
   requestAnimationFrame(() => {
     elements.main.focus({ preventScroll: true });
     // Binder text-fit walks every owned card and would run before the first paint.
@@ -1832,16 +1876,11 @@ function completion() {
 }
 
 function localStarCount() {
-  const inventory = model.serverState?.inventory || {};
   const cards = playerCatalog();
   if (!cards.length) return model.serverState?.starCount ?? 0;
-  return cards.reduce((sum, card) => {
-    if (!inventory[card.id]) return sum;
-    if (card.rarity === "Promotion") return sum + 5;
-    if (card.rarity?.startsWith("Rare")) return sum + 3;
-    if (card.rarity?.startsWith("Uncommon")) return sum + 2;
-    return sum + 1;
-  }, 0);
+  const playable = new Set(cards.map(({ id }) => id));
+  const inventory = Object.fromEntries(Object.entries(model.serverState?.inventory || {}).filter(([id]) => playable.has(id)));
+  return collectionStarsFrom(inventory, model.serverState?.numberedCopies, model.byId);
 }
 
 function pageSizeForCards() {
@@ -2541,6 +2580,10 @@ async function restoreSessionFromCode() {
     }
     model.serverState = state;
     model.stateRevision = stateRevision(state) ?? 0;
+    model.lateFieldRevisions = {};
+    model.achievementsLive = false;
+    achievementsFetchFailedAt = 0;
+    applyLateFields({}, model.serverState, state);
     model.idleQueue = [];
     model.extrasReady = false;
     extrasHydrate = null;
@@ -4032,7 +4075,7 @@ function binderScopeCards() {
   return playerCatalog().filter((card) => openIds.has(card.releaseSetId) && !card.eventOnly);
 }
 
-function binderProgress(inventory = binderInventory()) {
+function binderProgress(inventory = binderRegularInventory()) {
   const scope = binderScopeCards();
   const total = scope.length;
   const owned = scope.filter((card) => Number(inventory?.[card.id]) > 0).length;
@@ -4172,7 +4215,7 @@ function cardPresentation(card, instance = {}) {
 }
 
 function ownedCountFor(card) {
-  return model.serverState?.inventory?.[card.id] ?? 0;
+  return plainOwnedCount(card);
 }
 
 function stampForCard(card) {
@@ -4358,9 +4401,7 @@ function renderShowcaseBinder() {
 
 function plainOwnedCount(card) {
   if (!card) return 0;
-  const inventory = model.serverState?.inventory?.[card.id] ?? 0;
-  const numbered = (model.serverState?.numberedCopies || []).filter((item) => item.cardId === card.id).length;
-  return Math.max(0, inventory - numbered);
+  return myRegularInventory()[card.id] ?? 0;
 }
 
 function rarityCanRecycle(card) {
@@ -4456,13 +4497,7 @@ function binderNumberedCount(cardId) {
 }
 
 function binderRegularInventory(inventory = binderInventory()) {
-  const regular = { ...inventory };
-  for (const item of binderNumberedCopies()) {
-    if (!(Number(item?.numberedIndex) > 0) || !regular[item.cardId]) continue;
-    regular[item.cardId] -= 1;
-    if (regular[item.cardId] <= 0) delete regular[item.cardId];
-  }
-  return regular;
+  return regularInventoryFrom(inventory, binderNumberedCopies());
 }
 
 function binderRegularCount(cardId) {
@@ -5293,7 +5328,8 @@ function renderBinder() {
     elements.guestBinderLabel.textContent = guest ? `האלבום של ${model.guestBinder.displayName}` : "";
   }
   if (elements.shareMyBinder) elements.shareMyBinder.hidden = guest;
-  const { owned, total, percent } = binderProgress(inventory);
+  // x of y / %: regular copies only (a numbered-only card is still missing).
+  const { owned, total, percent } = binderProgress(binderRegularInventory(inventory));
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = binderProgressCopy(owned, total);
   elements.binderCount.textContent = binderProgressCopy(owned, total);
@@ -5747,7 +5783,7 @@ function hebrewBadge(badge) {
 }
 
 function localAchievementMeasures() {
-  const inventory = model.serverState?.inventory || {};
+  const inventory = myRegularInventory();
   const ownedIds = Object.keys(inventory);
   const unique = ownedIds.length;
   const cards = playerCatalog();
@@ -5868,10 +5904,46 @@ function isHeartedAchievement(badge) {
   return badge?.id === "favorite-first" || badge?.rule === "favorites";
 }
 
+/** A server achievements list (live, or from the home cache until the live one lands). */
+function hasServerAchievements() {
+  return Array.isArray(model.serverState?.achievements) && model.serverState.achievements.length > 0;
+}
+
+function badgeViewActive() {
+  return [elements.achievementGrid, elements.binderGrid].some((node) => node?.closest(".view")?.classList.contains("active"));
+}
+
+/**
+ * The slim home payload carries no achievements list, and a cached one may be old: fetch the
+ * server list once per page load where badges show. Never builds a list locally.
+ */
+function ensureServerAchievements() {
+  if (!model.token || model.showcase || model.achievementsLive || achievementsFetch) return;
+  // Only where badges are on screen (achievements page, binder medal rail): no extra call per visit.
+  if (!badgeViewActive()) return;
+  if (achievementsFetchFailedAt && Date.now() - achievementsFetchFailedAt < 20_000) return;
+  achievementsFetch = request("/api/achievements")
+    .then((payload) => {
+      if (applyLateFields(model.serverState || {}, model.serverState || {}, payload).length) repaintAchievementSurfaces();
+    })
+    .catch(() => {
+      achievementsFetchFailedAt = Date.now();
+    })
+    .finally(() => {
+      achievementsFetch = null;
+    });
+}
+
+/**
+ * Badges as the server reports them. Before any server list arrives this is empty (the screen shows
+ * a loading line), never a locally computed list: local measures only mark a server badge earned
+ * a moment before the server's next list does.
+ */
 function achievementList() {
+  ensureServerAchievements();
+  if (!hasServerAchievements()) return [];
   const local = localAchievementList().filter((badge) => !isHeartedAchievement(badge));
-  const server = (model.serverState?.achievements || []).filter((badge) => !isHeartedAchievement(badge));
-  if (!server.length) return local;
+  const server = model.serverState.achievements.filter((badge) => !isHeartedAchievement(badge));
   return server.map((badge) => {
     const fallback = local.find((item) => item.id === badge.id);
     if (badge.earned || !fallback?.earned) return badge;
@@ -5953,7 +6025,8 @@ function creatorLink() {
 
 function tradeThumbMarkup(card, { warnLastCopy = false } = {}) {
   if (!card) return "";
-  return `<span class="trade-thumb-frame">${binderCardMarkup(card, { tradeCopies: true, warnLastCopy })}</span>`;
+  // A trade moves a regular copy: never show a numbered stamp; the count is regular copies.
+  return `<span class="trade-thumb-frame">${binderCardMarkup(card, { tradeCopies: true, warnLastCopy, plain: true, count: plainOwnedCount(card) })}</span>`;
 }
 
 /** Unowned card: blur art, party, and quote. Name and rarity stay readable. */
@@ -6044,13 +6117,7 @@ function scheduleTradeListRefresh(pending) {
  * another one. Null means that fetch has not landed yet.
  */
 function regularTradeInventory(state = model.serverState) {
-  const inventory = { ...(state?.inventory || {}) };
-  for (const item of state?.numberedCopies || []) {
-    if (!(Number(item?.numberedIndex) > 0) || !item.cardId || !inventory[item.cardId]) continue;
-    inventory[item.cardId] -= 1;
-    if (inventory[item.cardId] <= 0) delete inventory[item.cardId];
-  }
-  return inventory;
+  return regularInventoryFrom(state?.inventory, state?.numberedCopies);
 }
 
 function currentTradeInventory() {
@@ -6718,10 +6785,10 @@ function renderGrowth() {
   model.serverState.inventory ??= {};
   setEmptyNote(elements.growthEmpty, "", { hidden: true });
   const liveCards = playerCatalog();
-  const duplicate = liveCards.find((card) => (model.serverState.inventory[card.id] ?? 0) > 1);
-  const owned = liveCards.find((card) => (model.serverState.inventory[card.id] ?? 0) > 0);
+  const duplicate = liveCards.find((candidate) => plainOwnedCount(candidate) > 1);
+  const owned = liveCards.find((candidate) => plainOwnedCount(candidate) > 0);
   const card = duplicate ?? owned ?? liveCards[0];
-  const count = model.serverState.inventory[card.id] ?? 0;
+  const count = plainOwnedCount(card);
   const isLive = count > 1;
   elements.tradePreview.dataset.cardId = card.id;
   elements.tradePreview.dataset.liveDuplicate = String(isLive);
@@ -8115,7 +8182,7 @@ function renderDialogCard() {
       ? binderRegularCount(card.id)
       : model.dialogNumbered
         ? Math.max(binderNumberedCount(card.id), 1)
-        : (model.serverState?.inventory?.[card.id] ?? 0);
+        : plainOwnedCount(card);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
   const canRecycle = !model.dialogNumbered && canRecycleCard(card);
@@ -9227,7 +9294,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.145";
+const HEARD_YOU_VERSION = "v1.146";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {

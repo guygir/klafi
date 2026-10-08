@@ -4,11 +4,14 @@ import { IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY } from "./idle-c
 import { publicTradeNotices } from "./trade-notices.js";
 import { publicStreakCalendar } from "./streak-calendar.js";
 import { referralStarGate } from "./referral.js";
+import { heldNumberedCopies, regularInventory } from "./numbered.js";
 
 export function slimPublicState(session, shell, now = Date.now()) {
   const idleIds = new Set(shell.idleCardIds || []);
   const inventory = session.inventory || {};
-  const unique = Object.keys(inventory).filter((id) => idleIds.has(id)).length;
+  // Numbered copies are not regular copies (level progress, unique counts).
+  const regular = regularInventory(inventory, session.numberedByCard || {});
+  const unique = Object.keys(regular).filter((id) => idleIds.has(id)).length;
   const ranks = shell.gameConfig?.progression?.rankNames || ["אזרח סקרן"];
   const totalLevels = Math.max(2, ranks.length);
   const idleTotal = idleIds.size || shell.totals?.idleEligible || 1;
@@ -29,7 +32,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     avatarId: session.avatarId || "kid-boy",
     avatars,
     ownedUnique: unique,
-    ownedUniqueAll: Object.keys(inventory).length,
+    ownedUniqueAll: Object.keys(regular).length,
     starCount: collectionStarCount(inventory, shell.cardIndex || [], session.numberedByCard || {}),
     totalCards: idleTotal,
     unseenCount: session.unseenPulls?.length ?? 0,
@@ -49,7 +52,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     binderSlug: session.publicBinderSlug || null,
     referralCode: session.referralCode || null,
     referralStars: referralStarGate(shell.gameConfig),
-    numberedCopies: (session.instances || []).filter((item) => Number(item?.numberedIndex) > 0),
+    numberedCopies: heldNumberedCopies(session),
     progression: {
       level,
       totalLevels,

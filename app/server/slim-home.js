@@ -138,6 +138,7 @@ export function sessionFromHomeRow(row) {
     eventCounts: extras.eventCounts || {},
     referralCode: normalizeInviteCode(extras.referralCode),
     numberedByCard: row.numbered_state || {},
+    numberedCopies: Array.isArray(row.numbered_copies) ? row.numbered_copies : [],
     acquiredAt: acquiredAtFromRow(row.acquired_state),
   };
 }
@@ -172,6 +173,20 @@ async function loadSession(db, token) {
            GROUP BY card_id
          ) AS numbered
        ), '{}'::jsonb) AS numbered_state,
+       COALESCE((
+         SELECT jsonb_agg(jsonb_build_object(
+           'instanceId', numbered.instance_id,
+           'cardId', numbered.card_id,
+           'numberedIndex', numbered.numbered_index,
+           'numberedOf', numbered.numbered_of,
+           'finish', numbered.finish,
+           'seenAt', numbered.seen_at
+         ) ORDER BY numbered.pulled_at ASC)
+         FROM kalpi_instances AS numbered
+         WHERE numbered.session_token = session.token
+           AND numbered.numbered_index > 0
+           AND numbered.seen_at IS NOT NULL
+       ), '[]'::jsonb) AS numbered_copies,
        COALESCE((
          SELECT jsonb_object_agg(acquired.card_id, acquired.first_at)
          FROM (

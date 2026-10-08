@@ -11,6 +11,7 @@ import {
   moveOwnedCard,
   numberPoolFromStored,
   regularCopyCount,
+  regularInventory,
   returnNumberedIndex,
   rollNumberedStamp,
   takePlainInstanceForCard,
@@ -1059,7 +1060,7 @@ export class PostgresStore {
         cardId: trade.wantedCardId,
         finish,
         pulledAt: acceptedAt,
-        isNew: session.inventory[trade.wantedCardId] === 1,
+        isNew: regularCopyCount(session, trade.wantedCardId) === 1,
         acquiredBy: "simulated-trade",
       });
       session.tradeCount += 1;
@@ -1201,7 +1202,7 @@ export class PostgresStore {
          LEFT JOIN (
            SELECT session_token, card_id, COUNT(*)::int AS numbered
            FROM kalpi_instances
-           WHERE numbered_index > 0
+           WHERE numbered_index > 0 AND seen_at IS NOT NULL
            GROUP BY session_token, card_id
          ) AS numbered
            ON numbered.session_token = inventory.session_token
@@ -1263,7 +1264,7 @@ export class PostgresStore {
         const inventory = row.inventory || {};
         return {
           label: row.display_name,
-          ownedUnique: Object.keys(inventory).length,
+          ownedUnique: Object.keys(regularInventory(inventory, numberedByToken.get(row.token) || {})).length,
           stars: collectionStars(inventory, cardsById, numberedByToken.get(row.token) || {}),
           packs: row.idle_pull_count ?? row.pack_count,
           current: row.token === currentToken,
@@ -1449,7 +1450,13 @@ export class PostgresStore {
         `SELECT i.card_id, COUNT(*)::int AS holders
          FROM kalpi_inventory i
          JOIN kalpi_sessions s ON s.token = i.session_token
-         WHERE i.copies > 0
+         LEFT JOIN (
+           SELECT session_token, card_id, COUNT(*)::int AS numbered
+           FROM kalpi_instances
+           WHERE numbered_index > 0 AND seen_at IS NOT NULL
+           GROUP BY session_token, card_id
+         ) AS n ON n.session_token = i.session_token AND n.card_id = i.card_id
+         WHERE i.copies > COALESCE(n.numbered, 0)
          GROUP BY i.card_id`,
       ),
       this.pool.query(

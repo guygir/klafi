@@ -1969,7 +1969,8 @@ test("numbered stamps are idle-only set-5 holos by list slot and streaks count J
   const firstPool = Array.from({ length: copy.numberedOf }, (_, index) => index + 1);
   const firstAt = Math.min(firstPool.length - 1, Math.floor(0.99 * firstPool.length));
   assert.equal(copy.numberedIndex, firstPool[firstAt]);
-  assert.equal(stamped.body.state.numberedCopies.length, 1);
+  // A waiting (warehouse) numbered copy is not held yet; it shows once opened.
+  assert.equal(stamped.body.state.numberedCopies.length, 0);
 
   const late = await api(running.base, "/api/idle/settle", {
     token: second.body.token,
@@ -2025,6 +2026,7 @@ test("numbered stamps are idle-only set-5 holos by list slot and streaks count J
   assert.equal(visit.body.loginStreak, 0);
   const dayOne = await openSettled(first.body.token);
   assert.equal(dayOne.body.loginStreak, 1);
+  assert.ok(dayOne.body.numberedCopies.some((item) => item.instanceId === copy.instanceId), "opened numbered copy is held");
   clock.value = Date.parse("2026-09-22T10:00:00+03:00");
   const dayTwo = await openSettled(first.body.token);
   assert.equal(dayTwo.body.loginStreak, 2);

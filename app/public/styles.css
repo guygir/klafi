@@ -6024,17 +6024,17 @@ body {
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  width: clamp(26px, 11.4cqw, 36px);
-  min-width: clamp(26px, 11.4cqw, 36px);
-  height: clamp(26px, 11.4cqw, 36px);
-  min-height: clamp(26px, 11.4cqw, 36px);
+  width: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
+  min-width: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
+  height: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
+  min-height: clamp(min(26px, 15.5cqw), 11.4cqw, 36px);
   padding: 0;
   border-radius: 50%;
   border: max(1.5px, 0.55cqw) solid #b42318;
   background:
     radial-gradient(circle at 38% 30%, #fff8f2 0 38%, #f6d4cb 100%);
   color: #8a1610;
-  font: 800 clamp(8px, 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
+  font: 800 clamp(min(8px, 4.8cqw), 3.6cqw, 12px)/1 "IBM Plex Sans Hebrew", sans-serif;
   letter-spacing: 0;
   box-shadow:
     inset 0 0 0 max(1px, 0.35cqw) #f8e4dc,

@@ -1,4 +1,5 @@
 /** Three plain copies of one card, spent without touching a numbered stamp. */
+import { regularCopyCount } from "./numbered.js";
 
 export const RECYCLE_COPIES = 3;
 
@@ -14,9 +15,7 @@ export function numberedHeldCount(session, cardId) {
 
 /** Inventory copies that are not a stamped print. Unseen warehouse copies are not held. */
 export function plainCopyCount(session, cardId) {
-  const inventoryCount = Number(session.inventory?.[cardId]) || 0;
-  const numbered = Math.min(numberedHeldCount(session, cardId), inventoryCount);
-  return Math.max(0, inventoryCount - numbered);
+  return regularCopyCount(session, cardId);
 }
 
 /**

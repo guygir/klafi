@@ -18,6 +18,39 @@ export function isStaleState(incoming, appliedRevision = 0) {
   return revision != null && revision < (Number(appliedRevision) || 0);
 }
 
+/**
+ * Fields only full state payloads carry (home, /api/state, /api/achievements); idle settle and open
+ * responses never do. They are not card or pack counts, so they get per-field freshness: a payload
+ * the revision check drops as stale may still fill them when nothing newer supplied them (a settle
+ * that lands before home must not leave the achievements screen without the server list).
+ * Inventory, unseen pulls and pack counts stay under isStaleState.
+ */
+export const LATE_STATE_FIELDS = Object.freeze(["achievements", "achievementPages"]);
+
+/**
+ * `next` with the late fields decided per field: `incoming`'s value wins when it is at least as new
+ * as the payload that last supplied that field (or none did); otherwise `previous`'s value stays.
+ * Returns { state, revisions, applied } (applied = field names taken from `incoming`).
+ */
+export function withLateFields(previous, next, incoming, fieldRevisions = {}) {
+  const revision = stateRevision(incoming) ?? 0;
+  const state = { ...(next || {}) };
+  const revisions = { ...(fieldRevisions || {}) };
+  const applied = [];
+  for (const key of LATE_STATE_FIELDS) {
+    const value = incoming?.[key];
+    const usable = key === "achievements" ? Array.isArray(value) && value.length > 0 : value != null;
+    if (usable && (revisions[key] == null || revision >= revisions[key])) {
+      state[key] = value;
+      revisions[key] = revision;
+      applied.push(key);
+    } else if (previous?.[key] != null) {
+      state[key] = previous[key];
+    }
+  }
+  return { state, revisions, applied };
+}
+
 function earliestIdleMs(state) {
   const times = [];
   for (const pull of state?.preparedPulls || []) {

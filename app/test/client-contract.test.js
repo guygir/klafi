@@ -424,7 +424,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /pack\?\.current\?\.sets/);
   assert.match(javascript, /runtimeState === "held"/);
   assert.match(javascript, /function tradeCatalog/);
-  assert.match(javascript, /function tradeWantLabel\(card\) \{\s*return `\$\{cardTitle\(card\)\} · \$\{cardCode\(card\)\} · \$\{rarityMark\(card\.rarity\)\} \$\{rarityNameHe\(card\.rarity\)\} · \$\{ownedCountFor\(card\)\}x`/);
+  assert.match(javascript, /function tradeWantLabel\(card\) \{\s*\/\/[^\n]*\n\s*return `\$\{cardTitle\(card\)\} · \$\{cardCode\(card\)\} · \$\{rarityMark\(card\.rarity\)\} \$\{rarityNameHe\(card\.rarity\)\} · \$\{plainOwnedCount\(card\)\}x`/);
   assert.match(javascript, /tradeOfferedCard[\s\S]{0,400}tradeWantLabel\(candidate\)/);
   assert.match(javascript, /tradeWantedCard[\s\S]{0,240}tradeWantLabel\(candidate\)/);
   assert.doesNotMatch(html, /הצעות ששחקנים אחרים פרסמו/);
@@ -640,7 +640,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /today-specials-line/);
   assert.doesNotMatch(css, /specials-marquee/);
   assert.match(javascript, /idlePullCount \?\? previous\.idlePullCount/);
-  assert.match(javascript, /achievements \?\? previous\.achievements/);
+  // A settle without the achievements list keeps the previous one (late fields, state-sync.js).
+  assert.match(javascript, /applyLateFields\(previous, model\.serverState, incoming\);/);
   assert.match(javascript, /function hydrateHome[\s\S]*renderAchievements/);
   assert.match(html, /<dialog id="event-dialog" class="policy-dialog event-dialog"/);
   assert.match(html, /id="event-dialog-title"/);

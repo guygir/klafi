@@ -184,7 +184,8 @@ test("card holder summary attaches live numbered pulls without storing them on t
     session.instances = [{ cardId: "C1", numberedIndex: 3, numberedOf: 10 }];
   });
   const summary = await store.cardHolderSummary();
-  assert.equal(summary.holders.C1, 1);
+  // Numbered-only owner: a numbered holder, not a regular holder of the card.
+  assert.equal(summary.holders.C1, undefined);
   assert.equal(summary.numberedHolders.C1, 1);
   assert.deepEqual(summary.numberedPulls, [
     { cardId: "C1", displayName: "ג׳וזפין", index: 3, of: 10, binderSlug: store.getSession(token).publicBinderSlug },
