@@ -57,7 +57,9 @@ import {
   leagueAchievementMeasures,
   normalizeAchievementDefinition,
   pendingAchievementStamps,
+  revokeUndeservedAchievements,
   stampAchievements,
+  undeservedAchievementStamps,
 } from "./achievements.js";
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 import { ackTradeNotices, publicTradeNotices } from "./trade-notices.js";
@@ -981,7 +983,9 @@ export async function createKalpiApp({
   async function stampEarnedAchievements(token, extra = {}) {
     const session = store.getSession(token);
     const catalog = playerAchievements();
-    if (!session || !pendingAchievementStamps(session, allCards, catalog, extra).length) return [];
+    if (!session) return [];
+    if (!pendingAchievementStamps(session, allCards, catalog, extra).length
+      && !undeservedAchievementStamps(session, allCards, catalog).length) return [];
     return (await store.withSession(token, (current) => stampAchievements(current, allCards, catalog, now(), extra))) || [];
   }
   // Every session write also stamps newly earned achievements, in the same write (one revision).
@@ -991,6 +995,8 @@ export async function createKalpiApp({
   const storeProto = Object.getPrototypeOf(store);
   store.withSession = (token, mutator) => storeProto.withSession.call(store, token, async (current) => {
     const result = await mutator(current);
+    // A stamp earned only by counting a numbered copy as a regular one is removed in the same write.
+    revokeUndeservedAchievements(current, allCards, playerAchievements());
     stampAchievements(current, allCards, playerAchievements(), now());
     return result;
   });
@@ -1876,6 +1882,16 @@ export async function createKalpiApp({
         if (request.method === "GET" && url.pathname === "/api/state") {
           await store.ensureBinderSlug(token);
           json(response, 200, stateFor(store.getSession(token)));
+          return;
+        }
+
+        // The achievements screen only: the slim home payload carries no achievements list.
+        if (request.method === "GET" && url.pathname === "/api/achievements") {
+          const current = store.getSession(token);
+          json(response, 200, {
+            revision: Number(current.stateRevision) || 0,
+            ...achievementState(current, allCards, playerAchievements()),
+          });
           return;
         }
 

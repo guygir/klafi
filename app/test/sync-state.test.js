@@ -132,7 +132,8 @@ test("client acks the seen card when the reveal starts and guards every server s
   // No raw assignment of a server response: all go through setServerState / applyHomePayload.
   assert.doesNotMatch(appJs, /model\.serverState = await request\(/);
   assert.doesNotMatch(appJs, /model\.serverState = \{ \.\.\.model\.serverState, \.\.\.\(await request/);
-  assert.match(appJs, /if \(home\.state && isStaleState\(home\.state, model\.stateRevision\)\) return false;/);
+  // A stale home still returns false; only the achievements list (late fields) may fill in.
+  assert.match(appJs, /if \(home\.state && isStaleState\(home\.state, model\.stateRevision\)\) \{\n\s+fillLateFieldsFromStale\(home\.state\);\n\s+return false;\n\s+\}/);
   const settle = appJs.slice(appJs.indexOf("async function hydrateIdleQueue"), appJs.indexOf("function scheduleIdleRefill"));
   assert.doesNotMatch(settle, /model\.idleQueue = settled\.cards/, "the settle queue only lands through the revision guard");
   // Level-up dialog waits for the reveal to finish.

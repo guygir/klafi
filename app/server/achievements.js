@@ -94,9 +94,10 @@ export function hasCustomProfile(session) {
  * Everything the rules read. `extra` carries measures that need other players' data and are only
  * known where that data is loaded (league room): { league: 0|1 }.
  */
-export function achievementMeasures(session, cards, extra = {}) {
+export function achievementMeasures(session, cards, extra = {}, { countNumbered = false } = {}) {
   // Numbered copies are not regular copies: badges, set progress, and duplicates count regular only.
-  const inventory = regularInventoryOf(session);
+  // countNumbered reproduces the old (buggy) count; only revocation reads it (see undeservedAchievementStamps).
+  const inventory = countNumbered ? { ...(session.inventory || {}) } : regularInventoryOf(session);
   const ownedIds = new Set(Object.keys(inventory));
   const unique = ownedIds.size;
   const collectible = cards.filter((card) => card.idleEligible || card.eventOnly || ownedIds.has(card.id));
@@ -176,6 +177,42 @@ export function qualifies(definition, measures) {
   return ruleValue(definition, measures) >= ruleTarget(definition, measures);
 }
 
+/**
+ * Rules whose measure counts copies of cards. Until numbered copies stopped counting as regular
+ * copies, these could be met by a numbered copy alone. Stars are not here: a numbered copy still
+ * adds stars on purpose.
+ */
+export const COPY_COUNT_RULES = Object.freeze(new Set([
+  SET_COMPLETE_RULE, "ownCards", "unique", "duplicate", "leaders", "leaderParties", "bestSet", "binderHalf", "rare",
+]));
+
+/**
+ * Stamps earned only because a numbered copy was counted as a regular copy. Earned badges are
+ * otherwise permanent (a player who traded or recycled a card keeps the set badge), so a stamp is
+ * undeserved only when all three hold: the badge reads copy counts, the regular-copy condition
+ * fails now, and it would pass if numbered copies counted.
+ */
+export function undeservedAchievementStamps(session, cards, catalog = []) {
+  const stamps = session?.achievementsEarned || {};
+  const definitions = (catalog.length ? catalog : FALLBACK)
+    .filter((definition) => stamps[definition.id] && COPY_COUNT_RULES.has(definition.rule));
+  if (!definitions.length || !Object.keys(numberedHeldByCard(session)).length) return [];
+  const regular = achievementMeasures(session, cards);
+  const legacy = achievementMeasures(session, cards, {}, { countNumbered: true });
+  return definitions
+    .filter((definition) => !qualifies(definition, regular) && qualifies(definition, legacy))
+    .map(({ id }) => id);
+}
+
+/** Session mutator: removes undeserved stamps (see above). Returns the removed ids. */
+export function revokeUndeservedAchievements(session, cards, catalog = []) {
+  const revoked = undeservedAchievementStamps(session, cards, catalog);
+  if (!revoked.length) return revoked;
+  session.achievementsEarned = { ...(session.achievementsEarned || {}) };
+  for (const id of revoked) delete session.achievementsEarned[id];
+  return revoked;
+}
+
 /** An earned stamp wins over the live measure: once earned, a badge stays earned. */
 export function achievementProgress(definition, measures, earnedAt = null) {
   const target = ruleTarget(definition, measures);
@@ -211,7 +248,10 @@ export function achievementPages(list) {
 
 export function achievementState(session, cards, catalog = []) {
   const measures = achievementMeasures(session, cards);
-  const stamps = session.achievementsEarned || {};
+  // A read shows the badge as not earned right away; the next write removes the stamp itself.
+  const undeserved = new Set(undeservedAchievementStamps(session, cards, catalog));
+  const stamps = { ...(session.achievementsEarned || {}) };
+  for (const id of undeserved) delete stamps[id];
   const definitions = catalog.length ? catalog : FALLBACK;
   const list = definitions.map((definition) => achievementProgress(definition, measures, stamps[definition.id]));
   return { achievements: list, achievementPages: achievementPages(list) };

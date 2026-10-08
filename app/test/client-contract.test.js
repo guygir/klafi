@@ -640,7 +640,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /today-specials-line/);
   assert.doesNotMatch(css, /specials-marquee/);
   assert.match(javascript, /idlePullCount \?\? previous\.idlePullCount/);
-  assert.match(javascript, /achievements \?\? previous\.achievements/);
+  // A settle without the achievements list keeps the previous one (late fields, state-sync.js).
+  assert.match(javascript, /applyLateFields\(previous, model\.serverState, incoming\);/);
   assert.match(javascript, /function hydrateHome[\s\S]*renderAchievements/);
   assert.match(html, /<dialog id="event-dialog" class="policy-dialog event-dialog"/);
   assert.match(html, /id="event-dialog-title"/);
