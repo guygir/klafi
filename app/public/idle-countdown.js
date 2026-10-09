@@ -62,14 +62,47 @@ export function formatCountdown(milliseconds) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
 }
 
-export function idleCountdownCopy({ serverState, idleQueueLength = 0, now = Date.now() } = {}) {
+/**
+ * Display-only count of waiting cards: the last server count plus the timed slots that came due
+ * since that state, up to the cap. Mirrors the server settle (server/app.js settleIdleSession):
+ * prepared slots grant in time order while the warehouse is below the cap; past the last known
+ * slot, slots continue every interval. A full warehouse accrues nothing (its clock restarts only
+ * when a card is opened, resumeIdleClockAfterCap), so a full count stays as it is.
+ * Never stored and never used to open: the open button, the settle hint and the instant-open
+ * fast path still read the server count and a real settle.
+ */
+export function predictedUnseenCount(serverState, { idleQueueLength = 0, now = Date.now() } = {}) {
+  const unseen = Math.max(0, Number(serverState?.unseenCount ?? idleQueueLength) || 0);
+  const cap = Number(serverState?.idleCapacity) > 0 ? Number(serverState.idleCapacity) : IDLE_BACKLOG_CAP;
+  if (unseen >= cap) return unseen;
+  const intervalMs = idleIntervalMs(serverState);
+  const prepared = (serverState?.preparedPulls || [])
+    .map((pull) => parseIdleTime(pull?.availableAt))
+    .filter((at) => at != null)
+    .sort((left, right) => left - right);
+  const scheduled = parseIdleTime(serverState?.nextIdleAt);
+  const times = prepared.length ? prepared : scheduled != null ? [scheduled] : [];
+  let count = unseen;
+  for (const at of times) {
+    if (count >= cap || at > now) return Math.min(cap, count);
+    count += 1;
+  }
+  const last = times.at(-1);
+  if (last == null) return count;
+  for (let at = last + intervalMs; at <= now && count < cap; at += intervalMs) count += 1;
+  return Math.min(cap, count);
+}
+
+export function idleCountdownCopy({ serverState, idleQueueLength = 0, now = Date.now(), predictedUnseen = null } = {}) {
   const intervalMs = idleIntervalMs(serverState);
   const remaining = nextCollectionRemaining(serverState, now, intervalMs);
   const unseen = serverState?.unseenCount ?? idleQueueLength;
   const cap = serverState?.idleCapacity ?? IDLE_BACKLOG_CAP;
   const full = unseen >= cap;
   const needsSettle = !full && idleScheduleIsDue(serverState, now);
-  if (full) {
+  // A predicted full warehouse shows the full copy, but the settle is still needed and asked for.
+  const shownFull = full || (Number(predictedUnseen) || 0) >= cap;
+  if (shownFull) {
     return {
       remaining: 0,
       unseen,
@@ -79,7 +112,7 @@ export function idleCountdownCopy({ serverState, idleQueueLength = 0, now = Date
       hidden: false,
       isClock: false,
       isFull: true,
-      needsSettle: false,
+      needsSettle,
     };
   }
   const clockRemaining = remaining > 0 ? remaining : intervalMs;
