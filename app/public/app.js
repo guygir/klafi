@@ -1,6 +1,6 @@
 import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, buildWeavePrompt } from "./prompt-builder.js";
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
-import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, homeSettleHint, idleCountdownCopy, IDLE_BACKLOG_CAP, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
+import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, homeSettleHint, idleCountdownCopy, IDLE_BACKLOG_CAP, predictedUnseenCount, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
 import { binderBadgeOrder } from "./badge-order.js";
 import {
@@ -17,7 +17,7 @@ import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
-import { holdsWantedCard, offersForTradeList } from "./trade-list.js";
+import { holdsWantedCard, offersForTradeList, readTradeCache, writeTradeCache } from "./trade-list.js";
 import {
   exitWalkoutSunburst,
   readSunburstRarityOverride,
@@ -86,6 +86,10 @@ const model = {
   activity: null,
   leaderboards: null,
   trades: [],
+  // trades holds a server list (tradesKnown) or, until one lands, this token's cached list (tradesFromCache).
+  tradesKnown: false,
+  tradesFromCache: false,
+  tradesCacheToken: null,
   specials: { sets: [] },
   events: [],
   catalog: [],
@@ -1007,7 +1011,7 @@ function applyFullBoot(boot) {
   model.specials = boot.specials;
   model.serverState = boot.idleReturn.state;
   model.idleQueue = boot.idleReturn.cards || [];
-  setTrades(boot.trades || []);
+  if (Array.isArray(boot.trades)) setTrades(boot.trades);
   model.events = boot.events || [];
   applyCatalog(cards);
   populateRevealTimingInputs();
@@ -2569,6 +2573,10 @@ async function restoreSessionFromCode() {
     model.leagues = [];
     model.leaguesKnown = false;
     model.leaguesCacheToken = null;
+    model.trades = [];
+    model.tradesKnown = false;
+    model.tradesFromCache = false;
+    model.tradesCacheToken = null;
     localStorage.setItem(SESSION_KEY, token);
     try {
       localStorage.removeItem(PENDING_MUTATIONS_KEY);
@@ -2771,6 +2779,10 @@ function renderHome() {
     idleQueueLength: model.idleQueue.length,
   });
   const readyCopy = homeIdleReadyCopy({ unseenCount: unseen, available, awaitingSettle: clock.needsSettle });
+  // The count shows at once from the last server state plus slots due since (display only). The
+  // open button, the settle hint and opening itself still wait for the server, exactly as before.
+  const shownUnseen = predictedUnseenCount(model.serverState, { idleQueueLength: model.idleQueue.length });
+  const shownTitle = homeIdleReadyCopy({ unseenCount: shownUnseen, available }).title;
   const idleCapacity = model.serverState?.idleCapacity ?? model.gameConfig?.idle?.capacity ?? IDLE_BACKLOG_CAP;
   elements.collectionCount.textContent = `${owned} מתוך ${total} מתוך כל הקלפים · ${percent}%`;
   elements.collectionProgress.style.width = `${percent}%`;
@@ -2796,7 +2808,7 @@ function renderHome() {
     .map((id) => model.gameConfig?.releaseSets?.find((release) => release.id === id)?.nameHe)
     .filter(Boolean);
   if (elements.activeRelease) elements.activeRelease.textContent = releaseNames.join(" + ");
-  elements.homeTitle.textContent = readyCopy.title;
+  elements.homeTitle.textContent = shownTitle;
   renderHomeSettleHint(homeSettleHint({ needsSettle: clock.needsSettle, suppressed: settleHintSuppressed }));
   elements.homeCopy.textContent = readyCopy.lede;
   renderSiteCardPeeks();
@@ -3222,6 +3234,7 @@ function updateCountdown() {
   const view = idleCountdownCopy({
     serverState: model.serverState,
     idleQueueLength: model.idleQueue.length,
+    predictedUnseen: predictedUnseenCount(model.serverState, { idleQueueLength: model.idleQueue.length }),
   });
   applyIdleCountdown(elements.cooldownCopy, view);
   renderHomeSettleHint(homeSettleHint({ needsSettle: view.needsSettle, suppressed: settleHintSuppressed }));
@@ -6130,7 +6143,11 @@ function currentTradeInventory() {
 }
 
 function listedOpenTrades() {
-  const inventory = currentTradeInventory();
+  ensureTradeCache();
+  // Cached offers list against the cached inventory for display; accept buttons still wait for a
+  // current inventory (tradeRowMarkup), and the server validates every action.
+  const inventory = currentTradeInventory()
+    ?? (model.tradesFromCache && model.serverState?.inventory ? regularTradeInventory() : null);
   const trades = Array.isArray(model.trades) ? model.trades : [];
   const open = inventory
     ? offersForTradeList(trades, inventory)
@@ -6766,6 +6783,7 @@ function syncCommunityPage() {
 }
 
 function renderGrowth() {
+  ensureTradeCache();
   const communityTabs = elements.communityTabs;
   const growthGrid = document.querySelector(".growth-grid");
   communityTabs?.removeAttribute("hidden");
@@ -8074,10 +8092,32 @@ function rememberHiddenTrade(tradeId) {
   }
 }
 
+function withoutHiddenTrades(list) {
+  const hidden = readHiddenTradeIds();
+  return hidden.size ? list.filter((trade) => !hidden.has(String(trade.tradeId))) : list;
+}
+
+/** A server trade list: replaces whatever was shown (cached offers that are gone disappear) and is cached. */
 function setTrades(trades) {
   const list = Array.isArray(trades) ? trades : [];
-  const hidden = readHiddenTradeIds();
-  model.trades = hidden.size ? list.filter((trade) => !hidden.has(String(trade.tradeId))) : list;
+  model.trades = withoutHiddenTrades(list);
+  model.tradesKnown = true;
+  model.tradesFromCache = false;
+  model.tradesCacheToken = model.token;
+  if (Array.isArray(trades)) writeTradeCache(localStorage, model.token, list);
+}
+
+/**
+ * Before this token's first server list, paint its cached one (instant revisit). The trade form,
+ * the open offer and the counts then match the last server answer instead of an empty board.
+ */
+function ensureTradeCache() {
+  if (model.tradesKnown || !model.token || model.tradesCacheToken === model.token) return;
+  model.tradesCacheToken = model.token;
+  const cached = readTradeCache(localStorage, model.token);
+  if (!cached?.length) return;
+  model.trades = withoutHiddenTrades(cached);
+  model.tradesFromCache = true;
 }
 
 function hideTradeOffer(tradeId) {
