@@ -4536,6 +4536,15 @@ function renderPendingWells(count = 6) {
 
 async function openPublicBinder(slug) {
   const payload = await request(`/api/public-binder/${encodeURIComponent(slug)}`);
+  if (payload?.isOwner) {
+    // Own share link: the normal binder (recycle, trades, own counts), and drop the share
+    // param so the next visit does not land in guest mode again.
+    model.guestBinder = null;
+    closePublicBinder();
+    showView("binder");
+    renderBinder();
+    return;
+  }
   model.guestBinder = payload;
   model.binderOwnedOnly = true;
   model.binderMissingOnly = false;

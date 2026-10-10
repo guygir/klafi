@@ -167,6 +167,40 @@ test("public binder is a shareable album without the session token", async (t) =
   assert.equal(boards.body.collectors[0].binderSlug, slug);
 });
 
+test("public binder tells only its own owner that it is theirs (own share link opens the normal binder)", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-own-album-test-"));
+  const clock = { value: Date.parse("2026-09-22T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const owner = (await api(running.base, "/api/home")).body;
+  const other = (await api(running.base, "/api/home")).body;
+  const slug = owner.state.binderSlug;
+  const own = await api(running.base, `/api/public-binder/${slug}`, { token: owner.token });
+  assert.equal(own.status, 200);
+  assert.equal(own.body.isOwner, true);
+  const theirs = await api(running.base, `/api/public-binder/${slug}`, { token: other.token });
+  assert.equal(theirs.body.isOwner, false);
+  const anonymous = await api(running.base, `/api/public-binder/${slug}`);
+  assert.equal(anonymous.body.isOwner, false);
+  for (const view of [own.body, theirs.body, anonymous.body]) {
+    const text = JSON.stringify(view);
+    assert.ok(!text.includes(owner.token), "no owner token");
+    assert.ok(!text.includes(other.token), "no viewer token");
+  }
+});
+
+test("client: an own album link opens the normal binder and drops the share param; others stay guest", async () => {
+  const js = await readFile(path.join(appRoot, "public/app.js"), "utf8");
+  const open = js.slice(js.indexOf("async function openPublicBinder("), js.indexOf("function closePublicBinder("));
+  assert.match(open, /if \(payload\?\.isOwner\) \{\n[^]*?model\.guestBinder = null;\n\s+closePublicBinder\(\);\n\s+showView\("binder"\);[^]*?return;\n\s+\}\n\s+model\.guestBinder = payload;/);
+  const close = js.slice(js.indexOf("function closePublicBinder("), js.indexOf("function binderInventory("));
+  assert.match(close, /url\.searchParams\.delete\("binder"\);/);
+  assert.match(close, /history\.replaceState/);
+});
+
 test("card holder counts are real session inventories, not fixtures", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-card-holders-test-"));
   const clock = { value: Date.parse("2026-09-22T12:00:00.000Z") };

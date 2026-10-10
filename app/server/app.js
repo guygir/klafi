@@ -1662,7 +1662,12 @@ export async function createKalpiApp({
           json(response, 404, { error: "NOT_FOUND" });
           return;
         }
-        json(response, 200, publicBinderView(owner));
+        // The viewer's own album (opened from their own share link) opens as their normal binder.
+        // Only a boolean about the viewer: nothing about the owner's session is exposed.
+        const viewerToken = bearer(request);
+        const viewer = viewerToken ? await store.hydrateSession(viewerToken).catch(() => null) : null;
+        const isOwner = Boolean(viewer && normalizePublicBinderSlug(viewer.publicBinderSlug) === slug);
+        json(response, 200, { ...publicBinderView(owner), isOwner });
         return;
       }
 
