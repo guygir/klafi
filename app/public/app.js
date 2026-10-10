@@ -8,6 +8,8 @@ import {
   BINDER_SORTS,
   acquiredAtByCard,
   binderSortId,
+  lastAcquiredAtByCard,
+  latestDates,
   sortBinderCards,
 } from "./binder-order.js";
 import { binderOpenReleaseIds, binderReleaseOk } from "./binder-filter.js";
@@ -841,6 +843,7 @@ function applyHomePayload(home) {
         avatars: model.serverState.avatars,
         inventory: model.serverState.inventory || {},
         acquiredAt: model.serverState.acquiredAt || {},
+        lastAcquiredAt: model.serverState.lastAcquiredAt || {},
         favorites: model.serverState.favorites || [],
         starCount: model.serverState.starCount,
         loginStreak: model.serverState.loginStreak || 0,
@@ -3543,6 +3546,10 @@ const SEEN_ACK_MODES = new Set(["idle-return", "level-reward", "quiz", "recycle"
  * The local ready-count decrement is display-only and is reconciled by the ack's server state.
  */
 function acknowledgeRevealedPack(pack) {
+  if (pack && !pack.openedNoted && !model.previewMode && !model.showcase) {
+    pack.openedNoted = true;
+    noteCardsOpened(pack.cards);
+  }
   if (!pack || pack.seenAck || model.previewMode || !SEEN_ACK_MODES.has(pack.mode)) return pack?.seenAck;
   const instanceIds = (pack.cards || []).map(({ instanceId }) => instanceId).filter(Boolean);
   const opened = new Set(instanceIds);
@@ -4852,6 +4859,35 @@ function binderSortMode() {
   return binderSortId(readBinderLocal(BINDER_SORT_KEY));
 }
 
+// Cards opened in this tab, newest under חדש right away (display only; the server's
+// lastAcquiredAt carries the same dates once the open is acknowledged, and after reload).
+const localLastAcquired = { token: null, dates: {} };
+
+function noteCardsOpened(cards, at = new Date().toISOString()) {
+  if (!model.token || model.guestBinder) return;
+  if (localLastAcquired.token !== model.token) {
+    localLastAcquired.token = model.token;
+    localLastAcquired.dates = {};
+  }
+  for (const card of cards || []) {
+    if (card?.cardId) localLastAcquired.dates[card.cardId] = at;
+  }
+}
+
+function binderLastAcquiredAtMap() {
+  const source = model.guestBinder || model.serverState;
+  if (!source) return {};
+  const local = !model.guestBinder && localLastAcquired.token === model.token ? localLastAcquired.dates : {};
+  const inventory = source.inventory || {};
+  const owned = Object.fromEntries(Object.entries(local).filter(([cardId]) => Number(inventory[cardId]) > 0 || !source.inventory));
+  // The server map knows which copies are still waiting (any kind: idle, rank reward, quiz…);
+  // instances only stand in for an older payload that has no map.
+  const server = source.lastAcquiredAt && typeof source.lastAcquiredAt === "object"
+    ? source.lastAcquiredAt
+    : lastAcquiredAtByCard(source.instances, source.inventory);
+  return latestDates(binderAcquiredAtMap(), server, owned);
+}
+
 function binderAcquiredAtMap() {
   const source = model.guestBinder || model.serverState;
   if (!source) return {};
@@ -5445,6 +5481,7 @@ function renderBinder() {
     sort: binderSortMode(),
     catalog: playerCards,
     acquiredAt: binderAcquiredAtMap(),
+    lastAcquiredAt: binderLastAcquiredAtMap(),
     inventory: numberedView ? inventory : regularInventory,
   });
   binderView?.classList.toggle("binder-list", listMode);
@@ -9334,7 +9371,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.147";
+const HEARD_YOU_VERSION = "v1.148";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {

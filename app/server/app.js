@@ -64,7 +64,7 @@ import {
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 import { ackTradeNotices, publicTradeNotices } from "./trade-notices.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
-import { acquiredAtByCard } from "../public/binder-order.js";
+import { acquiredAtByCard, lastAcquiredAtByCard } from "../public/binder-order.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
 import { normalizeInviteCode, referralMarker, referralStarGate } from "./referral.js";
 import { RECYCLE_COPIES, spendPlainCopies } from "./recycle.js";
@@ -612,6 +612,7 @@ function publicState(session, now, cards, config = {}) {
     packCount: session.packCount,
     inventory: session.inventory,
     acquiredAt: acquiredAtByCard(session.instances, session.inventory),
+    lastAcquiredAt: lastAcquiredAtByCard(session.instances, session.inventory, session.unseenPulls || []),
     instances: session.instances,
     favorites: session.favorites ?? [],
     lastPack: session.packs.at(-1) ?? null,
@@ -682,6 +683,7 @@ function publicIdleState(session, now, cards, config = {}) {
     // The binder's חדש/ישן sort reads this. Idle settle/seen replace the client state, so a
     // freshly revealed card (often from the newest set) must carry its date here too.
     acquiredAt: acquiredAtByCard(session.instances, session.inventory),
+    lastAcquiredAt: lastAcquiredAtByCard(session.instances, session.inventory, session.unseenPulls || []),
     pendingTradeNotices: publicTradeNotices(session),
   };
 }

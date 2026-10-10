@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { acquiredAtByCard } from "../public/binder-order.js";
+import { acquiredAtByCard, lastAcquiredAtByCard } from "../public/binder-order.js";
 import { heldNumberedCopies, regularInventory } from "./numbered.js";
 import { numberedHeldByCard } from "./stars.js";
 
@@ -37,6 +37,7 @@ export function publicBinderView(session) {
     factionId: session.factionId || null,
     inventory,
     acquiredAt: acquiredAtByCard(session.instances, inventory),
+    lastAcquiredAt: lastAcquiredAtByCard(session.instances, inventory, session.unseenPulls || []),
     numberedCopies: heldNumberedCopies(session)
       .map((item) => ({
         cardId: item.cardId,
