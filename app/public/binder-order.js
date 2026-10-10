@@ -102,7 +102,10 @@ export function compareBinderCards(left, right, ctx) {
     const name = binderCardTitle(left).localeCompare(binderCardTitle(right), "he");
     if (name) return name;
   } else if (sort === "date-new" || sort === "date-old") {
-    const date = compareAcquired(left.id, right.id, ctx.acquiredAt, sort === "date-old" ? "asc" : "desc");
+    // חדש orders by the latest copy received; ישן by when the card was first acquired.
+    const date = sort === "date-old"
+      ? compareAcquired(left.id, right.id, ctx.acquiredAt, "asc")
+      : compareAcquired(left.id, right.id, ctx.lastAcquiredAt || ctx.acquiredAt, "desc");
     if (date) return date;
   } else if (sort === "rarity") {
     const rarity = raritySortRank(left.rarity) - raritySortRank(right.rarity);
@@ -135,12 +138,54 @@ export function acquiredAtByCard(instances = [], inventory = null) {
   return out;
 }
 
-export function sortBinderCards(cards, { sort = "slot", catalog = cards, acquiredAt = {}, inventory = {} } = {}) {
+/**
+ * חדש: when the player last received a copy of each owned card. A warehouse card counts from the
+ * moment it is opened (seenAt), not when it landed in the warehouse (pulledAt); a copy still
+ * waiting in the warehouse does not count; a traded/credited copy counts from its pulledAt.
+ * unseenIds: instance ids still in the warehouse (server). Without them (client fallback for an
+ * older payload), an unopened copy that is not a trade is treated as waiting.
+ */
+export function lastAcquiredAtByCard(instances = [], inventory = null, unseenIds = null) {
+  const unseen = unseenIds ? new Set([...unseenIds].map(String)) : null;
+  const best = new Map();
+  for (const item of instances || []) {
+    const cardId = item?.cardId;
+    if (!cardId) continue;
+    if (inventory && !(Number(inventory[cardId]) > 0)) continue;
+    // Without the server's warehouse ids, only opened copies and traded copies (credited without
+    // an open) are known to be held.
+    if (unseen ? unseen.has(String(item.instanceId)) : (!item.seenAt && !String(item.acquiredBy || "").startsWith("trade"))) continue;
+    const raw = item.seenAt || item.pulledAt || "";
+    const ms = Date.parse(raw);
+    if (!Number.isFinite(ms)) continue;
+    const prev = best.get(cardId);
+    if (!prev || ms > prev) best.set(cardId, ms);
+  }
+  const out = {};
+  for (const [cardId, ms] of best) out[cardId] = new Date(ms).toISOString();
+  return out;
+}
+
+/** Per card, the later of several date maps (server, instances, local opens). */
+export function latestDates(...maps) {
+  const out = {};
+  for (const map of maps) {
+    for (const [cardId, raw] of Object.entries(map || {})) {
+      const ms = Date.parse(raw);
+      if (!Number.isFinite(ms)) continue;
+      if (!(cardId in out) || ms > Date.parse(out[cardId])) out[cardId] = new Date(ms).toISOString();
+    }
+  }
+  return out;
+}
+
+export function sortBinderCards(cards, { sort = "slot", catalog = cards, acquiredAt = {}, lastAcquiredAt = null, inventory = {} } = {}) {
   const ctx = {
     sort: binderSortId(sort),
     releaseIndex: releaseIndexFromCatalog(catalog),
     catalogIndex: catalogIndex(catalog),
     acquiredAt,
+    lastAcquiredAt: lastAcquiredAt || acquiredAt,
     inventory,
   };
   return [...(cards || [])].sort((left, right) => compareBinderCards(left, right, ctx));

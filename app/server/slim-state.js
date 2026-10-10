@@ -71,6 +71,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     inventory: session.inventory || {},
     // Binder חדש/ישן sort. Without it the first paint after a refresh falls back to set order.
     acquiredAt: session.acquiredAt && typeof session.acquiredAt === "object" ? session.acquiredAt : {},
+    lastAcquiredAt: session.lastAcquiredAt && typeof session.lastAcquiredAt === "object" ? session.lastAcquiredAt : {},
     favorites: session.favorites || [],
     eventCounts: {
       source_opened: Number(session.eventCounts?.source_opened) || 0,

@@ -140,6 +140,7 @@ export function sessionFromHomeRow(row) {
     numberedByCard: row.numbered_state || {},
     numberedCopies: Array.isArray(row.numbered_copies) ? row.numbered_copies : [],
     acquiredAt: acquiredAtFromRow(row.acquired_state),
+    lastAcquiredAt: acquiredAtFromRow(row.last_acquired_state),
   };
 }
 
@@ -200,7 +201,24 @@ async function loadSession(db, token) {
              AND COALESCE(instance.pulled_at, instance.seen_at) IS NOT NULL
            GROUP BY instance.card_id
          ) AS acquired
-       ), '{}'::jsonb) AS acquired_state
+       ), '{}'::jsonb) AS acquired_state,
+       COALESCE((
+         SELECT jsonb_object_agg(latest.card_id, latest.last_at)
+         FROM (
+           -- חדש: latest copy received. Opened warehouse cards count from seen_at; copies still
+           -- waiting in the warehouse (extras.unseenPulls) do not count.
+           SELECT instance.card_id, MAX(COALESCE(instance.seen_at, instance.pulled_at)) AS last_at
+           FROM kalpi_instances AS instance
+           JOIN kalpi_inventory AS owned
+             ON owned.session_token = instance.session_token
+            AND owned.card_id = instance.card_id
+            AND owned.copies > 0
+           WHERE instance.session_token = session.token
+             AND COALESCE(instance.seen_at, instance.pulled_at) IS NOT NULL
+             AND NOT (COALESCE(session.extras->'unseenPulls', '[]'::jsonb) ? instance.instance_id)
+           GROUP BY instance.card_id
+         ) AS latest
+       ), '{}'::jsonb) AS last_acquired_state
      FROM kalpi_sessions AS session
      WHERE session.token = $1`,
     [token],
