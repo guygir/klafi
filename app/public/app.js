@@ -4536,6 +4536,15 @@ function renderPendingWells(count = 6) {
 
 async function openPublicBinder(slug) {
   const payload = await request(`/api/public-binder/${encodeURIComponent(slug)}`);
+  if (payload?.isOwner) {
+    // Own share link: the normal binder (recycle, trades, own counts), and drop the share
+    // param so the next visit does not land in guest mode again.
+    model.guestBinder = null;
+    closePublicBinder();
+    showView("binder");
+    renderBinder();
+    return;
+  }
   model.guestBinder = payload;
   model.binderOwnedOnly = true;
   model.binderMissingOnly = false;
@@ -9371,7 +9380,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.148";
+const HEARD_YOU_VERSION = "v1.149";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {
