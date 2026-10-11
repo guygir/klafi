@@ -2,7 +2,7 @@
   "id": "set7-wip-pool",
   "status": "local-draft",
   "asOfDate": "2026-10-11",
-  "note": "Set 7 (העצמה נשית): 27 Quote cards, display codes נשית-01–27, ordered by person. Party and slot per Guy (2026-10-11): Regev Likud #5, Gotliv Otzma Yehudit #2, Golan Likud #40, Silman Likud #46, Son Har-Melech Otzma Yehudit #5, Strook Religious Zionism #3, Distel-Atbaryan Likud unplaced; Shitrit Likud with no slot yet (shown as לא ממוקמת, TBD). All 27 have sources. Not approved: a human still approves wording, context and publication.",
+  "note": "Set 7 (העצמה נשית): 26 Quote cards, display codes נשית-01–26 (gotliv 03+04 merged), ordered by person. Party and slot per Guy (2026-10-11): Regev Likud #5, Gotliv Otzma Yehudit #2, Golan Likud #40, Silman Likud #46, Son Har-Melech Otzma Yehudit #5, Strook Religious Zionism #3, Distel-Atbaryan Likud unplaced; Shitrit Likud with no slot yet (shown as לא ממוקמת, TBD). All 27 have sources. Not approved: a human still approves wording, context and publication.",
   "sourceDocument": "docs/art/haatzama-nashit/HANDOFF.md (Guy, Cursor_Klafi)",
   "candidates": [
     {
@@ -164,47 +164,29 @@
       "nameHe": "טלי גוטליב",
       "nameEn": "Tali Gotliv",
       "gender": "f",
-      "displayText": "חלאס אמא שלך!",
-      "quoteStatus": "exact",
-      "date": "2025-07-02",
-      "sources": [
-        "https://www.maariv.co.il/breaking-news/article-1211073"
-      ],
-      "sourceLabel": "\"חלאס אמא שלך!\": טלי גוטליב התפרצה וגרמה למהומה במליאה",
-      "existingStudioRef": null,
-      "notes": "במליאת הכנסת, 2 ביולי 2025. צעקה לעבר ח״כ וליד טאהא.",
-      "art": {
-        "artKey": "hero-art-nashit-gotliv-03-shout.jpg",
-        "status": "provided",
-        "sha256": "6fd6d10eee6dacf194f5657373ae9b0b936722c132d6ec337b29dd49c738f7f7",
-        "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
-      },
-      "rarity": "Common"
-    },
-    {
-      "n": 9,
-      "nameHe": "טלי גוטליב",
-      "nameEn": "Tali Gotliv",
-      "gender": "f",
-      "displayText": "איך קרא לי אלהואשלה, מסחורה? אולי אימא שלך מסחורה",
-      "quoteStatus": "exact",
+      "displayText": "אמא שלך מסחורה... חלאס אמא שלך!",
+      "quoteStatus": "shortened",
       "date": "2025-11-11",
       "sources": [
-        "https://www.kikar.co.il/scoop-news/55075"
+        "https://www.kikar.co.il/scoop-news/55075",
+        "https://www.maariv.co.il/breaking-news/article-1211073"
       ],
       "sourceLabel": "\"אמא שלך מסחורה!\": התגובה הסוערת של טלי גוטליב לח\"כים ערביים",
       "existingStudioRef": null,
-      "notes": "11 בנובמבר 2025, בתגובה לח״כ ואליד אלהואשלה.",
+      "notes": "שני אירועים במליאה, מאוחדים לקלף אחד: «אמא שלך מסחורה» לח״כ ואליד אלהואשלה (11 בנובמבר 2025) ו«חלאס אמא שלך!» לח״כ וליד טאהא (2 ביולי 2025).",
       "art": {
         "artKey": "hero-art-nashit-gotliv-04-goods.jpg",
         "status": "provided",
         "sha256": "0b68da31e677c74b15931c0326303cfebc9c94b3c861abaa17cb6ec83c9b693d",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common"
+      "rarity": "Common",
+      "extraSourceLabels": [
+        "\"חלאס אמא שלך!\": טלי גוטליב התפרצה וגרמה למהומה במליאה"
+      ]
     },
     {
-      "n": 10,
+      "n": 9,
       "nameHe": "טלי גוטליב",
       "nameEn": "Tali Gotliv",
       "gender": "f",
@@ -226,7 +208,7 @@
       "rarity": "Common"
     },
     {
-      "n": 11,
+      "n": 10,
       "nameHe": "טלי גוטליב",
       "nameEn": "Tali Gotliv",
       "gender": "f",
@@ -245,10 +227,10 @@
         "sha256": "85e12f63ea8ad0afdb47f1d19de1c69e12c68aa40c420b81199a34338de59359",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon"
+      "rarity": "Rare"
     },
     {
-      "n": 12,
+      "n": 11,
       "nameHe": "טלי גוטליב",
       "nameEn": "Tali Gotliv",
       "gender": "f",
@@ -270,7 +252,7 @@
       "rarity": "Common"
     },
     {
-      "n": 13,
+      "n": 12,
       "nameHe": "טלי גוטליב",
       "nameEn": "Tali Gotliv",
       "gender": "f",
@@ -292,7 +274,7 @@
       "rarity": "Uncommon"
     },
     {
-      "n": 14,
+      "n": 13,
       "nameHe": "גלית דיסטל-אטבריאן",
       "nameEn": "Galit Distel-Atbaryan",
       "gender": "f",
@@ -311,10 +293,10 @@
         "sha256": "af4d976622147819847f7242ae481f967a8230b58ed0bfe851e0b7dde2fb7cbd",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Rare"
+      "rarity": "Uncommon"
     },
     {
-      "n": 15,
+      "n": 14,
       "nameHe": "גלית דיסטל-אטבריאן",
       "nameEn": "Galit Distel-Atbaryan",
       "gender": "f",
@@ -336,7 +318,7 @@
       "rarity": "Rare"
     },
     {
-      "n": 16,
+      "n": 15,
       "nameHe": "גלית דיסטל-אטבריאן",
       "nameEn": "Galit Distel-Atbaryan",
       "gender": "f",
@@ -355,10 +337,10 @@
         "sha256": "be6eb14ba171e1db2f5b01daf1b28233f562547bdc70b45f09c5e4add78235fd",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon"
+      "rarity": "Common"
     },
     {
-      "n": 17,
+      "n": 16,
       "nameHe": "גלית דיסטל-אטבריאן",
       "nameEn": "Galit Distel-Atbaryan",
       "gender": "f",
@@ -380,7 +362,7 @@
       "rarity": "Common"
     },
     {
-      "n": 18,
+      "n": 17,
       "nameHe": "גלית דיסטל-אטבריאן",
       "nameEn": "Galit Distel-Atbaryan",
       "gender": "f",
@@ -402,7 +384,7 @@
       "rarity": "Common"
     },
     {
-      "n": 19,
+      "n": 18,
       "nameHe": "מאי גולן",
       "nameEn": "May Golan",
       "gender": "f",
@@ -425,7 +407,7 @@
       "listSlot": 40
     },
     {
-      "n": 20,
+      "n": 19,
       "nameHe": "מאי גולן",
       "nameEn": "May Golan",
       "gender": "f",
@@ -448,7 +430,7 @@
       "listSlot": 40
     },
     {
-      "n": 21,
+      "n": 20,
       "nameHe": "מאי גולן",
       "nameEn": "May Golan",
       "gender": "f",
@@ -471,7 +453,7 @@
       "listSlot": 40
     },
     {
-      "n": 22,
+      "n": 21,
       "nameHe": "קטי שטרית",
       "nameEn": "Keti Shitrit",
       "gender": "f",
@@ -490,10 +472,10 @@
         "sha256": "f78f1a8dbeb95f2de5ba58ab285d82c312316ca22bd9d9073816b3439fb535ae",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common"
+      "rarity": "Uncommon"
     },
     {
-      "n": 23,
+      "n": 22,
       "nameHe": "עידית סילמן",
       "nameEn": "Idit Silman",
       "gender": "f",
@@ -516,7 +498,7 @@
       "listSlot": 46
     },
     {
-      "n": 24,
+      "n": 23,
       "nameHe": "עידית סילמן",
       "nameEn": "Idit Silman",
       "gender": "f",
@@ -539,7 +521,7 @@
       "listSlot": 46
     },
     {
-      "n": 25,
+      "n": 24,
       "nameHe": "אורית סטרוק",
       "nameEn": "Orit Strook",
       "gender": "f",
@@ -558,10 +540,10 @@
         "sha256": "56b596ce5bfd0a8c1c3d9287e516c680b498cd60841cb0b81a57cd082d1198a6",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common"
+      "rarity": "Uncommon"
     },
     {
-      "n": 26,
+      "n": 25,
       "nameHe": "לימור סון הר-מלך",
       "nameEn": "Limor Son Har-Melech",
       "gender": "f",
@@ -585,7 +567,7 @@
       "listSlot": 5
     },
     {
-      "n": 27,
+      "n": 26,
       "nameHe": "לימור סון הר-מלך",
       "nameEn": "Limor Son Har-Melech",
       "gender": "f",

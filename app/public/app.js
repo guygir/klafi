@@ -4193,6 +4193,8 @@ function cardTrustLine(card) {
 }
 
 function configureSourceLink(link, card) {
+  // Extra receipts (a card merged from two events) render as sibling links after the main one.
+  while (link.nextElementSibling?.classList.contains("extra-source-link")) link.nextElementSibling.remove();
   const sourceUrl = card.walkout?.sourceUrl;
   link.hidden = !sourceUrl;
   if (!sourceUrl) {
@@ -4203,6 +4205,18 @@ function configureSourceLink(link, card) {
   link.textContent = "למקור המצורף ↗";
   const sourceName = card.walkout?.sourceLabel ? `: ${card.walkout.sourceLabel}` : "";
   link.setAttribute("aria-label", `פתיחת המקור${sourceName} בחלון חדש`);
+  let after = link;
+  for (const extra of card.walkout?.extraSources || []) {
+    if (!extra?.url) continue;
+    const more = link.cloneNode(false);
+    more.removeAttribute("id");
+    more.classList.add("extra-source-link");
+    more.href = extra.url;
+    more.textContent = "למקור נוסף ↗";
+    more.setAttribute("aria-label", `פתיחת מקור נוסף${extra.label ? `: ${extra.label}` : ""} בחלון חדש`);
+    after.after(more);
+    after = more;
+  }
 }
 
 function cardPresentation(card, instance = {}) {

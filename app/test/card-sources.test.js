@@ -92,3 +92,22 @@ test("research pools drop the sourcePending flag once a source is attached", asy
     assert.deepEqual(stale, [], `${file} candidates still flagged sourcePending: ${stale.join(", ")}`);
   }
 });
+
+test("a card merged from two events carries both receipts, and the client lists the extra one", async () => {
+  const { runtime, staticCards } = await playableCards();
+  for (const cards of [runtime, staticCards]) {
+    const merged = cards.find((card) => card.id === "SET7-08");
+    assert.ok(merged, "SET7-08 is the merged Gotliv card");
+    assert.equal(merged.walkout.quoteStatus, "shortened");
+    assert.equal(merged.walkout.extraSources?.length, 1);
+    const [extra] = merged.walkout.extraSources;
+    assert.match(extra.url, /^https:\/\//);
+    assert.ok(extra.label && !/^https?:/.test(extra.label), "extra receipt has a human label");
+    assert.notEqual(extra.url, merged.walkout.sourceUrl);
+  }
+  const js = await readFile(path.resolve(here, "../public/app.js"), "utf8");
+  const fn = js.slice(js.indexOf("function configureSourceLink("), js.indexOf("function cardPresentation("));
+  assert.match(fn, /extra-source-link/);
+  assert.match(fn, /card\.walkout\?\.extraSources/);
+  assert.match(fn, /nextElementSibling\?\.classList\.contains\("extra-source-link"\)/, "stale extra links are cleared");
+});

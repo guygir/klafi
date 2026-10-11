@@ -152,7 +152,13 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
   const fromMember = !party || member?.partyId === party.id ? Number(member?.slot) : NaN;
   const slot = Number.isInteger(fromCandidate) && fromCandidate > 0 ? fromCandidate : fromMember;
   const listSlot = Number.isInteger(slot) && slot > 0 ? slot : null;
-  const sourceUrl = (candidate.sources || []).find(Boolean) || "";
+  const sourceUrls = (candidate.sources || []).filter(Boolean);
+  const sourceUrl = sourceUrls[0] || "";
+  // A card built from more than one event lists every receipt; the first stays the main one.
+  const extraSources = sourceUrls.slice(1).map((url, i) => ({
+    url,
+    label: String(candidate.extraSourceLabels?.[i] || "").trim() || url,
+  }));
   // Human-readable receipt label (usually the source headline); fall back to the raw URL.
   const sourceLabel = String(candidate.sourceLabel || "").trim() || sourceUrl || "Source pending";
   const context = candidate.notes || candidate.art?.note || "";
@@ -191,6 +197,7 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
       sourceId: `${meta.sourceIdPrefix}-${String(index).padStart(2, "0")}`,
       sourceLabel,
       sourceUrl,
+      ...(extraSources.length ? { extraSources } : {}),
       context,
       quoteStatus: candidate.quoteStatus || "exact",
       selectionRationale: candidate.notes || meta.rationale,
