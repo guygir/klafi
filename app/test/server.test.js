@@ -2536,8 +2536,9 @@ test("bonus day 2026-10-11: set-gift label, one popup re-show, hidden V until cl
     await running.close();
     await rm(dataDir, { recursive: true, force: true });
   });
-  const cards = JSON.parse(await readFile(path.join(appRoot, "data/cards.json"), "utf8"));
-  const setOf = new Map((Array.isArray(cards) ? cards : cards.cards).map((card) => [card.id, card.releaseSetId]));
+  const catalog = await api(running.base, "/api/catalog");
+  const setOf = new Map(catalog.body.cards.map((card) => [card.id, card.releaseSetId]));
+  assert.ok(catalog.body.cards.some((card) => card.releaseSetId === "set-7" && card.idleEligible), "set 7 is in the pull pool");
   const bonusCell = (state) => state.streakCalendar.days.find((cell) => cell.date === "2026-10-11");
 
   // Streak player and popup-dismisser both visit the day before.

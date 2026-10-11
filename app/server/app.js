@@ -38,6 +38,7 @@ import {
   noteSkippedStreakPrize,
   calendarDay,
   dateAcquiredBy,
+  bonusDayFor,
   datePrizeFor,
   publicStreakCalendar,
   streakAcquiredBy,
@@ -2344,6 +2345,8 @@ export async function createKalpiApp({
           const opened = await store.withSession(token, async (current) => {
             if (date) {
               if (date !== current.visitDay) return { already: true };
+              // A bonus-day gift ends at Jerusalem midnight even if the app stayed open.
+              if (bonusDayFor(date) && date !== jerusalemDay(now())) return { already: true };
               const reward = datePrizeFor(date);
               if (!reward) return { already: true };
               const acquiredBy = dateAcquiredBy(date);
