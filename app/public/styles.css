@@ -6962,15 +6962,15 @@ body {
   height: auto;
 }
 
-/* One-day bonus gift: pack plus a centered two-line label, drawn over the claimed V. */
+/* One-day bonus gift: pack plus a two-line label centered at the cell bottom, drawn over the claimed V. */
 .streak-cell-prize.streak-cell-bonus {
   z-index: 3;
 }
 .streak-cell-bonus-label {
   position: absolute;
-  top: 50%;
+  bottom: 2px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   z-index: 3;
   display: grid;
   justify-items: center;
