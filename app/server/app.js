@@ -37,6 +37,7 @@ import {
   ackStreakCalendar,
   noteSkippedStreakPrize,
   calendarDay,
+  currentRunStreakInstance,
   dateAcquiredBy,
   bonusDayFor,
   datePrizeFor,
@@ -2343,6 +2344,12 @@ export async function createKalpiApp({
           const date = /^\d{4}-\d{2}-\d{2}$/.test(String(input.date || "")) ? String(input.date) : "";
           const ladderDay = Number.isInteger(Number(input.day)) && Number(input.day) > 0 ? Number(input.day) : 0;
           const opened = await store.withSession(token, async (current) => {
+            const result = await openCalendarPrize(current);
+            // A refused open still closes today's popup, so a reload does not keep offering it.
+            if (!result || result.already) ackStreakCalendar(current);
+            return result;
+          });
+          async function openCalendarPrize(current) {
             if (date) {
               if (date !== current.visitDay) return { already: true };
               // A bonus-day gift ends at Jerusalem midnight even if the app stayed open.
@@ -2364,16 +2371,20 @@ export async function createKalpiApp({
             if (ladderDay !== rewardDay) return { already: true };
             const reward = streakRewardForDay(rewardDay);
             if (!reward) return { already: true };
-            const acquiredBy = streakAcquiredBy(current.visitStreak, rewardDay);
-            let instance = (current.instances || []).find((item) => item.acquiredBy === acquiredBy);
+            // This run's prize only: an earlier run's same-day prize must not block it.
+            let instance = currentRunStreakInstance(current, rewardDay);
             if (instance?.seenAt) return { already: true };
-            if (!instance) instance = await grantPendingStreakReward(current);
+            if (!instance) {
+              // Claimed in the list but never granted in this run (old collision): grant it now.
+              current.visitStreakClaims = (current.visitStreakClaims || []).filter((day) => day !== rewardDay);
+              instance = await grantPendingStreakReward(current);
+            }
             if (!instance || instance.seenAt) return { already: true };
             const credited = creditStreakInstance(current, instance, new Date(now()).toISOString());
             if (credited) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
             ackStreakCalendar(current);
             return { instance, reward };
-          });
+          }
           if (!opened || opened.already) {
             json(response, 200, { already: true, state: await stateForToken(token) });
             return;

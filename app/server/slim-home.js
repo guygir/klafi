@@ -141,6 +141,8 @@ export function sessionFromHomeRow(row) {
     numberedCopies: Array.isArray(row.numbered_copies) ? row.numbered_copies : [],
     acquiredAt: acquiredAtFromRow(row.acquired_state),
     lastAcquiredAt: acquiredAtFromRow(row.last_acquired_state),
+    // Only calendar prizes (acquiredBy/pulledAt/seenAt), so the slim calendar knows what was opened.
+    instances: Array.isArray(row.calendar_prizes) ? row.calendar_prizes : [],
   };
 }
 
@@ -154,7 +156,7 @@ function acquiredAtFromRow(value) {
   return out;
 }
 
-async function loadSession(db, token) {
+export async function loadSession(db, token) {
   const sessionResult = await db.query(
     `SELECT
        session.*,
@@ -218,7 +220,18 @@ async function loadSession(db, token) {
              AND NOT (COALESCE(session.extras->'unseenPulls', '[]'::jsonb) ? instance.instance_id)
            GROUP BY instance.card_id
          ) AS latest
-       ), '{}'::jsonb) AS last_acquired_state
+       ), '{}'::jsonb) AS last_acquired_state,
+       -- Calendar prizes only (streak-N, date-YYYY-MM-DD): the calendar needs their opened state.
+       COALESCE((
+         SELECT jsonb_agg(jsonb_build_object(
+           'acquiredBy', prize.acquired_by,
+           'pulledAt', prize.pulled_at,
+           'seenAt', prize.seen_at
+         ) ORDER BY prize.pulled_at ASC)
+         FROM kalpi_instances AS prize
+         WHERE prize.session_token = session.token
+           AND (prize.acquired_by LIKE 'streak-%' OR prize.acquired_by LIKE 'date-%')
+       ), '[]'::jsonb) AS calendar_prizes
      FROM kalpi_sessions AS session
      WHERE session.token = $1`,
     [token],

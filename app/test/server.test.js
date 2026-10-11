@@ -2597,3 +2597,57 @@ test("bonus day 2026-10-11: set-gift label, one popup re-show, hidden V until cl
   const dismissState = await api(running.base, "/api/state", { token: dismisser });
   assert.equal((dismissState.body.instances || []).some((item) => item.acquiredBy === "date-2026-10-11"), false);
 });
+
+test("streak run after a reset: same run day opens this run's prize, not the old run's", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-run-collision-"));
+  const clock = { value: Date.parse("2026-10-06T07:00:00.000Z") };
+  let running = await start(dataDir, clock, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const token = (await api(running.base, "/api/home")).body.token;
+  clock.value = Date.parse("2026-10-07T07:00:00.000Z");
+  await api(running.base, "/api/home", { token });
+  const first = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 2 } });
+  assert.equal(first.body.cards.length, 1);
+  // Miss 10-08. Run 2 reaches day 2 on 10-10.
+  clock.value = Date.parse("2026-10-09T07:00:00.000Z");
+  await api(running.base, "/api/home", { token });
+  clock.value = Date.parse("2026-10-10T07:00:00.000Z");
+  const home = await api(running.base, "/api/home", { token });
+  assert.equal(home.body.state.visitStreak, 2);
+  assert.equal(home.body.state.streakCalendar.ladder[0].opened, false, "the old run's opened day-2 prize does not count");
+  const opened = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 2 } });
+  assert.equal(opened.body.already, undefined);
+  assert.equal(opened.body.cards.length, 1);
+  assert.equal(opened.body.state.streakCalendar.ladder[0].opened, true);
+  const again = await api(running.base, "/api/streak/open", { token, method: "POST", body: { day: 2 } });
+  assert.equal(again.body.already, true);
+  assert.equal(again.body.state.streakCalendar.showPopup, false, "a refused open closes the popup");
+  const state = await api(running.base, "/api/state", { token });
+  assert.equal((state.body.instances || []).filter((item) => item.acquiredBy === "streak-2").length, 2);
+  assert.equal(state.body.streakCalendar.ladder[0].opened, true);
+
+  // A player stuck by the old bug (stamped by slim home, never granted this run) recovers on open.
+  const stuck = (await api(running.base, "/api/home")).body.token;
+  clock.value = Date.parse("2026-10-11T07:00:00.000Z");
+  await api(running.base, "/api/home", { token: stuck });
+  await api(running.base, "/api/streak/open", { token: stuck, method: "POST", body: { day: 2 } });
+  await running.close();
+  const file = path.join(dataDir, "state.json");
+  const stored = JSON.parse(await readFile(file, "utf8"));
+  const session = stored.sessions[stuck];
+  // Reset, then slim-home stamps day 1 and day 2 of a new run with no grant; claims still list 2.
+  session.visitDay = "2026-10-13";
+  session.visitStreak = 2;
+  session.visitDates = [...session.visitDates, "2026-10-12", "2026-10-13"];
+  session.visitStreakClaims = [2];
+  await writeFile(file, JSON.stringify(stored));
+  clock.value = Date.parse("2026-10-13T07:00:00.000Z");
+  running = await start(dataDir, clock, { debugEnabled: false });
+  const peek = await api(running.base, "/api/state", { token: stuck });
+  assert.equal(peek.body.streakCalendar.ladder[0].opened, false);
+  const recovered = await api(running.base, "/api/streak/open", { token: stuck, method: "POST", body: { day: 2 } });
+  assert.equal(recovered.body.cards?.length, 1, "the stuck player gets this run's prize");
+});

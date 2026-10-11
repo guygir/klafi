@@ -6581,7 +6581,11 @@ async function openServerPrize({ body, reward, packId }) {
     if (pulled.already) {
       rip?.release();
       if (pulled.state) setServerState(pulled.state, { merge: true });
-      if (elements.streakDialog?.open && model.serverState?.streakCalendar) paintStreakCalendar(model.serverState.streakCalendar);
+      // Keep the table honest: reopen it painted from the server's answer (נלקח), and say so.
+      if (pulled.state?.streakCalendar && model.serverState) model.serverState.streakCalendar = pulled.state.streakCalendar;
+      openStreakCalendar({ force: true, calendar: model.serverState?.streakCalendar });
+      showToast("כבר פתחתם את הפרס הזה.");
+      renderHome();
       return;
     }
     if (!pulled.cards?.length) throw new Error("EMPTY_STREAK_REWARD");
@@ -9447,7 +9451,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.153";
+const HEARD_YOU_VERSION = "v1.154";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {

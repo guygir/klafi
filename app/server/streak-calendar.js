@@ -95,6 +95,29 @@ export function streakAcquiredBy(visitStreak, cellDay) {
   return `streak-${day}`;
 }
 
+/** First Jerusalem day of the current run (visitDay minus run length - 1). */
+export function runStartDay(session) {
+  const streak = Math.max(0, Math.round(Number(session?.visitStreak) || 0));
+  if (!session?.visitDay || streak < 1) return null;
+  return shiftJerusalemDay(session.visitDay, -(streak - 1));
+}
+
+/**
+ * The streak prize granted in THIS run for `cellDay`. acquiredBy is only "streak-N", so a run after a
+ * reset would otherwise match the prize of an earlier run's same day. Prefer an unopened one.
+ */
+export function currentRunStreakInstance(session, cellDay) {
+  const acquiredBy = `streak-${Math.round(Number(cellDay) || 0)}`;
+  const start = runStartDay(session);
+  const matches = (session?.instances || []).filter((item) => {
+    if (item?.acquiredBy !== acquiredBy) return false;
+    if (!start) return true;
+    const pulled = Date.parse(item.pulledAt || item.seenAt || "");
+    return !Number.isFinite(pulled) || jerusalemDay(pulled) >= start;
+  });
+  return matches.find((item) => !item.seenAt) || matches[0] || null;
+}
+
 export function datePrizeFor(date) {
   return DATE_PRIZES[date] || null;
 }
@@ -206,8 +229,7 @@ export function noteSkippedStreakPrize(session) {
   const day = calendarDay(session.visitStreak);
   if (!streakRewardForDay(day)) return false;
   if (!(session.visitStreakClaims || []).includes(day)) return false;
-  const acquiredBy = streakAcquiredBy(session.visitStreak, day);
-  const instance = (session.instances || []).find((item) => item?.acquiredBy === acquiredBy);
+  const instance = currentRunStreakInstance(session, day);
   if (!instance || instance.seenAt) return false;
   session.streakPrizeSkipped = true;
   return true;
@@ -223,12 +245,11 @@ function nextPrizeRunDays(streak, count) {
   return found;
 }
 
-function ladderRung(streak, runDay, { current = false, claims, instances }) {
+function ladderRung(streak, runDay, { current = false, claims, session }) {
   const cycleDay = calendarDay(runDay);
   const reward = streakRewardForDay(cycleDay);
   const claimed = Boolean(current && reward && claims.has(cycleDay));
-  const acquiredBy = claimed ? streakAcquiredBy(streak, cycleDay) : null;
-  const granted = acquiredBy ? instances.find((item) => item?.acquiredBy === acquiredBy) : null;
+  const granted = claimed ? currentRunStreakInstance(session, cycleDay) : null;
   return {
     runDay,
     cycleDay,
@@ -244,10 +265,9 @@ function ladderRung(streak, runDay, { current = false, claims, instances }) {
 export function publicStreakLadder(session) {
   const streak = Math.max(0, Number(session?.visitStreak) || 0);
   const claims = new Set(session?.visitStreakClaims || []);
-  const instances = session?.instances || [];
-  const current = ladderRung(streak, streak, { current: true, claims, instances });
+  const current = ladderRung(streak, streak, { current: true, claims, session });
   const upcoming = nextPrizeRunDays(streak, 2).map((runDay) => (
-    ladderRung(streak, runDay, { claims, instances })
+    ladderRung(streak, runDay, { claims, session })
   ));
   return [current, ...upcoming];
 }
