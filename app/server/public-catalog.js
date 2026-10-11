@@ -79,7 +79,9 @@ function findSet5Match(candidate, parties = [], members = []) {
   const member = members.find((item) =>
     normalizePersonName(item.nameHe) === nameHe
     || normalizePersonName(item.nameEn) === nameEn);
-  const partyId = member?.partyId
+  // An explicit candidate party wins over the members list (e.g. a set 7 placeholder line).
+  const partyId = candidate.partyId
+    || member?.partyId
     || SET5_PARTY_FALLBACK[candidate.nameHe]
     || SET5_PARTY_FALLBACK[candidate.nameEn];
   return {
@@ -115,7 +117,23 @@ const MOMENT_SETS = Object.freeze({
     indexField: "set6Index",
     fallbackSet: "LIK",
     why: "Selected for Set 6 from the accepted Likud quote pool.",
+    unplacedLine: true,
     rationale: "Accepted Set 6 quote with approved art.",
+  },
+  "set-7": {
+    idPrefix: "SET7",
+    letters: "נשית",
+    nameHe: "העצמה נשית",
+    nameEn: "Women Empowerment",
+    releaseSetId: "set-7",
+    releaseOrder: 13,
+    binderGroup: "set-7",
+    sourceIdPrefix: "set7",
+    indexField: "set7Index",
+    fallbackSet: "LIK",
+    unplacedLine: true,
+    why: "Selected for Set 7 (העצמה נשית) from the handoff quote pool.",
+    rationale: "Set 7 quote with supplied art.",
   },
 });
 
@@ -130,10 +148,17 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
   const treatment = party && critical.has(party.id) ? "critical" : "favorable";
   const index = Number(candidate.n) || 0;
   const fromCandidate = Number(candidate.listSlot);
-  const fromMember = Number(member?.slot);
+  // A member's list slot only applies when the card shows that member's party.
+  const fromMember = !party || member?.partyId === party.id ? Number(member?.slot) : NaN;
   const slot = Number.isInteger(fromCandidate) && fromCandidate > 0 ? fromCandidate : fromMember;
   const listSlot = Number.isInteger(slot) && slot > 0 ? slot : null;
-  const sourceUrl = (candidate.sources || []).find(Boolean) || "";
+  const sourceUrls = (candidate.sources || []).filter(Boolean);
+  const sourceUrl = sourceUrls[0] || "";
+  // A card built from more than one event lists every receipt; the first stays the main one.
+  const extraSources = sourceUrls.slice(1).map((url, i) => ({
+    url,
+    label: String(candidate.extraSourceLabels?.[i] || "").trim() || url,
+  }));
   // Human-readable receipt label (usually the source headline); fall back to the raw URL.
   const sourceLabel = String(candidate.sourceLabel || "").trim() || sourceUrl || "Source pending";
   const context = candidate.notes || candidate.art?.note || "";
@@ -153,14 +178,16 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
     type: "Quote",
     typeHe: "ציטוט",
     rarity: candidate.rarity || "Common",
-    subtitle: listSlot ? `מקום ${listSlot} · ${setLabel}` : (setId === "set-6" ? unplacedHe : `${meta.nameHe} · ${party?.displayNameHe || ""}`.replace(/ · $/, "")),
-    subtitleHe: listSlot ? `מקום ${listSlot}` : (setId === "set-6" ? unplacedHe : meta.nameHe),
+    subtitle: listSlot ? `מקום ${listSlot} · ${setLabel}` : (meta.unplacedLine ? unplacedHe : `${meta.nameHe} · ${party?.displayNameHe || ""}`.replace(/ · $/, "")),
+    subtitleHe: listSlot ? `מקום ${listSlot}` : (meta.unplacedLine ? unplacedHe : meta.nameHe),
     body: context,
     whyItMatters: candidate.notes || meta.why,
     source: sourceLabel,
     listSlot,
     [meta.indexField]: index,
-    membershipNote: String(member?.membershipNote || "").trim(),
+    membershipNote: candidate.partyId ? "" : String(member?.membershipNote || "").trim(),
+    // An explicit party line on the card: the members-list "former party" note does not apply.
+    partyOverride: Boolean(candidate.partyId),
     artKey: candidate.art?.artKey || null,
     walkout: {
       kind: "quote",
@@ -170,6 +197,7 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
       sourceId: `${meta.sourceIdPrefix}-${String(index).padStart(2, "0")}`,
       sourceLabel,
       sourceUrl,
+      ...(extraSources.length ? { extraSources } : {}),
       context,
       quoteStatus: candidate.quoteStatus || "exact",
       selectionRationale: candidate.notes || meta.rationale,
@@ -199,10 +227,15 @@ export function runtimeSet6Card(candidate, extras = {}) {
   return runtimeMomentCard(candidate, extras, "set-6");
 }
 
-export function catalogExtrasFromStudio(studio, set5, set6) {
+export function runtimeSet7Card(candidate, extras = {}) {
+  return runtimeMomentCard(candidate, extras, "set-7");
+}
+
+export function catalogExtrasFromStudio(studio, set5, set6, set7) {
   return {
     set5: set5 || { candidates: [] },
     set6: set6 || { candidates: [] },
+    set7: set7 || { candidates: [] },
     parties: studio?.parties || [],
     members: studio?.members || [],
     criticalBloc: studio?.editorialPolicy?.criticalBloc || [],
@@ -227,7 +260,7 @@ export function attachMembershipNotes(cards, members = []) {
     if (nameEn) byName.set(nameEn, note);
   }
   for (const card of cards) {
-    if (String(card.membershipNote || "").trim()) continue;
+    if (String(card.membershipNote || "").trim() || card.partyOverride) continue;
     const note = byMemberId.get(memberIdFromCardId(card.id))
       || byName.get(normalizePersonName(card.titleHe || card.hebrewTitle))
       || byName.get(normalizePersonName(card.title));
@@ -239,11 +272,13 @@ export function attachMembershipNotes(cards, members = []) {
 export function expandPublicCatalog(cards, specials = { sets: [], cards: [] }, extras = {}) {
   const set5Cards = (extras.set5?.candidates || []).map((candidate) => runtimeSet5Card(candidate, extras));
   const set6Cards = (extras.set6?.candidates || []).map((candidate) => runtimeSet6Card(candidate, extras));
+  const set7Cards = (extras.set7?.candidates || []).map((candidate) => runtimeSet7Card(candidate, extras));
   const expanded = [
     ...cards,
     ...(specials.cards || []).map((card) => runtimeSpecialCard(card, specials)),
     ...set5Cards,
     ...set6Cards,
+    ...set7Cards,
   ];
   return attachMembershipNotes(expanded, extras.members || []);
 }

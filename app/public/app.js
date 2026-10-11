@@ -47,7 +47,7 @@ const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
 const STATIC_DATA_VERSION = "visible-sets-4";
-const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5", "set-6"];
+const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5", "set-6", "set-7"];
 const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 
@@ -4070,6 +4070,7 @@ const FILTER_SET_SHORT = {
   "party-slot-2": "משנה",
   "set-5": "רגעים",
   "set-6": "ליכודיאדה",
+  "set-7": "העצמה נשית",
   "decisions": "החלטות",
   "records": "הישגים",
 };
@@ -4192,6 +4193,8 @@ function cardTrustLine(card) {
 }
 
 function configureSourceLink(link, card) {
+  // Extra receipts (a card merged from two events) render as sibling links after the main one.
+  while (link.nextElementSibling?.classList.contains("extra-source-link")) link.nextElementSibling.remove();
   const sourceUrl = card.walkout?.sourceUrl;
   link.hidden = !sourceUrl;
   if (!sourceUrl) {
@@ -4202,6 +4205,18 @@ function configureSourceLink(link, card) {
   link.textContent = "למקור המצורף ↗";
   const sourceName = card.walkout?.sourceLabel ? `: ${card.walkout.sourceLabel}` : "";
   link.setAttribute("aria-label", `פתיחת המקור${sourceName} בחלון חדש`);
+  let after = link;
+  for (const extra of card.walkout?.extraSources || []) {
+    if (!extra?.url) continue;
+    const more = link.cloneNode(false);
+    more.removeAttribute("id");
+    more.classList.add("extra-source-link");
+    more.href = extra.url;
+    more.textContent = "למקור נוסף ↗";
+    more.setAttribute("aria-label", `פתיחת מקור נוסף${extra.label ? `: ${extra.label}` : ""} בחלון חדש`);
+    after.after(more);
+    after = more;
+  }
 }
 
 function cardPresentation(card, instance = {}) {
@@ -9380,7 +9395,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.149";
+const HEARD_YOU_VERSION = "v1.150";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {

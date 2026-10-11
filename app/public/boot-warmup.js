@@ -26,7 +26,7 @@ const homePath = inboundInvite
   ? `/api/home?invite=${encodeURIComponent(inboundInvite)}`
   : "/api/home";
 const staticDataVersion = "visible-sets-4";
-const PLAYABLE_ART_SET_IDS = ["party-leaders", "party-slot-2", "set-5", "set-6"];
+const PLAYABLE_ART_SET_IDS = ["party-leaders", "party-slot-2", "set-5", "set-6", "set-7"];
 const json = async (response) => {
   const body = await response.json();
   if (!response.ok) throw new Error(body.error || "WARMUP_FAILED");

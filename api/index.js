@@ -20,6 +20,7 @@ export const config = {
     "app/data/presentation-content.json",
     "docs/intake/research/set5-wip-pool.json",
     "docs/intake/research/set6-wip-pool.json",
+    "docs/intake/research/set7-wip-pool.json",
     "app/server/**",
   ],
 };

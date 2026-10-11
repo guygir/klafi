@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { catalogExtrasFromStudio, expandPublicCatalog } from "../server/public-catalog.js";
+import { catalogExtrasFromStudio, expandPublicCatalog, runtimeMomentCard } from "../server/public-catalog.js";
 import { visiblePlayerCards } from "../server/visible-sets.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -16,15 +16,16 @@ const projectRoot = path.resolve(here, "../..");
 const KNOWN_PENDING_SOURCE_IDS = Object.freeze([]);
 
 async function playableCards() {
-  const [cards, specials, studio, set5, set6, catalog] = await Promise.all([
+  const [cards, specials, studio, set5, set6, set7, catalog] = await Promise.all([
     readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set5-wip-pool.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set6-wip-pool.json"), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "docs/intake/research/set7-wip-pool.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../public/catalog.json"), "utf8").then(JSON.parse),
   ]);
-  const runtime = visiblePlayerCards(expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studio, set5, set6)))
+  const runtime = visiblePlayerCards(expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studio, set5, set6, set7)))
     .filter((card) => !card.eventOnly);
   const staticCards = catalog.cards.filter((card) => !card.eventOnly);
   return { runtime, staticCards };
@@ -83,11 +84,28 @@ test("static catalog.json receipts match the runtime catalog", async () => {
 });
 
 test("research pools drop the sourcePending flag once a source is attached", async () => {
-  for (const file of ["set5-wip-pool.json", "set6-wip-pool.json"]) {
+  for (const file of ["set5-wip-pool.json", "set6-wip-pool.json", "set7-wip-pool.json"]) {
     const pool = JSON.parse(await readFile(path.join(projectRoot, "docs/intake/research", file), "utf8"));
     const stale = pool.candidates
       .filter((candidate) => candidate.sourcePending && (candidate.sources || []).some(Boolean))
       .map((candidate) => candidate.n);
     assert.deepEqual(stale, [], `${file} candidates still flagged sourcePending: ${stale.join(", ")}`);
   }
+});
+
+test("a card built from two events carries both receipts, and the client lists the extra one", async () => {
+  const card = runtimeMomentCard({
+    n: 99, nameHe: "בדיקה", nameEn: "Test", displayText: "ציטוט", quoteStatus: "shortened",
+    sources: ["https://example.org/a", "https://example.org/b"], sourceLabel: "כותרת א", extraSourceLabels: ["כותרת ב"],
+    art: { artKey: "x.jpg" },
+  }, {}, "set-7");
+  assert.equal(card.walkout.sourceUrl, "https://example.org/a");
+  assert.deepEqual(card.walkout.extraSources, [{ url: "https://example.org/b", label: "כותרת ב" }]);
+  const single = runtimeMomentCard({ n: 98, nameHe: "בדיקה", sources: ["https://example.org/a"], art: {} }, {}, "set-7");
+  assert.equal(single.walkout.extraSources, undefined);
+  const js = await readFile(path.resolve(here, "../public/app.js"), "utf8");
+  const fn = js.slice(js.indexOf("function configureSourceLink("), js.indexOf("function cardPresentation("));
+  assert.match(fn, /extra-source-link/);
+  assert.match(fn, /card\.walkout\?\.extraSources/);
+  assert.match(fn, /nextElementSibling\?\.classList\.contains\("extra-source-link"\)/, "stale extra links are cleared");
 });

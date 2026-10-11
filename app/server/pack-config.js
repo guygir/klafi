@@ -26,6 +26,7 @@ export const DEFAULT_PACK_SETS = Object.freeze([
   { id: "records", weight: 0, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 2, Uncommon: 2, Rare: 1 }) },
   { id: "set-5", weight: 30, includeEventCards: false, rarities: rarityWeightsForCounts({ Common: 12, Uncommon: 7, Rare: 4 }) },
   { id: "set-6", weight: 0, includeEventCards: false, rarities: { Common: 70, Uncommon: 22, Rare: 8 } },
+  { id: "set-7", weight: 0, includeEventCards: false, rarities: { Common: 70, Uncommon: 22, Rare: 8 } },
 ]);
 
 const RARITY_TIERS = Object.freeze(["Common", "Uncommon", "Rare"]);
