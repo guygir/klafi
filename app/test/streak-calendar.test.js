@@ -73,7 +73,8 @@ test("a long run keeps streak claims and does not open a second month", () => {
 });
 
 test("reward days stay on the ladder without a warehouse hold", () => {
-  assert.equal(Object.keys(DATE_PRIZES).length, 26);
+  assert.equal(Object.keys(DATE_PRIZES).length, 27);
+  assert.deepEqual(DATE_PRIZES["2026-10-11"], { kind: "pack", label: "סט 5!", setId: "set-7" });
   assert.equal(DATE_PRIZES["2026-10-01"].stars, 1);
   assert.equal(DATE_PRIZES["2026-10-02"].kind, "pack");
   assert.equal(DATE_PRIZES["2026-10-03"], undefined);
@@ -233,4 +234,18 @@ test("calendar popup is suppressed on day 1 and auto-opens from day 2", () => {
   assert.equal(publicStreakCalendar(session).showPopup, true);
   assert.equal(ackStreakCalendar(session), true);
   assert.equal(publicStreakCalendar(session).showPopup, false);
+});
+
+test("bonus day re-shows the popup once even after an ordinary ack, and never on day 1", () => {
+  const base = { visitDay: "2026-10-11", visitDates: ["2026-10-10", "2026-10-11"], visitStreak: 2 };
+  assert.equal(publicStreakCalendar({ ...base, streakCalendarAckDay: "2026-10-11" }).showPopup, true);
+  const session = { ...base, streakCalendarAckDay: "2026-10-11" };
+  assert.equal(ackStreakCalendar(session), true);
+  assert.equal(ackStreakCalendar(session), false);
+  assert.equal(publicStreakCalendar(session).showPopup, false);
+  assert.equal(publicStreakCalendar({ ...base, visitStreak: 1 }).showPopup, false);
+  const nextDay = { visitDay: "2026-10-12", visitDates: ["2026-10-11", "2026-10-12"], visitStreak: 3, streakCalendarAckDay: "2026-10-11+bonus" };
+  assert.equal(publicStreakCalendar(nextDay).showPopup, true);
+  ackStreakCalendar(nextDay);
+  assert.equal(nextDay.streakCalendarAckDay, "2026-10-12");
 });

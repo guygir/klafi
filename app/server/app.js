@@ -1432,6 +1432,13 @@ export async function createKalpiApp({
     return filtered.length ? filtered : pool;
   }
 
+  /** A bonus-day gift pulls only from its set; star odds stay the set's own pack odds. */
+  function rewardSetPool(pool, reward) {
+    if (!reward?.setId) return pool;
+    const inSet = pool.filter((card) => card.releaseSetId === reward.setId);
+    return inSet.length ? inSet : pool;
+  }
+
   function creditStreakInstance(session, instance, seenAt) {
     if (!instance || instance.seenAt) return false;
     instance.seenAt = seenAt;
@@ -1479,7 +1486,7 @@ export async function createKalpiApp({
 
   async function grantRewardInstance(session, reward, { acquiredBy, packPrefix }) {
     const currentMs = now();
-    const pool = streakRewardPool(activeIdleCards(allCards, currentMs), reward);
+    const pool = streakRewardPool(rewardSetPool(activeIdleCards(allCards, currentMs), reward), reward);
     if (!pool.length) return null;
     const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(session), session.idleDuplicateStreak || 0));
     const pulledAt = new Date(currentMs).toISOString();
