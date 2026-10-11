@@ -2,7 +2,7 @@
   "id": "set7-wip-pool",
   "status": "local-draft",
   "asOfDate": "2026-10-11",
-  "note": "Set 7 (העצמה נשית): 27 Quote cards, display codes נשית-01–27, ordered by person. Placeholders: party for people not in the members list falls back to Likud (Son Har-Melech set to Otzma Yehudit); unplaced women read לא ממוקמת; 10 cards are sourcePending. Not approved: a human still approves wording, context and publication.",
+  "note": "Set 7 (העצמה נשית): 27 Quote cards, display codes נשית-01–27, ordered by person. Placeholders: party for people not in the members list falls back to Likud (Son Har-Melech set to Otzma Yehudit); unplaced women read לא ממוקמת; all 27 cards have sources (10 supplied by Guy on 2026-10-11); Gotliv shown as Likud (placeholder: running with Otzma Yehudit since 3.9.2026, still a Likud-faction MK). Not approved: a human still approves wording, context and publication.",
   "sourceDocument": "docs/art/haatzama-nashit/HANDOFF.md (Guy, Cursor_Klafi)",
   "candidates": [
     {
@@ -12,19 +12,20 @@
       "gender": "f",
       "displayText": "איך זה להיות שאוויש, בחייך?",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2021-07-28",
+      "sources": [
+        "https://www.maariv.co.il/news/politics/article-855870"
+      ],
+      "sourceLabel": "\"השאוויש הגיע\": מה גרם למירי רגב להתפקע מצחוק במהלך נאומה?",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "במליאת הכנסת, 28 ביולי 2021.",
       "art": {
         "artKey": "hero-art-nashit-regev-01-whisper.jpg",
         "status": "provided",
         "sha256": "69f8ea8cd279b831c9c880f4795cf04a30c7aaf973fa0b66abc3f7d18141fd12",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common",
-      "sourcePending": true
+      "rarity": "Common"
     },
     {
       "n": 2,
@@ -33,19 +34,20 @@
       "gender": "f",
       "displayText": "מנה חמה לוקח יותר זמן להכין מאשר לבחור שופט במדינת ישראל",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2023-01-15",
+      "sources": [
+        "https://www.kipa.co.il/%D7%97%D7%93%D7%A9%D7%95%D7%AA/1149535-0/"
+      ],
+      "sourceLabel": "\"מנה חמה לוקח יותר זמן להכין מאשר לבחור שופט בישראל\"",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "15 בינואר 2023, על הרכב הוועדה לבחירת שופטים.",
       "art": {
         "artKey": "hero-art-nashit-regev-02-noodles.jpg",
         "status": "provided",
         "sha256": "17c56c3c1bacd921fec3d592837a0efc2f53ed2ed016f97dc11f06899e8d459c",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common",
-      "sourcePending": true
+      "rarity": "Common"
     },
     {
       "n": 3,
@@ -54,19 +56,20 @@
       "gender": "f",
       "displayText": "אני שואלת אותך. אני קראתי את פרשת השבוע שלי",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2024-11-30",
+      "sources": [
+        "https://www.kipa.co.il/%D7%AA%D7%A8%D7%91%D7%95%D7%AA/%D7%98%D7%9C%D7%95%D7%95%D7%99%D7%96%D7%99%D7%94/1193285-0/"
+      ],
+      "sourceLabel": "\"מה פרשת השבוע?\": מירי רגב התקשתה לענות בשידור - כך הגיב עמית סגל",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "בשידור, 30 בנובמבר 2024, כשנשאלה מה פרשת השבוע.",
       "art": {
         "artKey": "hero-art-nashit-regev-04-portion.jpg",
         "status": "provided",
         "sha256": "ae785509865a7ff8d90123adcde9a03c777350f446a123a3010605243767565b",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common",
-      "sourcePending": true
+      "rarity": "Common"
     },
     {
       "n": 4,
@@ -75,19 +78,20 @@
       "gender": "f",
       "displayText": "אני חושבת שאדם שלא שם ליכוד בקלפי הוא מיזנתרופ",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2021-03-14",
+      "sources": [
+        "https://www.mako.co.il/news-israel-elections/2021_q1/Article-4b2ab13fb703871026.htm"
+      ],
+      "sourceLabel": "רגב: מי שלא מצביע לליכוד - שונא אדם וכפוי טובה",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "14 במרץ 2021, לפני הבחירות לכנסת ה-24.",
       "art": {
         "artKey": "hero-art-nashit-regev-07-ballot.jpg",
         "status": "provided",
         "sha256": "e64ee49274a575c220ffbabbe3e2432e9ecd7da91c2a7cbe09de03e25d0e0766",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon",
-      "sourcePending": true
+      "rarity": "Uncommon"
     },
     {
       "n": 5,
@@ -96,53 +100,57 @@
       "gender": "f",
       "displayText": "אני מאוד מרוצה מהדרך שבה הצלחנו לפצח את השואה",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2018-04-17",
+      "sources": [
+        "https://haaretz.co.il/captain/viral/2018-04-17/ty-article/0000017f-e927-da9b-a1ff-ed6fb4240000"
+      ],
+      "sourceLabel": "מירי רגב \"פיצחה\" את השואה; הגולשים לא עמדו מנגד",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "17 באפריל 2018, על טקס הדלקת המשואות שבאחריותה.",
       "art": {
         "artKey": "hero-art-nashit-regev-08-torches.jpg",
         "status": "provided",
         "sha256": "a57e002148c9bda2937c44c9496e32dbe52d13797c4b2d8e186f97b09913f5db",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Rare",
-      "sourcePending": true
+      "rarity": "Rare"
     },
     {
       "n": 6,
       "nameHe": "מירי רגב",
       "nameEn": "Miri Regev",
       "gender": "f",
-      "displayText": "אם לא תתנצל, אני אדאג שלא תמונה למאמן הנבחרת",
+      "displayText": "כל עוד לא תתנצל בפני הליכודניקים, לעולם לא תהיה מאמן נבחרת ישראל",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2020-10-09",
+      "sources": [
+        "https://www.mako.co.il/tv-ofira_and_berkovich/articles/Article-4ff0615c6cd0571026.html"
+      ],
+      "sourceLabel": "פיצוץ באולפן בין מירי רגב לאייל ברקוביץ'",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "לאייל ברקוביץ' באולפן \"אופירה וברקוביץ'\", 9 באוקטובר 2020.",
       "art": {
         "artKey": "hero-art-nashit-regev-09-coach.jpg",
         "status": "provided",
         "sha256": "f27da1664be9a969a445086b026edd65177436fffc8fc623651ab686da332afa",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon",
-      "sourcePending": true
+      "rarity": "Uncommon"
     },
     {
       "n": 7,
       "nameHe": "טלי גוטליב",
-      "nameEn": "Tally Gotliv",
+      "nameEn": "Tali Gotliv",
       "gender": "f",
       "displayText": "לה לה לה... כי אתה תומך טרור",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2024-04-03",
+      "sources": [
+        "https://www.i24news.tv/he/news/news/politics/artc-ab9857b9"
+      ],
+      "sourceLabel": "\"לה, לה, לה – אתה תומך טרור\": טלי גוטליב שרה במליאת הכנסת",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "במליאת הכנסת, 3 באפריל 2024.",
       "art": {
         "artKey": "hero-art-nashit-gotliv-01-ears.jpg",
         "status": "provided",
@@ -150,12 +158,12 @@
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
       "rarity": "Common",
-      "sourcePending": true
+      "partyId": "LIK"
     },
     {
       "n": 8,
       "nameHe": "טלי גוטליב",
-      "nameEn": "Tally Gotliv",
+      "nameEn": "Tali Gotliv",
       "gender": "f",
       "displayText": "חלאס אמא שלך!",
       "quoteStatus": "exact",
@@ -172,20 +180,23 @@
         "sha256": "6fd6d10eee6dacf194f5657373ae9b0b936722c132d6ec337b29dd49c738f7f7",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common"
+      "rarity": "Common",
+      "partyId": "LIK"
     },
     {
       "n": 9,
       "nameHe": "טלי גוטליב",
-      "nameEn": "Tally Gotliv",
+      "nameEn": "Tali Gotliv",
       "gender": "f",
       "displayText": "איך קרא לי אלהואשלה, מסחורה? אולי אימא שלך מסחורה",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2025-11-11",
+      "sources": [
+        "https://www.kikar.co.il/scoop-news/55075"
+      ],
+      "sourceLabel": "\"אמא שלך מסחורה!\": התגובה הסוערת של טלי גוטליב לח\"כים ערביים",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "11 בנובמבר 2025, בתגובה לח״כ ואליד אלהואשלה.",
       "art": {
         "artKey": "hero-art-nashit-gotliv-04-goods.jpg",
         "status": "provided",
@@ -193,20 +204,22 @@
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
       "rarity": "Common",
-      "sourcePending": true
+      "partyId": "LIK"
     },
     {
       "n": 10,
       "nameHe": "טלי גוטליב",
-      "nameEn": "Tally Gotliv",
+      "nameEn": "Tali Gotliv",
       "gender": "f",
       "displayText": "אם ייפול עלי מזגן באמצע שום מקום... התאבדתי",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2025-03-25",
+      "sources": [
+        "https://www.maariv.co.il/news/politics/article-1183089"
+      ],
+      "sourceLabel": "טלי גוטליב: \"אם ייפול עלי מזגן, אל תאמינו שככל הנראה התאבדתי\"",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "25 במרץ 2025.",
       "art": {
         "artKey": "hero-art-nashit-gotliv-07-ac.jpg",
         "status": "provided",
@@ -214,12 +227,12 @@
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
       "rarity": "Common",
-      "sourcePending": true
+      "partyId": "LIK"
     },
     {
       "n": 11,
       "nameHe": "טלי גוטליב",
-      "nameEn": "Tally Gotliv",
+      "nameEn": "Tali Gotliv",
       "gender": "f",
       "displayText": "זה הזכיר לי את אושוויץ",
       "quoteStatus": "exact",
@@ -236,20 +249,23 @@
         "sha256": "85e12f63ea8ad0afdb47f1d19de1c69e12c68aa40c420b81199a34338de59359",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon"
+      "rarity": "Uncommon",
+      "partyId": "LIK"
     },
     {
       "n": 12,
       "nameHe": "טלי גוטליב",
-      "nameEn": "Tally Gotliv",
+      "nameEn": "Tali Gotliv",
       "gender": "f",
       "displayText": "הפמיניזם זה רק לשמאלניות 'נאורות'",
       "quoteStatus": "exact",
-      "date": "",
-      "sources": [],
-      "sourceLabel": "",
+      "date": "2026-07-08",
+      "sources": [
+        "https://www.c14.co.il/article/1614281"
+      ],
+      "sourceLabel": "הנאום הסוער של ח\"כ גוטליב: \"קשה לי שאישה תנקה את הבית\"",
       "existingStudioRef": null,
-      "notes": "",
+      "notes": "נאום בכנסת, 8 ביולי 2026.",
       "art": {
         "artKey": "hero-art-nashit-gotliv-10-quotes.jpg",
         "status": "provided",
@@ -257,12 +273,12 @@
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
       "rarity": "Common",
-      "sourcePending": true
+      "partyId": "LIK"
     },
     {
       "n": 13,
       "nameHe": "טלי גוטליב",
-      "nameEn": "Tally Gotliv",
+      "nameEn": "Tali Gotliv",
       "gender": "f",
       "displayText": "מריחים עד לכאן את הוודקה שאתה שותה",
       "quoteStatus": "exact",
@@ -279,7 +295,8 @@
         "sha256": "d27f1529ff641ef41e3d09107ecbe37db42181bb6f3e87f1811166c07af4d60a",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon"
+      "rarity": "Uncommon",
+      "partyId": "LIK"
     },
     {
       "n": 14,

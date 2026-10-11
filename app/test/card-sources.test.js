@@ -13,18 +13,7 @@ const projectRoot = path.resolve(here, "../..");
 // human-readable receipt label. Cards whose source is still being researched go here,
 // one id per line with a short reason, so the gap stays visible in review instead of
 // silently shipping "Source pending". Keep this list empty whenever possible.
-const KNOWN_PENDING_SOURCE_IDS = Object.freeze([
-  "SET7-01", // regev-01-whisper: set 7 handoff has no source yet (Guy sourcing)
-  "SET7-02", // regev-02-noodles: set 7 handoff has no source yet (Guy sourcing)
-  "SET7-03", // regev-04-portion: set 7 handoff has no source yet (Guy sourcing)
-  "SET7-04", // regev-07-ballot: set 7 handoff has no source yet (Guy sourcing)
-  "SET7-05", // regev-08-torches: set 7 handoff has no source yet (Guy sourcing)
-  "SET7-06", // regev-09-coach: set 7 handoff has no source yet (Guy sourcing)
-  "SET7-07", // gotliv-01-ears: set 7 handoff has no source yet (Guy sourcing)
-  "SET7-09", // gotliv-04-goods: set 7 handoff has no source yet (Guy sourcing)
-  "SET7-10", // gotliv-07-ac: set 7 handoff has no source yet (Guy sourcing)
-  "SET7-12", // gotliv-10-quotes: set 7 handoff has no source yet (Guy sourcing)
-]);
+const KNOWN_PENDING_SOURCE_IDS = Object.freeze([]);
 
 async function playableCards() {
   const [cards, specials, studio, set5, set6, set7, catalog] = await Promise.all([

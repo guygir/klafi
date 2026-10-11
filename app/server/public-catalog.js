@@ -79,8 +79,9 @@ function findSet5Match(candidate, parties = [], members = []) {
   const member = members.find((item) =>
     normalizePersonName(item.nameHe) === nameHe
     || normalizePersonName(item.nameEn) === nameEn);
-  const partyId = member?.partyId
-    || candidate.partyId
+  // An explicit candidate party wins over the members list (e.g. a set 7 placeholder line).
+  const partyId = candidate.partyId
+    || member?.partyId
     || SET5_PARTY_FALLBACK[candidate.nameHe]
     || SET5_PARTY_FALLBACK[candidate.nameEn];
   return {
@@ -147,7 +148,8 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
   const treatment = party && critical.has(party.id) ? "critical" : "favorable";
   const index = Number(candidate.n) || 0;
   const fromCandidate = Number(candidate.listSlot);
-  const fromMember = Number(member?.slot);
+  // A member's list slot only applies when the card shows that member's party.
+  const fromMember = !party || member?.partyId === party.id ? Number(member?.slot) : NaN;
   const slot = Number.isInteger(fromCandidate) && fromCandidate > 0 ? fromCandidate : fromMember;
   const listSlot = Number.isInteger(slot) && slot > 0 ? slot : null;
   const sourceUrl = (candidate.sources || []).find(Boolean) || "";
@@ -177,7 +179,9 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
     source: sourceLabel,
     listSlot,
     [meta.indexField]: index,
-    membershipNote: String(member?.membershipNote || "").trim(),
+    membershipNote: candidate.partyId ? "" : String(member?.membershipNote || "").trim(),
+    // An explicit party line on the card: the members-list "former party" note does not apply.
+    partyOverride: Boolean(candidate.partyId),
     artKey: candidate.art?.artKey || null,
     walkout: {
       kind: "quote",
@@ -249,7 +253,7 @@ export function attachMembershipNotes(cards, members = []) {
     if (nameEn) byName.set(nameEn, note);
   }
   for (const card of cards) {
-    if (String(card.membershipNote || "").trim()) continue;
+    if (String(card.membershipNote || "").trim() || card.partyOverride) continue;
     const note = byMemberId.get(memberIdFromCardId(card.id))
       || byName.get(normalizePersonName(card.titleHe || card.hebrewTitle))
       || byName.get(normalizePersonName(card.title));

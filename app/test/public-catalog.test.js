@@ -355,7 +355,11 @@ test("Sets 1 and 2 ship complete art-backed catalogs", async () => {
 test("party movers keep the current ballot list and a לשעבר receipt", async () => {
   const { cards, specials, extras, studio } = await loadCatalogSources();
   const expanded = expandPublicCatalog(cards, specials, extras);
-  const gotliv = expanded.filter((card) => card.titleHe === "טלי גוטליב");
+  // Set 7 shows Gotliv on a Likud placeholder line (party TBD with Guy); the other sets keep Otzma.
+  const gotliv = expanded.filter((card) => card.titleHe === "טלי גוטליב" && card.releaseSetId !== "set-7");
+  const gotlivSet7 = expanded.filter((card) => card.titleHe === "טלי גוטליב" && card.releaseSetId === "set-7");
+  assert.equal(gotlivSet7.length, 7);
+  assert.ok(gotlivSet7.every((card) => card.set === "LIK" && !card.membershipNote && !card.listSlot));
   const benShitrit = expanded.filter((card) => card.titleHe === "רפי בן שטרית");
   const segalovitz = expanded.filter((card) => card.titleHe === "יואב סגלוביץ");
   const ginzburg = expanded.filter((card) => card.titleHe === "איתן גינצבורג" || card.titleHe === "איתן גינזבורג");
