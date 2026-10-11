@@ -46,7 +46,7 @@ const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
-const STATIC_DATA_VERSION = "visible-sets-4";
+const STATIC_DATA_VERSION = "visible-sets-5";
 const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5", "set-6", "set-7"];
 const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
@@ -584,7 +584,55 @@ async function request(path, options = {}) {
     error.body = body;
     throw error;
   }
+  await ensureCatalogKnows(body);
   return body;
+}
+
+/** Card ids the server sent (pulls, packs, instances), a few levels deep. */
+function responseCardIds(value, depth = 0, found = new Set()) {
+  if (!value || typeof value !== "object" || depth > 4) return found;
+  if (Array.isArray(value)) {
+    for (const item of value) responseCardIds(item, depth + 1, found);
+    return found;
+  }
+  if (typeof value.cardId === "string") found.add(value.cardId);
+  for (const key of ["cards", "instances", "pulls", "pack", "packs", "state", "idleReturn", "preparedPulls", "idleQueue"]) {
+    if (value[key] && typeof value[key] === "object") responseCardIds(value[key], depth + 1, found);
+  }
+  return found;
+}
+
+let catalogReloadAt = 0;
+
+/**
+ * A card the cached catalog has never seen means the list is stale (a set shipped after it was cached).
+ * Reload it past the HTTP cache before anything renders that card. Every grant path goes through request().
+ */
+async function ensureCatalogKnows(body) {
+  const known = model.catalogIds;
+  if (!known?.size) return;
+  const ids = responseCardIds(body);
+  const unknown = [...ids].filter((id) => !known.has(id));
+  if (!unknown.length) return;
+  if (Date.now() - catalogReloadAt < 15000) return;
+  catalogReloadAt = Date.now();
+  try {
+    await reloadStaticCatalog();
+  } catch {
+    // Keep going with what we have; the next request retries after the throttle.
+  }
+}
+
+async function reloadStaticCatalog() {
+  const response = await fetch(`/catalog.json?v=${STATIC_DATA_VERSION}`, { cache: "reload" });
+  if (!response.ok) throw new Error("CATALOG_MISSING");
+  const payload = await response.json();
+  applyCatalog(payload.cards || payload);
+  catalogFailed = false;
+  if (model.showcase) return;
+  renderProfile();
+  renderBinder();
+  renderHome();
 }
 
 function clientOperationId(prefix) {
@@ -980,6 +1028,7 @@ async function loadShell() {
 
 function applyCatalog(cards) {
   if (!cards?.length) return;
+  model.catalogIds = new Set(cards.map((card) => card?.id).filter(Boolean));
   const visible = cards.filter((card) => isLiveReleaseSet(card.releaseSetId));
   model.catalog = visible;
   model.byId = new Map(visible.map((card) => [card.id, card]));
