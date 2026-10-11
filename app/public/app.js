@@ -6581,7 +6581,11 @@ async function openServerPrize({ body, reward, packId }) {
     if (pulled.already) {
       rip?.release();
       if (pulled.state) setServerState(pulled.state, { merge: true });
-      if (elements.streakDialog?.open && model.serverState?.streakCalendar) paintStreakCalendar(model.serverState.streakCalendar);
+      // Keep the table honest: reopen it painted from the server's answer (נלקח), and say so.
+      if (pulled.state?.streakCalendar && model.serverState) model.serverState.streakCalendar = pulled.state.streakCalendar;
+      openStreakCalendar({ force: true, calendar: model.serverState?.streakCalendar });
+      showToast("כבר פתחתם את הפרס הזה.");
+      renderHome();
       return;
     }
     if (!pulled.cards?.length) throw new Error("EMPTY_STREAK_REWARD");
