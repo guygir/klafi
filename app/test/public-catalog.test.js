@@ -188,10 +188,10 @@ test("public sets use flat 70/22/8 and the star rule holds", async () => {
   ]);
   const byId = new Map(studio.gameConfig.pack.sets.map((set) => [set.id, set]));
   assert.equal(byId.get("party-leaders").weight, 14);
-  assert.equal(byId.get("party-slot-2").weight, 13);
-  assert.equal(byId.get("set-5").weight, 23);
-  assert.equal(byId.get("set-6").weight, 18);
-  assert.equal(byId.get("set-7").weight, 32);
+  assert.equal(byId.get("party-slot-2").weight, 14);
+  assert.equal(byId.get("set-5").weight, 24);
+  assert.equal(byId.get("set-6").weight, 17);
+  assert.equal(byId.get("set-7").weight, 31);
   assert.equal(byId.get("decisions").weight, 0);
   assert.equal(byId.get("records").weight, 0);
   for (const id of ["party-leaders", "party-slot-2", "set-5", "set-6", "set-7"]) {
