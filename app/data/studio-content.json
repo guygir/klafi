@@ -34,7 +34,8 @@
         "party-position-democracy": 1,
         "party-position-society-services": 1,
         "special-events": 0,
-        "set-6": 1
+        "set-6": 1,
+        "set-7": 1
       },
       "rankNames": [
         "אזרח סקרן",
@@ -63,7 +64,7 @@
       "sets": [
         {
           "id": "party-leaders",
-          "weight": 17,
+          "weight": 14,
           "includeEventCards": false,
           "rarities": {
             "Common": 70,
@@ -73,7 +74,7 @@
         },
         {
           "id": "party-slot-2",
-          "weight": 18,
+          "weight": 13,
           "includeEventCards": false,
           "rarities": {
             "Common": 70,
@@ -103,7 +104,7 @@
         },
         {
           "id": "set-5",
-          "weight": 35,
+          "weight": 23,
           "includeEventCards": false,
           "rarities": {
             "Common": 70,
@@ -113,7 +114,17 @@
         },
         {
           "id": "set-6",
-          "weight": 30,
+          "weight": 18,
+          "includeEventCards": false,
+          "rarities": {
+            "Common": 70,
+            "Uncommon": 22,
+            "Rare": 8
+          }
+        },
+        {
+          "id": "set-7",
+          "weight": 32,
           "includeEventCards": false,
           "rarities": {
             "Common": 70,
@@ -180,6 +191,16 @@
         "runtimeState": "active",
         "runtimeAvailableFrom": "2026-09-20T00:00:00+03:00",
         "plannedPublishAt": "2026-09-20T06:00:00.000Z",
+        "launchGate": "blocked"
+      },
+      {
+        "id": "set-7",
+        "nameHe": "העצמה נשית",
+        "order": 13,
+        "tier": "objective",
+        "runtimeState": "active",
+        "runtimeAvailableFrom": "2026-10-11T00:00:00+03:00",
+        "plannedPublishAt": "2026-10-11T06:00:00.000Z",
         "launchGate": "blocked"
       },
       {

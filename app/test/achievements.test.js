@@ -283,10 +283,10 @@ test("server: state carries tiers + pages; a write stamps earnedAt and it surviv
   assert.deepEqual(fresh.body.achievementPages, [
     { tier: "simple", total: 11, earned: 0 },
     { tier: "medium", total: 11, earned: 0 },
-    { tier: "hard", total: 11, earned: 0 },
+    { tier: "hard", total: 12, earned: 0 },
   ]);
   const setBadges = fresh.body.achievements.filter(({ setId }) => setId);
-  assert.deepEqual(setBadges.map(({ id }) => id), ["set-complete:party-leaders", "set-complete:party-slot-2", "set-complete:set-5", "set-complete:set-6"], "sets 1, 2, 5 and 6 are the pullable ones");
+  assert.deepEqual(setBadges.map(({ id }) => id), ["set-complete:party-leaders", "set-complete:party-slot-2", "set-complete:set-5", "set-complete:set-6", "set-complete:set-7"], "sets 1, 2, 5, 6 and 7 are the pullable ones");
   assert.ok(setBadges.every(({ tier, target }) => tier === "hard" && target > 1));
   const revision = fresh.body.revision;
   const again = await api(running.base, "/api/state", { token });

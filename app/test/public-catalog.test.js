@@ -16,14 +16,15 @@ const publicDir = path.resolve(here, "../public");
 const projectRoot = path.resolve(here, "../..");
 
 async function loadCatalogSources() {
-  const [cards, specials, studio, set5, set6] = await Promise.all([
+  const [cards, specials, studio, set5, set6, set7] = await Promise.all([
     readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set5-wip-pool.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set6-wip-pool.json"), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "docs/intake/research/set7-wip-pool.json"), "utf8").then(JSON.parse),
   ]);
-  return { cards, specials, studio, set5, set6, extras: catalogExtrasFromStudio(studio, set5, set6) };
+  return { cards, specials, studio, set5, set6, set7, extras: catalogExtrasFromStudio(studio, set5, set6, set7) };
 }
 
 test("static catalog.json matches the public card expansion", async () => {
@@ -180,27 +181,35 @@ test("Vercel copies live card art including Set 5", async () => {
   assert.ok(liveBytes < 50 * 1024 * 1024, `live Vercel art should stay slim (${liveBytes})`);
 });
 
-test("public sets use flat 70/22/8 and set 5 is twice each other open set", async () => {
+test("public sets use flat 70/22/8; set 7 leads every star tier and the star rule holds", async () => {
   const [catalog, studio] = await Promise.all([
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
   ]);
   const byId = new Map(studio.gameConfig.pack.sets.map((set) => [set.id, set]));
-  assert.equal(byId.get("party-leaders").weight, 17);
-  assert.equal(byId.get("party-slot-2").weight, 18);
-  assert.equal(byId.get("set-5").weight, 35);
-  assert.equal(byId.get("set-6").weight, 30);
+  assert.equal(byId.get("party-leaders").weight, 14);
+  assert.equal(byId.get("party-slot-2").weight, 13);
+  assert.equal(byId.get("set-5").weight, 23);
+  assert.equal(byId.get("set-6").weight, 18);
+  assert.equal(byId.get("set-7").weight, 32);
   assert.equal(byId.get("decisions").weight, 0);
   assert.equal(byId.get("records").weight, 0);
-  for (const id of ["party-leaders", "party-slot-2", "set-5", "set-6"]) {
+  for (const id of ["party-leaders", "party-slot-2", "set-5", "set-6", "set-7"]) {
     assert.deepEqual(byId.get(id).rarities, { Common: 70, Uncommon: 22, Rare: 8 });
   }
   const odds = cardPullOdds({
     pack: studio.gameConfig.pack,
     releaseSets: studio.gameConfig.releaseSets,
     cards: catalog.cards,
-    now: Date.parse("2026-09-20T12:00:00.000Z"),
+    now: Date.parse("2026-10-12T12:00:00.000Z"),
   });
+  assert.equal(new Set(odds.map((row) => row.releaseSetId)).size, 5, "all five weighted sets are open");
+  for (const rarity of ["Common", "Uncommon", "Rare"]) {
+    const tier = odds.filter((row) => row.rarity === rarity);
+    const set7 = Math.min(...tier.filter((row) => row.releaseSetId === "set-7").map((row) => row.probability));
+    const others = Math.max(...tier.filter((row) => row.releaseSetId !== "set-7").map((row) => row.probability));
+    assert.ok(set7 > others, `set 7 leads ${rarity}`);
+  }
   const report = rarityOrderReport(odds);
   assert.equal(report.holds, true, JSON.stringify(report));
   const set5 = odds.find((row) => row.releaseSetId === "set-5" && row.rarity === "Common");

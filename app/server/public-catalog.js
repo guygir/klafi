@@ -80,6 +80,7 @@ function findSet5Match(candidate, parties = [], members = []) {
     normalizePersonName(item.nameHe) === nameHe
     || normalizePersonName(item.nameEn) === nameEn);
   const partyId = member?.partyId
+    || candidate.partyId
     || SET5_PARTY_FALLBACK[candidate.nameHe]
     || SET5_PARTY_FALLBACK[candidate.nameEn];
   return {
@@ -115,7 +116,23 @@ const MOMENT_SETS = Object.freeze({
     indexField: "set6Index",
     fallbackSet: "LIK",
     why: "Selected for Set 6 from the accepted Likud quote pool.",
+    unplacedLine: true,
     rationale: "Accepted Set 6 quote with approved art.",
+  },
+  "set-7": {
+    idPrefix: "SET7",
+    letters: "נשית",
+    nameHe: "העצמה נשית",
+    nameEn: "Women Empowerment",
+    releaseSetId: "set-7",
+    releaseOrder: 13,
+    binderGroup: "set-7",
+    sourceIdPrefix: "set7",
+    indexField: "set7Index",
+    fallbackSet: "LIK",
+    unplacedLine: true,
+    why: "Selected for Set 7 (העצמה נשית) from the handoff quote pool.",
+    rationale: "Set 7 quote with supplied art.",
   },
 });
 
@@ -153,8 +170,8 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
     type: "Quote",
     typeHe: "ציטוט",
     rarity: candidate.rarity || "Common",
-    subtitle: listSlot ? `מקום ${listSlot} · ${setLabel}` : (setId === "set-6" ? unplacedHe : `${meta.nameHe} · ${party?.displayNameHe || ""}`.replace(/ · $/, "")),
-    subtitleHe: listSlot ? `מקום ${listSlot}` : (setId === "set-6" ? unplacedHe : meta.nameHe),
+    subtitle: listSlot ? `מקום ${listSlot} · ${setLabel}` : (meta.unplacedLine ? unplacedHe : `${meta.nameHe} · ${party?.displayNameHe || ""}`.replace(/ · $/, "")),
+    subtitleHe: listSlot ? `מקום ${listSlot}` : (meta.unplacedLine ? unplacedHe : meta.nameHe),
     body: context,
     whyItMatters: candidate.notes || meta.why,
     source: sourceLabel,
@@ -199,10 +216,15 @@ export function runtimeSet6Card(candidate, extras = {}) {
   return runtimeMomentCard(candidate, extras, "set-6");
 }
 
-export function catalogExtrasFromStudio(studio, set5, set6) {
+export function runtimeSet7Card(candidate, extras = {}) {
+  return runtimeMomentCard(candidate, extras, "set-7");
+}
+
+export function catalogExtrasFromStudio(studio, set5, set6, set7) {
   return {
     set5: set5 || { candidates: [] },
     set6: set6 || { candidates: [] },
+    set7: set7 || { candidates: [] },
     parties: studio?.parties || [],
     members: studio?.members || [],
     criticalBloc: studio?.editorialPolicy?.criticalBloc || [],
@@ -239,11 +261,13 @@ export function attachMembershipNotes(cards, members = []) {
 export function expandPublicCatalog(cards, specials = { sets: [], cards: [] }, extras = {}) {
   const set5Cards = (extras.set5?.candidates || []).map((candidate) => runtimeSet5Card(candidate, extras));
   const set6Cards = (extras.set6?.candidates || []).map((candidate) => runtimeSet6Card(candidate, extras));
+  const set7Cards = (extras.set7?.candidates || []).map((candidate) => runtimeSet7Card(candidate, extras));
   const expanded = [
     ...cards,
     ...(specials.cards || []).map((card) => runtimeSpecialCard(card, specials)),
     ...set5Cards,
     ...set6Cards,
+    ...set7Cards,
   ];
   return attachMembershipNotes(expanded, extras.members || []);
 }

@@ -987,7 +987,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function localStarCount/);
   assert.match(javascript, /visible-sets-4/);
   assert.match(warmup, /visible-sets-4/);
-  assert.match(warmup, /const PLAYABLE_ART_SET_IDS = \["party-leaders", "party-slot-2", "set-5", "set-6"\]/);
+  assert.match(warmup, /const PLAYABLE_ART_SET_IDS = \["party-leaders", "party-slot-2", "set-5", "set-6", "set-7"\]/);
   assert.doesNotMatch(warmup, /\.slice\(0, 12\)/);
   assert.doesNotMatch(javascript, /\["state", \(\) => request\("\/api\/state"\)\]/);
   assert.doesNotMatch(javascript, /\["trades", \(\) => request\("\/api\/trades"\)\]/);

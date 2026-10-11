@@ -15,8 +15,9 @@ const avatars = JSON.parse(await readFile(path.join(root, "app/data/avatars.json
 const studio = JSON.parse(await readFile(path.join(root, "app/data/studio-content.json"), "utf8"));
 const set5 = JSON.parse(await readFile(path.join(root, "docs/intake/research/set5-wip-pool.json"), "utf8"));
 const set6 = JSON.parse(await readFile(path.join(root, "docs/intake/research/set6-wip-pool.json"), "utf8"));
+const set7 = JSON.parse(await readFile(path.join(root, "docs/intake/research/set7-wip-pool.json"), "utf8"));
 
-const visibleCards = visiblePlayerCards(expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studio, set5, set6)));
+const visibleCards = visiblePlayerCards(expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studio, set5, set6, set7)));
 const pack = normalizePackConfig(studio.gameConfig?.pack);
 const packById = new Map(pack.sets.map((set) => [set.id, set]));
 const releaseById = new Map((studio.gameConfig?.releaseSets || []).map((set) => [set.id, set]));
