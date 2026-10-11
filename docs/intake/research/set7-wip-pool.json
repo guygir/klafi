@@ -2,7 +2,7 @@
   "id": "set7-wip-pool",
   "status": "local-draft",
   "asOfDate": "2026-10-11",
-  "note": "Set 7 (העצמה נשית): 27 Quote cards, display codes נשית-01–27, ordered by person. Placeholders: party for people not in the members list falls back to Likud (Son Har-Melech set to Otzma Yehudit); unplaced women read לא ממוקמת; all 27 cards have sources (10 supplied by Guy on 2026-10-11); Gotliv shown as Likud (placeholder: running with Otzma Yehudit since 3.9.2026, still a Likud-faction MK). Not approved: a human still approves wording, context and publication.",
+  "note": "Set 7 (העצמה נשית): 27 Quote cards, display codes נשית-01–27, ordered by person. Party and slot per Guy (2026-10-11): Regev Likud #5, Gotliv Otzma Yehudit #2, Golan Likud #40, Silman Likud #46, Son Har-Melech Otzma Yehudit #5, Strook Religious Zionism #3, Distel-Atbaryan Likud unplaced; Shitrit Likud with no slot yet (shown as לא ממוקמת, TBD). All 27 have sources. Not approved: a human still approves wording, context and publication.",
   "sourceDocument": "docs/art/haatzama-nashit/HANDOFF.md (Guy, Cursor_Klafi)",
   "candidates": [
     {
@@ -157,8 +157,7 @@
         "sha256": "0467fcc295c27710a0f4470c1c968cabb089814307e9b0966b1f4eb07ea17a0a",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common",
-      "partyId": "LIK"
+      "rarity": "Common"
     },
     {
       "n": 8,
@@ -180,8 +179,7 @@
         "sha256": "6fd6d10eee6dacf194f5657373ae9b0b936722c132d6ec337b29dd49c738f7f7",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common",
-      "partyId": "LIK"
+      "rarity": "Common"
     },
     {
       "n": 9,
@@ -203,8 +201,7 @@
         "sha256": "0b68da31e677c74b15931c0326303cfebc9c94b3c861abaa17cb6ec83c9b693d",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common",
-      "partyId": "LIK"
+      "rarity": "Common"
     },
     {
       "n": 10,
@@ -226,8 +223,7 @@
         "sha256": "51920d69401c0fd1a44d742ec6ba771f146445d3ceb5308d6ded0b53494e7a39",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common",
-      "partyId": "LIK"
+      "rarity": "Common"
     },
     {
       "n": 11,
@@ -249,8 +245,7 @@
         "sha256": "85e12f63ea8ad0afdb47f1d19de1c69e12c68aa40c420b81199a34338de59359",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon",
-      "partyId": "LIK"
+      "rarity": "Uncommon"
     },
     {
       "n": 12,
@@ -272,8 +267,7 @@
         "sha256": "acbab36e65ad629a1269f60c058ad94c61ff47842c64f09db83191b35238f576",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common",
-      "partyId": "LIK"
+      "rarity": "Common"
     },
     {
       "n": 13,
@@ -295,8 +289,7 @@
         "sha256": "d27f1529ff641ef41e3d09107ecbe37db42181bb6f3e87f1811166c07af4d60a",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon",
-      "partyId": "LIK"
+      "rarity": "Uncommon"
     },
     {
       "n": 14,
@@ -428,7 +421,8 @@
         "sha256": "7e3bcfec38d8fb6659c735015c95073341d87c2bc9baf32b688e6985dc486247",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Rare"
+      "rarity": "Rare",
+      "listSlot": 40
     },
     {
       "n": 20,
@@ -450,7 +444,8 @@
         "sha256": "852f9911796008c4e05a88d429c8bcc1aec7a1cb2c0db29af5b896db1a768d5c",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon"
+      "rarity": "Uncommon",
+      "listSlot": 40
     },
     {
       "n": 21,
@@ -472,7 +467,8 @@
         "sha256": "44a9f98e115ee6c9b90657c1942790832fe19e004a208822401a9bb9fce7b6ff",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common"
+      "rarity": "Common",
+      "listSlot": 40
     },
     {
       "n": 22,
@@ -516,7 +512,8 @@
         "sha256": "3a43da21e237dba0cbf7fcec34ba0fc7324dbdf0a1bf50b7650f82205dbf5c15",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Common"
+      "rarity": "Common",
+      "listSlot": 46
     },
     {
       "n": 24,
@@ -538,12 +535,13 @@
         "sha256": "896ee320173680f51ed21f1af1fba8cf1f424b418517db6db8d0d8d59350446b",
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
-      "rarity": "Uncommon"
+      "rarity": "Uncommon",
+      "listSlot": 46
     },
     {
       "n": 25,
       "nameHe": "אורית סטרוק",
-      "nameEn": "Orit Strock",
+      "nameEn": "Orit Strook",
       "gender": "f",
       "displayText": "אני מכירה שרים שלא גומרים את החודש",
       "quoteStatus": "shortened",
@@ -583,7 +581,8 @@
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
       "rarity": "Uncommon",
-      "partyId": "OTZ"
+      "partyId": "OTZ",
+      "listSlot": 5
     },
     {
       "n": 27,
@@ -606,7 +605,8 @@
         "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
       },
       "rarity": "Common",
-      "partyId": "OTZ"
+      "partyId": "OTZ",
+      "listSlot": 5
     }
   ]
 }
