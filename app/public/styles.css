@@ -6961,3 +6961,44 @@ body {
   max-width: 100%;
   height: auto;
 }
+
+/* One-day bonus gift: pack plus a two-line label centered at the cell bottom, drawn over the claimed V. */
+.streak-cell-prize.streak-cell-bonus {
+  z-index: 3;
+}
+.streak-cell-bonus-label {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  max-width: calc(100% + 4px);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  color: #fff;
+  background: #c2185b;
+  border-radius: 6px;
+  padding: 2px 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+.streak-cell-bonus-label b {
+  font-size: 10px;
+  font-weight: 800;
+}
+.streak-cell-bonus-label small {
+  font-size: 7.5px;
+  font-weight: 700;
+}
+/* After claim the pack fades like other gifts, but the bonus label stays solid over the V. */
+.streak-cell.is-claimed .streak-cell-prize.streak-cell-bonus,
+.streak-cell.is-opened .streak-cell-prize.streak-cell-bonus {
+  opacity: 1;
+}
+.streak-cell.is-opened .streak-cell-bonus .streak-cell-pack {
+  opacity: 0.34;
+}

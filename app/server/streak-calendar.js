@@ -27,6 +27,23 @@ function prizeFromToken(token) {
   return null;
 }
 
+/**
+ * One-day bonus prizes keyed by Jerusalem date. They replace that date's pattern token,
+ * pull only from `setId` (that set's own star odds), and re-show the popup once that day.
+ */
+export const BONUS_DAYS = Object.freeze({
+  "2026-10-11": Object.freeze({ kind: "pack", label: "סט חדש", sublabel: "העצמה נשית", setId: "set-7" }),
+});
+
+export function bonusDayFor(date) {
+  return BONUS_DAYS[date] || null;
+}
+
+/** The ack marker for a bonus day, so an ordinary ack from earlier that day still shows the popup once more. */
+export function bonusAckMarker(date) {
+  return `${date}+bonus`;
+}
+
 function buildDatePrizes() {
   const prizes = {};
   OCTOBER_DATE_PATTERN.split(",").forEach((token, index) => {
@@ -34,6 +51,7 @@ function buildDatePrizes() {
     if (!reward) return;
     prizes[`2026-10-${String(index + 1).padStart(2, "0")}`] = reward;
   });
+  for (const [date, reward] of Object.entries(BONUS_DAYS)) prizes[date] = reward;
   return Object.freeze(prizes);
 }
 
@@ -170,10 +188,15 @@ export function applyVisitStreak(session, nowMs) {
   return { stamped: true, day, reward, reset };
 }
 
+function calendarAckFor(day) {
+  return bonusDayFor(day) ? bonusAckMarker(day) : day;
+}
+
 export function ackStreakCalendar(session) {
   if (!session?.visitDay) return false;
-  if (session.streakCalendarAckDay === session.visitDay) return false;
-  session.streakCalendarAckDay = session.visitDay;
+  const marker = calendarAckFor(session.visitDay);
+  if (session.streakCalendarAckDay === marker) return false;
+  session.streakCalendarAckDay = marker;
   return true;
 }
 
@@ -288,7 +311,7 @@ export function publicStreakCalendar(session) {
     today,
     closed: Boolean(today && today > ELECTION_GRID_END),
     // Day 1 is the tutorial day: no auto popup until the second visit day.
-    showPopup: Boolean(today && streak >= 2 && session?.streakCalendarAckDay !== today),
+    showPopup: Boolean(today && streak >= 2 && session?.streakCalendarAckDay !== calendarAckFor(today)),
     days: ELECTION_GRID_DATES.map((date) => {
       const reward = datePrizeFor(date);
       const granted = reward ? instances.find((item) => item?.acquiredBy === dateAcquiredBy(date)) : null;
@@ -296,7 +319,8 @@ export function publicStreakCalendar(session) {
         date,
         day: Number(date.slice(-2)),
         monthChip: monthChip(date),
-        checked: visited.has(date),
+        // A bonus day's V waits until its gift is taken.
+        checked: visited.has(date) && !(bonusDayFor(date) && !dateClaims.has(date) && !granted?.seenAt),
         current: date === today,
         election: date === ELECTION_DAY,
         reward,

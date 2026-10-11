@@ -6310,6 +6310,9 @@ function tipsBusy() {
 
 function streakRewardMarkup(reward) {
   if (!reward) return "";
+  if (reward.kind === "pack" && reward.label) {
+    return `<span class="streak-cell-prize streak-cell-bonus"><img class="streak-cell-pack" src="/packrip/pack-closed.webp" alt="חבילה"><span class="streak-cell-bonus-label"><b>${escapeHtml(reward.label)}</b>${reward.sublabel ? `<small>${escapeHtml(reward.sublabel)}</small>` : ""}</span></span>`;
+  }
   if (reward.kind === "pack") {
     return `<span class="streak-cell-prize"><img class="streak-cell-pack" src="/packrip/pack-closed.webp" alt="חבילה"></span>`;
   }
@@ -9395,7 +9398,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.150";
+const HEARD_YOU_VERSION = "v1.151";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {
