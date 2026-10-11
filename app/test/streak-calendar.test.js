@@ -74,7 +74,7 @@ test("a long run keeps streak claims and does not open a second month", () => {
 
 test("reward days stay on the ladder without a warehouse hold", () => {
   assert.equal(Object.keys(DATE_PRIZES).length, 27);
-  assert.deepEqual(DATE_PRIZES["2026-10-11"], { kind: "pack", label: "סט 5!", setId: "set-7" });
+  assert.deepEqual(DATE_PRIZES["2026-10-11"], { kind: "pack", label: "סט חדש", sublabel: "העצמה נשית", setId: "set-7" });
   assert.equal(DATE_PRIZES["2026-10-01"].stars, 1);
   assert.equal(DATE_PRIZES["2026-10-02"].kind, "pack");
   assert.equal(DATE_PRIZES["2026-10-03"], undefined);

@@ -6311,7 +6311,7 @@ function tipsBusy() {
 function streakRewardMarkup(reward) {
   if (!reward) return "";
   if (reward.kind === "pack" && reward.label) {
-    return `<span class="streak-cell-prize streak-cell-bonus"><img class="streak-cell-pack" src="/packrip/pack-closed.webp" alt="חבילה"><span class="streak-cell-bonus-label">${escapeHtml(reward.label)}</span></span>`;
+    return `<span class="streak-cell-prize streak-cell-bonus"><img class="streak-cell-pack" src="/packrip/pack-closed.webp" alt="חבילה"><span class="streak-cell-bonus-label"><b>${escapeHtml(reward.label)}</b>${reward.sublabel ? `<small>${escapeHtml(reward.sublabel)}</small>` : ""}</span></span>`;
   }
   if (reward.kind === "pack") {
     return `<span class="streak-cell-prize"><img class="streak-cell-pack" src="/packrip/pack-closed.webp" alt="חבילה"></span>`;

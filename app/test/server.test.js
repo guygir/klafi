@@ -2551,7 +2551,7 @@ test("bonus day 2026-10-11: set-gift label, one popup re-show, hidden V until cl
   const freshToken = fresh.body.token;
   assert.equal(fresh.body.state.visitStreak, 1);
   assert.equal(fresh.body.state.streakCalendar.showPopup, false);
-  assert.deepEqual(bonusCell(fresh.body.state).reward, { kind: "pack", label: "סט 5!", setId: "set-7" });
+  assert.deepEqual(bonusCell(fresh.body.state).reward, { kind: "pack", label: "סט חדש", sublabel: "העצמה נשית", setId: "set-7" });
   assert.equal(bonusCell(fresh.body.state).checked, false);
   const freshOpen = await api(running.base, "/api/streak/open", { token: freshToken, method: "POST", body: { date: "2026-10-11" } });
   assert.equal(freshOpen.body.mode, "streak-pack");

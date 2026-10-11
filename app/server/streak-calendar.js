@@ -32,7 +32,7 @@ function prizeFromToken(token) {
  * pull only from `setId` (that set's own star odds), and re-show the popup once that day.
  */
 export const BONUS_DAYS = Object.freeze({
-  "2026-10-11": Object.freeze({ kind: "pack", label: "סט 5!", setId: "set-7" }),
+  "2026-10-11": Object.freeze({ kind: "pack", label: "סט חדש", sublabel: "העצמה נשית", setId: "set-7" }),
 });
 
 export function bonusDayFor(date) {

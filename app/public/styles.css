@@ -6962,13 +6962,20 @@ body {
   height: auto;
 }
 
-/* One-day bonus gift: pack plus a short label ("סט 5!"). */
+/* One-day bonus gift: pack plus a centered two-line label, drawn over the claimed V. */
+.streak-cell-prize.streak-cell-bonus {
+  z-index: 3;
+}
 .streak-cell-bonus-label {
   position: absolute;
-  inset-inline: -6px;
-  bottom: -4px;
-  font-size: 10px;
-  font-weight: 800;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  max-width: calc(100% + 4px);
   line-height: 1;
   text-align: center;
   white-space: nowrap;
@@ -6976,5 +6983,14 @@ body {
   background: #c2185b;
   border-radius: 6px;
   padding: 2px 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+.streak-cell-bonus-label b {
+  font-size: 10px;
+  font-weight: 800;
+}
+.streak-cell-bonus-label small {
+  font-size: 7.5px;
+  font-weight: 700;
 }
