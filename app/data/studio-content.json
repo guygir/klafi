@@ -64,22 +64,22 @@
       "sets": [
         {
           "id": "party-leaders",
-          "weight": 29,
+          "weight": 28,
           "includeEventCards": false,
           "rarities": {
-            "Common": 70,
-            "Uncommon": 22,
-            "Rare": 8
+            "Common": 135,
+            "Uncommon": 48,
+            "Rare": 17
           }
         },
         {
           "id": "party-slot-2",
-          "weight": 28,
+          "weight": 27,
           "includeEventCards": false,
           "rarities": {
-            "Common": 70,
-            "Uncommon": 22,
-            "Rare": 8
+            "Common": 135,
+            "Uncommon": 48,
+            "Rare": 17
           }
         },
         {
@@ -104,12 +104,12 @@
         },
         {
           "id": "set-5",
-          "weight": 49,
+          "weight": 50,
           "includeEventCards": false,
           "rarities": {
-            "Common": 70,
-            "Uncommon": 22,
-            "Rare": 8
+            "Common": 135,
+            "Uncommon": 48,
+            "Rare": 17
           }
         },
         {
@@ -117,18 +117,18 @@
           "weight": 37,
           "includeEventCards": false,
           "rarities": {
-            "Common": 70,
-            "Uncommon": 22,
-            "Rare": 8
+            "Common": 135,
+            "Uncommon": 48,
+            "Rare": 17
           }
         },
         {
           "id": "set-7",
-          "weight": 57,
+          "weight": 58,
           "includeEventCards": false,
           "rarities": {
-            "Common": 132,
-            "Uncommon": 50,
+            "Common": 128,
+            "Uncommon": 54,
             "Rare": 18
           }
         }
