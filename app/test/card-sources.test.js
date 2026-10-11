@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { catalogExtrasFromStudio, expandPublicCatalog } from "../server/public-catalog.js";
+import { catalogExtrasFromStudio, expandPublicCatalog, runtimeMomentCard } from "../server/public-catalog.js";
 import { visiblePlayerCards } from "../server/visible-sets.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -93,18 +93,16 @@ test("research pools drop the sourcePending flag once a source is attached", asy
   }
 });
 
-test("a card merged from two events carries both receipts, and the client lists the extra one", async () => {
-  const { runtime, staticCards } = await playableCards();
-  for (const cards of [runtime, staticCards]) {
-    const merged = cards.find((card) => card.id === "SET7-08");
-    assert.ok(merged, "SET7-08 is the merged Gotliv card");
-    assert.equal(merged.walkout.quoteStatus, "shortened");
-    assert.equal(merged.walkout.extraSources?.length, 1);
-    const [extra] = merged.walkout.extraSources;
-    assert.match(extra.url, /^https:\/\//);
-    assert.ok(extra.label && !/^https?:/.test(extra.label), "extra receipt has a human label");
-    assert.notEqual(extra.url, merged.walkout.sourceUrl);
-  }
+test("a card built from two events carries both receipts, and the client lists the extra one", async () => {
+  const card = runtimeMomentCard({
+    n: 99, nameHe: "בדיקה", nameEn: "Test", displayText: "ציטוט", quoteStatus: "shortened",
+    sources: ["https://example.org/a", "https://example.org/b"], sourceLabel: "כותרת א", extraSourceLabels: ["כותרת ב"],
+    art: { artKey: "x.jpg" },
+  }, {}, "set-7");
+  assert.equal(card.walkout.sourceUrl, "https://example.org/a");
+  assert.deepEqual(card.walkout.extraSources, [{ url: "https://example.org/b", label: "כותרת ב" }]);
+  const single = runtimeMomentCard({ n: 98, nameHe: "בדיקה", sources: ["https://example.org/a"], art: {} }, {}, "set-7");
+  assert.equal(single.walkout.extraSources, undefined);
   const js = await readFile(path.resolve(here, "../public/app.js"), "utf8");
   const fn = js.slice(js.indexOf("function configureSourceLink("), js.indexOf("function cardPresentation("));
   assert.match(fn, /extra-source-link/);

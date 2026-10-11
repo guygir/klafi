@@ -373,8 +373,7 @@ test("party movers keep the current ballot list and a לשעבר receipt", async
   assert.match(gafni?.subtitleHe || gafni?.subtitle || "", /38/);
 });
 
-// TODO(Guy): after the 13/9/4 rarity redo, set 7 Uncommon (1 in 128) trails set 6 (1 in 126) until shares are retuned.
-test("set 7 leads every star tier", { todo: "rates to be retuned by Guy after the set 7 rarity redo" }, async () => {
+test("set 7 leads every star tier", async () => {
   const [catalog, studio] = await Promise.all([
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
