@@ -181,22 +181,23 @@ test("Vercel copies live card art including Set 5", async () => {
   assert.ok(liveBytes < 50 * 1024 * 1024, `live Vercel art should stay slim (${liveBytes})`);
 });
 
-test("public sets use flat 70/22/8 and the star rule holds", async () => {
+test("public sets use 70/22/8 (set 7: 64/28/8) and the star rule holds", async () => {
   const [catalog, studio] = await Promise.all([
     readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
   ]);
   const byId = new Map(studio.gameConfig.pack.sets.map((set) => [set.id, set]));
   assert.equal(byId.get("party-leaders").weight, 14);
-  assert.equal(byId.get("party-slot-2").weight, 14);
+  assert.equal(byId.get("party-slot-2").weight, 13);
   assert.equal(byId.get("set-5").weight, 24);
-  assert.equal(byId.get("set-6").weight, 17);
-  assert.equal(byId.get("set-7").weight, 31);
+  assert.equal(byId.get("set-6").weight, 19);
+  assert.equal(byId.get("set-7").weight, 30);
   assert.equal(byId.get("decisions").weight, 0);
   assert.equal(byId.get("records").weight, 0);
-  for (const id of ["party-leaders", "party-slot-2", "set-5", "set-6", "set-7"]) {
+  for (const id of ["party-leaders", "party-slot-2", "set-5", "set-6"]) {
     assert.deepEqual(byId.get(id).rarities, { Common: 70, Uncommon: 22, Rare: 8 });
   }
+  assert.deepEqual(byId.get("set-7").rarities, { Common: 64, Uncommon: 28, Rare: 8 });
   const odds = cardPullOdds({
     pack: studio.gameConfig.pack,
     releaseSets: studio.gameConfig.releaseSets,

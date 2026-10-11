@@ -74,7 +74,7 @@
         },
         {
           "id": "party-slot-2",
-          "weight": 14,
+          "weight": 13,
           "includeEventCards": false,
           "rarities": {
             "Common": 70,
@@ -114,7 +114,7 @@
         },
         {
           "id": "set-6",
-          "weight": 17,
+          "weight": 19,
           "includeEventCards": false,
           "rarities": {
             "Common": 70,
@@ -124,11 +124,11 @@
         },
         {
           "id": "set-7",
-          "weight": 31,
+          "weight": 30,
           "includeEventCards": false,
           "rarities": {
-            "Common": 70,
-            "Uncommon": 22,
+            "Common": 64,
+            "Uncommon": 28,
             "Rare": 8
           }
         }
