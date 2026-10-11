@@ -11,7 +11,7 @@
       "nameEn": "Miri Regev",
       "gender": "f",
       "displayText": "כל עוד לא תתנצל בפני הליכודניקים, לעולם לא תהיה מאמן נבחרת ישראל",
-      "quoteStatus": "exact",
+      "quoteStatus": "shortened",
       "date": "2020-10-09",
       "sources": [
         "https://www.mako.co.il/tv-ofira_and_berkovich/articles/Article-4ff0615c6cd0571026.html"
@@ -66,8 +66,8 @@
       "art": {
         "artKey": "hero-art-nashit-regev-07-ballot.jpg",
         "status": "provided",
-        "sha256": "e64ee49274a575c220ffbabbe3e2432e9ecd7da91c2a7cbe09de03e25d0e0766",
-        "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
+        "sha256": "d20a2957d35a8ab0ff4b0c23d23653f20f4a0dced57edd173963f159d8b51d78",
+        "note": "Edited (Pillow): ballot box raised ~10% of card height, from the supplied PNG. JPEG q90 864x1152."
       },
       "rarity": "Common"
     },
@@ -120,8 +120,8 @@
       "nameHe": "טלי גוטליב",
       "nameEn": "Tali Gotliv",
       "gender": "f",
-      "displayText": "לה לה לה, לא יקרה, לא לה לה, אף פעם",
-      "quoteStatus": "exact",
+      "displayText": "לה לה לה, לא יקרה, לה לה לה, אף פעם",
+      "quoteStatus": "shortened",
       "date": "2024-04-03",
       "sources": [
         "https://www.i24news.tv/he/news/news/politics/artc-ab9857b9"
@@ -143,7 +143,7 @@
       "nameEn": "Tali Gotliv",
       "gender": "f",
       "displayText": "זה הזכיר לי את אושוויץ... זה נראה לך נורמלי לעשות סרטון לעודד חרדים להתגייס לצבא?",
-      "quoteStatus": "exact",
+      "quoteStatus": "shortened",
       "date": "2026-08-12",
       "sources": [
         "https://www.ice.co.il/media/news/article/1125234"
@@ -198,8 +198,8 @@
       "art": {
         "artKey": "hero-art-nashit-gotliv-07-ac.jpg",
         "status": "provided",
-        "sha256": "51920d69401c0fd1a44d742ec6ba771f146445d3ceb5308d6ded0b53494e7a39",
-        "note": "864x1152; supplied as PNG (docs/art/haatzama-nashit), re-encoded to JPEG q90 at the same size (no crop/resize/recolor) to fit the 700KB Hobby art cap."
+        "sha256": "6817d4d677d988131a747dac84d7c97facd3f9ce499a0e621f61634571e4b334",
+        "note": "Edited (Pillow): image shifted up 8% so the face sits higher; AC top runs out of frame. JPEG q90 864x1152."
       },
       "rarity": "Common"
     },
