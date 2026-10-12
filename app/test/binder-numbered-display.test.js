@@ -11,9 +11,9 @@ const numbered = { instanceId: "n", cardId: "M6", numberedIndex: 2, numberedOf: 
 const player = () => ({ inventory: { M1: 1, M6: 1 }, instances: [{ instanceId: "r1", cardId: "M1" }, numbered], unseenPulls: [] });
 const cards = ["M1", "M6"].map((id) => ({ id, set: "MOM", releaseSetId: "set-5", idleEligible: true, rarity: "Common" }));
 
-test("binder shows a numbered-only card as owned: header, set counts and owned/missing filters read display ownership", () => {
+test("binder: numbered-only card shown as owned in tiles/filters/set counts; header x/y and % stay regular-only", () => {
   assert.match(app, /function binderDisplayInventory\(inventory = binderInventory\(\)\) \{/);
-  assert.match(app, /binderProgress\(binderDisplayInventory\(inventory\)\)/);
+  assert.match(app, /binderProgress\(binderRegularInventory\(inventory\)\)/);
   assert.match(app, /inventory: set === "NUMBERED" \? inventory : displayInventory,/);
   assert.match(app, /const slotInventory = numberedView \? inventory : displayInventory;/);
   // The tile is the numbered copy: # stamp, numbered dialog (no recycle, no trade of a regular copy).
@@ -33,5 +33,13 @@ test("trades, recycle, set completion and badges stay regular-only", () => {
 
 test("regular + opened numbered tile gets the gold # corner ribbon; numbered-only tiles do not", () => {
   assert.match(app, /extra: !numberedView && numberedIds\.has\(card\.id\) \? "numbered-too" : "",/);
-  assert.match(app, /spec\.extra === "numbered-too" \? '<span class="binder-numbered-ribbon"/);
+  assert.match(app, /spec\.extra === "numbered-too" \? numberedRibbonMarkup\(card\.id\)/);
+  assert.match(app, /class="binder-numbered-ribbon" data-open-numbered=/);
+  // Ribbon tap opens the numbered copy and never the regular tile.
+  assert.match(app, /const ribbon = event\.target\.closest\("\[data-open-numbered\]"\);\n  if \(ribbon\) \{\n    event\.preventDefault\(\);\n    event\.stopPropagation\(\);\n    openCardDialog\(ribbon\.dataset\.openNumbered, true\);/);
+});
+
+test("binder header: regular-only count copy and the gold numbered line", () => {
+  assert.match(app, /קלפים רגילים במשחק/);
+  assert.match(app, /count === 1 \? "1 ממוספר!" : `\$\{count\} ממוספרים!`/);
 });

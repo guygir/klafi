@@ -409,6 +409,7 @@ const elements = {
   navButtons: [...document.querySelectorAll("[data-nav]")],
   dialog: document.querySelector("#card-dialog"),
   dialogCard: document.querySelector("#dialog-card"),
+  binderNumberedLine: document.querySelector("#binder-numbered-line"),
   dialogTrust: document.querySelector("#dialog-trust"),
   dialogSource: document.querySelector("#dialog-source"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
@@ -4155,8 +4156,13 @@ function binderProgress(inventory = binderRegularInventory()) {
   return { owned, total, percent };
 }
 
+function binderNumberedLineCopy(count) {
+  if (count < 1) return "";
+  return count === 1 ? "1 ממוספר!" : `${count} ממוספרים!`;
+}
+
 function binderProgressCopy(owned, total) {
-  return `${owned} מתוך ${total} קלפים במשחק`;
+  return `${owned} מתוך ${total} קלפים רגילים במשחק`;
 }
 
 function binderSetChipCount(set, cards, { inventory = null, ownedOnly = false, missingOnly = false, numberedIds = null, numberedCards = null } = {}) {
@@ -5264,6 +5270,11 @@ function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, gue
   };
 }
 
+/** Gold # corner ribbon: the player holds a regular AND an opened numbered copy. Tapping it opens the numbered copy. */
+function numberedRibbonMarkup(cardId) {
+  return `<button type="button" class="binder-numbered-ribbon" data-open-numbered="${escapeHtml(cardId)}" aria-label="יש לכם גם עותק ממוספר. לחצו לצפייה בו" title="יש לכם גם עותק ממוספר"></button>`;
+}
+
 function binderSlotSignatureFor(spec) {
   return binderSlotSignature({
     mode: spec.mode,
@@ -5309,7 +5320,7 @@ function binderSlotMarkup(spec) {
           ${face}
         </button>
         ${spec.recycle ? binderRecycleButton(card) : ""}
-        ${spec.extra === "numbered-too" ? '<span class="binder-numbered-ribbon" aria-hidden="true" title="יש לכם גם עותק ממוספר"></span>' : ""}
+        ${spec.extra === "numbered-too" ? numberedRibbonMarkup(card.id) : ""}
       </div>`;
 }
 
@@ -5471,8 +5482,13 @@ function renderBinder() {
     elements.guestBinderLabel.textContent = guest ? `האלבום של ${model.guestBinder.displayName}` : "";
   }
   if (elements.shareMyBinder) elements.shareMyBinder.hidden = guest;
-  // x of y / %: display ownership (a card held only as an opened numbered copy counts as owned).
-  const { owned, total, percent } = binderProgress(binderDisplayInventory(inventory));
+  // x of y / %: regular copies only ("קלפים רגילים"); opened numbered copies get their own gold line.
+  const { owned, total, percent } = binderProgress(binderRegularInventory(inventory));
+  const openedNumbered = binderNumberedCopies().filter((item) => Number(item?.numberedIndex) > 0).length;
+  if (elements.binderNumberedLine) {
+    elements.binderNumberedLine.hidden = openedNumbered < 1;
+    elements.binderNumberedLine.textContent = binderNumberedLineCopy(openedNumbered);
+  }
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = binderProgressCopy(owned, total);
   elements.binderCount.textContent = binderProgressCopy(owned, total);
@@ -8386,7 +8402,7 @@ function openCardDialog(cardId, numbered = false, { plain = false } = {}) {
   model.dialogPlain = Boolean(plain) && !numbered;
   model.dialogNumberedPreview = null;
   renderDialogCard();
-  elements.dialog.showModal();
+  if (!elements.dialog.open) elements.dialog.showModal();
   queueCardTextFit(elements.dialog);
   maybeShowNumberedTip();
   maybeShowRecycleTip();
@@ -8423,6 +8439,14 @@ function renderDialogCard() {
       stamp: model.dialogNumbered ? binderStamp(card) : null,
       count: model.dialogPlain ? binderRegularCount(card.id) : model.dialogNumbered ? binderNumberedCount(card.id) : null,
     });
+  // Regular view of a card that also has an opened numbered copy: the same gold # ribbon on the card art.
+  if (!model.showcase && !model.dialogNumbered && binderRegularCount(card.id) > 0 && binderNumberedCount(card.id) > 0) {
+    const face = elements.dialogCard.firstElementChild;
+    if (face) {
+      face.classList.add("has-numbered-ribbon");
+      face.insertAdjacentHTML("beforeend", numberedRibbonMarkup(card.id));
+    }
+  }
   if (elements.dialogTrust) {
     const line = cardTrustLine(card);
     elements.dialogTrust.textContent = line;
@@ -9709,6 +9733,13 @@ async function confirmRecycle() {
 }
 
 elements.dialogCard?.addEventListener("click", (event) => {
+  const ribbon = event.target.closest("[data-open-numbered]");
+  if (ribbon) {
+    event.preventDefault();
+    event.stopPropagation();
+    openCardDialog(ribbon.dataset.openNumbered, true);
+    return;
+  }
   const button = event.target.closest("[data-recycle-card]");
   if (!button) return;
   event.preventDefault();
@@ -10108,6 +10139,13 @@ elements.communityTabs.addEventListener("click", (event) => {
 });
 
 elements.binderGrid.addEventListener("click", (event) => {
+  const ribbon = event.target.closest("[data-open-numbered]");
+  if (ribbon) {
+    event.preventDefault();
+    event.stopPropagation();
+    openCardDialog(ribbon.dataset.openNumbered, true);
+    return;
+  }
   const recycle = event.target.closest("[data-recycle-card]");
   if (recycle) {
     event.preventDefault();

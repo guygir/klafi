@@ -147,7 +147,7 @@ test("client trade UI lists and previews regular copies only", async () => {
   assert.match(js, /function tradeWantLabel\(card\) \{\n[^\n]*\n\s+return `[^`]*\$\{plainOwnedCount\(card\)\}x`;/);
   assert.match(js, /const ownedCards = tradableCards\.filter\(\(candidate\) => plainOwnedCount\(candidate\) > 0\);/);
   assert.match(js, /binderCardMarkup\(card, \{ tradeCopies: true, warnLastCopy, plain: true, count: plainOwnedCount\(card\) \}\)/);
-  assert.match(js, /binderProgress\(binderDisplayInventory\(inventory\)\)/);
+  assert.match(js, /binderProgress\(binderRegularInventory\(inventory\)\)/);
   assert.match(js, /function localAchievementMeasures\(\) \{\n\s+const inventory = myRegularInventory\(\);/);
 });
 
