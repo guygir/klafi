@@ -7035,3 +7035,31 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Binder tile with a regular copy AND an opened numbered copy: thin gold # ribbon, bottom-right corner
+   (the ×N tag sits at the top, so it is never covered). */
+.binder-slot.owned { position: relative; }
+.binder-numbered-ribbon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+  border-bottom-right-radius: 10px;
+  pointer-events: none;
+}
+.binder-numbered-ribbon::before {
+  content: "#";
+  position: absolute;
+  bottom: 9px;
+  right: -16px;
+  width: 70px;
+  transform: rotate(-45deg);
+  background: linear-gradient(90deg, #c99a3a, #f4e7b8, #c99a3a);
+  color: #3b2a08;
+  font: 900 10px/14px system-ui, sans-serif;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}

@@ -5259,7 +5259,8 @@ function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, gue
     count,
     recycle: !guest && Boolean(binderRecycleButton(card)),
     concealed,
-    extra: "",
+    // Regular copy plus an opened numbered copy: a thin gold # corner ribbon (numbered-only tiles keep their look).
+    extra: !numberedView && numberedIds.has(card.id) ? "numbered-too" : "",
   };
 }
 
@@ -5287,7 +5288,7 @@ function binderSlotMarkup(spec) {
   }
   const openLabel = concealed
     ? `${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)}`
-    : `פתיחת ${cardTitle(card)}, ברשותכם ${count}`;
+    : `פתיחת ${cardTitle(card)}, ברשותכם ${count}${spec.extra === "numbered-too" ? ", ויש לכם גם עותק ממוספר" : ""}`;
   const viewerMissing = concealed;
   const numbered = mode === "numbered" || mode === "numbered-list";
   const numberedAttr = numbered ? ' data-numbered="1"' : ' data-binder-plain="1"';
@@ -5308,6 +5309,7 @@ function binderSlotMarkup(spec) {
           ${face}
         </button>
         ${spec.recycle ? binderRecycleButton(card) : ""}
+        ${spec.extra === "numbered-too" ? '<span class="binder-numbered-ribbon" aria-hidden="true" title="יש לכם גם עותק ממוספר"></span>' : ""}
       </div>`;
 }
 

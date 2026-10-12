@@ -30,3 +30,8 @@ test("trades, recycle, set completion and badges stay regular-only", () => {
   assert.equal(measures.setOwned["set-5"], 1, "set completion");
   assert.equal(measures.ownedIds.has("M6"), false, "badges");
 });
+
+test("regular + opened numbered tile gets the gold # corner ribbon; numbered-only tiles do not", () => {
+  assert.match(app, /extra: !numberedView && numberedIds\.has\(card\.id\) \? "numbered-too" : "",/);
+  assert.match(app, /spec\.extra === "numbered-too" \? '<span class="binder-numbered-ribbon"/);
+});
