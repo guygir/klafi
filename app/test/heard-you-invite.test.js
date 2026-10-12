@@ -9,7 +9,7 @@ const studio = JSON.parse(await readFile(new URL("../data/studio-content.json", 
 
 test("heard-you: golden invite line with the player's own link and the real star gate", () => {
   assert.match(html, /<div id="heard-you-invite" class="heard-you-invite" hidden>[\s\S]*הזמינו חברים בעזרת הקישור:[\s\S]*id="heard-you-invite-link"[\s\S]*הם הגיעו ל15 כוכבים\? תקבלו חבילה מתנה!/);
-  assert.match(app, /const link = inviteShareUrl\(model\.serverState\?\.referralCode\);\n  if \(!elements\.heardYouInvite\) return;/);
+  assert.match(app, /const link = inviteShareUrl\(model\.serverState\?\.referralCode \|\| heardYouCodeFetch\?\.code\);\n  if \(!elements\.heardYouInvite\) return;/);
   assert.match(app, /הם הגיעו ל\$\{stars\} כוכבים\? תקבלו חבילה מתנה!/);
   assert.match(app, /elements\.heardYouInviteLink\?\.addEventListener\("click", \(\) => copyInviteLink\(\)\);/);
   assert.equal(referralStarGate(studio.gameConfig), 15, "the copy says 15 stars");
