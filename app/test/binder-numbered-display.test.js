@@ -11,15 +11,14 @@ const numbered = { instanceId: "n", cardId: "M6", numberedIndex: 2, numberedOf: 
 const player = () => ({ inventory: { M1: 1, M6: 1 }, instances: [{ instanceId: "r1", cardId: "M1" }, numbered], unseenPulls: [] });
 const cards = ["M1", "M6"].map((id) => ({ id, set: "MOM", releaseSetId: "set-5", idleEligible: true, rarity: "Common" }));
 
-test("binder shows a numbered-only card as owned: header, set counts and owned/missing filters read display ownership", () => {
-  assert.match(app, /function binderDisplayInventory\(inventory = binderInventory\(\)\) \{/);
-  assert.match(app, /binderProgress\(binderDisplayInventory\(inventory\)\)/);
-  assert.match(app, /inventory: set === "NUMBERED" \? inventory : displayInventory,/);
-  assert.match(app, /const slotInventory = numberedView \? inventory : displayInventory;/);
-  // The tile is the numbered copy: # stamp, numbered dialog (no recycle, no trade of a regular copy).
-  assert.match(app, /const numberedOnly = !numberedView && !\(regularInventory\[card\.id\] > 0\) && numberedIds\.has\(card\.id\)/);
-  assert.match(app, /const canRecycle = !model\.dialogNumbered && canRecycleCard\(card\);/);
-  assert.equal((app.match(/displayInventory/g) || []).length, 3, "display ownership is used only for presence and counts");
+test("binder: numbered-only card is a missing slot with the # ribbon; all counts and filters regular-only", () => {
+  assert.doesNotMatch(app, /binderDisplayInventory|displayInventory/);
+  assert.match(app, /binderProgress\(binderRegularInventory\(inventory\)\)/);
+  assert.match(app, /inventory: set === "NUMBERED" \? inventory : regularInventory,/);
+  assert.match(app, /const slotInventory = numberedView \? inventory : regularInventory;/);
+  assert.match(app, /return \{ card, mode: "missing", count: 0, recycle: false, concealed: false, extra: "numbered-only" \};/);
+  assert.match(app, /\$\{numberedOnly \? ' data-binder-plain="1"' : ""\}/, "body tap opens the regular view, not the numbered copy");
+  assert.match(app, /\$\{numberedOnly \? numberedRibbonMarkup\(card\.id\) : ""\}/);
 });
 
 test("trades, recycle, set completion and badges stay regular-only", () => {
@@ -31,7 +30,23 @@ test("trades, recycle, set completion and badges stay regular-only", () => {
   assert.equal(measures.ownedIds.has("M6"), false, "badges");
 });
 
-test("regular + opened numbered tile gets the gold # corner ribbon; numbered-only tiles do not", () => {
+test("regular + opened numbered tile gets the gold # corner ribbon", () => {
   assert.match(app, /extra: !numberedView && numberedIds\.has\(card\.id\) \? "numbered-too" : "",/);
-  assert.match(app, /spec\.extra === "numbered-too" \? '<span class="binder-numbered-ribbon"/);
+  assert.match(app, /spec\.extra === "numbered-too" \? numberedRibbonMarkup\(card\.id\)/);
+  assert.match(app, /class="binder-numbered-ribbon" data-open-numbered=/);
+  // Ribbon tap opens the numbered copy and never the regular tile.
+  assert.match(app, /const ribbon = event\.target\.closest\("\[data-open-numbered\]"\);\n  if \(ribbon\) \{\n    event\.preventDefault\(\);\n    event\.stopPropagation\(\);\n    openCardDialog\(ribbon\.dataset\.openNumbered, true\);/);
+});
+
+test("binder header: regular-only count copy and the gold numbered line", () => {
+  assert.match(app, /קלפים רגילים במשחק/);
+  assert.match(app, /count === 1 \? "1 ממוספר!" : `\$\{count\} ממוספרים!`/);
+});
+
+test("ממוספרים filter: one tile per opened numbered copy, each opening its own stamp", () => {
+  assert.match(app, /return binderNumberedCopiesOf\(card\.id\)\.map\(\(stamp\) => \(\{ \.\.\.spec, stamp, count: 1,/);
+  assert.match(app, /\.sort\(\(left, right\) => Number\(left\.numberedIndex\) - Number\(right\.numberedIndex\)\)/);
+  assert.match(app, /numberedIndex: button\.dataset\.numberedIndex \|\| null,/);
+  assert.match(app, /stamp: model\.dialogNumbered \? binderStamp\(card, model\.dialogNumberedIndex\) : null,/);
+  assert.match(app, /return `\$\{spec\.mode\}:\$\{spec\.card\.id\}\$\{spec\.stamp \? `:\$\{spec\.stamp\.numberedIndex\}` : ""\}`;/);
 });

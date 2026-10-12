@@ -7047,9 +7047,25 @@ body {
   width: 46px;
   height: 46px;
   overflow: hidden;
+  border: 0;
+  padding: 0;
+  background: transparent;
   border-bottom-right-radius: 10px;
-  pointer-events: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
+/* Only the gold band is tappable visually; the corner box is the hit area. */
+.binder-numbered-ribbon:focus-visible { outline: 2px solid #c99a3a; outline-offset: -2px; }
+.has-numbered-ribbon { position: relative; }
+#dialog-card .binder-numbered-ribbon { width: 62px; height: 62px; border-bottom-right-radius: 14px; }
+#dialog-card .binder-numbered-ribbon::before { bottom: 13px; right: -20px; width: 92px; font-size: 12px; line-height: 18px; }
+.binder-numbered-line {
+  display: block;
+  color: #b8862f;
+  font-weight: 900;
+  text-shadow: 0 1px 0 rgba(255, 246, 214, 0.8);
+}
+.binder-numbered-line[hidden] { display: none; }
 .binder-numbered-ribbon::before {
   content: "#";
   position: absolute;
@@ -7062,4 +7078,11 @@ body {
   font: 900 10px/14px system-ui, sans-serif;
   text-align: center;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Race boards: the streak badge (number + flame) hangs ~11px past the avatar's right edge, so in RTL it
+   sat outside the row and the board clipped it. Reserve that room at the row's start; the badge grows
+   leftward over the avatar, so 3-digit streaks fit too. */
+.leaderboard-list > .collector-row {
+  padding-inline-start: 14px;
 }

@@ -833,8 +833,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /setLabels\.ALL = "כל הקלפים"/);
   assert.match(javascript, /מתוך כל הקלפים/);
   assert.match(javascript, /function binderProgressCopy/);
-  assert.match(javascript, /קלפים במשחק/);
-  assert.match(html, /id="binder-count">קלפים במשחק/);
+  assert.match(javascript, /קלפים רגילים במשחק/);
+  assert.match(html, /id="binder-count">קלפים רגילים במשחק/);
   assert.doesNotMatch(html, /0 מתוך 14/);
 
   assert.doesNotMatch(javascript, /בסדרה הפעילה/);

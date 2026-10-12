@@ -409,6 +409,7 @@ const elements = {
   navButtons: [...document.querySelectorAll("[data-nav]")],
   dialog: document.querySelector("#card-dialog"),
   dialogCard: document.querySelector("#dialog-card"),
+  binderNumberedLine: document.querySelector("#binder-numbered-line"),
   dialogTrust: document.querySelector("#dialog-trust"),
   dialogSource: document.querySelector("#dialog-source"),
   dialogWhatsapp: document.querySelector("#dialog-whatsapp"),
@@ -4155,8 +4156,13 @@ function binderProgress(inventory = binderRegularInventory()) {
   return { owned, total, percent };
 }
 
+function binderNumberedLineCopy(count) {
+  if (count < 1) return "";
+  return count === 1 ? "1 ממוספר!" : `${count} ממוספרים!`;
+}
+
 function binderProgressCopy(owned, total) {
-  return `${owned} מתוך ${total} קלפים במשחק`;
+  return `${owned} מתוך ${total} קלפים רגילים במשחק`;
 }
 
 function binderSetChipCount(set, cards, { inventory = null, ownedOnly = false, missingOnly = false, numberedIds = null, numberedCards = null } = {}) {
@@ -4586,25 +4592,21 @@ function binderRegularInventory(inventory = binderInventory()) {
   return regularInventoryFrom(inventory, binderNumberedCopies());
 }
 
-/**
- * Binder display ownership: regular copies, plus 1 for a card held only as an opened numbered copy,
- * so it shows coloured, under באוסף, and in the x/y and set counts. Never used for trades,
- * recycle, set completion or badges (those read binderRegularInventory / regular-copies.js).
- */
-function binderDisplayInventory(inventory = binderInventory()) {
-  const display = { ...binderRegularInventory(inventory) };
-  for (const item of binderNumberedCopies()) {
-    if (Number(item?.numberedIndex) > 0 && Number(inventory?.[item.cardId]) > 0 && !display[item.cardId]) display[item.cardId] = 1;
-  }
-  return display;
-}
-
 function binderRegularCount(cardId) {
   return binderRegularInventory()[cardId] ?? 0;
 }
 
-function binderStamp(card) {
-  return binderNumberedCopies().find((item) => item.cardId === card?.id && Number(item.numberedIndex) > 0) || null;
+/** Opened numbered copies of one card, lowest index first (stable order for tiles and the default popup). */
+function binderNumberedCopiesOf(cardId) {
+  return binderNumberedCopies()
+    .filter((item) => item.cardId === cardId && Number(item.numberedIndex) > 0)
+    .sort((left, right) => Number(left.numberedIndex) - Number(right.numberedIndex));
+}
+
+/** The numbered copy a popup shows: the one the player tapped, else the lowest index. */
+function binderStamp(card, index = null) {
+  const copies = binderNumberedCopiesOf(card?.id);
+  return (index ? copies.find((item) => Number(item.numberedIndex) === Number(index)) : null) || copies[0] || null;
 }
 
 function renderPendingWells(count = 6) {
@@ -5227,9 +5229,10 @@ function syncBinderGridInventory(previous, next) {
 }
 
 function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, guest, listMode }) {
-  // Numbered-only card: shown as its numbered copy (# stamp, numbered dialog: no recycle, no trade).
-  const numberedOnly = !numberedView && !(regularInventory[card.id] > 0) && numberedIds.has(card.id) && Number(binderInventory()[card.id]) > 0;
-  if (numberedOnly) numberedView = true;
+  // Numbered-only card outside ממוספרים: the greyed missing slot plus the gold # ribbon (opens the numbered popup).
+  if (!numberedView && !(regularInventory[card.id] > 0) && numberedIds.has(card.id)) {
+    return { card, mode: "missing", count: 0, recycle: false, concealed: false, extra: "numbered-only" };
+  }
   const count = numberedView ? binderNumberedCount(card.id) : (regularInventory[card.id] ?? 0);
   if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
     if (guest || model.binderFilter === "NUMBERED") return null;
@@ -5264,6 +5267,15 @@ function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, gue
   };
 }
 
+/** Gold # corner ribbon: the player holds a regular AND an opened numbered copy. Tapping it opens the numbered copy. */
+function numberedRibbonMarkup(cardId) {
+  return `<button type="button" class="binder-numbered-ribbon" data-open-numbered="${escapeHtml(cardId)}" aria-label="יש לכם גם עותק ממוספר. לחצו לצפייה בו" title="יש לכם גם עותק ממוספר"></button>`;
+}
+
+function binderSlotKey(spec) {
+  return `${spec.mode}:${spec.card.id}${spec.stamp ? `:${spec.stamp.numberedIndex}` : ""}`;
+}
+
 function binderSlotSignatureFor(spec) {
   return binderSlotSignature({
     mode: spec.mode,
@@ -5277,12 +5289,15 @@ function binderSlotSignatureFor(spec) {
 
 function binderSlotMarkup(spec) {
   const { card, mode, count, concealed } = spec;
-  const key = escapeHtml(`${mode}:${card.id}`);
+  const key = escapeHtml(binderSlotKey(spec));
   if (mode === "missing") {
-    return `<div class="binder-slot is-missing" role="listitem" data-binder-key="${key}" data-card-id="${card.id}" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)} · חסר באוסף`)}">
+    const numberedOnly = spec.extra === "numbered-only";
+    // data-binder-plain: tapping the body opens the regular (missing) view, not the numbered copy.
+    return `<div class="binder-slot is-missing${numberedOnly ? " has-numbered-ribbon" : ""}"${numberedOnly ? ' data-binder-plain="1"' : ""} role="listitem" data-binder-key="${key}" data-card-id="${card.id}" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)} · ${numberedOnly ? "חסר עותק רגיל, יש לכם עותק ממוספר" : "חסר באוסף"}`)}">
         <span class="missing-name">${escapeHtml(cardTitle(card))}</span>
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
         <span class="missing-rarity">${escapeHtml(`${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`)}</span>
+        ${numberedOnly ? numberedRibbonMarkup(card.id) : ""}
         ${spec.extra === "debug" ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
       </div>`;
   }
@@ -5291,7 +5306,9 @@ function binderSlotMarkup(spec) {
     : `פתיחת ${cardTitle(card)}, ברשותכם ${count}${spec.extra === "numbered-too" ? ", ויש לכם גם עותק ממוספר" : ""}`;
   const viewerMissing = concealed;
   const numbered = mode === "numbered" || mode === "numbered-list";
-  const numberedAttr = numbered ? ' data-numbered="1"' : ' data-binder-plain="1"';
+  const numberedAttr = numbered
+    ? ` data-numbered="1"${spec.stamp ? ` data-numbered-index="${Number(spec.stamp.numberedIndex) || 0}"` : ""}`
+    : ' data-binder-plain="1"';
   if (mode === "list" || mode === "numbered-list") {
     return `
       <div class="binder-slot owned binder-list-row" role="listitem" style="--pip:${card.pip}" data-binder-key="${key}" data-binder-count="${count}">
@@ -5301,7 +5318,7 @@ function binderSlotMarkup(spec) {
       </div>`;
   }
   const face = mode === "numbered"
-    ? binderCardMarkup(card, { stamp: binderStamp(card), count, deferArt: true })
+    ? binderCardMarkup(card, { stamp: spec.stamp || binderStamp(card), count: spec.stamp ? 1 : count, deferArt: true })
     : binderCardMarkup(card, { plain: true, count, deferArt: true });
   return `
       <div class="binder-slot owned new-card-thumb" role="listitem" style="--pip:${card.pip}" data-binder-key="${key}" data-binder-count="${count}">
@@ -5309,7 +5326,7 @@ function binderSlotMarkup(spec) {
           ${face}
         </button>
         ${spec.recycle ? binderRecycleButton(card) : ""}
-        ${spec.extra === "numbered-too" ? '<span class="binder-numbered-ribbon" aria-hidden="true" title="יש לכם גם עותק ממוספר"></span>' : ""}
+        ${spec.extra === "numbered-too" ? numberedRibbonMarkup(card.id) : ""}
       </div>`;
 }
 
@@ -5393,7 +5410,7 @@ function paintBinderGrid(specs) {
     ? keyed.map((node) => ({ key: node.dataset.binderKey, sig: node.dataset.binderSig || "" }))
     : [];
   const next = specs.map((spec) => ({
-    key: `${spec.mode}:${spec.card.id}`,
+    key: binderSlotKey(spec),
     sig: binderSlotSignatureFor(spec),
     spec,
   }));
@@ -5471,8 +5488,13 @@ function renderBinder() {
     elements.guestBinderLabel.textContent = guest ? `האלבום של ${model.guestBinder.displayName}` : "";
   }
   if (elements.shareMyBinder) elements.shareMyBinder.hidden = guest;
-  // x of y / %: display ownership (a card held only as an opened numbered copy counts as owned).
-  const { owned, total, percent } = binderProgress(binderDisplayInventory(inventory));
+  // x of y / %: regular copies only ("קלפים רגילים"); opened numbered copies get their own gold line.
+  const { owned, total, percent } = binderProgress(binderRegularInventory(inventory));
+  const openedNumbered = binderNumberedCopies().filter((item) => Number(item?.numberedIndex) > 0).length;
+  if (elements.binderNumberedLine) {
+    elements.binderNumberedLine.hidden = openedNumbered < 1;
+    elements.binderNumberedLine.textContent = binderNumberedLineCopy(openedNumbered);
+  }
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = binderProgressCopy(owned, total);
   elements.binderCount.textContent = binderProgressCopy(owned, total);
@@ -5488,8 +5510,6 @@ function renderBinder() {
     .filter((item) => item.numberedIndex)
     .map((item) => item.cardId));
   const regularInventory = binderRegularInventory(inventory);
-  // Display only: presence and counts. Copy tags, recycle and trades keep reading regularInventory.
-  const displayInventory = binderDisplayInventory(inventory);
   const numberedView = model.binderFilter === "NUMBERED";
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
   if (numberedIds.size) setOrder.push("NUMBERED");
@@ -5516,7 +5536,7 @@ function renderBinder() {
   const listLabel = listMode ? "גריד" : "רשימה";
   const setOptions = setOrder.map((set) => {
     const count = binderSetChipCount(set, playerCards, {
-      inventory: set === "NUMBERED" ? inventory : displayInventory,
+      inventory: set === "NUMBERED" ? inventory : regularInventory,
       numberedIds,
       ownedOnly: (guest || model.binderOwnedOnly) && !model.binderMissingOnly,
       missingOnly: !guest && model.binderMissingOnly,
@@ -5565,9 +5585,10 @@ function renderBinder() {
       numberedIds,
     });
     const partyOk = !model.binderParty || card.set === model.binderParty;
-    const slotInventory = numberedView ? inventory : displayInventory;
+    // Owned = regular copies only; a numbered-only card is a missing slot (with the # ribbon) outside ממוספרים.
+    const slotInventory = numberedView ? inventory : regularInventory;
     const ownedOk = guest
-      ? Boolean(slotInventory[card.id])
+      ? Boolean(slotInventory[card.id]) || numberedIds.has(card.id)
       : model.binderMissingOnly
         ? !slotInventory[card.id]
         : (!model.binderOwnedOnly || Boolean(slotInventory[card.id]));
@@ -5582,13 +5603,12 @@ function renderBinder() {
   });
   binderView?.classList.toggle("binder-list", listMode);
   model.binderVisibleCount = ordered.length;
-  paintBinderGrid(ordered.map((card) => binderSlotSpec(card, {
-    numberedView,
-    regularInventory,
-    numberedIds,
-    guest,
-    listMode,
-  })).filter(Boolean));
+  // ממוספרים filter: one tile per opened numbered copy (its own stamp, no ×N), lowest index first.
+  paintBinderGrid(ordered.flatMap((card) => {
+    const spec = binderSlotSpec(card, { numberedView, regularInventory, numberedIds, guest, listMode });
+    if (!spec || !numberedView || spec.mode === "missing") return spec ? [spec] : [];
+    return binderNumberedCopiesOf(card.id).map((stamp) => ({ ...spec, stamp, count: 1, extra: `copy-${stamp.numberedIndex}` }));
+  }));
   if (!waitingOwnership && !guest && model.binderMissingOnly) {
     setEmptyNote(elements.binderEmpty, "אין קלפים חסרים.", { hidden: visible.length > 0 });
   }
@@ -8379,14 +8399,15 @@ async function debugUnlockCard(cardId) {
   }
 }
 
-function openCardDialog(cardId, numbered = false, { plain = false } = {}) {
+function openCardDialog(cardId, numbered = false, { plain = false, numberedIndex = null } = {}) {
   model.dialogCardId = cardId;
+  model.dialogNumberedIndex = numbered ? (Number(numberedIndex) || null) : null;
   model.dialogBack = false;
   model.dialogNumbered = Boolean(numbered);
   model.dialogPlain = Boolean(plain) && !numbered;
   model.dialogNumberedPreview = null;
   renderDialogCard();
-  elements.dialog.showModal();
+  if (!elements.dialog.open) elements.dialog.showModal();
   queueCardTextFit(elements.dialog);
   maybeShowNumberedTip();
   maybeShowRecycleTip();
@@ -8398,6 +8419,7 @@ function openNumberedPreview(cardId, index, of) {
   model.dialogBack = false;
   model.dialogNumbered = true;
   model.dialogNumberedPreview = { cardId, index: Number(index) || 0, of: Number(of) || 0 };
+  model.dialogNumberedIndex = Number(index) || null;
   renderDialogCard();
   if (!elements.dialog.open) elements.dialog.showModal();
   queueCardTextFit(elements.dialog);
@@ -8420,9 +8442,18 @@ function renderDialogCard() {
     : displayCardMarkup(card, "display", {
       recycle: canRecycle,
       plain: model.dialogPlain,
-      stamp: model.dialogNumbered ? binderStamp(card) : null,
-      count: model.dialogPlain ? binderRegularCount(card.id) : model.dialogNumbered ? binderNumberedCount(card.id) : null,
+      stamp: model.dialogNumbered ? binderStamp(card, model.dialogNumberedIndex) : null,
+      // One numbered copy per popup: no ×N on a numbered card.
+      count: model.dialogPlain ? binderRegularCount(card.id) : model.dialogNumbered ? 1 : null,
     });
+  // Regular view of a card that also has an opened numbered copy: the same gold # ribbon on the card art.
+  if (!model.showcase && !model.dialogNumbered && binderRegularCount(card.id) > 0 && binderNumberedCount(card.id) > 0) {
+    const face = elements.dialogCard.firstElementChild;
+    if (face) {
+      face.classList.add("has-numbered-ribbon");
+      face.insertAdjacentHTML("beforeend", numberedRibbonMarkup(card.id));
+    }
+  }
   if (elements.dialogTrust) {
     const line = cardTrustLine(card);
     elements.dialogTrust.textContent = line;
@@ -9523,7 +9554,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.156";
+const HEARD_YOU_VERSION = "v1.157";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {
@@ -9709,6 +9740,13 @@ async function confirmRecycle() {
 }
 
 elements.dialogCard?.addEventListener("click", (event) => {
+  const ribbon = event.target.closest("[data-open-numbered]");
+  if (ribbon) {
+    event.preventDefault();
+    event.stopPropagation();
+    openCardDialog(ribbon.dataset.openNumbered, true);
+    return;
+  }
   const button = event.target.closest("[data-recycle-card]");
   if (!button) return;
   event.preventDefault();
@@ -10108,6 +10146,13 @@ elements.communityTabs.addEventListener("click", (event) => {
 });
 
 elements.binderGrid.addEventListener("click", (event) => {
+  const ribbon = event.target.closest("[data-open-numbered]");
+  if (ribbon) {
+    event.preventDefault();
+    event.stopPropagation();
+    openCardDialog(ribbon.dataset.openNumbered, true);
+    return;
+  }
   const recycle = event.target.closest("[data-recycle-card]");
   if (recycle) {
     event.preventDefault();
@@ -10124,7 +10169,10 @@ elements.binderGrid.addEventListener("click", (event) => {
   const button = event.target.closest("[data-card-id]");
   if (button) {
     if (button.classList.contains("is-concealed")) return;
-    openCardDialog(button.dataset.cardId, button.hasAttribute("data-numbered"), { plain: button.hasAttribute("data-binder-plain") });
+    openCardDialog(button.dataset.cardId, button.hasAttribute("data-numbered"), {
+      plain: button.hasAttribute("data-binder-plain"),
+      numberedIndex: button.dataset.numberedIndex || null,
+    });
   }
 });
 elements.showcaseFilters?.addEventListener("click", (event) => {
