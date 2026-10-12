@@ -4692,7 +4692,7 @@ function inviteShareUrl(code) {
 }
 
 function copyInviteLink() {
-  const link = inviteShareUrl(model.serverState?.referralCode);
+  const link = inviteShareUrl(model.serverState?.referralCode || heardYouCodeFetch?.code);
   if (!link) {
     showToast("קישור ההזמנה עדיין לא מוכן.");
     return;
@@ -9586,11 +9586,22 @@ function markHeardYouSeen() {
   try { localStorage.setItem(HEARD_YOU_KEY, HEARD_YOU_NOTES); } catch { /* private mode */ }
 }
 /** Golden invite line: the player's own referral link (tap copies) and the real star gate. */
+let heardYouCodeFetch = null;
 function paintHeardYouInvite() {
-  const link = inviteShareUrl(model.serverState?.referralCode);
+  const link = inviteShareUrl(model.serverState?.referralCode || heardYouCodeFetch?.code);
   if (!elements.heardYouInvite) return;
   elements.heardYouInvite.hidden = !link;
-  if (!link) return;
+  if (!link) {
+    // The popup can open on a cold load before a state carrying referralCode lands: fetch it once.
+    if (!heardYouCodeFetch && model.token) {
+      heardYouCodeFetch = { code: null };
+      request("/api/state")
+        .then((state) => { heardYouCodeFetch.code = state?.referralCode || null; })
+        .catch(() => {})
+        .finally(() => { if (heardYouCodeFetch.code) paintHeardYouInvite(); else heardYouCodeFetch = null; });
+    }
+    return;
+  }
   elements.heardYouInviteLink.textContent = link;
   const stars = Number(model.serverState?.referralStars) || 15;
   elements.heardYouInviteReward.textContent = `הם הגיעו ל${stars} כוכבים? תקבלו חבילה מתנה!`;

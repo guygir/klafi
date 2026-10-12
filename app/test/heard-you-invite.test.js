@@ -27,3 +27,8 @@ test("heard-you: auto-opens once again, only after the tutorial and after the ca
   assert.match(app, /if \(!tipsBusy\(\) && !maybeShowStreakCalendar\(\)\) maybeAutoShowHeardYou\(\);/);
   assert.match(app, /maybeShowTradeNotice\(\);\n  maybeAutoShowHeardYou\(\);\n  return false;/);
 });
+
+test("heard-you: a cold load without referralCode fetches it once and repaints", () => {
+  assert.match(app, /request\("\/api\/state"\)\n        \.then\(\(state\) => \{ heardYouCodeFetch\.code = state\?\.referralCode \|\| null; \}\)/);
+  assert.match(app, /if \(elements\.heardYouDialog\?\.open\) paintHeardYouInvite\(\);/);
+});
