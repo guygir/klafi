@@ -43,3 +43,11 @@ test("binder header: regular-only count copy and the gold numbered line", () => 
   assert.match(app, /קלפים רגילים במשחק/);
   assert.match(app, /count === 1 \? "1 ממוספר!" : `\$\{count\} ממוספרים!`/);
 });
+
+test("ממוספרים filter: one tile per opened numbered copy, each opening its own stamp", () => {
+  assert.match(app, /return binderNumberedCopiesOf\(card\.id\)\.map\(\(stamp\) => \(\{ \.\.\.spec, stamp, count: 1,/);
+  assert.match(app, /\.sort\(\(left, right\) => Number\(left\.numberedIndex\) - Number\(right\.numberedIndex\)\)/);
+  assert.match(app, /numberedIndex: button\.dataset\.numberedIndex \|\| null,/);
+  assert.match(app, /stamp: model\.dialogNumbered \? binderStamp\(card, model\.dialogNumberedIndex\) : null,/);
+  assert.match(app, /return `\$\{spec\.mode\}:\$\{spec\.card\.id\}\$\{spec\.stamp \? `:\$\{spec\.stamp\.numberedIndex\}` : ""\}`;/);
+});
