@@ -7016,14 +7016,22 @@ body {
 .collector-row.numbered-row:disabled {
   cursor: default;
 }
-.achievement-count {
-  display: inline-block;
-  margin-inline-start: 4px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--foil, #b8862f);
-  color: #fff;
-  font-size: 0.8em;
-  font-weight: 800;
-  vertical-align: middle;
+/* Numbered badge: the count sits on the # (faded behind it), centered and legible at medal size. */
+.badge-artwork .badge-count-hash { opacity: 0.28; }
+.badge-artwork .badge-count {
+  fill: var(--ink, #2c3330);
+  stroke: rgba(255, 252, 240, 0.92);
+  stroke-width: 2.4px;
+  paint-order: stroke;
+  font-family: inherit;
+  font-weight: 900;
+}
+/* Race: two tabs stretch across; with ממוספרים, three equal tabs in one row. */
+#community-tabs[data-community-section="race"].has-numbered {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+#community-tabs[data-community-section="race"] button {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

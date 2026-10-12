@@ -1824,3 +1824,9 @@ body:has(#app[data-theme="pack-v2"]) {
   mix-blend-mode: soft-light;
   opacity: 0.55;
 }
+
+/* Race with the ממוספרים tab: three equal tabs in one row (two stretch across without it). */
+#app[data-density="airy-v2"] #community-tabs[data-community-section="race"].has-numbered,
+#community-tabs[data-community-section="race"].has-numbered {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}

@@ -5584,7 +5584,8 @@ function renderBinder() {
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
   const medals = earned.map((badge) => {
     const copy = hebrewBadge(badge);
-    return `<span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id, { tier: achievementTier(badge) })}</span>`;
+    const counted = badgeCountOf(badge) ? ` · ${badgeCountOf(badge)} ממוספרים` : "";
+    return `<span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}${counted}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name}${counted} · ${copy.description}`)}">${badgeArtwork(badge.id, { tier: achievementTier(badge), count: badgeCountOf(badge) })}</span>`;
   }).join("");
   rail.innerHTML = `<div class="binder-badge-medals">${medals}<button class="badge-overflow" type="button" hidden data-open-achievements>+</button></div>${starCounter}`;
   queueBinderBadgePack();
@@ -5647,7 +5648,19 @@ function badgeTierStarRow(tier, { style, foilKey } = {}) {
  * Every badge keeps its own icon and adds a 1/2/3 star row for the tier.
  * The sheen plays once per badge per device (see takeBadgeSheen), not on every re-render.
  */
-function badgeArtwork(id, { tier = "simple", earned = true, sheen = false, secret = false } = {}) {
+/** Count drawn on the numbered badge's # (minimum 1): the # fades behind a centered number. */
+function badgeCountOf(badge) {
+  return badge?.earned && badge.id === "numbered-first" ? Math.max(1, Math.round(Number(badge.count) || 1)) : 0;
+}
+
+function badgeArtwork(id, { tier = "simple", earned = true, sheen = false, secret = false, count = 0 } = {}) {
+  const shown = !secret && count > 0 ? String(Math.min(999, count)) : "";
+  if (shown) {
+    const size = shown.length > 2 ? 9 : shown.length > 1 ? 12 : 15;
+    const glyph = '<path class="badge-count-hash" d="M21.5 14l-3 20M30 14l-3 20M15.5 20.5h18M14.5 27.5h18"/>';
+    return badgeArtwork(id, { tier, earned, sheen, secret })
+      .replace(/<g class="badge-icon">[\s\S]*?<\/g>/, `<g class="badge-icon">${glyph}</g><text class="badge-count" x="24.2" y="24.6" text-anchor="middle" dominant-baseline="central" font-size="${size}">${shown}</text>`);
+  }
   const icon = secret
     ? '<path d="M21.2 20.2a2.8 2.8 0 1 1 5.2 1.5c-.7.8-2.2 1.3-2.2 2.8"/><circle cx="24.2" cy="28.6" r="1"/>'
     : {
@@ -6125,9 +6138,9 @@ function renderAchievements() {
     const percent = badge.earned ? 100 : Math.max(0, Math.min(100, Math.round((progress / target) * 100)));
     return `
     <article class="achievement-badge tier-${tier} ${badge.earned ? "earned" : ""} ${secret ? "is-secret" : ""}" data-badge-id="${escapeHtml(badge.id)}">
-      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id, { tier, earned: badge.earned && !secret, sheen: tier === "hard" && badge.earned && takeBadgeSheen(badge.id), secret })}</span>
+      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id, { tier, earned: badge.earned && !secret, sheen: tier === "hard" && badge.earned && takeBadgeSheen(badge.id), secret, count: badgeCountOf(badge) })}</span>
       <div>
-        <strong>${escapeHtml(copy.name)}${badge.earned && Number(badge.count) > 0 ? ` <span class="achievement-count" aria-label="${Number(badge.count)} קלפים ממוספרים">×${Number(badge.count)}</span>` : ""}</strong>
+        <strong>${escapeHtml(copy.name)}</strong>
         <p>${escapeHtml(copy.description)}</p>
         ${secret ? "" : `<div class="achievement-track" role="img" aria-label="${progress} מתוך ${target}">
           <span style="width:${percent}%"></span>
@@ -6899,7 +6912,14 @@ function renderNumberedBoard() {
     : '<p class="work-note">עוד אין לאף אחד קלף ממוספר. פותחים חבילות, ואולי תהיו הראשונים!</p>';
 }
 
+function hasOpenedNumbered() {
+  return (model.serverState?.numberedCopies || []).length > 0;
+}
+
 function syncCommunityPage() {
+  const showNumbered = hasOpenedNumbered();
+  if (!showNumbered && model.communityPage === "numbered") model.communityPage = "collectors";
+  elements.communityTabs?.classList.toggle("has-numbered", showNumbered);
   const section = communitySectionFor(model.communityPage);
   model.communitySection = section;
   const communityClasses = {
@@ -6923,7 +6943,7 @@ function syncCommunityPage() {
   elements.communityTabs?.querySelectorAll("[data-community-page]").forEach((button) => {
     const inSection = button.dataset.communitySection === section;
     const active = button.dataset.communityPage === model.communityPage;
-    button.hidden = !inSection;
+    button.hidden = !inSection || (button.dataset.communityPage === "numbered" && !showNumbered);
     button.classList.toggle("active", active);
     button.setAttribute("aria-selected", String(active && inSection));
     button.tabIndex = active && inSection ? 0 : -1;
@@ -9483,7 +9503,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.155";
+const HEARD_YOU_VERSION = "v1.156";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {

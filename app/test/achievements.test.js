@@ -358,7 +358,7 @@ test("client: three open tabs, tier art, no unlock toast, copy + icon for every 
   assert.doesNotMatch(html, /id="achievement-pager"|id="achievement-lock-note"/, "tabs replace the pager; no page locking");
   assert.match(javascript, /const ACHIEVEMENT_TIER_LABELS = Object\.freeze\(\{ simple: "הקלים", medium: "הבינוניים", hard: "הקשים" \}\)/);
   assert.match(javascript, /data-achievement-tier="\$\{item\.tier\}" aria-selected="\$\{active\}"/);
-  assert.match(javascript, /badgeArtwork\(badge\.id, \{ tier, earned: badge\.earned && !secret, sheen: tier === "hard" && badge\.earned && takeBadgeSheen\(badge\.id\), secret \}\)/);
+  assert.match(javascript, /badgeArtwork\(badge\.id, \{ tier, earned: badge\.earned && !secret, sheen: tier === "hard" && badge\.earned && takeBadgeSheen\(badge\.id\), secret, count: badgeCountOf\(badge\) \}\)/);
   assert.match(javascript, /Number\(Boolean\(left\.hidden\)\) - Number\(Boolean\(right\.hidden\)\)/);
   assert.match(javascript, /שחקו עוד כדי לגלות\.\.\./);
   assert.match(javascript, /<svg class="badge-artwork badge-tier-\$\{style\}"/);
