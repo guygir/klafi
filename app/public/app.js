@@ -184,6 +184,9 @@ const elements = {
   closeHeardYou: document.querySelector("#close-heard-you"),
   heardYouOk: document.querySelector("#heard-you-ok"),
   heardYouVersion: document.querySelector("#heard-you-version"),
+  heardYouInvite: document.querySelector("#heard-you-invite"),
+  heardYouInviteLink: document.querySelector("#heard-you-invite-link"),
+  heardYouInviteReward: document.querySelector("#heard-you-invite-reward"),
   homeEnableNotify: document.querySelector("#home-enable-notify"),
   leagueNameInput: document.querySelector("#league-name-input"),
   createLeague: document.querySelector("#create-league"),
@@ -9571,17 +9574,31 @@ function refreshHeardYouVersion() {
 }
 refreshHeardYouVersion();
 
+/** Bump when the notes change: every player (old "1" flag included) sees the popup once more. */
+const HEARD_YOU_NOTES = "invite-1";
 function heardYouSeen() {
-  try { return localStorage.getItem(HEARD_YOU_KEY) === "1"; } catch { return true; }
+  try { return localStorage.getItem(HEARD_YOU_KEY) === HEARD_YOU_NOTES; } catch { return true; }
 }
 function markHeardYouSeen() {
-  try { localStorage.setItem(HEARD_YOU_KEY, "1"); } catch { /* private mode */ }
+  try { localStorage.setItem(HEARD_YOU_KEY, HEARD_YOU_NOTES); } catch { /* private mode */ }
 }
+/** Golden invite line: the player's own referral link (tap copies) and the real star gate. */
+function paintHeardYouInvite() {
+  const link = inviteShareUrl(model.serverState?.referralCode);
+  if (!elements.heardYouInvite) return;
+  elements.heardYouInvite.hidden = !link;
+  if (!link) return;
+  elements.heardYouInviteLink.textContent = link;
+  const stars = Number(model.serverState?.referralStars) || 15;
+  elements.heardYouInviteReward.textContent = `הם הגיעו ל${stars} כוכבים? תקבלו חבילה מתנה!`;
+}
+elements.heardYouInviteLink?.addEventListener("click", () => copyInviteLink());
 function maybeShowHeardYou({ force = false } = {}) {
   const dialog = elements.heardYouDialog;
   if (!dialog || dialog.open) return Boolean(dialog?.open);
   if (!force && heardYouSeen()) return false;
   if (!force && (model.showcase || elements.waitDialog?.open || tipsBusy() || playerDialogOpen())) return false;
+  paintHeardYouInvite();
   dialog.showModal();
   return true;
 }
