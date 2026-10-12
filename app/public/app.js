@@ -9560,23 +9560,18 @@ elements.leafToggle?.addEventListener("click", () => {
   renderLeafToggle();
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
-/** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
+/** Last-resort label; the build stamps v1.<PR number> into <meta name="klafi-version"> (scripts/build-version.mjs). */
 const HEARD_YOU_VERSION = "v1.158";
-const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {
   const tag = String(version || "").trim();
   if (elements.heardYouVersion && tag) elements.heardYouVersion.textContent = `(${tag})`;
 }
-paintHeardYouVersion(HEARD_YOU_VERSION);
-
-function refreshHeardYouVersion() {
-  fetch(HEARD_YOU_RELEASE_URL, { headers: { Accept: "application/vnd.github+json" } })
-    .then((response) => (response.ok ? response.json() : null))
-    .then((release) => paintHeardYouVersion(release?.tag_name))
-    .catch(() => {});
+function builtHeardYouVersion() {
+  const stamped = document.querySelector('meta[name="klafi-version"]')?.content?.trim() || "";
+  return /^v1\.\d+$/.test(stamped) ? stamped : HEARD_YOU_VERSION;
 }
-refreshHeardYouVersion();
+paintHeardYouVersion(builtHeardYouVersion());
 
 /** Bump when the notes change: every player (old "1" flag included) sees the popup once more. */
 const HEARD_YOU_NOTES = "invite-1";
