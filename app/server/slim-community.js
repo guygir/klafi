@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import pg from "pg";
 import { collectionStars } from "./stars.js";
-import { takeCollectorBoard } from "./collector-board.js";
+import { numberedTotal, takeCollectorBoard, takeNumberedBoard } from "./collector-board.js";
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { openSpecialWindow } from "./special-window.js";
@@ -101,6 +101,9 @@ export function slimLeaderboards(config, collectors = [], factions = [], now = D
     collectors,
     collectorCount: extras.collectorCount ?? collectors.length,
     yourCollectorRank: extras.yourCollectorRank ?? collectors.find((entry) => entry.current)?.rank ?? null,
+    numberedCollectors: extras.numberedCollectors || [],
+    numberedCollectorCount: extras.numberedCollectorCount ?? 0,
+    yourNumberedRank: extras.yourNumberedRank ?? null,
     factions,
     dailyChallenge: slimDailyChallenge(config, now, extras.factionId || null),
     fixture: false,
@@ -243,6 +246,7 @@ async function collectorBoards(db, config, now, token) {
         label: row.display_name,
         ownedUnique: Object.keys(regularInventory(inventory, numberedByToken.get(row.token) || {})).length,
         stars: collectionStars(inventory, cardIndex, numberedByToken.get(row.token) || {}, { unknown: "skip" }),
+        numbered: numberedTotal(numberedByToken.get(row.token)),
         packs: row.idle_pull_count ?? row.pack_count,
         current: row.token === token,
         avatarId: row.avatar_id || "kid-boy",
@@ -263,6 +267,7 @@ async function collectorBoards(db, config, now, token) {
   return slimLeaderboards(config, collectors, factions, now, {
     collectorCount,
     yourCollectorRank,
+    ...takeNumberedBoard(allCollectors),
     factionId: viewerFaction,
   });
 }

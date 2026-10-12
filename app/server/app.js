@@ -26,6 +26,7 @@ import {
   numberedCopies,
   heldNumberedCopies,
   regularCopyCount,
+  progressionUnique,
   regularInventoryOf,
   stampEligible,
   stampFromGrant,
@@ -51,6 +52,7 @@ import { qrSvg } from "./qr-svg.js";
 import { eventClaimKey, eventClaimMode, eventReward, isEventClaimed, openSpecialWindow } from "./special-window.js";
 import { requestOrigin, serveBinderShareLanding, servePlayerBinderShareLanding, serveShareLanding } from "./share-landing.js";
 import { levelThresholds } from "./progression.js";
+import { numberedHeldByCard } from "./stars.js";
 import { createGithubBugFromBody } from "./github-bugs.js";
 import {
   achievementState,
@@ -550,10 +552,10 @@ function progressionConfig(config = {}, activeReleaseIds = null) {
   };
 }
 
-function progressionState(session, cards, config = {}, current = Date.now()) {
+export function progressionState(session, cards, config = {}, current = Date.now()) {
   const eligible = activeIdleCards(cards, current);
   const eligibleIds = new Set(eligible.map(({ id }) => id));
-  const unique = Object.keys(regularInventoryOf(session)).filter((id) => eligibleIds.has(id)).length;
+  const unique = progressionUnique(session.inventory, numberedHeldByCard(session), (id) => eligibleIds.has(id));
   const activeReleaseIds = [...new Set(eligible.map(({ releaseSetId }) => releaseSetId).filter(Boolean))];
   const { ranks, totalLevels, campaignLevels, reward, thresholdExponent } = progressionConfig(config, activeReleaseIds);
   const thresholds = levelThresholds(eligible.length, totalLevels, thresholdExponent);
@@ -1251,8 +1253,10 @@ export async function createKalpiApp({
   async function settleIdleSession(current, currentMs, pool) {
     current.unseenPulls ??= [];
     await grantPendingStreakReward(current);
-    const sealed = sealPastPrizes(current, new Date(currentMs).toISOString(), jerusalemDay(currentMs));
-    if (sealed) syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
+    sealPastPrizes(current, new Date(currentMs).toISOString(), jerusalemDay(currentMs));
+    // Always: a level earned without a new grant (numbered copies started counting) queues its rank
+    // rewards here. Idempotent: ranks already pending or claimed are not added again.
+    syncProgression(current, allCards, studioContent?.gameConfig?.progression, currentMs);
     current.preparedPulls = (current.preparedPulls || [])
       .filter((pull) => pull?.instanceId && pull?.cardId && Number.isFinite(Date.parse(pull.availableAt)))
       .sort((left, right) => Date.parse(left.availableAt) - Date.parse(right.availableAt));

@@ -26,7 +26,7 @@ import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-bind
 import { newReferralCode, normalizeInviteCode } from "./referral.js";
 import { collectionStars, numberedHeldByCard } from "./stars.js";
 import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
-import { takeCollectorBoard } from "./collector-board.js";
+import { numberedTotal, takeCollectorBoard, takeNumberedBoard } from "./collector-board.js";
 import { dailyRaceScore, raceTargetForSavedFaction, visibleDailyRaceLeaders } from "./daily-race.js";
 
 /**
@@ -611,6 +611,7 @@ export class JsonStore {
         label: session.displayName,
         ownedUnique: Object.keys(regularInventory(session.inventory, numberedHeldByCard(session))).length,
         stars: collectionStars(session.inventory, cardsById, numberedHeldByCard(session)),
+        numbered: numberedTotal(numberedHeldByCard(session)),
         packs: session.idlePullCount ?? session.packCount,
         current: token === currentToken,
         avatarId: session.avatarId || "kid-boy",
@@ -623,6 +624,7 @@ export class JsonStore {
       .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
     const { collectors, collectorCount, yourCollectorRank } = takeCollectorBoard(allCollectors);
+    const numberedBoard = takeNumberedBoard(allCollectors);
     const factions = factionStandingsFromCollectors(allCollectors);
     const partyIds = [...new Set(cards.filter(({ set }) => set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set))].sort();
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(now));
@@ -650,6 +652,7 @@ export class JsonStore {
       collectors,
       collectorCount,
       yourCollectorRank,
+      ...numberedBoard,
       factions,
       dailyChallenge: { day, targetPartyId, targetPartyNameHe, leaders: dailyParty },
       fixture: false,

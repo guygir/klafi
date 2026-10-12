@@ -14,3 +14,26 @@ export function takeCollectorBoard(allCollectors, size = COLLECTOR_BOARD_SIZE) {
     yourCollectorRank: current?.rank ?? null,
   };
 }
+
+/** Total opened numbered copies in a { cardId: copies } bag. */
+export function numberedTotal(bag = {}) {
+  return Object.values(bag || {}).reduce((sum, copies) => sum + Math.max(0, Math.round(Number(copies) || 0)), 0);
+}
+
+/**
+ * Numbered board: players holding at least one opened numbered copy, most copies first, then stars.
+ * Same top-N plus "your rank" shape as the collector board. Entries carry display names only.
+ */
+export function takeNumberedBoard(allCollectors, size = COLLECTOR_BOARD_SIZE) {
+  const ranked = (Array.isArray(allCollectors) ? allCollectors : [])
+    .filter((entry) => Number(entry?.numbered) > 0)
+    .map((entry) => ({ ...entry }))
+    .sort((a, b) => b.numbered - a.numbered || b.stars - a.stars || b.ownedUnique - a.ownedUnique)
+    .map((entry, index) => ({ ...entry, rank: index + 1 }));
+  const { collectors, collectorCount, yourCollectorRank } = takeCollectorBoard(ranked, size);
+  return {
+    numberedCollectors: collectors,
+    numberedCollectorCount: collectorCount,
+    yourNumberedRank: yourCollectorRank,
+  };
+}

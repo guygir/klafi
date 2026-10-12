@@ -4,14 +4,14 @@ import { IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY } from "./idle-c
 import { publicTradeNotices } from "./trade-notices.js";
 import { publicStreakCalendar } from "./streak-calendar.js";
 import { referralStarGate } from "./referral.js";
-import { heldNumberedCopies, regularInventory } from "./numbered.js";
+import { heldNumberedCopies, progressionUnique, regularInventory } from "./numbered.js";
 
 export function slimPublicState(session, shell, now = Date.now()) {
   const idleIds = new Set(shell.idleCardIds || []);
   const inventory = session.inventory || {};
   // Numbered copies are not regular copies (level progress, unique counts).
   const regular = regularInventory(inventory, session.numberedByCard || {});
-  const unique = Object.keys(regular).filter((id) => idleIds.has(id)).length;
+  const unique = progressionUnique(inventory, session.numberedByCard || {}, (id) => idleIds.has(id));
   const ranks = shell.gameConfig?.progression?.rankNames || ["אזרח סקרן"];
   const totalLevels = Math.max(2, ranks.length);
   const idleTotal = idleIds.size || shell.totals?.idleEligible || 1;
@@ -31,7 +31,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     createdAt: session.createdAt,
     avatarId: session.avatarId || "kid-boy",
     avatars,
-    ownedUnique: unique,
+    ownedUnique: Object.keys(regular).filter((id) => idleIds.has(id)).length,
     ownedUniqueAll: Object.keys(regular).length,
     starCount: collectionStarCount(inventory, shell.cardIndex || [], session.numberedByCard || {}),
     totalCards: idleTotal,
