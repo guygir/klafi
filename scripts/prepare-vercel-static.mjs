@@ -1,8 +1,9 @@
-import { cp, mkdir, readFile, rm } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { liveDeployAssetNames } from "./live-deploy-assets.mjs";
+import { deriveVersion, stampIndexHtml } from "./build-version.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = path.join(root, "public");
@@ -26,6 +27,11 @@ const assetNames = liveDeployAssetNames({ catalog, avatars });
 await rm(publicDir, { recursive: true, force: true });
 await mkdir(publicDir, { recursive: true });
 await cp(path.join(root, "app/public"), publicDir, { recursive: true });
+// Version label for the changelog popup: stamped into the deployed index.html only (assets and ?v= untouched).
+const { version, source } = deriveVersion();
+const indexPath = path.join(publicDir, "index.html");
+await writeFile(indexPath, stampIndexHtml(await readFile(indexPath, "utf8"), version));
+console.log(`Version label: ${version || "(client fallback)"} from ${source}`);
 const destAssets = path.join(publicDir, "design-assets");
 await mkdir(destAssets, { recursive: true });
 for (const name of assetNames) {
