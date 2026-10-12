@@ -11,15 +11,14 @@ const numbered = { instanceId: "n", cardId: "M6", numberedIndex: 2, numberedOf: 
 const player = () => ({ inventory: { M1: 1, M6: 1 }, instances: [{ instanceId: "r1", cardId: "M1" }, numbered], unseenPulls: [] });
 const cards = ["M1", "M6"].map((id) => ({ id, set: "MOM", releaseSetId: "set-5", idleEligible: true, rarity: "Common" }));
 
-test("binder: numbered-only card shown as owned in tiles/filters/set counts; header x/y and % stay regular-only", () => {
-  assert.match(app, /function binderDisplayInventory\(inventory = binderInventory\(\)\) \{/);
+test("binder: numbered-only card is a missing slot with the # ribbon; all counts and filters regular-only", () => {
+  assert.doesNotMatch(app, /binderDisplayInventory|displayInventory/);
   assert.match(app, /binderProgress\(binderRegularInventory\(inventory\)\)/);
-  assert.match(app, /inventory: set === "NUMBERED" \? inventory : displayInventory,/);
-  assert.match(app, /const slotInventory = numberedView \? inventory : displayInventory;/);
-  // The tile is the numbered copy: # stamp, numbered dialog (no recycle, no trade of a regular copy).
-  assert.match(app, /const numberedOnly = !numberedView && !\(regularInventory\[card\.id\] > 0\) && numberedIds\.has\(card\.id\)/);
-  assert.match(app, /const canRecycle = !model\.dialogNumbered && canRecycleCard\(card\);/);
-  assert.equal((app.match(/displayInventory/g) || []).length, 3, "display ownership is used only for presence and counts");
+  assert.match(app, /inventory: set === "NUMBERED" \? inventory : regularInventory,/);
+  assert.match(app, /const slotInventory = numberedView \? inventory : regularInventory;/);
+  assert.match(app, /return \{ card, mode: "missing", count: 0, recycle: false, concealed: false, extra: "numbered-only" \};/);
+  assert.match(app, /\$\{numberedOnly \? ' data-binder-plain="1"' : ""\}/, "body tap opens the regular view, not the numbered copy");
+  assert.match(app, /\$\{numberedOnly \? numberedRibbonMarkup\(card\.id\) : ""\}/);
 });
 
 test("trades, recycle, set completion and badges stay regular-only", () => {
@@ -31,7 +30,7 @@ test("trades, recycle, set completion and badges stay regular-only", () => {
   assert.equal(measures.ownedIds.has("M6"), false, "badges");
 });
 
-test("regular + opened numbered tile gets the gold # corner ribbon; numbered-only tiles do not", () => {
+test("regular + opened numbered tile gets the gold # corner ribbon", () => {
   assert.match(app, /extra: !numberedView && numberedIds\.has\(card\.id\) \? "numbered-too" : "",/);
   assert.match(app, /spec\.extra === "numbered-too" \? numberedRibbonMarkup\(card\.id\)/);
   assert.match(app, /class="binder-numbered-ribbon" data-open-numbered=/);

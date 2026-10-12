@@ -4592,19 +4592,6 @@ function binderRegularInventory(inventory = binderInventory()) {
   return regularInventoryFrom(inventory, binderNumberedCopies());
 }
 
-/**
- * Binder display ownership: regular copies, plus 1 for a card held only as an opened numbered copy,
- * so it shows coloured, under באוסף, and in the x/y and set counts. Never used for trades,
- * recycle, set completion or badges (those read binderRegularInventory / regular-copies.js).
- */
-function binderDisplayInventory(inventory = binderInventory()) {
-  const display = { ...binderRegularInventory(inventory) };
-  for (const item of binderNumberedCopies()) {
-    if (Number(item?.numberedIndex) > 0 && Number(inventory?.[item.cardId]) > 0 && !display[item.cardId]) display[item.cardId] = 1;
-  }
-  return display;
-}
-
 function binderRegularCount(cardId) {
   return binderRegularInventory()[cardId] ?? 0;
 }
@@ -5242,9 +5229,10 @@ function syncBinderGridInventory(previous, next) {
 }
 
 function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, guest, listMode }) {
-  // Numbered-only card: shown as its numbered copy (# stamp, numbered dialog: no recycle, no trade).
-  const numberedOnly = !numberedView && !(regularInventory[card.id] > 0) && numberedIds.has(card.id) && Number(binderInventory()[card.id]) > 0;
-  if (numberedOnly) numberedView = true;
+  // Numbered-only card outside ממוספרים: the greyed missing slot plus the gold # ribbon (opens the numbered popup).
+  if (!numberedView && !(regularInventory[card.id] > 0) && numberedIds.has(card.id)) {
+    return { card, mode: "missing", count: 0, recycle: false, concealed: false, extra: "numbered-only" };
+  }
   const count = numberedView ? binderNumberedCount(card.id) : (regularInventory[card.id] ?? 0);
   if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
     if (guest || model.binderFilter === "NUMBERED") return null;
@@ -5303,10 +5291,13 @@ function binderSlotMarkup(spec) {
   const { card, mode, count, concealed } = spec;
   const key = escapeHtml(binderSlotKey(spec));
   if (mode === "missing") {
-    return `<div class="binder-slot is-missing" role="listitem" data-binder-key="${key}" data-card-id="${card.id}" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)} · חסר באוסף`)}">
+    const numberedOnly = spec.extra === "numbered-only";
+    // data-binder-plain: tapping the body opens the regular (missing) view, not the numbered copy.
+    return `<div class="binder-slot is-missing${numberedOnly ? " has-numbered-ribbon" : ""}"${numberedOnly ? ' data-binder-plain="1"' : ""} role="listitem" data-binder-key="${key}" data-card-id="${card.id}" aria-label="${escapeHtml(`${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)} · ${numberedOnly ? "חסר עותק רגיל, יש לכם עותק ממוספר" : "חסר באוסף"}`)}">
         <span class="missing-name">${escapeHtml(cardTitle(card))}</span>
         <span class="missing-code">${escapeHtml(cardCode(card))}</span>
         <span class="missing-rarity">${escapeHtml(`${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`)}</span>
+        ${numberedOnly ? numberedRibbonMarkup(card.id) : ""}
         ${spec.extra === "debug" ? `<button class="debug-unlock-card" type="button" data-debug-unlock="${card.id}">פתיחה</button>` : ""}
       </div>`;
   }
@@ -5519,8 +5510,6 @@ function renderBinder() {
     .filter((item) => item.numberedIndex)
     .map((item) => item.cardId));
   const regularInventory = binderRegularInventory(inventory);
-  // Display only: presence and counts. Copy tags, recycle and trades keep reading regularInventory.
-  const displayInventory = binderDisplayInventory(inventory);
   const numberedView = model.binderFilter === "NUMBERED";
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
   if (numberedIds.size) setOrder.push("NUMBERED");
@@ -5547,7 +5536,7 @@ function renderBinder() {
   const listLabel = listMode ? "גריד" : "רשימה";
   const setOptions = setOrder.map((set) => {
     const count = binderSetChipCount(set, playerCards, {
-      inventory: set === "NUMBERED" ? inventory : displayInventory,
+      inventory: set === "NUMBERED" ? inventory : regularInventory,
       numberedIds,
       ownedOnly: (guest || model.binderOwnedOnly) && !model.binderMissingOnly,
       missingOnly: !guest && model.binderMissingOnly,
@@ -5596,9 +5585,10 @@ function renderBinder() {
       numberedIds,
     });
     const partyOk = !model.binderParty || card.set === model.binderParty;
-    const slotInventory = numberedView ? inventory : displayInventory;
+    // Owned = regular copies only; a numbered-only card is a missing slot (with the # ribbon) outside ממוספרים.
+    const slotInventory = numberedView ? inventory : regularInventory;
     const ownedOk = guest
-      ? Boolean(slotInventory[card.id])
+      ? Boolean(slotInventory[card.id]) || numberedIds.has(card.id)
       : model.binderMissingOnly
         ? !slotInventory[card.id]
         : (!model.binderOwnedOnly || Boolean(slotInventory[card.id]));
