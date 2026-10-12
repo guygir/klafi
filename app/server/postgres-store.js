@@ -1450,16 +1450,12 @@ export class PostgresStore {
     await this.ensureHolderSnapshotTable();
     const [owned, numbered] = await Promise.all([
       this.pool.query(
+        // One holder per player with any regular or opened numbered copy: kalpi_inventory counts
+        // both (an unopened warehouse copy is not credited yet), one row per (session, card).
         `SELECT i.card_id, COUNT(*)::int AS holders
          FROM kalpi_inventory i
          JOIN kalpi_sessions s ON s.token = i.session_token
-         LEFT JOIN (
-           SELECT session_token, card_id, COUNT(*)::int AS numbered
-           FROM kalpi_instances
-           WHERE numbered_index > 0 AND seen_at IS NOT NULL
-           GROUP BY session_token, card_id
-         ) AS n ON n.session_token = i.session_token AND n.card_id = i.card_id
-         WHERE i.copies > COALESCE(n.numbered, 0)
+         WHERE i.copies > 0
          GROUP BY i.card_id`,
       ),
       this.pool.query(

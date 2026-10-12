@@ -2,7 +2,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
 import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, homeSettleHint, idleCountdownCopy, IDLE_BACKLOG_CAP, predictedUnseenCount, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
-import { binderBadgeOrder } from "./badge-order.js";
+import { binderBadgeOrder, PINNED_BADGE_ID } from "./badge-order.js";
 import {
   BINDER_SORT_LABELS,
   BINDER_SORTS,
@@ -4586,6 +4586,19 @@ function binderRegularInventory(inventory = binderInventory()) {
   return regularInventoryFrom(inventory, binderNumberedCopies());
 }
 
+/**
+ * Binder display ownership: regular copies, plus 1 for a card held only as an opened numbered copy,
+ * so it shows coloured, under באוסף, and in the x/y and set counts. Never used for trades,
+ * recycle, set completion or badges (those read binderRegularInventory / regular-copies.js).
+ */
+function binderDisplayInventory(inventory = binderInventory()) {
+  const display = { ...binderRegularInventory(inventory) };
+  for (const item of binderNumberedCopies()) {
+    if (Number(item?.numberedIndex) > 0 && Number(inventory?.[item.cardId]) > 0 && !display[item.cardId]) display[item.cardId] = 1;
+  }
+  return display;
+}
+
 function binderRegularCount(cardId) {
   return binderRegularInventory()[cardId] ?? 0;
 }
@@ -5214,6 +5227,9 @@ function syncBinderGridInventory(previous, next) {
 }
 
 function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, guest, listMode }) {
+  // Numbered-only card: shown as its numbered copy (# stamp, numbered dialog: no recycle, no trade).
+  const numberedOnly = !numberedView && !(regularInventory[card.id] > 0) && numberedIds.has(card.id) && Number(binderInventory()[card.id]) > 0;
+  if (numberedOnly) numberedView = true;
   const count = numberedView ? binderNumberedCount(card.id) : (regularInventory[card.id] ?? 0);
   if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
     if (guest || model.binderFilter === "NUMBERED") return null;
@@ -5243,7 +5259,8 @@ function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, gue
     count,
     recycle: !guest && Boolean(binderRecycleButton(card)),
     concealed,
-    extra: "",
+    // Regular copy plus an opened numbered copy: a thin gold # corner ribbon (numbered-only tiles keep their look).
+    extra: !numberedView && numberedIds.has(card.id) ? "numbered-too" : "",
   };
 }
 
@@ -5271,7 +5288,7 @@ function binderSlotMarkup(spec) {
   }
   const openLabel = concealed
     ? `${cardTitle(card)} · ${cardCode(card)} · ${rarityNameHe(card.rarity)}`
-    : `פתיחת ${cardTitle(card)}, ברשותכם ${count}`;
+    : `פתיחת ${cardTitle(card)}, ברשותכם ${count}${spec.extra === "numbered-too" ? ", ויש לכם גם עותק ממוספר" : ""}`;
   const viewerMissing = concealed;
   const numbered = mode === "numbered" || mode === "numbered-list";
   const numberedAttr = numbered ? ' data-numbered="1"' : ' data-binder-plain="1"';
@@ -5292,6 +5309,7 @@ function binderSlotMarkup(spec) {
           ${face}
         </button>
         ${spec.recycle ? binderRecycleButton(card) : ""}
+        ${spec.extra === "numbered-too" ? '<span class="binder-numbered-ribbon" aria-hidden="true" title="יש לכם גם עותק ממוספר"></span>' : ""}
       </div>`;
 }
 
@@ -5453,8 +5471,8 @@ function renderBinder() {
     elements.guestBinderLabel.textContent = guest ? `האלבום של ${model.guestBinder.displayName}` : "";
   }
   if (elements.shareMyBinder) elements.shareMyBinder.hidden = guest;
-  // x of y / %: regular copies only (a numbered-only card is still missing).
-  const { owned, total, percent } = binderProgress(binderRegularInventory(inventory));
+  // x of y / %: display ownership (a card held only as an opened numbered copy counts as owned).
+  const { owned, total, percent } = binderProgress(binderDisplayInventory(inventory));
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = binderProgressCopy(owned, total);
   elements.binderCount.textContent = binderProgressCopy(owned, total);
@@ -5470,6 +5488,8 @@ function renderBinder() {
     .filter((item) => item.numberedIndex)
     .map((item) => item.cardId));
   const regularInventory = binderRegularInventory(inventory);
+  // Display only: presence and counts. Copy tags, recycle and trades keep reading regularInventory.
+  const displayInventory = binderDisplayInventory(inventory);
   const numberedView = model.binderFilter === "NUMBERED";
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
   if (numberedIds.size) setOrder.push("NUMBERED");
@@ -5496,7 +5516,7 @@ function renderBinder() {
   const listLabel = listMode ? "גריד" : "רשימה";
   const setOptions = setOrder.map((set) => {
     const count = binderSetChipCount(set, playerCards, {
-      inventory: set === "NUMBERED" ? inventory : regularInventory,
+      inventory: set === "NUMBERED" ? inventory : displayInventory,
       numberedIds,
       ownedOnly: (guest || model.binderOwnedOnly) && !model.binderMissingOnly,
       missingOnly: !guest && model.binderMissingOnly,
@@ -5545,7 +5565,7 @@ function renderBinder() {
       numberedIds,
     });
     const partyOk = !model.binderParty || card.set === model.binderParty;
-    const slotInventory = numberedView ? inventory : regularInventory;
+    const slotInventory = numberedView ? inventory : displayInventory;
     const ownedOk = guest
       ? Boolean(slotInventory[card.id])
       : model.binderMissingOnly
@@ -5584,7 +5604,8 @@ function renderBinder() {
   const rail = elements.earnedBadgeList || elements.earnedBadgeRail;
   const medals = earned.map((badge) => {
     const copy = hebrewBadge(badge);
-    return `<span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name} · ${copy.description}`)}">${badgeArtwork(badge.id, { tier: achievementTier(badge) })}</span>`;
+    const counted = badgeCountOf(badge) ? ` · ${badgeCountOf(badge)} ממוספרים` : "";
+    return `<span class="badge-medallion${badge.id === PINNED_BADGE_ID ? " is-pinned" : ""}" tabindex="0" aria-label="${escapeHtml(`${copy.name}${counted}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name}${counted} · ${copy.description}`)}">${badgeArtwork(badge.id, { tier: achievementTier(badge), count: badgeCountOf(badge) })}</span>`;
   }).join("");
   rail.innerHTML = `<div class="binder-badge-medals">${medals}<button class="badge-overflow" type="button" hidden data-open-achievements>+</button></div>${starCounter}`;
   queueBinderBadgePack();
@@ -5647,7 +5668,19 @@ function badgeTierStarRow(tier, { style, foilKey } = {}) {
  * Every badge keeps its own icon and adds a 1/2/3 star row for the tier.
  * The sheen plays once per badge per device (see takeBadgeSheen), not on every re-render.
  */
-function badgeArtwork(id, { tier = "simple", earned = true, sheen = false, secret = false } = {}) {
+/** Count drawn on the numbered badge's # (minimum 1): the # fades behind a centered number. */
+function badgeCountOf(badge) {
+  return badge?.earned && badge.id === "numbered-first" ? Math.max(1, Math.round(Number(badge.count) || 1)) : 0;
+}
+
+function badgeArtwork(id, { tier = "simple", earned = true, sheen = false, secret = false, count = 0 } = {}) {
+  const shown = !secret && count > 0 ? String(Math.min(999, count)) : "";
+  if (shown) {
+    const size = shown.length > 2 ? 9 : shown.length > 1 ? 12 : 15;
+    const glyph = '<path class="badge-count-hash" d="M21.5 14l-3 20M30 14l-3 20M15.5 20.5h18M14.5 27.5h18"/>';
+    return badgeArtwork(id, { tier, earned, sheen, secret })
+      .replace(/<g class="badge-icon">[\s\S]*?<\/g>/, `<g class="badge-icon">${glyph}</g><text class="badge-count" x="24.2" y="24.6" text-anchor="middle" dominant-baseline="central" font-size="${size}">${shown}</text>`);
+  }
   const icon = secret
     ? '<path d="M21.2 20.2a2.8 2.8 0 1 1 5.2 1.5c-.7.8-2.2 1.3-2.2 2.8"/><circle cx="24.2" cy="28.6" r="1"/>'
     : {
@@ -6125,9 +6158,9 @@ function renderAchievements() {
     const percent = badge.earned ? 100 : Math.max(0, Math.min(100, Math.round((progress / target) * 100)));
     return `
     <article class="achievement-badge tier-${tier} ${badge.earned ? "earned" : ""} ${secret ? "is-secret" : ""}" data-badge-id="${escapeHtml(badge.id)}">
-      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id, { tier, earned: badge.earned && !secret, sheen: tier === "hard" && badge.earned && takeBadgeSheen(badge.id), secret })}</span>
+      <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id, { tier, earned: badge.earned && !secret, sheen: tier === "hard" && badge.earned && takeBadgeSheen(badge.id), secret, count: badgeCountOf(badge) })}</span>
       <div>
-        <strong>${escapeHtml(copy.name)}${badge.earned && Number(badge.count) > 0 ? ` <span class="achievement-count" aria-label="${Number(badge.count)} קלפים ממוספרים">×${Number(badge.count)}</span>` : ""}</strong>
+        <strong>${escapeHtml(copy.name)}</strong>
         <p>${escapeHtml(copy.description)}</p>
         ${secret ? "" : `<div class="achievement-track" role="img" aria-label="${progress} מתוך ${target}">
           <span style="width:${percent}%"></span>
@@ -6899,7 +6932,14 @@ function renderNumberedBoard() {
     : '<p class="work-note">עוד אין לאף אחד קלף ממוספר. פותחים חבילות, ואולי תהיו הראשונים!</p>';
 }
 
+function hasOpenedNumbered() {
+  return (model.serverState?.numberedCopies || []).length > 0;
+}
+
 function syncCommunityPage() {
+  const showNumbered = hasOpenedNumbered();
+  if (!showNumbered && model.communityPage === "numbered") model.communityPage = "collectors";
+  elements.communityTabs?.classList.toggle("has-numbered", showNumbered);
   const section = communitySectionFor(model.communityPage);
   model.communitySection = section;
   const communityClasses = {
@@ -6923,7 +6963,7 @@ function syncCommunityPage() {
   elements.communityTabs?.querySelectorAll("[data-community-page]").forEach((button) => {
     const inSection = button.dataset.communitySection === section;
     const active = button.dataset.communityPage === model.communityPage;
-    button.hidden = !inSection;
+    button.hidden = !inSection || (button.dataset.communityPage === "numbered" && !showNumbered);
     button.classList.toggle("active", active);
     button.setAttribute("aria-selected", String(active && inSection));
     button.tabIndex = active && inSection ? 0 : -1;
@@ -9483,7 +9523,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.155";
+const HEARD_YOU_VERSION = "v1.156";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {

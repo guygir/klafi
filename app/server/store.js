@@ -114,9 +114,9 @@ export function tallyCardHolders(sessions = {}) {
   const holders = {};
   const numberedHolders = {};
   for (const session of Object.values(sessions || {})) {
-    // One live session with many copies still counts as one holder. Regular copies only:
-    // a numbered-only owner counts in numberedHolders, not as a holder of the card.
-    for (const [cardId, copies] of Object.entries(regularInventory(session.inventory, numberedHeldByCard(session)))) {
+    // One holder per player who holds any regular or opened numbered copy (x > 0 or y > 0 is +1,
+    // never +2). Inventory holds exactly those: a numbered copy still in the warehouse is not in it.
+    for (const [cardId, copies] of Object.entries(session.inventory || {})) {
       if (Number(copies) > 0) holders[cardId] = (holders[cardId] || 0) + 1;
     }
     const seen = new Set();
