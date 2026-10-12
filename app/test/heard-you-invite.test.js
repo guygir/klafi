@@ -23,7 +23,7 @@ test("heard-you: new notes show once for everyone (old '1' flag no longer counts
 });
 
 test("heard-you: auto-opens once again, only after the tutorial and after the calendar", () => {
-  assert.match(app, /function maybeAutoShowHeardYou\(\) \{\n  if \(readTipsPref\(\) !== "off" \|\| tipsBusy\(\)\) return false;/);
+  assert.match(app, /function maybeAutoShowHeardYou\(\) \{\n  if \(heardYouTodayVisits\(\) < 2\) return false;\n  if \(tipsBusy\(\)\) return false;/);
   assert.match(app, /if \(!tipsBusy\(\) && !maybeShowStreakCalendar\(\)\) maybeAutoShowHeardYou\(\);/);
   assert.match(app, /maybeShowTradeNotice\(\);\n  maybeAutoShowHeardYou\(\);\n  return false;/);
 });
@@ -31,4 +31,10 @@ test("heard-you: auto-opens once again, only after the tutorial and after the ca
 test("heard-you: a cold load without referralCode fetches it once and repaints", () => {
   assert.match(app, /request\("\/api\/state"\)\n        \.then\(\(state\) => \{ heardYouCodeFetch\.code = state\?\.referralCode \|\| null; \}\)/);
   assert.match(app, /if \(elements\.heardYouDialog\?\.open\) paintHeardYouInvite\(\);/);
+});
+
+test("heard-you: auto-opens from the 2nd Today visit (one per page load), never on the 1st", () => {
+  assert.match(app, /function noteHeardYouTodayVisit\(\) \{\n  if \(heardYouVisitNoted\) return;\n  heardYouVisitNoted = true;/);
+  assert.match(app, /if \(heardYouTodayVisits\(\) < 2\) return false;/);
+  assert.match(app, /if \(name === "home"\) noteHeardYouTodayVisit\(\);/);
 });
