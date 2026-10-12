@@ -4586,6 +4586,19 @@ function binderRegularInventory(inventory = binderInventory()) {
   return regularInventoryFrom(inventory, binderNumberedCopies());
 }
 
+/**
+ * Binder display ownership: regular copies, plus 1 for a card held only as an opened numbered copy,
+ * so it shows coloured, under באוסף, and in the x/y and set counts. Never used for trades,
+ * recycle, set completion or badges (those read binderRegularInventory / regular-copies.js).
+ */
+function binderDisplayInventory(inventory = binderInventory()) {
+  const display = { ...binderRegularInventory(inventory) };
+  for (const item of binderNumberedCopies()) {
+    if (Number(item?.numberedIndex) > 0 && Number(inventory?.[item.cardId]) > 0 && !display[item.cardId]) display[item.cardId] = 1;
+  }
+  return display;
+}
+
 function binderRegularCount(cardId) {
   return binderRegularInventory()[cardId] ?? 0;
 }
@@ -5214,6 +5227,9 @@ function syncBinderGridInventory(previous, next) {
 }
 
 function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, guest, listMode }) {
+  // Numbered-only card: shown as its numbered copy (# stamp, numbered dialog: no recycle, no trade).
+  const numberedOnly = !numberedView && !(regularInventory[card.id] > 0) && numberedIds.has(card.id) && Number(binderInventory()[card.id]) > 0;
+  if (numberedOnly) numberedView = true;
   const count = numberedView ? binderNumberedCount(card.id) : (regularInventory[card.id] ?? 0);
   if (!count || (model.binderFilter === "NUMBERED" && !numberedIds.has(card.id))) {
     if (guest || model.binderFilter === "NUMBERED") return null;
@@ -5453,8 +5469,8 @@ function renderBinder() {
     elements.guestBinderLabel.textContent = guest ? `האלבום של ${model.guestBinder.displayName}` : "";
   }
   if (elements.shareMyBinder) elements.shareMyBinder.hidden = guest;
-  // x of y / %: regular copies only (a numbered-only card is still missing).
-  const { owned, total, percent } = binderProgress(binderRegularInventory(inventory));
+  // x of y / %: display ownership (a card held only as an opened numbered copy counts as owned).
+  const { owned, total, percent } = binderProgress(binderDisplayInventory(inventory));
   elements.binderPercent.textContent = `${percent}%`;
   elements.binderPercent.title = binderProgressCopy(owned, total);
   elements.binderCount.textContent = binderProgressCopy(owned, total);
@@ -5470,6 +5486,8 @@ function renderBinder() {
     .filter((item) => item.numberedIndex)
     .map((item) => item.cardId));
   const regularInventory = binderRegularInventory(inventory);
+  // Display only: presence and counts. Copy tags, recycle and trades keep reading regularInventory.
+  const displayInventory = binderDisplayInventory(inventory);
   const numberedView = model.binderFilter === "NUMBERED";
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
   if (numberedIds.size) setOrder.push("NUMBERED");
@@ -5496,7 +5514,7 @@ function renderBinder() {
   const listLabel = listMode ? "גריד" : "רשימה";
   const setOptions = setOrder.map((set) => {
     const count = binderSetChipCount(set, playerCards, {
-      inventory: set === "NUMBERED" ? inventory : regularInventory,
+      inventory: set === "NUMBERED" ? inventory : displayInventory,
       numberedIds,
       ownedOnly: (guest || model.binderOwnedOnly) && !model.binderMissingOnly,
       missingOnly: !guest && model.binderMissingOnly,
@@ -5545,7 +5563,7 @@ function renderBinder() {
       numberedIds,
     });
     const partyOk = !model.binderParty || card.set === model.binderParty;
-    const slotInventory = numberedView ? inventory : regularInventory;
+    const slotInventory = numberedView ? inventory : displayInventory;
     const ownedOk = guest
       ? Boolean(slotInventory[card.id])
       : model.binderMissingOnly
