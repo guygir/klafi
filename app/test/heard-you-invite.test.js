@@ -21,3 +21,9 @@ test("heard-you: new notes show once for everyone (old '1' flag no longer counts
   assert.match(app, /localStorage\.getItem\(HEARD_YOU_KEY\) === HEARD_YOU_NOTES/);
   assert.match(app, /localStorage\.setItem\(HEARD_YOU_KEY, HEARD_YOU_NOTES\)/);
 });
+
+test("heard-you: auto-opens once again, only after the tutorial and after the calendar", () => {
+  assert.match(app, /function maybeAutoShowHeardYou\(\) \{\n  if \(readTipsPref\(\) !== "off" \|\| tipsBusy\(\)\) return false;/);
+  assert.match(app, /if \(!tipsBusy\(\) && !maybeShowStreakCalendar\(\)\) maybeAutoShowHeardYou\(\);/);
+  assert.match(app, /maybeShowTradeNotice\(\);\n  maybeAutoShowHeardYou\(\);\n  return false;/);
+});

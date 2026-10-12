@@ -2016,6 +2016,7 @@ function renderProfile() {
   if (elements.inviteShareUrl) {
     elements.inviteShareUrl.value = inviteShareUrl(model.serverState.referralCode);
   }
+  if (elements.heardYouDialog?.open) paintHeardYouInvite();
   if (elements.levelAvatar && avatar) {
     elements.levelAvatar.src = avatarUrl(avatar);
     elements.levelAvatar.alt = avatar.nameHe || "";
@@ -6589,6 +6590,7 @@ function maybeShowStreakCalendar({ force = false } = {}) {
 function maybeShowDeferredPopups() {
   if (maybeShowStreakCalendar()) return true;
   maybeShowTradeNotice();
+  maybeAutoShowHeardYou();
   return false;
 }
 
@@ -9497,6 +9499,7 @@ elements.streakLadderRedeem?.addEventListener("click", () => {
 elements.streakDialog?.addEventListener("close", () => {
   ackStreakCalendar().then(() => queueMicrotask(() => {
     maybeShowTradeNotice();
+    maybeAutoShowHeardYou();
   }));
 });
 elements.addAchievement?.addEventListener("click", () => {
@@ -9557,7 +9560,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.157";
+const HEARD_YOU_VERSION = "v1.158";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {
@@ -9601,6 +9604,14 @@ function maybeShowHeardYou({ force = false } = {}) {
   paintHeardYouInvite();
   dialog.showModal();
   return true;
+}
+/**
+ * New notes open once by themselves, after the calendar and trade notice, never during or before
+ * the tutorial (tips still "on" = a new player mid-tutorial; it turns "off" when finished or skipped).
+ */
+function maybeAutoShowHeardYou() {
+  if (readTipsPref() !== "off" || tipsBusy()) return false;
+  return maybeShowHeardYou();
 }
 function dismissHeardYou() {
   markHeardYouSeen();
@@ -10351,7 +10362,7 @@ bootstrap().then(async () => {
     /* Home can fail; the calendar waits for the next successful hydrate. */
   }
   klafiTips.maybeStart();
-  if (!tipsBusy()) maybeShowStreakCalendar();
+  if (!tipsBusy() && !maybeShowStreakCalendar()) maybeAutoShowHeardYou();
 });
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
