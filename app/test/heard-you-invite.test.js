@@ -23,8 +23,8 @@ test("heard-you: new notes show once for everyone (old '1' flag no longer counts
 });
 
 test("heard-you: auto-opens once again, only after the tutorial and after the calendar", () => {
-  assert.match(app, /function maybeAutoShowHeardYou\(\) \{\n  if \(heardYouTodayVisits\(\) < 2\) return false;\n  if \(tipsBusy\(\)\) return false;/);
-  assert.match(app, /if \(!tipsBusy\(\) && !maybeShowStreakCalendar\(\)\) maybeAutoShowHeardYou\(\);/);
+  assert.match(app, /function maybeAutoShowHeardYou\(\) \{\n  if \(!document\.querySelector\("#home-view"\)\?\.classList\.contains\("active"\)\) return false;\n  \/\/ The tutorial[^\n]*\n  if \(tipsBusy\(\)\) heardYouEntryHadTutorial = true;\n  if \(heardYouEntryHadTutorial\) return false;/);
+  assert.match(app, /if \(!tipsBusy\(\) && !maybeShowStreakCalendar\(\)\) onHeardYouTodayEntry\(\);/);
   assert.match(app, /maybeShowTradeNotice\(\);\n  maybeAutoShowHeardYou\(\);\n  return false;/);
 });
 
@@ -33,8 +33,9 @@ test("heard-you: a cold load without referralCode fetches it once and repaints",
   assert.match(app, /if \(elements\.heardYouDialog\?\.open\) paintHeardYouInvite\(\);/);
 });
 
-test("heard-you: auto-opens from the 2nd Today visit (one per page load), never on the 1st", () => {
-  assert.match(app, /function noteHeardYouTodayVisit\(\) \{\n  if \(heardYouVisitNoted\) return;\n  heardYouVisitNoted = true;/);
-  assert.match(app, /if \(heardYouTodayVisits\(\) < 2\) return false;/);
-  assert.match(app, /if \(name === "home"\) noteHeardYouTodayVisit\(\);/);
+test("heard-you: opens on any Today entry where the tutorial doesn't pop; no visit counter", () => {
+  assert.doesNotMatch(app, /klafi-heard-you-today-visits|heardYouTodayVisits/);
+  assert.match(app, /if \(name === "home"\) onHeardYouTodayEntry\(\);/);
+  assert.match(app, /if \(!tipsBusy\(\) && !maybeShowStreakCalendar\(\)\) onHeardYouTodayEntry\(\);/);
+  assert.match(app, /if \(!document\.querySelector\("#home-view"\)\?\.classList\.contains\("active"\)\) return false;\n  \/\/ The tutorial[^\n]*\n  if \(tipsBusy\(\)\) heardYouEntryHadTutorial = true;\n  if \(heardYouEntryHadTutorial\) return false;/);
 });

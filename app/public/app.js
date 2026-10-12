@@ -1890,7 +1890,7 @@ function showView(name) {
   persistPlayerView(name);
   const shell = document.querySelector("#app");
   shell.classList.toggle("home-active", name === "home");
-  if (name === "home") noteHeardYouTodayVisit();
+  if (name === "home") onHeardYouTodayEntry();
   shell.classList.toggle("share-active", name === "shared");
   for (const view of elements.views) {
     view.classList.toggle("active", view.id === `${name}-view`);
@@ -9621,21 +9621,18 @@ function maybeShowHeardYou({ force = false } = {}) {
  * New notes open once by themselves, after the calendar and trade notice, never while the tutorial
  * (or a page guide) is showing.
  */
-const HEARD_YOU_VISITS_KEY = "klafi-heard-you-today-visits";
-let heardYouVisitNoted = false;
-/** One Today visit per page load (tab switches within a load don't count). */
-function noteHeardYouTodayVisit() {
-  if (heardYouVisitNoted) return;
-  heardYouVisitNoted = true;
-  try { localStorage.setItem(HEARD_YOU_VISITS_KEY, String(heardYouTodayVisits() + 1)); } catch { /* private mode */ }
+/** Every Today entry (load or tab switch) where the tutorial doesn't pop: try the notes popup. */
+let heardYouEntryHadTutorial = false;
+function onHeardYouTodayEntry() {
+  heardYouEntryHadTutorial = false; // a new entry: the tutorial gets to decide again
+  setTimeout(() => maybeAutoShowHeardYou(), 900); // let the tutorial decide to pop first
 }
-function heardYouTodayVisits() {
-  try { return Number(localStorage.getItem(HEARD_YOU_VISITS_KEY)) || 0; } catch { return 0; }
-}
-/** Auto-open from the 2nd Today visit (the 1st only records it), once, after the tutorial. */
+/** Auto-open once ever, on Today, when the tutorial isn't showing (after calendar/trade notice). */
 function maybeAutoShowHeardYou() {
-  if (heardYouTodayVisits() < 2) return false;
-  if (tipsBusy()) return false; // the tutorial / page guide is on screen
+  if (!document.querySelector("#home-view")?.classList.contains("active")) return false;
+  // The tutorial (or a page guide) popped on this entry: wait for the next Today entry, even if skipped now.
+  if (tipsBusy()) heardYouEntryHadTutorial = true;
+  if (heardYouEntryHadTutorial) return false;
   return maybeShowHeardYou();
 }
 function dismissHeardYou() {
@@ -10387,8 +10384,7 @@ bootstrap().then(async () => {
     /* Home can fail; the calendar waits for the next successful hydrate. */
   }
   klafiTips.maybeStart();
-  if (document.querySelector("#home-view")?.classList.contains("active")) noteHeardYouTodayVisit();
-  if (!tipsBusy() && !maybeShowStreakCalendar()) maybeAutoShowHeardYou();
+  if (!tipsBusy() && !maybeShowStreakCalendar()) onHeardYouTodayEntry();
 });
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
