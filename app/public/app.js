@@ -184,6 +184,9 @@ const elements = {
   closeHeardYou: document.querySelector("#close-heard-you"),
   heardYouOk: document.querySelector("#heard-you-ok"),
   heardYouVersion: document.querySelector("#heard-you-version"),
+  heardYouInvite: document.querySelector("#heard-you-invite"),
+  heardYouInviteLink: document.querySelector("#heard-you-invite-link"),
+  heardYouInviteReward: document.querySelector("#heard-you-invite-reward"),
   homeEnableNotify: document.querySelector("#home-enable-notify"),
   leagueNameInput: document.querySelector("#league-name-input"),
   createLeague: document.querySelector("#create-league"),
@@ -1887,6 +1890,7 @@ function showView(name) {
   persistPlayerView(name);
   const shell = document.querySelector("#app");
   shell.classList.toggle("home-active", name === "home");
+  if (name === "home") onHeardYouTodayEntry();
   shell.classList.toggle("share-active", name === "shared");
   for (const view of elements.views) {
     view.classList.toggle("active", view.id === `${name}-view`);
@@ -2013,6 +2017,7 @@ function renderProfile() {
   if (elements.inviteShareUrl) {
     elements.inviteShareUrl.value = inviteShareUrl(model.serverState.referralCode);
   }
+  if (elements.heardYouDialog?.open) paintHeardYouInvite();
   if (elements.levelAvatar && avatar) {
     elements.levelAvatar.src = avatarUrl(avatar);
     elements.levelAvatar.alt = avatar.nameHe || "";
@@ -4688,7 +4693,7 @@ function inviteShareUrl(code) {
 }
 
 function copyInviteLink() {
-  const link = inviteShareUrl(model.serverState?.referralCode);
+  const link = inviteShareUrl(model.serverState?.referralCode || heardYouCodeFetch?.code);
   if (!link) {
     showToast("קישור ההזמנה עדיין לא מוכן.");
     return;
@@ -6586,6 +6591,7 @@ function maybeShowStreakCalendar({ force = false } = {}) {
 function maybeShowDeferredPopups() {
   if (maybeShowStreakCalendar()) return true;
   maybeShowTradeNotice();
+  maybeAutoShowHeardYou();
   return false;
 }
 
@@ -9494,6 +9500,7 @@ elements.streakLadderRedeem?.addEventListener("click", () => {
 elements.streakDialog?.addEventListener("close", () => {
   ackStreakCalendar().then(() => queueMicrotask(() => {
     maybeShowTradeNotice();
+    maybeAutoShowHeardYou();
   }));
 });
 elements.addAchievement?.addEventListener("click", () => {
@@ -9554,7 +9561,7 @@ elements.leafToggle?.addEventListener("click", () => {
 });
 const HEARD_YOU_KEY = "klafi-heard-you-seen";
 /** Fallback until GitHub has a release. The eyebrow follows the latest release tag. */
-const HEARD_YOU_VERSION = "v1.157";
+const HEARD_YOU_VERSION = "v1.158";
 const HEARD_YOU_RELEASE_URL = "https://api.github.com/repos/guygir/klafi/releases/latest";
 
 function paintHeardYouVersion(version) {
@@ -9571,19 +9578,62 @@ function refreshHeardYouVersion() {
 }
 refreshHeardYouVersion();
 
+/** Bump when the notes change: every player (old "1" flag included) sees the popup once more. */
+const HEARD_YOU_NOTES = "invite-1";
 function heardYouSeen() {
-  try { return localStorage.getItem(HEARD_YOU_KEY) === "1"; } catch { return true; }
+  try { return localStorage.getItem(HEARD_YOU_KEY) === HEARD_YOU_NOTES; } catch { return true; }
 }
 function markHeardYouSeen() {
-  try { localStorage.setItem(HEARD_YOU_KEY, "1"); } catch { /* private mode */ }
+  try { localStorage.setItem(HEARD_YOU_KEY, HEARD_YOU_NOTES); } catch { /* private mode */ }
 }
+/** Golden invite line: the player's own referral link (tap copies) and the real star gate. */
+let heardYouCodeFetch = null;
+function paintHeardYouInvite() {
+  const link = inviteShareUrl(model.serverState?.referralCode || heardYouCodeFetch?.code);
+  if (!elements.heardYouInvite) return;
+  elements.heardYouInvite.hidden = !link;
+  if (!link) {
+    // The popup can open on a cold load before a state carrying referralCode lands: fetch it once.
+    if (!heardYouCodeFetch && model.token) {
+      heardYouCodeFetch = { code: null };
+      request("/api/state")
+        .then((state) => { heardYouCodeFetch.code = state?.referralCode || null; })
+        .catch(() => {})
+        .finally(() => { if (heardYouCodeFetch.code) paintHeardYouInvite(); else heardYouCodeFetch = null; });
+    }
+    return;
+  }
+  elements.heardYouInviteLink.textContent = link;
+  const stars = Number(model.serverState?.referralStars) || 15;
+  elements.heardYouInviteReward.textContent = `הם הגיעו ל${stars} כוכבים? תקבלו חבילה מתנה!`;
+}
+elements.heardYouInviteLink?.addEventListener("click", () => copyInviteLink());
 function maybeShowHeardYou({ force = false } = {}) {
   const dialog = elements.heardYouDialog;
   if (!dialog || dialog.open) return Boolean(dialog?.open);
   if (!force && heardYouSeen()) return false;
   if (!force && (model.showcase || elements.waitDialog?.open || tipsBusy() || playerDialogOpen())) return false;
+  paintHeardYouInvite();
   dialog.showModal();
   return true;
+}
+/**
+ * New notes open once by themselves, after the calendar and trade notice, never while the tutorial
+ * (or a page guide) is showing.
+ */
+/** Every Today entry (load or tab switch) where the tutorial doesn't pop: try the notes popup. */
+let heardYouEntryHadTutorial = false;
+function onHeardYouTodayEntry() {
+  heardYouEntryHadTutorial = false; // a new entry: the tutorial gets to decide again
+  setTimeout(() => maybeAutoShowHeardYou(), 900); // let the tutorial decide to pop first
+}
+/** Auto-open once ever, on Today, when the tutorial isn't showing (after calendar/trade notice). */
+function maybeAutoShowHeardYou() {
+  if (!document.querySelector("#home-view")?.classList.contains("active")) return false;
+  // The tutorial (or a page guide) popped on this entry: wait for the next Today entry, even if skipped now.
+  if (tipsBusy()) heardYouEntryHadTutorial = true;
+  if (heardYouEntryHadTutorial) return false;
+  return maybeShowHeardYou();
 }
 function dismissHeardYou() {
   markHeardYouSeen();
@@ -10334,7 +10384,7 @@ bootstrap().then(async () => {
     /* Home can fail; the calendar waits for the next successful hydrate. */
   }
   klafiTips.maybeStart();
-  if (!tipsBusy()) maybeShowStreakCalendar();
+  if (!tipsBusy() && !maybeShowStreakCalendar()) onHeardYouTodayEntry();
 });
 flushPendingReports().catch(() => {});
 document.fonts?.ready.then(() => queueCardTextFit(elements.main));
