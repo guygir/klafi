@@ -338,6 +338,8 @@ const elements = {
   factionBoard: document.querySelector("#faction-board"),
   collectorBoard: document.querySelector("#collector-board"),
   collectorRank: document.querySelector("#collector-rank"),
+  numberedBoard: document.querySelector("#numbered-board"),
+  numberedRank: document.querySelector("#numbered-rank"),
   dailyChallengeTitle: document.querySelector("#daily-challenge-title"),
   dailyChallengeDate: document.querySelector("#daily-challenge-date"),
   dailyChallengeParty: document.querySelector("#daily-challenge-party"),
@@ -2316,7 +2318,7 @@ function scheduleIdleNotification() {
 
 const COMMUNITY_SECTIONS = {
   market: ["trade", "open-trades"],
-  race: ["leagues", "collectors"],
+  race: ["leagues", "collectors", "numbered"],
   party: ["challenge", "faction"],
 };
 
@@ -4598,7 +4600,7 @@ function renderPendingWells(count = 6) {
   ).join("");
 }
 
-async function openPublicBinder(slug) {
+async function openPublicBinder(slug, { filter = null } = {}) {
   const payload = await request(`/api/public-binder/${encodeURIComponent(slug)}`);
   if (payload?.isOwner) {
     // Own share link: the normal binder (recycle, trades, own counts), and drop the share
@@ -4612,6 +4614,7 @@ async function openPublicBinder(slug) {
   model.guestBinder = payload;
   model.binderOwnedOnly = true;
   model.binderMissingOnly = false;
+  if (filter === "NUMBERED") model.binderFilter = "NUMBERED";
   showView("binder");
   renderBinder();
 }
@@ -6124,7 +6127,7 @@ function renderAchievements() {
     <article class="achievement-badge tier-${tier} ${badge.earned ? "earned" : ""} ${secret ? "is-secret" : ""}" data-badge-id="${escapeHtml(badge.id)}">
       <span class="achievement-seal" aria-hidden="true">${badgeArtwork(badge.id, { tier, earned: badge.earned && !secret, sheen: tier === "hard" && badge.earned && takeBadgeSheen(badge.id), secret })}</span>
       <div>
-        <strong>${escapeHtml(copy.name)}</strong>
+        <strong>${escapeHtml(copy.name)}${badge.earned && Number(badge.count) > 0 ? ` <span class="achievement-count" aria-label="${Number(badge.count)} קלפים ממוספרים">×${Number(badge.count)}</span>` : ""}</strong>
         <p>${escapeHtml(copy.description)}</p>
         ${secret ? "" : `<div class="achievement-track" role="img" aria-label="${progress} מתוך ${target}">
           <span style="width:${percent}%"></span>
@@ -6761,7 +6764,7 @@ async function refreshDailyChallenge() {
     const boards = await request("/api/leaderboards");
     setLeaderboards(boards);
     renderTodayDocket();
-    if (model.communityPage === "challenge" || model.communityPage === "collectors" || model.communityPage === "faction") renderGrowth();
+    if (model.communityPage === "challenge" || model.communityPage === "collectors" || model.communityPage === "numbered" || model.communityPage === "faction") renderGrowth();
   } catch {
     /* Race board stays on the last server snapshot. */
   }
@@ -6869,6 +6872,33 @@ function renderAllParties() {
     : '<p class="work-note">עדיין אין מפלגה עם כוכבים.</p>';
 }
 
+/** Players holding opened numbered copies. A row opens that player's album on the numbered filter. */
+function renderNumberedBoard() {
+  if (!elements.numberedBoard) return;
+  const entries = (model.leaderboards?.numberedCollectors || []).slice(0, 10);
+  const total = Number(model.leaderboards?.numberedCollectorCount) || entries.length;
+  const yourRank = entries.find(({ current }) => current)?.rank || model.leaderboards?.yourNumberedRank;
+  if (elements.numberedRank) {
+    elements.numberedRank.hidden = !(yourRank && total);
+    elements.numberedRank.textContent = yourRank && total ? `אתם מקום ${yourRank} מתוך ${total}` : "";
+  }
+  elements.numberedBoard.innerHTML = entries.length
+    ? entries.map((entry) => {
+        const count = Number(entry.numbered) || 0;
+        const label = count === 1 ? "ממוספר אחד" : `${count} ממוספרים`;
+        const name = `${entry.rank}. ${escapeHtml(entry.label || "שחקן קְלָפִי")}`;
+        const open = entry.binderSlug
+          ? ` data-binder-slug="${escapeHtml(entry.binderSlug)}" data-binder-filter="NUMBERED" aria-label="${escapeHtml(`האלבום של ${entry.label || "שחקן"}, ממוספרים`)}"`
+          : "";
+        return `<button type="button" class="collector-row numbered-row${entry.current ? " current-player" : ""}"${open}${entry.binderSlug ? "" : " disabled"}>
+          ${collectorFaceMarkup(entry)}
+          <span>${name}</span>
+          <strong>${label} · ★${entry.stars}</strong>
+        </button>`;
+      }).join("")
+    : '<p class="work-note">עוד אין לאף אחד קלף ממוספר. פותחים חבילות, ואולי תהיו הראשונים!</p>';
+}
+
 function syncCommunityPage() {
   const section = communitySectionFor(model.communityPage);
   model.communitySection = section;
@@ -6876,7 +6906,8 @@ function syncCommunityPage() {
     trade: ".trade-desk",
     "open-trades": ".open-trades-desk",
     faction: ".faction-desk",
-    collectors: ".leaderboard-desk",
+    collectors: ".leaderboard-desk:not(.numbered-desk)",
+    numbered: ".numbered-desk",
     leagues: ".league-desk",
     challenge: ".daily-challenge-desk",
   };
@@ -7052,6 +7083,7 @@ function renderGrowth() {
         </div>`;
       }).join("")
     : '<p class="work-note">הטבלה מחכה לשחקן הראשון.</p>';
+  renderNumberedBoard();
 
   const factionId = model.serverState?.factionId || null;
   const serverRace = factionId && model.leaderboards?.dailyChallenge?.targetPartyId === factionId
@@ -9757,7 +9789,7 @@ function handlePublicNameReport(event) {
   const binder = event.target.closest("[data-binder-slug]");
   if (binder) {
     event.preventDefault();
-    openPublicBinder(binder.dataset.binderSlug).catch(() => showToast("לא מצאנו את האלבום הזה."));
+    openPublicBinder(binder.dataset.binderSlug, { filter: binder.dataset.binderFilter }).catch(() => showToast("לא מצאנו את האלבום הזה."));
     return;
   }
   const button = event.target.closest("[data-report-name]");
@@ -9765,6 +9797,7 @@ function handlePublicNameReport(event) {
   openNameReport(button.dataset.reportName);
 }
 elements.collectorBoard?.addEventListener("click", handlePublicNameReport);
+elements.numberedBoard?.addEventListener("click", handlePublicNameReport);
 elements.dailyChallengeBoard?.addEventListener("click", handlePublicNameReport);
 elements.tradeActive?.addEventListener("click", handleTradeBoardClick);
 elements.tradeBoardOffered?.addEventListener("change", () => {

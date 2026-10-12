@@ -17,7 +17,7 @@ import {
   takePlainInstanceForCard,
 } from "./numbered.js";
 import { emptyTodayPulse } from "../public/today-pulse.js";
-import { takeCollectorBoard } from "./collector-board.js";
+import { numberedTotal, takeCollectorBoard, takeNumberedBoard } from "./collector-board.js";
 import { raceTargetForSavedFaction, visibleDailyRaceLeaders } from "./daily-race.js";
 import {
   LEAGUE_MAX,
@@ -1266,6 +1266,7 @@ export class PostgresStore {
           label: row.display_name,
           ownedUnique: Object.keys(regularInventory(inventory, numberedByToken.get(row.token) || {})).length,
           stars: collectionStars(inventory, cardsById, numberedByToken.get(row.token) || {}),
+          numbered: numberedTotal(numberedByToken.get(row.token)),
           packs: row.idle_pull_count ?? row.pack_count,
           current: row.token === currentToken,
           avatarId: row.avatar_id || "kid-boy",
@@ -1279,6 +1280,7 @@ export class PostgresStore {
       .sort((a, b) => b.stars - a.stars || b.ownedUnique - a.ownedUnique || b.packs - a.packs)
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
     const { collectors, collectorCount, yourCollectorRank } = takeCollectorBoard(allCollectors);
+    const numberedBoard = takeNumberedBoard(allCollectors);
     const factions = factionStandingsFromCollectors(allCollectors);
 
     const partyIds = [...new Set(cards.filter(({ set }) => set !== "SYS" && !String(set).startsWith("special-")).map(({ set }) => set))].sort();
@@ -1346,6 +1348,7 @@ export class PostgresStore {
       collectors,
       collectorCount,
       yourCollectorRank,
+      ...numberedBoard,
       factions,
       dailyChallenge: { day, targetPartyId, targetPartyNameHe, leaders: dailyParty },
       fixture: false,

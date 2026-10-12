@@ -157,6 +157,21 @@ export function regularInventory(inventory = {}, numberedByCard = {}) {
   return regular;
 }
 
+/**
+ * Level progress: distinct eligible cards held as a regular copy, plus one for every opened
+ * numbered copy of an eligible card. Shared by the full state and slim home so both agree.
+ */
+export function progressionUnique(inventory = {}, numberedByCard = {}, isEligible = () => true) {
+  const regular = regularInventory(inventory, numberedByCard);
+  let count = Object.keys(regular).filter((id) => isEligible(id)).length;
+  for (const [cardId, copies] of Object.entries(numberedByCard || {})) {
+    if (!isEligible(cardId)) continue;
+    const owned = Math.max(0, Math.round(Number(inventory?.[cardId]) || 0));
+    count += Math.min(owned, Math.max(0, Math.round(Number(copies) || 0)));
+  }
+  return count;
+}
+
 export function regularInventoryOf(session) {
   return regularInventory(session?.inventory, numberedHeldByCard(session));
 }

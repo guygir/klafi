@@ -6,7 +6,7 @@
 
 import { IDLE_BACKLOG_CAP } from "./idle-config.js";
 import { collectionStars, numberedHeldByCard } from "./stars.js";
-import { regularInventoryOf } from "./numbered.js";
+import { heldNumberedCopies, regularInventoryOf } from "./numbered.js";
 
 export const ACHIEVEMENT_TIERS = Object.freeze(["simple", "medium", "hard"]);
 /** A catalog row with this rule and no setId expands to one badge per pullable release set. */
@@ -134,7 +134,8 @@ export function achievementMeasures(session, cards, extra = {}, { countNumbered 
     faction: session.factionId ? 1 : 0,
     profile: hasCustomProfile(session) ? 1 : 0,
     rare: cards.filter((card) => card.rarity?.startsWith("Rare") && Number(inventory[card.id]) > 0).length,
-    numbered: (session.instances || []).filter((item) => Number(item?.numberedIndex) > 0).length,
+    // Opened numbered copies only: one still waiting in the warehouse has not been revealed yet.
+    numbered: heldNumberedCopies(session).length,
     warehouseFull: (session.unseenPulls?.length || 0) >= IDLE_BACKLOG_CAP ? 1 : 0,
     binderOne: Number(session.eventCounts?.binder_one_column) > 0 ? 1 : 0,
     streakPrizeSkipped: session.streakPrizeSkipped ? 1 : 0,
@@ -194,14 +195,27 @@ export const COPY_COUNT_RULES = Object.freeze(new Set([
  */
 export function undeservedAchievementStamps(session, cards, catalog = []) {
   const stamps = session?.achievementsEarned || {};
-  const definitions = (catalog.length ? catalog : FALLBACK)
+  const all = catalog.length ? catalog : FALLBACK;
+  // The numbered badge used to stamp when a numbered copy reached the warehouse. Until one is opened
+  // it is not earned: an unopened numbered copy is waiting and none is held.
+  const waitingNumbered = !heldNumberedCopies(session).length
+    && numberedWaiting(session);
+  const early = waitingNumbered
+    ? all.filter((definition) => stamps[definition.id] && definition.rule === "numbered").map(({ id }) => id)
+    : [];
+  const definitions = all
     .filter((definition) => stamps[definition.id] && COPY_COUNT_RULES.has(definition.rule));
-  if (!definitions.length || !Object.keys(numberedHeldByCard(session)).length) return [];
+  if (!definitions.length || !Object.keys(numberedHeldByCard(session)).length) return early;
   const regular = achievementMeasures(session, cards);
   const legacy = achievementMeasures(session, cards, {}, { countNumbered: true });
-  return definitions
+  return [...early, ...definitions
     .filter((definition) => !qualifies(definition, regular) && qualifies(definition, legacy))
-    .map(({ id }) => id);
+    .map(({ id }) => id)];
+}
+
+function numberedWaiting(session) {
+  const unseen = new Set(session?.unseenPulls || []);
+  return (session?.instances || []).some((item) => Number(item?.numberedIndex) > 0 && unseen.has(item.instanceId));
 }
 
 /** Session mutator: removes undeserved stamps (see above). Returns the removed ids. */
@@ -231,6 +245,8 @@ export function achievementProgress(definition, measures, earnedAt = null) {
     earnedAt: earnedAt || null,
     progress: earned ? target : Math.min(raw, target),
     target,
+    // The numbered badge shows how many opened numbered copies the player holds (at least 1 once earned).
+    ...(definition.rule === "numbered" && earned ? { count: Math.max(1, Math.round(Number(raw) || 0)) } : {}),
   };
 }
 

@@ -313,6 +313,7 @@
             <button id="community-tab-open-trades" type="button" role="tab" aria-selected="false" aria-controls="community-panel-open-trades" tabindex="-1" data-community-page="open-trades" data-community-section="market">הצעות פתוחות</button>
             <button id="community-tab-leagues" type="button" role="tab" aria-selected="false" aria-controls="community-panel-leagues" tabindex="-1" data-community-page="leagues" data-community-section="race">ליגות</button>
             <button id="community-tab-collectors" type="button" role="tab" aria-selected="false" aria-controls="community-panel-collectors" tabindex="-1" data-community-page="collectors" data-community-section="race">אספנים</button>
+            <button id="community-tab-numbered" type="button" role="tab" aria-selected="false" aria-controls="community-panel-numbered" tabindex="-1" data-community-page="numbered" data-community-section="race">ממוספרים</button>
             <button id="community-tab-challenge" type="button" role="tab" aria-selected="false" aria-controls="community-panel-challenge" tabindex="-1" data-community-page="challenge" data-community-section="party">האתגר</button>
             <button id="community-tab-faction" type="button" role="tab" aria-selected="false" aria-controls="community-panel-faction" tabindex="-1" data-community-page="faction" data-community-section="party">מפלגות</button>
           </div>
@@ -403,6 +404,12 @@
             <p class="work-kicker">טבלת האספנים</p>
             <p id="collector-rank" class="work-note" hidden></p>
             <div id="collector-board" class="leaderboard-list"></div>
+          </article>
+          <article id="community-panel-numbered" class="work-card leaderboard-desk numbered-desk" role="tabpanel" aria-labelledby="community-tab-numbered" tabindex="0" hidden>
+            <p class="work-kicker">אספני הממוספרים</p>
+            <p class="work-note">מי מחזיק הכי הרבה קלפים ממוספרים. לחצו על שחקן כדי לראות את הממוספרים שלו.</p>
+            <p id="numbered-rank" class="work-note" hidden></p>
+            <div id="numbered-board" class="leaderboard-list"></div>
           </article>
           <article id="community-panel-leagues" class="work-card league-desk" role="tabpanel" aria-labelledby="community-tab-leagues" tabindex="0" hidden>
             <p class="work-kicker">הליגה שלכם</p>

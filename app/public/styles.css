@@ -7002,3 +7002,28 @@ body {
 .streak-cell.is-opened .streak-cell-bonus .streak-cell-pack {
   opacity: 0.34;
 }
+
+/* Numbered board rows are whole-row buttons into that player's numbered album. */
+.collector-row.numbered-row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.collector-row.numbered-row:disabled {
+  cursor: default;
+}
+.achievement-count {
+  display: inline-block;
+  margin-inline-start: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--foil, #b8862f);
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 800;
+  vertical-align: middle;
+}
