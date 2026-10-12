@@ -79,7 +79,7 @@ test("league, holders, public binder, slim home: regular unique counts", () => {
   assert.equal(score.ownedUnique, 2);
   assert.equal(score.stars, 1 + 1 + 4, "stars: numbered copy still adds its 4 (intentional)");
   const tally = tallyCardHolders({ a: numberedOnlyPlayer(), b: numberedPlusRegular() });
-  assert.equal(tally.holders.M6, 1);
+  assert.equal(tally.holders.M6, 2, "any regular or opened numbered copy makes a holder, once");
   assert.equal(tally.numberedHolders.M6, 2);
   const binder = publicBinderView({ ...numberedOnlyPlayer(), displayName: "x" });
   assert.equal(binder.ownedUnique, 2);

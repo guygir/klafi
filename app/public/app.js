@@ -2,7 +2,7 @@ import { buildMemberWeavePrompt, buildPackImagePrompt, buildPackRipPrompt, build
 import { avatarBallotState, factionLetterArt, factionLetters } from "./avatar-ballot.js";
 import { applyIdleCountdown, formatCountdown, homeIdleReadyCopy, homeSettleHint, idleCountdownCopy, IDLE_BACKLOG_CAP, predictedUnseenCount, resumeClockAfterCap, timeUntil } from "./idle-countdown.js";
 import { starContributionBins } from "./star-contribution-bins.js";
-import { binderBadgeOrder } from "./badge-order.js";
+import { binderBadgeOrder, PINNED_BADGE_ID } from "./badge-order.js";
 import {
   BINDER_SORT_LABELS,
   BINDER_SORTS,
@@ -5603,7 +5603,7 @@ function renderBinder() {
   const medals = earned.map((badge) => {
     const copy = hebrewBadge(badge);
     const counted = badgeCountOf(badge) ? ` · ${badgeCountOf(badge)} ממוספרים` : "";
-    return `<span class="badge-medallion" tabindex="0" aria-label="${escapeHtml(`${copy.name}${counted}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name}${counted} · ${copy.description}`)}">${badgeArtwork(badge.id, { tier: achievementTier(badge), count: badgeCountOf(badge) })}</span>`;
+    return `<span class="badge-medallion${badge.id === PINNED_BADGE_ID ? " is-pinned" : ""}" tabindex="0" aria-label="${escapeHtml(`${copy.name}${counted}: ${copy.description}`)}" data-tooltip="${escapeHtml(`${copy.name}${counted} · ${copy.description}`)}">${badgeArtwork(badge.id, { tier: achievementTier(badge), count: badgeCountOf(badge) })}</span>`;
   }).join("");
   rail.innerHTML = `<div class="binder-badge-medals">${medals}<button class="badge-overflow" type="button" hidden data-open-achievements>+</button></div>${starCounter}`;
   queueBinderBadgePack();
