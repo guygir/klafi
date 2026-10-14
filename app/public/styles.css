@@ -7111,3 +7111,119 @@ body {
 .leaderboard-list > .collector-row {
   padding-inline-start: 14px;
 }
+
+/* ── QA layout options for short phones (?layout=A|B|C|D, key klafi-layout). Default: none = current. ──
+   Scoped to the card/trade pages via #app[data-page]. */
+
+/* A: the קיפול תפריט fold also folds the top row (wordmark + icons + name); level bar + avatar stay. */
+#app[data-layout="A"][data-page="binder"]:has(#binder-view.is-chrome-collapsed) .masthead,
+#app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden])) .masthead {
+  display: none;
+}
+#app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden])) #growth-view .workspace-head {
+  display: none;
+}
+
+/* B: on card/trade pages the whole page scrolls (header included); only the bottom nav stays pinned. */
+#app[data-layout="B"][data-page="binder"],
+#app[data-layout="B"][data-page="growth"] {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  grid-template-rows: auto auto auto;
+}
+#app[data-layout="B"][data-page="binder"] #main,
+#app[data-layout="B"][data-page="growth"] #main,
+#app[data-layout="B"][data-page="binder"] #binder-view.view.active,
+#app[data-layout="B"][data-page="growth"] #growth-view.view.active {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+#app[data-layout="B"][data-page="binder"] #binder-grid,
+#app[data-layout="B"][data-page="growth"] .growth-grid,
+#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card {
+  height: auto;
+  max-height: none;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+#app[data-layout="B"][data-page="growth"] #trade-board,
+#app[data-layout="B"][data-page="growth"] .leaderboard-list {
+  max-height: none;
+  overflow: visible;
+}
+
+/* C: the header (top row + level strip) slides away while scrolling down and returns on scroll up. */
+#app[data-layout="C"] .masthead,
+#app[data-layout="C"] .level-strip {
+  max-height: 240px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #app[data-layout="C"] .masthead,
+  #app[data-layout="C"] .level-strip {
+    transition: max-height 200ms ease, opacity 160ms ease, padding 200ms ease;
+  }
+}
+/* (app.js drops header-tucked whenever a guide is busy) */
+#app[data-layout="C"][data-page="binder"].header-tucked .masthead,
+#app[data-layout="C"][data-page="binder"].header-tucked .level-strip,
+#app[data-layout="C"][data-page="growth"].header-tucked .masthead,
+#app[data-layout="C"][data-page="growth"].header-tucked .level-strip {
+  max-height: 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* D: a compact header on card/trade pages: one slim top row, a thin level strip, smaller binder chrome. */
+#app[data-layout="D"][data-page="binder"] .masthead,
+#app[data-layout="D"][data-page="growth"] .masthead { min-height: 0; }
+#app[data-layout="D"][data-page="binder"] .masthead-row,
+#app[data-layout="D"][data-page="growth"] .masthead-row { min-height: 34px; }
+#app[data-layout="D"][data-page="binder"] .masthead .wordmark b,
+#app[data-layout="D"][data-page="growth"] .masthead .wordmark b { font-size: 22px; }
+#app[data-layout="D"][data-page="binder"] .masthead-brand > button,
+#app[data-layout="D"][data-page="growth"] .masthead-brand > button { height: 32px; }
+#app[data-layout="D"][data-page="binder"] .level-strip,
+#app[data-layout="D"][data-page="growth"] .level-strip {
+  min-height: 0;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+#app[data-layout="D"][data-page="binder"] #level-next,
+#app[data-layout="D"][data-page="growth"] #level-next,
+#app[data-layout="D"][data-page="binder"] #level-rank,
+#app[data-layout="D"][data-page="growth"] #level-rank { display: none; }
+#app[data-layout="D"][data-page="binder"] .level-track,
+#app[data-layout="D"][data-page="growth"] .level-track { height: 20px; }
+#app[data-layout="D"][data-page="binder"] .level-avatar-button,
+#app[data-layout="D"][data-page="growth"] .level-avatar-button { width: 34px; height: 34px; }
+#app[data-layout="D"][data-page="binder"] #binder-view.view.active,
+#app[data-layout="D"][data-page="growth"] #growth-view.view.active { padding-top: 4px; }
+#app[data-layout="D"][data-page="binder"] .binder-chrome-clip { font-size: 0.92em; }
+#app[data-layout="D"][data-page="growth"] #growth-view .workspace-head { display: none; }
+/* Short screens: the badge row (also on the achievements page) gives its height back to the cards. */
+@media (max-height: 700px) {
+  /* …except while a page guide is on screen (its "תגים וכוכבים" step rings the badge row). */
+  html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="D"][data-page="binder"] #earned-badge-list { display: none; }
+}
+
+/* QA picker (only rendered when a layout option is set). */
+.layout-qa-picker {
+  position: fixed;
+  z-index: 40;
+  left: 2px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 112px);
+  padding: 1px 4px;
+  border: 1px solid rgba(31, 79, 74, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 250, 238, 0.92);
+  color: #1f4f4a;
+  font: 700 11px/1.2 system-ui, sans-serif;
+}
+.layout-qa-picker:focus-visible { outline: 2px solid #1f4f4a; outline-offset: 1px; }

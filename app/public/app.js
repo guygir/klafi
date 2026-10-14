@@ -1889,6 +1889,8 @@ function showView(name) {
   model.holdGeneration += 1;
   persistPlayerView(name);
   const shell = document.querySelector("#app");
+  shell.dataset.page = name;
+  shell.classList.remove("header-tucked");
   shell.classList.toggle("home-active", name === "home");
   if (name === "home") onHeardYouTodayEntry();
   shell.classList.toggle("share-active", name === "shared");
@@ -10406,3 +10408,53 @@ window.__kalpiDebug = {
   shareCaption,
   paintSharePortrait,
 };
+
+
+/* ── QA layout options (?layout=A|B|C|D or localStorage klafi-layout; ?layout=off clears). Default: none. ── */
+const LAYOUT_KEY = "klafi-layout";
+const LAYOUT_OPTIONS = ["A", "B", "C", "D"];
+function readLayoutOption(search = location.search, storage = localStorage) {
+  const asked = new URLSearchParams(search).get("layout");
+  if (asked !== null) {
+    const value = asked.trim().toUpperCase();
+    try {
+      if (LAYOUT_OPTIONS.includes(value)) storage.setItem(LAYOUT_KEY, value);
+      else storage.removeItem(LAYOUT_KEY);
+    } catch { /* private mode */ }
+    return LAYOUT_OPTIONS.includes(value) ? value : "";
+  }
+  try {
+    const stored = storage.getItem(LAYOUT_KEY) || "";
+    return LAYOUT_OPTIONS.includes(stored) ? stored : "";
+  } catch {
+    return "";
+  }
+}
+const layoutOption = readLayoutOption();
+const layoutShell = document.querySelector("#app");
+if (layoutOption && layoutShell) {
+  layoutShell.dataset.layout = layoutOption;
+  const picker = document.createElement("select");
+  picker.className = "layout-qa-picker";
+  picker.setAttribute("aria-label", "פריסת QA");
+  picker.innerHTML = ["", ...LAYOUT_OPTIONS].map((value) => `<option value="${value}"${value === layoutOption ? " selected" : ""}>${value ? `פריסה ${value}` : "רגיל"}</option>`).join("");
+  picker.addEventListener("change", () => {
+    const url = new URL(location.href);
+    url.searchParams.set("layout", picker.value || "off");
+    location.href = url.toString();
+  });
+  document.body.append(picker);
+}
+// C: tuck the header while a page's content scrolls down, bring it back on scroll up.
+const layoutScrollTops = new WeakMap();
+document.addEventListener("scroll", (event) => {
+  if (layoutShell?.dataset.layout !== "C") return;
+  const target = event.target;
+  if (!(target instanceof Element) || !target.closest(".view.active")) return;
+  const previous = layoutScrollTops.get(target) ?? 0;
+  const top = target.scrollTop;
+  layoutScrollTops.set(target, top);
+  if (tipsBusy() || top < 24) layoutShell.classList.remove("header-tucked");
+  else if (top - previous > 6) layoutShell.classList.add("header-tucked");
+  else if (previous - top > 6) layoutShell.classList.remove("header-tucked");
+}, { capture: true, passive: true });
