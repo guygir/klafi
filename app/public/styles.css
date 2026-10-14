@@ -3156,6 +3156,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   }
 }
 #app[data-leaves="still"] .site-card-peeks { display: none; }
+#app:has(#growth-view.view.active) .site-card-peeks { display: none; }
 #app[data-leaves="fall"] .site-leaf {
   top: -42vh;
   animation: leaf-fall var(--leaf-dur, 36s) linear var(--leaf-delay, 0s) infinite !important;
@@ -3723,7 +3724,12 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .growth-grid .trade-preview h3 { font-size: 19px; line-height: 1.2; }
 .growth-grid .trade-preview p { font-size: 12px; }
 .trade-compose { display: flex; flex-direction: column; gap: 10px; }
-.trade-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.trade-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
 @media (max-width: 520px) {
   .trade-offer .trade-thumb-frame {
     width: 104px;
@@ -3800,9 +3806,8 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .trade-offer .trade-thumb { margin-top: 0; }
 .trade-offer .trade-thumb-frame {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 63 / 96;
+  width: 76px;
+  height: calc(76px * 96 / 63);
 }
 .trade-offer > div { gap: 4px; text-align: right; }
 .trade-offer > div:nth-of-type(2) { text-align: right; }
@@ -3828,6 +3833,25 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   font: 500 11px/1.3 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.trade-offer-bar .trade-offer-actions {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+@media (max-width: 420px) {
+  .trade-offer > .trade-offer-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .trade-offer-bar .trade-offer-actions {
+    justify-content: stretch;
+  }
+  .trade-offer-bar .trade-offer-action {
+    flex: 1 1 auto;
+  }
 }
 .trade-offer-action {
   flex: 0 0 auto;
@@ -5038,7 +5062,6 @@ body {
 .trade-form {
   flex: 0 0 auto;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
   align-items: stretch;
   margin: 3px 0 6px;
 }
@@ -5211,8 +5234,13 @@ body {
 }
 .trade-desk .trade-actions:not(:has(> :not([hidden]))) { display: none; }
 #app .trade-desk .trade-form {
-  --trade-thumb-w: clamp(72px, min(30vw, 14dvh), 128px);
+  --trade-thumb-w: clamp(88px, min(36vw, 18dvh), 128px);
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch;
+  width: 100%;
   margin-top: 2px;
+  grid-template-columns: unset !important;
 }
 #app .trade-desk .trade-form fieldset {
   padding: 6px 8px 8px !important;
@@ -5231,6 +5259,244 @@ body {
 }
 #app .trade-desk .trade-choice-fields label {
   margin-top: 2px !important;
+}
+
+.trade-compose-arrow {
+  margin: 2px 0;
+  padding: 4px 0;
+  text-align: center;
+  color: var(--civic);
+  font-size: 22px;
+  line-height: 1;
+}
+.trade-side-fieldset {
+  width: 100%;
+  box-sizing: border-box;
+}
+.trade-side-mode {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.trade-mode-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font: 500 12px/1.35 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
+.trade-mode-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.trade-slot-fields {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.trade-slot-fields label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  margin: 0 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.trade-slot-fields select {
+  width: 100%;
+}
+.trade-mode-btn {
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: #f6efe2;
+  font-size: 12px;
+}
+.trade-mode-btn.is-active {
+  border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent);
+  background: #fff8ea;
+  font-weight: 600;
+}
+.trade-side-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trade-slot {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(44, 51, 48, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.35);
+}
+.trade-slot.has-join .trade-slot-join {
+  text-align: center;
+  color: var(--civic);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.trade-slot-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 6px;
+  direction: rtl;
+}
+.trade-slot-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+.trade-slot-thumb {
+  width: auto;
+  margin: 0;
+  justify-self: center;
+}
+.trade-slot-thumb[hidden] {
+  display: none;
+}
+.trade-slot-thumb .trade-thumb-frame,
+.trade-compose .trade-slot-thumb .trade-thumb-frame {
+  width: var(--trade-thumb-w, 88px);
+  height: calc(var(--trade-thumb-w, 88px) * 96 / 63);
+  margin-inline: auto;
+}
+.trade-slot-thumb.is-empty {
+  cursor: default;
+  pointer-events: none;
+}
+.trade-thumb-placeholder {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px dashed rgba(44, 51, 48, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink-soft);
+  font: 600 11px/1.25 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  text-align: center;
+}
+.trade-slot-picker {
+  min-width: 0;
+  width: 100%;
+}
+.trade-slot-picker select {
+  width: 100%;
+}
+.trade-slot-remove {
+  justify-self: end;
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1;
+}
+.trade-side-add {
+  margin-top: 6px;
+  width: 100%;
+}
+.trade-side-stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+.trade-offer .trade-side-stack .trade-stack-chip {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+}
+.trade-offer .trade-side-stack .trade-thumb-frame,
+.trade-offer .trade-stack-chip .trade-thumb-frame {
+  width: 76px;
+  height: calc(76px * 96 / 63);
+  max-width: none;
+}
+.trade-offer .trade-side {
+  justify-items: center;
+  text-align: center;
+}
+.trade-offer .trade-side small {
+  width: 100%;
+  text-align: center;
+}
+.trade-formation-badge {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--civic);
+  font: 600 11px/1.3 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  text-align: center;
+}
+@media (max-width: 420px) {
+  .trade-offer {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    gap: 8px;
+    width: 100%;
+    max-width: none;
+  }
+  .trade-offer > b {
+    grid-row: 2;
+    transform: rotate(90deg);
+    margin: 0 auto;
+  }
+  .trade-offer > .trade-side:first-of-type {
+    grid-row: 1;
+  }
+  .trade-offer > .trade-side:last-of-type {
+    grid-row: 3;
+  }
+  .trade-offer > .trade-offer-bar {
+    grid-row: 4;
+  }
+}
+.trade-offer.needs-choice .trade-offer-bar {
+  grid-column: 1 / -1;
+}
+.trade-accept-pick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.trade-accept-chip {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  opacity: 1;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+.trade-accept-chip.is-selected {
+  border-color: var(--pack-gold, #b38d3f);
+}
+.trade-accept-chip.is-disabled,
+.trade-accept-chip:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+.trade-offer-bar .trade-accept-pick small {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 11px;
 }
 
 .faction-member-board {
@@ -5654,11 +5920,25 @@ body {
   }
   .trade-desk > .work-kicker { display: none; }
   .trade-desk > h2 { font-size: 16px; margin-bottom: 6px; }
-  .trade-form {
+  #app .trade-desk .trade-form {
     flex: 0 0 auto;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
     overflow: visible;
+    gap: 10px;
+  }
+  .trade-desk-head {
+    flex-wrap: wrap;
+    align-items: stretch;
     gap: 8px;
+  }
+  .trade-desk .trade-desk-head h2 {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  #app .trade-desk .trade-desk-head #trade-create {
+    flex: 1 1 100%;
+    width: 100%;
   }
   .trade-choice-row {
     grid-template-columns: minmax(0, 1fr);

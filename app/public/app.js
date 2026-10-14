@@ -19,7 +19,8 @@ import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
-import { holdsWantedCard, offersForTradeList, readTradeCache, writeTradeCache } from "./trade-list.js";
+import { holdsWantedCard, offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
+import { TRADE_SIDE_MAX, emptyTradeSide, offeredCardIds, sideJoinLabel, sideNeedsPick, tradeFormationSummary, tradeModeHintHe } from "./trade-compose-ui.js";
 import {
   exitWalkoutSunburst,
   readSunburstRarityOverride,
@@ -140,6 +141,8 @@ const model = {
   tradeBoardPage: 0,
   tradeBoardOffered: "",
   tradeBoardWanted: "",
+  tradeCompose: { offered: emptyTradeSide(), wanted: emptyTradeSide() },
+  tradeAcceptPick: {},
 };
 // Server achievements list request (see ensureServerAchievements).
 let achievementsFetch = null;
@@ -330,6 +333,10 @@ const elements = {
   tradeBoardOffered: document.querySelector("#trade-board-offered"),
   tradeBoardWanted: document.querySelector("#trade-board-wanted"),
   tradeBoardPager: document.querySelector("#trade-board-pager"),
+  tradeOfferedSlots: document.querySelector("#trade-offered-slots"),
+  tradeWantedSlots: document.querySelector("#trade-wanted-slots"),
+  tradeOfferedAdd: document.querySelector("#trade-offered-add"),
+  tradeWantedAdd: document.querySelector("#trade-wanted-add"),
   creatorCode: document.querySelector("#creator-code"),
   copyCreatorLink: document.querySelector("#copy-creator-link"),
   creatorLinkPreview: document.querySelector("#creator-link-preview"),
@@ -546,6 +553,64 @@ function tradeCatalog() {
 function tradeWantLabel(card) {
   // Regular copies only: a numbered copy is never offered or counted in a trade.
   return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)} · ${plainOwnedCount(card)}x`;
+}
+
+function tradeReleaseSetKey(card) {
+  return `release:${card?.releaseSetId || "other"}`;
+}
+
+function tradeReleaseName(card) {
+  const releaseNames = Object.fromEntries((model.gameConfig?.releaseSets || []).map(({ id, nameHe }) => [id, nameHe]));
+  const fallbackReleaseNames = {
+    foundations: "יסודות",
+    "party-symbols": "סמלי המפלגות",
+    "editorial-backlog": "קלפים קודמים",
+    "special-events": "אירועים מיוחדים",
+  };
+  return releaseNames[card?.releaseSetId] || fallbackReleaseNames[card?.releaseSetId] || "סדרה אחרת";
+}
+
+function tradeComposeOfferLabel(card) {
+  const count = plainOwnedCount(card);
+  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)} · ${count}x`;
+}
+
+function tradeComposeWantLabel(card) {
+  const base = `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`;
+  if (!model.cardHoldersReady) return base;
+  const holders = holderCountFor(card);
+  if (holders <= 0) return base;
+  return `${base} · ${holders} שחקנים`;
+}
+
+function sortTradeComposeWanted(cards) {
+  return [...cards].sort((left, right) => {
+    const holderDiff = holderCountFor(right) - holderCountFor(left);
+    if (holderDiff) return holderDiff;
+    return cardTitle(left).localeCompare(cardTitle(right), "he");
+  });
+}
+
+function sortTradeComposeOffered(cards) {
+  return [...cards].sort((left, right) => {
+    const countDiff = plainOwnedCount(right) - plainOwnedCount(left);
+    if (countDiff) return countDiff;
+    return cardTitle(left).localeCompare(cardTitle(right), "he");
+  });
+}
+
+function tradeComposeSetOptions(cards, selectedKey) {
+  const releases = [...new Map(cards.map((candidate) => [tradeReleaseSetKey(candidate), tradeReleaseName(candidate)]))];
+  return [
+    '<option value="">בחרו סדרה</option>',
+    ...releases.map(([value, label]) => `<option value="${escapeHtml(value)}"${value === selectedKey ? " selected" : ""}>${escapeHtml(label)}</option>`),
+  ].join("");
+}
+
+function tradeComposeCardsInSet(cards, setKey) {
+  if (!setKey) return [];
+  const releaseId = String(setKey).replace(/^release:/, "");
+  return cards.filter((candidate) => (candidate.releaseSetId || "other") === releaseId);
 }
 
 function myRegularInventory() {
@@ -4407,6 +4472,8 @@ async function hydrateCardHolders() {
     if (model.showcase) renderShowcaseBinder();
     else if (catalogReady()) renderBinder();
     if (elements.dialog?.open) renderDialogCard();
+    if (elements.tradeCompose && !elements.tradeCompose.hidden) renderTradeComposeSlots();
+    if (elements.tradeWantedCard) renderGrowth();
   } catch {
     /* Holder counts stay empty until the hourly snapshot arrives. */
   }
@@ -6234,30 +6301,170 @@ function concealRenderedTradeThumbs(root) {
 }
 
 function tradeHasCards(trade) {
-  return model.byId.has(trade.offeredCardId) && model.byId.has(trade.wantedCardId);
+  const offered = offeredCardIds(trade);
+  const wanted = wantedCardIds(trade);
+  return offered.length && wanted.length && offered.every((id) => model.byId.has(id)) && wanted.every((id) => model.byId.has(id));
+}
+
+function tradeComposeSide(sideKey) {
+  model.tradeCompose[sideKey] ??= emptyTradeSide();
+  const side = model.tradeCompose[sideKey];
+  side.slotSets ??= side.cardIds.map((id) => {
+    const card = model.byId.get(id);
+    return card ? tradeReleaseSetKey(card) : "";
+  });
+  while (side.slotSets.length < side.cardIds.length) side.slotSets.push("");
+  while (side.slotSets.length > side.cardIds.length) side.slotSets.pop();
+  return side;
+}
+
+function syncLegacyTradeSelectFromCompose() {
+  const offered = tradeComposeSide("offered").cardIds.filter(Boolean)[0] || "";
+  const wanted = tradeComposeSide("wanted").cardIds.filter(Boolean)[0] || "";
+  if (elements.tradeOfferedCard) elements.tradeOfferedCard.value = offered;
+  if (elements.tradeWantedCard) elements.tradeWantedCard.value = wanted;
+}
+
+function tradeSlotCardOptions(cards, selected, sideKey) {
+  const labelFor = sideKey === "offered" ? tradeComposeOfferLabel : tradeComposeWantLabel;
+  const ordered = sideKey === "wanted" ? sortTradeComposeWanted(cards) : sortTradeComposeOffered(cards);
+  return [
+    '<option value="">בחרו קלף</option>',
+    ...ordered.map((candidate) => `<option value="${candidate.id}"${candidate.id === selected ? " selected" : ""}>${escapeHtml(labelFor(candidate))}</option>`),
+  ].join("");
+}
+
+function renderTradeComposeSlots() {
+  const tradableCards = tradeCatalog();
+  const ownedCards = sortTradeComposeOffered(tradableCards.filter((candidate) => plainOwnedCount(candidate) > 0));
+  const missingCards = sortTradeComposeWanted(tradableCards.filter((candidate) => plainOwnedCount(candidate) <= 0));
+  for (const sideKey of ["offered", "wanted"]) {
+    const side = tradeComposeSide(sideKey);
+    const pool = sideKey === "offered" ? ownedCards : missingCards;
+    const root = sideKey === "offered" ? elements.tradeOfferedSlots : elements.tradeWantedSlots;
+    const addBtn = sideKey === "offered" ? elements.tradeOfferedAdd : elements.tradeWantedAdd;
+    const modeHint = document.querySelector(`[data-trade-mode-hint="${sideKey}"]`);
+    if (modeHint) modeHint.textContent = tradeModeHintHe(side.mode);
+    if (!root) continue;
+    while (side.cardIds.length > TRADE_SIDE_MAX) side.cardIds.pop();
+    if (!side.cardIds.length) side.cardIds.push("");
+    root.innerHTML = side.cardIds.map((cardId, index) => {
+      const join = sideJoinLabel(side.mode, index);
+      let setKey = side.slotSets[index] || "";
+      const card = model.byId.get(cardId);
+      if (card) setKey = tradeReleaseSetKey(card);
+      side.slotSets[index] = setKey;
+      const cardsInSet = tradeComposeCardsInSet(pool, setKey);
+      const remove = side.cardIds.length > 1
+        ? `<button type="button" class="trade-slot-remove" data-trade-slot-remove="${sideKey}" data-trade-slot-index="${index}" aria-label="הסרת קלף">×</button>`
+        : "";
+      return `<div class="trade-slot${join ? " has-join" : ""}">
+        ${join ? `<span class="trade-slot-join" aria-hidden="true">${join}</span>` : ""}
+        <div class="trade-slot-row">
+          <div class="trade-slot-fields">
+            <label class="trade-slot-set">
+              <span>סדרה</span>
+              <select data-trade-slot-set="${sideKey}" data-trade-slot-index="${index}">${tradeComposeSetOptions(pool, setKey)}</select>
+            </label>
+            <label class="trade-slot-picker">
+              <span>קלף</span>
+              <select data-trade-slot-side="${sideKey}" data-trade-slot-index="${index}" ${setKey ? "" : "disabled"}>${tradeSlotCardOptions(cardsInSet, cardId, sideKey)}</select>
+            </label>
+          </div>
+          ${remove}
+        </div>
+      </div>`;
+    }).join("");
+    document.querySelectorAll(`.trade-side-fieldset[data-trade-side="${sideKey}"] .trade-mode-btn`).forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.tradeMode === side.mode);
+    });
+    if (addBtn) {
+      addBtn.hidden = side.cardIds.length >= TRADE_SIDE_MAX;
+      addBtn.disabled = side.cardIds.length >= TRADE_SIDE_MAX;
+    }
+  }
+  syncLegacyTradeSelectFromCompose();
+}
+
+function tradeSideCardsMarkup(trade, sideKey, role) {
+  const mode = sideKey === "offered" ? (trade.offeredMode || "and") : (trade.wantedMode || "and");
+  const ids = sideKey === "offered" ? offeredCardIds(trade) : wantedCardIds(trade);
+  const label = role === "give" ? "נותנים" : "מקבלים";
+  const chips = ids.map((cardId, index) => {
+    const card = model.byId.get(cardId);
+    const conceal = Boolean(card) && tradeCardUnowned(cardId);
+    const join = sideJoinLabel(mode, index);
+    return `${join ? `<span class="trade-slot-join" aria-hidden="true">${join}</span>` : ""}
+      <button type="button" class="trade-thumb trade-stack-chip${conceal ? " is-concealed" : ""}" data-trade-choice-card="${escapeHtml(cardId)}" aria-label="${escapeHtml(card ? cardTitle(card) : cardId)}">
+        ${card ? tradeThumbMarkup(card, { warnLastCopy: role === "give" }) : ""}
+      </button>`;
+  }).join("");
+  return `<div class="trade-side">
+    <small>${label}${mode === "or" && ids.length > 1 ? " · אחד מהם" : ids.length > 1 ? " · כולם" : ""}</small>
+    <div class="trade-side-stack">${chips}</div>
+  </div>`;
 }
 
 function tradeSideMarkup(cardId, card, role) {
-  const label = role === "give" ? "נותנים" : "מקבלים";
-  const conceal = Boolean(card) && tradeCardUnowned(cardId);
-  const aria = card
-    ? `${label}: ${cardTitle(card)}${conceal ? ` · ${rarityNameHe(card.rarity)}` : ""}`
-    : `${label}: ${cardId}`;
-  return `<div class="trade-side">
-    <small>${label}</small>
-    <button type="button" class="trade-thumb${conceal ? " is-concealed" : ""}" data-trade-choice-card="${escapeHtml(cardId)}" ${card ? "" : "hidden"} aria-label="${escapeHtml(aria)}">
-      ${tradeThumbMarkup(card, { warnLastCopy: role === "give" })}
-    </button>
-  </div>`;
+  const sideKey = role === "give" ? "offered" : "wanted";
+  const trade = sideKey === "offered"
+    ? { offeredMode: "and", offeredCardIds: [cardId] }
+    : { wantedMode: "and", wantedCardIds: [cardId] };
+  return tradeSideCardsMarkup(trade, sideKey, role);
+}
+
+function tradeAcceptPick(tradeId) {
+  model.tradeAcceptPick[tradeId] ??= { offeredCardId: "", wantedCardId: "" };
+  return model.tradeAcceptPick[tradeId];
+}
+
+function tradeAcceptChoiceMarkup(trade, inventory) {
+  if (!trade.needsAcceptChoice) return "";
+  const pick = tradeAcceptPick(trade.tradeId);
+  const choices = Array.isArray(trade.acceptChoices) ? trade.acceptChoices : [];
+  const canPick = (cardId, role) => choices.some((choice) => choice[`${role}CardId`] === cardId
+    && (!pick.offeredCardId || pick.offeredCardId === choice.offeredCardId)
+    && (!pick.wantedCardId || pick.wantedCardId === choice.wantedCardId));
+  const renderPick = (sideKey, ids, role) => {
+    const mode = sideKey === "offered" ? trade.offeredMode : trade.wantedMode;
+    if (!sideNeedsPick(mode, ids)) return "";
+    return `<div class="trade-accept-pick" data-trade-pick-side="${sideKey}">
+      <small>${sideKey === "offered" ? "בחרו מה מקבלים" : "בחרו מה נותנים"}</small>
+      <div class="trade-accept-pick-row">
+        ${ids.map((cardId) => {
+          const card = model.byId.get(cardId);
+          const owned = holdsWantedCard(inventory, cardId);
+          const enabled = choices.some((c) => c[`${sideKey === "offered" ? "offered" : "wanted"}CardId`] === cardId);
+          const selected = pick[sideKey === "offered" ? "offeredCardId" : "wantedCardId"] === cardId;
+          const reason = !owned ? "אין לכם עותק" : !enabled ? "לא מתאים לבחירה השנייה" : "";
+          return `<button type="button" class="trade-accept-chip${selected ? " is-selected" : ""}${!enabled ? " is-disabled" : ""}"
+            data-trade-pick="${sideKey}" data-trade-pick-card="${escapeHtml(cardId)}" ${!enabled ? "disabled" : ""}
+            ${reason ? `data-tooltip="${escapeHtml(reason)}"` : ""} aria-pressed="${selected}">
+            ${card ? tradeThumbMarkup(card) : escapeHtml(cardId)}
+          </button>`;
+        }).join("")}
+      </div>
+    </div>`;
+  };
+  return `${renderPick("offered", offeredCardIds(trade), "receive")}${renderPick("wanted", wantedCardIds(trade), "give")}`;
+}
+
+function tradeAcceptReady(trade, inventory) {
+  if (!trade.needsAcceptChoice) return Boolean(trade.canAccept);
+  const pick = tradeAcceptPick(trade.tradeId);
+  const choices = Array.isArray(trade.acceptChoices) ? trade.acceptChoices : [];
+  return choices.some((choice) => choice.offeredCardId === pick.offeredCardId && choice.wantedCardId === pick.wantedCardId);
 }
 
 function tradeBoardFilterOptions(trades, key) {
   const seen = new Map();
+  const idsFor = key === "offeredCardId" ? offeredCardIds : wantedCardIds;
   for (const trade of trades) {
-    const id = trade[key];
-    if (!id || seen.has(id)) continue;
-    const card = model.byId.get(id);
-    seen.set(id, card ? cardTitle(card) : id);
+    for (const id of idsFor(trade)) {
+      if (!id || seen.has(id)) continue;
+      const card = model.byId.get(id);
+      seen.set(id, card ? cardTitle(card) : id);
+    }
   }
   return [...seen.entries()].sort((left, right) => left[1].localeCompare(right[1], "he"));
 }
@@ -6313,6 +6520,11 @@ function currentTradeInventory() {
   return model.serverState?.inventory ? regularTradeInventory() : {};
 }
 
+function localhostTradeDebug() {
+  const host = location.hostname;
+  return host === "localhost" || host === "127.0.0.1";
+}
+
 function listedOpenTrades() {
   ensureTradeCache();
   // Cached offers list against the cached inventory for display; accept buttons still wait for a
@@ -6321,7 +6533,7 @@ function listedOpenTrades() {
     ?? (model.tradesFromCache && model.serverState?.inventory ? regularTradeInventory() : null);
   const trades = Array.isArray(model.trades) ? model.trades : [];
   const open = inventory
-    ? offersForTradeList(trades, inventory)
+    ? offersForTradeList(trades, inventory, { showUnholdable: localhostTradeDebug() })
     : trades.filter((trade) => trade.status === "open" && trade.ownedByCurrent);
   return open.filter((trade) => tradeHasCards(trade));
 }
@@ -6346,8 +6558,8 @@ function renderTradeBoard() {
   if (elements.tradeBoardToolbar) elements.tradeBoardToolbar.hidden = !showTradeFilters;
   applyTradeBoardChrome();
   const filtered = openOffers.filter((trade) => (
-    (!model.tradeBoardOffered || trade.offeredCardId === model.tradeBoardOffered)
-    && (!model.tradeBoardWanted || trade.wantedCardId === model.tradeBoardWanted)
+    (!model.tradeBoardOffered || offeredCardIds(trade).includes(model.tradeBoardOffered))
+    && (!model.tradeBoardWanted || wantedCardIds(trade).includes(model.tradeBoardWanted))
   ));
   const pages = Math.max(1, Math.ceil(filtered.length / TRADE_BOARD_PAGE_SIZE));
   model.tradeBoardPage = Math.min(model.tradeBoardPage, pages - 1);
@@ -6363,8 +6575,6 @@ function renderTradeBoard() {
 }
 
 function tradeRowMarkup(trade) {
-  const offeredCard = model.byId.get(trade.offeredCardId);
-  const wantedCard = model.byId.get(trade.wantedCardId);
   const until = new Date(trade.expiresAt).toLocaleString("he-IL", {
     timeZone: "Asia/Jerusalem",
     hour: "2-digit",
@@ -6376,18 +6586,22 @@ function tradeRowMarkup(trade) {
     ? `<button type="button" class="trade-offer-action" data-hide-trade="${trade.tradeId}">הסתר</button>`
     : "";
   const acceptInventory = currentTradeInventory();
-  const accept = acceptInventory && !trade.ownedByCurrent && holdsWantedCard(acceptInventory, trade.wantedCardId)
-    ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}">קבלה</button>`
+  const canShowAccept = acceptInventory && !trade.ownedByCurrent && trade.canAccept;
+  const acceptReady = canShowAccept && tradeAcceptReady(trade, acceptInventory);
+  const accept = canShowAccept
+    ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}" ${acceptReady ? "" : "disabled"}>קבלה</button>`
     : "";
+  const pickMarkup = canShowAccept ? tradeAcceptChoiceMarkup(trade, acceptInventory) : "";
   const action = trade.ownedByCurrent
     ? `<button type="button" class="trade-offer-action" data-cancel-trade="${trade.tradeId}">ביטול</button>`
-    : (accept || hide) ? `<span class="trade-offer-actions">${accept}${hide}</span>` : "";
+    : (accept || hide || pickMarkup) ? `<span class="trade-offer-actions">${pickMarkup}${accept}${hide}</span>` : "";
   const offeredRole = trade.ownedByCurrent ? "give" : "receive";
   const wantedRole = trade.ownedByCurrent ? "receive" : "give";
-  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}">
-    ${tradeSideMarkup(trade.offeredCardId, offeredCard, offeredRole)}
+  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}${trade.needsAcceptChoice ? " needs-choice" : ""}" data-offered-mode="${escapeHtml(trade.offeredMode || "and")}" data-wanted-mode="${escapeHtml(trade.wantedMode || "and")}">
+    <p class="trade-formation-badge">${escapeHtml(tradeFormationSummary(trade))}</p>
+    ${tradeSideCardsMarkup(trade, "offered", offeredRole)}
     <b aria-hidden="true">⇄</b>
-    ${tradeSideMarkup(trade.wantedCardId, wantedCard, wantedRole)}
+    ${tradeSideCardsMarkup(trade, "wanted", wantedRole)}
     <div class="trade-offer-bar">
       <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
       ${action}
@@ -7061,19 +7275,20 @@ function renderGrowth() {
   const previousWantedSet = elements.tradeWantedSet.value;
   const offeredValue = elements.tradeOfferedCard.value;
   const wantedValue = elements.tradeWantedCard.value;
+  const missingCards = sortTradeComposeWanted(tradableCards.filter((candidate) => plainOwnedCount(candidate) <= 0));
   elements.tradeOfferedSet.innerHTML = ownedCards.length ? groupedOptions(ownedCards) : '<option value="">אין קלפים</option>';
-  elements.tradeWantedSet.innerHTML = tradableCards.length ? groupedOptions(tradableCards) : '<option value="">אין קלפים</option>';
+  elements.tradeWantedSet.innerHTML = missingCards.length ? groupedOptions(missingCards) : '<option value="">אין קלפים חסרים</option>';
   if ([...elements.tradeOfferedSet.options].some(({ value }) => value === previousOfferedSet)) elements.tradeOfferedSet.value = previousOfferedSet;
   if ([...elements.tradeWantedSet.options].some(({ value }) => value === previousWantedSet)) elements.tradeWantedSet.value = previousWantedSet;
   const offeredCards = ownedCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeOfferedSet.value));
-  const wantedCards = tradableCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
+  const wantedCards = missingCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
   elements.tradeOfferedCard.innerHTML = offeredCards.length
-    ? offeredCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(tradeWantLabel(candidate))}</option>`).join("")
+    ? sortTradeComposeOffered(offeredCards).map((candidate) => `<option value="${candidate.id}">${escapeHtml(tradeComposeOfferLabel(candidate))}</option>`).join("")
     : '<option value="">קודם אספו קלף</option>';
   if (offeredCards.some(({ id }) => id === offeredValue)) elements.tradeOfferedCard.value = offeredValue;
   elements.tradeWantedCard.innerHTML = wantedCards.length
-    ? wantedCards.map((candidate) => `<option value="${candidate.id}">${escapeHtml(tradeWantLabel(candidate))}</option>`).join("")
-    : '<option value="">אין קלפים</option>';
+    ? sortTradeComposeWanted(wantedCards).map((candidate) => `<option value="${candidate.id}">${escapeHtml(tradeComposeWantLabel(candidate))}</option>`).join("")
+    : '<option value="">אין קלפים חסרים</option>';
   if (wantedCards.some(({ id }) => id === wantedValue)) elements.tradeWantedCard.value = wantedValue;
   for (const select of [elements.tradeOfferedSet, elements.tradeWantedSet, elements.tradeOfferedCard, elements.tradeWantedCard]) {
     const chosen = select.selectedOptions[0];
@@ -7118,6 +7333,7 @@ function renderGrowth() {
       queueCardTextFit(elements.tradeActive);
     }
   }
+  renderTradeComposeSlots();
   watchOpenTrade();
   renderTradeBoard();
 
@@ -8218,10 +8434,16 @@ async function refreshSocialBoards() {
 }
 
 async function createTradeOffer() {
-  const offeredCardId = elements.tradeOfferedCard.value;
-  const wantedCardId = elements.tradeWantedCard.value;
-  if (!offeredCardId || !wantedCardId || offeredCardId === wantedCardId) {
-    showToast("בחרו שני קלפים שונים.");
+  const offered = tradeComposeSide("offered");
+  const wanted = tradeComposeSide("wanted");
+  const offeredIds = offered.cardIds.map((id) => String(id || "").trim()).filter(Boolean);
+  const wantedIds = wanted.cardIds.map((id) => String(id || "").trim()).filter(Boolean);
+  if (!offeredIds.length || !wantedIds.length) {
+    showToast("בחרו קלף לכל צד.");
+    return;
+  }
+  if (new Set([...offeredIds, ...wantedIds]).size !== offeredIds.length + wantedIds.length) {
+    showToast("אותו קלף לא יכול להופיע פעמיים.");
     return;
   }
   elements.tradeCreate.disabled = true;
@@ -8230,7 +8452,10 @@ async function createTradeOffer() {
     const result = await request("/api/trades", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ offeredCardId, wantedCardId }),
+      body: JSON.stringify({
+        offered: { mode: offered.mode, cardIds: offeredIds },
+        wanted: { mode: wanted.mode, cardIds: wantedIds },
+      }),
     });
     applyTradeResult(result);
     watchOpenTrade();
@@ -8240,7 +8465,7 @@ async function createTradeOffer() {
       applyTradeResult(error.body);
       showToast("כבר יש לכם הצעה פתוחה.");
     } else {
-      showToast("לא הצלחנו לפרסם את ההצעה.");
+      showToast(error.body?.messageHe || "לא הצלחנו לפרסם את ההצעה.");
     }
   } finally {
     hideWait();
@@ -8261,19 +8486,29 @@ async function simulateTradeAcceptance(tradeId) {
 
 async function acceptTradeOffer(tradeId) {
   if (model.acceptingTrade) return;
+  const trade = model.trades.find((entry) => entry.tradeId === tradeId);
+  const pick = tradeAcceptPick(tradeId);
   model.acceptingTrade = true;
   showWait("מאשרים…");
   try {
-    const result = await request(`/api/trades/${encodeURIComponent(tradeId)}/accept`, { method: "POST" });
+    const result = await request(`/api/trades/${encodeURIComponent(tradeId)}/accept`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        offeredCardId: pick.offeredCardId || undefined,
+        wantedCardId: pick.wantedCardId || undefined,
+      }),
+    });
     applyTradeResult(result);
     hideWait();
     showAcceptedTradeNotice({
       otherName: result.trade?.ownerLabel,
-      receivedCardId: result.trade?.offeredCardId,
-      givenCardId: result.trade?.wantedCardId,
+      receivedCardId: result.trade?.acceptedOfferedCardId || result.trade?.offeredCardId,
+      givenCardId: result.trade?.acceptedWantedCardId || result.trade?.wantedCardId,
     });
-  } catch {
-    showToast("ההצעה כבר לא זמינה או שחסר לכם הקלף המבוקש.");
+    delete model.tradeAcceptPick[tradeId];
+  } catch (error) {
+    showToast(error.body?.messageHe || "ההצעה כבר לא זמינה או שחסר לכם הקלף.");
   } finally {
     hideWait();
     model.acceptingTrade = false;
@@ -9882,7 +10117,72 @@ elements.tradeWantedSet.addEventListener("change", renderGrowth);
 elements.tradeOfferedCard.addEventListener("change", renderGrowth);
 elements.tradeWantedCard.addEventListener("change", renderGrowth);
 elements.tradeCreate.addEventListener("click", createTradeOffer);
+elements.tradeCompose?.addEventListener("click", (event) => {
+  const modeBtn = event.target.closest(".trade-mode-btn[data-trade-mode]");
+  if (modeBtn) {
+    const side = tradeComposeSide(modeBtn.dataset.tradeSide);
+    side.mode = modeBtn.dataset.tradeMode === "or" ? "or" : "and";
+    renderTradeComposeSlots();
+    return;
+  }
+  const addBtn = event.target.closest("#trade-offered-add, #trade-wanted-add");
+  if (addBtn) {
+    const sideKey = addBtn.id === "trade-offered-add" ? "offered" : "wanted";
+    const side = tradeComposeSide(sideKey);
+    if (side.cardIds.length < TRADE_SIDE_MAX) {
+      side.cardIds.push("");
+      side.slotSets.push("");
+    }
+    renderTradeComposeSlots();
+    return;
+  }
+  const removeBtn = event.target.closest("[data-trade-slot-remove]");
+  if (removeBtn) {
+    const side = tradeComposeSide(removeBtn.dataset.tradeSlotRemove);
+    const index = Number(removeBtn.dataset.tradeSlotIndex);
+    if (side.cardIds.length > 1) {
+      side.cardIds.splice(index, 1);
+      side.slotSets.splice(index, 1);
+    }
+    renderTradeComposeSlots();
+  }
+});
+elements.tradeCompose?.addEventListener("change", (event) => {
+  const setSelect = event.target.closest("select[data-trade-slot-set]");
+  if (setSelect) {
+    const side = tradeComposeSide(setSelect.dataset.tradeSlotSet);
+    const index = Number(setSelect.dataset.tradeSlotIndex);
+    side.slotSets[index] = setSelect.value;
+    side.cardIds[index] = "";
+    renderTradeComposeSlots();
+    return;
+  }
+  const select = event.target.closest("select[data-trade-slot-side]");
+  if (!select) return;
+  const side = tradeComposeSide(select.dataset.tradeSlotSide);
+  const index = Number(select.dataset.tradeSlotIndex);
+  side.cardIds[index] = select.value;
+  const card = model.byId.get(select.value);
+  if (card) side.slotSets[index] = tradeReleaseSetKey(card);
+  renderTradeComposeSlots();
+  renderGrowth();
+});
 function handleTradeBoardClick(event) {
+  const pick = event.target.closest("[data-trade-pick-card]");
+  if (pick && !pick.disabled) {
+    const tradeRow = pick.closest(".trade-offer");
+    const tradeId = tradeRow?.querySelector("[data-accept-trade]")?.dataset.acceptTrade
+      || tradeRow?.querySelector("[data-cancel-trade]")?.dataset.cancelTrade;
+    if (tradeId) {
+      const slot = pick.dataset.tradePick;
+      const cardId = pick.dataset.tradePickCard;
+      const state = tradeAcceptPick(tradeId);
+      if (slot === "offered") state.offeredCardId = state.offeredCardId === cardId ? "" : cardId;
+      else state.wantedCardId = state.wantedCardId === cardId ? "" : cardId;
+      renderTradeBoard();
+    }
+    return;
+  }
   const cancel = event.target.closest("[data-cancel-trade]");
   if (cancel) {
     cancelTradeOffer(cancel.dataset.cancelTrade);

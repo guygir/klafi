@@ -1619,6 +1619,13 @@ export async function createKalpiApp({
     };
   }
 
+  async function prepareDebugTradeBoardForViewer(viewerToken, debugRequest) {
+    if (!debugRequest || !viewerToken || process.env.KLAFI_QA_TRADE_SAMPLES !== "1") return;
+    const { ensureDebugTradeBoard, ensureDebugTradeViewerKit } = await import("./trade-debug-samples.js");
+    await ensureDebugTradeBoard({ store, allCards, cardsById, now, grantCard });
+    await ensureDebugTradeViewerKit({ store, allCards, cardsById, now, grantCard, viewerToken });
+  }
+
   const handleRequest = async function handler(request, response) {
     const requestId = randomUUID();
     response.setHeader("x-request-id", requestId);
@@ -1873,6 +1880,7 @@ export async function createKalpiApp({
         const token = bearer(request);
         await store.hydrateSession(token);
         await store.expireTrades(new Date(now()).toISOString());
+        await prepareDebugTradeBoardForViewer(token, debugRequest);
         json(response, 200, {
           trades: { trades: await store.listTrades(token), simulated: false },
           leaderboards: await store.leaderboardSummary(allCards, now(), token),
@@ -2218,6 +2226,7 @@ export async function createKalpiApp({
 
         if (request.method === "GET" && url.pathname === "/api/trades") {
           await store.expireTrades(new Date(now()).toISOString());
+          await prepareDebugTradeBoardForViewer(token, debugRequest);
           json(response, 200, { trades: await store.listTrades(token), simulated: false });
           return;
         }
@@ -2236,13 +2245,19 @@ export async function createKalpiApp({
 
         if (request.method === "POST" && url.pathname === "/api/trades") {
           const input = await readJson(request);
-          if (!cardsById.has(input.offeredCardId) || !cardsById.has(input.wantedCardId)) {
-            json(response, 400, { error: "INVALID_CARD" });
-            return;
+          const { parseCreateTradeInput, TRADE_MESSAGES_HE } = await import("./trade-core.js");
+          const parsed = parseCreateTradeInput(input);
+          for (const cardId of [...parsed.offered.cardIds, ...parsed.wanted.cardIds]) {
+            if (!cardsById.has(cardId)) {
+              json(response, 400, { error: "INVALID_CARD" });
+              return;
+            }
           }
-          if (!cardIsPackPullable(cardsById.get(input.wantedCardId))) {
-            json(response, 400, { error: "WANTED_NOT_PULLABLE" });
-            return;
+          for (const cardId of parsed.wanted.cardIds) {
+            if (!cardIsPackPullable(cardsById.get(cardId))) {
+              json(response, 400, { error: "WANTED_NOT_PULLABLE" });
+              return;
+            }
           }
           const result = await store.idempotent(
             token,
@@ -2251,6 +2266,8 @@ export async function createKalpiApp({
             async () => {
               const created = await store.createTrade({
                 sessionToken: token,
+                offered: parsed.offered,
+                wanted: parsed.wanted,
                 offeredCardId: input.offeredCardId,
                 wantedCardId: input.wantedCardId,
                 createdAt: new Date(now()).toISOString(),
@@ -2268,9 +2285,15 @@ export async function createKalpiApp({
                   },
                 };
               }
+              if (created?.error) {
+                return {
+                  status: 400,
+                  body: { error: created.error, messageHe: created.messageHe || TRADE_MESSAGES_HE.INVALID_TRADE },
+                };
+              }
               return created
                 ? { status: 201, body: { trade: { ...created, ownerToken: undefined }, trades, simulated: false } }
-                : { status: 400, body: { error: "INVALID_TRADE" } };
+                : { status: 400, body: { error: "INVALID_TRADE", messageHe: TRADE_MESSAGES_HE.INVALID_TRADE } };
             },
           );
           if (result.replayed) response.setHeader("idempotency-replayed", "true");
@@ -2418,18 +2441,37 @@ export async function createKalpiApp({
 
         const tradeAccept = url.pathname.match(/^\/api\/trades\/([^/]+)\/accept$/);
         if (request.method === "POST" && tradeAccept) {
+          const input = await readJson(request).catch(() => ({}));
+          const { TRADE_MESSAGES_HE } = await import("./trade-core.js");
           const currentTrade = (await store.listTrades(token)).find(({ tradeId }) => tradeId === tradeAccept[1]);
-          const offered = currentTrade ? cardsById.get(currentTrade.offeredCardId) : null;
-          const wanted = currentTrade ? cardsById.get(currentTrade.wantedCardId) : null;
-          const trade = offered && wanted ? await store.acceptTrade({
+          const offeredIds = currentTrade?.offeredCardIds?.length
+            ? currentTrade.offeredCardIds
+            : (currentTrade?.offeredCardId ? [currentTrade.offeredCardId] : []);
+          const wantedIds = currentTrade?.wantedCardIds?.length
+            ? currentTrade.wantedCardIds
+            : (currentTrade?.wantedCardId ? [currentTrade.wantedCardId] : []);
+          const offeredFinishes = Object.fromEntries(offeredIds.map((cardId) => {
+            const card = cardsById.get(cardId);
+            return [cardId, card ? rarityTier(card) : "common"];
+          }));
+          const wantedFinishes = Object.fromEntries(wantedIds.map((cardId) => {
+            const card = cardsById.get(cardId);
+            return [cardId, card ? rarityTier(card) : "common"];
+          }));
+          const trade = currentTrade ? await store.acceptTrade({
             tradeId: tradeAccept[1],
             sessionToken: token,
             acceptedAt: new Date(now()).toISOString(),
-            offeredFinish: rarityTier(offered),
-            wantedFinish: rarityTier(wanted),
+            offeredCardId: input.offeredCardId || null,
+            wantedCardId: input.wantedCardId || null,
+            offeredFinishes,
+            wantedFinishes,
           }) : null;
-          if (!trade) {
-            json(response, 409, { error: "TRADE_NOT_ACCEPTABLE" });
+          if (!trade || trade.ok === false) {
+            json(response, 409, {
+              error: trade?.code || "TRADE_NOT_ACCEPTABLE",
+              messageHe: trade?.messageHe || TRADE_MESSAGES_HE.ACCEPT_FAILED,
+            });
             return;
           }
           const trades = await store.listTrades(token);
@@ -2502,6 +2544,16 @@ export async function createKalpiApp({
             current.nextDailyAt = null;
           });
           json(response, 200, await stateForToken(token));
+          return;
+        }
+
+        if (request.method === "POST" && url.pathname === "/api/debug/clear-open-trades") {
+          if (!debugRequest) {
+            json(response, 404, { error: "NOT_FOUND" });
+            return;
+          }
+          const cleared = await store.clearOpenTradesDebug?.(new Date(now()).toISOString());
+          json(response, 200, { cleared: cleared?.cleared ?? 0, trades: await store.listTrades(token) });
           return;
         }
 

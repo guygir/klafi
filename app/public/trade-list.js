@@ -11,11 +11,26 @@ export function holdsWantedCard(inventory, cardId) {
   return Number(inventory?.[cardId] || 0) > 0;
 }
 
-export function offersForTradeList(trades, inventory) {
+export function wantedCardIds(trade) {
+  if (!trade) return [];
+  if (Array.isArray(trade.wantedCardIds) && trade.wantedCardIds.length) return trade.wantedCardIds;
+  return trade.wantedCardId ? [trade.wantedCardId] : [];
+}
+
+export function holdsWantedSide(inventory, trade) {
+  const ids = wantedCardIds(trade);
+  if (!ids.length) return false;
+  const mode = trade?.wantedMode === "or" ? "or" : "and";
+  if (mode === "or") return ids.some((cardId) => holdsWantedCard(inventory, cardId));
+  return ids.every((cardId) => holdsWantedCard(inventory, cardId));
+}
+
+export function offersForTradeList(trades, inventory, { showUnholdable = false } = {}) {
   return (Array.isArray(trades) ? trades : []).filter((trade) => {
     if (!trade || trade.status !== "open") return false;
     if (trade.ownedByCurrent) return true;
-    return holdsWantedCard(inventory, trade.wantedCardId);
+    if (showUnholdable) return true;
+    return holdsWantedSide(inventory, trade);
   });
 }
 
