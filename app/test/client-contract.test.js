@@ -431,6 +431,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /כולם \(וגם\)/);
   assert.match(javascript, /tradeFormationSummary/);
   assert.match(css, /\.trade-formation-badge/);
+  assert.match(javascript, /paintComposeFormationHint/);
+  assert.match(javascript, /sideNeedsPick\(trade\.offeredMode, offeredCardIds\(trade\)\)/);
+  assert.match(javascript, /trade-accept-picks/);
+  assert.match(javascript, /data-trade-id=/);
+  assert.match(css, /\.trade-offer > \.trade-accept-picks/);
   assert.doesNotMatch(html, /הצעות ששחקנים אחרים פרסמו/);
   assert.match(html, /id="trade-board"/);
   assert.match(javascript, /const tradableCards = tradeCatalog\(\)/);

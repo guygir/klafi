@@ -67,13 +67,13 @@ Open: `http://127.0.0.1:8799/?view=growth&tab=open-trades`
 
 ## Still open / verify
 
-- [ ] **Accept QA** for all four formations in browser (OR pick UI + server accept)
-- [ ] **Postgres** accept path with full persistence (create + migration tested; accept E2E on real PG if deployed)
-- [ ] **Race:** recycle vs open offer (needs 3 copies); double-accept (partially tested)
-- [ ] **Achievements / binder counts** after multi-card trades
-- [ ] **Tips/tutorial** copy for new compose UI
-- [ ] **`messageHe`** on all store-layer accept failures (API often generic today)
-- [ ] **Production:** ensure `KLAFI_QA_TRADE_SAMPLES` is **unset** (auto-seed must not run in prod)
+- [x] **Accept QA** for all four formations in browser (OR pick UI + server accept) — Playwright in `docs/qa-enhanced-trades/capture.mjs`, shots in `/opt/cursor/artifacts/qa-enhanced-trades`
+- [x] **Postgres** accept path with full persistence (PGlite: create + accept + SQL re-read; real PG if `KALPI_TEST_DATABASE_URL` is up)
+- [x] **Race:** recycle vs open offer (3 copies reserved → recycle 409); double-accept (200/409 + inventory conservation)
+- [x] **Achievements / binder counts** after multi-card trades
+- [x] **Tips/tutorial** copy for new compose UI (growth steps 2–3; rings still in HTML)
+- [x] **`messageHe`** on all store-layer accept failures (API surfaces `code` + Hebrew)
+- [x] **Production:** `qaTradeSamplesAllowed` gates on loopback/debug **and** blocks `NODE_ENV`/`VERCEL_ENV` production even if `KLAFI_QA_TRADE_SAMPLES=1`
 
 ---
 

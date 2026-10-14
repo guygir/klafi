@@ -5,6 +5,18 @@ const SAMPLES = [
   { offered: { mode: "or", cardIdx: [10, 11] }, wanted: { mode: "or", cardIdx: [8, 9] } },
 ];
 
+/**
+ * Auto-seed is a local debug board only. Production (NODE_ENV or Vercel) must never
+ * seed even if KLAFI_QA_TRADE_SAMPLES=1 is set on the deployment.
+ */
+export function qaTradeSamplesAllowed({ debugRequest = false, env = process.env } = {}) {
+  if (!debugRequest) return false;
+  if (String(env?.KLAFI_QA_TRADE_SAMPLES || "") !== "1") return false;
+  if (env?.NODE_ENV === "production") return false;
+  if (env?.VERCEL_ENV === "production") return false;
+  return true;
+}
+
 export function partyLeaderSampleIds(allCards) {
   return allCards
     .filter((card) => !card.eventOnly && card.releaseSetId === "party-leaders")

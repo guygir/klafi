@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import { createKalpiApp } from "../server/app.js";
 import { PostgresStore } from "../server/postgres-store.js";
-import { assertInventoryConserved, parseCreateTradeInput, validateTradeShape } from "../server/trade-core.js";
+import { TRADE_MESSAGES_HE, assertInventoryConserved, parseCreateTradeInput, validateTradeShape } from "../server/trade-core.js";
+import { qaTradeSamplesAllowed } from "../server/trade-debug-samples.js";
 import { holdsWantedSide, offersForTradeList } from "../public/trade-list.js";
 import { tradeFormationSummary, tradeModeHintHe } from "../public/trade-compose-ui.js";
 
@@ -104,16 +105,31 @@ async function postgresStoreWithMigrations() {
       instances: [],
       tradeCount: row.trade_count || 0,
       hiddenTradeIds: [],
+      pendingTradeNotices: [],
     };
   };
   store.saveSession = async (token, session) => {
-    for (const [cardId, copies] of Object.entries(session.inventory || {})) {
+    const keep = Object.entries(session.inventory || {}).filter(([, copies]) => Number(copies) > 0);
+    for (const [cardId, copies] of keep) {
       await db.query(
         `INSERT INTO kalpi_inventory (session_token, card_id, copies) VALUES ($1,$2,$3)
          ON CONFLICT (session_token, card_id) DO UPDATE SET copies = EXCLUDED.copies`,
         [token, cardId, copies],
       );
     }
+    const keepIds = keep.map(([cardId]) => cardId);
+    if (keepIds.length) {
+      await db.query(
+        "DELETE FROM kalpi_inventory WHERE session_token = $1 AND NOT (card_id = ANY($2::text[]))",
+        [token, keepIds],
+      );
+    } else {
+      await db.query("DELETE FROM kalpi_inventory WHERE session_token = $1", [token]);
+    }
+    await db.query(
+      "UPDATE kalpi_sessions SET trade_count = $2, extras = $3::jsonb WHERE token = $1",
+      [token, session.tradeCount || 0, JSON.stringify({ pendingTradeNotices: session.pendingTradeNotices || [] })],
+    );
   };
   store.insertSessionRow = async (client, token, session) => {
     await db.query(
@@ -235,6 +251,10 @@ test("file store: bundle 2↔2 and OR choice accept", async (t) => {
     },
   });
   assert.equal(orOffer.status, 201);
+  const beforeOr = inventorySnapshot({
+    owner: (await api(running.base, "/api/state", { token: owner2 })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  });
   const badChoice = await api(running.base, `/api/trades/${orOffer.body.trade.tradeId}/accept`, {
     token: accepter,
     method: "POST",
@@ -247,6 +267,10 @@ test("file store: bundle 2↔2 and OR choice accept", async (t) => {
     body: { offeredCardId: orGive[1], wantedCardId: orTake[0] },
   });
   assert.equal(good.status, 200);
+  assertInventoryConserved(beforeOr, inventorySnapshot({
+    owner: (await api(running.base, "/api/state", { token: owner2 })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  }));
 });
 
 test("file store: double accept race and recycle vs open offer", async (t) => {
@@ -269,9 +293,90 @@ test("file store: double accept race and recycle vs open offer", async (t) => {
     method: "POST",
     body: { offeredCardId: cards[0].id, wantedCardId: cards[1].id },
   });
+  const beforeRace = inventorySnapshot({
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    a: (await api(running.base, "/api/state", { token: a })).body,
+    b: (await api(running.base, "/api/state", { token: b })).body,
+  });
   const results = await Promise.all([a, b].map((token) =>
     api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, { token, method: "POST" })));
   assert.deepEqual(results.map(({ status }) => status).sort(), [200, 409]);
+  const loser = results.find(({ status }) => status === 409);
+  assert.equal(loser.body.error, "ACCEPT_FAILED");
+  assert.equal(loser.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_FAILED);
+  const afterRace = inventorySnapshot({
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    a: (await api(running.base, "/api/state", { token: a })).body,
+    b: (await api(running.base, "/api/state", { token: b })).body,
+  });
+  assertInventoryConserved(beforeRace, afterRace);
+  const winnerInv = afterRace.a.inventory[cards[0].id] === 1 ? afterRace.a : afterRace.b;
+  const loserInv = winnerInv === afterRace.a ? afterRace.b : afterRace.a;
+  assert.equal(winnerInv.inventory[cards[0].id], 1);
+  assert.equal(loserInv.inventory[cards[1].id], 1);
+  assert.equal(loserInv.inventory[cards[0].id] || 0, 0);
+});
+
+test("recycle cannot spend a copy reserved by an open offer (3 copies)", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-enhanced-recycle-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  let running = await start(dataDir, clock);
+  const cards = (await api(running.base, "/api/catalog")).body.cards
+    .filter(({ eventOnly, rarity }) => !eventOnly && String(rarity || "").startsWith("Common"))
+    .slice(0, 2);
+  const recycler = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const partner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await unlockMany(running.base, recycler, [cards[0].id]);
+  await unlockMany(running.base, partner, [cards[1].id]);
+  await running.close();
+  const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  const session = stored.sessions[recycler];
+  session.inventory[cards[0].id] = 3;
+  session.instances = [
+    ...(session.instances || []).filter((item) => item.cardId !== cards[0].id),
+    ...[0, 1, 2].map((index) => ({
+      instanceId: `recycle-plain-${index}`,
+      cardId: cards[0].id,
+      finish: "Common",
+      pulledAt: "2026-10-10T12:00:00.000Z",
+    })),
+  ];
+  await writeFile(path.join(dataDir, "state.json"), JSON.stringify(stored));
+  running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const reserved = await api(running.base, "/api/trades", {
+    token: recycler,
+    method: "POST",
+    body: { offeredCardId: cards[0].id, wantedCardId: cards[1].id },
+  });
+  assert.equal(reserved.status, 201);
+  const beforeRecycle = inventorySnapshot({
+    recycler: (await api(running.base, "/api/state", { token: recycler })).body,
+    partner: (await api(running.base, "/api/state", { token: partner })).body,
+  });
+  assert.equal(beforeRecycle.recycler.inventory[cards[0].id], 3);
+  const recycled = await api(running.base, "/api/recycle", {
+    token: recycler,
+    method: "POST",
+    body: { cardId: cards[0].id },
+  });
+  assert.equal(recycled.status, 409);
+  assert.equal(recycled.body.error, "NOT_ENOUGH_COPIES");
+  const acceptedReserved = await api(running.base, `/api/trades/${reserved.body.trade.tradeId}/accept`, {
+    token: partner,
+    method: "POST",
+  });
+  assert.equal(acceptedReserved.status, 200);
+  const afterRecycle = inventorySnapshot({
+    recycler: (await api(running.base, "/api/state", { token: recycler })).body,
+    partner: (await api(running.base, "/api/state", { token: partner })).body,
+  });
+  assertInventoryConserved(beforeRecycle, afterRecycle);
+  assert.equal(afterRecycle.recycler.inventory[cards[0].id], 2);
+  assert.equal(afterRecycle.partner.inventory[cards[0].id], 1);
 });
 
 test("postgres SQL store: migration 012 columns round-trip on createTrade", async (t) => {
@@ -326,4 +431,245 @@ test("compose mode hints explain AND vs OR in Hebrew", () => {
 
 test("formation summary labels poster AND/OR on open trades", () => {
   assert.match(tradeFormationSummary({ offeredMode: "and", wantedMode: "or" }), /כולם \(וגם\).*אחד \(או\)/);
+});
+
+test("accept failures return Hebrew messageHe from the store through the API", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-enhanced-msg-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const cards = (await api(running.base, "/api/catalog")).body.cards.filter(({ eventOnly }) => !eventOnly).slice(0, 4);
+  const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const accepter = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const stranger = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await unlockMany(running.base, owner, [cards[0].id, cards[1].id]);
+  await unlockMany(running.base, accepter, [cards[2].id]);
+  const created = await api(running.base, "/api/trades", {
+    token: owner,
+    method: "POST",
+    body: {
+      offered: { mode: "or", cardIds: [cards[0].id, cards[1].id] },
+      wanted: { mode: "or", cardIds: [cards[2].id, cards[3].id] },
+    },
+  });
+  assert.equal(created.status, 201);
+  const needsChoice = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+    token: accepter,
+    method: "POST",
+    body: {},
+  });
+  assert.equal(needsChoice.status, 409);
+  assert.equal(needsChoice.body.code || needsChoice.body.error, "NEEDS_CHOICE");
+  assert.equal(needsChoice.body.messageHe, TRADE_MESSAGES_HE.NEEDS_CHOICE);
+  const badChoice = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+    token: accepter,
+    method: "POST",
+    body: { offeredCardId: cards[0].id, wantedCardId: cards[0].id },
+  });
+  assert.equal(badChoice.status, 409);
+  assert.equal(badChoice.body.messageHe, TRADE_MESSAGES_HE.INVALID_CHOICE);
+  const missingWanted = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+    token: stranger,
+    method: "POST",
+    body: { offeredCardId: cards[0].id, wantedCardId: cards[2].id },
+  });
+  assert.equal(missingWanted.status, 409);
+  assert.equal(missingWanted.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+  const notOwned = await api(running.base, "/api/trades", {
+    token: stranger,
+    method: "POST",
+    body: { offeredCardId: cards[0].id, wantedCardId: cards[2].id },
+  });
+  assert.equal(notOwned.status, 400);
+  assert.equal(notOwned.body.error, "NOT_OWNED");
+  assert.equal(notOwned.body.messageHe, TRADE_MESSAGES_HE.NOT_OWNED);
+});
+
+test("multi-card accept updates achievements, binder unique counts, and conserves inventory", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-enhanced-ach-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const cards = (await api(running.base, "/api/catalog")).body.cards
+    .filter(({ eventOnly, idleEligible }) => !eventOnly && idleEligible)
+    .slice(0, 5);
+  const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const accepter = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await unlockMany(running.base, owner, [cards[0].id, cards[1].id]);
+  await unlockMany(running.base, accepter, [cards[2].id, cards[3].id, cards[4].id]);
+  const before = {
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  };
+  assert.equal(before.owner.ownedUnique, 2);
+  assert.equal(before.accepter.ownedUnique, 3);
+  assert.equal(before.owner.tradeCount, 0);
+  const created = await api(running.base, "/api/trades", {
+    token: owner,
+    method: "POST",
+    body: {
+      offered: { mode: "and", cardIds: [cards[0].id, cards[1].id] },
+      wanted: { mode: "and", cardIds: [cards[2].id, cards[3].id] },
+    },
+  });
+  assert.equal(created.status, 201);
+  const accepted = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+    token: accepter,
+    method: "POST",
+  });
+  assert.equal(accepted.status, 200);
+  const after = {
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  };
+  assertInventoryConserved(inventorySnapshot(before), inventorySnapshot(after));
+  assert.equal(after.owner.ownedUnique, 2);
+  assert.equal(after.accepter.ownedUnique, 3);
+  assert.equal(after.owner.inventory[cards[2].id], 1);
+  assert.equal(after.owner.inventory[cards[3].id], 1);
+  assert.equal(after.accepter.inventory[cards[0].id], 1);
+  assert.equal(after.accepter.inventory[cards[4].id], 1);
+  assert.equal(after.owner.tradeCount, 1);
+  assert.equal(after.accepter.tradeCount, 1);
+  const ownerMatch = after.owner.achievements.find(({ id }) => id === "trade-match");
+  const accepterMatch = after.accepter.achievements.find(({ id }) => id === "trade-match");
+  assert.equal(ownerMatch?.earned, true);
+  assert.equal(accepterMatch?.earned, true);
+});
+
+test("QA trade samples stay off in production even if the env flag is set", () => {
+  assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { KLAFI_QA_TRADE_SAMPLES: "1", NODE_ENV: "production" } }), false);
+  assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { KLAFI_QA_TRADE_SAMPLES: "1", VERCEL_ENV: "production" } }), false);
+  assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { KLAFI_QA_TRADE_SAMPLES: "1", NODE_ENV: "production", VERCEL_ENV: "production" } }), false);
+  assert.equal(qaTradeSamplesAllowed({ debugRequest: false, env: { KLAFI_QA_TRADE_SAMPLES: "1", NODE_ENV: "test" } }), false);
+  assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { NODE_ENV: "test" } }), false);
+  assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { KLAFI_QA_TRADE_SAMPLES: "1", NODE_ENV: "test" } }), true);
+  assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { KLAFI_QA_TRADE_SAMPLES: "1" } }), true);
+});
+
+test("QA trade board does not seed when NODE_ENV is production", async (t) => {
+  const previousNode = process.env.NODE_ENV;
+  const previousFlag = process.env.KLAFI_QA_TRADE_SAMPLES;
+  process.env.KLAFI_QA_TRADE_SAMPLES = "1";
+  process.env.NODE_ENV = "production";
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-qa-prod-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    process.env.NODE_ENV = previousNode;
+    if (previousFlag === undefined) delete process.env.KLAFI_QA_TRADE_SAMPLES;
+    else process.env.KLAFI_QA_TRADE_SAMPLES = previousFlag;
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const token = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const community = await api(running.base, "/api/community", { token });
+  assert.equal(community.status, 200);
+  const open = (community.body.trades?.trades || []).filter((trade) => trade.status === "open");
+  assert.equal(open.length, 0);
+});
+
+test("postgres SQL store: accept persists inventory and accepted picks", async (t) => {
+  const { db, store } = await postgresStoreWithMigrations();
+  t.after(async () => db.close());
+  const at = "2026-10-10T12:00:00.000Z";
+  const owner = "owner-pg-accept";
+  const accepter = "accepter-pg-accept";
+  await store.insertSessionRow(store.pool, owner, {
+    displayName: owner,
+    createdAt: at,
+    inventory: { A: 1, B: 1 },
+  });
+  await store.insertSessionRow(store.pool, accepter, {
+    displayName: accepter,
+    createdAt: at,
+    inventory: { C: 1, D: 1 },
+  });
+  const created = await store.createTrade({
+    sessionToken: owner,
+    offered: { mode: "or", cardIds: ["A", "B"] },
+    wanted: { mode: "and", cardIds: ["C", "D"] },
+    createdAt: at,
+    expiresAt: new Date(Date.parse(at) + 86400000).toISOString(),
+  });
+  const before = {
+    owner: await store.hydrateSession(owner),
+    accepter: await store.hydrateSession(accepter),
+  };
+  const accepted = await store.acceptTrade({
+    tradeId: created.tradeId,
+    sessionToken: accepter,
+    acceptedAt: at,
+    offeredCardId: "B",
+  });
+  assert.equal(accepted.status, "accepted");
+  assert.equal(accepted.acceptedOfferedCardId, "B");
+  assert.deepEqual(accepted.acceptedWantedCardId ? [accepted.acceptedWantedCardId] : [], ["C"]);
+  const ownerAfter = await store.hydrateSession(owner);
+  const accepterAfter = await store.hydrateSession(accepter);
+  assertInventoryConserved(
+    { owner: { inventory: before.owner.inventory }, accepter: { inventory: before.accepter.inventory } },
+    { owner: { inventory: ownerAfter.inventory }, accepter: { inventory: accepterAfter.inventory } },
+  );
+  assert.equal(ownerAfter.inventory.A, 1);
+  assert.equal(ownerAfter.inventory.B, undefined);
+  assert.equal(ownerAfter.inventory.C, 1);
+  assert.equal(ownerAfter.inventory.D, 1);
+  assert.equal(accepterAfter.inventory.B, 1);
+  assert.equal(accepterAfter.inventory.C, undefined);
+  const row = (await db.query("SELECT * FROM kalpi_trades WHERE trade_id = $1", [created.tradeId])).rows[0];
+  assert.equal(row.status, "accepted");
+  assert.equal(row.accepted_by, accepter);
+  assert.equal(row.accepted_offered_card_id, "B");
+  assert.equal(row.accepted_wanted_card_id, "C");
+  const ownerInv = (await db.query("SELECT card_id, copies FROM kalpi_inventory WHERE session_token = $1", [owner])).rows;
+  const accepterInv = (await db.query("SELECT card_id, copies FROM kalpi_inventory WHERE session_token = $1", [accepter])).rows;
+  assert.deepEqual(Object.fromEntries(ownerInv.map(({ card_id, copies }) => [card_id, copies])), { A: 1, C: 1, D: 1 });
+  assert.deepEqual(Object.fromEntries(accepterInv.map(({ card_id, copies }) => [card_id, copies])), { B: 1 });
+});
+
+test("legacy 1↔1 accept conserves inventory and stays a single-card AND trade", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-legacy-cons-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const [a, b] = (await api(running.base, "/api/catalog")).body.cards.filter(({ eventOnly }) => !eventOnly).slice(0, 2);
+  const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const accepter = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await unlockMany(running.base, owner, [a.id]);
+  await unlockMany(running.base, accepter, [b.id]);
+  const before = inventorySnapshot({
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  });
+  const created = await api(running.base, "/api/trades", {
+    token: owner,
+    method: "POST",
+    body: { offeredCardId: a.id, wantedCardId: b.id },
+  });
+  assert.equal(created.body.trade.offeredMode, "and");
+  assert.deepEqual(created.body.trade.offeredCardIds, [a.id]);
+  assert.deepEqual(created.body.trade.wantedCardIds, [b.id]);
+  const accepted = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+    token: accepter,
+    method: "POST",
+  });
+  assert.equal(accepted.status, 200);
+  const after = inventorySnapshot({
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  });
+  assertInventoryConserved(before, after);
+  assert.equal(after.owner.inventory[b.id], 1);
+  assert.equal(after.accepter.inventory[a.id], 1);
+  assert.equal(after.owner.inventory[a.id] || 0, 0);
 });

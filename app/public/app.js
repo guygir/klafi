@@ -6383,7 +6383,20 @@ function renderTradeComposeSlots() {
       addBtn.disabled = side.cardIds.length >= TRADE_SIDE_MAX;
     }
   }
+  paintComposeFormationHint();
   syncLegacyTradeSelectFromCompose();
+}
+
+function paintComposeFormationHint() {
+  const boardHint = document.querySelector("#trade-board-hint");
+  if (!boardHint) return;
+  const offered = tradeComposeSide("offered");
+  const wanted = tradeComposeSide("wanted");
+  boardHint.hidden = false;
+  boardHint.textContent = tradeFormationSummary({
+    offeredMode: offered.mode,
+    wantedMode: wanted.mode,
+  });
 }
 
 function tradeSideCardsMarkup(trade, sideKey, role) {
@@ -6436,7 +6449,9 @@ function tradeAcceptChoiceMarkup(trade, inventory) {
           const owned = holdsWantedCard(inventory, cardId);
           const enabled = choices.some((c) => c[`${sideKey === "offered" ? "offered" : "wanted"}CardId`] === cardId);
           const selected = pick[sideKey === "offered" ? "offeredCardId" : "wantedCardId"] === cardId;
-          const reason = !owned ? "אין לכם עותק" : !enabled ? "לא מתאים לבחירה השנייה" : "";
+          const reason = sideKey === "wanted" && !owned
+            ? "אין לכם עותק"
+            : !enabled ? "לא מתאים לבחירה השנייה" : "";
           return `<button type="button" class="trade-accept-chip${selected ? " is-selected" : ""}${!enabled ? " is-disabled" : ""}"
             data-trade-pick="${sideKey}" data-trade-pick-card="${escapeHtml(cardId)}" ${!enabled ? "disabled" : ""}
             ${reason ? `data-tooltip="${escapeHtml(reason)}"` : ""} aria-pressed="${selected}">
@@ -6446,14 +6461,21 @@ function tradeAcceptChoiceMarkup(trade, inventory) {
       </div>
     </div>`;
   };
-  return `${renderPick("offered", offeredCardIds(trade), "receive")}${renderPick("wanted", wantedCardIds(trade), "give")}`;
+  const picks = `${renderPick("offered", offeredCardIds(trade), "receive")}${renderPick("wanted", wantedCardIds(trade), "give")}`;
+  return picks ? `<div class="trade-accept-picks">${picks}</div>` : "";
 }
 
 function tradeAcceptReady(trade, inventory) {
   if (!trade.needsAcceptChoice) return Boolean(trade.canAccept);
   const pick = tradeAcceptPick(trade.tradeId);
   const choices = Array.isArray(trade.acceptChoices) ? trade.acceptChoices : [];
-  return choices.some((choice) => choice.offeredCardId === pick.offeredCardId && choice.wantedCardId === pick.wantedCardId);
+  const offeredId = sideNeedsPick(trade.offeredMode, offeredCardIds(trade))
+    ? pick.offeredCardId
+    : offeredCardIds(trade)[0] || "";
+  const wantedId = sideNeedsPick(trade.wantedMode, wantedCardIds(trade))
+    ? pick.wantedCardId
+    : wantedCardIds(trade)[0] || "";
+  return choices.some((choice) => choice.offeredCardId === offeredId && choice.wantedCardId === wantedId);
 }
 
 function tradeBoardFilterOptions(trades, key) {
@@ -6594,14 +6616,15 @@ function tradeRowMarkup(trade) {
   const pickMarkup = canShowAccept ? tradeAcceptChoiceMarkup(trade, acceptInventory) : "";
   const action = trade.ownedByCurrent
     ? `<button type="button" class="trade-offer-action" data-cancel-trade="${trade.tradeId}">ביטול</button>`
-    : (accept || hide || pickMarkup) ? `<span class="trade-offer-actions">${pickMarkup}${accept}${hide}</span>` : "";
+    : (accept || hide) ? `<span class="trade-offer-actions">${accept}${hide}</span>` : "";
   const offeredRole = trade.ownedByCurrent ? "give" : "receive";
   const wantedRole = trade.ownedByCurrent ? "receive" : "give";
-  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}${trade.needsAcceptChoice ? " needs-choice" : ""}" data-offered-mode="${escapeHtml(trade.offeredMode || "and")}" data-wanted-mode="${escapeHtml(trade.wantedMode || "and")}">
+  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}${trade.needsAcceptChoice ? " needs-choice" : ""}" data-trade-id="${escapeHtml(trade.tradeId)}" data-offered-mode="${escapeHtml(trade.offeredMode || "and")}" data-wanted-mode="${escapeHtml(trade.wantedMode || "and")}">
     <p class="trade-formation-badge">${escapeHtml(tradeFormationSummary(trade))}</p>
     ${tradeSideCardsMarkup(trade, "offered", offeredRole)}
     <b aria-hidden="true">⇄</b>
     ${tradeSideCardsMarkup(trade, "wanted", wantedRole)}
+    ${pickMarkup}
     <div class="trade-offer-bar">
       <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
       ${action}
@@ -6932,29 +6955,46 @@ function cardTitleHe(cardId) {
 }
 
 function paintTradeNoticeThumb(node, cardId, { warnLastCopy = false } = {}) {
-  const card = model.byId.get(cardId);
-  if (!node) return;
-  node.hidden = !card;
-  node.innerHTML = card ? tradeThumbMarkup(card, { warnLastCopy }) : "";
-  if (card) queueCardTextFit(node);
+  paintTradeNoticeThumbs(node, [cardId], { warnLastCopy });
 }
 
-function showAcceptedTradeNotice({ otherName, receivedCardId, givenCardId, noticeId = "" }) {
+function showAcceptedTradeNotice({
+  otherName,
+  receivedCardId,
+  givenCardId,
+  receivedCardIds = null,
+  givenCardIds = null,
+  noticeId = "",
+}) {
   const dialog = elements.tradeNoticeDialog;
   if (!dialog) return;
+  const received = (Array.isArray(receivedCardIds) && receivedCardIds.length ? receivedCardIds : [receivedCardId]).filter(Boolean);
+  const given = (Array.isArray(givenCardIds) && givenCardIds.length ? givenCardIds : [givenCardId]).filter(Boolean);
   const lines = tradeApprovedLines({
     otherName,
-    receivedTitle: cardTitleHe(receivedCardId),
-    givenTitle: cardTitleHe(givenCardId),
+    receivedTitle: cardTitleHe(received[0]),
+    givenTitle: cardTitleHe(given[0]),
   });
   if (elements.tradeNoticeTitle) elements.tradeNoticeTitle.textContent = lines.title;
   if (elements.tradeNoticeCopy) elements.tradeNoticeCopy.textContent = lines.who;
-  paintTradeNoticeThumb(elements.tradeNoticeReceived, receivedCardId);
-  paintTradeNoticeThumb(elements.tradeNoticeGiven, givenCardId, { warnLastCopy: true });
+  paintTradeNoticeThumbs(elements.tradeNoticeReceived, received);
+  paintTradeNoticeThumbs(elements.tradeNoticeGiven, given, { warnLastCopy: true });
   dialog.dataset.noticeId = noticeId || "";
-  dialog.dataset.receivedCardId = receivedCardId || "";
-  dialog.dataset.givenCardId = givenCardId || "";
+  dialog.dataset.receivedCardId = received[0] || "";
+  dialog.dataset.givenCardId = given[0] || "";
   if (!dialog.open) dialog.showModal();
+}
+
+function paintTradeNoticeThumbs(node, cardIds, { warnLastCopy = false } = {}) {
+  if (!node) return;
+  const ids = (Array.isArray(cardIds) ? cardIds : [cardIds]).filter(Boolean);
+  node.hidden = !ids.length;
+  node.classList.toggle("trade-notice-stack", ids.length > 1);
+  node.innerHTML = ids.map((cardId) => {
+    const card = model.byId.get(cardId);
+    return card ? `<div class="trade-thumb">${tradeThumbMarkup(card, { warnLastCopy })}</div>` : "";
+  }).join("");
+  if (ids.length) queueCardTextFit(node);
 }
 
 function maybeShowTradeNotice() {
@@ -6969,6 +7009,8 @@ function maybeShowTradeNotice() {
     otherName: notice.accepterName,
     receivedCardId: notice.receivedCardId,
     givenCardId: notice.givenCardId,
+    receivedCardIds: notice.receivedCardIds,
+    givenCardIds: notice.givenCardIds,
     noticeId: notice.id,
   });
 }
@@ -7416,11 +7458,7 @@ function renderGrowth() {
   }
 
   syncCommunityPage();
-  const boardHint = document.querySelector("#trade-board-hint");
-  if (boardHint) {
-    boardHint.hidden = true;
-    boardHint.textContent = "";
-  }
+  paintComposeFormationHint();
 }
 
 function fillFactionSelect() {
@@ -8495,16 +8533,26 @@ async function acceptTradeOffer(tradeId) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        offeredCardId: pick.offeredCardId || undefined,
-        wantedCardId: pick.wantedCardId || undefined,
+        offeredCardId: pick.offeredCardId
+          || (trade && !sideNeedsPick(trade.offeredMode, offeredCardIds(trade)) ? offeredCardIds(trade)[0] : undefined),
+        wantedCardId: pick.wantedCardId
+          || (trade && !sideNeedsPick(trade.wantedMode, wantedCardIds(trade)) ? wantedCardIds(trade)[0] : undefined),
       }),
     });
     applyTradeResult(result);
     hideWait();
+    const receivedIds = result.trade?.offeredMode === "or"
+      ? [result.trade?.acceptedOfferedCardId || result.trade?.offeredCardId]
+      : (result.trade?.offeredCardIds || [result.trade?.acceptedOfferedCardId || result.trade?.offeredCardId]);
+    const givenIds = result.trade?.wantedMode === "or"
+      ? [result.trade?.acceptedWantedCardId || result.trade?.wantedCardId]
+      : (result.trade?.wantedCardIds || [result.trade?.acceptedWantedCardId || result.trade?.wantedCardId]);
     showAcceptedTradeNotice({
       otherName: result.trade?.ownerLabel,
-      receivedCardId: result.trade?.acceptedOfferedCardId || result.trade?.offeredCardId,
-      givenCardId: result.trade?.acceptedWantedCardId || result.trade?.wantedCardId,
+      receivedCardId: receivedIds[0],
+      givenCardId: givenIds[0],
+      receivedCardIds: receivedIds,
+      givenCardIds: givenIds,
     });
     delete model.tradeAcceptPick[tradeId];
   } catch (error) {

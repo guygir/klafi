@@ -71,7 +71,7 @@ import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
 import { acquiredAtByCard, lastAcquiredAtByCard } from "../public/binder-order.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
 import { normalizeInviteCode, referralMarker, referralStarGate } from "./referral.js";
-import { RECYCLE_COPIES, spendPlainCopies } from "./recycle.js";
+import { RECYCLE_COPIES, plainCopyCount, spendPlainCopies } from "./recycle.js";
 import {
   IDLE_BACKLOG_CAP,
   IDLE_INTERVAL_MS,
@@ -1620,8 +1620,8 @@ export async function createKalpiApp({
   }
 
   async function prepareDebugTradeBoardForViewer(viewerToken, debugRequest) {
-    if (!debugRequest || !viewerToken || process.env.KLAFI_QA_TRADE_SAMPLES !== "1") return;
-    const { ensureDebugTradeBoard, ensureDebugTradeViewerKit } = await import("./trade-debug-samples.js");
+    const { qaTradeSamplesAllowed, ensureDebugTradeBoard, ensureDebugTradeViewerKit } = await import("./trade-debug-samples.js");
+    if (!viewerToken || !qaTradeSamplesAllowed({ debugRequest, env: process.env })) return;
     await ensureDebugTradeBoard({ store, allCards, cardsById, now, grantCard });
     await ensureDebugTradeViewerKit({ store, allCards, cardsById, now, grantCard, viewerToken });
   }
@@ -2458,7 +2458,7 @@ export async function createKalpiApp({
             const card = cardsById.get(cardId);
             return [cardId, card ? rarityTier(card) : "common"];
           }));
-          const trade = currentTrade ? await store.acceptTrade({
+          const trade = await store.acceptTrade({
             tradeId: tradeAccept[1],
             sessionToken: token,
             acceptedAt: new Date(now()).toISOString(),
@@ -2466,7 +2466,7 @@ export async function createKalpiApp({
             wantedCardId: input.wantedCardId || null,
             offeredFinishes,
             wantedFinishes,
-          }) : null;
+          });
           if (!trade || trade.ok === false) {
             json(response, 409, {
               error: trade?.code || "TRADE_NOT_ACCEPTABLE",
@@ -2506,6 +2506,12 @@ export async function createKalpiApp({
           const recycled = await store.withSession(token, async (current) => {
             if ((current.unseenPulls || []).length >= IDLE_BACKLOG_CAP) {
               return { error: "PULL_CAP_REACHED" };
+            }
+            const reserved = typeof store.reservedOfferCopiesFor === "function"
+              ? await store.reservedOfferCopiesFor(token, cardId, new Date(now()).toISOString())
+              : 0;
+            if (plainCopyCount(current, cardId) - reserved < RECYCLE_COPIES) {
+              return { error: "NOT_ENOUGH_COPIES" };
             }
             if (!spendPlainCopies(current, cardId, RECYCLE_COPIES)) {
               return { error: "NOT_ENOUGH_COPIES" };

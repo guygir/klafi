@@ -33,6 +33,7 @@ import {
   ownerCanOfferCards,
   parseCreateTradeInput,
   publicTradeView,
+  reservedOfferCopies,
   tradeRecordFromSides,
   validateTradeShape,
 } from "./trade-core.js";
@@ -478,7 +479,7 @@ export class JsonStore {
         createdAt,
         regularCopyCount,
       );
-      if (!canOffer.ok) return null;
+      if (!canOffer.ok) return { error: "NOT_OWNED", messageHe: TRADE_MESSAGES_HE.NOT_OWNED, cardId: canOffer.cardId };
       const trade = tradeRecordFromSides({
         tradeId: randomUUID(),
         ownerToken: sessionToken,
@@ -545,8 +546,15 @@ export class JsonStore {
           offeredCardId,
           wantedCardId,
         })
-        : { ok: false };
-      if (!verdict.ok) return null;
+        : { ok: false, code: "ACCEPT_FAILED", messageHe: TRADE_MESSAGES_HE.ACCEPT_FAILED };
+      if (!verdict.ok) {
+        return {
+          ok: false,
+          error: verdict.code || "ACCEPT_FAILED",
+          code: verdict.code || "ACCEPT_FAILED",
+          messageHe: verdict.messageHe || TRADE_MESSAGES_HE.ACCEPT_FAILED,
+        };
+      }
       for (const cardId of verdict.offeredCardIds) {
         moveOwnedCard(owner, accepter, cardId, {
           acquiredBy: "trade-accepted",
@@ -634,6 +642,10 @@ export class JsonStore {
       await this.persist();
       return { tradeId };
     });
+  }
+
+  async reservedOfferCopiesFor(sessionToken, cardId, at) {
+    return reservedOfferCopies(this.state.trades, sessionToken, cardId, at);
   }
 
   async listTrades(token) {

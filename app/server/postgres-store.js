@@ -37,6 +37,7 @@ import {
   ownerCanOfferCards,
   parseCreateTradeInput,
   publicTradeView,
+  reservedOfferCopies,
   tradeRecordFromSides,
   validateTradeShape,
 } from "./trade-core.js";
@@ -1048,7 +1049,7 @@ export class PostgresStore {
         createdAt,
         regularCopyCount,
       );
-      if (!canOffer.ok) return null;
+      if (!canOffer.ok) return { error: "NOT_OWNED", messageHe: TRADE_MESSAGES_HE.NOT_OWNED, cardId: canOffer.cardId };
       const trade = tradeRecordFromSides({
         tradeId: randomUUID(),
         ownerToken: sessionToken,
@@ -1133,7 +1134,12 @@ export class PostgresStore {
       );
       const trade = this.tradeFromRow(tradeRow.rows[0]);
       if (!trade || trade.status !== "open" || Date.parse(trade.expiresAt || 0) <= Date.parse(acceptedAt) || trade.ownerToken === sessionToken) {
-        return null;
+        return {
+          ok: false,
+          error: "ACCEPT_FAILED",
+          code: "ACCEPT_FAILED",
+          messageHe: TRADE_MESSAGES_HE.ACCEPT_FAILED,
+        };
       }
       for (const lockToken of [trade.ownerToken, sessionToken].sort()) {
         await this.loadSession(lockToken, { forUpdate: true });
@@ -1153,7 +1159,14 @@ export class PostgresStore {
         offeredCardId,
         wantedCardId,
       });
-      if (!verdict.ok) return null;
+      if (!verdict.ok) {
+        return {
+          ok: false,
+          error: verdict.code || "ACCEPT_FAILED",
+          code: verdict.code || "ACCEPT_FAILED",
+          messageHe: verdict.messageHe || TRADE_MESSAGES_HE.ACCEPT_FAILED,
+        };
+      }
       const previousOwner = structuredClone(owner);
       const previousAccepter = structuredClone(accepter);
       for (const cardId of verdict.offeredCardIds) {
@@ -1264,6 +1277,14 @@ export class PostgresStore {
       if (session.hiddenTradeIds.length > 200) session.hiddenTradeIds = session.hiddenTradeIds.slice(-200);
       return { tradeId };
     });
+  }
+
+  async reservedOfferCopiesFor(sessionToken, cardId, at) {
+    const result = await this.executor().query(
+      `SELECT * FROM kalpi_trades WHERE owner_token = $1 AND status = 'open' AND expires_at > $2`,
+      [sessionToken, at],
+    );
+    return reservedOfferCopies(result.rows.map((row) => this.tradeFromRow(row)), sessionToken, cardId, at);
   }
 
   async listTrades(token) {

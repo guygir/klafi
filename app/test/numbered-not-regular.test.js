@@ -111,10 +111,15 @@ test("trades: numbered-only copy cannot be offered or move; numbered+regular tra
   const b = await store.createSession(now);
   await store.withSession(a, (s) => Object.assign(s, numberedOnlyPlayer()));
   await store.withSession(b, (s) => { s.inventory = { M2: 1 }; s.instances = [{ instanceId: "b2", cardId: "M2" }]; });
-  assert.equal(await store.createTrade({ sessionToken: a, offeredCardId: "M6", wantedCardId: "M2", createdAt: now, expiresAt: later }), null);
+  const numberedOnly = await store.createTrade({ sessionToken: a, offeredCardId: "M6", wantedCardId: "M2", createdAt: now, expiresAt: later });
+  assert.equal(numberedOnly.error, "NOT_OWNED");
+  assert.match(numberedOnly.messageHe, /עותק מיותר/);
   // A legacy open trade on the numbered-only copy cannot be accepted.
   store.state.trades.push({ tradeId: "legacy", ownerToken: a, offeredCardId: "M6", wantedCardId: "M2", status: "open", createdAt: now, expiresAt: later });
-  assert.equal(await store.acceptTrade({ tradeId: "legacy", sessionToken: b, acceptedAt: now }), null);
+  const refused = await store.acceptTrade({ tradeId: "legacy", sessionToken: b, acceptedAt: now });
+  assert.equal(refused.ok, false);
+  assert.equal(refused.code, "ACCEPT_OWNER_MISSING");
+  assert.match(refused.messageHe, /למציע כבר אין/);
   const listed = (await store.listTrades(b)).find((trade) => trade.tradeId === "legacy");
   assert.equal(listed.canAccept, false);
   assert.equal(store.getSession(a).instances.some((item) => item.instanceId === "n6"), true, "numbered copy stays");
