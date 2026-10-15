@@ -5186,15 +5186,16 @@ body {
    so both cards stay whole from 320px phones to desktop. */
 .trade-desk-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; /* the publish button sits centered on its own row under the title */
   gap: 10px;
   min-width: 0;
   margin: 0 0 4px;
   direction: rtl;
 }
 .trade-desk .trade-desk-head h2 {
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   min-width: 0;
   margin: 0;
   font-size: clamp(16px, 4.6vw, 20px);
@@ -7110,4 +7111,196 @@ body {
    leftward over the avatar, so 3-digit streaks fit too. */
 .leaderboard-list > .collector-row {
   padding-inline-start: 14px;
+}
+
+/* ── QA layout options for short phones (?layout=A|B|C|D, key klafi-layout). Default: none = current. ──
+   Scoped to the card/trade pages via #app[data-page]. */
+
+/* A: the קיפול תפריט fold also folds the top row (wordmark + icons + name); level bar + avatar stay. */
+#app[data-layout="A"][data-page="binder"]:has(#binder-view.is-chrome-collapsed) .masthead,
+#app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden]) #trade-board-chrome-toggle:not([hidden])) .masthead,
+#app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) .masthead {
+  display: none;
+}
+/* …but not while a page guide is up: the קהילה guide's first step rings the section tabs in that head. */
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden]) #trade-board-chrome-toggle:not([hidden])) #growth-view .workspace-head,
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) #growth-view .workspace-head {
+  display: none;
+}
+/* A, folded trades: like the binder, everything between the level bar and the content goes
+   (section + page tabs, kicker, desk heading, the card frame's top padding); the fold button stays.
+   Not while a page guide is up: its steps ring those tabs. */
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden]) #trade-board-chrome-toggle:not([hidden])) #growth-view .community-nav,
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) #growth-view .community-nav,
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] .work-card.is-chrome-collapsed:not([hidden]) > .work-kicker,
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] #community-panel-trade.is-chrome-collapsed .trade-desk-head > h2 {
+  display: none;
+}
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] #community-panel-open-trades.is-chrome-collapsed:not([hidden]):has(#trade-board-chrome-toggle:not([hidden])),
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] #community-panel-trade.is-chrome-collapsed:not([hidden]) {
+  padding-top: 2px;
+}
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(.work-card.is-chrome-collapsed:not([hidden])) #growth-view.view.active {
+  padding-top: 0;
+}
+/* The desk's fold sits at its top, compact like the board's. */
+#app[data-layout="A"] #trade-desk-chrome-toggle { margin: 0 0 4px; }
+
+
+/* B: on card/trade pages the whole page scrolls (header included); only the bottom nav stays pinned. */
+#app[data-layout="B"][data-page="binder"],
+#app[data-layout="B"][data-page="growth"],
+#app[data-layout="E"][data-page="binder"],
+#app[data-layout="E"][data-page="growth"] {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  /* 1fr (not auto): short pages keep the header at its own height instead of stretching it. */
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
+}
+
+#app[data-layout="B"][data-page="binder"] #main,
+#app[data-layout="B"][data-page="growth"] #main,
+#app[data-layout="B"][data-page="binder"] #binder-view.view.active,
+#app[data-layout="B"][data-page="growth"] #growth-view.view.active,
+#app[data-layout="E"][data-page="binder"] #main,
+#app[data-layout="E"][data-page="growth"] #main,
+#app[data-layout="E"][data-page="binder"] #binder-view.view.active,
+#app[data-layout="E"][data-page="growth"] #growth-view.view.active {
+  height: auto;
+  min-height: auto; /* content height, so #main's nav clearance lands after the last row, not under it */
+  overflow: visible;
+}
+
+#app[data-layout="B"][data-page="binder"] #binder-grid,
+#app[data-layout="B"][data-page="growth"] .growth-grid,
+#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card,
+#app[data-layout="E"][data-page="binder"] #binder-grid,
+#app[data-layout="E"][data-page="growth"] .growth-grid,
+#app[data-layout="E"][data-page="growth"] .growth-grid > .work-card {
+  height: auto;
+  max-height: none;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+#app[data-layout="B"][data-page="growth"] #trade-board,
+#app[data-layout="B"][data-page="growth"] .leaderboard-list,
+#app[data-layout="B"][data-page="growth"] #collector-board,
+#app[data-layout="B"][data-page="growth"] #daily-challenge-board,
+#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card.trade-desk,
+#app[data-layout="E"][data-page="growth"] #trade-board,
+#app[data-layout="E"][data-page="growth"] .leaderboard-list,
+#app[data-layout="E"][data-page="growth"] #collector-board,
+#app[data-layout="E"][data-page="growth"] #daily-challenge-board,
+#app[data-layout="E"][data-page="growth"] .growth-grid > .work-card.trade-desk {
+  max-height: none;
+  overflow: visible !important; /* beats the short-phone .trade-desk overflow !important: one scroller only */
+}
+
+/* C: the header (top row + level strip) slides away while scrolling down and returns on scroll up. */
+#app[data-layout="C"] .masthead,
+#app[data-layout="C"] .level-strip {
+  max-height: 240px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #app[data-layout="C"] .masthead,
+  #app[data-layout="C"] .level-strip {
+    transition: max-height 200ms ease, opacity 160ms ease, padding 200ms ease;
+  }
+}
+/* (app.js drops header-tucked whenever a guide is busy) */
+#app[data-layout="C"][data-page="binder"].header-tucked .masthead,
+#app[data-layout="C"][data-page="binder"].header-tucked .level-strip,
+#app[data-layout="C"][data-page="growth"].header-tucked .masthead,
+#app[data-layout="C"][data-page="growth"].header-tucked .level-strip {
+  max-height: 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* D: a compact header on card/trade pages: one slim top row, a thin level strip, smaller binder chrome. */
+#app[data-layout="D"][data-page="binder"] .masthead,
+#app[data-layout="D"][data-page="growth"] .masthead { min-height: 0; }
+#app[data-layout="D"][data-page="binder"] .masthead-row,
+#app[data-layout="D"][data-page="growth"] .masthead-row { min-height: 34px; }
+#app[data-layout="D"][data-page="binder"] .masthead .wordmark b,
+#app[data-layout="D"][data-page="growth"] .masthead .wordmark b { font-size: 22px; }
+#app[data-layout="D"][data-page="binder"] .masthead-brand > button,
+#app[data-layout="D"][data-page="growth"] .masthead-brand > button { height: 32px; }
+#app[data-layout="D"][data-page="binder"] .level-strip,
+#app[data-layout="D"][data-page="growth"] .level-strip {
+  min-height: 0;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+#app[data-layout="D"][data-page="binder"] #level-next,
+#app[data-layout="D"][data-page="growth"] #level-next,
+#app[data-layout="D"][data-page="binder"] #level-rank,
+#app[data-layout="D"][data-page="growth"] #level-rank { display: none; }
+#app[data-layout="D"][data-page="binder"] .level-track,
+#app[data-layout="D"][data-page="growth"] .level-track { height: 20px; }
+#app[data-layout="D"][data-page="binder"] .level-avatar-button,
+#app[data-layout="D"][data-page="growth"] .level-avatar-button { width: 34px; height: 34px; }
+#app[data-layout="D"][data-page="binder"] #binder-view.view.active,
+#app[data-layout="D"][data-page="growth"] #growth-view.view.active { padding-top: 4px; }
+#app[data-layout="D"][data-page="binder"] .binder-chrome-clip { font-size: 0.92em; }
+#app[data-layout="D"][data-page="growth"] #growth-view .workspace-head { display: none; }
+/* Short screens: the badge row (also on the achievements page) gives its height back to the cards. */
+@media (max-height: 700px) {
+  /* …except while a page guide is on screen (its "תגים וכוכבים" step rings the badge row). */
+  html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="D"][data-page="binder"] #earned-badge-list { display: none; }
+}
+
+/* QA picker (only rendered when a layout option is set). */
+.layout-qa-picker {
+  position: fixed;
+  z-index: 40;
+  left: 2px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 112px);
+  padding: 1px 4px;
+  border: 1px solid rgba(31, 79, 74, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 250, 238, 0.92);
+  color: #1f4f4a;
+  font: 700 11px/1.2 system-ui, sans-serif;
+}
+.layout-qa-picker:focus-visible { outline: 2px solid #1f4f4a; outline-offset: 1px; }
+/* B: content now scrolls under the fixed nav row, so its strip (nav + footer links) gets the paper behind it. */
+#app[data-layout="B"][data-page="binder"] .top-nav-row,
+#app[data-layout="B"][data-page="growth"] .top-nav-row,
+#app[data-layout="E"][data-page="binder"] .top-nav-row,
+#app[data-layout="E"][data-page="growth"] .top-nav-row {
+  background: linear-gradient(to bottom, transparent, var(--paper) 18px);
+}
+
+/* E: B (one page scroller, header scrolls away) but the sort/filter controls stay pinned while scrolling:
+   the binder's filter strip (list/owned/missing, sort, party, set) and the open-offers filter bar.
+   Their wrappers become display:contents so the sticky bar's containing block is the whole page/panel;
+   the fold has nothing to fold here, so its button is hidden. */
+#app[data-layout="E"][data-page="binder"] #binder-chrome,
+#app[data-layout="E"][data-page="binder"] #binder-chrome > .binder-chrome-clip,
+#app[data-layout="E"][data-page="growth"] #trade-board-chrome,
+#app[data-layout="E"][data-page="growth"] #trade-board-chrome > .binder-chrome-clip {
+  display: contents;
+}
+#app[data-layout="E"][data-page="binder"] #binder-chrome-toggle,
+#app[data-layout="E"][data-page="growth"] #trade-board-chrome-toggle {
+  display: none;
+}
+#app[data-layout="E"][data-page="binder"] #binder-filters,
+#app[data-layout="E"][data-page="growth"] #trade-board-toolbar:not([hidden]) {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin-inline: -4px;
+  padding: 4px 4px 6px;
+  background: var(--paper);
+  box-shadow: 0 6px 8px -8px rgba(26, 31, 28, 0.45);
 }
