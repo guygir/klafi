@@ -27,3 +27,16 @@ test("page and tucked state follow the view; C never tucks under a guide", () =>
   assert.match(app, /if \(tipsBusy\(\) \|\| top < 24\) layoutShell\.classList\.remove\("header-tucked"\);/);
   assert.match(css, /html:not\(:has\(#klafi-tips:not\(\[hidden\]\)\)\) #app\[data-layout="D"\]\[data-page="binder"\] #earned-badge-list/);
 });
+
+test("trades: A folds the header on the desk too, B keeps one scroller and an unstretched header", () => {
+  const block = css.slice(css.indexOf("/* ── QA layout options"));
+  // A: the desk shares the board's fold key and gets its own toggle (A only); the board fold only counts while its toggle shows.
+  assert.match(app, /document\.querySelector\("#community-panel-trade"\)\?\.classList\.toggle\("is-chrome-collapsed", collapsed\)/);
+  assert.match(app, /if \(layoutOption === "A"\) \{[\s\S]*?fold\.addEventListener\("click", toggleTradeBoardChrome\)/);
+  assert.match(block, /:has\(#community-panel-trade\.is-chrome-collapsed:not\(\[hidden\]\)\) \.masthead/);
+  assert.match(block, /#community-panel-open-trades\.is-chrome-collapsed:not\(\[hidden\]\) #trade-board-chrome-toggle:not\(\[hidden\]\)/);
+  // B: 1fr + align-content:start (no stretched header on short pages), #main sized to content (nav clearance after the last row).
+  assert.match(block, /grid-template-rows: auto auto 1fr;\n  align-content: start;/);
+  assert.match(block, /#growth-view\.view\.active \{\n  height: auto;\n  min-height: auto;/);
+  assert.match(block, /\.growth-grid > \.work-card\.trade-desk \{\n  max-height: none;\n  overflow: visible !important;/);
+});

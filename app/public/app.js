@@ -5120,11 +5120,14 @@ function applyTradeBoardChrome() {
   const panel = document.querySelector("#community-panel-open-trades");
   const collapsed = tradeBoardChromeCollapsed();
   panel?.classList.toggle("is-chrome-collapsed", collapsed);
-  const button = elements.tradeBoardChromeToggle;
-  if (!button) return;
-  button.setAttribute("aria-expanded", collapsed ? "false" : "true");
-  button.textContent = collapsed ? "↓ פתיחת התפריט ↓" : "↑ קיפול התפריט ↑";
-  button.setAttribute("aria-label", collapsed ? "פתיחת התפריט" : "קיפול התפריט");
+  // Layout option A folds the header on the trade desk too (its own toggle, same key).
+  document.querySelector("#community-panel-trade")?.classList.toggle("is-chrome-collapsed", collapsed);
+  for (const button of [elements.tradeBoardChromeToggle, document.getElementById("trade-desk-chrome-toggle")]) {
+    if (!button) continue;
+    button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    button.textContent = collapsed ? "↓ פתיחת התפריט ↓" : "↑ קיפול התפריט ↑";
+    button.setAttribute("aria-label", collapsed ? "פתיחת התפריט" : "קיפול התפריט");
+  }
 }
 
 function toggleTradeBoardChrome() {
@@ -10444,6 +10447,19 @@ if (layoutOption && layoutShell) {
     location.href = url.toString();
   });
   document.body.append(picker);
+  if (layoutOption === "A") {
+    // A: the trade desk gets the same fold as the open-trades board, so the header folds on every trade view.
+    const desk = document.querySelector("#community-panel-trade");
+    if (desk && !document.getElementById("trade-desk-chrome-toggle")) {
+      const fold = document.createElement("button");
+      fold.type = "button";
+      fold.id = "trade-desk-chrome-toggle";
+      fold.className = "binder-chrome-toggle";
+      fold.addEventListener("click", toggleTradeBoardChrome);
+      desk.prepend(fold);
+      applyTradeBoardChrome();
+    }
+  }
 }
 // C: tuck the header while a page's content scrolls down, bring it back on scroll up.
 const layoutScrollTops = new WeakMap();

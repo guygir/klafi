@@ -7117,12 +7117,18 @@ body {
 
 /* A: the קיפול תפריט fold also folds the top row (wordmark + icons + name); level bar + avatar stay. */
 #app[data-layout="A"][data-page="binder"]:has(#binder-view.is-chrome-collapsed) .masthead,
-#app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden])) .masthead {
+#app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden]) #trade-board-chrome-toggle:not([hidden])) .masthead,
+#app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) .masthead {
   display: none;
 }
-#app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden])) #growth-view .workspace-head {
+/* …but not while a page guide is up: the קהילה guide's first step rings the section tabs in that head. */
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden]) #trade-board-chrome-toggle:not([hidden])) #growth-view .workspace-head,
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) #growth-view .workspace-head {
   display: none;
 }
+/* The desk's fold sits at its top, compact like the board's. */
+#app[data-layout="A"] #trade-desk-chrome-toggle { margin: 0 0 4px; }
+
 
 /* B: on card/trade pages the whole page scrolls (header included); only the bottom nav stays pinned. */
 #app[data-layout="B"][data-page="binder"],
@@ -7130,14 +7136,16 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  grid-template-rows: auto auto auto;
+  /* 1fr (not auto): short pages keep the header at its own height instead of stretching it. */
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
 }
 #app[data-layout="B"][data-page="binder"] #main,
 #app[data-layout="B"][data-page="growth"] #main,
 #app[data-layout="B"][data-page="binder"] #binder-view.view.active,
 #app[data-layout="B"][data-page="growth"] #growth-view.view.active {
   height: auto;
-  min-height: 0;
+  min-height: auto; /* content height, so #main's nav clearance lands after the last row, not under it */
   overflow: visible;
 }
 #app[data-layout="B"][data-page="binder"] #binder-grid,
@@ -7149,9 +7157,12 @@ body {
   overflow: visible;
 }
 #app[data-layout="B"][data-page="growth"] #trade-board,
-#app[data-layout="B"][data-page="growth"] .leaderboard-list {
+#app[data-layout="B"][data-page="growth"] .leaderboard-list,
+#app[data-layout="B"][data-page="growth"] #collector-board,
+#app[data-layout="B"][data-page="growth"] #daily-challenge-board,
+#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card.trade-desk {
   max-height: none;
-  overflow: visible;
+  overflow: visible !important; /* beats the short-phone .trade-desk overflow !important: one scroller only */
 }
 
 /* C: the header (top row + level strip) slides away while scrolling down and returns on scroll up. */
@@ -7227,3 +7238,8 @@ body {
   font: 700 11px/1.2 system-ui, sans-serif;
 }
 .layout-qa-picker:focus-visible { outline: 2px solid #1f4f4a; outline-offset: 1px; }
+/* B: content now scrolls under the fixed nav row, so its strip (nav + footer links) gets the paper behind it. */
+#app[data-layout="B"][data-page="binder"] .top-nav-row,
+#app[data-layout="B"][data-page="growth"] .top-nav-row {
+  background: linear-gradient(to bottom, transparent, var(--paper) 18px);
+}
