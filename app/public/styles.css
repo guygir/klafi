@@ -5186,15 +5186,16 @@ body {
    so both cards stay whole from 320px phones to desktop. */
 .trade-desk-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center; /* the publish button sits centered on its own row under the title */
   gap: 10px;
   min-width: 0;
   margin: 0 0 4px;
   direction: rtl;
 }
 .trade-desk .trade-desk-head h2 {
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   min-width: 0;
   margin: 0;
   font-size: clamp(16px, 4.6vw, 20px);

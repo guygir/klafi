@@ -10416,21 +10416,23 @@ window.__kalpiDebug = {
 /* ── QA layout options (?layout=A|B|C|D or localStorage klafi-layout; ?layout=off clears). Default: none. ── */
 const LAYOUT_KEY = "klafi-layout";
 const LAYOUT_OPTIONS = ["A", "B", "C", "D", "E"];
+// A is the default layout for everyone; B–E are debug-only via ?layout=X (remembered in klafi-layout).
+const LAYOUT_DEFAULT = "A";
 function readLayoutOption(search = location.search, storage = localStorage) {
   const asked = new URLSearchParams(search).get("layout");
   if (asked !== null) {
     const value = asked.trim().toUpperCase();
     try {
-      if (LAYOUT_OPTIONS.includes(value)) storage.setItem(LAYOUT_KEY, value);
+      if (LAYOUT_OPTIONS.includes(value) && value !== LAYOUT_DEFAULT) storage.setItem(LAYOUT_KEY, value);
       else storage.removeItem(LAYOUT_KEY);
     } catch { /* private mode */ }
-    return LAYOUT_OPTIONS.includes(value) ? value : "";
+    return LAYOUT_OPTIONS.includes(value) ? value : LAYOUT_DEFAULT;
   }
   try {
     const stored = storage.getItem(LAYOUT_KEY) || "";
-    return LAYOUT_OPTIONS.includes(stored) ? stored : "";
+    return LAYOUT_OPTIONS.includes(stored) ? stored : LAYOUT_DEFAULT;
   } catch {
-    return "";
+    return LAYOUT_DEFAULT;
   }
 }
 const layoutOption = readLayoutOption();
@@ -10440,13 +10442,14 @@ if (layoutOption && layoutShell) {
   const picker = document.createElement("select");
   picker.className = "layout-qa-picker";
   picker.setAttribute("aria-label", "פריסת QA");
-  picker.innerHTML = ["", ...LAYOUT_OPTIONS].map((value) => `<option value="${value}"${value === layoutOption ? " selected" : ""}>${value ? `פריסה ${value}` : "רגיל"}</option>`).join("");
+  picker.innerHTML = LAYOUT_OPTIONS.map((value) => `<option value="${value}"${value === layoutOption ? " selected" : ""}>פריסה ${value}</option>`).join("");
   picker.addEventListener("change", () => {
     const url = new URL(location.href);
-    url.searchParams.set("layout", picker.value || "off");
+    url.searchParams.set("layout", picker.value);
     location.href = url.toString();
   });
-  document.body.append(picker);
+  // The debug picker shows only when ?layout= is in the URL.
+  if (new URLSearchParams(location.search).has("layout")) document.body.append(picker);
   if (layoutOption === "A") {
     // A: the trade desk gets the same fold as the open-trades board, so the header folds on every trade view.
     const desk = document.querySelector("#community-panel-trade");

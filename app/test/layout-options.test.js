@@ -6,11 +6,18 @@ const app = await readFile(new URL("../public/app.js", import.meta.url), "utf8")
 const css = await readFile(new URL("../public/styles.css", import.meta.url), "utf8");
 const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
 
-test("layout options are opt-in: no data-layout by default, only ?layout= / klafi-layout set it", () => {
-  assert.doesNotMatch(html, /data-layout=/, "production markup has no layout option");
+test("A is the default layout; B–E only via ?layout=X; the picker only with ?layout in the URL", () => {
+  assert.doesNotMatch(html, /data-layout=/, "markup has no layout; app.js sets it");
   assert.match(app, /const LAYOUT_OPTIONS = \["A", "B", "C", "D", "E"\];/);
-  assert.match(app, /if \(layoutOption && layoutShell\) \{\n  layoutShell\.dataset\.layout = layoutOption;/);
-  assert.match(app, /else storage\.removeItem\(LAYOUT_KEY\);/, "?layout=off clears the stored option");
+  assert.match(app, /const LAYOUT_DEFAULT = "A";/);
+  assert.match(app, /return LAYOUT_OPTIONS\.includes\(value\) \? value : LAYOUT_DEFAULT;/, "?layout=off gives A");
+  assert.match(app, /return LAYOUT_OPTIONS\.includes\(stored\) \? stored : LAYOUT_DEFAULT;/, "no stored key gives A");
+  assert.match(app, /if \(new URLSearchParams\(location\.search\)\.has\("layout"\)\) document\.body\.append\(picker\);/);
+});
+
+test("the publish-trade button is centered on its own row", () => {
+  assert.match(css, /\.trade-desk-head \{\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: center;/);
+  assert.match(css, /\.trade-desk \.trade-desk-head h2 \{\n  flex: 1 1 100%;/);
 });
 
 test("every layout rule is scoped to a data-layout value", () => {
