@@ -8,7 +8,7 @@ const html = await readFile(new URL("../public/index.html", import.meta.url), "u
 
 test("layout options are opt-in: no data-layout by default, only ?layout= / klafi-layout set it", () => {
   assert.doesNotMatch(html, /data-layout=/, "production markup has no layout option");
-  assert.match(app, /const LAYOUT_OPTIONS = \["A", "B", "C", "D"\];/);
+  assert.match(app, /const LAYOUT_OPTIONS = \["A", "B", "C", "D", "E"\];/);
   assert.match(app, /if \(layoutOption && layoutShell\) \{\n  layoutShell\.dataset\.layout = layoutOption;/);
   assert.match(app, /else storage\.removeItem\(LAYOUT_KEY\);/, "?layout=off clears the stored option");
 });
@@ -18,7 +18,7 @@ test("every layout rule is scoped to a data-layout value", () => {
   const selectors = block.replace(/\/\*[\s\S]*?\*\//g, "").match(/^[^{}@\n][^{}]*\{/gm) || [];
   for (const selector of selectors) {
     if (selector.includes(".layout-qa-picker")) continue;
-    for (const part of selector.replace("{", "").split(",")) assert.match(part, /data-layout="[ABCD]"/, part.trim());
+    for (const part of selector.replace("{", "").split(",")) assert.match(part, /data-layout="[ABCDE]"/, part.trim());
   }
 });
 
@@ -46,4 +46,10 @@ test("A folded trades hide the tabs, kicker and desk heading like the binder fol
   assert.match(block, /html:not\(:has\(#klafi-tips:not\(\[hidden\]\)\)\) #app\[data-layout="A"\]\[data-page="growth"\]:has\(#community-panel-trade\.is-chrome-collapsed:not\(\[hidden\]\)\) #growth-view \.community-nav/);
   assert.match(block, /\.work-card\.is-chrome-collapsed:not\(\[hidden\]\) > \.work-kicker/);
   assert.match(block, /#community-panel-trade\.is-chrome-collapsed \.trade-desk-head > h2/);
+});
+
+test("E = B plus pinned sort/filter bars", () => {
+  const block = css.slice(css.indexOf("/* ── QA layout options"));
+  assert.match(block, /#app\[data-layout="E"\]\[data-page="growth"\] #main/, "E reuses B's single page scroller");
+  assert.match(block, /#app\[data-layout="E"\]\[data-page="binder"\] #binder-filters,\n#app\[data-layout="E"\]\[data-page="growth"\] #trade-board-toolbar:not\(\[hidden\]\) \{\n  position: sticky;/);
 });

@@ -7148,7 +7148,9 @@ html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growt
 
 /* B: on card/trade pages the whole page scrolls (header included); only the bottom nav stays pinned. */
 #app[data-layout="B"][data-page="binder"],
-#app[data-layout="B"][data-page="growth"] {
+#app[data-layout="B"][data-page="growth"],
+#app[data-layout="E"][data-page="binder"],
+#app[data-layout="E"][data-page="growth"] {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
@@ -7156,27 +7158,42 @@ html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growt
   grid-template-rows: auto auto 1fr;
   align-content: start;
 }
+
 #app[data-layout="B"][data-page="binder"] #main,
 #app[data-layout="B"][data-page="growth"] #main,
 #app[data-layout="B"][data-page="binder"] #binder-view.view.active,
-#app[data-layout="B"][data-page="growth"] #growth-view.view.active {
+#app[data-layout="B"][data-page="growth"] #growth-view.view.active,
+#app[data-layout="E"][data-page="binder"] #main,
+#app[data-layout="E"][data-page="growth"] #main,
+#app[data-layout="E"][data-page="binder"] #binder-view.view.active,
+#app[data-layout="E"][data-page="growth"] #growth-view.view.active {
   height: auto;
   min-height: auto; /* content height, so #main's nav clearance lands after the last row, not under it */
   overflow: visible;
 }
+
 #app[data-layout="B"][data-page="binder"] #binder-grid,
 #app[data-layout="B"][data-page="growth"] .growth-grid,
-#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card {
+#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card,
+#app[data-layout="E"][data-page="binder"] #binder-grid,
+#app[data-layout="E"][data-page="growth"] .growth-grid,
+#app[data-layout="E"][data-page="growth"] .growth-grid > .work-card {
   height: auto;
   max-height: none;
   flex: 0 0 auto;
   overflow: visible;
 }
+
 #app[data-layout="B"][data-page="growth"] #trade-board,
 #app[data-layout="B"][data-page="growth"] .leaderboard-list,
 #app[data-layout="B"][data-page="growth"] #collector-board,
 #app[data-layout="B"][data-page="growth"] #daily-challenge-board,
-#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card.trade-desk {
+#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card.trade-desk,
+#app[data-layout="E"][data-page="growth"] #trade-board,
+#app[data-layout="E"][data-page="growth"] .leaderboard-list,
+#app[data-layout="E"][data-page="growth"] #collector-board,
+#app[data-layout="E"][data-page="growth"] #daily-challenge-board,
+#app[data-layout="E"][data-page="growth"] .growth-grid > .work-card.trade-desk {
   max-height: none;
   overflow: visible !important; /* beats the short-phone .trade-desk overflow !important: one scroller only */
 }
@@ -7256,6 +7273,33 @@ html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growt
 .layout-qa-picker:focus-visible { outline: 2px solid #1f4f4a; outline-offset: 1px; }
 /* B: content now scrolls under the fixed nav row, so its strip (nav + footer links) gets the paper behind it. */
 #app[data-layout="B"][data-page="binder"] .top-nav-row,
-#app[data-layout="B"][data-page="growth"] .top-nav-row {
+#app[data-layout="B"][data-page="growth"] .top-nav-row,
+#app[data-layout="E"][data-page="binder"] .top-nav-row,
+#app[data-layout="E"][data-page="growth"] .top-nav-row {
   background: linear-gradient(to bottom, transparent, var(--paper) 18px);
+}
+
+/* E: B (one page scroller, header scrolls away) but the sort/filter controls stay pinned while scrolling:
+   the binder's filter strip (list/owned/missing, sort, party, set) and the open-offers filter bar.
+   Their wrappers become display:contents so the sticky bar's containing block is the whole page/panel;
+   the fold has nothing to fold here, so its button is hidden. */
+#app[data-layout="E"][data-page="binder"] #binder-chrome,
+#app[data-layout="E"][data-page="binder"] #binder-chrome > .binder-chrome-clip,
+#app[data-layout="E"][data-page="growth"] #trade-board-chrome,
+#app[data-layout="E"][data-page="growth"] #trade-board-chrome > .binder-chrome-clip {
+  display: contents;
+}
+#app[data-layout="E"][data-page="binder"] #binder-chrome-toggle,
+#app[data-layout="E"][data-page="growth"] #trade-board-chrome-toggle {
+  display: none;
+}
+#app[data-layout="E"][data-page="binder"] #binder-filters,
+#app[data-layout="E"][data-page="growth"] #trade-board-toolbar:not([hidden]) {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin-inline: -4px;
+  padding: 4px 4px 6px;
+  background: var(--paper);
+  box-shadow: 0 6px 8px -8px rgba(26, 31, 28, 0.45);
 }

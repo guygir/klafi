@@ -10415,7 +10415,7 @@ window.__kalpiDebug = {
 
 /* ── QA layout options (?layout=A|B|C|D or localStorage klafi-layout; ?layout=off clears). Default: none. ── */
 const LAYOUT_KEY = "klafi-layout";
-const LAYOUT_OPTIONS = ["A", "B", "C", "D"];
+const LAYOUT_OPTIONS = ["A", "B", "C", "D", "E"];
 function readLayoutOption(search = location.search, storage = localStorage) {
   const asked = new URLSearchParams(search).get("layout");
   if (asked !== null) {
