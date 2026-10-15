@@ -7126,6 +7126,22 @@ html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growt
 html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) #growth-view .workspace-head {
   display: none;
 }
+/* A, folded trades: like the binder, everything between the level bar and the content goes
+   (section + page tabs, kicker, desk heading, the card frame's top padding); the fold button stays.
+   Not while a page guide is up: its steps ring those tabs. */
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden]) #trade-board-chrome-toggle:not([hidden])) #growth-view .community-nav,
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) #growth-view .community-nav,
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] .work-card.is-chrome-collapsed:not([hidden]) > .work-kicker,
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] #community-panel-trade.is-chrome-collapsed .trade-desk-head > h2 {
+  display: none;
+}
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] #community-panel-open-trades.is-chrome-collapsed:not([hidden]):has(#trade-board-chrome-toggle:not([hidden])),
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] #community-panel-trade.is-chrome-collapsed:not([hidden]) {
+  padding-top: 2px;
+}
+html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(.work-card.is-chrome-collapsed:not([hidden])) #growth-view.view.active {
+  padding-top: 0;
+}
 /* The desk's fold sits at its top, compact like the board's. */
 #app[data-layout="A"] #trade-desk-chrome-toggle { margin: 0 0 4px; }
 

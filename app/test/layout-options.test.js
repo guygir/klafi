@@ -40,3 +40,10 @@ test("trades: A folds the header on the desk too, B keeps one scroller and an un
   assert.match(block, /#growth-view\.view\.active \{\n  height: auto;\n  min-height: auto;/);
   assert.match(block, /\.growth-grid > \.work-card\.trade-desk \{\n  max-height: none;\n  overflow: visible !important;/);
 });
+
+test("A folded trades hide the tabs, kicker and desk heading like the binder fold, but not during a guide", () => {
+  const block = css.slice(css.indexOf("/* ── QA layout options"));
+  assert.match(block, /html:not\(:has\(#klafi-tips:not\(\[hidden\]\)\)\) #app\[data-layout="A"\]\[data-page="growth"\]:has\(#community-panel-trade\.is-chrome-collapsed:not\(\[hidden\]\)\) #growth-view \.community-nav/);
+  assert.match(block, /\.work-card\.is-chrome-collapsed:not\(\[hidden\]\) > \.work-kicker/);
+  assert.match(block, /#community-panel-trade\.is-chrome-collapsed \.trade-desk-head > h2/);
+});
