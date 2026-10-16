@@ -9,21 +9,37 @@ export function publicTradeNotices(session) {
       tradeId: String(notice?.tradeId || ""),
       receivedCardId: String(notice?.receivedCardId || ""),
       givenCardId: String(notice?.givenCardId || ""),
+      receivedCardIds: Array.isArray(notice?.receivedCardIds) ? notice.receivedCardIds.map(String) : [],
+      givenCardIds: Array.isArray(notice?.givenCardIds) ? notice.givenCardIds.map(String) : [],
       acceptedAt: notice?.acceptedAt || null,
       accepterName: String(notice?.accepterName || "").trim() || "שחקן",
       ownerName: String(notice?.ownerName || "").trim() || "שחקן",
     }))
-    .filter((notice) => notice.id && notice.receivedCardId);
+    .filter((notice) => notice.id && (notice.receivedCardId || notice.receivedCardIds.length));
 }
 
-export function enqueueAcceptedTradeNotice(owner, trade, { acceptedAt, accepterName, ownerName } = {}) {
+export function enqueueAcceptedTradeNotice(owner, trade, {
+  acceptedAt,
+  accepterName,
+  ownerName,
+  receivedCardIds = null,
+  givenCardIds = null,
+} = {}) {
   if (!owner || !trade) return null;
   owner.pendingTradeNotices = Array.isArray(owner.pendingTradeNotices) ? owner.pendingTradeNotices : [];
+  const received = Array.isArray(receivedCardIds) && receivedCardIds.length
+    ? receivedCardIds.map(String)
+    : [String(trade.acceptedWantedCardId || trade.wantedCardId || "")].filter(Boolean);
+  const given = Array.isArray(givenCardIds) && givenCardIds.length
+    ? givenCardIds.map(String)
+    : [String(trade.acceptedOfferedCardId || trade.offeredCardId || "")].filter(Boolean);
   const notice = {
     id: randomUUID(),
     tradeId: trade.tradeId,
-    receivedCardId: trade.wantedCardId,
-    givenCardId: trade.offeredCardId,
+    receivedCardId: received[0] || "",
+    givenCardId: given[0] || "",
+    receivedCardIds: received,
+    givenCardIds: given,
     acceptedAt: acceptedAt || null,
     accepterName: String(accepterName || "").trim() || "שחקן",
     ownerName: String(ownerName || owner.displayName || "").trim() || "שחקן",

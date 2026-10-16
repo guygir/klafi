@@ -26,6 +26,17 @@ import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-bind
 import { newReferralCode, normalizeInviteCode } from "./referral.js";
 import { collectionStars, numberedHeldByCard } from "./stars.js";
 import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
+import {
+  TRADE_MESSAGES_HE,
+  canAcceptTrade as canCompleteTrade,
+  normalizeStoredTrade,
+  ownerCanOfferCards,
+  parseCreateTradeInput,
+  publicTradeView,
+  reservedOfferCopies,
+  tradeRecordFromSides,
+  validateTradeShape,
+} from "./trade-core.js";
 import { numberedTotal, takeCollectorBoard, takeNumberedBoard } from "./collector-board.js";
 import { dailyRaceScore, raceTargetForSavedFaction, visibleDailyRaceLeaders } from "./daily-race.js";
 
@@ -60,6 +71,7 @@ export function normalizeState(value = {}) {
   state.analytics ??= { events: [] };
   state.analytics.events ??= [];
   state.trades ??= [];
+  state.trades = state.trades.map((trade) => normalizeStoredTrade(trade));
   state.factions ??= {};
   state.reports ??= [];
   state.idempotency ??= {};
@@ -445,32 +457,37 @@ export class JsonStore {
     });
   }
 
-  async createTrade({ sessionToken, offeredCardId, wantedCardId, createdAt, expiresAt }) {
+  async createTrade({ sessionToken, offered, wanted, offeredCardId, wantedCardId, createdAt, expiresAt }) {
     return this.exclusive(async () => {
       const session = this.getSession(sessionToken);
-      if (!session || !session.inventory[offeredCardId] || offeredCardId === wantedCardId) return null;
+      const parsed = offered && wanted
+        ? { offered, wanted }
+        : parseCreateTradeInput({ offeredCardId, wantedCardId });
+      const shape = validateTradeShape(parsed);
+      if (!shape.ok) return { error: shape.code, messageHe: shape.messageHe };
+      if (!session) return null;
       const existing = this.state.trades.find((trade) =>
         trade.ownerToken === sessionToken
         && trade.status === "open"
         && Date.parse(trade.expiresAt || 0) > Date.parse(createdAt));
       if (existing) return { blocked: true, existing };
-      const reservedCopies = this.state.trades.filter((trade) =>
-        trade.ownerToken === sessionToken
-        && trade.offeredCardId === offeredCardId
-        && trade.status === "open"
-        && Date.parse(trade.expiresAt || 0) > Date.parse(createdAt)).length;
-      if (regularCopyCount(session, offeredCardId) <= reservedCopies) return null;
-      const trade = {
+      const canOffer = ownerCanOfferCards(
+        session,
+        this.state.trades,
+        sessionToken,
+        parsed.offered.cardIds,
+        createdAt,
+        regularCopyCount,
+      );
+      if (!canOffer.ok) return { error: "NOT_OWNED", messageHe: TRADE_MESSAGES_HE.NOT_OWNED, cardId: canOffer.cardId };
+      const trade = tradeRecordFromSides({
         tradeId: randomUUID(),
         ownerToken: sessionToken,
-        offeredCardId,
-        wantedCardId,
-        status: "open",
+        offered: parsed.offered,
+        wanted: parsed.wanted,
         createdAt,
         expiresAt,
-        acceptedAt: null,
-        acceptedBy: null,
-      };
+      });
       this.state.trades.unshift(trade);
       this.state.trades = this.state.trades.slice(0, 100);
       await this.persist();
@@ -506,34 +523,64 @@ export class JsonStore {
     });
   }
 
-  async acceptTrade({ tradeId, sessionToken, acceptedAt, offeredFinish, wantedFinish }) {
+  async acceptTrade({
+    tradeId,
+    sessionToken,
+    acceptedAt,
+    offeredCardId = null,
+    wantedCardId = null,
+    offeredFinishes = {},
+    wantedFinishes = {},
+  }) {
     return this.exclusive(async () => {
       const trade = this.state.trades.find((candidate) => candidate.tradeId === tradeId);
       const owner = trade ? this.getSession(trade.ownerToken) : null;
       const accepter = this.getSession(sessionToken);
-      if (!trade || trade.status !== "open" || Date.parse(trade.expiresAt || 0) <= Date.parse(acceptedAt) || trade.ownerToken === sessionToken
-        || regularCopyCount(owner, trade.offeredCardId) < 1
-        || regularCopyCount(accepter, trade.wantedCardId) < 1) {
-        return null;
+      const verdict = trade && owner && accepter
+        ? canCompleteTrade(trade, {
+          owner,
+          accepter: { ...accepter, token: sessionToken },
+          trades: this.state.trades,
+          at: acceptedAt,
+          regularCopyCountFn: regularCopyCount,
+          offeredCardId,
+          wantedCardId,
+        })
+        : { ok: false, code: "ACCEPT_FAILED", messageHe: TRADE_MESSAGES_HE.ACCEPT_FAILED };
+      if (!verdict.ok) {
+        return {
+          ok: false,
+          error: verdict.code || "ACCEPT_FAILED",
+          code: verdict.code || "ACCEPT_FAILED",
+          messageHe: verdict.messageHe || TRADE_MESSAGES_HE.ACCEPT_FAILED,
+        };
       }
-      moveOwnedCard(owner, accepter, trade.offeredCardId, {
-        acquiredBy: "trade-accepted",
-        pulledAt: acceptedAt,
-        finish: offeredFinish,
-        instanceId: randomUUID(),
-      });
-      moveOwnedCard(accepter, owner, trade.wantedCardId, {
-        acquiredBy: "trade-accepted",
-        pulledAt: acceptedAt,
-        finish: wantedFinish,
-        instanceId: randomUUID(),
-      });
+      for (const cardId of verdict.offeredCardIds) {
+        moveOwnedCard(owner, accepter, cardId, {
+          acquiredBy: "trade-accepted",
+          pulledAt: acceptedAt,
+          finish: offeredFinishes[cardId] || offeredFinishes.default,
+          instanceId: randomUUID(),
+        });
+      }
+      for (const cardId of verdict.wantedCardIds) {
+        moveOwnedCard(accepter, owner, cardId, {
+          acquiredBy: "trade-accepted",
+          pulledAt: acceptedAt,
+          finish: wantedFinishes[cardId] || wantedFinishes.default,
+          instanceId: randomUUID(),
+        });
+      }
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
+      trade.acceptedOfferedCardId = verdict.acceptedOfferedCardId;
+      trade.acceptedWantedCardId = verdict.acceptedWantedCardId;
       enqueueAcceptedTradeNotice(owner, trade, {
         acceptedAt,
         accepterName: accepter.displayName,
         ownerName: owner.displayName,
+        receivedCardIds: verdict.wantedCardIds,
+        givenCardIds: verdict.offeredCardIds,
       });
       bumpStateRevision(owner);
       bumpStateRevision(accepter);
@@ -570,6 +617,20 @@ export class JsonStore {
     });
   }
 
+  async clearOpenTradesDebug(cancelledAt) {
+    return this.exclusive(async () => {
+      let cleared = 0;
+      for (const trade of this.state.trades) {
+        if (trade.status !== "open") continue;
+        trade.status = "cancelled";
+        trade.cancelledAt = cancelledAt;
+        cleared += 1;
+      }
+      if (cleared) await this.persist();
+      return { cleared };
+    });
+  }
+
   async hideTrade({ tradeId, sessionToken }) {
     return this.exclusive(async () => {
       const session = this.getSession(sessionToken);
@@ -583,23 +644,29 @@ export class JsonStore {
     });
   }
 
+  async reservedOfferCopiesFor(sessionToken, cardId, at) {
+    return reservedOfferCopies(this.state.trades, sessionToken, cardId, at);
+  }
+
   async listTrades(token) {
     const current = this.getSession(token);
     const hidden = new Set(current?.hiddenTradeIds || []);
     return this.state.trades
       .filter((trade) => trade.status === "open" || trade.ownerToken === token || trade.acceptedBy === token)
       .filter((trade) => trade.ownerToken === token || !hidden.has(trade.tradeId))
-      .map(({ ownerToken, acceptedBy, ...trade }) => {
-        const owner = this.getSession(ownerToken);
+      .map((trade) => {
+        const owner = this.getSession(trade.ownerToken);
+        const view = publicTradeView(trade, {
+          token,
+          ownerSession: owner,
+          viewerSession: current ? { ...current, token } : null,
+          trades: this.state.trades,
+          at: null,
+          regularCopyCountFn: regularCopyCount,
+        });
         return {
-          ...trade,
+          ...view,
           ownerLabel: owner?.displayName || "שחקן קְלָפִי",
-          ownedByCurrent: ownerToken === token,
-          acceptedByCurrent: acceptedBy === token,
-          canAccept: trade.status === "open"
-            && ownerToken !== token
-            && regularCopyCount(owner, trade.offeredCardId) > 0
-            && regularCopyCount(current, trade.wantedCardId) > 0,
         };
       });
   }

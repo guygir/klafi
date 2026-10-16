@@ -104,7 +104,7 @@ test("client: cached trades paint first, server lists replace them, actions stay
   assert.match(js, /if \(Array\.isArray\(boot\.trades\)\) setTrades\(boot\.trades\);/, "a missing list never wipes the cache");
   // Accept buttons still require a current inventory; the server validates every action.
   assert.match(js, /const acceptInventory = currentTradeInventory\(\);/);
-  assert.match(js, /request\(`\/api\/trades\/\$\{encodeURIComponent\(tradeId\)\}\/accept`, \{ method: "POST" \}\)/);
+  assert.match(js, /request\(`\/api\/trades\/\$\{encodeURIComponent\(tradeId\)\}\/accept`, \{[\s\S]*method: "POST"/);
   // Switching session drops the other token's trades.
   assert.match(js, /model\.trades = \[\];\n\s+model\.tradesKnown = false;\n\s+model\.tradesFromCache = false;\n\s+model\.tradesCacheToken = null;/);
 });

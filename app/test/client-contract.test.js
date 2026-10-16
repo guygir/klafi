@@ -425,8 +425,17 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /runtimeState === "held"/);
   assert.match(javascript, /function tradeCatalog/);
   assert.match(javascript, /function tradeWantLabel\(card\) \{\s*\/\/[^\n]*\n\s*return `\$\{cardTitle\(card\)\} · \$\{cardCode\(card\)\} · \$\{rarityMark\(card\.rarity\)\} \$\{rarityNameHe\(card\.rarity\)\} · \$\{plainOwnedCount\(card\)\}x`/);
-  assert.match(javascript, /tradeOfferedCard[\s\S]{0,400}tradeWantLabel\(candidate\)/);
-  assert.match(javascript, /tradeWantedCard[\s\S]{0,240}tradeWantLabel\(candidate\)/);
+  assert.match(javascript, /tradeOfferedCard[\s\S]{0,400}tradeComposeOfferLabel\(candidate\)/);
+  assert.match(javascript, /tradeWantedCard[\s\S]{0,240}tradeComposeWantLabel\(candidate\)/);
+  assert.match(javascript, /tradeModeHintHe/);
+  assert.match(html, /כולם \(וגם\)/);
+  assert.match(javascript, /tradeFormationSummary/);
+  assert.match(css, /\.trade-formation-badge/);
+  assert.match(javascript, /paintComposeFormationHint/);
+  assert.match(javascript, /sideNeedsPick\(trade\.offeredMode, offeredCardIds\(trade\)\)/);
+  assert.match(javascript, /trade-accept-picks/);
+  assert.match(javascript, /data-trade-id=/);
+  assert.match(css, /\.trade-offer > \.trade-accept-picks/);
   assert.doesNotMatch(html, /הצעות ששחקנים אחרים פרסמו/);
   assert.match(html, /id="trade-board"/);
   assert.match(javascript, /const tradableCards = tradeCatalog\(\)/);
@@ -440,7 +449,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /\.trade-thumb\.is-concealed \.card-rarity-zone/);
   assert.match(javascript, /function tradeCardUnowned/);
   assert.match(javascript, /concealRenderedTradeThumbs\(elements\.tradeBoard\)/);
-  assert.match(javascript, /class="trade-thumb\$\{conceal \? " is-concealed" : ""\}"/);
+  assert.match(javascript, /class="trade-thumb(?: trade-stack-chip)?\$\{conceal \? " is-concealed" : ""\}"/);
   assert.match(javascript, /const earned = binderBadgeOrder\(visibleEarnedBadges\(\)\);/, "the binder rail shows earned badges from open pages");
   assert.match(javascript, /"party-slot-2": "משנה"/);
   assert.match(html, /id="wait-dialog"/);
@@ -581,7 +590,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-board-offered"/);
   assert.match(html, /id="trade-board-wanted"/);
   assert.match(html, /id="trade-board-pager"/);
-  assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,80}?width:\s*100%/);
+  assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,120}?width:\s*76px/);
   assert.match(css, /\.trade-choice-row[\s\S]{0,180}?grid-template-columns:\s*auto minmax\(0,\s*1fr\)/);
   assert.match(html, /class="trade-choice-row"/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame[\s\S]{0,80}?width:\s*48px/);
@@ -753,7 +762,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /#main \{[^}]*position:\s*relative/);
   assert.match(css, /\.community-nav \{[^}]*gap: 4px/);
   assert.match(css, /\.trade-desk \{\s*display: flex;[\s\S]*?overflow-y: auto;/);
-  assert.match(css, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) !important/);
+  assert.match(css, /#app \.trade-desk \.trade-form[\s\S]{0,240}flex-direction:\s*column !important/);
   assert.doesNotMatch(css, /\.trade-desk \{\s*overflow: hidden !important;/);
   assert.match(html, /id="trade-wanted-set"/);
   assert.ok(

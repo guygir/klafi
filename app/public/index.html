@@ -331,9 +331,18 @@
             <div id="trade-active" class="trade-active" hidden></div>
             <div id="trade-compose" class="trade-compose" hidden>
               <div class="trade-form">
-                <fieldset>
+                <fieldset class="trade-side-fieldset" data-trade-side="offered">
                   <legend>אני נותן</legend>
-                  <div class="trade-choice-row">
+                  <div class="trade-side-mode">
+                    <p class="trade-mode-hint" data-trade-mode-hint="offered">צריך את כל הקלפים ברשימה.</p>
+                    <div class="trade-mode-toggle" role="group" aria-label="איך הקלפים שאני נותן מתחברים">
+                      <button type="button" class="trade-mode-btn is-active" data-trade-side="offered" data-trade-mode="and">כולם (וגם)</button>
+                      <button type="button" class="trade-mode-btn" data-trade-side="offered" data-trade-mode="or">אחד (או)</button>
+                    </div>
+                  </div>
+                  <div id="trade-offered-slots" class="trade-side-slots" aria-live="polite"></div>
+                  <button type="button" id="trade-offered-add" class="secondary-action trade-side-add">+ הוסיפו קלף</button>
+                  <div class="trade-choice-row" hidden>
                     <button type="button" id="trade-offered-preview" class="trade-thumb" hidden></button>
                     <div class="trade-choice-fields">
                       <label>סדרה <select id="trade-offered-set"></select></label>
@@ -341,9 +350,19 @@
                     </div>
                   </div>
                 </fieldset>
-                <fieldset>
+                <p class="trade-compose-arrow" aria-hidden="true">⇄</p>
+                <fieldset class="trade-side-fieldset" data-trade-side="wanted">
                   <legend>אני רוצה</legend>
-                  <div class="trade-choice-row">
+                  <div class="trade-side-mode">
+                    <p class="trade-mode-hint" data-trade-mode-hint="wanted">צריך את כל הקלפים ברשימה.</p>
+                    <div class="trade-mode-toggle" role="group" aria-label="איך הקלפים שאני רוצה מתחברים">
+                      <button type="button" class="trade-mode-btn is-active" data-trade-side="wanted" data-trade-mode="and">כולם (וגם)</button>
+                      <button type="button" class="trade-mode-btn" data-trade-side="wanted" data-trade-mode="or">אחד (או)</button>
+                    </div>
+                  </div>
+                  <div id="trade-wanted-slots" class="trade-side-slots" aria-live="polite"></div>
+                  <button type="button" id="trade-wanted-add" class="secondary-action trade-side-add">+ הוסיפו קלף</button>
+                  <div class="trade-choice-row" hidden>
                     <button type="button" id="trade-wanted-preview" class="trade-thumb" hidden></button>
                     <div class="trade-choice-fields">
                       <label>סדרה <select id="trade-wanted-set"></select></label>

@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   TIPS_COOKIE,
   TIPS_STORAGE,
@@ -174,8 +177,12 @@ test("each nav page has a first-visit guide; seen pages and mute stop auto-open"
   assert.doesNotMatch(PAGE_GUIDES.growth[3].body, /שתי קומות/);
   assert.match(PAGE_GUIDES.growth[0].ring, /community-sections/);
   assert.match(PAGE_GUIDES.growth[1].body, /הצעה להחלפה/);
+  assert.match(PAGE_GUIDES.growth[1].body, /שלושה קלפים/);
+  assert.match(PAGE_GUIDES.growth[1].body, /כולם \(וגם\)/);
+  assert.match(PAGE_GUIDES.growth[1].body, /אחד \(או\)/);
   assert.match(PAGE_GUIDES.growth[2].body, /הצעות/);
   assert.match(PAGE_GUIDES.growth[2].body, /לפלטר/);
+  assert.match(PAGE_GUIDES.growth[2].body, /או/);
   assert.match(PAGE_GUIDES.growth[3].ring, /community-section-race/);
   assert.doesNotMatch(PAGE_GUIDES.growth[3].ring, /community-tab-leagues|community-tab-challenge/);
   assert.match(PAGE_GUIDES.growth[3].body, /ליגות/);
@@ -364,4 +371,15 @@ test("recycle tip opens only on the binder once a plain stack hits 3", () => {
     tipsOff: readTipsPref(fresh) === "off",
     seen: Boolean(readSeenPages(fresh).recycle),
   }), false);
+});
+
+test("growth tutorial rings still exist in the live HTML", async () => {
+  const html = await readFile(path.join(path.dirname(fileURLToPath(import.meta.url)), "../public/index.html"), "utf8");
+  for (const step of PAGE_GUIDES.growth) {
+    for (const selector of String(step.ring).split(",")) {
+      const id = selector.trim().replace(/^#/, "").replace(/\..*$/, "");
+      if (!id) continue;
+      assert.match(html, new RegExp(`id="${id}"`), `${step.title} still rings #${id}`);
+    }
+  }
 });
