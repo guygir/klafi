@@ -341,7 +341,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-wanted-set"/);
   assert.match(html, /id="trade-active"/);
   assert.match(html, /id="trade-compose"/);
-  assert.match(html, /class="trade-desk-head">\s*<h2>[^<]+<\/h2>\s*<button id="trade-create"/, "publish sits in the title row, after the title (RTL: left of it)");
+  assert.match(html, /class="trade-desk-head">\s*<h2>[^<]+<\/h2>\s*<\/div>/, "title row is title-only; publish sits below compose");
+  assert.match(html, /class="trade-publish-row">\s*<button id="trade-create"/, "publish sits in a centered row under compose");
   assert.match(html, /id="trade-offered-set"[\s\S]*id="trade-wanted-set"/);
   assert.match(html, /id="avatar-seal"/);
   assert.match(html, /id="level-letter"/);
@@ -429,6 +430,15 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /tradeWantedCard[\s\S]{0,240}tradeComposeWantLabel\(candidate\)/);
   assert.match(javascript, /tradeModeHintHe/);
   assert.match(html, /כולם \(וגם\)/);
+  assert.match(html, /trade-mode-btn is-active"[^>]*aria-pressed="true"/);
+  assert.match(html, /data-trade-mode="or" aria-pressed="false"/);
+  assert.match(javascript, /setAttribute\("aria-pressed", active \? "true" : "false"\)/);
+  assert.match(css, /\.trade-mode-btn\.is-active \{[^}]*background:\s*var\(--civic\)/);
+  assert.match(css, /\.trade-mode-btn\.is-active::before \{[^}]*content:\s*"✓ "/);
+  assert.match(javascript, /orderTradeComposeSlotCards\(cards, sideKey/);
+  assert.match(javascript, /tradeComposeCardsInSet\(pool, setKey\)/);
+  assert.match(javascript, /tradeOrChipTapOpensDialog\(alreadyPicked\)/);
+  assert.match(javascript, /if \(!tradeOrChipTapOpensDialog\(alreadyPicked\)\) \{[\s\S]*?renderTradeBoard\(\);[\s\S]*?return;/);
   assert.match(javascript, /tradeFormationSummary/);
   assert.match(css, /\.trade-formation-badge/);
   assert.doesNotMatch(javascript, /trade\.qaLabel/);
@@ -440,7 +450,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /data-trade-id=/);
   assert.match(javascript, /is-picked/);
   assert.match(css, /\.trade-side-rail/);
-  assert.match(css, /\.trade-offer \.trade-thumb\.is-picked/);
+  assert.match(css, /\.trade-offer \.trade-thumb\.is-picked \{[^}]*outline:\s*3px solid var\(--civic\)/);
   assert.doesNotMatch(javascript, /trade-accept-picks/);
   assert.doesNotMatch(css, /\.trade-offer > \.trade-accept-picks/);
   assert.doesNotMatch(html, /הצעות ששחקנים אחרים פרסמו/);
@@ -774,9 +784,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /\.trade-desk \{\s*overflow: hidden !important;/);
   assert.match(html, /id="trade-wanted-set"/);
   assert.ok(
-    html.indexOf("trade-desk-head") < html.indexOf("trade-form"),
-    "the publish button rides in the title row, so both big card slots stay on one phone page",
+    html.indexOf("trade-desk-head") < html.indexOf("trade-form")
+      && html.indexOf("trade-form") < html.indexOf("trade-publish-row"),
+    "the publish button sits centered under compose, after both sides",
   );
+  assert.match(css, /\.trade-publish-row \{[^}]*justify-content:\s*center/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame \{\s*width: var\(--trade-thumb-w\);/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(css, /\.pack-shadow \{\s*display: none;/);

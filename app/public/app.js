@@ -20,7 +20,20 @@ import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleCl
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
 import { offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
-import { TRADE_SIDE_MAX, emptyTradeSide, offeredCardIds, sideJoinLabel, sideNeedsPick, tradeFormationSummary, tradeModeHintHe } from "./trade-compose-ui.js";
+import {
+  TRADE_SIDE_MAX,
+  emptyTradeSide,
+  offeredCardIds,
+  orderTradeComposeSlotCards,
+  sideJoinLabel,
+  sideNeedsPick,
+  sortTradeComposeOffered as sortOfferedByCopies,
+  sortTradeComposeWanted as sortWantedByHolders,
+  tradeComposeCardsInSet,
+  tradeFormationSummary,
+  tradeModeHintHe,
+  tradeOrChipTapOpensDialog,
+} from "./trade-compose-ui.js";
 import {
   exitWalkoutSunburst,
   readSunburstRarityOverride,
@@ -584,19 +597,11 @@ function tradeComposeWantLabel(card) {
 }
 
 function sortTradeComposeWanted(cards) {
-  return [...cards].sort((left, right) => {
-    const holderDiff = holderCountFor(right) - holderCountFor(left);
-    if (holderDiff) return holderDiff;
-    return cardTitle(left).localeCompare(cardTitle(right), "he");
-  });
+  return sortWantedByHolders(cards, holderCountFor, cardTitle);
 }
 
 function sortTradeComposeOffered(cards) {
-  return [...cards].sort((left, right) => {
-    const countDiff = plainOwnedCount(right) - plainOwnedCount(left);
-    if (countDiff) return countDiff;
-    return cardTitle(left).localeCompare(cardTitle(right), "he");
-  });
+  return sortOfferedByCopies(cards, plainOwnedCount, cardTitle);
 }
 
 function tradeComposeSetOptions(cards, selectedKey) {
@@ -605,12 +610,6 @@ function tradeComposeSetOptions(cards, selectedKey) {
     '<option value="">בחרו סדרה</option>',
     ...releases.map(([value, label]) => `<option value="${escapeHtml(value)}"${value === selectedKey ? " selected" : ""}>${escapeHtml(label)}</option>`),
   ].join("");
-}
-
-function tradeComposeCardsInSet(cards, setKey) {
-  if (!setKey) return [];
-  const releaseId = String(setKey).replace(/^release:/, "");
-  return cards.filter((candidate) => (candidate.releaseSetId || "other") === releaseId);
 }
 
 function myRegularInventory() {
@@ -6327,7 +6326,11 @@ function syncLegacyTradeSelectFromCompose() {
 
 function tradeSlotCardOptions(cards, selected, sideKey) {
   const labelFor = sideKey === "offered" ? tradeComposeOfferLabel : tradeComposeWantLabel;
-  const ordered = sideKey === "wanted" ? sortTradeComposeWanted(cards) : sortTradeComposeOffered(cards);
+  const ordered = orderTradeComposeSlotCards(cards, sideKey, {
+    ownedCount: plainOwnedCount,
+    holderCount: holderCountFor,
+    title: cardTitle,
+  });
   return [
     '<option value="">בחרו קלף</option>',
     ...ordered.map((candidate) => `<option value="${candidate.id}"${candidate.id === selected ? " selected" : ""}>${escapeHtml(labelFor(candidate))}</option>`),
@@ -6376,7 +6379,9 @@ function renderTradeComposeSlots() {
       </div>`;
     }).join("");
     document.querySelectorAll(`.trade-side-fieldset[data-trade-side="${sideKey}"] .trade-mode-btn`).forEach((button) => {
-      button.classList.toggle("is-active", button.dataset.tradeMode === side.mode);
+      const active = button.dataset.tradeMode === side.mode;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
     });
     if (addBtn) {
       addBtn.hidden = side.cardIds.length >= TRADE_SIDE_MAX;
@@ -7353,7 +7358,7 @@ function renderGrowth() {
   if (elements.tradeActive && elements.tradeCompose) {
     elements.tradeActive.hidden = !mine;
     elements.tradeCompose.hidden = Boolean(mine);
-    // The publish button lives in the title row; it goes with the compose form.
+    // The publish button sits centered under the compose form.
     elements.tradeCreate.hidden = Boolean(mine);
     elements.tradeActive.innerHTML = mine ? `${tradeRowMarkup(mine)}<p class="work-note">אפשר הצעה אחת בכל פעם. כשמישהו מקבל, הקלף נכנס לאוסף מיד.</p>` : "";
     if (mine) {
@@ -10225,9 +10230,13 @@ function handleTradeBoardClick(event) {
     const cardId = chip.dataset.tradeChoiceCard;
     if (tradeId && sideKey && !chip.classList.contains("is-pick-disabled")) {
       const state = tradeAcceptPick(tradeId);
-      if (sideKey === "offered") state.offeredCardId = cardId;
-      else state.wantedCardId = cardId;
-      renderTradeBoard();
+      const field = sideKey === "offered" ? "offeredCardId" : "wantedCardId";
+      const alreadyPicked = state[field] === cardId;
+      if (!tradeOrChipTapOpensDialog(alreadyPicked)) {
+        state[field] = cardId;
+        renderTradeBoard();
+        return;
+      }
     }
     openCardDialog(chip.dataset.tradeChoiceCard);
     return;

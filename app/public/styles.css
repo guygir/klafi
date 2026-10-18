@@ -5263,32 +5263,33 @@ body {
   width: 100%;
 }
 
-/* Trade compose: the publish button shares the title row (RTL: title right, button left), and each
+/* Trade compose: the publish button is centered under the form. Each
    side stacks a large card over its two selects. The thumb scales with the viewport width and height
    so both cards stay whole from 320px phones to desktop. */
 .trade-desk-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  display: block;
   min-width: 0;
   margin: 0 0 4px;
   direction: rtl;
 }
 .trade-desk .trade-desk-head h2 {
-  flex: 1 1 auto;
-  min-width: 0;
   margin: 0;
   font-size: clamp(16px, 4.6vw, 20px);
   line-height: 1.2;
 }
-#app .trade-desk .trade-desk-head #trade-create {
+.trade-publish-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 12px 0 4px;
+}
+#app .trade-desk .trade-publish-row #trade-create {
   flex: 0 0 auto;
-  width: auto;
-  min-height: 44px;
-  margin: 0;
-  padding: 0 16px;
-  font-size: 14px;
+  width: min(280px, 88%);
+  min-height: 48px;
+  margin: 0 auto;
+  padding: 0 20px;
+  font-size: 15px;
   white-space: nowrap;
 }
 .trade-desk .trade-actions:not(:has(> :not([hidden]))) { display: none; }
@@ -5367,17 +5368,25 @@ body {
   width: 100%;
 }
 .trade-mode-btn {
-  min-height: 36px;
-  padding: 6px 10px;
-  border: 1px solid var(--rule);
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 2px solid var(--civic);
   border-radius: 999px;
-  background: #f6efe2;
-  font-size: 12px;
+  background: transparent;
+  color: var(--civic);
+  font-size: 13px;
+  font-weight: 600;
 }
 .trade-mode-btn.is-active {
-  border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent);
-  background: #fff8ea;
-  font-weight: 600;
+  border-color: var(--civic);
+  background: var(--civic);
+  color: var(--paper);
+  font-weight: 700;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--ink) 18%, transparent);
+}
+.trade-mode-btn.is-active::before {
+  content: "✓ ";
+  font-weight: 800;
 }
 .trade-side-slots {
   display: flex;
@@ -5498,10 +5507,17 @@ body {
   width: 100%;
   height: 100%;
 }
+.trade-offer .trade-side-rail,
+.trade-offer .trade-rail-slot {
+  overflow: visible;
+}
 .trade-offer .trade-thumb.is-picked {
-  outline: 2px solid var(--foil);
-  outline-offset: 1px;
+  position: relative;
+  z-index: 1;
+  outline: 3px solid var(--civic);
+  outline-offset: 2px;
   border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 5px var(--foil);
 }
 .trade-offer .trade-thumb.is-pick-disabled {
   opacity: 0.42;
@@ -5958,17 +5974,13 @@ body {
     gap: 10px;
   }
   .trade-desk-head {
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: 8px;
+    display: block;
   }
   .trade-desk .trade-desk-head h2 {
-    flex: 1 1 100%;
     width: 100%;
   }
-  #app .trade-desk .trade-desk-head #trade-create {
-    flex: 1 1 100%;
-    width: 100%;
+  #app .trade-desk .trade-publish-row #trade-create {
+    width: min(280px, 88%);
   }
   .trade-choice-row {
     grid-template-columns: minmax(0, 1fr);

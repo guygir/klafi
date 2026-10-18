@@ -11,7 +11,15 @@ import { PostgresStore } from "../server/postgres-store.js";
 import { TRADE_MESSAGES_HE, assertInventoryConserved, parseCreateTradeInput, validateTradeShape } from "../server/trade-core.js";
 import { QA_TRADE_SAMPLES, partyLeaderSampleIds, qaTradeSamplesAllowed, viewerGrantPlan } from "../server/trade-debug-samples.js";
 import { holdsWantedSide, offersForTradeList } from "../public/trade-list.js";
-import { tradeFormationSummary, tradeModeHintHe } from "../public/trade-compose-ui.js";
+import {
+  orderTradeComposeSlotCards,
+  sortTradeComposeOffered,
+  sortTradeComposeWanted,
+  tradeComposeCardsInSet,
+  tradeFormationSummary,
+  tradeModeHintHe,
+  tradeOrChipTapOpensDialog,
+} from "../public/trade-compose-ui.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
@@ -441,6 +449,62 @@ test("compose mode hints explain AND vs OR in Hebrew", () => {
 
 test("formation summary labels poster AND/OR on open trades", () => {
   assert.match(tradeFormationSummary({ offeredMode: "and", wantedMode: "or" }), /כולם \(וגם\).*אחד \(או\)/);
+});
+
+test("give-side dropdown orders owned cards by copy count, including within a set", () => {
+  const cards = [
+    { id: "a", releaseSetId: "set-1", titleHe: "אלף" },
+    { id: "b", releaseSetId: "set-1", titleHe: "בית" },
+    { id: "c", releaseSetId: "set-1", titleHe: "גימל" },
+    { id: "d", releaseSetId: "set-2", titleHe: "דלת" },
+  ];
+  const owned = { a: 1, b: 5, c: 3, d: 9 };
+  const inSet = tradeComposeCardsInSet(cards, "release:set-1");
+  assert.deepEqual(inSet.map((card) => card.id).sort(), ["a", "b", "c"]);
+  const ordered = sortTradeComposeOffered(inSet, (card) => owned[card.id], (card) => card.titleHe);
+  assert.deepEqual(ordered.map((card) => card.id), ["b", "c", "a"]);
+  const viaSlot = orderTradeComposeSlotCards(inSet, "offered", {
+    ownedCount: (card) => owned[card.id],
+    holderCount: () => 0,
+    title: (card) => card.titleHe,
+  });
+  assert.deepEqual(viaSlot.map((card) => card.id), ["b", "c", "a"]);
+});
+
+test("want-side dropdown orders by holder count, including within a set", () => {
+  const cards = [
+    { id: "a", releaseSetId: "set-1", titleHe: "אלף" },
+    { id: "b", releaseSetId: "set-1", titleHe: "בית" },
+    { id: "c", releaseSetId: "set-1", titleHe: "גימל" },
+    { id: "d", releaseSetId: "set-2", titleHe: "דלת" },
+  ];
+  const holders = { a: 12, b: 2, c: 8, d: 99 };
+  const inSet = tradeComposeCardsInSet(cards, "release:set-1");
+  const ordered = sortTradeComposeWanted(inSet, (card) => holders[card.id], (card) => card.titleHe);
+  assert.deepEqual(ordered.map((card) => card.id), ["a", "c", "b"]);
+  const viaSlot = orderTradeComposeSlotCards(inSet, "wanted", {
+    ownedCount: () => 0,
+    holderCount: (card) => holders[card.id],
+    title: (card) => card.titleHe,
+  });
+  assert.deepEqual(viaSlot.map((card) => card.id), ["a", "c", "b"]);
+});
+
+test("compose dropdown sorts tie-break on Hebrew title", () => {
+  const cards = [
+    { id: "late", releaseSetId: "set-1", titleHe: "תמר" },
+    { id: "early", releaseSetId: "set-1", titleHe: "אביב" },
+  ];
+  const offered = sortTradeComposeOffered(cards, () => 2, (card) => card.titleHe);
+  const wanted = sortTradeComposeWanted(cards, () => 4, (card) => card.titleHe);
+  assert.deepEqual(offered.map((card) => card.id), ["early", "late"]);
+  assert.deepEqual(wanted.map((card) => card.id), ["early", "late"]);
+});
+
+test("OR first tap highlights only; second tap on the same card opens the viewer", () => {
+  assert.equal(tradeOrChipTapOpensDialog(false), false);
+  assert.equal(tradeOrChipTapOpensDialog(""), false);
+  assert.equal(tradeOrChipTapOpensDialog("card-1"), true);
 });
 
 test("accept failures return Hebrew messageHe from the store through the API", async (t) => {

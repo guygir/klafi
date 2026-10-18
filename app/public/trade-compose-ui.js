@@ -35,3 +35,36 @@ export function offeredCardIds(trade) {
 export function sideNeedsPick(mode, cardIds) {
   return mode === "or" && (cardIds?.length || 0) > 1;
 }
+
+export function tradeComposeCardsInSet(cards, setKey) {
+  if (!setKey) return [];
+  const releaseId = String(setKey).replace(/^release:/, "");
+  return (cards || []).filter((candidate) => (candidate.releaseSetId || "other") === releaseId);
+}
+
+export function sortTradeComposeOffered(cards, ownedCount, title) {
+  return [...(cards || [])].sort((left, right) => {
+    const countDiff = ownedCount(right) - ownedCount(left);
+    if (countDiff) return countDiff;
+    return String(title(left) || "").localeCompare(String(title(right) || ""), "he");
+  });
+}
+
+export function sortTradeComposeWanted(cards, holderCount, title) {
+  return [...(cards || [])].sort((left, right) => {
+    const holderDiff = holderCount(right) - holderCount(left);
+    if (holderDiff) return holderDiff;
+    return String(title(left) || "").localeCompare(String(title(right) || ""), "he");
+  });
+}
+
+export function orderTradeComposeSlotCards(cards, sideKey, { ownedCount, holderCount, title }) {
+  return sideKey === "wanted"
+    ? sortTradeComposeWanted(cards, holderCount, title)
+    : sortTradeComposeOffered(cards, ownedCount, title);
+}
+
+/** OR rails: first tap on an unhighlighted card only highlights. Second tap opens the viewer. AND never uses this. */
+export function tradeOrChipTapOpensDialog(alreadyPicked) {
+  return Boolean(alreadyPicked);
+}
