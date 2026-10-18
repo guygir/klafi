@@ -804,6 +804,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
     "the publish button sits centered under compose, after both sides",
   );
   assert.match(css, /\.trade-publish-row \{[^}]*justify-content:\s*center/);
+  assert.match(css, /\.trade-compose \{[^}]*flex:\s*0 0 auto;/);
+  assert.doesNotMatch(css, /\.trade-compose \{[^}]*flex:\s*1 1 auto;/);
+  assert.match(css, /#app \.trade-offer \.trade-thumb \.kalpi-card\[data-card-frame="fullart-v1"\] \.card-rarity-zone,\s*#app \.trade-compose \.trade-thumb \.kalpi-card\[data-card-frame="fullart-v1"\] \.card-rarity-zone \{\s*display:\s*none;/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame \{\s*width: var\(--trade-thumb-w\);/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(css, /\.pack-shadow \{\s*display: none;/);
