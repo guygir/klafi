@@ -1,0 +1,689 @@
+{
+  "id": "set8-wip-pool",
+  "status": "local-draft",
+  "asOfDate": "2026-10-18",
+  "note": "Set 8 (צדיקים): 28 Quote cards, display codes צדיק-01–28, ordered as in the brief. Quotes and the shortened mark come from Guy's rank export (2026-10-18T11:31:56.709Z), except the fixed overrides: deri1, deri4 (Arutz 7, with בישראל), goldknopf1, smotrich1 (article wording, no comma), bengvir2 and bengvir4 shortened, maoz2 starts with תרומה, goldknopf4 and maoz3 stay exact. Goldknopf 5 keeps the export line; Calcalist's wording is shorter (לא ראיתי שמתמטיקה ואנגלית קידמו את המדינה). List slots: Malkieli 3 and Taib 9 on Shas, Porush 4 on UTJ. Gafni stays לא ממוקם (the records card already has him off the list; 120 is symbolic). Yitzhak Cohen stays לא ממוקם; he is not in the published Shas 1–13. Avi Maoz is מקום 1 of נעם (party NAM, letters ני, pip #3E5C3A). Art was resampled from the ranking-page embeds because src/named was not in the checkout.",
+  "sourceDocument": "Guy rank.html export 2026-10-18, basis share filerevision-01M575HM",
+  "candidates": [
+    {
+      "n": 1,
+      "nameHe": "אריה דרעי",
+      "nameEn": "Aryeh Deri",
+      "displayText": "הציונות, זו תנועה של כפירה, שרוצה ליצור יהדות חדשה.",
+      "quoteStatus": "exact",
+      "date": "1997-04-23",
+      "rarity": "Common",
+      "sources": [
+        "https://he.wikiquote.org/wiki/%D7%90%D7%A8%D7%99%D7%94_%D7%93%D7%A8%D7%A2%D7%99"
+      ],
+      "sourceLabel": "ויקיציטוט, עצרת ש״ס",
+      "notes": "בעצרת ש״ס, 23 באפריל 1997.",
+      "art": {
+        "artKey": "hero-art-datiim-deri1.jpg",
+        "status": "provided",
+        "sha256": "957518fedabc24a9807ba968628c2e9e67086f34d5a891c9c9881df1b713d269",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 2,
+      "nameHe": "אריה דרעי",
+      "nameEn": "Aryeh Deri",
+      "displayText": "יסגרו לנו את הדלת, ניכנס דרך החלון.",
+      "quoteStatus": "exact",
+      "date": "2023-01-18",
+      "rarity": "Rare",
+      "sources": [
+        "https://mivzaklive.co.il/archives/642437"
+      ],
+      "sourceLabel": "מבזק לייב, אחרי פסיקת בג״ץ",
+      "notes": "אחרי פסיקת בג״ץ, 18 בינואר 2023.",
+      "art": {
+        "artKey": "hero-art-datiim-deri2.jpg",
+        "status": "provided",
+        "sha256": "d763a682428871de9b7d5168f53ce2f7be0ac408866a0764a51f72c637c919b9",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 3,
+      "nameHe": "אריה דרעי",
+      "nameEn": "Aryeh Deri",
+      "displayText": "הכנסת זה לא מקום לאישה חרדית להיות בו. אישה שמכבדת את עצמה ואת הבית שלה גם לא תלך לשם.",
+      "quoteStatus": "shortened",
+      "date": "2017-05-30",
+      "rarity": "Common",
+      "sources": [
+        "https://www.zman.co.il/726349/"
+      ],
+      "sourceLabel": "זמן ישראל, מצטט ראיון למעריב",
+      "notes": "מתוך ראיון למעריב, 30 במאי 2017, כפי שהובא בזמן ישראל.",
+      "art": {
+        "artKey": "hero-art-datiim-deri3.jpg",
+        "status": "provided",
+        "sha256": "020a4e7310515a62e2c998d4bb4328e020dc3afcb0fb3ca45cf06a99b84179b3",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 4,
+      "nameHe": "יצחק גולדקנופף",
+      "nameEn": "Yitzhak Goldknopf",
+      "displayText": "אם לא תהיה ברירה, אז יעזבו את הארץ. החרדים לא ישנו את אורח חייהם בגלל שיש צבא ומלחמה.",
+      "quoteStatus": "shortened",
+      "date": "",
+      "rarity": "Uncommon",
+      "sources": [
+        "https://www.ynet.co.il/news/article/hyd115hjvxg",
+        "https://www.mako.co.il/news-politics/2025_q3/Article-e83c6039abc3891027.htm"
+      ],
+      "sourceLabel": "ynet, ראיון למקור ראשון",
+      "extraSourceLabels": [
+        "מאקו, אותו ראיון"
+      ],
+      "notes": "בראיון ל״מקור ראשון״, 2025. שני משפטים לא רצופים חוברו.",
+      "art": {
+        "artKey": "hero-art-datiim-goldknopf1.jpg",
+        "status": "provided",
+        "sha256": "ad5b59b8f667c88acf2a367c7c163831ab42f4e4d01c9af3622cc97210a9d56b",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 5,
+      "nameHe": "יצחק גולדקנופף",
+      "nameEn": "Yitzhak Goldknopf",
+      "displayText": "אל תביא לי את הכאב שלך ותעביר אותו אליי. בוא נחליט שכל אחד עם החבילה שלו.",
+      "quoteStatus": "exact",
+      "date": "",
+      "rarity": "Common",
+      "sources": [
+        "https://www.ynet.co.il/news/article/hyd115hjvxg"
+      ],
+      "sourceLabel": "ynet, ראיון למקור ראשון",
+      "notes": "באותו ראיון ל״מקור ראשון״, 2025.",
+      "art": {
+        "artKey": "hero-art-datiim-goldknopf2.jpg",
+        "status": "provided",
+        "sha256": "5431d482e57f7a606e1afef7b3099cf70af388df8673e778728fe757fb9fe08c",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 6,
+      "nameHe": "יצחק גולדקנופף",
+      "nameEn": "Yitzhak Goldknopf",
+      "displayText": "אני לא יודע שיש משבר בענף הדיור.",
+      "quoteStatus": "exact",
+      "date": "",
+      "rarity": "Rare",
+      "sources": [
+        "https://www.ynet.co.il/economy/article/r1dpezapj",
+        "https://www.ice.co.il/realestate/news/article/916345"
+      ],
+      "sourceLabel": "ynet, דצמבר 2022",
+      "extraSourceLabels": [
+        "Ice, אותה ידיעה"
+      ],
+      "notes": "דצמבר 2022, על ענף הדיור.",
+      "art": {
+        "artKey": "hero-art-datiim-goldknopf3.jpg",
+        "status": "provided",
+        "sha256": "4336794412317b2e3c50119cc1e56c662f62763ac1d286f303f27cbce7291fec",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 7,
+      "nameHe": "יצחק גולדקנופף",
+      "nameEn": "Yitzhak Goldknopf",
+      "displayText": "זה שלומד תורה יותר קשה לו מאשר זה שהולך לחזית.",
+      "quoteStatus": "exact",
+      "date": "2022-10-19",
+      "rarity": "Common",
+      "sources": [
+        "https://www.calcalist.co.il/local_news/article/hkb8t83qj",
+        "https://he.wikiquote.org/wiki/%D7%99%D7%A6%D7%97%D7%A7_%D7%92%D7%95%D7%9C%D7%93%D7%A7%D7%A0%D7%95%D7%A4%D7%A3"
+      ],
+      "sourceLabel": "כלכליסט, 19 באוקטובר 2022",
+      "extraSourceLabels": [
+        "ויקיציטוט, אותו נוסח"
+      ],
+      "notes": "בראיון לכלכליסט, 19 באוקטובר 2022.",
+      "art": {
+        "artKey": "hero-art-datiim-goldknopf4.jpg",
+        "status": "provided",
+        "sha256": "ca7a6ee2946b153214b4b0b90671b71f1f99544181b1bf86bcc6c93ed5e9bfa9",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 8,
+      "nameHe": "יצחק גולדקנופף",
+      "nameEn": "Yitzhak Goldknopf",
+      "displayText": "לא ראיתי שהמתמטיקה והאנגלית קידמו כל כך את המדינה בדברים של הכלכלה.",
+      "quoteStatus": "exact",
+      "date": "2022-10-19",
+      "rarity": "Common",
+      "sources": [
+        "https://www.calcalist.co.il/local_news/article/hkb8t83qj",
+        "https://vt.tiktok.com/ZSbogDnfG"
+      ],
+      "sourceLabel": "כלכליסט, 19 באוקטובר 2022",
+      "extraSourceLabels": [
+        "טיקטוק, אותו ראיון"
+      ],
+      "notes": "בראיון לכלכליסט, 19 באוקטובר 2022.",
+      "art": {
+        "artKey": "hero-art-datiim-goldknopfnew.jpg",
+        "status": "provided",
+        "sha256": "c06a0245e28be3eb83b77c1e8d86c1dc2e63d348c049428452284200f3958cdb",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 9,
+      "nameHe": "משה גפני",
+      "nameEn": "Moshe Gafni",
+      "partyId": "UTJ",
+      "displayText": "שופט בית-המשפט העליון כותב שטויות... ועוד אחד חובש כיפה.",
+      "quoteStatus": "shortened",
+      "date": "2014-05-26",
+      "rarity": "Common",
+      "sources": [
+        "https://www.inn.co.il/news/276952"
+      ],
+      "sourceLabel": "ערוץ 7, 26 במאי 2014",
+      "notes": "בנאום, 26 במאי 2014. קטעים לא רצופים חוברו.",
+      "art": {
+        "artKey": "hero-art-datiim-gafni1.jpg",
+        "status": "provided",
+        "sha256": "7c5635eb0155c9124b58aa5dfef13f5f6d64040cf47c13497b3561f1cda576be",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 10,
+      "nameHe": "מאיר פרוש",
+      "nameEn": "Meir Porush",
+      "partyId": "UTJ",
+      "listSlot": 4,
+      "displayText": "אנחנו גדלים ומתרבים בקצב מהיר, ובעוד 10 שנים לא יהיה חילוני בשום ראשות עיר.",
+      "quoteStatus": "shortened",
+      "date": "",
+      "rarity": "Common",
+      "sources": [
+        "https://www.ynet.co.il/articles/0,7340,L-3616714,00.html",
+        "https://www.walla.co.il/news/israel/1370627"
+      ],
+      "sourceLabel": "ynet, כינוס בעלז",
+      "extraSourceLabels": [
+        "וואלה, אותה ידיעה"
+      ],
+      "notes": "בכינוס של חסידות בעלז, נובמבר 2008.",
+      "art": {
+        "artKey": "hero-art-datiim-porush1.jpg",
+        "status": "provided",
+        "sha256": "3b04f61eeba58f1225885ff65734e8e6b50ee437d26796e4e0efd577fd0eff8c",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 11,
+      "nameHe": "מאיר פרוש",
+      "nameEn": "Meir Porush",
+      "partyId": "UTJ",
+      "listSlot": 4,
+      "displayText": "את נשות הכותל... שמו ליד שער האשפות, שם המקום שלכם. לכלב תשליכון אותו.",
+      "quoteStatus": "shortened",
+      "date": "2016-02-01",
+      "rarity": "Rare",
+      "sources": [
+        "https://www.maariv.co.il/news/politics/article-524355",
+        "https://www.kikar.co.il/haredim-news/194759",
+        "https://www.ch10.co.il/news/249746/"
+      ],
+      "sourceLabel": "מעריב, 1 בפברואר 2016",
+      "extraSourceLabels": [
+        "כיכר השבת, תגובתו",
+        "ערוץ 10"
+      ],
+      "notes": "במליאת הכנסת, 1 בפברואר 2016.",
+      "art": {
+        "artKey": "hero-art-datiim-porush2.jpg",
+        "status": "provided",
+        "sha256": "d2d4609bc59c11c6486304349e8e1d0eb07f7c8cfeb2d7615a5f32ca34f8adec",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 12,
+      "nameHe": "מיכאל מלכיאלי",
+      "nameEn": "Michael Malchieli",
+      "partyId": "SHS",
+      "listSlot": 3,
+      "displayText": "נכנסנו לממשלה בשביל החוק הזה שהוא חוק ליבה שלנו. המפלגות החרדיות יפילו ממשלה כשגדולי ישראל יגידו.",
+      "quoteStatus": "exact",
+      "date": "",
+      "rarity": "Uncommon",
+      "sources": [
+        "https://www.ynet.co.il/news/article/r1qgtv8wyl"
+      ],
+      "sourceLabel": "ynet",
+      "notes": "על חוק הליבה של ש״ס.",
+      "art": {
+        "artKey": "hero-art-datiim-malkieli1.jpg",
+        "status": "provided",
+        "sha256": "2daaa184b97410be6583abd2ab5549bf9b23a9f6ba7b87dfedd749efb4d16c80",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 13,
+      "nameHe": "יוסי טייב",
+      "nameEn": "Yossi Taieb",
+      "partyId": "SHS",
+      "listSlot": 9,
+      "displayText": "בני קיבל צו, אם ייעצר - ימשיך ללמוד תורה מהכלא.",
+      "quoteStatus": "exact",
+      "date": "",
+      "rarity": "Uncommon",
+      "sources": [
+        "https://www.ynet.co.il/news/article/b1o1aw8ojg",
+        "https://www.inn.co.il/news/659920"
+      ],
+      "sourceLabel": "ynet",
+      "extraSourceLabels": [
+        "ערוץ 7"
+      ],
+      "notes": "אחרי שבנו קיבל צו גיוס.",
+      "art": {
+        "artKey": "hero-art-datiim-taib1.jpg",
+        "status": "provided",
+        "sha256": "c7d4c60ebafeb3c9775c3b793a711caf6e81a5fc1cdc5e96f756095a41e2cf3c",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 14,
+      "nameHe": "איציק כהן",
+      "nameEn": "Itzik Cohen",
+      "partyId": "SHS",
+      "displayText": "אתה חצוף, אתה אפס, צא לנו מהחיים.",
+      "quoteStatus": "exact",
+      "date": "2019-11-20",
+      "rarity": "Uncommon",
+      "sources": [
+        "https://www.ynet.co.il/articles/0,7340,L-5629011,00.html"
+      ],
+      "sourceLabel": "ynet, 20 בנובמבר 2019",
+      "notes": "במליאה, 20 בנובמבר 2019, לליברמן.",
+      "art": {
+        "artKey": "hero-art-datiim-cohen1.jpg",
+        "status": "provided",
+        "sha256": "bfc6e47a97ab3d02e2538fba46971fc2d15720bac858acfbc15a592affca6bac",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 15,
+      "nameHe": "בצלאל סמוטריץ'",
+      "nameEn": "Bezalel Smotrich",
+      "displayText": "אתם פה בטעות כי בן גוריון לא גמר את העבודה ולא זרק אתכם ב-48",
+      "quoteStatus": "shortened",
+      "date": "2021-10-13",
+      "rarity": "Uncommon",
+      "sources": [
+        "https://www.kikar.co.il/political-news/403088"
+      ],
+      "sourceLabel": "כיכר השבת, 13 באוקטובר 2021",
+      "notes": "במליאה, 13 באוקטובר 2021. קטע מאמצע משפט.",
+      "art": {
+        "artKey": "hero-art-datiim-smotrich1.jpg",
+        "status": "provided",
+        "sha256": "361b4d918108bb863e4549ce2901f51453c01f04496abdfa7c0c4b7e31238dfe",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 16,
+      "nameHe": "בצלאל סמוטריץ'",
+      "nameEn": "Bezalel Smotrich",
+      "displayText": "אני הומופוב גאה.",
+      "quoteStatus": "exact",
+      "date": "2015-02-22",
+      "rarity": "Rare",
+      "sources": [
+        "https://www.news1.co.il/Archive/001-D-360947-00.html"
+      ],
+      "sourceLabel": "News1, 22 בפברואר 2015",
+      "notes": "בתיכון בגבעתיים, 22 בפברואר 2015.",
+      "art": {
+        "artKey": "hero-art-datiim-smotrich2.jpg",
+        "status": "provided",
+        "sha256": "d707df9a4f4e21d28a1ea9962556a0b086938692ab397efc7a3f300948c9bc05",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 17,
+      "nameHe": "בצלאל סמוטריץ'",
+      "nameEn": "Bezalel Smotrich",
+      "displayText": "גם לי יש פנטזיות מיניות שאני לא יכול לממש כנראה, כמו כולנו.",
+      "quoteStatus": "exact",
+      "date": "2016-09-14",
+      "rarity": "Common",
+      "sources": [
+        "https://www.youtube.com/watch?v=PIp663wzE5U"
+      ],
+      "sourceLabel": "ערוץ הכנסת ביוטיוב, 14 בספטמבר 2016",
+      "notes": "בערוץ הכנסת, 14 בספטמבר 2016.",
+      "art": {
+        "artKey": "hero-art-datiim-smotrich3.jpg",
+        "status": "provided",
+        "sha256": "baa457203f9f70e6f18486e7c1d066eb411c7f20eafa5efaaeeeb802ee93de57",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 18,
+      "nameHe": "בצלאל סמוטריץ'",
+      "nameEn": "Bezalel Smotrich",
+      "displayText": "יצחק עמית הוא מגלומן אלים, דורסני, שגונב את הדמוקרטיה הישראלית. התוצאה תהיה שנדרוס אותו.",
+      "quoteStatus": "exact",
+      "date": "2025-12-29",
+      "rarity": "Uncommon",
+      "sources": [
+        "https://www.ynet.co.il/news/article/BJyrgGx4Wg",
+        "https://www.calcalist.co.il/local_news/article/bjbnmfevwe",
+        "https://www.maariv.co.il/news/politics/article-1267266"
+      ],
+      "sourceLabel": "ynet, ישיבת סיעה",
+      "extraSourceLabels": [
+        "כלכליסט",
+        "מעריב"
+      ],
+      "notes": "בישיבת סיעה, 29 בדצמבר 2025.",
+      "art": {
+        "artKey": "hero-art-datiim-smotrich4.jpg",
+        "status": "provided",
+        "sha256": "cf819f53230dc6e3dca7e14dc5a9629811cca954c058ddde0fdf8b5fd05b54b5",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 19,
+      "nameHe": "איתמר בן גביר",
+      "nameEn": "Itamar Ben Gvir",
+      "displayText": "כמו שאנחנו הגענו לסמל הזה, אנחנו יכולים להגיע לרבין.",
+      "quoteStatus": "exact",
+      "date": "",
+      "rarity": "Uncommon",
+      "sources": [
+        "https://www.ynet.co.il/news/article/bjikbdedh"
+      ],
+      "sourceLabel": "ynet, קליפ מערוץ 1",
+      "notes": "בקליפ מערוץ 1, סוף 1995.",
+      "art": {
+        "artKey": "hero-art-datiim-bengvir1.jpg",
+        "status": "provided",
+        "sha256": "aac441208610425a4275bf6690022878a0c561a8751b1c431804134df7afa94a",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 20,
+      "nameHe": "איתמר בן גביר",
+      "nameEn": "Itamar Ben Gvir",
+      "displayText": "נקמה זה דבר מוסרי. ד\"ר גולדשטיין עשה מה שהוא חשב לעשות ואני לא מגנה את המעשה הזה.",
+      "quoteStatus": "shortened",
+      "date": "",
+      "rarity": "Rare",
+      "sources": [
+        "https://www.ynet.co.il/news/article/bjikbdedh"
+      ],
+      "sourceLabel": "ynet, עדות מבית המשפט",
+      "notes": "מעדות בבית משפט בשנת 2000. שני קטעים חוברו. פורסם ב-23 ביוני 2023.",
+      "art": {
+        "artKey": "hero-art-datiim-bengvir2.jpg",
+        "status": "provided",
+        "sha256": "b3f5e6e59085e757b00629104d32721bef01499b7f89a8516c2c1a60c987a280",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 21,
+      "nameHe": "איתמר בן גביר",
+      "nameEn": "Itamar Ben Gvir",
+      "displayText": "אין להם מקום, לא בירושלים ובכלל לא במדינת ישראל.",
+      "quoteStatus": "exact",
+      "date": "",
+      "rarity": "Common",
+      "sources": [
+        "https://heb.hartman.org.il/persico-ben-gvir-kahane/",
+        "https://he.wikiquote.org/wiki/%D7%90%D7%99%D7%AA%D7%9E%D7%A8_%D7%91%D7%9F-%D7%92%D7%91%D7%99%D7%A8"
+      ],
+      "sourceLabel": "מכון הרטמן, תומר פרסיקו",
+      "extraSourceLabels": [
+        "ויקיציטוט, מצטט את המאמר"
+      ],
+      "notes": "נאמר ב-2016, לפי מאמר של תומר פרסיקו.",
+      "art": {
+        "artKey": "hero-art-datiim-bengvir3.jpg",
+        "status": "provided",
+        "sha256": "4242c875f25f7e0f334a0709b0610abd686e71174692904da6e5e4b298fcf937",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 22,
+      "nameHe": "איתמר בן גביר",
+      "nameEn": "Itamar Ben Gvir",
+      "displayText": "יש לו פוטנציאל למרדכי, עוד 10, 15, 20 שנה... והוא יהיה איזשהו שר, למה לא?",
+      "quoteStatus": "shortened",
+      "date": "2026-10-11",
+      "rarity": "Common",
+      "sources": [
+        "https://www.walla.co.il/news/israel/383957062"
+      ],
+      "sourceLabel": "וואלה, מונית הכנסת",
+      "notes": "ב״מונית הכנסת״, 11 באוקטובר 2026.",
+      "art": {
+        "artKey": "hero-art-datiim-bengvir4.jpg",
+        "status": "provided",
+        "sha256": "f06dfb51eed0d9696d090b171951fb7c2ca2f27241a32ffbc8e44c74205d4896",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 23,
+      "nameHe": "אבי מעוז",
+      "nameEn": "Avi Maoz",
+      "displayText": "כשבא גבר ואומר אני לא גבר - אני אישה... אני לא מקבל את זה, זה אדם תימהוני.",
+      "quoteStatus": "shortened",
+      "date": "2021-05-25",
+      "rarity": "Common",
+      "sources": [
+        "https://www.ice.co.il/media/news/article/821144",
+        "https://www.srugim.co.il/565494-%D7%97%D7%9B-%D7%90%D7%91%D7%99-%D7%9E%D7%A2%D7%95%D7%96-%D7%9C%D7%90-%D7%9E%D7%A7%D7%91%D7%9C-%D7%90%D7%AA-%D7%96%D7%94-%D7%A9%D7%92%D7%91%D7%A8-%D7%99%D7%9B%D7%95%D7%9C-%D7%94%D7%99%D7%95"
+      ],
+      "sourceLabel": "Ice, מצטט את סרוגים",
+      "extraSourceLabels": [
+        "סרוגים, הראיון המקורי"
+      ],
+      "notes": "בראיון, 25 במאי 2021",
+      "art": {
+        "artKey": "hero-art-datiim-maoz1.jpg",
+        "status": "provided",
+        "sha256": "3aafd4a9a62580a78e250e37650e343d61399541403b3be8a1153e0919b20d70",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m",
+      "partyId": "NAM",
+      "listSlot": 1
+    },
+    {
+      "n": 24,
+      "nameHe": "אבי מעוז",
+      "nameEn": "Avi Maoz",
+      "displayText": "תרומה העיקרית של אישה זה שהיא תגדל את המשפחה שלה לתפארת... תשתדל ללדת כמה שהקב\"ה נותן.",
+      "quoteStatus": "shortened",
+      "date": "2021-05-25",
+      "rarity": "Common",
+      "sources": [
+        "https://www.srugim.co.il/565494-%D7%97%D7%9B-%D7%90%D7%91%D7%99-%D7%9E%D7%A2%D7%95%D7%96-%D7%9C%D7%90-%D7%9E%D7%A7%D7%91%D7%9C-%D7%90%D7%AA-%D7%96%D7%94-%D7%A9%D7%92%D7%91%D7%A8-%D7%99%D7%9B%D7%95%D7%9C-%D7%94%D7%99%D7%95",
+        "https://www.ice.co.il/media/news/article/821144"
+      ],
+      "sourceLabel": "סרוגים, הראיון המקורי",
+      "extraSourceLabels": [
+        "Ice"
+      ],
+      "notes": "באותו ראיון, 25 במאי 2021",
+      "art": {
+        "artKey": "hero-art-datiim-maoz2.jpg",
+        "status": "provided",
+        "sha256": "bfa771b79e494c2defa0bb684998eb4dd58396ead74ba91002fae076c02eda4d",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m",
+      "partyId": "NAM",
+      "listSlot": 1
+    },
+    {
+      "n": 25,
+      "nameHe": "אבי מעוז",
+      "nameEn": "Avi Maoz",
+      "displayText": "אתה רוצה להפגין, תפגין, אבל מצעד תועבה זנותי בפרהסיה?!",
+      "quoteStatus": "exact",
+      "date": "",
+      "rarity": "Common",
+      "sources": [
+        "https://he.wikiquote.org/wiki/%D7%90%D7%91%D7%99_%D7%9E%D7%A2%D7%95%D7%96"
+      ],
+      "sourceLabel": "ויקיציטוט: אבי מעוז",
+      "notes": "ויקיציטוט, בלי תאריך",
+      "art": {
+        "artKey": "hero-art-datiim-maoz3.jpg",
+        "status": "provided",
+        "sha256": "6fc22d55b13cbfa86b9f1fcde8bc05efeca3f38b281b0e281a2063a158b12c25",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m",
+      "partyId": "NAM",
+      "listSlot": 1
+    },
+    {
+      "n": 26,
+      "nameHe": "עופר וינטר",
+      "nameEn": "Ofer Winter",
+      "displayText": "באנו לדרוש, באנו להכריע, ואם לא אז אני אומר לך - שביבי יקפוץ לי.",
+      "quoteStatus": "exact",
+      "date": "2026-10-10",
+      "rarity": "Uncommon",
+      "sources": [
+        "https://www.mako.co.il/news-politics/2026_q4/Article-45e57cc1dc021a1026.htm"
+      ],
+      "sourceLabel": "מאקו, פגוש את העיתונות",
+      "notes": "ב״פגוש את העיתונות״, 10 באוקטובר 2026.",
+      "art": {
+        "artKey": "hero-art-datiim-winter1.jpg",
+        "status": "provided",
+        "sha256": "7f3e3eaa50a5f8a175702d267e1f9a883836bf63461776de552ee5a3765c32ee",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 27,
+      "nameHe": "אריה דרעי",
+      "nameEn": "Aryeh Deri",
+      "displayText": "אני מוחה בכל תוקף על צווי המעצר שהוצאו נגד אלפי לומדי תורה בישראל, ובהם גם נכדיי, שאני גאה בהם.",
+      "quoteStatus": "exact",
+      "date": "",
+      "rarity": "Common",
+      "sources": [
+        "https://www.inn.co.il/news/699320"
+      ],
+      "sourceLabel": "ערוץ 7",
+      "notes": "הודעה בערוץ 7.",
+      "art": {
+        "artKey": "hero-art-datiim-deri4.jpg",
+        "status": "provided",
+        "sha256": "c4d4d534587e4f3695761f4e9b8570adc0b844e6a00d370e357729658d1dff60",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    },
+    {
+      "n": 28,
+      "nameHe": "יצחק פינדרוס",
+      "nameEn": "Yitzhak Pindrus",
+      "displayText": "בתחילת הקדנציה הצביעו ליושב ראש כנסת, ואני חושב שיש בזה חילול השם... אני חושב שיש לזה מחיר.",
+      "quoteStatus": "shortened",
+      "date": "",
+      "rarity": "Uncommon",
+      "sources": [
+        "https://www.ynet.co.il/news/elections2026/article/sjirn4aizl"
+      ],
+      "sourceLabel": "ynet, בחירות 2026",
+      "notes": "בראיון לבחירות 2026. קטעים לא רצופים חוברו.",
+      "art": {
+        "artKey": "hero-art-datiim-pindrus1.jpg",
+        "status": "provided",
+        "sha256": "7c06d4fbbddecb4592e044a97cbe08b93f0502c7e0a86b29c43924200edd4120",
+        "note": "864x1152 JPEG q90. Named originals were not in this checkout; resampled from the 480x640 ranking-page embeds (same 3:4, no crop)."
+      },
+      "existingStudioRef": null,
+      "gender": "m"
+    }
+  ]
+}

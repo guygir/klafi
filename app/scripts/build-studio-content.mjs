@@ -25,6 +25,7 @@ const parties = [
   { id: "AMH", displayNameHe: "עמך ישראל", displayNameEn: "Amcha Yisrael", requestedLetters: ["ך"], letterStatus: "requested", treatment: "critical", pip: "#84623B", members: [["Ofer Winter", "עופר וינטר", 1], ["Yoseph Haddad", "יוסף חדאד", 2], ["Netali Shem Tov", "נטעלי שם טוב", 3]] },
   { id: "RSE", displayNameHe: "המילואימניקים והכלכלית", displayNameEn: "Reservists–Economic", requestedLetters: ["די", "צ", "י"], letterStatus: "requested", treatment: "favorable", pip: "#506A70", members: [["Yoaz Hendel", "יועז הנדל", 1], ["Yaron Zelekha", "ירון זליכה", 2]] },
   { id: "BW", displayNameHe: "כחול לבן", displayNameEn: "Blue and White", requestedLetters: ["כן"], letterStatus: "protected", treatment: "favorable", pip: "#315C8A", members: [["Benny Gantz", "בני גנץ", 1], ["Pnina Tamano-Shata", "פנינה תמנו שטה", 2]] },
+  { id: "NAM", displayNameHe: "נעם", displayNameEn: "Noam", requestedLetters: ["ני"], letterStatus: "protected", treatment: "critical", pip: "#3E5C3A", members: [] },
 ];
 
 const bibiSeed = [
@@ -333,7 +334,7 @@ try {
   if (error.code !== "ENOENT") throw error;
 }
 
-if (canonicalParties.length !== 14) throw new Error(`Expected 14 parties, received ${canonicalParties.length}`);
+if (canonicalParties.length !== 15) throw new Error(`Expected 15 parties, received ${canonicalParties.length}`);
 if (canonicalMembers.length !== 51) throw new Error(`Expected 51 members, received ${canonicalMembers.length}`);
 
 const output = {
@@ -342,7 +343,7 @@ const output = {
   asOfDate: "2026-09-09",
   editorialPolicy: {
     disclosure: "Governing/right figures are selected critically; current-opposition figures favorably. Quotations remain sourced and visibly classified.",
-    criticalBloc: ["LIK", "RZ", "OTZ", "SHS", "UTJ", "AMH"],
+    criticalBloc: ["LIK", "RZ", "OTZ", "SHS", "UTJ", "AMH", "NAM"],
     favorableBloc: ["YSR", "BYD", "YB", "DEM", "JNT", "RAM", "RSE", "BW"],
     sparseRule: "If fewer than three strong distinct quotes qualify, Common and Uncommon stay blank and only the best quote occupies Rare.",
   },

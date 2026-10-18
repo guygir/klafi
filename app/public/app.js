@@ -61,8 +61,8 @@ const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
-const STATIC_DATA_VERSION = "visible-sets-5";
-const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5", "set-6", "set-7"];
+const STATIC_DATA_VERSION = "visible-sets-8";
+const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5", "set-6", "set-7", "set-8"];
 const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
 
@@ -4193,6 +4193,7 @@ const FILTER_SET_SHORT = {
   "set-5": "רגעים",
   "set-6": "ליכודיאדה",
   "set-7": "העצמה נשית",
+  "set-8": "צדיקים",
   "decisions": "החלטות",
   "records": "הישגים",
 };
@@ -4276,6 +4277,10 @@ function quoteTrustLabel(card) {
 function partyTrustLabel(card) {
   if (!card.set || card.set === "SYS" || String(card.set).startsWith("special-")) return "";
   const party = partyRegister().find(({ id }) => id === card.set);
+  // Printed list (נעם) is not the game party, so don't claim that party's ballot letters.
+  if (party?.displayNameHe && card.setNameHe && card.setNameHe !== party.displayNameHe) {
+    return card.letters ? `אותיות הרשימה: ${card.letters}` : "";
+  }
   if (!party?.filingStatus && !party?.letterStatus) return "";
   const letters = (party.finalLetters || party.requestedLetters || []).join(" / ");
   const letterStatus = {

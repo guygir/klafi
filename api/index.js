@@ -21,6 +21,7 @@ export const config = {
     "docs/intake/research/set5-wip-pool.json",
     "docs/intake/research/set6-wip-pool.json",
     "docs/intake/research/set7-wip-pool.json",
+    "docs/intake/research/set8-wip-pool.json",
     "app/server/**",
   ],
 };

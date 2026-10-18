@@ -35,7 +35,8 @@
         "party-position-society-services": 1,
         "special-events": 0,
         "set-6": 1,
-        "set-7": 1
+        "set-7": 1,
+        "set-8": 1
       },
       "rankNames": [
         "אזרח סקרן",
@@ -131,6 +132,16 @@
             "Uncommon": 54,
             "Rare": 18
           }
+        },
+        {
+          "id": "set-8",
+          "weight": 74,
+          "includeEventCards": false,
+          "rarities": {
+            "Common": 652,
+            "Uncommon": 256,
+            "Rare": 93
+          }
         }
       ]
     },
@@ -204,6 +215,16 @@
         "launchGate": "blocked"
       },
       {
+        "id": "set-8",
+        "nameHe": "צדיקים",
+        "order": 14,
+        "tier": "objective",
+        "runtimeState": "active",
+        "runtimeAvailableFrom": "2026-10-18T00:00:00+03:00",
+        "plannedPublishAt": "2026-10-18T06:00:00.000Z",
+        "launchGate": "blocked"
+      },
+      {
         "id": "party-position-security",
         "nameHe": "עמדת המפלגה · ביטחון ומדיניות חוץ",
         "order": 6,
@@ -267,7 +288,8 @@
       "OTZ",
       "SHS",
       "UTJ",
-      "AMH"
+      "AMH",
+      "NAM"
     ],
     "favorableBloc": [
       "YSR",
@@ -957,6 +979,56 @@
         "originalText": "כן",
         "contentStatus": "submitted-pending-cec",
         "sourceUrl": "https://www.okn.co.il/politics/61423/"
+      }
+    },
+    {
+      "id": "NAM",
+      "displayNameHe": "נעם",
+      "displayNameEn": "Noam",
+      "requestedLetters": [
+        "ני"
+      ],
+      "letterStatus": "protected",
+      "treatment": "critical",
+      "pip": "#3E5C3A",
+      "submittedListNameHe": "נעם לישראל למען עתיד הילדים בראשות אבי מעוז",
+      "finalLetters": null,
+      "filingStatus": "submitted-pending-cec-review",
+      "asOfDate": "2026-10-18",
+      "pipSuggestion": "#4E7348",
+      "membershipConstituentCaveat": "Independent list headed by Avi Maoz. Not one of the original 14 roster parties; added so his cards file under נעם. No 2026 manifesto was used; the two policy cards are dated statements already on his set-8 cards.",
+      "symbolSourceUrl": "https://www.gov.il/he/pages/candidates-lists-26",
+      "platformCards": [
+        {
+          "originalText": "תרומה העיקרית של אישה זה שהיא תגדל את המשפחה שלה לתפארת... תשתדל ללדת כמה שהקב\"ה נותן.",
+          "translation": "A woman's main contribution is raising her family in glory. She should try to give birth to as many children as God grants.",
+          "documentName": "Avi Maoz interview, Ice quoting Srugim",
+          "dateOrVersion": "2021-05-25",
+          "sourceUrl": "https://www.ice.co.il/media/news/article/821144",
+          "sourceType": "attributed-party-statement",
+          "section/page": "Family",
+          "context": "Dated interview statement. There is no separate 2026 Noam manifesto in the game.",
+          "contentStatus": "verified-current-attributed-statement",
+          "subjectSet": "religion-state"
+        },
+        {
+          "originalText": "אתה רוצה להפגין, תפגין, אבל מצעד תועבה זנותי בפרהסיה?!",
+          "translation": "You want to demonstrate, demonstrate, but a public abomination parade?!",
+          "documentName": "Wikiquote: Avi Maoz",
+          "dateOrVersion": "undated on the receipt",
+          "sourceUrl": "https://he.wikiquote.org/wiki/%D7%90%D7%91%D7%99_%D7%9E%D7%A2%D7%95%D7%96",
+          "sourceType": "attributed-party-statement",
+          "section/page": "Public protest",
+          "context": "Attributed statement kept as a policy card because no current Noam manifesto was filed.",
+          "contentStatus": "verified-current-attributed-statement",
+          "subjectSet": "religion-state"
+        }
+      ],
+      "symbolCard": {
+        "id": "NAM-S-01",
+        "originalText": "ני",
+        "contentStatus": "submitted-pending-cec",
+        "sourceUrl": "https://www.gov.il/he/pages/candidates-lists-26"
       }
     }
   ],

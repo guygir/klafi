@@ -16,16 +16,17 @@ const projectRoot = path.resolve(here, "../..");
 const KNOWN_PENDING_SOURCE_IDS = Object.freeze([]);
 
 async function playableCards() {
-  const [cards, specials, studio, set5, set6, set7, catalog] = await Promise.all([
+  const [cards, specials, studio, set5, set6, set7, set8, catalog] = await Promise.all([
     readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set5-wip-pool.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set6-wip-pool.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set7-wip-pool.json"), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "docs/intake/research/set8-wip-pool.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../public/catalog.json"), "utf8").then(JSON.parse),
   ]);
-  const runtime = visiblePlayerCards(expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studio, set5, set6, set7)))
+  const runtime = visiblePlayerCards(expandPublicCatalog(cards, specials, catalogExtrasFromStudio(studio, set5, set6, set7, set8)))
     .filter((card) => !card.eventOnly);
   const staticCards = catalog.cards.filter((card) => !card.eventOnly);
   return { runtime, staticCards };
@@ -84,7 +85,7 @@ test("static catalog.json receipts match the runtime catalog", async () => {
 });
 
 test("research pools drop the sourcePending flag once a source is attached", async () => {
-  for (const file of ["set5-wip-pool.json", "set6-wip-pool.json", "set7-wip-pool.json"]) {
+  for (const file of ["set5-wip-pool.json", "set6-wip-pool.json", "set7-wip-pool.json", "set8-wip-pool.json"]) {
     const pool = JSON.parse(await readFile(path.join(projectRoot, "docs/intake/research", file), "utf8"));
     const stale = pool.candidates
       .filter((candidate) => candidate.sourcePending && (candidate.sources || []).some(Boolean))

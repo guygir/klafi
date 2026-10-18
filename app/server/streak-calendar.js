@@ -33,6 +33,7 @@ function prizeFromToken(token) {
  */
 export const BONUS_DAYS = Object.freeze({
   "2026-10-11": Object.freeze({ kind: "pack", label: "סט חדש", sublabel: "העצמה נשית", setId: "set-7" }),
+  "2026-10-18": Object.freeze({ kind: "pack", label: "סט חדש", sublabel: "צדיקים", setId: "set-8" }),
 });
 
 export function bonusDayFor(date) {

@@ -135,6 +135,21 @@ const MOMENT_SETS = Object.freeze({
     why: "Selected for Set 7 (העצמה נשית) from the handoff quote pool.",
     rationale: "Set 7 quote with supplied art.",
   },
+  "set-8": {
+    idPrefix: "SET8",
+    letters: "צדיק",
+    nameHe: "צדיקים",
+    nameEn: "Religious men",
+    releaseSetId: "set-8",
+    releaseOrder: 14,
+    binderGroup: "set-8",
+    sourceIdPrefix: "set8",
+    indexField: "set8Index",
+    fallbackSet: "RZ",
+    unplacedLine: true,
+    why: "Selected for Set 8 (צדיקים) from the accepted quote pool.",
+    rationale: "Set 8 quote with supplied art.",
+  },
 });
 
 export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
@@ -162,14 +177,19 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
   // Human-readable receipt label (usually the source headline); fall back to the raw URL.
   const sourceLabel = String(candidate.sourceLabel || "").trim() || sourceUrl || "Source pending";
   const context = candidate.notes || candidate.art?.note || "";
-  const setLabel = party?.displayNameHe || meta.nameHe;
+  // A printed list name (נעם) can differ from the 14 game parties. card.set stays the game party.
+  const setNameHe = String(candidate.partyNameHe || "").trim() || party?.displayNameHe || meta.nameHe;
+  const setName = String(candidate.partyNameEn || "").trim() || party?.displayNameEn || meta.nameEn;
+  const ballot = String(candidate.ballotLetters || "").trim();
+  const letters = ballot || (party?.finalLetters || party?.requestedLetters || [meta.letters])[0];
+  const setLabel = setNameHe;
   const unplacedHe = candidate.gender === "f" ? "לא ממוקמת" : "לא ממוקם";
   return {
     id: `${meta.idPrefix}-${String(index).padStart(2, "0")}`,
     set: party?.id || meta.fallbackSet,
-    setName: party?.displayNameEn || meta.nameEn,
-    setNameHe: party?.displayNameHe || meta.nameHe,
-    letters: (party?.finalLetters || party?.requestedLetters || [meta.letters])[0],
+    setName,
+    setNameHe,
+    letters,
     displayCode: `${meta.letters}-${String(index).padStart(2, "0")}`,
     pip: party?.pip || "#1B3A6B",
     title: candidate.nameEn,
@@ -231,11 +251,16 @@ export function runtimeSet7Card(candidate, extras = {}) {
   return runtimeMomentCard(candidate, extras, "set-7");
 }
 
-export function catalogExtrasFromStudio(studio, set5, set6, set7) {
+export function runtimeSet8Card(candidate, extras = {}) {
+  return runtimeMomentCard(candidate, extras, "set-8");
+}
+
+export function catalogExtrasFromStudio(studio, set5, set6, set7, set8) {
   return {
     set5: set5 || { candidates: [] },
     set6: set6 || { candidates: [] },
     set7: set7 || { candidates: [] },
+    set8: set8 || { candidates: [] },
     parties: studio?.parties || [],
     members: studio?.members || [],
     criticalBloc: studio?.editorialPolicy?.criticalBloc || [],
@@ -273,12 +298,14 @@ export function expandPublicCatalog(cards, specials = { sets: [], cards: [] }, e
   const set5Cards = (extras.set5?.candidates || []).map((candidate) => runtimeSet5Card(candidate, extras));
   const set6Cards = (extras.set6?.candidates || []).map((candidate) => runtimeSet6Card(candidate, extras));
   const set7Cards = (extras.set7?.candidates || []).map((candidate) => runtimeSet7Card(candidate, extras));
+  const set8Cards = (extras.set8?.candidates || []).map((candidate) => runtimeSet8Card(candidate, extras));
   const expanded = [
     ...cards,
     ...(specials.cards || []).map((card) => runtimeSpecialCard(card, specials)),
     ...set5Cards,
     ...set6Cards,
     ...set7Cards,
+    ...set8Cards,
   ];
   return attachMembershipNotes(expanded, extras.members || []);
 }

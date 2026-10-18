@@ -938,7 +938,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   const catalog = await api(running.base, "/api/catalog");
   assert.equal(catalog.status, 200);
   assert.ok(catalog.body.cards.length > 100);
-  assert.equal(new Set(catalog.body.cards.filter(({ set, eventOnly }) => set !== "SYS" && !eventOnly).map(({ set }) => set)).size, 14);
+  assert.equal(new Set(catalog.body.cards.filter(({ set, eventOnly }) => set !== "SYS" && !eventOnly).map(({ set }) => set)).size, 15);
   assert.ok(catalog.body.cards.every(({ titleHe, setNameHe, typeHe, displayCode }) => titleHe && setNameHe && typeHe && displayCode));
   const specials = await api(running.base, "/api/specials");
   assert.equal(specials.status, 200);
@@ -1312,7 +1312,7 @@ test("Studio reads publicly and saves one card atomically only in debug mode", a
 
   const content = await api(running.base, "/api/studio/content");
   assert.equal(content.status, 200);
-  assert.equal(content.body.parties.length, 14);
+  assert.equal(content.body.parties.length, 15);
   assert.equal(content.body.members.length, 51);
   const catalog = await api(running.base, "/api/catalog");
   const targetRuntime = catalog.body.cards.find(({ type }) => type === "Quote");
@@ -1441,6 +1441,8 @@ test("Studio mutation endpoint is hidden when debug mode is disabled", async (t)
   assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-5").weight, 50);
   assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-6").weight, 37);
   assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-7").weight, 58);
+  assert.equal(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-8").weight, 74);
+  assert.deepEqual(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-8").rarities, { Common: 652, Uncommon: 256, Rare: 93 });
   assert.deepEqual(boot.body.gameConfig.pack.sets.find(({ id }) => id === "party-leaders").rarities, { Common: 135, Uncommon: 48, Rare: 17 });
   assert.deepEqual(boot.body.gameConfig.pack.sets.find(({ id }) => id === "set-5").rarities, { Common: 135, Uncommon: 48, Rare: 17 });
   assert.deepEqual(boot.body.gameConfig.pack.current.sets.map(({ id }) => id), []);
@@ -2592,6 +2594,71 @@ test("bonus day 2026-10-11: set-gift label, one popup re-show, hidden V until cl
   assert.equal(tomorrow.body.state.streakCalendar.showPopup, true);
   const dismissState = await api(running.base, "/api/state", { token: dismisser });
   assert.equal((dismissState.body.instances || []).some((item) => item.acquiredBy === "date-2026-10-11"), false);
+});
+
+test("bonus day 2026-10-18: set-gift label, one popup re-show, hidden V until claimed, gone after midnight", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-bonus-day-8-"));
+  const clock = { value: Date.parse("2026-10-17T07:00:00.000Z") };
+  const running = await start(dataDir, clock, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const catalog = await api(running.base, "/api/catalog");
+  const setOf = new Map(catalog.body.cards.map((card) => [card.id, card.releaseSetId]));
+  assert.ok(catalog.body.cards.some((card) => card.releaseSetId === "set-8" && card.idleEligible), "set 8 is in the pull pool");
+  const bonusCell = (state) => state.streakCalendar.days.find((cell) => cell.date === "2026-10-18");
+
+  const streaker = (await api(running.base, "/api/home")).body.token;
+  const dismisser = (await api(running.base, "/api/home")).body.token;
+  clock.value = Date.parse("2026-10-18T07:00:00.000Z");
+
+  const fresh = await api(running.base, "/api/home");
+  const freshToken = fresh.body.token;
+  assert.equal(fresh.body.state.visitStreak, 1);
+  assert.equal(fresh.body.state.streakCalendar.showPopup, false);
+  assert.deepEqual(bonusCell(fresh.body.state).reward, { kind: "pack", label: "סט חדש", sublabel: "צדיקים", setId: "set-8" });
+  assert.equal(bonusCell(fresh.body.state).checked, false);
+  const freshOpen = await api(running.base, "/api/streak/open", { token: freshToken, method: "POST", body: { date: "2026-10-18" } });
+  assert.equal(freshOpen.body.mode, "streak-pack");
+  assert.equal(freshOpen.body.cards.length, 1);
+  assert.equal(setOf.get(freshOpen.body.cards[0].cardId), "set-8");
+  assert.equal(bonusCell(freshOpen.body.state).checked, true);
+  assert.equal(bonusCell(freshOpen.body.state).opened, true);
+  const freshAgain = await api(running.base, "/api/streak/open", { token: freshToken, method: "POST", body: { date: "2026-10-18" } });
+  assert.equal(freshAgain.body.already, true);
+
+  const streakHome = await api(running.base, "/api/home", { token: streaker });
+  assert.equal(streakHome.body.state.visitStreak, 2);
+  assert.equal(streakHome.body.state.streakCalendar.showPopup, true);
+  const streakOpen = await api(running.base, "/api/streak/open", { token: streaker, method: "POST", body: { day: 2 } });
+  assert.equal(streakOpen.body.cards.length, 1);
+  assert.equal(streakOpen.body.state.streakCalendar.showPopup, false);
+  const streakAgain = await api(running.base, "/api/streak/open", { token: streaker, method: "POST", body: { day: 2 } });
+  assert.equal(streakAgain.body.already, true);
+  const bonusOpen = await api(running.base, "/api/streak/open", { token: streaker, method: "POST", body: { date: "2026-10-18" } });
+  assert.equal(setOf.get(bonusOpen.body.cards[0].cardId), "set-8");
+  const streakState = await api(running.base, "/api/state", { token: streaker });
+  const count = (prefix) => (streakState.body.instances || []).filter((item) => item.acquiredBy === prefix).length;
+  assert.equal(count("streak-2"), 1);
+  assert.equal(count("date-2026-10-18"), 1);
+
+  const dismissHome = await api(running.base, "/api/home", { token: dismisser });
+  assert.equal(dismissHome.body.state.streakCalendar.showPopup, true);
+  const ack = await api(running.base, "/api/streak/ack", { token: dismisser, method: "POST" });
+  assert.equal(ack.body.state.streakCalendar.showPopup, false);
+  const reload = await api(running.base, "/api/home", { token: dismisser });
+  assert.equal(reload.body.state.streakCalendar.showPopup, false);
+  assert.equal(bonusCell(reload.body.state).checked, false);
+
+  clock.value = Date.parse("2026-10-18T21:30:00.000Z");
+  const late = await api(running.base, "/api/streak/open", { token: dismisser, method: "POST", body: { date: "2026-10-18" } });
+  assert.equal(late.body.already, true);
+  const tomorrow = await api(running.base, "/api/home", { token: dismisser });
+  assert.equal(tomorrow.body.state.streakCalendar.today, "2026-10-19");
+  assert.equal(tomorrow.body.state.streakCalendar.showPopup, true);
+  const dismissState = await api(running.base, "/api/state", { token: dismisser });
+  assert.equal((dismissState.body.instances || []).some((item) => item.acquiredBy === "date-2026-10-18"), false);
 });
 
 test("streak run after a reset: same run day opens this run's prize, not the old run's", async (t) => {
