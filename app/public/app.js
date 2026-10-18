@@ -6426,9 +6426,7 @@ function tradeSideCardsMarkup(trade, sideKey, role, { canPick = false } = {}) {
   const pickable = canPick && sideNeedsPick(mode, ids);
   const pick = pickable ? tradeAcceptPick(trade.tradeId) : null;
   const pickKey = sideKey === "offered" ? "offeredCardId" : "wantedCardId";
-  const slots = [0, 1, 2].map((index) => {
-    const cardId = ids[index];
-    if (!cardId) return `<div class="trade-rail-slot" aria-hidden="true"></div>`;
+  const slots = ids.filter(Boolean).slice(0, TRADE_SIDE_MAX).map((cardId) => {
     const card = model.byId.get(cardId);
     const conceal = Boolean(card) && tradeCardUnowned(cardId);
     const selected = Boolean(pick && pick[pickKey] === cardId);

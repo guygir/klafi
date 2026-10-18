@@ -619,7 +619,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-board-wanted"/);
   assert.match(html, /id="trade-board-pager"/);
   assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,120}?width:\s*100%/);
-  assert.match(css, /\.trade-side-rail[\s\S]{0,160}?grid-template-columns:\s*repeat\(3,/);
+  assert.match(css, /\.trade-side-rail \{[^}]*display:\s*flex/);
+  assert.match(css, /\.trade-side-rail \{[^}]*justify-content:\s*center/);
+  assert.match(css, /\.trade-rail-slot \{[^}]*flex: 0 0 calc\(\(100% - \(2 \* var\(--trade-rail-gap\)\)\) \/ 3\)/);
+  assert.match(css, /\.trade-rail-slot:empty \{[^}]*display:\s*none/);
+  assert.match(javascript, /ids\.filter\(Boolean\)\.slice\(0, TRADE_SIDE_MAX\)/);
+  assert.doesNotMatch(javascript, /trade-rail-slot" aria-hidden="true"/);
   assert.match(css, /\.trade-choice-row[\s\S]{0,180}?grid-template-columns:\s*auto minmax\(0,\s*1fr\)/);
   assert.match(html, /class="trade-choice-row"/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame[\s\S]{0,80}?width:\s*48px/);

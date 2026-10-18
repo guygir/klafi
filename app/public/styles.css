@@ -5491,19 +5491,22 @@ body {
   width: 100%;
 }
 .trade-side-rail {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  --trade-rail-gap: 3px;
+  display: flex;
+  justify-content: center;
   align-items: start;
-  gap: 3px;
+  gap: var(--trade-rail-gap);
   width: 100%;
 }
 .trade-offer > .trade-side[data-trade-side="offered"] .trade-side-rail { direction: ltr; }
 .trade-rail-slot {
+  flex: 0 0 calc((100% - (2 * var(--trade-rail-gap))) / 3);
+  width: calc((100% - (2 * var(--trade-rail-gap))) / 3);
+  max-width: calc((100% - (2 * var(--trade-rail-gap))) / 3);
   min-width: 0;
-  width: 100%;
 }
 .trade-rail-slot:empty {
-  aspect-ratio: 63 / 96;
+  display: none;
 }
 .trade-offer .trade-side-rail .trade-thumb {
   display: block;
