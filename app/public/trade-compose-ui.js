@@ -10,17 +10,6 @@ export function tradeModeHintHe(mode) {
     : "צריך את כל הקלפים ברשימה.";
 }
 
-export function tradeModeToggleLabel(mode) {
-  return mode === "or" ? "אחד (או)" : "כולם (וגם)";
-}
-
-/** Poster-side summary (offered = they give, wanted = they ask). */
-export function tradeFormationSummary(trade) {
-  const offered = trade?.offeredMode === "or" ? "or" : "and";
-  const wanted = trade?.wantedMode === "or" ? "or" : "and";
-  return `נותנים ${tradeModeToggleLabel(offered)} · מבקשים ${tradeModeToggleLabel(wanted)}`;
-}
-
 export function sideJoinLabel(mode, index) {
   if (index <= 0) return "";
   return mode === "or" ? "או" : "+";

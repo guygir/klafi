@@ -5082,9 +5082,12 @@ body {
 .trade-compose {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  /* Content-sized: flex:1 reserved a second bottom hole (compose box =
+     desk leftover, ~nav-clearance tall) above the in-flow publish row. */
+  flex: 0 0 auto;
   min-height: 0;
   gap: 8px;
+  padding-bottom: 0;
 }
 
 .trade-desk .trade-form {
@@ -5213,6 +5216,7 @@ body {
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
+  align-content: start;
   gap: 8px;
   overflow: visible;
   direction: rtl;
@@ -5284,7 +5288,9 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 12px 0 4px;
+  flex: 0 0 auto;
+  margin: 8px 0 0;
+  padding: 0;
 }
 #app .trade-desk .trade-publish-row #trade-create {
   flex: 0 0 auto;

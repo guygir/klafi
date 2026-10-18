@@ -114,6 +114,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /data-fit-card-text="quote"/);
   assert.match(javascript, /data-fit-card-text="party"/);
   assert.match(javascript, /data-fit-card-text="name"/);
+  assert.match(javascript, /data-fit-card-text="rarity"/);
+  assert.match(javascript, /rarity: rarityCqw/);
   assert.match(javascript, /function fitCardText/);
   assert.match(javascript, /function applyCardStage/);
   assert.match(javascript, /progressiveStage: "blank"/);
@@ -446,7 +448,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /tradeComposeCardsInSet\(pool, setKey\)/);
   assert.match(javascript, /tradeOrChipTapOpensDialog\(alreadyPicked\)/);
   assert.match(javascript, /if \(!tradeOrChipTapOpensDialog\(alreadyPicked\)\) \{[\s\S]*?renderTradeBoard\(\);[\s\S]*?return;/);
-  assert.match(javascript, /tradeFormationSummary/);
+  assert.doesNotMatch(javascript, /tradeFormationSummary/);
+  assert.doesNotMatch(javascript, /paintComposeFormationHint/);
+  assert.doesNotMatch(html, /id="trade-board-hint"/);
   assert.doesNotMatch(javascript, /trade-formation-badge/);
   assert.doesNotMatch(css, /\.trade-formation-badge/);
   assert.match(javascript, /<small>\$\{label\}/);
@@ -455,7 +459,6 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(javascript, /trade\.qaLabel/);
   assert.doesNotMatch(css, /\.trade-qa-label/);
   assert.match(javascript, /data-trade-side=/);
-  assert.match(javascript, /paintComposeFormationHint/);
   assert.match(javascript, /sideNeedsPick\(trade\.offeredMode, offeredCardIds\(trade\)\)/);
   assert.match(javascript, /trade-side-rail/);
   assert.match(javascript, /data-trade-id=/);
@@ -804,6 +807,10 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
     "the publish button sits centered under compose, after both sides",
   );
   assert.match(css, /\.trade-publish-row \{[^}]*justify-content:\s*center/);
+  assert.match(css, /\.trade-compose \{[^}]*flex:\s*0 0 auto;/);
+  assert.doesNotMatch(css, /\.trade-compose \{[^}]*flex:\s*1 1 auto;/);
+  assert.doesNotMatch(css, /trade-thumb[^{]*card-rarity-zone[^{]*display:\s*none/);
+  assert.doesNotMatch(themeCss, /\[data-card-frame="fullart-v1"\] \.card-rarity-run[\s\S]{0,200}?font-size:/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame \{\s*width: var\(--trade-thumb-w\);/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(css, /\.pack-shadow \{\s*display: none;/);
