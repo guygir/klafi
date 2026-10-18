@@ -64,6 +64,12 @@ export function orderTradeComposeSlotCards(cards, sideKey, { ownedCount, holderC
     : sortTradeComposeOffered(cards, ownedCount, title);
 }
 
+/** Same visual count both dropdowns use: "15x", including "0x". */
+export function tradeComposeCountTag(count) {
+  const n = Math.max(0, Math.round(Number(count) || 0));
+  return `${Number.isFinite(n) ? n : 0}x`;
+}
+
 /** OR rails: first tap on an unhighlighted card only highlights. Second tap opens the viewer. AND never uses this. */
 export function tradeOrChipTapOpensDialog(alreadyPicked) {
   return Boolean(alreadyPicked);

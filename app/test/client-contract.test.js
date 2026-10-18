@@ -429,6 +429,12 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function tradeWantLabel\(card\) \{\s*\/\/[^\n]*\n\s*return `\$\{cardTitle\(card\)\} · \$\{cardCode\(card\)\} · \$\{rarityMark\(card\.rarity\)\} \$\{rarityNameHe\(card\.rarity\)\} · \$\{plainOwnedCount\(card\)\}x`/);
   assert.match(javascript, /tradeOfferedCard[\s\S]{0,400}tradeComposeOfferLabel\(candidate\)/);
   assert.match(javascript, /tradeWantedCard[\s\S]{0,240}tradeComposeWantLabel\(candidate\)/);
+  assert.match(javascript, /function tradeComposeWantLabel\(card\) \{\n  return tradeComposeCardLabel\(card, holderCountFor\(card\)\);/);
+  assert.match(javascript, /function tradeComposeOfferLabel\(card\) \{\n  return tradeComposeCardLabel\(card, plainOwnedCount\(card\)\);/);
+  assert.match(javascript, /tradeComposeCountTag\(count\)/);
+  assert.doesNotMatch(javascript, /if \(!model\.cardHoldersReady\) return base;/);
+  assert.match(css, /\.trade-form legend \{ padding: 0 6px; font-size: 22px;/);
+  assert.match(css, /\.trade-compose-arrow \{[^}]*font-size: 36px;/);
   assert.match(javascript, /tradeModeHintHe/);
   assert.match(html, /כולם \(וגם\)/);
   assert.match(html, /trade-mode-btn is-active"[^>]*aria-pressed="true"/);

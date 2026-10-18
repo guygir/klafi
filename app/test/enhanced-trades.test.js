@@ -16,6 +16,7 @@ import {
   sortTradeComposeOffered,
   sortTradeComposeWanted,
   tradeComposeCardsInSet,
+  tradeComposeCountTag,
   tradeFormationSummary,
   tradeModeHintHe,
   tradeOrChipTapOpensDialog,
@@ -470,6 +471,13 @@ test("give-side dropdown orders owned cards by copy count, including within a se
     title: (card) => card.titleHe,
   });
   assert.deepEqual(viaSlot.map((card) => card.id), ["b", "c", "a"]);
+});
+
+test("compose option counts use the same Nx tag on give and want, including 0x", () => {
+  assert.equal(tradeComposeCountTag(1), "1x");
+  assert.equal(tradeComposeCountTag(15), "15x");
+  assert.equal(tradeComposeCountTag(0), "0x");
+  assert.equal(tradeComposeCountTag(null), "0x");
 });
 
 test("want-side dropdown orders by holder count, including within a set", () => {

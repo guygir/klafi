@@ -30,6 +30,7 @@ import {
   sortTradeComposeOffered as sortOfferedByCopies,
   sortTradeComposeWanted as sortWantedByHolders,
   tradeComposeCardsInSet,
+  tradeComposeCountTag,
   tradeFormationSummary,
   tradeModeHintHe,
   tradeOrChipTapOpensDialog,
@@ -583,17 +584,16 @@ function tradeReleaseName(card) {
   return releaseNames[card?.releaseSetId] || fallbackReleaseNames[card?.releaseSetId] || "סדרה אחרת";
 }
 
+function tradeComposeCardLabel(card, count) {
+  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)} · ${tradeComposeCountTag(count)}`;
+}
+
 function tradeComposeOfferLabel(card) {
-  const count = plainOwnedCount(card);
-  return `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)} · ${count}x`;
+  return tradeComposeCardLabel(card, plainOwnedCount(card));
 }
 
 function tradeComposeWantLabel(card) {
-  const base = `${cardTitle(card)} · ${cardCode(card)} · ${rarityMark(card.rarity)} ${rarityNameHe(card.rarity)}`;
-  if (!model.cardHoldersReady) return base;
-  const holders = holderCountFor(card);
-  if (holders <= 0) return base;
-  return `${base} · ${holders} שחקנים`;
+  return tradeComposeCardLabel(card, holderCountFor(card));
 }
 
 function sortTradeComposeWanted(cards) {
@@ -1702,6 +1702,7 @@ async function bootstrap() {
     renderBinder();
     renderAchievements();
     renderGrowth();
+    hydrateCardHolders().catch(() => {});
     const homePromise = hydrateHome();
     const afterToday = homePromise.then(() => prefetchAfterToday());
     if (extrasNeeded) await afterToday.catch(() => null);
@@ -4473,7 +4474,7 @@ async function hydrateCardHolders() {
     if (model.showcase) renderShowcaseBinder();
     else if (catalogReady()) renderBinder();
     if (elements.dialog?.open) renderDialogCard();
-    if (elements.tradeCompose && !elements.tradeCompose.hidden) renderTradeComposeSlots();
+    renderTradeComposeSlots();
     if (elements.tradeWantedCard) renderGrowth();
   } catch {
     /* Holder counts stay empty until the hourly snapshot arrives. */

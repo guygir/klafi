@@ -3734,7 +3734,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   width: 100%;
 }
 @media (max-width: 520px) {
@@ -3744,7 +3744,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   }
 }
 .trade-form fieldset { min-width: 0; margin: 0; padding: 10px; border: 1px solid rgba(44, 51, 48, 0.22); border-radius: 8px; }
-.trade-form legend { padding: 0 4px; font-size: 13px; font-weight: 600; }
+.trade-form legend { padding: 0 6px; font-size: 22px; font-weight: 700; line-height: 1.15; }
 .trade-form label { display: grid; gap: 5px; margin-top: 9px; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .trade-thumb {
   display: grid;
@@ -5328,12 +5328,23 @@ body {
 }
 
 .trade-compose-arrow {
-  margin: 2px 0;
-  padding: 4px 0;
+  margin: 8px 0;
+  padding: 6px 0;
   text-align: center;
   color: var(--civic);
-  font-size: 22px;
+  font-size: 36px;
+  font-weight: 700;
   line-height: 1;
+}
+#app .trade-desk .trade-compose .trade-side-fieldset > legend {
+  font-family: "Noto Serif Hebrew", "Noto Serif", serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+#app .trade-desk .trade-compose .trade-compose-arrow {
+  font-size: 36px;
+  font-weight: 700;
 }
 .trade-side-fieldset {
   width: 100%;
