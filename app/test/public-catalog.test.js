@@ -417,7 +417,9 @@ test("set 8 ships 28 cards, 14/9/5, and stays in the normalized pack", async () 
   assert.equal(slotOf("SET8-14").subtitleHe, "לא ממוקם");
   assert.equal(slotOf("SET8-23").setNameHe, "נעם");
   assert.equal(slotOf("SET8-23").subtitleHe, "מקום 1");
-  assert.equal(slotOf("SET8-23").set, "RZ");
+  assert.equal(slotOf("SET8-23").set, "NAM");
+  assert.equal(slotOf("SET8-23").letters, "ני");
+  assert.equal(slotOf("SET8-23").pip, "#3E5C3A");
   assert.equal(slotOf("SET8-26").subtitleHe, "מקום 1");
   const shortened = new Set(set8.candidates.filter(({ quoteStatus }) => quoteStatus === "shortened").map(({ n }) => `SET8-${String(n).padStart(2, "0")}`));
   assert.deepEqual(

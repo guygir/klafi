@@ -942,7 +942,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   const catalog = await api(running.base, "/api/catalog");
   assert.equal(catalog.status, 200);
   assert.ok(catalog.body.cards.length > 100);
-  assert.equal(new Set(catalog.body.cards.filter(({ set, eventOnly }) => set !== "SYS" && !eventOnly).map(({ set }) => set)).size, 14);
+  assert.equal(new Set(catalog.body.cards.filter(({ set, eventOnly }) => set !== "SYS" && !eventOnly).map(({ set }) => set)).size, 15);
   assert.ok(catalog.body.cards.every(({ titleHe, setNameHe, typeHe, displayCode }) => titleHe && setNameHe && typeHe && displayCode));
   const specials = await api(running.base, "/api/specials");
   assert.equal(specials.status, 200);
@@ -1316,7 +1316,7 @@ test("Studio reads publicly and saves one card atomically only in debug mode", a
 
   const content = await api(running.base, "/api/studio/content");
   assert.equal(content.status, 200);
-  assert.equal(content.body.parties.length, 14);
+  assert.equal(content.body.parties.length, 15);
   assert.equal(content.body.members.length, 51);
   const catalog = await api(running.base, "/api/catalog");
   const targetRuntime = catalog.body.cards.find(({ type }) => type === "Quote");

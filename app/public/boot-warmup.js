@@ -25,7 +25,7 @@ const inboundInvite = pendingInvite();
 const homePath = inboundInvite
   ? `/api/home?invite=${encodeURIComponent(inboundInvite)}`
   : "/api/home";
-const staticDataVersion = "visible-sets-7";
+const staticDataVersion = "visible-sets-8";
 const PLAYABLE_ART_SET_IDS = ["party-leaders", "party-slot-2", "set-5", "set-6", "set-7", "set-8"];
 const json = async (response) => {
   const body = await response.json();

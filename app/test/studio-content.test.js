@@ -13,10 +13,10 @@ const runtimeCards = JSON.parse(await readFile(path.join(appRoot, "data/cards.js
 const specials = JSON.parse(await readFile(path.join(appRoot, "data/specials-content.json"), "utf8"));
 const archive = JSON.parse(await readFile(path.join(projectRoot, "docs/intake/research/quote-archive-41.json"), "utf8"));
 
-test("expanded Studio has the canonical 14-party, 51-person roster", () => {
-  assert.equal(studio.parties.length, 14);
+test("expanded Studio has the canonical 15-party, 51-person roster", () => {
+  assert.equal(studio.parties.length, 15);
   assert.equal(studio.members.length, 51);
-  assert.equal(new Set(studio.parties.map(({ id }) => id)).size, 14);
+  assert.equal(new Set(studio.parties.map(({ id }) => id)).size, 15);
   assert.equal(new Set(studio.members.map(({ id }) => id)).size, 51);
 
   const partyIds = new Set(studio.parties.map(({ id }) => id));
