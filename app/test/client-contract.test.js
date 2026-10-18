@@ -114,6 +114,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /data-fit-card-text="quote"/);
   assert.match(javascript, /data-fit-card-text="party"/);
   assert.match(javascript, /data-fit-card-text="name"/);
+  assert.match(javascript, /data-fit-card-text="rarity"/);
+  assert.match(javascript, /rarity: rarityCqw/);
   assert.match(javascript, /function fitCardText/);
   assert.match(javascript, /function applyCardStage/);
   assert.match(javascript, /progressiveStage: "blank"/);
@@ -808,7 +810,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.trade-compose \{[^}]*flex:\s*0 0 auto;/);
   assert.doesNotMatch(css, /\.trade-compose \{[^}]*flex:\s*1 1 auto;/);
   assert.doesNotMatch(css, /trade-thumb[^{]*card-rarity-zone[^{]*display:\s*none/);
-  assert.match(themeCss, /\[data-card-frame="fullart-v1"\] \.card-rarity-run[\s\S]{0,280}?font-size:\s*3\.5cqw/);
+  assert.doesNotMatch(themeCss, /\[data-card-frame="fullart-v1"\] \.card-rarity-run[\s\S]{0,200}?font-size:/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame \{\s*width: var\(--trade-thumb-w\);/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(css, /\.pack-shadow \{\s*display: none;/);

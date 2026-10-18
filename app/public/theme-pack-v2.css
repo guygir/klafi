@@ -1701,7 +1701,6 @@ body:has(#app[data-theme="pack-v2"]) {
   display: grid;
   place-items: center;
   gap: 0;
-  overflow: hidden;
   color: var(--foil);
   font-family: "IBM Plex Sans Hebrew", sans-serif;
   font-size: 3.5cqw;
@@ -1710,8 +1709,6 @@ body:has(#app[data-theme="pack-v2"]) {
   letter-spacing: 0;
   white-space: nowrap;
   text-align: center;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 #app[data-card-frame="fullart-v1"] .card-rarity-run,
@@ -1721,15 +1718,8 @@ body:has(#app[data-theme="pack-v2"]) {
   justify-content: center;
   gap: 0.32em;
   max-width: 100%;
-  max-height: 100%;
-  overflow: hidden;
-  /* cqw on the inner span — inherit from the <p> was clamped to ~11px on thumbs. */
-  font-size: 3.5cqw;
-  line-height: 1;
   letter-spacing: 0;
   white-space: nowrap;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 #app[data-card-frame="fullart-v1"] .card-rarity-zone strong,

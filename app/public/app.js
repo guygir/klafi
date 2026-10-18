@@ -1815,8 +1815,8 @@ function describeError(error) {
 function fitBinderTextLikeRarity(element, role, isFullart) {
   const rarityCqw = isFullart ? 3.5 : 4.2;
   const design = isFullart
-    ? { name: 8, party: rarityCqw, quote: 5.6 }
-    : { name: 6.4, party: rarityCqw, quote: 4.3 };
+    ? { name: 8, party: rarityCqw, rarity: rarityCqw, quote: 5.6 }
+    : { name: 6.4, party: rarityCqw, rarity: rarityCqw, quote: 4.3 };
   const start = design[role] ?? rarityCqw;
   const slop = role === "quote" ? 0 : 1;
   const fits = (cqw) => {
@@ -4644,7 +4644,7 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
         <div class="card-identity-stack">
           <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
           <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
-          <p class="card-rarity-zone" dir="rtl" lang="he"><span class="card-rarity-run"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</span></p>
+          <p class="card-rarity-zone" dir="rtl" lang="he"><span class="card-rarity-run" data-fit-card-text="rarity"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</span></p>
           <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
         </div>
       </section>
