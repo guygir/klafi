@@ -8,7 +8,9 @@ import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { openSpecialWindow } from "./special-window.js";
 import { jerusalemDay, regularInventory } from "./numbered.js";
 import { raceTargetForSavedFaction } from "./daily-race.js";
+import { holdsWantedSide } from "../public/trade-list.js";
 import { emptyTodayPulse } from "../public/today-pulse.js";
+import { normalizeStoredTrade, tradeNeedsAcceptChoices } from "./trade-core.js";
 
 const { Pool } = pg;
 const SECURITY_HEADERS = Object.freeze({
@@ -131,6 +133,58 @@ function iso(value) {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
 
+function ownerHoldsOfferedSide(trade, ownerHasOffered) {
+  const prefix = `${trade.ownerToken}:`;
+  const ids = trade.offeredCardIds || [];
+  if (!ids.length) return false;
+  return trade.offeredMode === "or"
+    ? ids.some((cardId) => ownerHasOffered.has(`${prefix}${cardId}`))
+    : ids.every((cardId) => ownerHasOffered.has(`${prefix}${cardId}`));
+}
+
+/** Fast /api/community row: same side arrays the full trade list uses, no accept-choice matrix. */
+export function slimTradeView(row, { token, inventory = {}, ownerHasOffered = new Set() } = {}) {
+  const trade = normalizeStoredTrade({
+    tradeId: row.trade_id,
+    ownerToken: row.owner_token,
+    offeredCardId: row.offered_card_id,
+    wantedCardId: row.wanted_card_id,
+    offeredMode: row.offered_mode,
+    wantedMode: row.wanted_mode,
+    offeredCardIds: row.offered_card_ids,
+    wantedCardIds: row.wanted_card_ids,
+    status: row.status,
+    createdAt: iso(row.created_at),
+    expiresAt: iso(row.expires_at),
+    acceptedAt: iso(row.accepted_at),
+    cancelledAt: iso(row.cancelled_at),
+    acceptedBy: row.accepted_by,
+  });
+  const ownedByCurrent = trade.ownerToken === token;
+  return {
+    tradeId: trade.tradeId,
+    offeredCardId: trade.offeredCardId,
+    wantedCardId: trade.wantedCardId,
+    offeredMode: trade.offeredMode,
+    wantedMode: trade.wantedMode,
+    offeredCardIds: trade.offeredCardIds,
+    wantedCardIds: trade.wantedCardIds,
+    status: trade.status,
+    createdAt: trade.createdAt,
+    expiresAt: trade.expiresAt,
+    acceptedAt: trade.acceptedAt,
+    cancelledAt: trade.cancelledAt,
+    ownerLabel: row.owner_label || "שחקן קְלָפִי",
+    ownedByCurrent,
+    acceptedByCurrent: trade.acceptedBy === token,
+    canAccept: trade.status === "open"
+      && !ownedByCurrent
+      && ownerHoldsOfferedSide(trade, ownerHasOffered)
+      && holdsWantedSide(inventory, trade),
+    needsAcceptChoice: tradeNeedsAcceptChoices(trade) || undefined,
+  };
+}
+
 /** Regular copies only (Guy's rule: a numbered copy is not a regular, tradeable copy). */
 async function sessionInventory(db, token) {
   if (!token) return {};
@@ -149,7 +203,7 @@ async function sessionInventory(db, token) {
   );
 }
 
-async function listTrades(db, token, now) {
+export async function listSlimCommunityTrades(db, token, now) {
   await db.query(
     `UPDATE kalpi_trades SET status = 'expired'
      WHERE status = 'open' AND expires_at <= $1`,
@@ -186,30 +240,26 @@ async function listTrades(db, token, now) {
         AND numbered.card_id = inventory.card_id
        WHERE inventory.copies > COALESCE(numbered.numbered, 0)
          AND (inventory.session_token, inventory.card_id) IN (
-           SELECT owner_token, offered_card_id FROM kalpi_trades
-           WHERE status = 'open' AND owner_token <> $1
+           SELECT owner_token, card_id FROM (
+             SELECT owner_token,
+                    jsonb_array_elements_text(
+                      CASE
+                        WHEN jsonb_typeof(offered_card_ids) = 'array' AND jsonb_array_length(offered_card_ids) > 0
+                          THEN offered_card_ids
+                        ELSE jsonb_build_array(offered_card_id)
+                      END
+                    ) AS card_id
+             FROM kalpi_trades
+             WHERE status = 'open' AND owner_token <> $1
+           ) AS offered
          )`,
       [token],
     );
     for (const row of owners.rows) ownerHasOffered.add(`${row.session_token}:${row.card_id}`);
   }
-  return result.rows.filter((row) => row.owner_token === token || !hidden.has(row.trade_id)).map((row) => ({
-    tradeId: row.trade_id,
-    offeredCardId: row.offered_card_id,
-    wantedCardId: row.wanted_card_id,
-    status: row.status,
-    createdAt: iso(row.created_at),
-    expiresAt: iso(row.expires_at),
-    acceptedAt: iso(row.accepted_at),
-    cancelledAt: iso(row.cancelled_at),
-    ownerLabel: row.owner_label || "שחקן קְלָפִי",
-    ownedByCurrent: row.owner_token === token,
-    acceptedByCurrent: row.accepted_by === token,
-    canAccept: row.status === "open"
-      && row.owner_token !== token
-      && ownerHasOffered.has(`${row.owner_token}:${row.offered_card_id}`)
-      && Boolean(inventory[row.wanted_card_id]),
-  }));
+  return result.rows
+    .filter((row) => row.owner_token === token || !hidden.has(row.trade_id))
+    .map((row) => slimTradeView(row, { token, inventory, ownerHasOffered }));
 }
 
 async function collectorBoards(db, config, now, token) {
@@ -331,7 +381,7 @@ export async function handleSlimCommunity(request, response) {
       return;
     }
     const [trades, leaderboards, activity] = await Promise.all([
-      listTrades(db, token, now).catch(() => []),
+      listSlimCommunityTrades(db, token, now).catch(() => []),
       collectorBoards(db, config, now, token).catch(() => slimLeaderboards(config, [], [], now)),
       activitySummary(db).catch(() => emptyCommunity(config, now).activity),
     ]);

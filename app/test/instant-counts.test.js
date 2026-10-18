@@ -93,6 +93,24 @@ test("trade cache: per token, expired offers dropped, replaced by the next serve
   assert.equal(storage.map.get(TRADE_CACHE_KEY), "{bad json", "no token, no write");
 });
 
+test("trade cache ignores legacy 1v1 snapshots that omit side arrays", () => {
+  const storage = memoryStorage();
+  storage.setItem(TRADE_CACHE_KEY, JSON.stringify({
+    token: "tok-a",
+    trades: [offer("legacy-1v1")],
+  }));
+  assert.equal(readTradeCache(storage, "tok-a", T0), null, "pre-#160 cache must not first-paint as 1v1");
+  writeTradeCache(storage, "tok-a", [{
+    ...offer("bundle"),
+    offeredCardIds: ["A", "B"],
+    wantedCardIds: ["C", "D", "E"],
+  }]);
+  const cached = readTradeCache(storage, "tok-a", T0);
+  assert.deepEqual(cached.map(({ tradeId }) => tradeId), ["bundle"]);
+  assert.deepEqual(cached[0].offeredCardIds, ["A", "B"]);
+  assert.deepEqual(cached[0].wantedCardIds, ["C", "D", "E"]);
+});
+
 test("client: cached trades paint first, server lists replace them, actions stay on the server", async () => {
   const js = await readFile(new URL("../public/app.js", import.meta.url), "utf8");
   const set = js.slice(js.indexOf("function setTrades("), js.indexOf("function hideTradeOffer("));
