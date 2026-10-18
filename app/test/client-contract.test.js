@@ -433,9 +433,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.trade-formation-badge/);
   assert.match(javascript, /paintComposeFormationHint/);
   assert.match(javascript, /sideNeedsPick\(trade\.offeredMode, offeredCardIds\(trade\)\)/);
-  assert.match(javascript, /trade-accept-picks/);
+  assert.match(javascript, /trade-side-rail/);
   assert.match(javascript, /data-trade-id=/);
-  assert.match(css, /\.trade-offer > \.trade-accept-picks/);
+  assert.match(javascript, /is-picked/);
+  assert.match(css, /\.trade-side-rail/);
+  assert.match(css, /\.trade-offer \.trade-thumb\.is-picked/);
+  assert.doesNotMatch(javascript, /trade-accept-picks/);
+  assert.doesNotMatch(css, /\.trade-offer > \.trade-accept-picks/);
   assert.doesNotMatch(html, /הצעות ששחקנים אחרים פרסמו/);
   assert.match(html, /id="trade-board"/);
   assert.match(javascript, /const tradableCards = tradeCatalog\(\)/);
@@ -449,7 +453,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /\.trade-thumb\.is-concealed \.card-rarity-zone/);
   assert.match(javascript, /function tradeCardUnowned/);
   assert.match(javascript, /concealRenderedTradeThumbs\(elements\.tradeBoard\)/);
-  assert.match(javascript, /class="trade-thumb(?: trade-stack-chip)?\$\{conceal \? " is-concealed" : ""\}"/);
+  assert.match(javascript, /class="trade-thumb trade-stack-chip\$\{conceal \? " is-concealed" : ""\}\$\{selected \? " is-picked" : ""\}/);
   assert.match(javascript, /const earned = binderBadgeOrder\(visibleEarnedBadges\(\)\);/, "the binder rail shows earned badges from open pages");
   assert.match(javascript, /"party-slot-2": "משנה"/);
   assert.match(html, /id="wait-dialog"/);
@@ -590,7 +594,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-board-offered"/);
   assert.match(html, /id="trade-board-wanted"/);
   assert.match(html, /id="trade-board-pager"/);
-  assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,120}?width:\s*76px/);
+  assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,120}?width:\s*100%/);
+  assert.match(css, /\.trade-side-rail[\s\S]{0,160}?grid-template-columns:\s*repeat\(3,/);
   assert.match(css, /\.trade-choice-row[\s\S]{0,180}?grid-template-columns:\s*auto minmax\(0,\s*1fr\)/);
   assert.match(html, /class="trade-choice-row"/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame[\s\S]{0,80}?width:\s*48px/);
@@ -1158,6 +1163,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function paintShareCardFace/);
   assert.match(javascript, /function paintFullartShareIdentity/);
   assert.match(javascript, /SHARE_PULL_LINE/);
+  assert.match(html, /id="close-dialog-done"/);
+  assert.match(html, />סגירה</);
+  assert.match(javascript, /#close-dialog-done/);
   assert.match(css, /#card-dialog \.dialog-close/);
   assert.match(css, /#card-dialog \.dialog-close:focus-visible/);
   assert.doesNotMatch(css, /#card-dialog \.dialog-close:focus-visible[^}]*var\(--foil\)/);

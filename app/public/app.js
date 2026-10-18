@@ -19,7 +19,7 @@ import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
-import { holdsWantedCard, offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
+import { offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
 import { TRADE_SIDE_MAX, emptyTradeSide, offeredCardIds, sideJoinLabel, sideNeedsPick, tradeFormationSummary, tradeModeHintHe } from "./trade-compose-ui.js";
 import {
   exitWalkoutSunburst,
@@ -6399,22 +6399,42 @@ function paintComposeFormationHint() {
   });
 }
 
-function tradeSideCardsMarkup(trade, sideKey, role) {
+function tradeRailPickEnabled(trade, sideKey, cardId) {
+  const pick = tradeAcceptPick(trade.tradeId);
+  const choices = Array.isArray(trade.acceptChoices) ? trade.acceptChoices : [];
+  const field = sideKey === "offered" ? "offeredCardId" : "wantedCardId";
+  const otherField = sideKey === "offered" ? "wantedCardId" : "offeredCardId";
+  const otherPick = pick[otherField];
+  return choices.some((choice) => choice[field] === cardId && (!otherPick || choice[otherField] === otherPick));
+}
+
+function tradeSideCardsMarkup(trade, sideKey, role, { canPick = false } = {}) {
   const mode = sideKey === "offered" ? (trade.offeredMode || "and") : (trade.wantedMode || "and");
   const ids = sideKey === "offered" ? offeredCardIds(trade) : wantedCardIds(trade);
   const label = role === "give" ? "נותנים" : "מקבלים";
-  const chips = ids.map((cardId, index) => {
+  const pickable = canPick && sideNeedsPick(mode, ids);
+  const pick = pickable ? tradeAcceptPick(trade.tradeId) : null;
+  const pickKey = sideKey === "offered" ? "offeredCardId" : "wantedCardId";
+  const slots = [0, 1, 2].map((index) => {
+    const cardId = ids[index];
+    if (!cardId) return `<div class="trade-rail-slot" aria-hidden="true"></div>`;
     const card = model.byId.get(cardId);
     const conceal = Boolean(card) && tradeCardUnowned(cardId);
-    const join = sideJoinLabel(mode, index);
-    return `${join ? `<span class="trade-slot-join" aria-hidden="true">${join}</span>` : ""}
-      <button type="button" class="trade-thumb trade-stack-chip${conceal ? " is-concealed" : ""}" data-trade-choice-card="${escapeHtml(cardId)}" aria-label="${escapeHtml(card ? cardTitle(card) : cardId)}">
+    const selected = Boolean(pick && pick[pickKey] === cardId);
+    const pickBlocked = pickable && !tradeRailPickEnabled(trade, sideKey, cardId);
+    const pickAttr = pickable
+      ? ` data-trade-pick="${sideKey}" data-trade-pick-card="${escapeHtml(cardId)}" aria-pressed="${selected}"`
+      : "";
+    const title = card ? cardTitle(card) : cardId;
+    return `<div class="trade-rail-slot">
+      <button type="button" class="trade-thumb trade-stack-chip${conceal ? " is-concealed" : ""}${selected ? " is-picked" : ""}${pickBlocked ? " is-pick-disabled" : ""}" data-trade-choice-card="${escapeHtml(cardId)}"${pickAttr} aria-label="${escapeHtml(title)}">
         ${card ? tradeThumbMarkup(card, { warnLastCopy: role === "give" }) : ""}
-      </button>`;
+      </button>
+    </div>`;
   }).join("");
-  return `<div class="trade-side">
+  return `<div class="trade-side" data-trade-side-mode="${mode}">
     <small>${label}${mode === "or" && ids.length > 1 ? " · אחד מהם" : ids.length > 1 ? " · כולם" : ""}</small>
-    <div class="trade-side-stack">${chips}</div>
+    <div class="trade-side-rail">${slots}</div>
   </div>`;
 }
 
@@ -6429,40 +6449,6 @@ function tradeSideMarkup(cardId, card, role) {
 function tradeAcceptPick(tradeId) {
   model.tradeAcceptPick[tradeId] ??= { offeredCardId: "", wantedCardId: "" };
   return model.tradeAcceptPick[tradeId];
-}
-
-function tradeAcceptChoiceMarkup(trade, inventory) {
-  if (!trade.needsAcceptChoice) return "";
-  const pick = tradeAcceptPick(trade.tradeId);
-  const choices = Array.isArray(trade.acceptChoices) ? trade.acceptChoices : [];
-  const canPick = (cardId, role) => choices.some((choice) => choice[`${role}CardId`] === cardId
-    && (!pick.offeredCardId || pick.offeredCardId === choice.offeredCardId)
-    && (!pick.wantedCardId || pick.wantedCardId === choice.wantedCardId));
-  const renderPick = (sideKey, ids, role) => {
-    const mode = sideKey === "offered" ? trade.offeredMode : trade.wantedMode;
-    if (!sideNeedsPick(mode, ids)) return "";
-    return `<div class="trade-accept-pick" data-trade-pick-side="${sideKey}">
-      <small>${sideKey === "offered" ? "בחרו מה מקבלים" : "בחרו מה נותנים"}</small>
-      <div class="trade-accept-pick-row">
-        ${ids.map((cardId) => {
-          const card = model.byId.get(cardId);
-          const owned = holdsWantedCard(inventory, cardId);
-          const enabled = choices.some((c) => c[`${sideKey === "offered" ? "offered" : "wanted"}CardId`] === cardId);
-          const selected = pick[sideKey === "offered" ? "offeredCardId" : "wantedCardId"] === cardId;
-          const reason = sideKey === "wanted" && !owned
-            ? "אין לכם עותק"
-            : !enabled ? "לא מתאים לבחירה השנייה" : "";
-          return `<button type="button" class="trade-accept-chip${selected ? " is-selected" : ""}${!enabled ? " is-disabled" : ""}"
-            data-trade-pick="${sideKey}" data-trade-pick-card="${escapeHtml(cardId)}" ${!enabled ? "disabled" : ""}
-            ${reason ? `data-tooltip="${escapeHtml(reason)}"` : ""} aria-pressed="${selected}">
-            ${card ? tradeThumbMarkup(card) : escapeHtml(cardId)}
-          </button>`;
-        }).join("")}
-      </div>
-    </div>`;
-  };
-  const picks = `${renderPick("offered", offeredCardIds(trade), "receive")}${renderPick("wanted", wantedCardIds(trade), "give")}`;
-  return picks ? `<div class="trade-accept-picks">${picks}</div>` : "";
 }
 
 function tradeAcceptReady(trade, inventory) {
@@ -6613,18 +6599,17 @@ function tradeRowMarkup(trade) {
   const accept = canShowAccept
     ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}" ${acceptReady ? "" : "disabled"}>קבלה</button>`
     : "";
-  const pickMarkup = canShowAccept ? tradeAcceptChoiceMarkup(trade, acceptInventory) : "";
   const action = trade.ownedByCurrent
     ? `<button type="button" class="trade-offer-action" data-cancel-trade="${trade.tradeId}">ביטול</button>`
     : (accept || hide) ? `<span class="trade-offer-actions">${accept}${hide}</span>` : "";
   const offeredRole = trade.ownedByCurrent ? "give" : "receive";
   const wantedRole = trade.ownedByCurrent ? "receive" : "give";
+  const sideOpts = { canPick: Boolean(canShowAccept) };
   return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}${trade.needsAcceptChoice ? " needs-choice" : ""}" data-trade-id="${escapeHtml(trade.tradeId)}" data-offered-mode="${escapeHtml(trade.offeredMode || "and")}" data-wanted-mode="${escapeHtml(trade.wantedMode || "and")}">
     <p class="trade-formation-badge">${escapeHtml(tradeFormationSummary(trade))}</p>
-    ${tradeSideCardsMarkup(trade, "offered", offeredRole)}
+    ${tradeSideCardsMarkup(trade, "offered", offeredRole, sideOpts)}
     <b aria-hidden="true">⇄</b>
-    ${tradeSideCardsMarkup(trade, "wanted", wantedRole)}
-    ${pickMarkup}
+    ${tradeSideCardsMarkup(trade, "wanted", wantedRole, sideOpts)}
     <div class="trade-offer-bar">
       <p>${escapeHtml(trade.ownedByCurrent ? "ההצעה שלכם" : trade.ownerLabel)} · עד ${escapeHtml(until)}</p>
       ${action}
@@ -10088,6 +10073,7 @@ elements.recycleConfirm?.addEventListener("click", () => {
   confirmRecycle().catch(() => showToast("לא הצלחנו למחזר."));
 });
 elements.closeDialog.addEventListener("click", () => elements.dialog.close());
+document.querySelector("#close-dialog-done")?.addEventListener("click", () => elements.dialog.close());
 elements.dialog.addEventListener("close", () => {
   maybeShowTradeNotice();
   maybeShowRecycleTip();
@@ -10216,21 +10202,6 @@ elements.tradeCompose?.addEventListener("change", (event) => {
   renderGrowth();
 });
 function handleTradeBoardClick(event) {
-  const pick = event.target.closest("[data-trade-pick-card]");
-  if (pick && !pick.disabled) {
-    const tradeRow = pick.closest(".trade-offer");
-    const tradeId = tradeRow?.querySelector("[data-accept-trade]")?.dataset.acceptTrade
-      || tradeRow?.querySelector("[data-cancel-trade]")?.dataset.cancelTrade;
-    if (tradeId) {
-      const slot = pick.dataset.tradePick;
-      const cardId = pick.dataset.tradePickCard;
-      const state = tradeAcceptPick(tradeId);
-      if (slot === "offered") state.offeredCardId = state.offeredCardId === cardId ? "" : cardId;
-      else state.wantedCardId = state.wantedCardId === cardId ? "" : cardId;
-      renderTradeBoard();
-    }
-    return;
-  }
   const cancel = event.target.closest("[data-cancel-trade]");
   if (cancel) {
     cancelTradeOffer(cancel.dataset.cancelTrade);
@@ -10248,7 +10219,15 @@ function handleTradeBoardClick(event) {
   }
   const chip = event.target.closest("[data-trade-choice-card]");
   if (chip) {
-    if (chip.classList.contains("is-concealed")) return;
+    const tradeId = chip.closest(".trade-offer")?.dataset.tradeId;
+    const sideKey = chip.dataset.tradePick;
+    const cardId = chip.dataset.tradeChoiceCard;
+    if (tradeId && sideKey && !chip.classList.contains("is-pick-disabled")) {
+      const state = tradeAcceptPick(tradeId);
+      if (sideKey === "offered") state.offeredCardId = cardId;
+      else state.wantedCardId = cardId;
+      renderTradeBoard();
+    }
     openCardDialog(chip.dataset.tradeChoiceCard);
     return;
   }
@@ -10630,7 +10609,10 @@ elements.dialog.addEventListener("click", (event) => {
     openNumberedPreview(link.dataset.cardId, link.dataset.numberedIndex, link.dataset.numberedOf);
     return;
   }
-  if (event.target === elements.dialog) elements.dialog.close();
+  const rect = elements.dialog.getBoundingClientRect();
+  const outside = event.clientX < rect.left || event.clientX > rect.right
+    || event.clientY < rect.top || event.clientY > rect.bottom;
+  if (event.target === elements.dialog || outside) elements.dialog.close();
 });
 elements.closeEventDialog.addEventListener("click", () => elements.eventDialog.close());
 elements.eventDialogOk.addEventListener("click", () => {
