@@ -31,7 +31,6 @@ import {
   sortTradeComposeWanted as sortWantedByHolders,
   tradeComposeCardsInSet,
   tradeComposeCountTag,
-  tradeFormationSummary,
   tradeModeHintHe,
   tradeOrChipTapOpensDialog,
 } from "./trade-compose-ui.js";
@@ -6396,20 +6395,7 @@ function renderTradeComposeSlots() {
       addBtn.disabled = side.cardIds.length >= TRADE_SIDE_MAX;
     }
   }
-  paintComposeFormationHint();
   syncLegacyTradeSelectFromCompose();
-}
-
-function paintComposeFormationHint() {
-  const boardHint = document.querySelector("#trade-board-hint");
-  if (!boardHint) return;
-  const offered = tradeComposeSide("offered");
-  const wanted = tradeComposeSide("wanted");
-  boardHint.hidden = false;
-  boardHint.textContent = tradeFormationSummary({
-    offeredMode: offered.mode,
-    wantedMode: wanted.mode,
-  });
 }
 
 function tradeRailPickEnabled(trade, sideKey, cardId) {
@@ -7454,7 +7440,6 @@ function renderGrowth() {
   }
 
   syncCommunityPage();
-  paintComposeFormationHint();
 }
 
 function fillFactionSelect() {

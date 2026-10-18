@@ -5495,10 +5495,6 @@ body {
   margin-top: 6px;
   width: 100%;
 }
-.trade-compose > #trade-board-hint {
-  flex: 0 0 auto;
-  margin: 4px 0 0;
-}
 .trade-side-rail {
   --trade-rail-gap: 3px;
   display: flex;
@@ -5534,14 +5530,6 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-}
-/* Mini thumbs (~52px): .card-rarity-run stays ~11px (Safari text-size
-   floor / cqw not inherited) on a 3.5cqw foil zone, so the Hebrew rarity
-   paints as a gold scribble along the bottom. Illegible at this size.
-   Must outrank #app .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone. */
-#app .trade-offer .trade-thumb .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone,
-#app .trade-compose .trade-thumb .kalpi-card[data-card-frame="fullart-v1"] .card-rarity-zone {
-  display: none;
 }
 .trade-offer .trade-side-rail,
 .trade-offer .trade-rail-slot {

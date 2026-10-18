@@ -17,7 +17,6 @@ import {
   sortTradeComposeWanted,
   tradeComposeCardsInSet,
   tradeComposeCountTag,
-  tradeFormationSummary,
   tradeModeHintHe,
   tradeOrChipTapOpensDialog,
 } from "../public/trade-compose-ui.js";
@@ -447,10 +446,6 @@ test("legacy single-card trade rows still list and accept after normalization", 
 test("compose mode hints explain AND vs OR in Hebrew", () => {
   assert.match(tradeModeHintHe("and"), /כל הקלפים/);
   assert.match(tradeModeHintHe("or"), /קלף אחד/);
-});
-
-test("formation summary names poster AND/OR for the compose hint only", () => {
-  assert.match(tradeFormationSummary({ offeredMode: "and", wantedMode: "or" }), /כולם \(וגם\).*אחד \(או\)/);
 });
 
 test("give-side dropdown orders owned cards by copy count, including within a set", () => {
