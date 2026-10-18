@@ -407,6 +407,18 @@ test("set 8 ships 28 cards, 14/9/5, and stays in the normalized pack", async () 
   for (const card of live) counts[card.rarity] += 1;
   assert.deepEqual(counts, { Common: 14, Uncommon: 9, Rare: 5 });
   assert.equal(live.find(({ id }) => id === "SET8-13").titleHe, "יוסי טייב");
+  const slotOf = (id) => live.find((card) => card.id === id);
+  assert.equal(slotOf("SET8-12").listSlot, 3);
+  assert.equal(slotOf("SET8-12").subtitleHe, "מקום 3");
+  assert.equal(slotOf("SET8-13").listSlot, 9);
+  assert.equal(slotOf("SET8-10").listSlot, 4);
+  assert.equal(slotOf("SET8-11").listSlot, 4);
+  assert.equal(slotOf("SET8-09").subtitleHe, "לא ממוקם");
+  assert.equal(slotOf("SET8-14").subtitleHe, "לא ממוקם");
+  assert.equal(slotOf("SET8-23").setNameHe, "נעם");
+  assert.equal(slotOf("SET8-23").subtitleHe, "מקום 1");
+  assert.equal(slotOf("SET8-23").set, "RZ");
+  assert.equal(slotOf("SET8-26").subtitleHe, "מקום 1");
   const shortened = new Set(set8.candidates.filter(({ quoteStatus }) => quoteStatus === "shortened").map(({ n }) => `SET8-${String(n).padStart(2, "0")}`));
   assert.deepEqual(
     live.filter(({ walkout }) => walkout.quoteStatus === "shortened").map(({ id }) => id),

@@ -2,7 +2,7 @@
   "id": "set8-wip-pool",
   "status": "local-draft",
   "asOfDate": "2026-10-18",
-  "note": "Set 8 (צדיקים): 28 Quote cards, display codes צדיק-01–28, ordered as in the brief. Quotes and the shortened mark come from Guy's rank export (2026-10-18T11:31:56.709Z), except the fixed overrides: deri1, deri4 (Arutz 7, with בישראל), goldknopf1, smotrich1 (article wording, no comma), bengvir2 and bengvir4 shortened, maoz2 starts with תרומה, goldknopf4 and maoz3 stay exact. Goldknopf 5 keeps the export line; Calcalist's wording is shorter (לא ראיתי שמתמטיקה ואנגלית קידמו את המדינה). Avi Maoz leads נעם לישראל, which is not one of the 14 lists, so his cards use partyId RZ and show לא ממוקם. Art was resampled from the ranking-page embeds because src/named was not in the checkout.",
+  "note": "Set 8 (צדיקים): 28 Quote cards, display codes צדיק-01–28, ordered as in the brief. Quotes and the shortened mark come from Guy's rank export (2026-10-18T11:31:56.709Z), except the fixed overrides: deri1, deri4 (Arutz 7, with בישראל), goldknopf1, smotrich1 (article wording, no comma), bengvir2 and bengvir4 shortened, maoz2 starts with תרומה, goldknopf4 and maoz3 stay exact. Goldknopf 5 keeps the export line; Calcalist's wording is shorter (לא ראיתי שמתמטיקה ואנגלית קידמו את המדינה). List slots: Malkieli 3 and Taib 9 on Shas, Porush 4 on UTJ. Gafni stays לא ממוקם (the records card already has him off the list; 120 is symbolic). Yitzhak Cohen stays לא ממוקם; he is not in the published Shas 1–13. Avi Maoz is מקום 1 of נעם. נעם is not one of the 14 game lists, so his cards keep set RZ and only the printed name and slot say נעם · מקום 1. Art was resampled from the ranking-page embeds because src/named was not in the checkout.",
   "sourceDocument": "Guy rank.html export 2026-10-18, basis share filerevision-01M575HM",
   "candidates": [
     {
@@ -225,6 +225,7 @@
       "nameHe": "מאיר פרוש",
       "nameEn": "Meir Porush",
       "partyId": "UTJ",
+      "listSlot": 4,
       "displayText": "אנחנו גדלים ומתרבים בקצב מהיר, ובעוד 10 שנים לא יהיה חילוני בשום ראשות עיר.",
       "quoteStatus": "shortened",
       "date": "",
@@ -252,6 +253,7 @@
       "nameHe": "מאיר פרוש",
       "nameEn": "Meir Porush",
       "partyId": "UTJ",
+      "listSlot": 4,
       "displayText": "את נשות הכותל... שמו ליד שער האשפות, שם המקום שלכם. לכלב תשליכון אותו.",
       "quoteStatus": "shortened",
       "date": "2016-02-01",
@@ -281,6 +283,7 @@
       "nameHe": "מיכאל מלכיאלי",
       "nameEn": "Michael Malchieli",
       "partyId": "SHS",
+      "listSlot": 3,
       "displayText": "נכנסנו לממשלה בשביל החוק הזה שהוא חוק ליבה שלנו. המפלגות החרדיות יפילו ממשלה כשגדולי ישראל יגידו.",
       "quoteStatus": "exact",
       "date": "",
@@ -304,6 +307,7 @@
       "nameHe": "יוסי טייב",
       "nameEn": "Yossi Taieb",
       "partyId": "SHS",
+      "listSlot": 9,
       "displayText": "בני קיבל צו, אם ייעצר - ימשיך ללמוד תורה מהכלא.",
       "quoteStatus": "exact",
       "date": "",
@@ -560,7 +564,11 @@
       },
       "existingStudioRef": null,
       "gender": "m",
-      "partyId": "RZ"
+      "partyId": "RZ",
+      "listSlot": 1,
+      "partyNameHe": "נעם",
+      "partyNameEn": "Noam",
+      "ballotLetters": "ני"
     },
     {
       "n": 24,
@@ -587,7 +595,11 @@
       },
       "existingStudioRef": null,
       "gender": "m",
-      "partyId": "RZ"
+      "partyId": "RZ",
+      "listSlot": 1,
+      "partyNameHe": "נעם",
+      "partyNameEn": "Noam",
+      "ballotLetters": "ני"
     },
     {
       "n": 25,
@@ -610,7 +622,11 @@
       },
       "existingStudioRef": null,
       "gender": "m",
-      "partyId": "RZ"
+      "partyId": "RZ",
+      "listSlot": 1,
+      "partyNameHe": "נעם",
+      "partyNameEn": "Noam",
+      "ballotLetters": "ני"
     },
     {
       "n": 26,

@@ -177,14 +177,19 @@ export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
   // Human-readable receipt label (usually the source headline); fall back to the raw URL.
   const sourceLabel = String(candidate.sourceLabel || "").trim() || sourceUrl || "Source pending";
   const context = candidate.notes || candidate.art?.note || "";
-  const setLabel = party?.displayNameHe || meta.nameHe;
+  // A printed list name (נעם) can differ from the 14 game parties. card.set stays the game party.
+  const setNameHe = String(candidate.partyNameHe || "").trim() || party?.displayNameHe || meta.nameHe;
+  const setName = String(candidate.partyNameEn || "").trim() || party?.displayNameEn || meta.nameEn;
+  const ballot = String(candidate.ballotLetters || "").trim();
+  const letters = ballot || (party?.finalLetters || party?.requestedLetters || [meta.letters])[0];
+  const setLabel = setNameHe;
   const unplacedHe = candidate.gender === "f" ? "לא ממוקמת" : "לא ממוקם";
   return {
     id: `${meta.idPrefix}-${String(index).padStart(2, "0")}`,
     set: party?.id || meta.fallbackSet,
-    setName: party?.displayNameEn || meta.nameEn,
-    setNameHe: party?.displayNameHe || meta.nameHe,
-    letters: (party?.finalLetters || party?.requestedLetters || [meta.letters])[0],
+    setName,
+    setNameHe,
+    letters,
     displayCode: `${meta.letters}-${String(index).padStart(2, "0")}`,
     pip: party?.pip || "#1B3A6B",
     title: candidate.nameEn,
