@@ -203,7 +203,7 @@ async function sessionInventory(db, token) {
   );
 }
 
-async function listTrades(db, token, now) {
+export async function listSlimCommunityTrades(db, token, now) {
   await db.query(
     `UPDATE kalpi_trades SET status = 'expired'
      WHERE status = 'open' AND expires_at <= $1`,
@@ -381,7 +381,7 @@ export async function handleSlimCommunity(request, response) {
       return;
     }
     const [trades, leaderboards, activity] = await Promise.all([
-      listTrades(db, token, now).catch(() => []),
+      listSlimCommunityTrades(db, token, now).catch(() => []),
       collectorBoards(db, config, now, token).catch(() => slimLeaderboards(config, [], [], now)),
       activitySummary(db).catch(() => emptyCommunity(config, now).activity),
     ]);
