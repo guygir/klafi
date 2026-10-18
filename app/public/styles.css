@@ -5493,6 +5493,20 @@ body {
   font: 600 11px/1.3 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
   text-align: center;
 }
+.trade-qa-label {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(31, 79, 74, 0.12);
+  color: var(--civic);
+  font: 700 10px/1.3 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  text-align: center;
+}
+.trade-offer.qa-expect-fail .trade-qa-label {
+  background: rgba(138, 74, 58, 0.14);
+  color: var(--danger-mute);
+}
 .trade-offer.needs-choice .trade-offer-bar {
   grid-column: 1 / -1;
 }

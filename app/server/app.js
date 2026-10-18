@@ -1831,6 +1831,7 @@ export async function createKalpiApp({
         await store.ensureBinderSlug(token);
         await store.ensureReferralCode(token);
         await stampVisitAndGrant(token);
+        await prepareDebugTradeBoardForViewer(token, debugRequest);
         json(response, 200, {
           token,
           state: stateFor(store.getSession(token)),

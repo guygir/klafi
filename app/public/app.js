@@ -6492,9 +6492,9 @@ function fillTradeBoardFilter(select, trades, key, selected) {
   return "";
 }
 
-function tradeBoardPagerMarkup(page, pages, remaining) {
+function tradeBoardPagerMarkup(page, pages, remaining, pageSize = TRADE_BOARD_PAGE_SIZE) {
   if (pages <= 1) return "";
-  const nextCount = remaining > 0 ? Math.min(TRADE_BOARD_PAGE_SIZE, remaining) : TRADE_BOARD_PAGE_SIZE;
+  const nextCount = remaining > 0 ? Math.min(pageSize, remaining) : pageSize;
   return `<button type="button" data-page-target="trades" data-page="${Math.max(0, page - 1)}" ${page === 0 ? "disabled" : ""}>הקודמות</button>
     <span>${page + 1}/${pages}</span>
     <button type="button" data-page-target="trades" data-page="${Math.min(pages - 1, page + 1)}" ${page === pages - 1 ? "disabled" : ""}>עוד ${nextCount}</button>`;
@@ -6569,16 +6569,17 @@ function renderTradeBoard() {
     (!model.tradeBoardOffered || offeredCardIds(trade).includes(model.tradeBoardOffered))
     && (!model.tradeBoardWanted || wantedCardIds(trade).includes(model.tradeBoardWanted))
   ));
-  const pages = Math.max(1, Math.ceil(filtered.length / TRADE_BOARD_PAGE_SIZE));
+  const pageSize = filtered.some((trade) => trade.qaLabel) ? 10 : TRADE_BOARD_PAGE_SIZE;
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   model.tradeBoardPage = Math.min(model.tradeBoardPage, pages - 1);
-  const start = model.tradeBoardPage * TRADE_BOARD_PAGE_SIZE;
-  const page = filtered.slice(start, start + TRADE_BOARD_PAGE_SIZE);
+  const start = model.tradeBoardPage * pageSize;
+  const page = filtered.slice(start, start + pageSize);
   const remaining = Math.max(0, filtered.length - start - page.length);
   elements.tradeBoard.innerHTML = page.length
     ? page.map((trade) => tradeRowMarkup(trade)).join("")
     : `<p class="work-note">${openOffers.length ? "אין הצעות שמתאימות לסינון." : "אין כרגע הצעות פתוחות."}</p>`;
   concealRenderedTradeThumbs(elements.tradeBoard);
-  if (elements.tradeBoardPager) elements.tradeBoardPager.innerHTML = tradeBoardPagerMarkup(model.tradeBoardPage, pages, remaining);
+  if (elements.tradeBoardPager) elements.tradeBoardPager.innerHTML = tradeBoardPagerMarkup(model.tradeBoardPage, pages, remaining, pageSize);
   queueCardTextFit(elements.tradeBoard);
 }
 
@@ -6594,8 +6595,9 @@ function tradeRowMarkup(trade) {
     ? `<button type="button" class="trade-offer-action" data-hide-trade="${trade.tradeId}">הסתר</button>`
     : "";
   const acceptInventory = currentTradeInventory();
-  const canShowAccept = acceptInventory && !trade.ownedByCurrent && trade.canAccept;
-  const acceptReady = canShowAccept && tradeAcceptReady(trade, acceptInventory);
+  const qaFail = trade.qaExpect === "fail";
+  const canShowAccept = acceptInventory && !trade.ownedByCurrent && (trade.canAccept || qaFail);
+  const acceptReady = qaFail || (canShowAccept && tradeAcceptReady(trade, acceptInventory));
   const accept = canShowAccept
     ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}" ${acceptReady ? "" : "disabled"}>קבלה</button>`
     : "";
@@ -6605,8 +6607,12 @@ function tradeRowMarkup(trade) {
   const offeredRole = trade.ownedByCurrent ? "give" : "receive";
   const wantedRole = trade.ownedByCurrent ? "receive" : "give";
   const sideOpts = { canPick: Boolean(canShowAccept) };
-  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}${trade.needsAcceptChoice ? " needs-choice" : ""}" data-trade-id="${escapeHtml(trade.tradeId)}" data-offered-mode="${escapeHtml(trade.offeredMode || "and")}" data-wanted-mode="${escapeHtml(trade.wantedMode || "and")}">
+  const qaBadge = trade.qaLabel
+    ? `<p class="trade-qa-label">${escapeHtml(trade.qaLabel)}</p>`
+    : "";
+  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}${trade.needsAcceptChoice ? " needs-choice" : ""}${qaFail ? " qa-expect-fail" : trade.qaExpect === "pass" ? " qa-expect-pass" : ""}" data-trade-id="${escapeHtml(trade.tradeId)}" data-offered-mode="${escapeHtml(trade.offeredMode || "and")}" data-wanted-mode="${escapeHtml(trade.wantedMode || "and")}"${trade.qaSampleId ? ` data-qa-sample="${escapeHtml(trade.qaSampleId)}"` : ""}>
     <p class="trade-formation-badge">${escapeHtml(tradeFormationSummary(trade))}</p>
+    ${qaBadge}
     ${tradeSideCardsMarkup(trade, "offered", offeredRole, sideOpts)}
     <b aria-hidden="true">⇄</b>
     ${tradeSideCardsMarkup(trade, "wanted", wantedRole, sideOpts)}

@@ -200,7 +200,11 @@ export function canAcceptTrade(trade, { owner, accepter, trades, at, regularCopy
     }
   }
   for (const cardId of cardsToMoveWanted) {
-    if (regularCopyCountFn(accepter, cardId) < 1) {
+    const owned = regularCopyCountFn(accepter, cardId);
+    const reserved = accepter?.token
+      ? reservedOfferCopies(trades, accepter.token, cardId, at)
+      : 0;
+    if (owned <= reserved) {
       return { ok: false, code: "ACCEPT_ACCEPTER_MISSING", messageHe: TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING, cardId };
     }
   }

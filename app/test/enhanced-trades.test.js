@@ -9,7 +9,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { createKalpiApp } from "../server/app.js";
 import { PostgresStore } from "../server/postgres-store.js";
 import { TRADE_MESSAGES_HE, assertInventoryConserved, parseCreateTradeInput, validateTradeShape } from "../server/trade-core.js";
-import { qaTradeSamplesAllowed } from "../server/trade-debug-samples.js";
+import { QA_TRADE_SAMPLES, partyLeaderSampleIds, qaTradeSamplesAllowed, viewerGrantPlan } from "../server/trade-debug-samples.js";
 import { holdsWantedSide, offersForTradeList } from "../public/trade-list.js";
 import { tradeFormationSummary, tradeModeHintHe } from "../public/trade-compose-ui.js";
 
@@ -551,6 +551,113 @@ test("QA trade samples stay off in production even if the env flag is set", () =
   assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { NODE_ENV: "test" } }), false);
   assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { KLAFI_QA_TRADE_SAMPLES: "1", NODE_ENV: "test" } }), true);
   assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { KLAFI_QA_TRADE_SAMPLES: "1" } }), true);
+});
+
+test("QA trade sample set covers sizes, AND/OR mixes, and fail cases", () => {
+  const keys = new Set(QA_TRADE_SAMPLES.map((sample) => (
+    `${sample.offered.cardIdx.length}-${sample.wanted.cardIdx.length}-${sample.offered.mode}-${sample.wanted.mode}`
+  )));
+  for (const need of [
+    "1-1-and-and",
+    "1-2-and-and",
+    "2-1-and-and",
+    "1-3-and-and",
+    "3-1-and-and",
+    "3-3-and-and",
+    "2-2-and-and",
+    "2-2-and-or",
+    "2-2-or-and",
+    "2-2-or-or",
+    "1-3-and-or",
+    "1-3-or-and",
+    "1-3-or-or",
+    "3-1-and-or",
+    "3-1-or-and",
+    "3-1-or-or",
+  ]) {
+    assert.ok(keys.has(need), need);
+  }
+  const failIds = QA_TRADE_SAMPLES.filter((sample) => sample.expect === "fail").map((sample) => sample.id);
+  for (const id of ["fail-and-missing", "fail-or-none", "fail-numbered", "fail-reserved", "fail-owner-gone"]) {
+    assert.ok(failIds.includes(id), id);
+  }
+  for (const sample of QA_TRADE_SAMPLES) {
+    assert.match(sample.label, sample.expect === "pass" ? /אמור להצליח/ : /אמור להיכשל/);
+  }
+});
+
+test("QA trade board seeds on /api/home and grants viewer cards", async (t) => {
+  const previousFlag = process.env.KLAFI_QA_TRADE_SAMPLES;
+  process.env.KLAFI_QA_TRADE_SAMPLES = "1";
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-qa-seed-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    if (previousFlag === undefined) delete process.env.KLAFI_QA_TRADE_SAMPLES;
+    else process.env.KLAFI_QA_TRADE_SAMPLES = previousFlag;
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const home = await api(running.base, "/api/home");
+  assert.equal(home.status, 200);
+  const token = home.body.token;
+  const catalog = (await api(running.base, "/api/catalog")).body.cards;
+  const ids = partyLeaderSampleIds(catalog);
+  assert.ok(ids.length >= 14);
+  const inventory = home.body.state.inventory || {};
+  const plan = viewerGrantPlan();
+  for (const index of plan.regular) {
+    assert.ok((inventory[ids[index]] || 0) >= 1, `home grants regular ${ids[index]}`);
+  }
+  assert.equal(inventory[ids[10]] || 0, 0, "viewer lacks the AND missing card");
+  assert.equal(inventory[ids[11]] || 0, 0, "viewer lacks OR option A");
+  assert.equal(inventory[ids[12]] || 0, 0, "viewer lacks OR option B");
+  const numbered = home.body.state.numberedCopies || [];
+  assert.ok(numbered.some((item) => item.cardId === ids[13]), "home grants numbered-only wanted card");
+
+  const listed = await api(running.base, "/api/trades", { token });
+  assert.equal(listed.status, 200);
+  const open = (listed.body.trades || []).filter((trade) => trade.status === "open");
+  const byId = new Map(open.map((trade) => [trade.qaSampleId, trade]));
+  for (const sample of QA_TRADE_SAMPLES) {
+    const row = byId.get(sample.id);
+    assert.ok(row, `missing sample ${sample.id}`);
+    assert.equal(row.qaLabel, sample.label);
+    assert.equal(row.qaExpect, sample.expect);
+  }
+
+  async function accept(sampleId, body = {}) {
+    const row = byId.get(sampleId);
+    return api(running.base, `/api/trades/${row.tradeId}/accept`, { token, method: "POST", body });
+  }
+
+  const andMissing = await accept("fail-and-missing");
+  assert.equal(andMissing.status, 409);
+  assert.equal(andMissing.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const orNone = await accept("fail-or-none", {
+    offeredCardId: byId.get("fail-or-none").offeredCardIds[0],
+    wantedCardId: byId.get("fail-or-none").wantedCardIds[0],
+  });
+  assert.equal(orNone.status, 409);
+  assert.equal(orNone.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const numberedOnly = await accept("fail-numbered");
+  assert.equal(numberedOnly.status, 409);
+  assert.equal(numberedOnly.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const reserved = await accept("fail-reserved");
+  assert.equal(reserved.status, 409);
+  assert.equal(reserved.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const ownerGone = await accept("fail-owner-gone");
+  assert.equal(ownerGone.status, 409);
+  assert.equal(ownerGone.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_OWNER_MISSING);
+
+  const okLegacy = await accept("ok-1-1");
+  assert.equal(okLegacy.status, 200);
+  assert.equal(okLegacy.body.trade?.status, "accepted");
 });
 
 test("QA trade board does not seed when NODE_ENV is production", async (t) => {
