@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>קלפי · סקיצות לוח הצעות</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&family=Noto+Serif+Hebrew:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a1f1c;
+      --paper: #f4efe4;
+      --paper-deep: #e7dfd0;
+      --rule: #2c3330;
+      --civic: #1f4f4a;
+      --civic-bright: #2a7a72;
+      --foil: #c4a35a;
+      --danger: #8a4a3a;
+      --offer: #eee5d4;
+      --thumb: 63 / 96;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); }
+    body {
+      font-family: "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+      background:
+        linear-gradient(90deg, transparent 49.85%, rgba(44, 51, 48, 0.045) 50%, transparent 50.15%),
+        var(--paper);
+    }
+    button { font: inherit; color: inherit; }
+
+    /* —— Gallery (desktop review) —— */
+    .gallery { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; }
+    .gallery-head { max-width: 720px; margin-bottom: 28px; }
+    .gallery-head .kicker {
+      margin: 0 0 6px;
+      color: var(--civic);
+      font: 700 12px/1.3 "IBM Plex Sans Hebrew", sans-serif;
+      letter-spacing: 0.04em;
+    }
+    .gallery-head h1 {
+      margin: 0 0 10px;
+      font: 700 28px/1.2 "Noto Serif Hebrew", serif;
+    }
+    .gallery-head p { margin: 0 0 10px; font-size: 15px; line-height: 1.55; color: rgba(26, 31, 28, 0.82); }
+    .gallery-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
+    .gallery-nav a {
+      padding: 8px 12px;
+      border: 1px solid rgba(44, 51, 48, 0.28);
+      border-radius: 8px;
+      background: #fff8ea;
+      color: var(--civic);
+      font: 600 13px/1 "IBM Plex Sans Hebrew", sans-serif;
+      text-decoration: none;
+    }
+    .gallery-nav a:hover { background: var(--civic); color: var(--paper); }
+    .phone-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin: 32px 0;
+    }
+    .phone-wrap h2 {
+      margin: 0 0 6px;
+      font: 700 18px/1.25 "Noto Serif Hebrew", serif;
+    }
+    .phone-wrap .lede { margin: 0 0 12px; font-size: 13px; line-height: 1.45; color: rgba(26, 31, 28, 0.72); }
+    .phone-frame {
+      width: 390px;
+      height: 664px;
+      max-width: 100%;
+      margin: 0 auto;
+      border: 1px solid rgba(44, 51, 48, 0.4);
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: 0 18px 40px rgba(26, 31, 28, 0.12);
+    }
+    .notes { display: grid; gap: 16px; margin-top: 12px; }
+    .note {
+      padding: 14px 16px;
+      border: 1px solid rgba(44, 51, 48, 0.2);
+      border-radius: 10px;
+      background: #fff8ea;
+    }
+    .note h3 { margin: 0 0 6px; font: 700 16px/1.3 "Noto Serif Hebrew", serif; }
+    .note p, .note li { font-size: 14px; line-height: 1.5; }
+    .note ul { margin: 6px 0 0; padding-inline-start: 18px; }
+    .reco { border-color: color-mix(in srgb, var(--foil) 55%, var(--rule)); background: #f7edd4; }
+
+    /* —— Phone chrome —— */
+    .phone {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: var(--paper);
+    }
+    .masthead {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 42px;
+      padding: 6px 12px 4px;
+      border-bottom: 1px solid rgba(44, 51, 48, 0.28);
+    }
+    .wordmark {
+      margin: 0;
+      color: var(--civic);
+      font: 700 16px/1 "IBM Plex Sans Hebrew", sans-serif;
+    }
+    .mast-meta { color: rgba(26, 31, 28, 0.55); font: 600 10px/1 "IBM Plex Sans Hebrew", sans-serif; }
+    .desk {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 6px 10px 0;
+    }
+    .work-kicker {
+      margin: 0 2px 2px;
+      color: var(--civic);
+      font: 700 11px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+    }
+    .chrome-toggle {
+      display: block;
+      width: 100%;
+      margin: 0 0 6px;
+      padding: 3px 0 4px;
+      border: 0;
+      background: transparent;
+      color: rgba(26, 31, 28, 0.55);
+      font: 600 10px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+      text-align: center;
+    }
+    .board {
+      flex: 1 1 auto;
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      overflow: auto;
+      padding-bottom: 8px;
+    }
+    .dock {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      height: 52px;
+      margin: 0 10px 8px;
+      border: 1px solid rgba(44, 51, 48, 0.18);
+      border-radius: 12px;
+      background: #fff8ea;
+      box-shadow: 0 8px 20px rgba(26, 31, 28, 0.08);
+    }
+    .dock span {
+      display: grid;
+      place-items: center;
+      border-inline-start: 1px solid rgba(44, 51, 48, 0.1);
+      color: rgba(26, 31, 28, 0.55);
+      font: 600 10px/1 "IBM Plex Sans Hebrew", sans-serif;
+    }
+    .dock span:first-child { border: 0; }
+    .dock .on { background: var(--ink); color: var(--paper); border-radius: 10px; }
+
+    /* —— Shared offer card —— */
+    .offer {
+      display: grid;
+      gap: 6px;
+      padding: 8px 8px 7px;
+      border: 1px solid rgba(44, 51, 48, 0.32);
+      border-radius: 8px;
+      background: var(--offer);
+    }
+    .offer.is-mine { border-color: color-mix(in srgb, var(--foil) 55%, transparent); }
+    .badge {
+      margin: 0;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.55);
+      color: var(--civic);
+      font: 600 11px/1.3 "IBM Plex Sans Hebrew", sans-serif;
+      text-align: center;
+    }
+    .sides {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+      align-items: start;
+      gap: 6px;
+    }
+    .side { display: grid; justify-items: center; gap: 3px; min-width: 0; }
+    .side small {
+      color: var(--civic);
+      font: 700 10px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+      text-align: center;
+    }
+    .swap {
+      align-self: center;
+      color: var(--civic);
+      font-size: 16px;
+      text-align: center;
+    }
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .bar p {
+      margin: 0;
+      min-width: 0;
+      overflow: hidden;
+      color: var(--civic);
+      font: 500 10px/1.3 "IBM Plex Sans Hebrew", sans-serif;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .actions { display: flex; gap: 6px; flex: 0 0 auto; }
+    .act {
+      min-height: 32px;
+      padding: 5px 10px;
+      border: 1px solid var(--civic);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--civic);
+      font: 700 12px/1 "IBM Plex Sans Hebrew", sans-serif;
+      cursor: pointer;
+    }
+    .act.accept { background: var(--civic); color: var(--paper); }
+    .act[disabled] { opacity: 0.4; cursor: not-allowed; }
+    .picks { display: grid; gap: 4px; }
+    .picks small {
+      color: var(--civic);
+      font: 700 10px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+      text-align: center;
+    }
+    .pick-row { display: flex; justify-content: center; gap: 6px; }
+
+    /* Card art */
+    .thumb {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: var(--thumb);
+      margin: 0;
+      overflow: hidden;
+      border: 2px solid var(--rule);
+      border-radius: 6px;
+      background: var(--paper-deep);
+    }
+    .thumb .pip {
+      position: absolute;
+      z-index: 2;
+      top: 4px;
+      inset-inline-start: 4px;
+      width: 7px;
+      height: 7px;
+      border-radius: 1px;
+      background: var(--pip, var(--civic));
+      box-shadow: 0 0 0 1px rgba(244, 239, 228, 0.7);
+    }
+    .thumb img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 18%;
+    }
+    .thumb figcaption {
+      position: absolute;
+      inset-inline: 0;
+      bottom: 0;
+      padding: 10px 2px 2px;
+      overflow: hidden;
+      background: linear-gradient(transparent, rgba(26, 31, 28, 0.82));
+      color: #f4efe4;
+      font: 700 7px/1.1 "Noto Serif Hebrew", serif;
+      text-align: center;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .thumb.is-empty {
+      border-style: dashed;
+      border-color: rgba(44, 51, 48, 0.28);
+      background:
+        repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(44, 51, 48, 0.04) 4px, rgba(44, 51, 48, 0.04) 5px),
+        var(--paper);
+    }
+    .thumb.is-empty figcaption { display: none; }
+    .thumb.is-pick {
+      outline: 2px solid transparent;
+      outline-offset: 1px;
+    }
+    .thumb.is-pick.is-on { outline-color: var(--foil); }
+
+    /* A · reserved 3-slot rail — fill toward the swap */
+    .opt-slots .rail {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 3px;
+      width: 100%;
+    }
+    .opt-slots .side:first-of-type .rail { direction: ltr; }
+    .opt-slots .offer { gap: 5px; padding: 7px; }
+
+    /* B · overlapping fan — always reserve a 3-card hand */
+    .opt-fan .fan {
+      position: relative;
+      width: 94px;
+      height: 78px;
+    }
+    .opt-fan .leaf {
+      position: absolute;
+      top: 2px;
+      width: 50px;
+      transform-origin: 50% 120%;
+    }
+    .opt-fan .leaf .thumb {
+      box-shadow: -2px 3px 0 rgba(26, 31, 28, 0.14);
+    }
+    .opt-fan .sides { align-items: center; }
+    .opt-fan .offer { gap: 4px; padding: 6px 7px; }
+    .opt-fan .badge { padding: 3px 7px; font-size: 10px; }
+    .opt-fan .act { min-height: 30px; }
+
+    /* C · mini strip + count */
+    .opt-strip .strip-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 5px;
+    }
+    .opt-strip .count {
+      display: inline-grid;
+      place-items: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: var(--civic);
+      color: var(--paper);
+      font: 700 10px/1 "IBM Plex Sans Hebrew", sans-serif;
+    }
+    .opt-strip .strip {
+      display: flex;
+      justify-content: center;
+      gap: 3px;
+      width: 100%;
+    }
+    .opt-strip .strip .thumb { width: 30px; }
+    .opt-strip .strip .thumb figcaption { font-size: 0; padding: 0; height: 0; }
+    .opt-strip .offer { gap: 5px; padding: 7px; }
+    .opt-strip .badge { padding: 3px 7px; font-size: 10px; }
+
+    /* D · compact list + expand */
+    .opt-list .offer { padding: 6px 7px; gap: 5px; }
+    .opt-list .row {
+      display: grid;
+      grid-template-columns: 52px 12px 52px minmax(0, 1fr) auto 22px;
+      align-items: center;
+      gap: 4px;
+    }
+    .opt-list .mini {
+      --spread: 11px;
+      --card: 22px;
+      position: relative;
+      height: 34px;
+      width: calc(var(--card) + 2 * var(--spread));
+      justify-self: center;
+    }
+    .opt-list .mini .leaf {
+      position: absolute;
+      top: 0;
+      width: var(--card);
+      inset-inline-start: calc(((3 - var(--n, 1)) * var(--spread) / 2) + var(--i, 0) * var(--spread));
+      z-index: calc(1 + var(--i, 0));
+    }
+    .opt-list .mini .thumb { border-width: 1.5px; }
+    .opt-list .mini .thumb figcaption { display: none; }
+    .opt-list .who {
+      min-width: 0;
+      margin: 0;
+      overflow: hidden;
+      color: var(--civic);
+      font: 500 10px/1.25 "IBM Plex Sans Hebrew", sans-serif;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .opt-list .chip {
+      display: block;
+      margin-bottom: 1px;
+      color: var(--ink);
+      font: 700 10px/1.2 "IBM Plex Sans Hebrew", sans-serif;
+    }
+    .opt-list .expand { display: none; }
+    .opt-list .offer.is-open .expand { display: grid; gap: 6px; }
+    .opt-list .offer.is-open .expand .strip {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+    }
+    .opt-list .offer.is-open .expand .thumb { width: 42px; }
+    .opt-list .more {
+      width: 28px;
+      min-height: 28px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: rgba(26, 31, 28, 0.5);
+      font: 700 14px/1 "IBM Plex Sans Hebrew", sans-serif;
+      cursor: pointer;
+    }
+    .opt-list .actions { flex-wrap: nowrap; }
+    .opt-list .act { min-height: 30px; padding: 4px 8px; font-size: 11px; }
+
+    /* Shot mode: the page IS the phone */
+    body.shot { background: var(--paper); }
+    body.shot .gallery { display: none; }
+    body.shot #phone-shot {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+    }
+    body.shot #phone-shot .phone { height: 100%; }
+    #phone-shot { display: none; }
+  </style>
+</head>
+<body>
+  <main class="gallery" id="gallery">
+    <header class="gallery-head">
+      <p class="kicker">סקיצה בלבד · לא מיושם באפליקציה</p>
+      <h1>ארבע צורות לשורת הצעה פתוחה</h1>
+      <p>גיא ביקש לוח שמתאים לאייפון 12 / 12 מיני (375×812 ו־390×844, גובה גלוי עם כרום ספארי ≈ 635 ו־664), לפחות כשהתפריט מקופל, ודרך עקבית להראות 1 / 2 / 3 קלפים בכל צד.</p>
+      <p>כל אפשרות מציגה את אותן ארבע הצעות: 1↔1, 2↔2, 3↔3, ו־1↔3 או. עברית מימין לשמאל, ארט אמיתי מהמאגר. צילומי המסך ב־<code>/opt/cursor/artifacts/layout-options/</code>.</p>
+      <nav class="gallery-nav" aria-label="מעבר לצילום מסך">
+        <a href="?opt=slots&amp;shot=1">א · מסילה</a>
+        <a href="?opt=fan&amp;shot=1">ב · מניפה</a>
+        <a href="?opt=strip&amp;shot=1">ג · רצועה</a>
+        <a href="?opt=list&amp;shot=1">ד · שורות</a>
+      </nav>
+    </header>
+
+    <section class="phone-grid" id="gallery-phones"></section>
+
+    <section class="notes">
+      <article class="note">
+        <h3>א. מסילה קבועה — תמיד 3 משבצות</h3>
+        <p><b>יתרון:</b> 1 / 2 / 3 תופסים בדיוק אותו רוחב. המשבצת הריקה מסבירה שחסר קלף, לא שנשבר הלוח. הקלפים מתמלאים פנימה לכיוון החץ.</p>
+        <p><b>חיסרון:</b> 1↔1 נראה דליל. על 375px כל קלף ≈46px — הפנים נקראות, השמות צפופים. <b>צפיפות:</b> 2 הצעות מלאות + הצצה לשלישית (גם ב־390×664).</p>
+      </article>
+      <article class="note reco">
+        <h3>ב. מניפה חופפת — ההמלצה</h3>
+        <p><b>יתרון:</b> אותה טביעת רגל לכל ספירה, בלי בארות ריקות. נראה כמו יד קלפים — מתאים לקלפי יותר מטופס. 2 ו־3 נקראים כערימה אחת. <b>צפיפות:</b> 2+הצצה ב־375×635, 3 הצעות מלאות ב־390×664.</p>
+        <p><b>חיסרון:</b> הקלפים מאחור מוסתרים חלקית. לא מראה במפורש «יש מקום לעוד קלף».</p>
+      </article>
+      <article class="note">
+        <h3>ג. רצועת מדבקות + ספירה</h3>
+        <p><b>יתרון:</b> הספירה («3 · כולם») פותרת את אי־הוודאות של 1 מול 3 בלי לשנות גובה. <b>צפיפות:</b> 3 הצעות מלאות + הצצה לרביעית (או) בשני הגדלים.</p>
+        <p><b>חיסרון:</b> הארט הופך לבול. קשה להבחין בין מנהיגים בלי לפתוח. פחות «קלף», יותר רשימת מלאי.</p>
+      </article>
+      <article class="note">
+        <h3>ד. שורות דחוסות + הקשה להרחבה</h3>
+        <p><b>יתרון:</b> סריקה מהירה. בחירת או יושבת בהרחבה. 1 / 2 / 3 זהים במצב סגור. <b>צפיפות:</b> 4 הצעות במסך, כולל שורת או פתוחה עם בחירה, בשני הגדלים.</p>
+        <p><b>חיסרון:</b> הארט כמעט נעלם עד שמקשיבים. עוד מחווה לפני קבלה.</p>
+      </article>
+      <article class="note reco">
+        <h3>המלצה</h3>
+        <p>ליישם את <b>ב · מניפה</b> כברירת מחדל בלוח, עם אותה טביעת רגל ל־1/2/3. כשצד הוא או — להראות את המניפה פלוס שורת בחירה קומפקטית מתחת (כמו היום, רק בלי לערום את הצדדים לגובה). אם הלוח יתמלא בעשרות הצעות, אפשר להוסיף אחר־כך את מצב ד כצפיפות־על, לא במקומה.</p>
+        <p>לא מסילה: הבארות הריקות מבזבזות רוחב יקר ב־375. לא רצועה לבד: הארט הוא מה שקלפי מוכרת, והמדבקות מאבדות אותו.</p>
+      </article>
+    </section>
+  </main>
+
+  <div id="phone-shot" aria-hidden="true"></div>
+
+  <script>
+    const ART = "../design/assets/";
+    const CARDS = {
+      neth: { name: "בנימין נתניהו", art: "hero-art-benjamin-netanyahu-01.png", pip: "#1B3A6B" },
+      regev: { name: "מירי רגב", art: "hero-art-miri-regev-01.jpg", pip: "#1B3A6B" },
+      smotrich: { name: "בצלאל סמוטריץ", art: "hero-art-bezalel-smotrich-slot1.png", pip: "#2E5A3C" },
+      lapid: { name: "יאיר לפיד", art: "hero-art-yair-lapid-slot2.jpg", pip: "#C43B3B" },
+      golan: { name: "יאיר גולן", art: "hero-art-yair-golan-slot1.png", pip: "#C43B3B" },
+      gantz: { name: "בני גנץ", art: "hero-art-benny-gantz-slot1.png", pip: "#2A5F7A" },
+      lieberman: { name: "אביגדור ליברמן", art: "hero-art-avigdor-lieberman-slot1.png", pip: "#1B3A6B" },
+      bengvir: { name: "איתמר בן גביר", art: "hero-art-itamar-ben-gvir-slot1.png", pip: "#8A4A3A" },
+      deri: { name: "אריה דרעי", art: "hero-art-aryeh-deri-slot1.png", pip: "#1F4F8A" },
+      abbas: { name: "מנסור עבאס", art: "hero-art-mansour-abbas-slot1.png", pip: "#2E7D4F" },
+    };
+
+    const TRADES = [
+      {
+        id: "t1",
+        give: ["neth"],
+        want: ["lapid"],
+        giveMode: "and",
+        wantMode: "and",
+        owner: "ההצעה שלכם",
+        until: "עד 18.10 18:40",
+        mine: true,
+        action: "cancel",
+      },
+      {
+        id: "t2",
+        give: ["neth", "regev"],
+        want: ["lapid", "golan"],
+        giveMode: "and",
+        wantMode: "and",
+        owner: "נועה",
+        until: "עד 18.10 19:05",
+        action: "accept",
+      },
+      {
+        id: "t3",
+        give: ["neth", "regev", "smotrich"],
+        want: ["lapid", "golan", "gantz"],
+        giveMode: "and",
+        wantMode: "and",
+        owner: "דני",
+        until: "עד 19.10 09:12",
+        action: "accept",
+      },
+      {
+        id: "t4",
+        give: ["lieberman"],
+        want: ["bengvir", "deri", "abbas"],
+        giveMode: "and",
+        wantMode: "or",
+        owner: "תמר",
+        until: "עד 19.10 11:30",
+        action: "pick",
+        pick: "deri",
+      },
+    ];
+
+    const OPTIONS = {
+      slots: { key: "slots", letter: "א", title: "מסילה קבועה", short: "תמיד 3 משבצות" },
+      fan: { key: "fan", letter: "ב", title: "מניפה חופפת", short: "ערימה באותו מקום" },
+      strip: { key: "strip", letter: "ג", title: "רצועת מדבקות", short: "תמונות קטנות + ספירה" },
+      list: { key: "list", letter: "ד", title: "שורות דחוסות", short: "הקשה להרחבה" },
+    };
+
+    function formation(trade) {
+      const g = trade.giveMode === "or" ? "אחד (או)" : "כולם (וגם)";
+      const w = trade.wantMode === "or" ? "אחד (או)" : "כולם (וגם)";
+      return `נותנים ${g} · מבקשים ${w}`;
+    }
+
+    function sideLabel(role, cards, mode) {
+      const who = role === "give" ? "נותנים" : "מקבלים";
+      if (cards.length < 2) return who;
+      return mode === "or" ? `${who} · אחד מהם` : `${who} · כולם`;
+    }
+
+    function compactChip(trade) {
+      const g = trade.giveMode === "or" ? "או" : "וגם";
+      const w = trade.wantMode === "or" ? "או" : "וגם";
+      return `${trade.give.length} ${g} ↔ ${trade.want.length} ${w}`;
+    }
+
+    function thumb(id, { empty = false, pick = false, on = false, hideName = false } = {}) {
+      if (empty) return `<figure class="thumb is-empty" aria-hidden="true"></figure>`;
+      const card = CARDS[id];
+      const cls = ["thumb", pick && "is-pick", on && "is-on"].filter(Boolean).join(" ");
+      return `<figure class="${cls}" style="--pip:${card.pip}">
+        <span class="pip" aria-hidden="true"></span>
+        <img src="${ART}${card.art}" alt="${card.name}" />
+        ${hideName ? "" : `<figcaption>${card.name}</figcaption>`}
+      </figure>`;
+    }
+
+    function rail(ids) {
+      const slots = [0, 1, 2].map((i) => {
+        const id = ids[i];
+        return `<div class="slot">${id ? thumb(id) : thumb(null, { empty: true })}</div>`;
+      }).join("");
+      return `<div class="rail">${slots}</div>`;
+    }
+
+    function fan(ids, hideName = false) {
+      const n = ids.length;
+      const spread = 22;
+      const base = ((3 - n) * spread) / 2;
+      const mid = (n - 1) / 2;
+      const cards = ids.map((id, i) => {
+        const start = base + i * spread;
+        const tilt = ((i - mid) * 8).toFixed(1);
+        return `<span class="leaf" style="inset-inline-start:${start}px;z-index:${i + 1};transform:rotate(${tilt}deg)">${thumb(id, { hideName: hideName || i < n - 1 })}</span>`;
+      }).join("");
+      return `<div class="fan" data-n="${n}">${cards}</div>`;
+    }
+
+    function strip(ids) {
+      return `<div class="strip">${ids.map((id) => thumb(id, { hideName: true })).join("")}</div>`;
+    }
+
+    function mini(ids) {
+      const n = ids.length;
+      const spread = 12;
+      const card = 22;
+      const base = ((3 - n) * spread) / 2;
+      const cards = ids.map((id, i) =>
+        `<span class="leaf" style="inset-inline-start:${base + i * spread}px;z-index:${i + 1};width:${card}px">${thumb(id, { hideName: true })}</span>`
+      ).join("");
+      return `<div class="mini">${cards}</div>`;
+    }
+
+    function actions(trade, { compact = false } = {}) {
+      if (trade.action === "cancel") {
+        return `<span class="actions"><button type="button" class="act">ביטול</button></span>`;
+      }
+      if (compact) {
+        return `<span class="actions"><button type="button" class="act accept"${trade.action === "pick" && !trade.pick ? " disabled" : ""}>קבלה</button></span>`;
+      }
+      if (trade.action === "pick") {
+        return `<span class="actions">
+          <button type="button" class="act">הסתר</button>
+          <button type="button" class="act accept"${trade.pick ? "" : " disabled"}>קבלה</button>
+        </span>`;
+      }
+      return `<span class="actions">
+        <button type="button" class="act">הסתר</button>
+        <button type="button" class="act accept">קבלה</button>
+      </span>`;
+    }
+
+    function picks(trade, opt) {
+      if (trade.action !== "pick") return "";
+      const hide = opt === "strip" || opt === "list";
+      const chips = trade.want.map((id) => thumb(id, { pick: true, on: id === trade.pick, hideName: hide })).join("");
+      return `<div class="picks">
+        <small>בחרו מה נותנים</small>
+        <div class="pick-row">${chips}</div>
+      </div>`;
+    }
+
+    function sidesSlots(trade) {
+      return `<div class="sides">
+        <div class="side">
+          <small>${sideLabel("give", trade.give, trade.giveMode)}</small>
+          ${rail(trade.give)}
+        </div>
+        <b class="swap" aria-hidden="true">⇄</b>
+        <div class="side">
+          <small>${sideLabel("want", trade.want, trade.wantMode)}</small>
+          ${rail(trade.want)}
+        </div>
+      </div>`;
+    }
+
+    function sidesFan(trade) {
+      return `<div class="sides">
+        <div class="side">
+          <small>${sideLabel("give", trade.give, trade.giveMode)}</small>
+          ${fan(trade.give)}
+        </div>
+        <b class="swap" aria-hidden="true">⇄</b>
+        <div class="side">
+          <small>${sideLabel("want", trade.want, trade.wantMode)}</small>
+          ${fan(trade.want)}
+        </div>
+      </div>`;
+    }
+
+    function sidesStrip(trade) {
+      const count = (cards, mode) =>
+        `<span class="strip-head"><span class="count">${cards.length}</span><small>${mode === "or" && cards.length > 1 ? "אחד מהם" : cards.length > 1 ? "כולם" : "קלף"}</small></span>`;
+      return `<div class="sides">
+        <div class="side">
+          ${count(trade.give, trade.giveMode)}
+          ${strip(trade.give)}
+        </div>
+        <b class="swap" aria-hidden="true">⇄</b>
+        <div class="side">
+          ${count(trade.want, trade.wantMode)}
+          ${strip(trade.want)}
+        </div>
+      </div>`;
+    }
+
+    function sidesList(trade, open) {
+      return `<div class="row">
+        ${mini(trade.give)}
+        <b class="swap" aria-hidden="true">⇄</b>
+        ${mini(trade.want)}
+        <p class="who"><span class="chip">${compactChip(trade)}</span>${trade.owner} · ${trade.until}</p>
+        ${actions(trade, { compact: true })}
+        <button type="button" class="more" data-toggle="${trade.id}" aria-expanded="${open}">${open ? "▴" : "▾"}</button>
+      </div>
+      ${open ? `<div class="expand">
+        <div class="sides">
+          <div class="side"><small>נותנים</small>${strip(trade.give)}</div>
+          <b class="swap" aria-hidden="true">⇄</b>
+          <div class="side"><small>${trade.wantMode === "or" ? "מקבלים · אחד" : "מקבלים"}</small>${strip(trade.want)}</div>
+        </div>
+        ${picks(trade, "list")}
+      </div>` : ""}`;
+    }
+
+    function renderOffer(trade, opt) {
+      const open = opt === "list" && trade.id === "t4";
+      const body = opt === "slots" ? sidesSlots(trade)
+        : opt === "fan" ? sidesFan(trade)
+        : opt === "strip" ? sidesStrip(trade)
+        : sidesList(trade, open);
+      if (opt === "list") {
+        return `<article class="offer${trade.mine ? " is-mine" : ""}${open ? " is-open" : ""}" data-trade="${trade.id}">
+          ${body}
+        </article>`;
+      }
+      return `<article class="offer${trade.mine ? " is-mine" : ""}" data-trade="${trade.id}">
+        <p class="badge">${formation(trade)}</p>
+        ${body}
+        ${picks(trade, opt)}
+        <div class="bar">
+          <p>${trade.owner} · ${trade.until}</p>
+          ${actions(trade)}
+        </div>
+      </article>`;
+    }
+
+    function renderPhone(optKey, { shot = false } = {}) {
+      const opt = OPTIONS[optKey];
+      return `<div class="phone opt-${opt.key}">
+        <header class="masthead">
+          <p class="wordmark">קְלָפִי</p>
+          <span class="mast-meta">${opt.letter} · ${opt.title}</span>
+        </header>
+        <section class="desk">
+          <p class="work-kicker">הצעות פתוחות · 4</p>
+          <button type="button" class="chrome-toggle" aria-expanded="false">↓ פתיחת התפריט ↓</button>
+          <div class="board">
+            ${TRADES.map((trade) => renderOffer(trade, opt.key)).join("")}
+          </div>
+        </section>
+        <nav class="dock" aria-label="ניווט">
+          <span>בית</span><span>אוסף</span><span class="on">קהילה</span><span>פתיחה</span>
+        </nav>
+      </div>`;
+    }
+
+    function renderGallery() {
+      const root = document.querySelector("#gallery-phones");
+      root.innerHTML = Object.values(OPTIONS).map((opt) => `
+        <article class="phone-wrap">
+          <h2>${opt.letter}. ${opt.title}</h2>
+          <p class="lede">${opt.short}. מסגרת 390×664 — גובה גלוי של אייפון 12 עם כרום ספארי, תפריט מקופל.</p>
+          <div class="phone-frame" data-opt="${opt.key}">${renderPhone(opt.key)}</div>
+        </article>
+      `).join("");
+    }
+
+    function bindToggles(root) {
+      root.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-toggle]");
+        if (!btn) return;
+        const offer = btn.closest(".offer");
+        if (!offer) return;
+        offer.classList.toggle("is-open");
+        const open = offer.classList.contains("is-open");
+        btn.textContent = open ? "▴" : "▾";
+        btn.setAttribute("aria-expanded", String(open));
+        const trade = TRADES.find((item) => item.id === offer.dataset.trade);
+        if (open && !offer.querySelector(".expand") && trade) {
+          btn.insertAdjacentHTML("beforebegin", `<div class="expand">
+            <div class="sides">
+              <div class="side"><small>נותנים</small>${strip(trade.give)}</div>
+              <b class="swap" aria-hidden="true">⇄</b>
+              <div class="side"><small>${trade.wantMode === "or" ? "מקבלים · אחד" : "מקבלים"}</small>${strip(trade.want)}</div>
+            </div>
+            ${picks(trade, "list")}
+          </div>`);
+        }
+      });
+    }
+
+    const params = new URLSearchParams(location.search);
+    const opt = params.get("opt");
+    const shot = params.get("shot") === "1";
+
+    if (shot && OPTIONS[opt]) {
+      document.body.classList.add("shot");
+      document.title = `קלפי · ${OPTIONS[opt].title}`;
+      const mount = document.querySelector("#phone-shot");
+      mount.innerHTML = renderPhone(opt, { shot: true });
+      mount.setAttribute("aria-hidden", "false");
+      bindToggles(mount);
+    } else {
+      renderGallery();
+      bindToggles(document.querySelector("#gallery-phones"));
+    }
+  </script>
+</body>
+</html>
