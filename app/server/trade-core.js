@@ -252,7 +252,7 @@ export function tradeNeedsAcceptChoices(trade) {
 
 export function publicTradeView(trade, { token, ownerSession, viewerSession, trades, at, regularCopyCountFn }) {
   const normalized = normalizeStoredTrade(trade);
-  const { ownerToken, acceptedBy, ...rest } = normalized;
+  const { ownerToken, acceptedBy, qaLabel, qaExpect, ...rest } = normalized;
   const choices = tradeNeedsAcceptChoices(normalized) && viewerSession && ownerSession
     ? listAcceptChoices(normalized, ownerSession, viewerSession, trades, at, regularCopyCountFn)
     : [];

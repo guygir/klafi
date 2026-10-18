@@ -6432,7 +6432,7 @@ function tradeSideCardsMarkup(trade, sideKey, role, { canPick = false } = {}) {
       </button>
     </div>`;
   }).join("");
-  return `<div class="trade-side" data-trade-side-mode="${mode}">
+  return `<div class="trade-side" data-trade-side="${sideKey}" data-trade-side-mode="${mode}">
     <small>${label}${mode === "or" && ids.length > 1 ? " · אחד מהם" : ids.length > 1 ? " · כולם" : ""}</small>
     <div class="trade-side-rail">${slots}</div>
   </div>`;
@@ -6569,7 +6569,7 @@ function renderTradeBoard() {
     (!model.tradeBoardOffered || offeredCardIds(trade).includes(model.tradeBoardOffered))
     && (!model.tradeBoardWanted || wantedCardIds(trade).includes(model.tradeBoardWanted))
   ));
-  const pageSize = filtered.some((trade) => trade.qaLabel) ? 10 : TRADE_BOARD_PAGE_SIZE;
+  const pageSize = filtered.some((trade) => trade.qaSampleId) ? 4 : TRADE_BOARD_PAGE_SIZE;
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   model.tradeBoardPage = Math.min(model.tradeBoardPage, pages - 1);
   const start = model.tradeBoardPage * pageSize;
@@ -6595,9 +6595,8 @@ function tradeRowMarkup(trade) {
     ? `<button type="button" class="trade-offer-action" data-hide-trade="${trade.tradeId}">הסתר</button>`
     : "";
   const acceptInventory = currentTradeInventory();
-  const qaFail = trade.qaExpect === "fail";
-  const canShowAccept = acceptInventory && !trade.ownedByCurrent && (trade.canAccept || qaFail);
-  const acceptReady = qaFail || (canShowAccept && tradeAcceptReady(trade, acceptInventory));
+  const canShowAccept = acceptInventory && !trade.ownedByCurrent && trade.canAccept;
+  const acceptReady = canShowAccept && tradeAcceptReady(trade, acceptInventory);
   const accept = canShowAccept
     ? `<button type="button" class="trade-offer-action accept" data-accept-trade="${trade.tradeId}" ${acceptReady ? "" : "disabled"}>קבלה</button>`
     : "";
@@ -6607,12 +6606,8 @@ function tradeRowMarkup(trade) {
   const offeredRole = trade.ownedByCurrent ? "give" : "receive";
   const wantedRole = trade.ownedByCurrent ? "receive" : "give";
   const sideOpts = { canPick: Boolean(canShowAccept) };
-  const qaBadge = trade.qaLabel
-    ? `<p class="trade-qa-label">${escapeHtml(trade.qaLabel)}</p>`
-    : "";
-  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}${trade.needsAcceptChoice ? " needs-choice" : ""}${qaFail ? " qa-expect-fail" : trade.qaExpect === "pass" ? " qa-expect-pass" : ""}" data-trade-id="${escapeHtml(trade.tradeId)}" data-offered-mode="${escapeHtml(trade.offeredMode || "and")}" data-wanted-mode="${escapeHtml(trade.wantedMode || "and")}"${trade.qaSampleId ? ` data-qa-sample="${escapeHtml(trade.qaSampleId)}"` : ""}>
+  return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}${trade.needsAcceptChoice ? " needs-choice" : ""}" data-trade-id="${escapeHtml(trade.tradeId)}" data-offered-mode="${escapeHtml(trade.offeredMode || "and")}" data-wanted-mode="${escapeHtml(trade.wantedMode || "and")}"${trade.qaSampleId ? ` data-qa-sample="${escapeHtml(trade.qaSampleId)}"` : ""}>
     <p class="trade-formation-badge">${escapeHtml(tradeFormationSummary(trade))}</p>
-    ${qaBadge}
     ${tradeSideCardsMarkup(trade, "offered", offeredRole, sideOpts)}
     <b aria-hidden="true">⇄</b>
     ${tradeSideCardsMarkup(trade, "wanted", wantedRole, sideOpts)}

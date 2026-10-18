@@ -98,11 +98,13 @@ async function postgresStoreWithMigrations() {
     if (!row) return null;
     const inv = (await db.query("SELECT card_id, copies FROM kalpi_inventory WHERE session_token = $1", [token])).rows;
     const inventory = Object.fromEntries(inv.map(({ card_id, copies }) => [card_id, copies]));
+    const extras = row.extras && typeof row.extras === "object" ? row.extras : {};
     return {
       token,
       displayName: row.display_name,
       inventory,
-      instances: [],
+      instances: extras.instances || [],
+      numberedByCard: extras.numberedByCard || {},
       tradeCount: row.trade_count || 0,
       hiddenTradeIds: [],
       pendingTradeNotices: [],
@@ -133,8 +135,16 @@ async function postgresStoreWithMigrations() {
   };
   store.insertSessionRow = async (client, token, session) => {
     await db.query(
-      "INSERT INTO kalpi_sessions (token, display_name, created_at, extras) VALUES ($1,$2,$3,'{}'::jsonb) ON CONFLICT DO NOTHING",
-      [token, session.displayName || token, session.createdAt || new Date().toISOString()],
+      "INSERT INTO kalpi_sessions (token, display_name, created_at, extras) VALUES ($1,$2,$3,$4::jsonb) ON CONFLICT DO NOTHING",
+      [
+        token,
+        session.displayName || token,
+        session.createdAt || new Date().toISOString(),
+        JSON.stringify({
+          numberedByCard: session.numberedByCard || {},
+          instances: session.instances || [],
+        }),
+      ],
     );
     for (const [cardId, copies] of Object.entries(session.inventory || {})) {
       await db.query(
@@ -553,40 +563,16 @@ test("QA trade samples stay off in production even if the env flag is set", () =
   assert.equal(qaTradeSamplesAllowed({ debugRequest: true, env: { KLAFI_QA_TRADE_SAMPLES: "1" } }), true);
 });
 
-test("QA trade sample set covers sizes, AND/OR mixes, and fail cases", () => {
-  const keys = new Set(QA_TRADE_SAMPLES.map((sample) => (
+test("QA trade sample set is exactly four 2↔3 AND/OR offers", () => {
+  assert.equal(QA_TRADE_SAMPLES.length, 4);
+  const keys = QA_TRADE_SAMPLES.map((sample) => (
     `${sample.offered.cardIdx.length}-${sample.wanted.cardIdx.length}-${sample.offered.mode}-${sample.wanted.mode}`
-  )));
-  for (const need of [
-    "1-1-and-and",
-    "1-2-and-and",
-    "2-1-and-and",
-    "1-3-and-and",
-    "3-1-and-and",
-    "3-3-and-and",
-    "2-2-and-and",
-    "2-2-and-or",
-    "2-2-or-and",
-    "2-2-or-or",
-    "1-3-and-or",
-    "1-3-or-and",
-    "1-3-or-or",
-    "3-1-and-or",
-    "3-1-or-and",
-    "3-1-or-or",
-  ]) {
-    assert.ok(keys.has(need), need);
-  }
-  const failIds = QA_TRADE_SAMPLES.filter((sample) => sample.expect === "fail").map((sample) => sample.id);
-  for (const id of ["fail-and-missing", "fail-or-none", "fail-numbered", "fail-reserved", "fail-owner-gone"]) {
-    assert.ok(failIds.includes(id), id);
-  }
-  for (const sample of QA_TRADE_SAMPLES) {
-    assert.match(sample.label, sample.expect === "pass" ? /אמור להצליח/ : /אמור להיכשל/);
-  }
+  )).sort();
+  assert.deepEqual(keys, ["2-3-and-and", "2-3-and-or", "2-3-or-and", "2-3-or-or"]);
+  assert.equal(QA_TRADE_SAMPLES.some((sample) => sample.id.startsWith("fail-")), false);
 });
 
-test("QA trade board seeds on /api/home and grants viewer cards", async (t) => {
+test("QA trade board seeds four 2↔3 offers on /api/home", async (t) => {
   const previousFlag = process.env.KLAFI_QA_TRADE_SAMPLES;
   process.env.KLAFI_QA_TRADE_SAMPLES = "1";
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-qa-seed-"));
@@ -604,60 +590,32 @@ test("QA trade board seeds on /api/home and grants viewer cards", async (t) => {
   const token = home.body.token;
   const catalog = (await api(running.base, "/api/catalog")).body.cards;
   const ids = partyLeaderSampleIds(catalog);
-  assert.ok(ids.length >= 14);
+  assert.ok(ids.length >= 5);
   const inventory = home.body.state.inventory || {};
-  const plan = viewerGrantPlan();
-  for (const index of plan.regular) {
-    assert.ok((inventory[ids[index]] || 0) >= 1, `home grants regular ${ids[index]}`);
+  for (const index of viewerGrantPlan().regular) {
+    assert.ok((inventory[ids[index]] || 0) >= 1, `home grants ${ids[index]}`);
   }
-  assert.equal(inventory[ids[10]] || 0, 0, "viewer lacks the AND missing card");
-  assert.equal(inventory[ids[11]] || 0, 0, "viewer lacks OR option A");
-  assert.equal(inventory[ids[12]] || 0, 0, "viewer lacks OR option B");
-  const numbered = home.body.state.numberedCopies || [];
-  assert.ok(numbered.some((item) => item.cardId === ids[13]), "home grants numbered-only wanted card");
 
   const listed = await api(running.base, "/api/trades", { token });
-  assert.equal(listed.status, 200);
   const open = (listed.body.trades || []).filter((trade) => trade.status === "open");
+  assert.equal(open.length, 4);
   const byId = new Map(open.map((trade) => [trade.qaSampleId, trade]));
   for (const sample of QA_TRADE_SAMPLES) {
     const row = byId.get(sample.id);
     assert.ok(row, `missing sample ${sample.id}`);
-    assert.equal(row.qaLabel, sample.label);
-    assert.equal(row.qaExpect, sample.expect);
+    assert.equal(row.offeredCardIds.length, 2);
+    assert.equal(row.wantedCardIds.length, 3);
+    assert.equal(row.offeredMode, sample.offeredMode);
+    assert.equal(row.wantedMode, sample.wantedMode);
+    assert.equal(row.qaLabel, undefined);
+    assert.equal(row.canAccept, true);
   }
-
-  async function accept(sampleId, body = {}) {
-    const row = byId.get(sampleId);
-    return api(running.base, `/api/trades/${row.tradeId}/accept`, { token, method: "POST", body });
-  }
-
-  const andMissing = await accept("fail-and-missing");
-  assert.equal(andMissing.status, 409);
-  assert.equal(andMissing.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
-
-  const orNone = await accept("fail-or-none", {
-    offeredCardId: byId.get("fail-or-none").offeredCardIds[0],
-    wantedCardId: byId.get("fail-or-none").wantedCardIds[0],
+  const accepted = await api(running.base, `/api/trades/${byId.get("ok-2-3-and-and").tradeId}/accept`, {
+    token,
+    method: "POST",
   });
-  assert.equal(orNone.status, 409);
-  assert.equal(orNone.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
-
-  const numberedOnly = await accept("fail-numbered");
-  assert.equal(numberedOnly.status, 409);
-  assert.equal(numberedOnly.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
-
-  const reserved = await accept("fail-reserved");
-  assert.equal(reserved.status, 409);
-  assert.equal(reserved.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
-
-  const ownerGone = await accept("fail-owner-gone");
-  assert.equal(ownerGone.status, 409);
-  assert.equal(ownerGone.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_OWNER_MISSING);
-
-  const okLegacy = await accept("ok-1-1");
-  assert.equal(okLegacy.status, 200);
-  assert.equal(okLegacy.body.trade?.status, "accepted");
+  assert.equal(accepted.status, 200);
+  assert.equal(accepted.body.trade?.status, "accepted");
 });
 
 test("QA trade board does not seed when NODE_ENV is production", async (t) => {
@@ -680,6 +638,290 @@ test("QA trade board does not seed when NODE_ENV is production", async (t) => {
   assert.equal(community.status, 200);
   const open = (community.body.trades?.trades || []).filter((trade) => trade.status === "open");
   assert.equal(open.length, 0);
+});
+
+test("file store: accept rejects missing AND, empty OR, numbered-only, reserved, and owner-gone", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-qa-rejects-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  let running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const cards = (await api(running.base, "/api/catalog")).body.cards.filter(({ eventOnly }) => !eventOnly).slice(0, 8);
+  const [o1, o2, w1, w2, w3, extra] = cards;
+
+  async function freshPair() {
+    const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+    const accepter = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+    return { owner, accepter };
+  }
+
+  const andMissing = await freshPair();
+  await unlockMany(running.base, andMissing.owner, [o1.id]);
+  await unlockMany(running.base, andMissing.accepter, [w1.id]);
+  const andTrade = await api(running.base, "/api/trades", {
+    token: andMissing.owner,
+    method: "POST",
+    body: { offered: { mode: "and", cardIds: [o1.id] }, wanted: { mode: "and", cardIds: [w1.id, w2.id] } },
+  });
+  const andFail = await api(running.base, `/api/trades/${andTrade.body.trade.tradeId}/accept`, {
+    token: andMissing.accepter,
+    method: "POST",
+  });
+  assert.equal(andFail.status, 409);
+  assert.equal(andFail.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const orNone = await freshPair();
+  await unlockMany(running.base, orNone.owner, [o1.id]);
+  const orTrade = await api(running.base, "/api/trades", {
+    token: orNone.owner,
+    method: "POST",
+    body: { offered: { mode: "and", cardIds: [o1.id] }, wanted: { mode: "or", cardIds: [w1.id, w2.id] } },
+  });
+  const orFail = await api(running.base, `/api/trades/${orTrade.body.trade.tradeId}/accept`, {
+    token: orNone.accepter,
+    method: "POST",
+    body: { offeredCardId: o1.id, wantedCardId: w1.id },
+  });
+  assert.equal(orFail.status, 409);
+  assert.equal(orFail.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const reserved = await freshPair();
+  await unlockMany(running.base, reserved.owner, [o2.id]);
+  await unlockMany(running.base, reserved.accepter, [w3.id]);
+  const reserveMine = await api(running.base, "/api/trades", {
+    token: reserved.accepter,
+    method: "POST",
+    body: { offered: { mode: "and", cardIds: [w3.id] }, wanted: { mode: "and", cardIds: [extra.id] } },
+  });
+  assert.equal(reserveMine.status, 201);
+  const reservedOffer = await api(running.base, "/api/trades", {
+    token: reserved.owner,
+    method: "POST",
+    body: { offered: { mode: "and", cardIds: [o2.id] }, wanted: { mode: "and", cardIds: [w3.id] } },
+  });
+  const reservedFail = await api(running.base, `/api/trades/${reservedOffer.body.trade.tradeId}/accept`, {
+    token: reserved.accepter,
+    method: "POST",
+  });
+  assert.equal(reservedFail.status, 409);
+  assert.equal(reservedFail.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const numbered = await freshPair();
+  await unlockMany(running.base, numbered.owner, [o1.id]);
+  await unlockMany(running.base, numbered.accepter, [w1.id]);
+  const numberedTrade = await api(running.base, "/api/trades", {
+    token: numbered.owner,
+    method: "POST",
+    body: { offeredCardId: o1.id, wantedCardId: w1.id },
+  });
+  await running.close();
+  const stored = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  const numberedSession = stored.sessions[numbered.accepter];
+  for (const instance of numberedSession.instances || []) {
+    if (instance.cardId === w1.id) {
+      instance.numberedIndex = 1;
+      instance.numberedOf = 4;
+    }
+  }
+  await writeFile(path.join(dataDir, "state.json"), JSON.stringify(stored));
+  running = await start(dataDir, clock);
+  const numberedFail = await api(running.base, `/api/trades/${numberedTrade.body.trade.tradeId}/accept`, {
+    token: numbered.accepter,
+    method: "POST",
+  });
+  assert.equal(numberedFail.status, 409);
+  assert.equal(numberedFail.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const gone = await freshPair();
+  await unlockMany(running.base, gone.owner, [o2.id]);
+  await unlockMany(running.base, gone.accepter, [w2.id]);
+  const goneTrade = await api(running.base, "/api/trades", {
+    token: gone.owner,
+    method: "POST",
+    body: { offeredCardId: o2.id, wantedCardId: w2.id },
+  });
+  await running.close();
+  const goneState = JSON.parse(await readFile(path.join(dataDir, "state.json"), "utf8"));
+  delete goneState.sessions[gone.owner].inventory[o2.id];
+  goneState.sessions[gone.owner].instances = (goneState.sessions[gone.owner].instances || [])
+    .filter((item) => item.cardId !== o2.id);
+  await writeFile(path.join(dataDir, "state.json"), JSON.stringify(goneState));
+  running = await start(dataDir, clock);
+  const goneFail = await api(running.base, `/api/trades/${goneTrade.body.trade.tradeId}/accept`, {
+    token: gone.accepter,
+    method: "POST",
+  });
+  assert.equal(goneFail.status, 409);
+  assert.equal(goneFail.body.messageHe, TRADE_MESSAGES_HE.ACCEPT_OWNER_MISSING);
+});
+
+test("file store: 2↔3 accept moves cards into binder and updates counts", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-qa-binder-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const cards = (await api(running.base, "/api/catalog")).body.cards
+    .filter(({ eventOnly, idleEligible }) => !eventOnly && idleEligible)
+    .slice(0, 5);
+  const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const accepter = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const offered = cards.slice(0, 2).map(({ id }) => id);
+  const wanted = cards.slice(2, 5).map(({ id }) => id);
+  await unlockMany(running.base, owner, offered);
+  await unlockMany(running.base, accepter, wanted);
+  const before = {
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  };
+  const created = await api(running.base, "/api/trades", {
+    token: owner,
+    method: "POST",
+    body: { offered: { mode: "and", cardIds: offered }, wanted: { mode: "and", cardIds: wanted } },
+  });
+  const accepted = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+    token: accepter,
+    method: "POST",
+  });
+  assert.equal(accepted.status, 200);
+  const after = {
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  };
+  assertInventoryConserved(inventorySnapshot(before), inventorySnapshot(after));
+  for (const id of wanted) assert.equal(after.owner.inventory[id], 1);
+  for (const id of offered) assert.equal(after.accepter.inventory[id], 1);
+  for (const id of offered) assert.equal(after.owner.inventory[id] || 0, 0);
+  for (const id of wanted) assert.equal(after.accepter.inventory[id] || 0, 0);
+  assert.equal(after.owner.ownedUnique, before.owner.ownedUnique - offered.length + wanted.length);
+  assert.equal(after.accepter.ownedUnique, before.accepter.ownedUnique - wanted.length + offered.length);
+  assert.equal(after.owner.tradeCount, 1);
+  assert.equal(after.accepter.tradeCount, 1);
+});
+
+test("pglite: accept rejects missing AND, empty OR, numbered-only, reserved, and owner-gone; 2↔3 updates counts", async (t) => {
+  const { db, store } = await postgresStoreWithMigrations();
+  t.after(async () => db.close());
+  const at = "2026-10-10T12:00:00.000Z";
+  const later = new Date(Date.parse(at) + 86400000).toISOString();
+  let n = 0;
+  async function pair(ownerInv, accepterInv, accepterExtra = {}) {
+    n += 1;
+    const owner = `pg-owner-${n}`;
+    const accepter = `pg-accepter-${n}`;
+    await store.insertSessionRow(store.pool, owner, { displayName: owner, createdAt: at, inventory: ownerInv });
+    await store.insertSessionRow(store.pool, accepter, {
+      displayName: accepter,
+      createdAt: at,
+      inventory: accepterInv,
+      ...accepterExtra,
+    });
+    return { owner, accepter };
+  }
+
+  const andMissing = await pair({ O: 1 }, { A: 1 });
+  const andTrade = await store.createTrade({
+    sessionToken: andMissing.owner,
+    offered: { mode: "and", cardIds: ["O"] },
+    wanted: { mode: "and", cardIds: ["A", "B"] },
+    createdAt: at,
+    expiresAt: later,
+  });
+  const andFail = await store.acceptTrade({ tradeId: andTrade.tradeId, sessionToken: andMissing.accepter, acceptedAt: at });
+  assert.equal(andFail.ok, false);
+  assert.equal(andFail.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const orNone = await pair({ O: 1 }, {});
+  const orTrade = await store.createTrade({
+    sessionToken: orNone.owner,
+    offered: { mode: "and", cardIds: ["O"] },
+    wanted: { mode: "or", cardIds: ["A", "B"] },
+    createdAt: at,
+    expiresAt: later,
+  });
+  const orFail = await store.acceptTrade({
+    tradeId: orTrade.tradeId,
+    sessionToken: orNone.accepter,
+    acceptedAt: at,
+    offeredCardId: "O",
+    wantedCardId: "A",
+  });
+  assert.equal(orFail.ok, false);
+  assert.equal(orFail.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const numbered = await pair({ O: 1 }, { N: 1 }, { numberedByCard: { N: 1 } });
+  const numberedTrade = await store.createTrade({
+    sessionToken: numbered.owner,
+    offered: { mode: "and", cardIds: ["O"] },
+    wanted: { mode: "and", cardIds: ["N"] },
+    createdAt: at,
+    expiresAt: later,
+  });
+  const numberedFail = await store.acceptTrade({ tradeId: numberedTrade.tradeId, sessionToken: numbered.accepter, acceptedAt: at });
+  assert.equal(numberedFail.ok, false);
+  assert.equal(numberedFail.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const reserved = await pair({ O: 1 }, { R: 1 });
+  const mine = await store.createTrade({
+    sessionToken: reserved.accepter,
+    offered: { mode: "and", cardIds: ["R"] },
+    wanted: { mode: "and", cardIds: ["X"] },
+    createdAt: at,
+    expiresAt: later,
+  });
+  assert.ok(mine.tradeId);
+  const reservedOffer = await store.createTrade({
+    sessionToken: reserved.owner,
+    offered: { mode: "and", cardIds: ["O"] },
+    wanted: { mode: "and", cardIds: ["R"] },
+    createdAt: at,
+    expiresAt: later,
+  });
+  const reservedFail = await store.acceptTrade({ tradeId: reservedOffer.tradeId, sessionToken: reserved.accepter, acceptedAt: at });
+  assert.equal(reservedFail.ok, false);
+  assert.equal(reservedFail.messageHe, TRADE_MESSAGES_HE.ACCEPT_ACCEPTER_MISSING);
+
+  const gone = await pair({ O: 1 }, { W: 1 });
+  const goneTrade = await store.createTrade({
+    sessionToken: gone.owner,
+    offered: { mode: "and", cardIds: ["O"] },
+    wanted: { mode: "and", cardIds: ["W"] },
+    createdAt: at,
+    expiresAt: later,
+  });
+  const ownerSession = await store.hydrateSession(gone.owner);
+  delete ownerSession.inventory.O;
+  await store.saveSession(gone.owner, ownerSession);
+  const goneFail = await store.acceptTrade({ tradeId: goneTrade.tradeId, sessionToken: gone.accepter, acceptedAt: at });
+  assert.equal(goneFail.ok, false);
+  assert.equal(goneFail.messageHe, TRADE_MESSAGES_HE.ACCEPT_OWNER_MISSING);
+
+  const binder = await pair({ A: 1, B: 1 }, { C: 1, D: 1, E: 1 });
+  const bundle = await store.createTrade({
+    sessionToken: binder.owner,
+    offered: { mode: "and", cardIds: ["A", "B"] },
+    wanted: { mode: "and", cardIds: ["C", "D", "E"] },
+    createdAt: at,
+    expiresAt: later,
+  });
+  const before = {
+    owner: await store.hydrateSession(binder.owner),
+    accepter: await store.hydrateSession(binder.accepter),
+  };
+  const accepted = await store.acceptTrade({ tradeId: bundle.tradeId, sessionToken: binder.accepter, acceptedAt: at });
+  assert.equal(accepted.status, "accepted");
+  const ownerAfter = await store.hydrateSession(binder.owner);
+  const accepterAfter = await store.hydrateSession(binder.accepter);
+  assertInventoryConserved(
+    { owner: { inventory: before.owner.inventory }, accepter: { inventory: before.accepter.inventory } },
+    { owner: { inventory: ownerAfter.inventory }, accepter: { inventory: accepterAfter.inventory } },
+  );
+  assert.deepEqual(ownerAfter.inventory, { C: 1, D: 1, E: 1 });
+  assert.deepEqual(accepterAfter.inventory, { A: 1, B: 1 });
 });
 
 test("postgres SQL store: accept persists inventory and accepted picks", async (t) => {
