@@ -26,7 +26,7 @@ const appRoot = path.resolve(here, "..");
 const projectRoot = path.resolve(appRoot, "..");
 const migrationsDir = path.join(appRoot, "server/migrations");
 
-async function start(dataDir, clock, { databaseUrl = null } = {}) {
+async function start(dataDir, clock, { databaseUrl = null, holderWarm = false } = {}) {
   const handler = await createKalpiApp({
     dataDir,
     publicDir: path.join(appRoot, "public"),
@@ -46,6 +46,7 @@ async function start(dataDir, clock, { databaseUrl = null } = {}) {
     docsDir: path.join(projectRoot, "docs"),
     debugEnabled: true,
     databaseUrl,
+    holderWarm,
     now: () => clock.value,
     numberedRandom: () => 0.99,
     rng: () => 0,
@@ -641,7 +642,7 @@ test("QA trade board seeds four 2↔3 offers on /api/home", async (t) => {
   process.env.KLAFI_QA_TRADE_SAMPLES = "1";
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-qa-seed-"));
   const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
-  const running = await start(dataDir, clock);
+  const running = await start(dataDir, clock, { holderWarm: true });
   t.after(async () => {
     if (previousFlag === undefined) delete process.env.KLAFI_QA_TRADE_SAMPLES;
     else process.env.KLAFI_QA_TRADE_SAMPLES = previousFlag;
@@ -680,6 +681,32 @@ test("QA trade board seeds four 2↔3 offers on /api/home", async (t) => {
   });
   assert.equal(accepted.status, 200);
   assert.equal(accepted.body.trade?.status, "accepted");
+});
+
+test("QA seed invalidates the boot holder snapshot so new owners appear", async (t) => {
+  const previousFlag = process.env.KLAFI_QA_TRADE_SAMPLES;
+  process.env.KLAFI_QA_TRADE_SAMPLES = "1";
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-qa-holders-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock, { holderWarm: true });
+  t.after(async () => {
+    if (previousFlag === undefined) delete process.env.KLAFI_QA_TRADE_SAMPLES;
+    else process.env.KLAFI_QA_TRADE_SAMPLES = previousFlag;
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const empty = await api(running.base, "/api/card-holders");
+  assert.equal(empty.status, 200);
+  assert.deepEqual(empty.body.holders, {});
+  const home = await api(running.base, "/api/home");
+  assert.equal(home.status, 200);
+  const catalog = (await api(running.base, "/api/catalog")).body.cards;
+  const ids = partyLeaderSampleIds(catalog);
+  const holders = await api(running.base, "/api/card-holders");
+  assert.ok(Object.keys(holders.body.holders).length > 0, "seeded owners must show up after a warm empty snapshot");
+  for (const index of viewerGrantPlan().regular) {
+    assert.ok((holders.body.holders[ids[index]] || 0) >= 1, `${ids[index]} has a holder after seed`);
+  }
 });
 
 test("QA trade board does not seed when NODE_ENV is production", async (t) => {

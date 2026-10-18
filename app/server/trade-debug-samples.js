@@ -137,6 +137,9 @@ export async function ensureDebugTradeBoard({ store, allCards, cardsById, now, g
     }
   }
 
+  if (typeof store.refreshCardHolderSnapshot === "function") {
+    await store.refreshCardHolderSnapshot().catch(() => null);
+  }
   return { seeded, open: await openTradeCount(store) };
 }
 
@@ -147,5 +150,8 @@ export async function ensureDebugTradeViewerKit({ store, allCards, cardsById, no
   const at = new Date(now()).toISOString();
   const regularIds = viewerGrantPlan().regular.map((index) => ids[index]).filter(Boolean);
   await grantPlainCopies(store, grantCard, cardsById, viewerToken, regularIds, at);
+  if (typeof store.refreshCardHolderSnapshot === "function") {
+    await store.refreshCardHolderSnapshot().catch(() => null);
+  }
   return { granted: regularIds.length };
 }

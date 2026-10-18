@@ -168,6 +168,16 @@ export function cardHolderSnapshotFresh(snapshot, nowMs, ttlMs = CARD_HOLDER_SYN
   return Number.isFinite(at) && (nowMs - at) < ttlMs;
 }
 
+export function holderInventoryChanged(before, after) {
+  const left = before?.inventory || {};
+  const right = after?.inventory || {};
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  for (const key of keys) {
+    if (Number(left[key] || 0) !== Number(right[key] || 0)) return true;
+  }
+  return false;
+}
+
 export class JsonStore {
   constructor(filePath, { now = () => Date.now(), numberedRandom = Math.random } = {}) {
     this.filePath = filePath;
@@ -316,11 +326,21 @@ export class JsonStore {
     }).then(() => this.getSession(token));
   }
 
+  invalidateCardHolderSnapshot() {
+    this.state.cardHolderSnapshot = {
+      holders: this.state.cardHolderSnapshot?.holders || {},
+      numberedHolders: this.state.cardHolderSnapshot?.numberedHolders || {},
+      computedAt: null,
+    };
+  }
+
   async withSession(token, mutator) {
     return this.exclusive(async () => {
       const session = this.getSession(token);
       if (!session) return null;
+      const before = { inventory: { ...(session.inventory || {}) } };
       const result = await mutator(session);
+      if (holderInventoryChanged(before, session)) this.invalidateCardHolderSnapshot();
       bumpStateRevision(session);
       await this.persist();
       return result;
@@ -518,6 +538,7 @@ export class JsonStore {
       trade.status = "matched-demo";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = "simulated-matching-user";
+      this.invalidateCardHolderSnapshot();
       await this.persist();
       return trade;
     });
@@ -587,6 +608,7 @@ export class JsonStore {
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = sessionToken;
+      this.invalidateCardHolderSnapshot();
       await this.persist();
       return trade;
     });
@@ -751,11 +773,10 @@ export class JsonStore {
   async cardHolderSummary() {
     const snapshot = this.state.cardHolderSnapshot;
     const numberedPulls = listNumberedPulls(this.state.sessions);
-    if (!snapshot?.computedAt) {
+    if (!snapshot?.computedAt || !cardHolderSnapshotFresh(snapshot, this.now())) {
       const fresh = await this.refreshCardHolderSnapshot();
       return { ...fresh, numberedPulls };
     }
-    if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
     return { ...snapshot, numberedPulls };
   }
 

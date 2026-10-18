@@ -596,6 +596,9 @@ export class PostgresStore {
       this.remember(token, session);
       return;
     }
+    if (deltas.inventoryUpserts.length || deltas.inventoryDeletes.length) {
+      this.invalidateCardHolderSnapshot();
+    }
     // Only real writes advance the revision (the row lock serializes them), so no-op settles stay free.
     session.stateRevision = (Number(previous.stateRevision) || 0) + 1;
     await client.query(
@@ -1509,7 +1512,14 @@ export class PostgresStore {
     this.holderTableReady = true;
   }
 
+  invalidateCardHolderSnapshot() {
+    this.holderSnapshot = { holders: {}, numberedHolders: {}, computedAt: null };
+  }
+
   async readCardHolderSnapshot() {
+    if (this.holderSnapshot && this.holderSnapshot.computedAt === null) {
+      return this.holderSnapshot;
+    }
     if (this.holderSnapshot?.computedAt) return this.holderSnapshot;
     await this.ensureHolderSnapshotTable();
     const result = await this.pool.query(
@@ -1596,11 +1606,10 @@ export class PostgresStore {
     try {
       const snapshot = await this.readCardHolderSnapshot();
       const numberedPulls = await this.listNumberedPulls().catch(() => []);
-      if (!snapshot?.computedAt) {
+      if (!snapshot?.computedAt || !cardHolderSnapshotFresh(snapshot, this.now())) {
         const fresh = await this.refreshCardHolderSnapshot();
         return { ...fresh, numberedPulls };
       }
-      if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
       return { ...snapshot, numberedPulls };
     } catch {
       return { holders: {}, numberedHolders: {}, numberedPulls: [], computedAt: new Date(this.now()).toISOString() };
