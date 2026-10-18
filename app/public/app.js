@@ -1954,8 +1954,6 @@ function showView(name) {
   model.holdGeneration += 1;
   persistPlayerView(name);
   const shell = document.querySelector("#app");
-  shell.dataset.page = name;
-  shell.classList.remove("header-tucked");
   shell.classList.toggle("home-active", name === "home");
   if (name === "home") onHeardYouTodayEntry();
   shell.classList.toggle("share-active", name === "shared");
@@ -5187,7 +5185,6 @@ function applyTradeBoardChrome() {
   const panel = document.querySelector("#community-panel-open-trades");
   const collapsed = tradeBoardChromeCollapsed();
   panel?.classList.toggle("is-chrome-collapsed", collapsed);
-  // Layout option A folds the header on the trade desk too (its own toggle, same key).
   document.querySelector("#community-panel-trade")?.classList.toggle("is-chrome-collapsed", collapsed);
   for (const button of [elements.tradeBoardChromeToggle, document.getElementById("trade-desk-chrome-toggle")]) {
     if (!button) continue;
@@ -10750,69 +10747,3 @@ window.__kalpiDebug = {
   shareCaption,
   paintSharePortrait,
 };
-
-
-/* ── QA layout options (?layout=A|B|C|D or localStorage klafi-layout; ?layout=off clears). Default: none. ── */
-const LAYOUT_KEY = "klafi-layout";
-const LAYOUT_OPTIONS = ["A", "B", "C", "D", "E"];
-// A is the default layout for everyone; B–E are debug-only via ?layout=X (remembered in klafi-layout).
-const LAYOUT_DEFAULT = "A";
-function readLayoutOption(search = location.search, storage = localStorage) {
-  const asked = new URLSearchParams(search).get("layout");
-  if (asked !== null) {
-    const value = asked.trim().toUpperCase();
-    try {
-      if (LAYOUT_OPTIONS.includes(value) && value !== LAYOUT_DEFAULT) storage.setItem(LAYOUT_KEY, value);
-      else storage.removeItem(LAYOUT_KEY);
-    } catch { /* private mode */ }
-    return LAYOUT_OPTIONS.includes(value) ? value : LAYOUT_DEFAULT;
-  }
-  try {
-    const stored = storage.getItem(LAYOUT_KEY) || "";
-    return LAYOUT_OPTIONS.includes(stored) ? stored : LAYOUT_DEFAULT;
-  } catch {
-    return LAYOUT_DEFAULT;
-  }
-}
-const layoutOption = readLayoutOption();
-const layoutShell = document.querySelector("#app");
-if (layoutOption && layoutShell) {
-  layoutShell.dataset.layout = layoutOption;
-  const picker = document.createElement("select");
-  picker.className = "layout-qa-picker";
-  picker.setAttribute("aria-label", "פריסת QA");
-  picker.innerHTML = LAYOUT_OPTIONS.map((value) => `<option value="${value}"${value === layoutOption ? " selected" : ""}>פריסה ${value}</option>`).join("");
-  picker.addEventListener("change", () => {
-    const url = new URL(location.href);
-    url.searchParams.set("layout", picker.value);
-    location.href = url.toString();
-  });
-  // The debug picker shows only when ?layout= is in the URL.
-  if (new URLSearchParams(location.search).has("layout")) document.body.append(picker);
-  if (layoutOption === "A") {
-    // A: the trade desk gets the same fold as the open-trades board, so the header folds on every trade view.
-    const desk = document.querySelector("#community-panel-trade");
-    if (desk && !document.getElementById("trade-desk-chrome-toggle")) {
-      const fold = document.createElement("button");
-      fold.type = "button";
-      fold.id = "trade-desk-chrome-toggle";
-      fold.className = "binder-chrome-toggle";
-      fold.addEventListener("click", toggleTradeBoardChrome);
-      desk.prepend(fold);
-      applyTradeBoardChrome();
-    }
-  }
-}
-// C: tuck the header while a page's content scrolls down, bring it back on scroll up.
-const layoutScrollTops = new WeakMap();
-document.addEventListener("scroll", (event) => {
-  if (layoutShell?.dataset.layout !== "C") return;
-  const target = event.target;
-  if (!(target instanceof Element) || !target.closest(".view.active")) return;
-  const previous = layoutScrollTops.get(target) ?? 0;
-  const top = target.scrollTop;
-  layoutScrollTops.set(target, top);
-  if (tipsBusy() || top < 24) layoutShell.classList.remove("header-tucked");
-  else if (top - previous > 6) layoutShell.classList.add("header-tucked");
-  else if (previous - top > 6) layoutShell.classList.remove("header-tucked");
-}, { capture: true, passive: true });
