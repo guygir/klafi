@@ -7,6 +7,7 @@ import {
   calendarDay,
   publicStreakCalendar,
   streakAcquiredBy,
+  BONUS_DAYS,
   DATE_PRIZES,
   ELECTION_DAY,
   ELECTION_GRID_DATES,
@@ -73,8 +74,10 @@ test("a long run keeps streak claims and does not open a second month", () => {
 });
 
 test("reward days stay on the ladder without a warehouse hold", () => {
-  assert.equal(Object.keys(DATE_PRIZES).length, 27);
+  assert.equal(Object.keys(DATE_PRIZES).length, 28);
+  assert.deepEqual(Object.keys(BONUS_DAYS).sort(), ["2026-10-11", "2026-10-18"]);
   assert.deepEqual(DATE_PRIZES["2026-10-11"], { kind: "pack", label: "סט חדש", sublabel: "העצמה נשית", setId: "set-7" });
+  assert.deepEqual(DATE_PRIZES["2026-10-18"], { kind: "pack", label: "סט חדש", sublabel: "צדיקים", setId: "set-8" });
   assert.equal(DATE_PRIZES["2026-10-01"].stars, 1);
   assert.equal(DATE_PRIZES["2026-10-02"].kind, "pack");
   assert.equal(DATE_PRIZES["2026-10-03"], undefined);
@@ -140,8 +143,10 @@ test("a mid-grid start checks only stored visit dates", () => {
   const calendar = publicStreakCalendar(session);
   assert.deepEqual(
     calendar.days.filter((cell) => cell.checked).map((cell) => cell.date),
-    ["2026-10-18"],
+    // 2026-10-18 is the bonus day: its V waits until the gift is taken.
+    [],
   );
+  assert.equal(calendar.days.find((cell) => cell.date === "2026-10-18").checked, false);
   assert.equal(calendar.days.find((cell) => cell.date === "2026-10-04").checked, false);
   assert.equal(calendar.days.find((cell) => cell.date === "2026-10-16").checked, false);
   assert.equal(calendar.days.find((cell) => cell.election).date, ELECTION_DAY);
@@ -153,9 +158,9 @@ test("a mid-grid start checks only stored visit dates", () => {
   assert.equal(calendar.ladder[2].runDay, 6);
   assert.equal(calendar.ladder[2].reward.kind, "pack");
   assert.equal(calendar.ladder.some((rung) => rung.runDay === 7), false);
-  assert.equal(calendar.nextDatePrize.date, "2026-10-19");
-  assert.equal(calendar.nextDatePrize.wait, 1);
-  assert.equal(calendar.nextDatePrize.reward.kind, "pack");
+  assert.equal(calendar.nextDatePrize.date, "2026-10-18");
+  assert.equal(calendar.nextDatePrize.wait, 0);
+  assert.equal(calendar.nextDatePrize.reward.setId, "set-8");
 });
 
 test("an old run length does not invent visit dates", () => {

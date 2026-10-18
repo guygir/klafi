@@ -35,7 +35,8 @@
         "party-position-society-services": 1,
         "special-events": 0,
         "set-6": 1,
-        "set-7": 1
+        "set-7": 1,
+        "set-8": 1
       },
       "rankNames": [
         "אזרח סקרן",
@@ -131,6 +132,16 @@
             "Uncommon": 54,
             "Rare": 18
           }
+        },
+        {
+          "id": "set-8",
+          "weight": 74,
+          "includeEventCards": false,
+          "rarities": {
+            "Common": 652,
+            "Uncommon": 256,
+            "Rare": 93
+          }
         }
       ]
     },
@@ -201,6 +212,16 @@
         "runtimeState": "active",
         "runtimeAvailableFrom": "2026-10-11T00:00:00+03:00",
         "plannedPublishAt": "2026-10-11T06:00:00.000Z",
+        "launchGate": "blocked"
+      },
+      {
+        "id": "set-8",
+        "nameHe": "צדיקים",
+        "order": 14,
+        "tier": "objective",
+        "runtimeState": "active",
+        "runtimeAvailableFrom": "2026-10-18T00:00:00+03:00",
+        "plannedPublishAt": "2026-10-18T06:00:00.000Z",
         "launchGate": "blocked"
       },
       {

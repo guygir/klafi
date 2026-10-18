@@ -135,6 +135,21 @@ const MOMENT_SETS = Object.freeze({
     why: "Selected for Set 7 (העצמה נשית) from the handoff quote pool.",
     rationale: "Set 7 quote with supplied art.",
   },
+  "set-8": {
+    idPrefix: "SET8",
+    letters: "צדיק",
+    nameHe: "צדיקים",
+    nameEn: "Religious men",
+    releaseSetId: "set-8",
+    releaseOrder: 14,
+    binderGroup: "set-8",
+    sourceIdPrefix: "set8",
+    indexField: "set8Index",
+    fallbackSet: "RZ",
+    unplacedLine: true,
+    why: "Selected for Set 8 (צדיקים) from the accepted quote pool.",
+    rationale: "Set 8 quote with supplied art.",
+  },
 });
 
 export function runtimeMomentCard(candidate, extras = {}, setId = "set-5") {
@@ -231,11 +246,16 @@ export function runtimeSet7Card(candidate, extras = {}) {
   return runtimeMomentCard(candidate, extras, "set-7");
 }
 
-export function catalogExtrasFromStudio(studio, set5, set6, set7) {
+export function runtimeSet8Card(candidate, extras = {}) {
+  return runtimeMomentCard(candidate, extras, "set-8");
+}
+
+export function catalogExtrasFromStudio(studio, set5, set6, set7, set8) {
   return {
     set5: set5 || { candidates: [] },
     set6: set6 || { candidates: [] },
     set7: set7 || { candidates: [] },
+    set8: set8 || { candidates: [] },
     parties: studio?.parties || [],
     members: studio?.members || [],
     criticalBloc: studio?.editorialPolicy?.criticalBloc || [],
@@ -273,12 +293,14 @@ export function expandPublicCatalog(cards, specials = { sets: [], cards: [] }, e
   const set5Cards = (extras.set5?.candidates || []).map((candidate) => runtimeSet5Card(candidate, extras));
   const set6Cards = (extras.set6?.candidates || []).map((candidate) => runtimeSet6Card(candidate, extras));
   const set7Cards = (extras.set7?.candidates || []).map((candidate) => runtimeSet7Card(candidate, extras));
+  const set8Cards = (extras.set8?.candidates || []).map((candidate) => runtimeSet8Card(candidate, extras));
   const expanded = [
     ...cards,
     ...(specials.cards || []).map((card) => runtimeSpecialCard(card, specials)),
     ...set5Cards,
     ...set6Cards,
     ...set7Cards,
+    ...set8Cards,
   ];
   return attachMembershipNotes(expanded, extras.members || []);
 }

@@ -8,6 +8,7 @@ export const LIVE_RELEASE_SET_IDS = Object.freeze([
   "set-5",
   "set-6",
   "set-7",
+  "set-8",
 ]);
 
 export function isLiveReleaseSet(id) {

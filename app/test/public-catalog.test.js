@@ -8,7 +8,7 @@ import { slimPublicState } from "../server/slim-state.js";
 import { LIVE_RELEASE_SET_IDS, visiblePlayerCards } from "../server/visible-sets.js";
 import { emptyCommunity, slimDailyChallenge } from "../server/slim-community.js";
 import { liveDeployAssetNames } from "../../scripts/live-deploy-assets.mjs";
-import { cardPullOdds, rarityOrderReport } from "../server/pack-config.js";
+import { cardPullOdds, normalizePackConfig, rarityOrderReport, resolvePackTable } from "../server/pack-config.js";
 import { IDLE_BACKLOG_CAP, IDLE_INTERVAL_MS, IDLE_STARTER_READY } from "../server/idle-config.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -16,15 +16,16 @@ const publicDir = path.resolve(here, "../public");
 const projectRoot = path.resolve(here, "../..");
 
 async function loadCatalogSources() {
-  const [cards, specials, studio, set5, set6, set7] = await Promise.all([
+  const [cards, specials, studio, set5, set6, set7, set8] = await Promise.all([
     readFile(path.resolve(here, "../data/cards.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/specials-content.json"), "utf8").then(JSON.parse),
     readFile(path.resolve(here, "../data/studio-content.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set5-wip-pool.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set6-wip-pool.json"), "utf8").then(JSON.parse),
     readFile(path.join(projectRoot, "docs/intake/research/set7-wip-pool.json"), "utf8").then(JSON.parse),
+    readFile(path.join(projectRoot, "docs/intake/research/set8-wip-pool.json"), "utf8").then(JSON.parse),
   ]);
-  return { cards, specials, studio, set5, set6, set7, extras: catalogExtrasFromStudio(studio, set5, set6, set7) };
+  return { cards, specials, studio, set5, set6, set7, set8, extras: catalogExtrasFromStudio(studio, set5, set6, set7, set8) };
 }
 
 test("static catalog.json matches the public card expansion", async () => {
@@ -192,12 +193,14 @@ test("public sets use 67.5/24/8.5 (set 7: 64/27/9), stored per 200 and the star 
   assert.equal(byId.get("set-5").weight, 50);
   assert.equal(byId.get("set-6").weight, 37);
   assert.equal(byId.get("set-7").weight, 58);
+  assert.equal(byId.get("set-8").weight, 74);
   assert.equal(byId.get("decisions").weight, 0);
   assert.equal(byId.get("records").weight, 0);
   for (const id of ["party-leaders", "party-slot-2", "set-5", "set-6"]) {
     assert.deepEqual(byId.get(id).rarities, { Common: 135, Uncommon: 48, Rare: 17 });
   }
   assert.deepEqual(byId.get("set-7").rarities, { Common: 128, Uncommon: 54, Rare: 18 });
+  assert.deepEqual(byId.get("set-8").rarities, { Common: 652, Uncommon: 256, Rare: 93 });
   const odds = cardPullOdds({
     pack: studio.gameConfig.pack,
     releaseSets: studio.gameConfig.releaseSets,
@@ -386,4 +389,56 @@ test("set 7 leads every star tier", async () => {
     const others = Math.max(...tier.filter((row) => row.releaseSetId !== "set-7").map((row) => row.probability));
     assert.ok(set7 > others, `set 7 leads ${rarity}`);
   }
+});
+
+test("set 8 ships 28 cards, 14/9/5, and stays in the normalized pack", async () => {
+  const [{ set8, studio }, catalog] = await Promise.all([
+    loadCatalogSources(),
+    readFile(path.join(publicDir, "catalog.json"), "utf8").then(JSON.parse),
+  ]);
+  const live = catalog.cards.filter(({ releaseSetId }) => releaseSetId === "set-8");
+  assert.equal(set8.candidates.length, 28);
+  assert.equal(live.length, 28);
+  assert.deepEqual(live.map(({ id }) => id), Array.from({ length: 28 }, (_, index) => `SET8-${String(index + 1).padStart(2, "0")}`));
+  assert.deepEqual(live.map(({ displayCode }) => displayCode), Array.from({ length: 28 }, (_, index) => `צדיק-${String(index + 1).padStart(2, "0")}`));
+  assert.equal(new Set(live.map(({ id }) => id)).size, 28);
+  assert.equal(new Set(live.map(({ displayCode }) => displayCode)).size, 28);
+  const counts = { Common: 0, Uncommon: 0, Rare: 0 };
+  for (const card of live) counts[card.rarity] += 1;
+  assert.deepEqual(counts, { Common: 14, Uncommon: 9, Rare: 5 });
+  assert.equal(live.find(({ id }) => id === "SET8-13").titleHe, "יוסי טייב");
+  const shortened = new Set(set8.candidates.filter(({ quoteStatus }) => quoteStatus === "shortened").map(({ n }) => `SET8-${String(n).padStart(2, "0")}`));
+  assert.deepEqual(
+    live.filter(({ walkout }) => walkout.quoteStatus === "shortened").map(({ id }) => id),
+    [...shortened],
+  );
+  for (const card of live) {
+    assert.ok(String(card.walkout?.sourceUrl || "").trim(), `${card.id} needs a source URL`);
+    const file = path.resolve(here, "../../docs/design/assets", card.artKey);
+    const size = (await stat(file)).size;
+    assert.ok(size > 0 && size <= 700 * 1024, `${card.artKey} is ${size} bytes`);
+  }
+  const normalized = normalizePackConfig(studio.gameConfig.pack);
+  const packSet = normalized.sets.find(({ id }) => id === "set-8");
+  assert.equal(packSet.weight, 74);
+  assert.deepEqual(packSet.rarities, { Common: 652, Uncommon: 256, Rare: 93 });
+  const now = Date.parse("2026-10-18T12:00:00.000Z");
+  const table = resolvePackTable({
+    pack: studio.gameConfig.pack,
+    releaseSets: studio.gameConfig.releaseSets,
+    cards: catalog.cards,
+    now,
+  });
+  const row = table.sets.find(({ id }) => id === "set-8");
+  assert.equal(row.cardCount, 28);
+  assert.deepEqual(counts, { Common: 14, Uncommon: 9, Rare: 5 });
+  const odds = cardPullOdds({
+    pack: studio.gameConfig.pack,
+    releaseSets: studio.gameConfig.releaseSets,
+    cards: catalog.cards,
+    now,
+  });
+  const set8Odds = odds.filter(({ releaseSetId }) => releaseSetId === "set-8");
+  assert.equal(set8Odds.length, 28);
+  assert.ok(set8Odds.every(({ probability }) => probability > 0));
 });
