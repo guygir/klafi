@@ -341,7 +341,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-wanted-set"/);
   assert.match(html, /id="trade-active"/);
   assert.match(html, /id="trade-compose"/);
-  assert.match(html, /class="trade-desk-head">\s*<h2>[^<]+<\/h2>\s*<\/div>/, "title row is title-only; publish sits below compose");
+  assert.doesNotMatch(html, /פרסמו הצעת החלפה/, "compose has no redundant publish heading under the menu");
+  assert.match(html, /id="trade-desk-chrome-toggle"[^>]*>↑ קיפול התפריט ↑/, "compose has the same fold-menu control as the binder");
   assert.match(html, /class="trade-publish-row">\s*<button id="trade-create"/, "publish sits in a centered row under compose");
   assert.match(html, /id="trade-offered-set"[\s\S]*id="trade-wanted-set"/);
   assert.match(html, /id="avatar-seal"/);
@@ -784,8 +785,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /\.trade-desk \{\s*overflow: hidden !important;/);
   assert.match(html, /id="trade-wanted-set"/);
   assert.ok(
-    html.indexOf("trade-desk-head") < html.indexOf("trade-form")
-      && html.indexOf("trade-form") < html.indexOf("trade-publish-row"),
+    html.indexOf("trade-form") < html.indexOf("trade-publish-row"),
     "the publish button sits centered under compose, after both sides",
   );
   assert.match(css, /\.trade-publish-row \{[^}]*justify-content:\s*center/);
