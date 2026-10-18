@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=layout-a-default" />
+  <link rel="stylesheet" href="/styles.css?v=trade-merge" />
   <link rel="stylesheet" href="/theme-pack-v2.css?v=numbered-pin-156" />
   <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-157" />
   <link rel="stylesheet" href="/packrip.css?v=card-surface-157" />
@@ -322,18 +322,24 @@
         </div>
         <div class="growth-grid">
           <article id="community-panel-trade" class="work-card trade-desk" role="tabpanel" aria-labelledby="community-tab-trade" tabindex="0">
+            <button type="button" id="trade-desk-chrome-toggle" class="binder-chrome-toggle" aria-expanded="true" aria-controls="community-panel-trade" aria-label="קיפול התפריט">↑ קיפול התפריט ↑</button>
             <p class="work-kicker">החלפות</p>
-            <div class="trade-desk-head">
-              <h2>פרסמו הצעת החלפה.</h2>
-              <button id="trade-create" class="primary-action" type="button" hidden>פרסמו החלפה</button>
-            </div>
             <div id="trade-preview" class="trade-preview" hidden></div>
             <div id="trade-active" class="trade-active" hidden></div>
             <div id="trade-compose" class="trade-compose" hidden>
               <div class="trade-form">
-                <fieldset>
+                <fieldset class="trade-side-fieldset" data-trade-side="offered">
                   <legend>אני נותן</legend>
-                  <div class="trade-choice-row">
+                  <div class="trade-side-mode">
+                    <p class="trade-mode-hint" data-trade-mode-hint="offered">צריך את כל הקלפים ברשימה.</p>
+                    <div class="trade-mode-toggle" role="group" aria-label="איך הקלפים שאני נותן מתחברים">
+                      <button type="button" class="trade-mode-btn is-active" data-trade-side="offered" data-trade-mode="and" aria-pressed="true">כולם (וגם)</button>
+                      <button type="button" class="trade-mode-btn" data-trade-side="offered" data-trade-mode="or" aria-pressed="false">אחד (או)</button>
+                    </div>
+                  </div>
+                  <div id="trade-offered-slots" class="trade-side-slots" aria-live="polite"></div>
+                  <button type="button" id="trade-offered-add" class="secondary-action trade-side-add">+ הוסיפו קלף</button>
+                  <div class="trade-choice-row" hidden>
                     <button type="button" id="trade-offered-preview" class="trade-thumb" hidden></button>
                     <div class="trade-choice-fields">
                       <label>סדרה <select id="trade-offered-set"></select></label>
@@ -341,9 +347,19 @@
                     </div>
                   </div>
                 </fieldset>
-                <fieldset>
+                <p class="trade-compose-arrow" aria-hidden="true">⇄</p>
+                <fieldset class="trade-side-fieldset" data-trade-side="wanted">
                   <legend>אני רוצה</legend>
-                  <div class="trade-choice-row">
+                  <div class="trade-side-mode">
+                    <p class="trade-mode-hint" data-trade-mode-hint="wanted">צריך את כל הקלפים ברשימה.</p>
+                    <div class="trade-mode-toggle" role="group" aria-label="איך הקלפים שאני רוצה מתחברים">
+                      <button type="button" class="trade-mode-btn is-active" data-trade-side="wanted" data-trade-mode="and" aria-pressed="true">כולם (וגם)</button>
+                      <button type="button" class="trade-mode-btn" data-trade-side="wanted" data-trade-mode="or" aria-pressed="false">אחד (או)</button>
+                    </div>
+                  </div>
+                  <div id="trade-wanted-slots" class="trade-side-slots" aria-live="polite"></div>
+                  <button type="button" id="trade-wanted-add" class="secondary-action trade-side-add">+ הוסיפו קלף</button>
+                  <div class="trade-choice-row" hidden>
                     <button type="button" id="trade-wanted-preview" class="trade-thumb" hidden></button>
                     <div class="trade-choice-fields">
                       <label>סדרה <select id="trade-wanted-set"></select></label>
@@ -353,6 +369,9 @@
                 </fieldset>
               </div>
               <p id="trade-board-hint" class="work-note" hidden></p>
+              <div class="trade-publish-row">
+                <button id="trade-create" class="primary-action" type="button" hidden>פרסמו החלפה</button>
+              </div>
               <div class="trade-actions">
                 <button id="trade-demo" class="secondary-action" type="button" hidden>קישור לדוגמה</button>
               </div>
@@ -700,6 +719,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.1" cy="6.9" r="1.15" fill="currentColor"/></svg>
         <span>סטורי</span>
       </button>
+      <button id="close-dialog-done" class="dialog-done full" type="button">סגירה</button>
     </div>
   </dialog>
 
@@ -974,6 +994,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=layout-a-default"></script>
+  <script type="module" src="/app.js?v=trade-merge"></script>
 </body>
 </html>

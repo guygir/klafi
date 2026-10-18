@@ -30,6 +30,17 @@ import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-bind
 import { newReferralCode, normalizeInviteCode } from "./referral.js";
 import { collectionStars } from "./stars.js";
 import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
+import {
+  TRADE_MESSAGES_HE,
+  canAcceptTrade as canCompleteTrade,
+  normalizeStoredTrade,
+  ownerCanOfferCards,
+  parseCreateTradeInput,
+  publicTradeView,
+  reservedOfferCopies,
+  tradeRecordFromSides,
+  validateTradeShape,
+} from "./trade-core.js";
 
 const { Pool } = pg;
 
@@ -45,6 +56,7 @@ const MIGRATIONS = [
   ["009_numbered_pool", "009_numbered_pool.sql"],
   ["010_referral_code", "010_referral_code.sql"],
   ["011_referral_invited_by", "011_referral_invited_by.sql"],
+  ["012_enhanced_trades", "012_enhanced_trades.sql"],
 ];
 
 function iso(value) {
@@ -313,8 +325,10 @@ export class PostgresStore {
       await client.query(
         `INSERT INTO kalpi_trades (
            trade_id, owner_token, offered_card_id, wanted_card_id, status,
-           created_at, expires_at, accepted_at, accepted_by, cancelled_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+           created_at, expires_at, accepted_at, accepted_by, cancelled_at,
+           offered_mode, wanted_mode, offered_card_ids, wanted_card_ids,
+           accepted_offered_card_id, accepted_wanted_card_id
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14::jsonb,$15,$16)
          ON CONFLICT (trade_id) DO NOTHING`,
         [
           trade.tradeId,
@@ -327,6 +341,12 @@ export class PostgresStore {
           trade.acceptedAt,
           trade.acceptedBy,
           trade.cancelledAt || null,
+          trade.offeredMode || "and",
+          trade.wantedMode || "and",
+          JSON.stringify(trade.offeredCardIds || [trade.offeredCardId]),
+          JSON.stringify(trade.wantedCardIds || [trade.wantedCardId]),
+          trade.acceptedOfferedCardId || null,
+          trade.acceptedWantedCardId || null,
         ],
       );
     }
@@ -575,6 +595,9 @@ export class PostgresStore {
     if (!deltas.sessionChanged && !hasCollectionChanges) {
       this.remember(token, session);
       return;
+    }
+    if (deltas.inventoryUpserts.length || deltas.inventoryDeletes.length) {
+      this.invalidateCardHolderSnapshot();
     }
     // Only real writes advance the revision (the row lock serializes them), so no-op settles stay free.
     session.stateRevision = (Number(previous.stateRevision) || 0) + 1;
@@ -1001,10 +1024,15 @@ export class PostgresStore {
     );
   }
 
-  async createTrade({ sessionToken, offeredCardId, wantedCardId, createdAt, expiresAt }) {
+  async createTrade({ sessionToken, offered, wanted, offeredCardId, wantedCardId, createdAt, expiresAt }) {
     return this.exclusive(async () => {
+      const parsed = offered && wanted
+        ? { offered, wanted }
+        : parseCreateTradeInput({ offeredCardId, wantedCardId });
+      const shape = validateTradeShape(parsed);
+      if (!shape.ok) return { error: shape.code, messageHe: shape.messageHe };
       const session = await this.loadSession(sessionToken, { forUpdate: true });
-      if (!session || !session.inventory[offeredCardId] || offeredCardId === wantedCardId) return null;
+      if (!session) return null;
       const open = await this.executor().query(
         `SELECT * FROM kalpi_trades
          WHERE owner_token = $1 AND status = 'open' AND expires_at > $2
@@ -1012,28 +1040,45 @@ export class PostgresStore {
         [sessionToken, createdAt],
       );
       if (open.rows[0]) return { blocked: true, existing: this.tradeFromRow(open.rows[0]) };
-      const reserved = await this.executor().query(
-        `SELECT COUNT(*)::int AS count FROM kalpi_trades
-         WHERE owner_token = $1 AND offered_card_id = $2 AND status = 'open' AND expires_at > $3`,
-        [sessionToken, offeredCardId, createdAt],
+      const openTrades = (await this.executor().query(
+        `SELECT * FROM kalpi_trades WHERE owner_token = $1 AND status = 'open' AND expires_at > $2`,
+        [sessionToken, createdAt],
+      )).rows.map((row) => this.tradeFromRow(row));
+      const canOffer = ownerCanOfferCards(
+        session,
+        openTrades,
+        sessionToken,
+        parsed.offered.cardIds,
+        createdAt,
+        regularCopyCount,
       );
-      if (regularCopyCount(session, offeredCardId) <= reserved.rows[0].count) return null;
-      const trade = {
+      if (!canOffer.ok) return { error: "NOT_OWNED", messageHe: TRADE_MESSAGES_HE.NOT_OWNED, cardId: canOffer.cardId };
+      const trade = tradeRecordFromSides({
         tradeId: randomUUID(),
         ownerToken: sessionToken,
-        offeredCardId,
-        wantedCardId,
-        status: "open",
+        offered: parsed.offered,
+        wanted: parsed.wanted,
         createdAt,
         expiresAt,
-        acceptedAt: null,
-        acceptedBy: null,
-      };
+      });
       await this.executor().query(
         `INSERT INTO kalpi_trades (
-           trade_id, owner_token, offered_card_id, wanted_card_id, status, created_at, expires_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [trade.tradeId, sessionToken, offeredCardId, wantedCardId, "open", createdAt, expiresAt],
+           trade_id, owner_token, offered_card_id, wanted_card_id, status, created_at, expires_at,
+           offered_mode, wanted_mode, offered_card_ids, wanted_card_ids
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb)`,
+        [
+          trade.tradeId,
+          sessionToken,
+          trade.offeredCardId,
+          trade.wantedCardId,
+          "open",
+          createdAt,
+          expiresAt,
+          trade.offeredMode,
+          trade.wantedMode,
+          JSON.stringify(trade.offeredCardIds),
+          JSON.stringify(trade.wantedCardIds),
+        ],
       );
       return trade;
     });
@@ -1076,7 +1121,15 @@ export class PostgresStore {
     });
   }
 
-  async acceptTrade({ tradeId, sessionToken, acceptedAt, offeredFinish, wantedFinish }) {
+  async acceptTrade({
+    tradeId,
+    sessionToken,
+    acceptedAt,
+    offeredCardId = null,
+    wantedCardId = null,
+    offeredFinishes = {},
+    wantedFinishes = {},
+  }) {
     return this.exclusive(async () => {
       const tradeRow = await this.executor().query(
         "SELECT * FROM kalpi_trades WHERE trade_id = $1 FOR UPDATE",
@@ -1084,34 +1137,67 @@ export class PostgresStore {
       );
       const trade = this.tradeFromRow(tradeRow.rows[0]);
       if (!trade || trade.status !== "open" || Date.parse(trade.expiresAt || 0) <= Date.parse(acceptedAt) || trade.ownerToken === sessionToken) {
-        return null;
+        return {
+          ok: false,
+          error: "ACCEPT_FAILED",
+          code: "ACCEPT_FAILED",
+          messageHe: TRADE_MESSAGES_HE.ACCEPT_FAILED,
+        };
       }
       for (const lockToken of [trade.ownerToken, sessionToken].sort()) {
         await this.loadSession(lockToken, { forUpdate: true });
       }
       const owner = await this.loadSession(trade.ownerToken);
       const accepter = await this.loadSession(sessionToken);
-      if (regularCopyCount(owner, trade.offeredCardId) < 1 || regularCopyCount(accepter, trade.wantedCardId) < 1) return null;
+      const openTrades = (await this.executor().query(
+        `SELECT * FROM kalpi_trades WHERE status = 'open' AND expires_at > $1`,
+        [acceptedAt],
+      )).rows.map((row) => this.tradeFromRow(row));
+      const verdict = canCompleteTrade(trade, {
+        owner,
+        accepter: { ...accepter, token: sessionToken },
+        trades: openTrades,
+        at: acceptedAt,
+        regularCopyCountFn: regularCopyCount,
+        offeredCardId,
+        wantedCardId,
+      });
+      if (!verdict.ok) {
+        return {
+          ok: false,
+          error: verdict.code || "ACCEPT_FAILED",
+          code: verdict.code || "ACCEPT_FAILED",
+          messageHe: verdict.messageHe || TRADE_MESSAGES_HE.ACCEPT_FAILED,
+        };
+      }
       const previousOwner = structuredClone(owner);
       const previousAccepter = structuredClone(accepter);
-      moveOwnedCard(owner, accepter, trade.offeredCardId, {
-        acquiredBy: "trade-accepted",
-        pulledAt: acceptedAt,
-        finish: offeredFinish,
-        instanceId: randomUUID(),
-      });
-      moveOwnedCard(accepter, owner, trade.wantedCardId, {
-        acquiredBy: "trade-accepted",
-        pulledAt: acceptedAt,
-        finish: wantedFinish,
-        instanceId: randomUUID(),
-      });
+      for (const cardId of verdict.offeredCardIds) {
+        moveOwnedCard(owner, accepter, cardId, {
+          acquiredBy: "trade-accepted",
+          pulledAt: acceptedAt,
+          finish: offeredFinishes[cardId] || offeredFinishes.default,
+          instanceId: randomUUID(),
+        });
+      }
+      for (const cardId of verdict.wantedCardIds) {
+        moveOwnedCard(accepter, owner, cardId, {
+          acquiredBy: "trade-accepted",
+          pulledAt: acceptedAt,
+          finish: wantedFinishes[cardId] || wantedFinishes.default,
+          instanceId: randomUUID(),
+        });
+      }
       owner.tradeCount += 1;
       accepter.tradeCount += 1;
+      trade.acceptedOfferedCardId = verdict.acceptedOfferedCardId;
+      trade.acceptedWantedCardId = verdict.acceptedWantedCardId;
       enqueueAcceptedTradeNotice(owner, trade, {
         acceptedAt,
         accepterName: accepter.displayName,
         ownerName: owner.displayName,
+        receivedCardIds: verdict.wantedCardIds,
+        givenCardIds: verdict.offeredCardIds,
       });
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
@@ -1119,8 +1205,11 @@ export class PostgresStore {
       await this.saveSession(trade.ownerToken, owner, previousOwner);
       await this.saveSession(sessionToken, accepter, previousAccepter);
       await this.executor().query(
-        `UPDATE kalpi_trades SET status = $2, accepted_at = $3, accepted_by = $4 WHERE trade_id = $1`,
-        [tradeId, trade.status, trade.acceptedAt, trade.acceptedBy],
+        `UPDATE kalpi_trades
+         SET status = $2, accepted_at = $3, accepted_by = $4,
+             accepted_offered_card_id = $5, accepted_wanted_card_id = $6
+         WHERE trade_id = $1`,
+        [tradeId, trade.status, trade.acceptedAt, trade.acceptedBy, trade.acceptedOfferedCardId, trade.acceptedWantedCardId],
       );
       return trade;
     });
@@ -1148,20 +1237,34 @@ export class PostgresStore {
     });
   }
 
+  async clearOpenTradesDebug(cancelledAt) {
+    const result = await this.pool.query(
+      `UPDATE kalpi_trades SET status = 'cancelled', cancelled_at = $2 WHERE status = 'open'`,
+      [cancelledAt],
+    );
+    return { cleared: result.rowCount || 0 };
+  }
+
   tradeFromRow(row) {
     if (!row) return null;
-    return {
+    return normalizeStoredTrade({
       tradeId: row.trade_id,
       ownerToken: row.owner_token,
       offeredCardId: row.offered_card_id,
       wantedCardId: row.wanted_card_id,
+      offeredMode: row.offered_mode,
+      wantedMode: row.wanted_mode,
+      offeredCardIds: row.offered_card_ids,
+      wantedCardIds: row.wanted_card_ids,
+      acceptedOfferedCardId: row.accepted_offered_card_id,
+      acceptedWantedCardId: row.accepted_wanted_card_id,
       status: row.status,
       createdAt: iso(row.created_at),
       expiresAt: iso(row.expires_at),
       acceptedAt: iso(row.accepted_at),
       acceptedBy: row.accepted_by,
       cancelledAt: iso(row.cancelled_at),
-    };
+    });
   }
 
   async hideTrade({ tradeId, sessionToken }) {
@@ -1179,6 +1282,14 @@ export class PostgresStore {
     });
   }
 
+  async reservedOfferCopiesFor(sessionToken, cardId, at) {
+    const result = await this.executor().query(
+      `SELECT * FROM kalpi_trades WHERE owner_token = $1 AND status = 'open' AND expires_at > $2`,
+      [sessionToken, at],
+    );
+    return reservedOfferCopies(result.rows.map((row) => this.tradeFromRow(row)), sessionToken, cardId, at);
+  }
+
   async listTrades(token) {
     const current = token ? await this.hydrateSession(token) : null;
     const hidden = new Set(current?.hiddenTradeIds || []);
@@ -1191,43 +1302,25 @@ export class PostgresStore {
        LIMIT 100`,
       [token],
     );
-    const offeredIds = result.rows
-      .filter((row) => row.status === "open" && row.owner_token !== token)
-      .map((row) => row.offered_card_id);
-    const ownerHasOffered = new Map();
-    if (offeredIds.length) {
-      const owners = await this.pool.query(
-        `SELECT inventory.session_token, inventory.card_id
-         FROM kalpi_inventory AS inventory
-         LEFT JOIN (
-           SELECT session_token, card_id, COUNT(*)::int AS numbered
-           FROM kalpi_instances
-           WHERE numbered_index > 0 AND seen_at IS NOT NULL
-           GROUP BY session_token, card_id
-         ) AS numbered
-           ON numbered.session_token = inventory.session_token
-          AND numbered.card_id = inventory.card_id
-         WHERE inventory.copies > COALESCE(numbered.numbered, 0)
-           AND (inventory.session_token, inventory.card_id) IN (
-             SELECT owner_token, offered_card_id FROM kalpi_trades
-             WHERE status = 'open' AND owner_token <> $1
-           )`,
-        [token],
-      );
-      for (const row of owners.rows) ownerHasOffered.set(`${row.session_token}:${row.card_id}`, true);
+    const trades = result.rows.map((row) => this.tradeFromRow(row));
+    const ownerTokens = [...new Set(trades.map((trade) => trade.ownerToken))];
+    const owners = new Map();
+    for (const ownerToken of ownerTokens) {
+      owners.set(ownerToken, await this.hydrateSession(ownerToken));
     }
     return result.rows.filter((row) => row.owner_token === token || !hidden.has(row.trade_id)).map((row) => {
       const trade = this.tradeFromRow(row);
-      const { ownerToken, acceptedBy, ...publicTrade } = trade;
+      const view = publicTradeView(trade, {
+        token,
+        ownerSession: owners.get(trade.ownerToken),
+        viewerSession: current ? { ...current, token } : null,
+        trades,
+        at: null,
+        regularCopyCountFn: regularCopyCount,
+      });
       return {
-        ...publicTrade,
+        ...view,
         ownerLabel: row.owner_label || "שחקן קְלָפִי",
-        ownedByCurrent: ownerToken === token,
-        acceptedByCurrent: acceptedBy === token,
-        canAccept: trade.status === "open"
-          && ownerToken !== token
-          && Boolean(ownerHasOffered.get(`${ownerToken}:${trade.offeredCardId}`))
-          && regularCopyCount(current, trade.wantedCardId) > 0,
       };
     });
   }
@@ -1419,7 +1512,14 @@ export class PostgresStore {
     this.holderTableReady = true;
   }
 
+  invalidateCardHolderSnapshot() {
+    this.holderSnapshot = { holders: {}, numberedHolders: {}, computedAt: null };
+  }
+
   async readCardHolderSnapshot() {
+    if (this.holderSnapshot && this.holderSnapshot.computedAt === null) {
+      return this.holderSnapshot;
+    }
     if (this.holderSnapshot?.computedAt) return this.holderSnapshot;
     await this.ensureHolderSnapshotTable();
     const result = await this.pool.query(
@@ -1506,11 +1606,10 @@ export class PostgresStore {
     try {
       const snapshot = await this.readCardHolderSnapshot();
       const numberedPulls = await this.listNumberedPulls().catch(() => []);
-      if (!snapshot?.computedAt) {
+      if (!snapshot?.computedAt || !cardHolderSnapshotFresh(snapshot, this.now())) {
         const fresh = await this.refreshCardHolderSnapshot();
         return { ...fresh, numberedPulls };
       }
-      if (!cardHolderSnapshotFresh(snapshot, this.now())) this.scheduleCardHolderRefresh();
       return { ...snapshot, numberedPulls };
     } catch {
       return { holders: {}, numberedHolders: {}, numberedPulls: [], computedAt: new Date(this.now()).toISOString() };

@@ -1521,7 +1521,7 @@ img.mini-art {
 .trade-offer > div:nth-of-type(2) { text-align: right; }
 .trade-offer span, .trade-offer small { color: var(--ink-soft); font: 8px/1.2 ui-monospace, monospace; }
 .trade-offer strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-.trade-offer > p { grid-column: 1 / 3; margin: 0; color: var(--civic); font: 8px/1.2 ui-monospace, monospace; text-transform: uppercase; }
+.trade-offer > p { grid-column: 1 / -1; margin: 0; color: var(--civic); font: 8px/1.2 ui-monospace, monospace; text-transform: uppercase; }
 .trade-offer > button { width: auto; min-height: 30px; padding: 6px 8px; font-size: 8px; }
 .trade-offer.matched-demo { opacity: 0.7; }
 .faction-desk > button { margin: 8px 0 12px; }
@@ -2421,10 +2421,17 @@ img.mini-art {
   font-size: 18px;
   text-align: center;
 }
-.trade-notice-cards .trade-thumb {
+.trade-notice-cards .trade-thumb,
+.trade-notice-cards .trade-notice-stack {
   margin-top: 0;
   pointer-events: none;
   cursor: default;
+}
+.trade-notice-cards .trade-notice-stack {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
 }
 .trade-notice-cards .trade-thumb-frame {
   width: min(132px, 100%);
@@ -3156,6 +3163,7 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   }
 }
 #app[data-leaves="still"] .site-card-peeks { display: none; }
+#app:has(#growth-view.view.active) .site-card-peeks { display: none; }
 #app[data-leaves="fall"] .site-leaf {
   top: -42vh;
   animation: leaf-fall var(--leaf-dur, 36s) linear var(--leaf-delay, 0s) infinite !important;
@@ -3723,15 +3731,20 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .growth-grid .trade-preview h3 { font-size: 19px; line-height: 1.2; }
 .growth-grid .trade-preview p { font-size: 12px; }
 .trade-compose { display: flex; flex-direction: column; gap: 10px; }
-.trade-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.trade-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
 @media (max-width: 520px) {
-  .trade-offer .trade-thumb-frame {
+  .trade-desk .trade-compose .trade-thumb-frame {
     width: 104px;
     height: calc(104px * 96 / 63);
   }
 }
 .trade-form fieldset { min-width: 0; margin: 0; padding: 10px; border: 1px solid rgba(44, 51, 48, 0.22); border-radius: 8px; }
-.trade-form legend { padding: 0 4px; font-size: 13px; font-weight: 600; }
+.trade-form legend { padding: 0 6px; font-size: 22px; font-weight: 700; line-height: 1.15; }
 .trade-form label { display: grid; gap: 5px; margin-top: 9px; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .trade-thumb {
   display: grid;
@@ -3785,20 +3798,39 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .faction-desk select { width: 100%; min-height: 40px; padding: 8px 10px; font: 500 14px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif; }
 .faction-pick-row select { min-height: 40px; }
 .faction-pick-row > button { min-height: 40px; }
-.trade-board { gap: 10px; margin-top: 16px; }
-.trade-offer { display: grid; width: min(100%, 460px); margin-inline: auto; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 10px; padding: 13px; border: 1px solid rgba(44, 51, 48, 0.32); border-radius: 8px; background: #eee5d4; }
+.trade-board { gap: 8px; margin-top: 8px; }
+.trade-offer {
+  display: grid;
+  width: min(100%, 460px);
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+  grid-template-areas:
+    "offered arrow wanted"
+    "bar bar bar";
+  align-items: start;
+  gap: 6px 4px;
+  padding: 8px;
+  border: 1px solid rgba(44, 51, 48, 0.32);
+  border-radius: 8px;
+  background: #eee5d4;
+}
+.trade-offer > .trade-side[data-trade-side="offered"] { grid-area: offered; }
+.trade-offer > .trade-side[data-trade-side="wanted"] { grid-area: wanted; }
+.trade-offer > b { grid-area: arrow; align-self: center; }
+.trade-offer > .trade-offer-bar { grid-area: bar; }
 .trade-offer > .trade-side {
   display: grid;
-  justify-items: center;
+  justify-items: stretch;
   align-content: start;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
+  width: 100%;
 }
 .trade-side small {
   color: var(--civic);
-  font: 700 11px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  font: 700 14px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
 }
-.trade-offer .trade-thumb { margin-top: 0; }
+.trade-offer .trade-thumb { margin-top: 0; width: 100%; }
 .trade-offer .trade-thumb-frame {
   width: 100%;
   height: auto;
@@ -3829,6 +3861,23 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.trade-offer-bar .trade-offer-actions {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+@media (max-width: 420px) {
+  .trade-offer > .trade-offer-bar {
+    gap: 6px;
+  }
+  .trade-offer-action {
+    min-height: 34px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
 .trade-offer-action {
   flex: 0 0 auto;
   width: auto;
@@ -3844,6 +3893,11 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 .trade-offer-action.accept {
   background: var(--civic);
   color: var(--paper);
+}
+.trade-offer-action:disabled,
+.trade-offer-action[disabled] {
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 .trade-offer-action:hover {
   background: var(--civic-bright);
@@ -3880,18 +3934,45 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 #card-dialog .dialog-close {
   top: 4px;
-  right: 8px;
+  inset-inline-end: 4px;
+  right: auto;
   z-index: 6;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  font-size: 24px;
+  font-size: 28px;
   line-height: 1;
   color: var(--ink);
+}
+#card-dialog .dialog-done {
+  min-height: 44px;
+  border: 1px solid var(--civic);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--civic);
+  font: 700 14px/1 "IBM Plex Sans Hebrew", sans-serif;
+  cursor: pointer;
+}
+@media (max-height: 720px) {
+  #card-dialog[open] {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 12px;
+  }
+  #card-dialog .dialog-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    margin-top: 8px;
+    padding-top: 8px;
+    background: var(--paper);
+  }
 }
 #card-dialog .dialog-close:focus,
 #card-dialog .dialog-close:focus-visible {
@@ -5038,7 +5119,6 @@ body {
 .trade-form {
   flex: 0 0 auto;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
   align-items: stretch;
   margin: 3px 0 6px;
 }
@@ -5181,39 +5261,49 @@ body {
   width: 100%;
 }
 
-/* Trade compose: the publish button shares the title row (RTL: title right, button left), and each
+/* Trade compose: the publish button is centered under the form. Each
    side stacks a large card over its two selects. The thumb scales with the viewport width and height
    so both cards stay whole from 320px phones to desktop. */
 .trade-desk-head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: center; /* the publish button sits centered on its own row under the title */
+  justify-content: space-between;
   gap: 10px;
   min-width: 0;
   margin: 0 0 4px;
   direction: rtl;
 }
 .trade-desk .trade-desk-head h2 {
-  flex: 1 1 100%;
+  flex: 1 1 auto;
   min-width: 0;
   margin: 0;
   font-size: clamp(16px, 4.6vw, 20px);
   line-height: 1.2;
 }
-#app .trade-desk .trade-desk-head #trade-create {
+.trade-publish-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 12px 0 4px;
+}
+#app .trade-desk .trade-publish-row #trade-create {
   flex: 0 0 auto;
-  width: auto;
-  min-height: 44px;
-  margin: 0;
-  padding: 0 16px;
-  font-size: 14px;
+  width: min(280px, 88%);
+  min-height: 48px;
+  margin: 0 auto;
+  padding: 0 20px;
+  font-size: 15px;
   white-space: nowrap;
 }
 .trade-desk .trade-actions:not(:has(> :not([hidden]))) { display: none; }
 #app .trade-desk .trade-form {
-  --trade-thumb-w: clamp(72px, min(30vw, 14dvh), 128px);
+  --trade-thumb-w: clamp(88px, min(36vw, 18dvh), 128px);
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch;
+  width: 100%;
   margin-top: 2px;
+  grid-template-columns: unset !important;
 }
 #app .trade-desk .trade-form fieldset {
   padding: 6px 8px 8px !important;
@@ -5232,6 +5322,234 @@ body {
 }
 #app .trade-desk .trade-choice-fields label {
   margin-top: 2px !important;
+}
+
+.trade-compose-arrow {
+  margin: 8px 0;
+  padding: 6px 0;
+  text-align: center;
+  color: var(--civic);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+#app .trade-desk .trade-compose .trade-side-fieldset > legend {
+  font-family: "Noto Serif Hebrew", "Noto Serif", serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+#app .trade-desk .trade-compose .trade-compose-arrow {
+  font-size: 36px;
+  font-weight: 700;
+}
+.trade-side-fieldset {
+  width: 100%;
+  box-sizing: border-box;
+}
+.trade-side-mode {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.trade-mode-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font: 500 12px/1.35 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
+.trade-mode-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.trade-slot-fields {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.trade-slot-fields label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  margin: 0 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.trade-slot-fields select {
+  width: 100%;
+}
+.trade-mode-btn {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 2px solid var(--civic);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--civic);
+  font-size: 13px;
+  font-weight: 600;
+}
+.trade-mode-btn.is-active {
+  border-color: var(--civic);
+  background: var(--civic);
+  color: var(--paper);
+  font-weight: 700;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--ink) 18%, transparent);
+}
+.trade-mode-btn.is-active::before {
+  content: "✓ ";
+  font-weight: 800;
+}
+.trade-side-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trade-slot {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(44, 51, 48, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.35);
+}
+.trade-slot.has-join .trade-slot-join {
+  text-align: center;
+  color: var(--civic);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.trade-slot-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 6px;
+  direction: rtl;
+}
+.trade-slot-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+.trade-slot-thumb {
+  width: auto;
+  margin: 0;
+  justify-self: center;
+}
+.trade-slot-thumb[hidden] {
+  display: none;
+}
+.trade-slot-thumb .trade-thumb-frame,
+.trade-compose .trade-slot-thumb .trade-thumb-frame {
+  width: var(--trade-thumb-w, 88px);
+  height: calc(var(--trade-thumb-w, 88px) * 96 / 63);
+  margin-inline: auto;
+}
+.trade-slot-thumb.is-empty {
+  cursor: default;
+  pointer-events: none;
+}
+.trade-thumb-placeholder {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px dashed rgba(44, 51, 48, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink-soft);
+  font: 600 11px/1.25 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+  text-align: center;
+}
+.trade-slot-picker {
+  min-width: 0;
+  width: 100%;
+}
+.trade-slot-picker select {
+  width: 100%;
+}
+.trade-slot-remove {
+  justify-self: end;
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1;
+}
+.trade-side-add {
+  margin-top: 6px;
+  width: 100%;
+}
+.trade-side-rail {
+  --trade-rail-gap: 3px;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  gap: var(--trade-rail-gap);
+  width: 100%;
+}
+.trade-offer > .trade-side[data-trade-side="offered"] .trade-side-rail { direction: ltr; }
+.trade-rail-slot {
+  flex: 0 0 calc((100% - (2 * var(--trade-rail-gap))) / 3);
+  width: calc((100% - (2 * var(--trade-rail-gap))) / 3);
+  max-width: calc((100% - (2 * var(--trade-rail-gap))) / 3);
+  min-width: 0;
+}
+.trade-rail-slot:empty {
+  display: none;
+}
+.trade-offer .trade-side-rail .trade-thumb {
+  display: block;
+  width: 100%;
+}
+.trade-offer .trade-side-rail .trade-thumb-frame,
+.trade-offer .trade-stack-chip .trade-thumb-frame {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 63 / 96;
+  max-width: none;
+}
+.trade-offer .trade-thumb-frame .binder-shared-card,
+.trade-offer .trade-thumb-frame .kalpi-card {
+  width: 100%;
+  height: 100%;
+}
+.trade-offer .trade-side-rail,
+.trade-offer .trade-rail-slot {
+  overflow: visible;
+}
+.trade-offer .trade-thumb.is-picked {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid var(--civic);
+  outline-offset: 2px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 5px var(--foil);
+}
+.trade-offer .trade-thumb.is-pick-disabled {
+  opacity: 0.42;
+}
+.trade-offer .trade-side {
+  justify-items: center;
+  text-align: center;
+}
+.trade-offer .trade-side small {
+  width: 100%;
+  text-align: center;
+  font: 700 14px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
+.trade-offer.needs-choice .trade-offer-bar {
+  grid-column: 1 / -1;
 }
 
 .faction-member-board {
@@ -5655,11 +5973,21 @@ body {
   }
   .trade-desk > .work-kicker { display: none; }
   .trade-desk > h2 { font-size: 16px; margin-bottom: 6px; }
-  .trade-form {
+  #app .trade-desk .trade-form {
     flex: 0 0 auto;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
     overflow: visible;
-    gap: 8px;
+    gap: 10px;
+  }
+  .trade-desk-head {
+    display: block;
+  }
+  .trade-desk .trade-desk-head h2 {
+    width: 100%;
+  }
+  #app .trade-desk .trade-publish-row #trade-create {
+    width: min(280px, 88%);
   }
   .trade-choice-row {
     grid-template-columns: minmax(0, 1fr);
@@ -7111,196 +7439,4 @@ body {
    leftward over the avatar, so 3-digit streaks fit too. */
 .leaderboard-list > .collector-row {
   padding-inline-start: 14px;
-}
-
-/* ── QA layout options for short phones (?layout=A|B|C|D, key klafi-layout). Default: none = current. ──
-   Scoped to the card/trade pages via #app[data-page]. */
-
-/* A: the קיפול תפריט fold also folds the top row (wordmark + icons + name); level bar + avatar stay. */
-#app[data-layout="A"][data-page="binder"]:has(#binder-view.is-chrome-collapsed) .masthead,
-#app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden]) #trade-board-chrome-toggle:not([hidden])) .masthead,
-#app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) .masthead {
-  display: none;
-}
-/* …but not while a page guide is up: the קהילה guide's first step rings the section tabs in that head. */
-html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden]) #trade-board-chrome-toggle:not([hidden])) #growth-view .workspace-head,
-html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) #growth-view .workspace-head {
-  display: none;
-}
-/* A, folded trades: like the binder, everything between the level bar and the content goes
-   (section + page tabs, kicker, desk heading, the card frame's top padding); the fold button stays.
-   Not while a page guide is up: its steps ring those tabs. */
-html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-open-trades.is-chrome-collapsed:not([hidden]) #trade-board-chrome-toggle:not([hidden])) #growth-view .community-nav,
-html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(#community-panel-trade.is-chrome-collapsed:not([hidden])) #growth-view .community-nav,
-html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] .work-card.is-chrome-collapsed:not([hidden]) > .work-kicker,
-html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] #community-panel-trade.is-chrome-collapsed .trade-desk-head > h2 {
-  display: none;
-}
-html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] #community-panel-open-trades.is-chrome-collapsed:not([hidden]):has(#trade-board-chrome-toggle:not([hidden])),
-html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"] #community-panel-trade.is-chrome-collapsed:not([hidden]) {
-  padding-top: 2px;
-}
-html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="A"][data-page="growth"]:has(.work-card.is-chrome-collapsed:not([hidden])) #growth-view.view.active {
-  padding-top: 0;
-}
-/* The desk's fold sits at its top, compact like the board's. */
-#app[data-layout="A"] #trade-desk-chrome-toggle { margin: 0 0 4px; }
-
-
-/* B: on card/trade pages the whole page scrolls (header included); only the bottom nav stays pinned. */
-#app[data-layout="B"][data-page="binder"],
-#app[data-layout="B"][data-page="growth"],
-#app[data-layout="E"][data-page="binder"],
-#app[data-layout="E"][data-page="growth"] {
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  /* 1fr (not auto): short pages keep the header at its own height instead of stretching it. */
-  grid-template-rows: auto auto 1fr;
-  align-content: start;
-}
-
-#app[data-layout="B"][data-page="binder"] #main,
-#app[data-layout="B"][data-page="growth"] #main,
-#app[data-layout="B"][data-page="binder"] #binder-view.view.active,
-#app[data-layout="B"][data-page="growth"] #growth-view.view.active,
-#app[data-layout="E"][data-page="binder"] #main,
-#app[data-layout="E"][data-page="growth"] #main,
-#app[data-layout="E"][data-page="binder"] #binder-view.view.active,
-#app[data-layout="E"][data-page="growth"] #growth-view.view.active {
-  height: auto;
-  min-height: auto; /* content height, so #main's nav clearance lands after the last row, not under it */
-  overflow: visible;
-}
-
-#app[data-layout="B"][data-page="binder"] #binder-grid,
-#app[data-layout="B"][data-page="growth"] .growth-grid,
-#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card,
-#app[data-layout="E"][data-page="binder"] #binder-grid,
-#app[data-layout="E"][data-page="growth"] .growth-grid,
-#app[data-layout="E"][data-page="growth"] .growth-grid > .work-card {
-  height: auto;
-  max-height: none;
-  flex: 0 0 auto;
-  overflow: visible;
-}
-
-#app[data-layout="B"][data-page="growth"] #trade-board,
-#app[data-layout="B"][data-page="growth"] .leaderboard-list,
-#app[data-layout="B"][data-page="growth"] #collector-board,
-#app[data-layout="B"][data-page="growth"] #daily-challenge-board,
-#app[data-layout="B"][data-page="growth"] .growth-grid > .work-card.trade-desk,
-#app[data-layout="E"][data-page="growth"] #trade-board,
-#app[data-layout="E"][data-page="growth"] .leaderboard-list,
-#app[data-layout="E"][data-page="growth"] #collector-board,
-#app[data-layout="E"][data-page="growth"] #daily-challenge-board,
-#app[data-layout="E"][data-page="growth"] .growth-grid > .work-card.trade-desk {
-  max-height: none;
-  overflow: visible !important; /* beats the short-phone .trade-desk overflow !important: one scroller only */
-}
-
-/* C: the header (top row + level strip) slides away while scrolling down and returns on scroll up. */
-#app[data-layout="C"] .masthead,
-#app[data-layout="C"] .level-strip {
-  max-height: 240px;
-}
-@media (prefers-reduced-motion: no-preference) {
-  #app[data-layout="C"] .masthead,
-  #app[data-layout="C"] .level-strip {
-    transition: max-height 200ms ease, opacity 160ms ease, padding 200ms ease;
-  }
-}
-/* (app.js drops header-tucked whenever a guide is busy) */
-#app[data-layout="C"][data-page="binder"].header-tucked .masthead,
-#app[data-layout="C"][data-page="binder"].header-tucked .level-strip,
-#app[data-layout="C"][data-page="growth"].header-tucked .masthead,
-#app[data-layout="C"][data-page="growth"].header-tucked .level-strip {
-  max-height: 0;
-  min-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  border-width: 0;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* D: a compact header on card/trade pages: one slim top row, a thin level strip, smaller binder chrome. */
-#app[data-layout="D"][data-page="binder"] .masthead,
-#app[data-layout="D"][data-page="growth"] .masthead { min-height: 0; }
-#app[data-layout="D"][data-page="binder"] .masthead-row,
-#app[data-layout="D"][data-page="growth"] .masthead-row { min-height: 34px; }
-#app[data-layout="D"][data-page="binder"] .masthead .wordmark b,
-#app[data-layout="D"][data-page="growth"] .masthead .wordmark b { font-size: 22px; }
-#app[data-layout="D"][data-page="binder"] .masthead-brand > button,
-#app[data-layout="D"][data-page="growth"] .masthead-brand > button { height: 32px; }
-#app[data-layout="D"][data-page="binder"] .level-strip,
-#app[data-layout="D"][data-page="growth"] .level-strip {
-  min-height: 0;
-  padding-top: 2px;
-  padding-bottom: 2px;
-}
-#app[data-layout="D"][data-page="binder"] #level-next,
-#app[data-layout="D"][data-page="growth"] #level-next,
-#app[data-layout="D"][data-page="binder"] #level-rank,
-#app[data-layout="D"][data-page="growth"] #level-rank { display: none; }
-#app[data-layout="D"][data-page="binder"] .level-track,
-#app[data-layout="D"][data-page="growth"] .level-track { height: 20px; }
-#app[data-layout="D"][data-page="binder"] .level-avatar-button,
-#app[data-layout="D"][data-page="growth"] .level-avatar-button { width: 34px; height: 34px; }
-#app[data-layout="D"][data-page="binder"] #binder-view.view.active,
-#app[data-layout="D"][data-page="growth"] #growth-view.view.active { padding-top: 4px; }
-#app[data-layout="D"][data-page="binder"] .binder-chrome-clip { font-size: 0.92em; }
-#app[data-layout="D"][data-page="growth"] #growth-view .workspace-head { display: none; }
-/* Short screens: the badge row (also on the achievements page) gives its height back to the cards. */
-@media (max-height: 700px) {
-  /* …except while a page guide is on screen (its "תגים וכוכבים" step rings the badge row). */
-  html:not(:has(#klafi-tips:not([hidden]))) #app[data-layout="D"][data-page="binder"] #earned-badge-list { display: none; }
-}
-
-/* QA picker (only rendered when a layout option is set). */
-.layout-qa-picker {
-  position: fixed;
-  z-index: 40;
-  left: 2px;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 112px);
-  padding: 1px 4px;
-  border: 1px solid rgba(31, 79, 74, 0.4);
-  border-radius: 8px;
-  background: rgba(255, 250, 238, 0.92);
-  color: #1f4f4a;
-  font: 700 11px/1.2 system-ui, sans-serif;
-}
-.layout-qa-picker:focus-visible { outline: 2px solid #1f4f4a; outline-offset: 1px; }
-/* B: content now scrolls under the fixed nav row, so its strip (nav + footer links) gets the paper behind it. */
-#app[data-layout="B"][data-page="binder"] .top-nav-row,
-#app[data-layout="B"][data-page="growth"] .top-nav-row,
-#app[data-layout="E"][data-page="binder"] .top-nav-row,
-#app[data-layout="E"][data-page="growth"] .top-nav-row {
-  background: linear-gradient(to bottom, transparent, var(--paper) 18px);
-}
-
-/* E: B (one page scroller, header scrolls away) but the sort/filter controls stay pinned while scrolling:
-   the binder's filter strip (list/owned/missing, sort, party, set) and the open-offers filter bar.
-   Their wrappers become display:contents so the sticky bar's containing block is the whole page/panel;
-   the fold has nothing to fold here, so its button is hidden. */
-#app[data-layout="E"][data-page="binder"] #binder-chrome,
-#app[data-layout="E"][data-page="binder"] #binder-chrome > .binder-chrome-clip,
-#app[data-layout="E"][data-page="growth"] #trade-board-chrome,
-#app[data-layout="E"][data-page="growth"] #trade-board-chrome > .binder-chrome-clip {
-  display: contents;
-}
-#app[data-layout="E"][data-page="binder"] #binder-chrome-toggle,
-#app[data-layout="E"][data-page="growth"] #trade-board-chrome-toggle {
-  display: none;
-}
-#app[data-layout="E"][data-page="binder"] #binder-filters,
-#app[data-layout="E"][data-page="growth"] #trade-board-toolbar:not([hidden]) {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  margin-inline: -4px;
-  padding: 4px 4px 6px;
-  background: var(--paper);
-  box-shadow: 0 6px 8px -8px rgba(26, 31, 28, 0.45);
 }

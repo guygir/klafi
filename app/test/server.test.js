@@ -15,6 +15,7 @@ const projectRoot = path.resolve(appRoot, "..");
 async function start(dataDir, clock, {
   debugEnabled = true,
   quizEnabled = false,
+  holderWarm = false,
   databaseUrl = null,
   studioSecret = null,
   studioContentPath = path.join(appRoot, "data/studio-content.json"),
@@ -42,6 +43,7 @@ async function start(dataDir, clock, {
     docsDir: path.join(projectRoot, "docs"),
     debugEnabled,
     quizEnabled,
+    holderWarm,
     databaseUrl,
     studioSecret,
     now: () => clock.value,
@@ -222,18 +224,12 @@ test("card holder counts are real session inventories, not fixtures", async (t) 
   assert.ok(tally.body.computedAt);
   const third = (await api(running.base, "/api/session", { method: "POST" })).body.token;
   await api(running.base, "/api/debug/unlock-card", { token: third, method: "POST", body: { cardId } });
-  const cached = await api(running.base, "/api/card-holders");
-  assert.equal(cached.body.holders[cardId], 2);
-  assert.equal(cached.body.computedAt, tally.body.computedAt);
+  const afterGrant = await api(running.base, "/api/card-holders");
+  assert.equal(afterGrant.body.holders[cardId], 3, "a new owner invalidates the holder snapshot");
+  assert.ok(afterGrant.body.computedAt);
   clock.value += CARD_HOLDER_SYNC_MS + 1;
-  const stale = await api(running.base, "/api/card-holders");
-  assert.equal(stale.body.holders[cardId], 2);
-  let refreshed = stale;
-  for (let attempt = 0; attempt < 20 && refreshed.body.holders[cardId] !== 3; attempt += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 25));
-    refreshed = await api(running.base, "/api/card-holders");
-  }
-  assert.equal(refreshed.body.holders[cardId], 3);
+  const afterTtl = await api(running.base, "/api/card-holders");
+  assert.equal(afterTtl.body.holders[cardId], 3);
 });
 
 test("public party register keeps Hebrew names without opening Studio", () => {

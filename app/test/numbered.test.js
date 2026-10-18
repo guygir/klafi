@@ -232,7 +232,9 @@ test("an open trade needs a regular copy on both sides and keeps numbered stamps
   };
   store.getSession(owner).inventory["SET5-06"] = 1;
   store.getSession(owner).instances.push({ instanceId: "owner-numbered", cardId: "SET5-06", numberedIndex: 2, numberedOf: 4, finish: "Holo" });
-  assert.equal(await store.createTrade(offer), null);
+  const numberedOnly = await store.createTrade(offer);
+  assert.equal(numberedOnly.error, "NOT_OWNED");
+  assert.match(numberedOnly.messageHe, /עותק מיותר/);
 
   store.getSession(owner).inventory["SET5-06"] = 2;
   store.getSession(owner).instances.push({ instanceId: "owner-plain", cardId: "SET5-06", finish: "Common" });
@@ -240,13 +242,16 @@ test("an open trade needs a regular copy on both sides and keeps numbered stamps
   store.getSession(accepter).instances.push({ instanceId: "accepter-numbered", cardId: "SET5-01", numberedIndex: 1, numberedOf: 1, finish: "Holo" });
   const trade = await store.createTrade(offer);
   assert.equal(typeof trade.tradeId, "string");
-  assert.equal(await store.acceptTrade({
+  const numberedWanted = await store.acceptTrade({
     tradeId: trade.tradeId,
     sessionToken: accepter,
     acceptedAt: now,
     offeredFinish: "Common",
     wantedFinish: "Common",
-  }), null);
+  });
+  assert.equal(numberedWanted.ok, false);
+  assert.equal(numberedWanted.code, "ACCEPT_ACCEPTER_MISSING");
+  assert.match(numberedWanted.messageHe, /אין לכם עותק מיותר/);
 
   store.getSession(accepter).inventory["SET5-01"] = 2;
   store.getSession(accepter).instances.push({ instanceId: "accepter-plain", cardId: "SET5-01", finish: "Common" });

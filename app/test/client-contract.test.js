@@ -341,7 +341,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-wanted-set"/);
   assert.match(html, /id="trade-active"/);
   assert.match(html, /id="trade-compose"/);
-  assert.match(html, /class="trade-desk-head">\s*<h2>[^<]+<\/h2>\s*<button id="trade-create"/, "publish sits in the title row, after the title (RTL: left of it)");
+  assert.doesNotMatch(html, /פרסמו הצעת החלפה/, "compose has no redundant publish heading under the menu");
+  assert.match(html, /id="trade-desk-chrome-toggle"[^>]*>↑ קיפול התפריט ↑/, "compose has the same fold-menu control as the binder");
+  assert.match(html, /class="trade-publish-row">\s*<button id="trade-create"/, "publish sits in a centered row under compose");
   assert.match(html, /id="trade-offered-set"[\s\S]*id="trade-wanted-set"/);
   assert.match(html, /id="avatar-seal"/);
   assert.match(html, /id="level-letter"/);
@@ -425,8 +427,43 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /runtimeState === "held"/);
   assert.match(javascript, /function tradeCatalog/);
   assert.match(javascript, /function tradeWantLabel\(card\) \{\s*\/\/[^\n]*\n\s*return `\$\{cardTitle\(card\)\} · \$\{cardCode\(card\)\} · \$\{rarityMark\(card\.rarity\)\} \$\{rarityNameHe\(card\.rarity\)\} · \$\{plainOwnedCount\(card\)\}x`/);
-  assert.match(javascript, /tradeOfferedCard[\s\S]{0,400}tradeWantLabel\(candidate\)/);
-  assert.match(javascript, /tradeWantedCard[\s\S]{0,240}tradeWantLabel\(candidate\)/);
+  assert.match(javascript, /tradeOfferedCard[\s\S]{0,400}tradeComposeOfferLabel\(candidate\)/);
+  assert.match(javascript, /tradeWantedCard[\s\S]{0,240}tradeComposeWantLabel\(candidate\)/);
+  assert.match(javascript, /function tradeComposeWantLabel\(card\) \{\n  return tradeComposeCardLabel\(card, holderCountFor\(card\)\);/);
+  assert.match(javascript, /function tradeComposeOfferLabel\(card\) \{\n  return tradeComposeCardLabel\(card, plainOwnedCount\(card\)\);/);
+  assert.match(javascript, /tradeComposeCountTag\(count\)/);
+  assert.doesNotMatch(javascript, /if \(!model\.cardHoldersReady\) return base;/);
+  assert.match(css, /\.trade-form legend \{ padding: 0 6px; font-size: 22px;/);
+  assert.match(css, /\.trade-compose-arrow \{[^}]*font-size: 36px;/);
+  assert.match(javascript, /tradeModeHintHe/);
+  assert.match(html, /כולם \(וגם\)/);
+  assert.match(html, /trade-mode-btn is-active"[^>]*aria-pressed="true"/);
+  assert.match(html, /data-trade-mode="or" aria-pressed="false"/);
+  assert.match(javascript, /setAttribute\("aria-pressed", active \? "true" : "false"\)/);
+  assert.match(css, /\.trade-mode-btn\.is-active \{[^}]*background:\s*var\(--civic\)/);
+  assert.match(css, /\.trade-mode-btn\.is-active::before \{[^}]*content:\s*"✓ "/);
+  assert.match(javascript, /orderTradeComposeSlotCards\(cards, sideKey/);
+  assert.match(javascript, /tradeComposeCardsInSet\(pool, setKey\)/);
+  assert.match(javascript, /tradeOrChipTapOpensDialog\(alreadyPicked\)/);
+  assert.match(javascript, /if \(!tradeOrChipTapOpensDialog\(alreadyPicked\)\) \{[\s\S]*?renderTradeBoard\(\);[\s\S]*?return;/);
+  assert.match(javascript, /tradeFormationSummary/);
+  assert.doesNotMatch(javascript, /trade-formation-badge/);
+  assert.doesNotMatch(css, /\.trade-formation-badge/);
+  assert.match(javascript, /<small>\$\{label\}/);
+  assert.match(css, /\.trade-offer \.trade-side small \{[^}]*font: 700 14px\/1\.2/);
+  assert.match(css, /grid-template-areas:\s*"offered arrow wanted"\s*"bar bar bar"/);
+  assert.doesNotMatch(javascript, /trade\.qaLabel/);
+  assert.doesNotMatch(css, /\.trade-qa-label/);
+  assert.match(javascript, /data-trade-side=/);
+  assert.match(javascript, /paintComposeFormationHint/);
+  assert.match(javascript, /sideNeedsPick\(trade\.offeredMode, offeredCardIds\(trade\)\)/);
+  assert.match(javascript, /trade-side-rail/);
+  assert.match(javascript, /data-trade-id=/);
+  assert.match(javascript, /is-picked/);
+  assert.match(css, /\.trade-side-rail/);
+  assert.match(css, /\.trade-offer \.trade-thumb\.is-picked \{[^}]*outline:\s*3px solid var\(--civic\)/);
+  assert.doesNotMatch(javascript, /trade-accept-picks/);
+  assert.doesNotMatch(css, /\.trade-offer > \.trade-accept-picks/);
   assert.doesNotMatch(html, /הצעות ששחקנים אחרים פרסמו/);
   assert.match(html, /id="trade-board"/);
   assert.match(javascript, /const tradableCards = tradeCatalog\(\)/);
@@ -440,7 +477,7 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.doesNotMatch(css, /\.trade-thumb\.is-concealed \.card-rarity-zone/);
   assert.match(javascript, /function tradeCardUnowned/);
   assert.match(javascript, /concealRenderedTradeThumbs\(elements\.tradeBoard\)/);
-  assert.match(javascript, /class="trade-thumb\$\{conceal \? " is-concealed" : ""\}"/);
+  assert.match(javascript, /class="trade-thumb trade-stack-chip\$\{conceal \? " is-concealed" : ""\}\$\{selected \? " is-picked" : ""\}/);
   assert.match(javascript, /const earned = binderBadgeOrder\(visibleEarnedBadges\(\)\);/, "the binder rail shows earned badges from open pages");
   assert.match(javascript, /"party-slot-2": "משנה"/);
   assert.match(html, /id="wait-dialog"/);
@@ -581,7 +618,13 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(html, /id="trade-board-offered"/);
   assert.match(html, /id="trade-board-wanted"/);
   assert.match(html, /id="trade-board-pager"/);
-  assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,80}?width:\s*100%/);
+  assert.match(css, /\.trade-offer \.trade-thumb-frame[\s\S]{0,120}?width:\s*100%/);
+  assert.match(css, /\.trade-side-rail \{[^}]*display:\s*flex/);
+  assert.match(css, /\.trade-side-rail \{[^}]*justify-content:\s*center/);
+  assert.match(css, /\.trade-rail-slot \{[^}]*flex: 0 0 calc\(\(100% - \(2 \* var\(--trade-rail-gap\)\)\) \/ 3\)/);
+  assert.match(css, /\.trade-rail-slot:empty \{[^}]*display:\s*none/);
+  assert.match(javascript, /ids\.filter\(Boolean\)\.slice\(0, TRADE_SIDE_MAX\)/);
+  assert.doesNotMatch(javascript, /trade-rail-slot" aria-hidden="true"/);
   assert.match(css, /\.trade-choice-row[\s\S]{0,180}?grid-template-columns:\s*auto minmax\(0,\s*1fr\)/);
   assert.match(html, /class="trade-choice-row"/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame[\s\S]{0,80}?width:\s*48px/);
@@ -753,13 +796,14 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /#main \{[^}]*position:\s*relative/);
   assert.match(css, /\.community-nav \{[^}]*gap: 4px/);
   assert.match(css, /\.trade-desk \{\s*display: flex;[\s\S]*?overflow-y: auto;/);
-  assert.match(css, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) !important/);
+  assert.match(css, /#app \.trade-desk \.trade-form[\s\S]{0,240}flex-direction:\s*column !important/);
   assert.doesNotMatch(css, /\.trade-desk \{\s*overflow: hidden !important;/);
   assert.match(html, /id="trade-wanted-set"/);
   assert.ok(
-    html.indexOf("trade-desk-head") < html.indexOf("trade-form"),
-    "the publish button rides in the title row, so both big card slots stay on one phone page",
+    html.indexOf("trade-form") < html.indexOf("trade-publish-row"),
+    "the publish button sits centered under compose, after both sides",
   );
+  assert.match(css, /\.trade-publish-row \{[^}]*justify-content:\s*center/);
   assert.match(css, /\.trade-compose \.trade-thumb-frame \{\s*width: var\(--trade-thumb-w\);/);
   assert.match(html, /id="site-card-peeks"/);
   assert.match(css, /\.pack-shadow \{\s*display: none;/);
@@ -1149,6 +1193,9 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function paintShareCardFace/);
   assert.match(javascript, /function paintFullartShareIdentity/);
   assert.match(javascript, /SHARE_PULL_LINE/);
+  assert.match(html, /id="close-dialog-done"/);
+  assert.match(html, />סגירה</);
+  assert.match(javascript, /#close-dialog-done/);
   assert.match(css, /#card-dialog \.dialog-close/);
   assert.match(css, /#card-dialog \.dialog-close:focus-visible/);
   assert.doesNotMatch(css, /#card-dialog \.dialog-close:focus-visible[^}]*var\(--foil\)/);
