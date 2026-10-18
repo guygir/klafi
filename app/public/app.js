@@ -6618,7 +6618,6 @@ function tradeRowMarkup(trade) {
   const wantedRole = trade.ownedByCurrent ? "receive" : "give";
   const sideOpts = { canPick: Boolean(canShowAccept) };
   return `<article class="trade-offer ${trade.status}${trade.ownedByCurrent ? " mine" : ""}${trade.needsAcceptChoice ? " needs-choice" : ""}" data-trade-id="${escapeHtml(trade.tradeId)}" data-offered-mode="${escapeHtml(trade.offeredMode || "and")}" data-wanted-mode="${escapeHtml(trade.wantedMode || "and")}"${trade.qaSampleId ? ` data-qa-sample="${escapeHtml(trade.qaSampleId)}"` : ""}>
-    <p class="trade-formation-badge">${escapeHtml(tradeFormationSummary(trade))}</p>
     ${tradeSideCardsMarkup(trade, "offered", offeredRole, sideOpts)}
     <b aria-hidden="true">⇄</b>
     ${tradeSideCardsMarkup(trade, "wanted", wantedRole, sideOpts)}

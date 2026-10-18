@@ -447,7 +447,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /tradeOrChipTapOpensDialog\(alreadyPicked\)/);
   assert.match(javascript, /if \(!tradeOrChipTapOpensDialog\(alreadyPicked\)\) \{[\s\S]*?renderTradeBoard\(\);[\s\S]*?return;/);
   assert.match(javascript, /tradeFormationSummary/);
-  assert.match(css, /\.trade-formation-badge/);
+  assert.doesNotMatch(javascript, /trade-formation-badge/);
+  assert.doesNotMatch(css, /\.trade-formation-badge/);
+  assert.match(javascript, /<small>\$\{label\}/);
+  assert.match(css, /\.trade-offer \.trade-side small \{[^}]*font: 700 14px\/1\.2/);
+  assert.match(css, /grid-template-areas:\s*"offered arrow wanted"\s*"bar bar bar"/);
   assert.doesNotMatch(javascript, /trade\.qaLabel/);
   assert.doesNotMatch(css, /\.trade-qa-label/);
   assert.match(javascript, /data-trade-side=/);

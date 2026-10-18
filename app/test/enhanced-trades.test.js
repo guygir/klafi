@@ -449,7 +449,7 @@ test("compose mode hints explain AND vs OR in Hebrew", () => {
   assert.match(tradeModeHintHe("or"), /קלף אחד/);
 });
 
-test("formation summary labels poster AND/OR on open trades", () => {
+test("formation summary names poster AND/OR for the compose hint only", () => {
   assert.match(tradeFormationSummary({ offeredMode: "and", wantedMode: "or" }), /כולם \(וגם\).*אחד \(או\)/);
 });
 
