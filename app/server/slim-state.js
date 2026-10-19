@@ -15,7 +15,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
   const ranks = shell.gameConfig?.progression?.rankNames || ["אזרח סקרן"];
   const totalLevels = Math.max(2, ranks.length);
   const idleTotal = idleIds.size || shell.totals?.idleEligible || 1;
-  const thresholds = levelThresholds(idleTotal, totalLevels);
+  const thresholds = levelThresholds(idleTotal, totalLevels, shell.gameConfig?.progression?.thresholdOverrides);
   const computedLevel = thresholds.reduce((result, threshold, index) => unique >= threshold ? index + 1 : result, 1);
   const level = Math.max(computedLevel, Math.min(ranks.length, session.highestRank || 1));
   const capped = Math.min(level, totalLevels);

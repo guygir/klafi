@@ -66,6 +66,7 @@ const shell = {
       rankNames: studio.gameConfig?.progression?.rankNames || [],
       releaseLevelIncrements: studio.gameConfig?.progression?.releaseLevelIncrements || {},
       thresholdExponent: studio.gameConfig?.progression?.thresholdExponent || 1.2,
+      thresholdOverrides: studio.gameConfig?.progression?.thresholdOverrides || { 15: 120 },
       teaser: studio.gameConfig?.progression?.teaser || "האם תגיעו לדרגת ראש הממשלה?",
       reward: studio.gameConfig?.progression?.reward || "קלף בונוס מיידי",
     },

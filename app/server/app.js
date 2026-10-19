@@ -51,7 +51,7 @@ import { LEAGUE_NAME_MAX, currentLeagueOf, publicLeague } from "./leagues.js";
 import { qrSvg } from "./qr-svg.js";
 import { eventClaimKey, eventClaimMode, eventReward, isEventClaimed, openSpecialWindow } from "./special-window.js";
 import { requestOrigin, serveBinderShareLanding, servePlayerBinderShareLanding, serveShareLanding } from "./share-landing.js";
-import { levelThresholds } from "./progression.js";
+import { levelThresholds, normalizeThresholdOverrides } from "./progression.js";
 import { numberedHeldByCard } from "./stars.js";
 import { createGithubBugFromBody } from "./github-bugs.js";
 import {
@@ -98,6 +98,7 @@ const RANK_TITLES = [
   "סגן שר",
   "שר",
   "שר בכיר",
+  "סגן רוה״מ",
   "ראש הממשלה",
 ];
 const LEVEL_RATIOS = [0, 0.03, 0.07, 0.12, 0.18, 0.25, 0.33, 0.42, 0.52, 0.63, 0.74, 0.84, 0.92, 1];
@@ -544,6 +545,7 @@ function progressionConfig(config = {}, activeReleaseIds = null) {
     campaignLevels: ranks.length,
     releaseLevelIncrements: increments,
     thresholdExponent: exponent,
+    thresholdOverrides: normalizeThresholdOverrides(config.thresholdOverrides),
     reward: config.reward || "קלף בונוס מיידי",
     rankNames: ranks,
     grantLevelReward: config.grantLevelReward !== false,
@@ -557,8 +559,8 @@ export function progressionState(session, cards, config = {}, current = Date.now
   const eligibleIds = new Set(eligible.map(({ id }) => id));
   const unique = progressionUnique(session.inventory, numberedHeldByCard(session), (id) => eligibleIds.has(id));
   const activeReleaseIds = [...new Set(eligible.map(({ releaseSetId }) => releaseSetId).filter(Boolean))];
-  const { ranks, totalLevels, campaignLevels, reward, thresholdExponent } = progressionConfig(config, activeReleaseIds);
-  const thresholds = levelThresholds(eligible.length, totalLevels, thresholdExponent);
+  const { ranks, totalLevels, campaignLevels, reward, thresholdOverrides } = progressionConfig(config, activeReleaseIds);
+  const thresholds = levelThresholds(eligible.length, totalLevels, thresholdOverrides);
   const computedLevel = eligible.length
     ? thresholds.reduce((result, threshold, index) => unique >= threshold ? index + 1 : result, 1)
     : 1;

@@ -925,8 +925,8 @@ test("only one concurrent accepter can complete a trade", async (t) => {
 });
 
 test("server owns sessions, idle pulls, inventory, and persistence", async (t) => {
-  assert.equal(RANK_TITLES.length, 14);
-  assert.equal(new Set(RANK_TITLES).size, 14);
+  assert.equal(RANK_TITLES.length, 15);
+  assert.equal(new Set(RANK_TITLES).size, 15);
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-test-"));
   const clock = { value: Date.parse("2026-09-03T12:00:00.000Z") };
   let running = await start(dataDir, clock);
@@ -1029,7 +1029,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.equal(stateAfterDemo.body.packCount, 0);
   assert.deepEqual(stateAfterDemo.body.inventory, {});
   assert.equal(stateAfterDemo.body.progression.level, 1);
-  assert.equal(stateAfterDemo.body.progression.totalLevels, 14);
+  assert.equal(stateAfterDemo.body.progression.totalLevels, 15);
   assert.equal(stateAfterDemo.body.progression.rank, "אזרח סקרן");
   assert.equal(stateAfterDemo.body.progression.nextRank, "קורא כותרות");
 
