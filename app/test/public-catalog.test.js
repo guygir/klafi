@@ -94,9 +94,10 @@ test("slim home state includes inventory for binder reads", () => {
 test("production slim community handler maps trade side arrays", async () => {
   const slim = await readFile(path.resolve(here, "../server/slim-community.js"), "utf8");
   assert.match(slim, /export function slimTradeView/);
-  assert.match(slim, /offeredCardIds: trade.offeredCardIds/);
-  assert.match(slim, /wantedCardIds: trade.wantedCardIds/);
-  assert.match(slim, /slimTradeView\(row, \{ token, inventory, ownerHasOffered \}\)/);
+  assert.match(slim, /offeredCardIds: view.offeredCardIds/);
+  assert.match(slim, /wantedCardIds: view.wantedCardIds/);
+  assert.match(slim, /slimTradeView\(row, \{ token, inventory, ownerHasOffered, trades, at \}\)/);
+  assert.match(slim, /acceptChoices: view\.acceptChoices/);
   assert.match(slim, /export async function listSlimCommunityTrades/);
   assert.match(slim, /listSlimCommunityTrades\(db, token, now\)/);
   assert.doesNotMatch(slim, /canAccept: row\.status === "open"\s*&& row\.owner_token !== token\s*&& ownerHasOffered\.has\(`\$\{row\.owner_token\}:\$\{row\.offered_card_id\}`\)/);
@@ -130,6 +131,7 @@ test("slim community trade view keeps 2↔3 sides instead of the first card only
   assert.equal(view.wantedMode, "or");
   assert.equal(view.canAccept, true);
   assert.equal(view.needsAcceptChoice, true);
+  assert.deepEqual(view.acceptChoices, [{ offeredCardId: "A", wantedCardId: "X" }]);
   assert.equal(view.ownedByCurrent, false);
 
   const legacy = slimTradeView({
@@ -143,6 +145,58 @@ test("slim community trade view keeps 2↔3 sides instead of the first card only
   assert.deepEqual(legacy.wantedCardIds, ["X"]);
   assert.equal(legacy.canAccept, true);
   assert.equal(legacy.needsAcceptChoice, undefined);
+  assert.equal(legacy.acceptChoices, undefined);
+});
+
+test("slim community trade view is reservation-aware for acceptChoices", () => {
+  const row = {
+    trade_id: "t-or-or",
+    owner_token: "owner",
+    offered_card_id: "A",
+    wanted_card_id: "X",
+    offered_mode: "or",
+    wanted_mode: "or",
+    offered_card_ids: ["A", "B"],
+    wanted_card_ids: ["X", "Y"],
+    status: "open",
+    created_at: "2026-10-18T12:00:00.000Z",
+    expires_at: "2026-10-19T12:00:00.000Z",
+    owner_label: "Guy",
+  };
+  const mine = {
+    tradeId: "mine",
+    ownerToken: "viewer",
+    offeredCardId: "X",
+    wantedCardId: "Z",
+    offeredMode: "and",
+    wantedMode: "and",
+    offeredCardIds: ["X"],
+    wantedCardIds: ["Z"],
+    status: "open",
+    expiresAt: "2026-10-19T12:00:00.000Z",
+  };
+  const reserved = slimTradeView(row, {
+    token: "viewer",
+    inventory: { X: 1 },
+    ownerHasOffered: new Set(["owner:A", "owner:B"]),
+    trades: [mine],
+    at: "2026-10-18T12:00:00.000Z",
+  });
+  assert.equal(reserved.canAccept, false);
+  assert.equal(reserved.acceptChoices, undefined);
+
+  const spare = slimTradeView(row, {
+    token: "viewer",
+    inventory: { X: 1, Y: 1 },
+    ownerHasOffered: new Set(["owner:A", "owner:B"]),
+    trades: [mine],
+    at: "2026-10-18T12:00:00.000Z",
+  });
+  assert.equal(spare.canAccept, true);
+  assert.deepEqual(spare.acceptChoices, [
+    { offeredCardId: "A", wantedCardId: "Y" },
+    { offeredCardId: "B", wantedCardId: "Y" },
+  ]);
 });
 
 test("slim home state keeps a selected faction on the player", () => {

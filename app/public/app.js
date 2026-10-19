@@ -130,6 +130,7 @@ const model = {
   selectedStudioMemberId: null,
   selectedStudioSpecialSetId: null,
   dialogCardId: null,
+  dialogConcealed: false,
   dialogBack: false,
   holdGeneration: 0,
   renderedLevel: null,
@@ -6398,7 +6399,12 @@ function renderTradeComposeSlots() {
   syncLegacyTradeSelectFromCompose();
 }
 
+function tradeChoicesPending(trade) {
+  return Boolean(trade?.canAccept && trade?.needsAcceptChoice && !Array.isArray(trade.acceptChoices));
+}
+
 function tradeRailPickEnabled(trade, sideKey, cardId) {
+  if (tradeChoicesPending(trade)) return true;
   const pick = tradeAcceptPick(trade.tradeId);
   const choices = Array.isArray(trade.acceptChoices) ? trade.acceptChoices : [];
   const field = sideKey === "offered" ? "offeredCardId" : "wantedCardId";
@@ -6449,6 +6455,7 @@ function tradeAcceptPick(tradeId) {
 }
 
 function tradeAcceptReady(trade, inventory) {
+  if (tradeChoicesPending(trade)) return false;
   if (!trade.needsAcceptChoice) return Boolean(trade.canAccept);
   const pick = tradeAcceptPick(trade.tradeId);
   const choices = Array.isArray(trade.acceptChoices) ? trade.acceptChoices : [];
@@ -6578,6 +6585,24 @@ function renderTradeBoard() {
   concealRenderedTradeThumbs(elements.tradeBoard);
   if (elements.tradeBoardPager) elements.tradeBoardPager.innerHTML = tradeBoardPagerMarkup(model.tradeBoardPage, pages, remaining, pageSize);
   queueCardTextFit(elements.tradeBoard);
+  queueMicrotask(() => {
+    hydrateMissingAcceptChoices().catch(() => {});
+  });
+}
+
+async function hydrateMissingAcceptChoices() {
+  if (model.tradeChoicesHydrating || !model.token) return;
+  if (!(model.trades || []).some(tradeChoicesPending)) return;
+  model.tradeChoicesHydrating = true;
+  try {
+    const payload = await request("/api/trades");
+    setTrades(payload.trades || payload);
+    renderTradeBoard();
+  } catch {
+    /* Accept stays disabled until a later list. */
+  } finally {
+    model.tradeChoicesHydrating = false;
+  }
 }
 
 function tradeRowMarkup(trade) {
@@ -7040,6 +7065,7 @@ async function pollWatchedTrade() {
   const payload = await request("/api/trades");
   const trades = payload.trades || payload;
   setTrades(trades);
+  renderTradeBoard();
   const watched = trades.find((trade) => trade.tradeId === model.watchedTrade.tradeId);
   if (watched?.status === "accepted") {
     model.watchedTrade = null;
@@ -8669,12 +8695,13 @@ async function debugUnlockCard(cardId) {
   }
 }
 
-function openCardDialog(cardId, numbered = false, { plain = false, numberedIndex = null } = {}) {
+function openCardDialog(cardId, numbered = false, { plain = false, numberedIndex = null, concealed = false } = {}) {
   model.dialogCardId = cardId;
   model.dialogNumberedIndex = numbered ? (Number(numberedIndex) || null) : null;
   model.dialogBack = false;
   model.dialogNumbered = Boolean(numbered);
   model.dialogPlain = Boolean(plain) && !numbered;
+  model.dialogConcealed = Boolean(concealed) && !numbered;
   model.dialogNumberedPreview = null;
   renderDialogCard();
   if (!elements.dialog.open) elements.dialog.showModal();
@@ -8688,6 +8715,7 @@ function openNumberedPreview(cardId, index, of) {
   model.dialogCardId = cardId;
   model.dialogBack = false;
   model.dialogNumbered = true;
+  model.dialogConcealed = false;
   model.dialogNumberedPreview = { cardId, index: Number(index) || 0, of: Number(of) || 0 };
   model.dialogNumberedIndex = Number(index) || null;
   renderDialogCard();
@@ -8706,7 +8734,8 @@ function renderDialogCard() {
         : plainOwnedCount(card);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
-  const canRecycle = !model.dialogNumbered && canRecycleCard(card);
+  const canRecycle = !model.dialogConcealed && !model.dialogNumbered && canRecycleCard(card);
+  elements.dialog?.classList.toggle("is-concealed", Boolean(model.dialogConcealed));
   elements.dialogCard.innerHTML = model.showcase
     ? catalogCardMarkup(card, "display", model.dialogNumbered)
     : displayCardMarkup(card, "display", {
@@ -8717,32 +8746,41 @@ function renderDialogCard() {
       count: model.dialogPlain ? binderRegularCount(card.id) : model.dialogNumbered ? 1 : null,
     });
   // Regular view of a card that also has an opened numbered copy: the same gold # ribbon on the card art.
-  if (!model.showcase && !model.dialogNumbered && binderRegularCount(card.id) > 0 && binderNumberedCount(card.id) > 0) {
+  if (!model.showcase && !model.dialogConcealed && !model.dialogNumbered && binderRegularCount(card.id) > 0 && binderNumberedCount(card.id) > 0) {
     const face = elements.dialogCard.firstElementChild;
     if (face) {
       face.classList.add("has-numbered-ribbon");
       face.insertAdjacentHTML("beforeend", numberedRibbonMarkup(card.id));
     }
   }
+  if (model.dialogConcealed) concealTradeThumb(elements.dialogCard, card);
   if (elements.dialogTrust) {
     const line = cardTrustLine(card);
     elements.dialogTrust.textContent = line;
-    elements.dialogTrust.hidden = !line;
+    elements.dialogTrust.hidden = Boolean(model.dialogConcealed) || !line;
   }
   if (elements.dialogHolders) {
     elements.dialogHolders.textContent = holderLine(holderCountFor(card, false), false, card);
-    elements.dialogHolders.hidden = !model.cardHoldersReady;
+    elements.dialogHolders.hidden = Boolean(model.dialogConcealed) || !model.cardHoldersReady;
   }
   if (elements.dialogNumberedPulls) {
     const pulls = numberedPullsFor(card);
     elements.dialogNumberedPulls.innerHTML = pulls.map(numberedPullLine).join("");
-    elements.dialogNumberedPulls.hidden = !model.cardHoldersReady || pulls.length === 0;
+    elements.dialogNumberedPulls.hidden = Boolean(model.dialogConcealed) || !model.cardHoldersReady || pulls.length === 0;
   }
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
-  elements.dialogWhatsapp.hidden = ownedCount < 1;
-  elements.dialogInstagram.hidden = ownedCount < 1;
-  if (elements.dialogReport) elements.dialogReport.hidden = model.showcase;
+  if (model.dialogConcealed && elements.dialogSource) {
+    elements.dialogSource.hidden = true;
+    let extra = elements.dialogSource.nextElementSibling;
+    while (extra?.classList.contains("extra-source-link")) {
+      extra.hidden = true;
+      extra = extra.nextElementSibling;
+    }
+  }
+  elements.dialogWhatsapp.hidden = Boolean(model.dialogConcealed) || ownedCount < 1;
+  elements.dialogInstagram.hidden = Boolean(model.dialogConcealed) || ownedCount < 1;
+  if (elements.dialogReport) elements.dialogReport.hidden = Boolean(model.dialogConcealed) || model.showcase;
 }
 
 function currentReportSubject() {
@@ -10228,6 +10266,10 @@ function handleTradeBoardClick(event) {
         renderTradeBoard();
         return;
       }
+    }
+    if (chip.classList.contains("is-concealed")) {
+      openCardDialog(chip.dataset.tradeChoiceCard, false, { concealed: true });
+      return;
     }
     openCardDialog(chip.dataset.tradeChoiceCard);
     return;
