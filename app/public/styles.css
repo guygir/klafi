@@ -3791,15 +3791,6 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
 }
 .trade-thumb.is-concealed,
 .binder-card-open.is-concealed { cursor: default; }
-#card-dialog.is-concealed .card-art,
-#card-dialog.is-concealed .card-party-zone,
-#card-dialog.is-concealed .card-quote-zone,
-#app #card-dialog.is-concealed .card-image-zone .card-art,
-#app #card-dialog.is-concealed .card-party-zone,
-#app #card-dialog.is-concealed .card-quote-zone {
-  filter: blur(8px);
-  user-select: none;
-}
 .trade-offer-actions { display: flex; flex: 0 0 auto; gap: 6px; }
 .trade-active { display: grid; gap: 8px; }
 .trade-offer.mine { border-color: color-mix(in srgb, var(--pack-gold, #b38d3f) 55%, transparent); }

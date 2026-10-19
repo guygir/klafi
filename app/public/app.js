@@ -130,7 +130,6 @@ const model = {
   selectedStudioMemberId: null,
   selectedStudioSpecialSetId: null,
   dialogCardId: null,
-  dialogConcealed: false,
   dialogBack: false,
   holdGeneration: 0,
   renderedLevel: null,
@@ -8695,13 +8694,12 @@ async function debugUnlockCard(cardId) {
   }
 }
 
-function openCardDialog(cardId, numbered = false, { plain = false, numberedIndex = null, concealed = false } = {}) {
+function openCardDialog(cardId, numbered = false, { plain = false, numberedIndex = null } = {}) {
   model.dialogCardId = cardId;
   model.dialogNumberedIndex = numbered ? (Number(numberedIndex) || null) : null;
   model.dialogBack = false;
   model.dialogNumbered = Boolean(numbered);
   model.dialogPlain = Boolean(plain) && !numbered;
-  model.dialogConcealed = Boolean(concealed) && !numbered;
   model.dialogNumberedPreview = null;
   renderDialogCard();
   if (!elements.dialog.open) elements.dialog.showModal();
@@ -8715,7 +8713,6 @@ function openNumberedPreview(cardId, index, of) {
   model.dialogCardId = cardId;
   model.dialogBack = false;
   model.dialogNumbered = true;
-  model.dialogConcealed = false;
   model.dialogNumberedPreview = { cardId, index: Number(index) || 0, of: Number(of) || 0 };
   model.dialogNumberedIndex = Number(index) || null;
   renderDialogCard();
@@ -8734,8 +8731,7 @@ function renderDialogCard() {
         : plainOwnedCount(card);
   const dialogTitle = document.querySelector("#card-dialog-title");
   if (dialogTitle) dialogTitle.textContent = cardTitle(card);
-  const canRecycle = !model.dialogConcealed && !model.dialogNumbered && canRecycleCard(card);
-  elements.dialog?.classList.toggle("is-concealed", Boolean(model.dialogConcealed));
+  const canRecycle = !model.dialogNumbered && canRecycleCard(card);
   elements.dialogCard.innerHTML = model.showcase
     ? catalogCardMarkup(card, "display", model.dialogNumbered)
     : displayCardMarkup(card, "display", {
@@ -8746,41 +8742,32 @@ function renderDialogCard() {
       count: model.dialogPlain ? binderRegularCount(card.id) : model.dialogNumbered ? 1 : null,
     });
   // Regular view of a card that also has an opened numbered copy: the same gold # ribbon on the card art.
-  if (!model.showcase && !model.dialogConcealed && !model.dialogNumbered && binderRegularCount(card.id) > 0 && binderNumberedCount(card.id) > 0) {
+  if (!model.showcase && !model.dialogNumbered && binderRegularCount(card.id) > 0 && binderNumberedCount(card.id) > 0) {
     const face = elements.dialogCard.firstElementChild;
     if (face) {
       face.classList.add("has-numbered-ribbon");
       face.insertAdjacentHTML("beforeend", numberedRibbonMarkup(card.id));
     }
   }
-  if (model.dialogConcealed) concealTradeThumb(elements.dialogCard, card);
   if (elements.dialogTrust) {
     const line = cardTrustLine(card);
     elements.dialogTrust.textContent = line;
-    elements.dialogTrust.hidden = Boolean(model.dialogConcealed) || !line;
+    elements.dialogTrust.hidden = !line;
   }
   if (elements.dialogHolders) {
     elements.dialogHolders.textContent = holderLine(holderCountFor(card, false), false, card);
-    elements.dialogHolders.hidden = Boolean(model.dialogConcealed) || !model.cardHoldersReady;
+    elements.dialogHolders.hidden = !model.cardHoldersReady;
   }
   if (elements.dialogNumberedPulls) {
     const pulls = numberedPullsFor(card);
     elements.dialogNumberedPulls.innerHTML = pulls.map(numberedPullLine).join("");
-    elements.dialogNumberedPulls.hidden = Boolean(model.dialogConcealed) || !model.cardHoldersReady || pulls.length === 0;
+    elements.dialogNumberedPulls.hidden = !model.cardHoldersReady || pulls.length === 0;
   }
   configureSourceLink(elements.dialogSource, card);
   elements.dialogSource.dataset.sourceCard = card.id;
-  if (model.dialogConcealed && elements.dialogSource) {
-    elements.dialogSource.hidden = true;
-    let extra = elements.dialogSource.nextElementSibling;
-    while (extra?.classList.contains("extra-source-link")) {
-      extra.hidden = true;
-      extra = extra.nextElementSibling;
-    }
-  }
-  elements.dialogWhatsapp.hidden = Boolean(model.dialogConcealed) || ownedCount < 1;
-  elements.dialogInstagram.hidden = Boolean(model.dialogConcealed) || ownedCount < 1;
-  if (elements.dialogReport) elements.dialogReport.hidden = Boolean(model.dialogConcealed) || model.showcase;
+  elements.dialogWhatsapp.hidden = ownedCount < 1;
+  elements.dialogInstagram.hidden = ownedCount < 1;
+  if (elements.dialogReport) elements.dialogReport.hidden = model.showcase;
 }
 
 function currentReportSubject() {
@@ -10267,10 +10254,7 @@ function handleTradeBoardClick(event) {
         return;
       }
     }
-    if (chip.classList.contains("is-concealed")) {
-      openCardDialog(chip.dataset.tradeChoiceCard, false, { concealed: true });
-      return;
-    }
+    if (chip.classList.contains("is-concealed")) return;
     openCardDialog(chip.dataset.tradeChoiceCard);
     return;
   }
