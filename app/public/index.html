@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=trades-want-all" />
+  <link rel="stylesheet" href="/styles.css?v=trades-want-all-tick" />
   <link rel="stylesheet" href="/theme-pack-v2.css?v=numbered-pin-156" />
   <link rel="stylesheet" href="/walkout-sunburst.css?v=card-surface-157" />
   <link rel="stylesheet" href="/packrip.css?v=card-surface-157" />
@@ -361,7 +361,12 @@
                   <div class="trade-side-add-row">
                     <button type="button" id="trade-wanted-add" class="secondary-action trade-side-add">+ הוסיפו קלף</button>
                     <label class="trade-want-missing-only" for="trade-want-missing-only">
-                      <input type="checkbox" id="trade-want-missing-only" checked>
+                      <span class="trade-want-missing-box">
+                        <input type="checkbox" id="trade-want-missing-only" checked>
+                        <svg class="trade-want-missing-check" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                          <path d="M3.2 8.3 6.5 11.4 12.8 4.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </span>
                       <span>חסרים בלבד</span>
                     </label>
                   </div>
@@ -999,6 +1004,6 @@
       <button id="share-sheet-save" class="secondary-action" type="button">שמירת תמונה</button>
     </div>
   </dialog>
-  <script type="module" src="/app.js?v=trades-want-all"></script>
+  <script type="module" src="/app.js?v=trades-want-all-tick"></script>
 </body>
 </html>

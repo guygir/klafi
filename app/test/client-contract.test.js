@@ -443,6 +443,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function tradeComposeOfferLabel\(card\) \{\n  return tradeComposeCardLabel\(card, plainOwnedCount\(card\)\);/);
   assert.match(html, /id="trade-want-missing-only"[^>]*checked/);
   assert.match(html, /<label class="trade-want-missing-only" for="trade-want-missing-only">[\s\S]*?<span>חסרים בלבד<\/span>/);
+  assert.match(html, /class="trade-want-missing-check"[\s\S]*?d="M3\.2 8\.3 6\.5 11\.4 12\.8 4\.2"/);
+  assert.doesNotMatch(css, /trade-want-missing-only input\[type="checkbox"\]:checked::after/);
   assert.match(html, /חסרים בלבד/);
   assert.match(javascript, /function tradeWantComposePool\(tradableCards\) \{\n  return sortTradeComposeWanted\(tradeComposeWantPool\(tradableCards, \{\n    missingOnly: tradeWantMissingOnlyEnabled\(\),\n    ownedCount: plainOwnedCount,/);
   assert.match(javascript, /keepValidTradeComposeWanted\(side, pool, tradeReleaseSetKey\)/);

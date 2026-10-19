@@ -5544,6 +5544,16 @@ body {
 .trade-want-missing-only {
   min-height: 32px;
 }
+.trade-want-missing-box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
 .trade-want-missing-only input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -5555,21 +5565,24 @@ body {
   border: 1.5px solid currentColor;
   border-radius: 4px;
   background: transparent;
-  display: grid;
-  place-items: center;
   cursor: pointer;
 }
 .trade-want-missing-only input[type="checkbox"]:checked {
   background: var(--paper);
   border-color: var(--paper);
 }
-.trade-want-missing-only input[type="checkbox"]:checked::after {
-  content: "";
-  width: 9px;
-  height: 5px;
-  border-inline-start: 2px solid var(--civic);
-  border-bottom: 2px solid var(--civic);
-  transform: rotate(-45deg) translateY(-1px);
+.trade-want-missing-check {
+  position: absolute;
+  inset: 2px;
+  width: 14px;
+  height: 14px;
+  color: var(--civic);
+  pointer-events: none;
+  opacity: 0;
+  transform: none;
+}
+.trade-want-missing-only:has(input:checked) .trade-want-missing-check {
+  opacity: 1;
 }
 .trade-want-missing-only:focus-within {
   outline: 2px solid var(--civic);
