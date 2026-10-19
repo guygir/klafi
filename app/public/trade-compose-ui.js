@@ -53,6 +53,29 @@ export function orderTradeComposeSlotCards(cards, sideKey, { ownedCount, holderC
     : sortTradeComposeOffered(cards, ownedCount, title);
 }
 
+/** Want-side catalog: missing-only, or every tradeable regular card. */
+export function tradeComposeWantPool(cards, { missingOnly = true, ownedCount }) {
+  const list = Array.isArray(cards) ? cards : [];
+  if (!missingOnly) return list.slice();
+  return list.filter((card) => (Number(ownedCount?.(card)) || 0) <= 0);
+}
+
+/** Drop want picks that left the pool; keep a set if it still has cards. */
+export function keepValidTradeComposeWanted(side, pool, setKeyOf) {
+  const ids = new Set((pool || []).map((card) => card.id));
+  const setKeys = new Set((pool || []).map((card) => setKeyOf(card)));
+  const cardIds = [...(side?.cardIds || [])];
+  const slotSets = [...(side?.slotSets || [])];
+  while (slotSets.length < cardIds.length) slotSets.push("");
+  for (let i = 0; i < cardIds.length; i += 1) {
+    if (cardIds[i] && !ids.has(cardIds[i])) {
+      cardIds[i] = "";
+      if (slotSets[i] && !setKeys.has(slotSets[i])) slotSets[i] = "";
+    }
+  }
+  return { ...side, cardIds, slotSets };
+}
+
 /** Same visual count both dropdowns use: "15x", including "0x". */
 export function tradeComposeCountTag(count) {
   const n = Math.max(0, Math.round(Number(count) || 0));

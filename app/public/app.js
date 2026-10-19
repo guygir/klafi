@@ -23,6 +23,7 @@ import { offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } fr
 import {
   TRADE_SIDE_MAX,
   emptyTradeSide,
+  keepValidTradeComposeWanted,
   offeredCardIds,
   orderTradeComposeSlotCards,
   sideJoinLabel,
@@ -31,6 +32,7 @@ import {
   sortTradeComposeWanted as sortWantedByHolders,
   tradeComposeCardsInSet,
   tradeComposeCountTag,
+  tradeComposeWantPool,
   tradeModeHintHe,
   tradeOrChipTapOpensDialog,
 } from "./trade-compose-ui.js";
@@ -155,6 +157,7 @@ const model = {
   tradeBoardOffered: "",
   tradeBoardWanted: "",
   tradeCompose: { offered: emptyTradeSide(), wanted: emptyTradeSide() },
+  tradeWantMissingOnly: true,
   tradeAcceptPick: {},
 };
 // Server achievements list request (see ensureServerAchievements).
@@ -350,6 +353,7 @@ const elements = {
   tradeWantedSlots: document.querySelector("#trade-wanted-slots"),
   tradeOfferedAdd: document.querySelector("#trade-offered-add"),
   tradeWantedAdd: document.querySelector("#trade-wanted-add"),
+  tradeWantMissingOnly: document.querySelector("#trade-want-missing-only"),
   creatorCode: document.querySelector("#creator-code"),
   copyCreatorLink: document.querySelector("#copy-creator-link"),
   creatorLinkPreview: document.querySelector("#creator-link-preview"),
@@ -597,6 +601,29 @@ function tradeComposeWantLabel(card) {
 
 function sortTradeComposeWanted(cards) {
   return sortWantedByHolders(cards, holderCountFor, cardTitle);
+}
+
+function tradeWantMissingOnlyEnabled() {
+  return model.tradeWantMissingOnly !== false;
+}
+
+function tradeWantComposePool(tradableCards) {
+  return sortTradeComposeWanted(tradeComposeWantPool(tradableCards, {
+    missingOnly: tradeWantMissingOnlyEnabled(),
+    ownedCount: plainOwnedCount,
+  }));
+}
+
+function pruneInvalidWantSlots(pool) {
+  const side = tradeComposeSide("wanted");
+  const next = keepValidTradeComposeWanted(side, pool, tradeReleaseSetKey);
+  side.cardIds = next.cardIds;
+  side.slotSets = next.slotSets;
+}
+
+function syncWantMissingOnlyControl() {
+  if (!elements.tradeWantMissingOnly) return;
+  elements.tradeWantMissingOnly.checked = tradeWantMissingOnlyEnabled();
 }
 
 function sortTradeComposeOffered(cards) {
@@ -6347,10 +6374,12 @@ function tradeSlotCardOptions(cards, selected, sideKey) {
 function renderTradeComposeSlots() {
   const tradableCards = tradeCatalog();
   const ownedCards = sortTradeComposeOffered(tradableCards.filter((candidate) => plainOwnedCount(candidate) > 0));
-  const missingCards = sortTradeComposeWanted(tradableCards.filter((candidate) => plainOwnedCount(candidate) <= 0));
+  const wantCards = tradeWantComposePool(tradableCards);
+  pruneInvalidWantSlots(wantCards);
+  syncWantMissingOnlyControl();
   for (const sideKey of ["offered", "wanted"]) {
     const side = tradeComposeSide(sideKey);
-    const pool = sideKey === "offered" ? ownedCards : missingCards;
+    const pool = sideKey === "offered" ? ownedCards : wantCards;
     const root = sideKey === "offered" ? elements.tradeOfferedSlots : elements.tradeWantedSlots;
     const addBtn = sideKey === "offered" ? elements.tradeOfferedAdd : elements.tradeWantedAdd;
     const modeHint = document.querySelector(`[data-trade-mode-hint="${sideKey}"]`);
@@ -7324,20 +7353,21 @@ function renderGrowth() {
   const previousWantedSet = elements.tradeWantedSet.value;
   const offeredValue = elements.tradeOfferedCard.value;
   const wantedValue = elements.tradeWantedCard.value;
-  const missingCards = sortTradeComposeWanted(tradableCards.filter((candidate) => plainOwnedCount(candidate) <= 0));
+  const wantCards = tradeWantComposePool(tradableCards);
+  const wantEmpty = tradeWantMissingOnlyEnabled() ? "אין קלפים חסרים" : "אין קלפים";
   elements.tradeOfferedSet.innerHTML = ownedCards.length ? groupedOptions(ownedCards) : '<option value="">אין קלפים</option>';
-  elements.tradeWantedSet.innerHTML = missingCards.length ? groupedOptions(missingCards) : '<option value="">אין קלפים חסרים</option>';
+  elements.tradeWantedSet.innerHTML = wantCards.length ? groupedOptions(wantCards) : `<option value="">${wantEmpty}</option>`;
   if ([...elements.tradeOfferedSet.options].some(({ value }) => value === previousOfferedSet)) elements.tradeOfferedSet.value = previousOfferedSet;
   if ([...elements.tradeWantedSet.options].some(({ value }) => value === previousWantedSet)) elements.tradeWantedSet.value = previousWantedSet;
   const offeredCards = ownedCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeOfferedSet.value));
-  const wantedCards = missingCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
+  const wantedCards = wantCards.filter((candidate) => matchesTradeGroup(candidate, elements.tradeWantedSet.value));
   elements.tradeOfferedCard.innerHTML = offeredCards.length
     ? sortTradeComposeOffered(offeredCards).map((candidate) => `<option value="${candidate.id}">${escapeHtml(tradeComposeOfferLabel(candidate))}</option>`).join("")
     : '<option value="">קודם אספו קלף</option>';
   if (offeredCards.some(({ id }) => id === offeredValue)) elements.tradeOfferedCard.value = offeredValue;
   elements.tradeWantedCard.innerHTML = wantedCards.length
     ? sortTradeComposeWanted(wantedCards).map((candidate) => `<option value="${candidate.id}">${escapeHtml(tradeComposeWantLabel(candidate))}</option>`).join("")
-    : '<option value="">אין קלפים חסרים</option>';
+    : `<option value="">${wantEmpty}</option>`;
   if (wantedCards.some(({ id }) => id === wantedValue)) elements.tradeWantedCard.value = wantedValue;
   for (const select of [elements.tradeOfferedSet, elements.tradeWantedSet, elements.tradeOfferedCard, elements.tradeWantedCard]) {
     const chosen = select.selectedOptions[0];
@@ -10172,6 +10202,11 @@ elements.tradeOfferedSet.addEventListener("change", renderGrowth);
 elements.tradeWantedSet.addEventListener("change", renderGrowth);
 elements.tradeOfferedCard.addEventListener("change", renderGrowth);
 elements.tradeWantedCard.addEventListener("change", renderGrowth);
+elements.tradeWantMissingOnly?.addEventListener("change", () => {
+  model.tradeWantMissingOnly = Boolean(elements.tradeWantMissingOnly.checked);
+  renderTradeComposeSlots();
+  if (elements.tradeWantedCard) renderGrowth();
+});
 elements.tradeCreate.addEventListener("click", createTradeOffer);
 elements.tradeCompose?.addEventListener("click", (event) => {
   const modeBtn = event.target.closest(".trade-mode-btn[data-trade-mode]");
