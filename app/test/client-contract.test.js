@@ -129,6 +129,14 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function configureSourceLink/);
   assert.doesNotMatch(javascript, /displayCardMarkup\(card, "event"\)/);
   assert.match(javascript, /openCardDialog\(chip\.dataset\.tradeChoiceCard\)/);
+  assert.match(javascript, /if \(chip\.classList\.contains\("is-concealed"\)\) return;/);
+  assert.doesNotMatch(javascript, /concealed:\s*true/);
+  assert.doesNotMatch(javascript, /dialogConcealed/);
+  assert.match(javascript, /function tradeChoicesPending/);
+  assert.match(javascript, /trade\?\.canAccept && trade\?\.needsAcceptChoice && !Array\.isArray\(trade\.acceptChoices\)/);
+  assert.match(javascript, /function hydrateMissingAcceptChoices/);
+  assert.match(javascript, /request\("\/api\/trades"\)/);
+  assert.doesNotMatch(css, /#card-dialog\.is-concealed/);
   assert.match(javascript, /displayCardMarkup\(card\)/);
   assert.doesNotMatch(javascript, /displayCardMarkup\(selected, "trade"\)/);
   assert.doesNotMatch(javascript, /\["binder", "trade", "peek"\]/);

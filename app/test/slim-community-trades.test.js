@@ -65,5 +65,66 @@ test("slim community Postgres query keeps 2↔3 sides and AND/OR accept", async 
   assert.equal(listed[0].wantedCardId, "X");
   assert.equal(listed[0].canAccept, true);
   assert.equal(listed[0].needsAcceptChoice, true);
+  assert.deepEqual(listed[0].acceptChoices, [{ offeredCardId: "A", wantedCardId: "X" }]);
   assert.equal(listed[0].ownedByCurrent, false);
+});
+
+test("slim community Postgres query hides a reserved-only OR give option", async () => {
+  const db = await database();
+  const now = Date.parse("2026-10-18T12:00:00.000Z");
+  const later = new Date(now + 24 * 3600 * 1000).toISOString();
+  const created = new Date(now).toISOString();
+  for (const token of ["owner", "viewer"]) {
+    await db.query(
+      "INSERT INTO kalpi_sessions (token, display_name, created_at) VALUES ($1, $2, $3)",
+      [token, token, created],
+    );
+  }
+  for (const [token, cardId] of [
+    ["owner", "A"],
+    ["owner", "B"],
+    ["viewer", "X"],
+    ["viewer", "Y"],
+  ]) {
+    await db.query(
+      "INSERT INTO kalpi_inventory (session_token, card_id, copies) VALUES ($1, $2, 1)",
+      [token, cardId],
+    );
+  }
+  await db.query(
+    `INSERT INTO kalpi_trades (
+       trade_id, owner_token, offered_card_id, wanted_card_id, status,
+       created_at, expires_at, offered_mode, wanted_mode, offered_card_ids, wanted_card_ids
+     ) VALUES
+       ($1,$2,$3,$4,'open',$5,$6,'or','or',$7::jsonb,$8::jsonb),
+       ($9,'viewer','X','Z','open',$5,$6,'and','and',$10::jsonb,$11::jsonb)`,
+    [
+      "t-or-or",
+      "owner",
+      "A",
+      "X",
+      created,
+      later,
+      JSON.stringify(["A", "B"]),
+      JSON.stringify(["X", "Y"]),
+      "mine",
+      JSON.stringify(["X"]),
+      JSON.stringify(["Z"]),
+    ],
+  );
+
+  const listed = await listSlimCommunityTrades(db, "viewer", now);
+  const offer = listed.find((trade) => trade.tradeId === "t-or-or");
+  assert.ok(offer);
+  assert.equal(offer.canAccept, true);
+  assert.deepEqual(offer.acceptChoices, [
+    { offeredCardId: "A", wantedCardId: "Y" },
+    { offeredCardId: "B", wantedCardId: "Y" },
+  ]);
+
+  await db.query("DELETE FROM kalpi_inventory WHERE session_token = 'viewer' AND card_id = 'Y'");
+  const reservedOnly = await listSlimCommunityTrades(db, "viewer", now);
+  const blocked = reservedOnly.find((trade) => trade.tradeId === "t-or-or");
+  assert.equal(blocked.canAccept, false);
+  assert.equal(blocked.acceptChoices, undefined);
 });

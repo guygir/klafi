@@ -6398,7 +6398,12 @@ function renderTradeComposeSlots() {
   syncLegacyTradeSelectFromCompose();
 }
 
+function tradeChoicesPending(trade) {
+  return Boolean(trade?.canAccept && trade?.needsAcceptChoice && !Array.isArray(trade.acceptChoices));
+}
+
 function tradeRailPickEnabled(trade, sideKey, cardId) {
+  if (tradeChoicesPending(trade)) return true;
   const pick = tradeAcceptPick(trade.tradeId);
   const choices = Array.isArray(trade.acceptChoices) ? trade.acceptChoices : [];
   const field = sideKey === "offered" ? "offeredCardId" : "wantedCardId";
@@ -6449,6 +6454,7 @@ function tradeAcceptPick(tradeId) {
 }
 
 function tradeAcceptReady(trade, inventory) {
+  if (tradeChoicesPending(trade)) return false;
   if (!trade.needsAcceptChoice) return Boolean(trade.canAccept);
   const pick = tradeAcceptPick(trade.tradeId);
   const choices = Array.isArray(trade.acceptChoices) ? trade.acceptChoices : [];
@@ -6578,6 +6584,24 @@ function renderTradeBoard() {
   concealRenderedTradeThumbs(elements.tradeBoard);
   if (elements.tradeBoardPager) elements.tradeBoardPager.innerHTML = tradeBoardPagerMarkup(model.tradeBoardPage, pages, remaining, pageSize);
   queueCardTextFit(elements.tradeBoard);
+  queueMicrotask(() => {
+    hydrateMissingAcceptChoices().catch(() => {});
+  });
+}
+
+async function hydrateMissingAcceptChoices() {
+  if (model.tradeChoicesHydrating || !model.token) return;
+  if (!(model.trades || []).some(tradeChoicesPending)) return;
+  model.tradeChoicesHydrating = true;
+  try {
+    const payload = await request("/api/trades");
+    setTrades(payload.trades || payload);
+    renderTradeBoard();
+  } catch {
+    /* Accept stays disabled until a later list. */
+  } finally {
+    model.tradeChoicesHydrating = false;
+  }
 }
 
 function tradeRowMarkup(trade) {
@@ -7040,6 +7064,7 @@ async function pollWatchedTrade() {
   const payload = await request("/api/trades");
   const trades = payload.trades || payload;
   setTrades(trades);
+  renderTradeBoard();
   const watched = trades.find((trade) => trade.tradeId === model.watchedTrade.tradeId);
   if (watched?.status === "accepted") {
     model.watchedTrade = null;
@@ -10229,6 +10254,7 @@ function handleTradeBoardClick(event) {
         return;
       }
     }
+    if (chip.classList.contains("is-concealed")) return;
     openCardDialog(chip.dataset.tradeChoiceCard);
     return;
   }

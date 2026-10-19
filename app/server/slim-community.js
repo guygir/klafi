@@ -6,11 +6,10 @@ import { numberedTotal, takeCollectorBoard, takeNumberedBoard } from "./collecto
 import { factionStandingsFromCollectors } from "./faction-standings.js";
 import { guardPool, postgresPoolOptions } from "./postgres-pool.js";
 import { openSpecialWindow } from "./special-window.js";
-import { jerusalemDay, regularInventory } from "./numbered.js";
+import { jerusalemDay, regularCopyCount, regularInventory } from "./numbered.js";
 import { raceTargetForSavedFaction } from "./daily-race.js";
-import { holdsWantedSide } from "../public/trade-list.js";
 import { emptyTodayPulse } from "../public/today-pulse.js";
-import { normalizeStoredTrade, tradeNeedsAcceptChoices } from "./trade-core.js";
+import { normalizeStoredTrade, publicTradeView } from "./trade-core.js";
 
 const { Pool } = pg;
 const SECURITY_HEADERS = Object.freeze({
@@ -133,18 +132,8 @@ function iso(value) {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
 
-function ownerHoldsOfferedSide(trade, ownerHasOffered) {
-  const prefix = `${trade.ownerToken}:`;
-  const ids = trade.offeredCardIds || [];
-  if (!ids.length) return false;
-  return trade.offeredMode === "or"
-    ? ids.some((cardId) => ownerHasOffered.has(`${prefix}${cardId}`))
-    : ids.every((cardId) => ownerHasOffered.has(`${prefix}${cardId}`));
-}
-
-/** Fast /api/community row: same side arrays the full trade list uses, no accept-choice matrix. */
-export function slimTradeView(row, { token, inventory = {}, ownerHasOffered = new Set() } = {}) {
-  const trade = normalizeStoredTrade({
+function tradeFromSlimRow(row) {
+  return normalizeStoredTrade({
     tradeId: row.trade_id,
     ownerToken: row.owner_token,
     offeredCardId: row.offered_card_id,
@@ -160,28 +149,52 @@ export function slimTradeView(row, { token, inventory = {}, ownerHasOffered = ne
     cancelledAt: iso(row.cancelled_at),
     acceptedBy: row.accepted_by,
   });
-  const ownedByCurrent = trade.ownerToken === token;
+}
+
+function ownerSessionFromOffered(trade, ownerHasOffered) {
+  const inventory = {};
+  for (const cardId of trade.offeredCardIds || []) {
+    if (ownerHasOffered.has(`${trade.ownerToken}:${cardId}`)) inventory[cardId] = 1;
+  }
+  return { token: trade.ownerToken, inventory };
+}
+
+/** Fast /api/community row: side arrays plus reservation-aware acceptChoices. */
+export function slimTradeView(row, {
+  token,
+  inventory = {},
+  ownerHasOffered = new Set(),
+  trades = [],
+  at,
+} = {}) {
+  const trade = tradeFromSlimRow(row);
+  const view = publicTradeView(trade, {
+    token,
+    ownerSession: ownerSessionFromOffered(trade, ownerHasOffered),
+    viewerSession: token ? { token, inventory } : null,
+    trades,
+    at,
+    regularCopyCountFn: regularCopyCount,
+  });
   return {
-    tradeId: trade.tradeId,
-    offeredCardId: trade.offeredCardId,
-    wantedCardId: trade.wantedCardId,
-    offeredMode: trade.offeredMode,
-    wantedMode: trade.wantedMode,
-    offeredCardIds: trade.offeredCardIds,
-    wantedCardIds: trade.wantedCardIds,
-    status: trade.status,
-    createdAt: trade.createdAt,
-    expiresAt: trade.expiresAt,
-    acceptedAt: trade.acceptedAt,
-    cancelledAt: trade.cancelledAt,
+    tradeId: view.tradeId,
+    offeredCardId: view.offeredCardId,
+    wantedCardId: view.wantedCardId,
+    offeredMode: view.offeredMode,
+    wantedMode: view.wantedMode,
+    offeredCardIds: view.offeredCardIds,
+    wantedCardIds: view.wantedCardIds,
+    status: view.status,
+    createdAt: view.createdAt,
+    expiresAt: view.expiresAt,
+    acceptedAt: view.acceptedAt,
+    cancelledAt: view.cancelledAt,
     ownerLabel: row.owner_label || "שחקן קְלָפִי",
-    ownedByCurrent,
-    acceptedByCurrent: trade.acceptedBy === token,
-    canAccept: trade.status === "open"
-      && !ownedByCurrent
-      && ownerHoldsOfferedSide(trade, ownerHasOffered)
-      && holdsWantedSide(inventory, trade),
-    needsAcceptChoice: tradeNeedsAcceptChoices(trade) || undefined,
+    ownedByCurrent: view.ownedByCurrent,
+    acceptedByCurrent: view.acceptedByCurrent,
+    canAccept: view.canAccept,
+    acceptChoices: view.acceptChoices,
+    needsAcceptChoice: view.needsAcceptChoice,
   };
 }
 
@@ -257,9 +270,11 @@ export async function listSlimCommunityTrades(db, token, now) {
     );
     for (const row of owners.rows) ownerHasOffered.add(`${row.session_token}:${row.card_id}`);
   }
+  const trades = result.rows.map(tradeFromSlimRow);
+  const at = new Date(now).toISOString();
   return result.rows
     .filter((row) => row.owner_token === token || !hidden.has(row.trade_id))
-    .map((row) => slimTradeView(row, { token, inventory, ownerHasOffered }));
+    .map((row) => slimTradeView(row, { token, inventory, ownerHasOffered, trades, at }));
 }
 
 async function collectorBoards(db, config, now, token) {
