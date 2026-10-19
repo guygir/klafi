@@ -12,11 +12,13 @@ import { TRADE_MESSAGES_HE, assertInventoryConserved, parseCreateTradeInput, val
 import { QA_TRADE_SAMPLES, partyLeaderSampleIds, qaTradeSamplesAllowed, viewerGrantPlan } from "../server/trade-debug-samples.js";
 import { holdsWantedSide, offersForTradeList } from "../public/trade-list.js";
 import {
+  keepValidTradeComposeWanted,
   orderTradeComposeSlotCards,
   sortTradeComposeOffered,
   sortTradeComposeWanted,
   tradeComposeCardsInSet,
   tradeComposeCountTag,
+  tradeComposeWantPool,
   tradeModeHintHe,
   tradeOrChipTapOpensDialog,
 } from "../public/trade-compose-ui.js";
@@ -505,10 +507,95 @@ test("compose dropdown sorts tie-break on Hebrew title", () => {
   assert.deepEqual(wanted.map((card) => card.id), ["early", "late"]);
 });
 
+test("want pool is missing-only by default and includes owned cards when unchecked", () => {
+  const cards = [
+    { id: "owned", releaseSetId: "set-1", titleHe: "שלי" },
+    { id: "missing", releaseSetId: "set-1", titleHe: "חסר" },
+    { id: "other", releaseSetId: "set-2", titleHe: "אחר" },
+  ];
+  const ownedCount = (card) => (card.id === "owned" ? 2 : 0);
+  const missing = tradeComposeWantPool(cards, { missingOnly: true, ownedCount });
+  assert.deepEqual(missing.map((card) => card.id), ["missing", "other"]);
+  const all = tradeComposeWantPool(cards, { missingOnly: false, ownedCount });
+  assert.deepEqual(all.map((card) => card.id), ["owned", "missing", "other"]);
+  const holders = { owned: 1, missing: 9, other: 4 };
+  const ranked = sortTradeComposeWanted(all, (card) => holders[card.id], (card) => card.titleHe);
+  assert.deepEqual(ranked.map((card) => card.id), ["missing", "other", "owned"]);
+});
+
+test("unticking missing-only keeps valid want picks and clears owned cards that left the pool", () => {
+  const poolAll = [
+    { id: "owned", releaseSetId: "set-1" },
+    { id: "missing", releaseSetId: "set-1" },
+  ];
+  const poolMissing = poolAll.filter((card) => card.id === "missing");
+  const setKeyOf = (card) => `release:${card.releaseSetId}`;
+  const kept = keepValidTradeComposeWanted(
+    { mode: "and", cardIds: ["owned"], slotSets: ["release:set-1"] },
+    poolAll,
+    setKeyOf,
+  );
+  assert.deepEqual(kept.cardIds, ["owned"]);
+  assert.deepEqual(kept.slotSets, ["release:set-1"]);
+  const pruned = keepValidTradeComposeWanted(kept, poolMissing, setKeyOf);
+  assert.deepEqual(pruned.cardIds, [""]);
+  assert.deepEqual(pruned.slotSets, ["release:set-1"]);
+});
+
 test("OR first tap highlights only; second tap on the same card opens the viewer", () => {
   assert.equal(tradeOrChipTapOpensDialog(false), false);
   assert.equal(tradeOrChipTapOpensDialog(""), false);
   assert.equal(tradeOrChipTapOpensDialog("card-1"), true);
+});
+
+test("file store: creator may want a card they already own; accepter still gives it", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-want-owned-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const cards = (await api(running.base, "/api/catalog")).body.cards.filter(({ eventOnly }) => !eventOnly).slice(0, 3);
+  const [give, want, other] = cards;
+  const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const accepter = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await unlockMany(running.base, owner, [give.id, want.id]);
+  await unlockMany(running.base, accepter, [want.id]);
+  const sameCard = await api(running.base, "/api/trades", {
+    token: owner,
+    method: "POST",
+    body: { offeredCardId: give.id, wantedCardId: give.id },
+  });
+  assert.equal(sameCard.status, 400);
+  assert.equal(sameCard.body.error, "CROSS_SIDE");
+  const created = await api(running.base, "/api/trades", {
+    token: owner,
+    method: "POST",
+    body: { offeredCardId: give.id, wantedCardId: want.id },
+  });
+  assert.equal(created.status, 201);
+  assert.deepEqual(created.body.trade.wantedCardIds, [want.id]);
+  const before = inventorySnapshot({
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  });
+  assert.equal(before.owner.inventory[want.id], 1);
+  const accepted = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+    token: accepter,
+    method: "POST",
+  });
+  assert.equal(accepted.status, 200);
+  const after = inventorySnapshot({
+    owner: (await api(running.base, "/api/state", { token: owner })).body,
+    accepter: (await api(running.base, "/api/state", { token: accepter })).body,
+  });
+  assertInventoryConserved(before, after);
+  assert.equal(after.owner.inventory[give.id], undefined);
+  assert.equal(after.owner.inventory[want.id], 2);
+  assert.equal(after.accepter.inventory[give.id], 1);
+  assert.equal(after.accepter.inventory[want.id], undefined);
+  assert.equal(after.owner.inventory[other.id], undefined);
 });
 
 test("accept failures return Hebrew messageHe from the store through the API", async (t) => {
@@ -1075,6 +1162,56 @@ test("postgres SQL store: accept persists inventory and accepted picks", async (
   const accepterInv = (await db.query("SELECT card_id, copies FROM kalpi_inventory WHERE session_token = $1", [accepter])).rows;
   assert.deepEqual(Object.fromEntries(ownerInv.map(({ card_id, copies }) => [card_id, copies])), { A: 1, C: 1, D: 1 });
   assert.deepEqual(Object.fromEntries(accepterInv.map(({ card_id, copies }) => [card_id, copies])), { B: 1 });
+});
+
+test("postgres SQL store: creator may want a card they already own", async (t) => {
+  const { db, store } = await postgresStoreWithMigrations();
+  t.after(async () => db.close());
+  const at = "2026-10-10T12:00:00.000Z";
+  const later = new Date(Date.parse(at) + 86400000).toISOString();
+  const owner = "owner-pg-want-owned";
+  const accepter = "accepter-pg-want-owned";
+  await store.insertSessionRow(store.pool, owner, {
+    displayName: owner,
+    createdAt: at,
+    inventory: { A: 1, C: 1 },
+  });
+  await store.insertSessionRow(store.pool, accepter, {
+    displayName: accepter,
+    createdAt: at,
+    inventory: { C: 1 },
+  });
+  const created = await store.createTrade({
+    sessionToken: owner,
+    offered: { mode: "and", cardIds: ["A"] },
+    wanted: { mode: "and", cardIds: ["C"] },
+    createdAt: at,
+    expiresAt: later,
+  });
+  assert.ok(created.tradeId);
+  assert.deepEqual(created.wantedCardIds, ["C"]);
+  const before = {
+    owner: await store.hydrateSession(owner),
+    accepter: await store.hydrateSession(accepter),
+  };
+  assert.equal(before.owner.inventory.C, 1);
+  const accepted = await store.acceptTrade({
+    tradeId: created.tradeId,
+    sessionToken: accepter,
+    acceptedAt: at,
+  });
+  assert.equal(accepted.status, "accepted");
+  const ownerAfter = await store.hydrateSession(owner);
+  const accepterAfter = await store.hydrateSession(accepter);
+  assertInventoryConserved(
+    { owner: { inventory: before.owner.inventory }, accepter: { inventory: before.accepter.inventory } },
+    { owner: { inventory: ownerAfter.inventory }, accepter: { inventory: accepterAfter.inventory } },
+  );
+  assert.deepEqual(ownerAfter.inventory, { C: 2 });
+  assert.deepEqual(accepterAfter.inventory, { A: 1 });
+  const row = (await db.query("SELECT * FROM kalpi_trades WHERE trade_id = $1", [created.tradeId])).rows[0];
+  assert.equal(row.status, "accepted");
+  assert.equal(row.accepted_wanted_card_id, "C");
 });
 
 test("legacy 1↔1 accept conserves inventory and stays a single-card AND trade", async (t) => {

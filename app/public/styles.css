@@ -5495,6 +5495,99 @@ body {
   margin-top: 6px;
   width: 100%;
 }
+.trade-side-add-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  width: 100%;
+}
+.trade-side-add-row .trade-side-add {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-top: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.trade-form label.trade-want-missing-only {
+  display: inline-flex !important;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px !important;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-height: 40px;
+  min-width: 32px;
+  margin-top: 0 !important;
+  padding: 0 12px 0 10px;
+  border: 2px solid var(--civic);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--civic);
+  font: 600 13px/1 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.trade-form label.trade-want-missing-only:has(input:checked) {
+  background: var(--civic);
+  color: var(--paper);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--ink) 18%, transparent);
+}
+.trade-want-missing-only {
+  min-height: 32px;
+}
+.trade-want-missing-box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.trade-want-missing-only input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin: 0;
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+.trade-want-missing-only input[type="checkbox"]:checked {
+  background: var(--paper);
+  border-color: var(--paper);
+}
+.trade-want-missing-check {
+  position: absolute;
+  inset: 2px;
+  width: 14px;
+  height: 14px;
+  color: var(--civic);
+  pointer-events: none;
+  opacity: 0;
+  transform: none;
+}
+.trade-want-missing-only:has(input:checked) .trade-want-missing-check {
+  opacity: 1;
+}
+.trade-want-missing-only:focus-within {
+  outline: 2px solid var(--civic);
+  outline-offset: 3px;
+}
 .trade-side-rail {
   --trade-rail-gap: 3px;
   display: flex;
