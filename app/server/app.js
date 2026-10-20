@@ -68,6 +68,7 @@ import {
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 import { ackTradeNotices, publicTradeNotices } from "./trade-notices.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
+import { normalizeNumberedCopiesByRarity } from "../public/numbered-copies.js";
 import { acquiredAtByCard, lastAcquiredAtByCard } from "../public/binder-order.js";
 import { creditSeenInstances, grantedCopyCounts } from "./inventory-credit.js";
 import { normalizeInviteCode, referralMarker, referralStarGate } from "./referral.js";
@@ -335,6 +336,10 @@ function validProgressionPatch(value) {
     if (!Array.isArray(value.numberedSets) || value.numberedSets.length > 40) return false;
     if (!value.numberedSets.every((id) => typeof id === "string" && /^[a-z0-9-]{2,40}$/.test(id))) return false;
   }
+  if (value.numberedCopiesByRarity !== undefined) {
+    const table = value.numberedCopiesByRarity;
+    if (!table || typeof table !== "object" || Array.isArray(table) || Object.keys(table).length > 40) return false;
+  }
   if (value.numberedEvery !== undefined) {
     const every = Number(value.numberedEvery);
     if (!Number.isInteger(every) || every < 1 || every > 1000) return false;
@@ -551,6 +556,7 @@ function progressionConfig(config = {}, activeReleaseIds = null) {
     grantLevelReward: config.grantLevelReward !== false,
     numberedSets: normalizeNumberedSets(config.numberedSets),
     numberedEvery: normalizeNumberedEvery(config.numberedEvery),
+    numberedCopiesByRarity: normalizeNumberedCopiesByRarity(config.numberedCopiesByRarity),
   };
 }
 
@@ -1356,6 +1362,9 @@ export async function createKalpiApp({
       state: publicIdleState(session, currentMs, allCards, runtimeProgression()),
     };
   }
+  function numberedCopiesTable() {
+    return normalizeNumberedCopiesByRarity(studioContent?.gameConfig?.progression?.numberedCopiesByRarity);
+  }
   function numberedSetIds() {
     return normalizeNumberedSets(
       studioContent?.gameConfig?.progression?.numberedSets,
@@ -1374,14 +1383,14 @@ export async function createKalpiApp({
     const active = activeIdleCards(allCards, currentMs);
     const eligible = allCards.filter((card) => !card.eventOnly && card.idleEligible === true);
     const matches = (card) => (rarity === 4
-      ? stampEligible(card, sets)
+      ? stampEligible(card, sets, numberedCopiesTable())
       : rarity ? rarityTier(card) === DEBUG_PULL_TIERS[rarity] : true);
     const pool = [active, eligible].map((cardsIn) => cardsIn.filter(matches)).find((list) => list.length);
     if (!pool) return null;
     const pull = generateIdlePull(idlePullOptions(pool, {}, 0));
     const card = cardsById.get(pull.cardId);
     const pulledAt = new Date(currentMs).toISOString();
-    const stamp = rarity === 4 ? { index: 1, of: stampMax(card) } : null;
+    const stamp = rarity === 4 ? { index: 1, of: stampMax(card, numberedCopiesTable()) } : null;
     return pullInstance(pull, {
       instanceId: `studio-debug-${randomUUID()}`,
       pulledAt,
@@ -1397,7 +1406,7 @@ export async function createKalpiApp({
    */
   function studioDebugPullCard(card) {
     const pulledAt = new Date(now()).toISOString();
-    const stamp = stampEligible(card, numberedSetIds()) ? { index: 1, of: stampMax(card) } : null;
+    const stamp = stampEligible(card, numberedSetIds(), numberedCopiesTable()) ? { index: 1, of: stampMax(card, numberedCopiesTable()) } : null;
     return pullInstance({ cardId: card.id, finish: rarityTier(card) }, {
       instanceId: `studio-debug-${randomUUID()}`,
       pulledAt,
@@ -1413,10 +1422,10 @@ export async function createKalpiApp({
       session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
     }
     const card = cardsById.get(pull.cardId);
-    const stamp = stampFromGrant(card, numberedSetIds(), acquiredBy)
+    const stamp = stampFromGrant(card, numberedSetIds(), acquiredBy, numberedCopiesTable())
       ? await store.claimNumberedStamp(
         stampKey(card),
-        stampMax(card),
+        stampMax(card, numberedCopiesTable()),
         normalizeNumberedEvery(studioContent?.gameConfig?.progression?.numberedEvery),
       )
       : null;
@@ -2803,6 +2812,9 @@ export async function createKalpiApp({
               numberedSets: input.progression?.numberedSets
                 ? normalizeNumberedSets(input.progression.numberedSets, releaseIds)
                 : studioContent.gameConfig.progression?.numberedSets,
+              numberedCopiesByRarity: input.progression?.numberedCopiesByRarity !== undefined
+                ? normalizeNumberedCopiesByRarity(input.progression.numberedCopiesByRarity)
+                : studioContent.gameConfig.progression?.numberedCopiesByRarity,
               numberedEvery: input.progression?.numberedEvery !== undefined
                 ? normalizeNumberedEvery(input.progression.numberedEvery)
                 : normalizeNumberedEvery(studioContent.gameConfig.progression?.numberedEvery),

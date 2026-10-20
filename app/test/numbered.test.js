@@ -43,7 +43,7 @@ test("stamp eligibility is list-slot print runs plus numberedSets, idle only", (
   assert.equal(stampEligible(leader, ["set-5"]), false);
   assert.equal(stampEligible(leader, ["party-leaders"]), true);
   assert.equal(stampMax(leader), 1);
-  assert.equal(stampKey(leader), "LIK:1");
+  assert.equal(stampKey(leader), "LIK-M01-Q01");
   assert.deepEqual(normalizeNumberedSets(undefined), []);
   assert.deepEqual(normalizeNumberedSets(["set-5", "party-leaders"], ["set-5"]), ["set-5"]);
 });

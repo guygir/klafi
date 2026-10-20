@@ -1,3 +1,4 @@
+import { DEFAULT_NUMBERED_COPIES_BY_RARITY, numberedCopiesFor } from "../public/numbered-copies.js";
 import { numberedHeldByCard } from "./stars.js";
 
 export function jerusalemDay(ms) {
@@ -107,28 +108,27 @@ export function returnNumberedIndex(pool, index, max) {
   return [...current, n].sort((left, right) => left - right);
 }
 
-export function stampMax(card) {
-  const slot = Number(card?.listSlot);
-  return Number.isInteger(slot) && slot > 0 ? slot : 0;
+export function stampMax(card, byRarity = DEFAULT_NUMBERED_COPIES_BY_RARITY) {
+  return numberedCopiesFor(card, byRarity);
 }
 
-export function stampEligible(card, numberedSets = []) {
+export function stampEligible(card, numberedSets = [], byRarity = DEFAULT_NUMBERED_COPIES_BY_RARITY) {
   return Boolean(
     card
-    && stampMax(card) > 0
+    && stampMax(card, byRarity) > 0
     && Array.isArray(numberedSets)
     && numberedSets.includes(card.releaseSetId)
     && !card.eventOnly,
   );
 }
 
-export function stampFromGrant(card, numberedSets, acquiredBy) {
-  return acquiredBy === "idle" && stampEligible(card, numberedSets);
+export function stampFromGrant(card, numberedSets, acquiredBy, byRarity = DEFAULT_NUMBERED_COPIES_BY_RARITY) {
+  return acquiredBy === "idle" && stampEligible(card, numberedSets, byRarity);
 }
 
+/** Serial pools are per card. Set 5 always keyed by card id, so its stored pools are unchanged. */
 export function stampKey(card) {
-  if (card?.releaseSetId === "set-5") return String(card.id);
-  return `${card.set}:${Number(card.listSlot)}`;
+  return String(card.id);
 }
 
 export function numberedCopies(instances = []) {
