@@ -45,6 +45,7 @@ import {
 } from "./walkout-sunburst.js";
 import { destroyPackRip, mountPackRip, packRipMarkup, preloadPackRipAssets, schedulePackRipPrefetch } from "./packrip.js";
 import { createSfx, revealClipForStage, sfxRarityKey } from "./sfx.js";
+import { normalizeNumberedCopiesByRarity, numberedCopiesFor } from "./numbered-copies.js";
 const SESSION_KEY = "kalpi-alpha-session";
 const HIDDEN_TRADES_KEY = "klafi:hidden-trades";
 const STUDIO_KEY = "kalpi-studio-secret";
@@ -4421,17 +4422,20 @@ function stampForCard(card) {
 
 function catalogNumberedSets() {
   const configured = model.gameConfig?.progression?.numberedSets;
-  return Array.isArray(configured) && configured.length ? configured : ["set-5"];
+  return Array.isArray(configured) && configured.length ? configured : ["set-5", "set-7", "set-8"];
+}
+
+function catalogNumberedCopies(card) {
+  return numberedCopiesFor(card, normalizeNumberedCopiesByRarity(model.gameConfig?.progression?.numberedCopiesByRarity));
 }
 
 function isPossibleNumberedCard(card) {
-  return Boolean(card && catalogNumberedSets().includes(card.releaseSetId) && !card.eventOnly);
+  return Boolean(card && catalogNumberedSets().includes(card.releaseSetId) && !card.eventOnly && catalogNumberedCopies(card) > 0);
 }
 
 function catalogNumberedInstance(card) {
   if (!isPossibleNumberedCard(card)) return {};
-  const listSlot = Number(card?.listSlot);
-  const of = Number.isInteger(listSlot) && listSlot > 0 ? listSlot : 1;
+  const of = catalogNumberedCopies(card) || 1;
   return { numberedIndex: 1, numberedOf: of, finish: "Holo" };
 }
 
@@ -4459,8 +4463,7 @@ function holderCountFor(card, numbered = false) {
 }
 
 function printRunFor(card) {
-  const slot = Number(card?.listSlot);
-  return Number.isInteger(slot) && slot > 0 ? slot : 0;
+  return isPossibleNumberedCard(card) ? catalogNumberedCopies(card) : 0;
 }
 
 function holderLine(count, numbered = false, card = null) {

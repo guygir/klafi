@@ -19,8 +19,14 @@
       "thresholdExponent": 1.2,
       "grantLevelReward": true,
       "numberedSets": [
-        "set-5"
+        "set-5",
+        "set-7",
+        "set-8"
       ],
+      "numberedCopiesByRarity": {
+        "set-7": { "Common": 0, "Uncommon": 2, "Rare": 1 },
+        "set-8": { "Common": 0, "Uncommon": 2, "Rare": 1 }
+      },
       "numberedEvery": 30,
       "releaseLevelIncrements": {
         "party-leaders": 1,
