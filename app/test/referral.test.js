@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { PGlite } from "@electric-sql/pglite";
 import { createKalpiApp } from "../server/app.js";
 import { collectionStarCount } from "../server/achievements.js";
+import { PostgresStore } from "../server/postgres-store.js";
 import { referralStarGate } from "../server/referral.js";
+import { JsonStore } from "../server/store.js";
 import { collectionStarCount as indexStarCount } from "../server/visible-sets.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -22,7 +25,43 @@ function referralPacks(state, code) {
   return (state.instances || []).filter((item) => item.acquiredBy === marker(code));
 }
 
-async function start(dataDir, clock, studioContentPath = path.join(appRoot, "data/studio-content.json"), databaseUrl = null) {
+function pglitePool(db) {
+  const run = (sql, params) => db.query(sql, params);
+  return {
+    query: run,
+    connect: async () => ({
+      query: run,
+      release() {},
+    }),
+  };
+}
+
+async function migratedPglite() {
+  const db = new PGlite();
+  const migrationsDir = path.join(appRoot, "server/migrations");
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS kalpi_schema_migrations (
+      version TEXT PRIMARY KEY,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  for (const file of (await readdir(migrationsDir)).filter((name) => name.endsWith(".sql")).sort()) {
+    await db.exec(await readFile(path.join(migrationsDir, file), "utf8"));
+    await db.query(
+      "INSERT INTO kalpi_schema_migrations (version) VALUES ($1) ON CONFLICT (version) DO NOTHING",
+      [file.replace(/\.sql$/, "")],
+    );
+  }
+  return db;
+}
+
+async function start(
+  dataDir,
+  clock,
+  studioContentPath = path.join(appRoot, "data/studio-content.json"),
+  databaseUrl = null,
+  extras = {},
+) {
   const handler = await createKalpiApp({
     dataDir,
     publicDir: path.join(appRoot, "public"),
@@ -43,6 +82,8 @@ async function start(dataDir, clock, studioContentPath = path.join(appRoot, "dat
     debugEnabled: true,
     quizEnabled: false,
     databaseUrl,
+    store: extras.store || null,
+    testHooks: extras.testHooks || {},
     studioSecret: null,
     now: () => clock.value,
     numberedRandom: () => 0.99,
@@ -260,8 +301,9 @@ test("referral pack is paid once to the inviter at 15 collection stars", async (
       method: "POST",
       body: { code: state.referralCode },
     });
-    assert.equal(repeatClaim.status, 409);
-    assert.equal(repeatClaim.body.error, "REFERRAL_CLAIMED");
+    assert.equal(repeatClaim.status, 200);
+    assert.equal(repeatClaim.body.cards[0].instanceId, paid[0].instanceId);
+    assert.equal(referralPacks(repeatClaim.body.state, state.referralCode).length, 1);
 
     const extra = cards.find((card) => !owned.has(card.id));
     const again = await api(running.base, "/api/debug/unlock-card", {
@@ -379,7 +421,8 @@ test("a referral link on first entrance uses the configured star gate", async ()
       method: "POST",
       body: { code: invitee.body.referralCode },
     });
-    assert.equal(repeat.status, 409);
+    assert.equal(repeat.status, 200);
+    assert.equal(referralPacks(repeat.body.state, invitee.body.referralCode).length, 1);
     const still = await api(running.base, "/api/state", { token: inviter.body.token });
     assert.equal(referralPacks(still.body, invitee.body.referralCode).length, 1);
     assert.equal(referralPacks(still.body, secondUnlocked.body.referralCode).length, 0);
@@ -448,9 +491,171 @@ test("a shared card ref is the invite on a new player's first entrance", async (
       method: "POST",
       body: { code: invitee.body.referralCode },
     });
-    assert.equal(again.status, 409);
+    assert.equal(again.status, 200);
+    assert.equal(again.body.cards[0].instanceId, claimed.body.cards[0].instanceId);
   } finally {
     await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  }
+});
+
+async function writeOneStarStudio(dataDir) {
+  const studio = JSON.parse(await readFile(path.join(appRoot, "data/studio-content.json"), "utf8"));
+  studio.gameConfig.referral = { stars: 1 };
+  const studioPath = path.join(dataDir, "studio.json");
+  await writeFile(studioPath, JSON.stringify(studio));
+  return studioPath;
+}
+
+async function readyOneStarInvite(running) {
+  const inviter = await api(running.base, "/api/home");
+  const code = inviter.body.state.referralCode;
+  const created = await api(running.base, "/api/session", { method: "POST", body: { invite: code } });
+  const catalog = await api(running.base, "/api/catalog");
+  const card = catalog.body.cards.find((item) => item.rarity === "Common");
+  const unlocked = await api(running.base, "/api/debug/unlock-card", {
+    token: created.body.token,
+    method: "POST",
+    body: { cardId: card.id },
+  });
+  assert.equal(unlocked.body.starCount, 1);
+  const invitee = await api(running.base, "/api/state", { token: created.body.token });
+  return {
+    inviterToken: inviter.body.token,
+    inviteeToken: created.body.token,
+    inviteeCode: invitee.body.referralCode,
+  };
+}
+
+function claimOnce(base, token, code, headers = {}) {
+  return fetch(`${base}/api/referrals/claim`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      ...headers,
+    },
+    body: JSON.stringify({ code }),
+  }).then(async (response) => ({ status: response.status, body: await response.json() }));
+}
+
+test("file store: a mid-grant failure rolls back and a retry pays once", async () => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-referral-fail-"));
+  const studioPath = await writeOneStarStudio(dataDir);
+  const clock = { value: Date.parse("2026-10-21T08:00:00+03:00") };
+  const store = new JsonStore(path.join(dataDir, "state.json"), { now: () => clock.value, numberedRandom: () => 0.99 });
+  const running = await start(dataDir, clock, studioPath, null, { store });
+  try {
+    const ready = await readyOneStarInvite(running);
+    const failed = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode, {
+      "x-kalpi-debug": "fail-referral-grant",
+    });
+    assert.equal(failed.status, 500);
+    assert.equal(failed.body.error, "SERVER_ERROR");
+    const invitee = store.getSession(ready.inviteeToken);
+    assert.equal(invitee.referralRewardedAt, null);
+    assert.equal(referralPacks(store.getSession(ready.inviterToken), ready.inviteeCode).length, 0);
+    const retried = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
+    assert.equal(retried.status, 200);
+    assert.equal(referralPacks(retried.body.state, ready.inviteeCode).length, 1);
+    const again = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
+    assert.equal(again.status, 200);
+    assert.equal(again.body.cards[0].instanceId, retried.body.cards[0].instanceId);
+    assert.equal(referralPacks(store.getSession(ready.inviterToken), ready.inviteeCode).length, 1);
+  } finally {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  }
+});
+
+test("file store: claimed-without-pack self-heals on the next tap", async () => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-referral-heal-"));
+  const studioPath = await writeOneStarStudio(dataDir);
+  const clock = { value: Date.parse("2026-10-21T08:00:00+03:00") };
+  const store = new JsonStore(path.join(dataDir, "state.json"), { now: () => clock.value, numberedRandom: () => 0.99 });
+  const running = await start(dataDir, clock, studioPath, null, { store });
+  try {
+    const ready = await readyOneStarInvite(running);
+    await store.withSession(ready.inviteeToken, (invitee) => {
+      invitee.referralRewardedAt = new Date(clock.value).toISOString();
+    });
+    assert.equal(store.getSession(ready.inviteeToken).referralRewardedAt != null, true);
+    assert.equal(referralPacks(store.getSession(ready.inviterToken), ready.inviteeCode).length, 0);
+    const healed = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
+    assert.equal(healed.status, 200);
+    assert.equal(referralPacks(healed.body.state, ready.inviteeCode).length, 1);
+    assert.ok(healed.body.cards[0].instanceId);
+  } finally {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  }
+});
+
+test("postgres store: a mid-grant failure rolls back and a retry pays once", async () => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-referral-pg-fail-"));
+  const studioPath = await writeOneStarStudio(dataDir);
+  const clock = { value: Date.parse("2026-10-21T08:00:00+03:00") };
+  const db = await migratedPglite();
+  const store = new PostgresStore("postgres://qa@127.0.0.1:1/none", {
+    pool: pglitePool(db),
+    now: () => clock.value,
+    numberedRandom: () => 0.99,
+  });
+  const running = await start(dataDir, clock, studioPath, null, { store });
+  try {
+    const ready = await readyOneStarInvite(running);
+    const failed = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode, {
+      "x-kalpi-debug": "fail-referral-grant",
+    });
+    assert.equal(failed.status, 500);
+    await store.refresh();
+    const invitee = await store.hydrateSession(ready.inviteeToken);
+    const inviter = await store.hydrateSession(ready.inviterToken);
+    assert.equal(invitee.referralRewardedAt, null);
+    assert.equal(referralPacks(inviter, ready.inviteeCode).length, 0);
+    const retried = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
+    assert.equal(retried.status, 200);
+    assert.equal(referralPacks(retried.body.state, ready.inviteeCode).length, 1);
+    const again = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
+    assert.equal(again.status, 200);
+    assert.equal(again.body.cards[0].instanceId, retried.body.cards[0].instanceId);
+    await store.refresh();
+    const after = await store.hydrateSession(ready.inviterToken);
+    assert.equal(referralPacks(after, ready.inviteeCode).length, 1);
+  } finally {
+    await running.close();
+    await db.close();
+    await rm(dataDir, { recursive: true, force: true });
+  }
+});
+
+test("postgres store: claimed-without-pack self-heals on the next tap", async () => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-referral-pg-heal-"));
+  const studioPath = await writeOneStarStudio(dataDir);
+  const clock = { value: Date.parse("2026-10-21T08:00:00+03:00") };
+  const db = await migratedPglite();
+  const store = new PostgresStore("postgres://qa@127.0.0.1:1/none", {
+    pool: pglitePool(db),
+    now: () => clock.value,
+    numberedRandom: () => 0.99,
+  });
+  const running = await start(dataDir, clock, studioPath, null, { store });
+  try {
+    const ready = await readyOneStarInvite(running);
+    await store.withSession(ready.inviteeToken, (invitee) => {
+      invitee.referralRewardedAt = new Date(clock.value).toISOString();
+    });
+    await store.refresh();
+    const flagged = await store.hydrateSession(ready.inviteeToken);
+    const before = await store.hydrateSession(ready.inviterToken);
+    assert.ok(flagged.referralRewardedAt);
+    assert.equal(referralPacks(before, ready.inviteeCode).length, 0);
+    const healed = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
+    assert.equal(healed.status, 200);
+    assert.equal(referralPacks(healed.body.state, ready.inviteeCode).length, 1);
+  } finally {
+    await running.close();
+    await db.close();
     await rm(dataDir, { recursive: true, force: true });
   }
 });

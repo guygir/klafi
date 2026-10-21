@@ -4854,6 +4854,19 @@ async function loadReferrals() {
   }
 }
 
+function consumeDebugReferralFail() {
+  try {
+    const params = new URLSearchParams(location.search);
+    if (!params.has("failReferralGrant")) return false;
+    params.delete("failReferralGrant");
+    const query = params.toString();
+    history.replaceState(null, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function claimReferralReward(code, button) {
   if (homePackRipBusy) return;
   sfx.unlock();
@@ -4865,7 +4878,10 @@ async function claimReferralReward(code, button) {
     showWait("פותחים…");
     const body = await request("/api/referrals/claim", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        ...(consumeDebugReferralFail() ? { "x-kalpi-debug": "fail-referral-grant" } : {}),
+      },
       body: JSON.stringify({ code }),
     });
     hideWait();

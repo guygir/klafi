@@ -203,10 +203,15 @@ export function sessionDeltas(previous, session) {
 }
 
 export class PostgresStore {
-  constructor(connectionString, { ssl = false, now = () => Date.now(), numberedRandom = Math.random } = {}) {
-    const poolOptions = postgresPoolOptions(connectionString, { ssl });
-    this.transactionPooling = poolOptions.connectionString !== connectionString;
-    this.pool = guardPool(new Pool(poolOptions));
+  constructor(connectionString, { ssl = false, now = () => Date.now(), numberedRandom = Math.random, pool = null } = {}) {
+    if (pool) {
+      this.transactionPooling = false;
+      this.pool = pool;
+    } else {
+      const poolOptions = postgresPoolOptions(connectionString, { ssl });
+      this.transactionPooling = poolOptions.connectionString !== connectionString;
+      this.pool = guardPool(new Pool(poolOptions));
+    }
     this.transaction = new AsyncLocalStorage();
     this.requestSessions = new AsyncLocalStorage();
     this.sessionCache = new Map();
