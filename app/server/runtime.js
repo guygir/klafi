@@ -50,24 +50,34 @@ export function runtimePaths() {
   };
 }
 
-export async function createRuntimeHandler({ loadDotEnv = false } = {}) {
+export async function createRuntimeHandler({
+  loadDotEnv = false,
+  store = null,
+  now = null,
+  dataDir = null,
+  testHooks = null,
+} = {}) {
   if (loadDotEnv) await loadEnvFile(path.join(projectRoot, ".env"));
-  if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL) {
+  if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL && !store) {
     throw new Error("DATABASE_URL is required in production.");
   }
   const paths = runtimePaths();
   const debugEnabled = process.env.KALPI_DEBUG === "1" && process.env.NODE_ENV !== "production";
   return createKalpiApp({
     ...paths,
+    ...(dataDir ? { dataDir } : {}),
     holderWarm: true,
     sourcesPath: debugEnabled ? paths.sourcesPath : null,
     sequencesPath: debugEnabled ? paths.sequencesPath : null,
     samplesPath: debugEnabled ? paths.samplesPath : null,
     presentationContentPath: debugEnabled ? paths.presentationContentPath : null,
-    databaseUrl: process.env.DATABASE_URL || null,
+    databaseUrl: store ? null : (process.env.DATABASE_URL || null),
     databaseSsl: process.env.DATABASE_SSL === "1",
     debugEnabled,
     quizEnabled: process.env.QUIZ_ENABLED === "1",
     studioSecret: process.env.STUDIO_SECRET || null,
+    ...(store ? { store } : {}),
+    ...(now ? { now } : {}),
+    ...(testHooks ? { testHooks } : {}),
   });
 }

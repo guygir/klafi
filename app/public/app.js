@@ -4867,12 +4867,67 @@ function consumeDebugReferralFail() {
   }
 }
 
+async function revealReferralPack(cards, packId) {
+  const rip = playHomePackRip();
+  if (elements.profileDialog?.open) elements.profileDialog.close();
+  try {
+    await rip.finished;
+    await cardArtGate(cards);
+    model.currentPack = {
+      packId: packId || `referral-${cards[0].instanceId}`,
+      mode: "referral",
+      pulledAt: cards[0].pulledAt || new Date().toISOString(),
+      cards,
+    };
+    model.currentCardIndex = 0;
+    model.previewMode = false;
+    rip.release({ revealing: true });
+    showView("pack");
+    startWalkout();
+  } catch (error) {
+    rip.release();
+    throw error;
+  }
+}
+
+async function recoverReferralReward(code) {
+  try {
+    const [state, list] = await Promise.all([
+      request("/api/state"),
+      request("/api/referrals"),
+    ]);
+    if (state) setServerState(state);
+    renderReferralList(list.referrals || []);
+    if (!model.catalog.length) await loadStaticCatalog();
+    const marker = `referral-${code}`;
+    const cards = (state.instances || []).filter((item) => (
+      item?.acquiredBy === marker && item.cardId && model.byId.has(item.cardId)
+    ));
+    if (!cards.length) return false;
+    const last = state.lastPack;
+    const packId = last?.mode === "referral" && last.cards?.some((card) => card.instanceId === cards[0].instanceId)
+      ? last.packId
+      : `referral-${cards[0].instanceId}`;
+    await revealReferralPack(cards, packId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function referralClaimToast(error) {
+  const errorCode = error?.body?.error || error?.message || "";
+  if (errorCode === "REFERRAL_CLAIMED") return "כבר קיבלתם את החבילה הזאת.";
+  if (errorCode === "REFERRAL_NOT_READY") return "החבילה עדיין לא מוכנה.";
+  if (!error?.status || error.status >= 500) return "השרת לא סיים. נסו שוב.";
+  return "החבילה עדיין לא מוכנה.";
+}
+
 async function claimReferralReward(code, button) {
   if (homePackRipBusy) return;
   sfx.unlock();
   if (button) button.disabled = true;
   homePackRipBusy = true;
-  let rip = null;
   try {
     // Same path as any other pack: "opening…" wait, then the rip and reveal in place.
     showWait("פותחים…");
@@ -4898,29 +4953,14 @@ async function claimReferralReward(code, button) {
       showToast("החבילה נכנסה לאוסף.");
       return;
     }
-    // Start the rip first so closing the profile does not let a deferred popup jump in.
-    rip = playHomePackRip();
-    if (elements.profileDialog?.open) elements.profileDialog.close();
-    await rip.finished;
-    await cardArtGate(cards);
-    model.currentPack = {
-      packId: body.packId || `referral-${cards[0].instanceId}`,
-      mode: "referral",
-      pulledAt: cards[0].pulledAt || new Date().toISOString(),
-      cards,
-    };
-    model.currentCardIndex = 0;
-    model.previewMode = false;
-    rip.release({ revealing: true });
-    showView("pack");
-    startWalkout();
+    await revealReferralPack(cards, body.packId);
   } catch (error) {
     hideWait();
-    rip?.release();
+    const recovered = await recoverReferralReward(code);
+    if (recovered) return;
     if (button) button.disabled = false;
-    const errorCode = error?.body?.error || error?.message || "";
-    showToast(errorCode === "REFERRAL_CLAIMED" ? "כבר קיבלתם את החבילה הזאת." : "החבילה עדיין לא מוכנה.");
-    loadReferrals();
+    showToast(referralClaimToast(error));
+    await loadReferrals();
   } finally {
     hideWait();
     homePackRipBusy = false;
