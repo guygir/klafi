@@ -80,11 +80,17 @@ async function loadEvents() {
 }
 
 function getPool() {
+  if (pool) return pool;
   if (!process.env.DATABASE_URL) return null;
   pool ??= guardPool(new Pool(postgresPoolOptions(process.env.DATABASE_URL, {
     ssl: process.env.DATABASE_SSL === "1",
   })));
   return pool;
+}
+
+/** Test seam: share one PGlite/Postgres client with the fat API. Not used in production. */
+export function useSlimCommunityPool(injected) {
+  pool = injected;
 }
 
 export function slimDailyChallenge(config, now = Date.now(), factionId = null) {

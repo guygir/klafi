@@ -27,6 +27,20 @@ test("accepted-trade notices stay public-safe and can be acknowledged", () => {
   assert.deepEqual(publicTradeNotices(owner), []);
 });
 
+test("enqueueAcceptedTradeNotice never throws and never blocks a transfer", () => {
+  assert.equal(enqueueAcceptedTradeNotice(null, null), null);
+  assert.equal(enqueueAcceptedTradeNotice({}, null), null);
+  const owner = {};
+  Object.defineProperty(owner, "pendingTradeNotices", {
+    configurable: true,
+    get() { return []; },
+    set() { throw new Error("dialog boom"); },
+  });
+  assert.equal(enqueueAcceptedTradeNotice(owner, { tradeId: "t", wantedCardId: "X", offeredCardId: "A" }, {
+    accepterName: "גיא",
+  }), null);
+});
+
 test("owner notices keep every card that moved on an AND/OR accept", () => {
   const owner = { displayName: "שיר", pendingTradeNotices: [] };
   const trade = {

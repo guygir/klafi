@@ -33,6 +33,7 @@ import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
 import {
   TRADE_MESSAGES_HE,
   canAcceptTrade as canCompleteTrade,
+  movedCardIdsFromVerdict,
   normalizeStoredTrade,
   ownerCanOfferCards,
   parseCreateTradeInput,
@@ -1204,16 +1205,23 @@ export class PostgresStore {
       accepter.tradeCount += 1;
       trade.acceptedOfferedCardId = verdict.acceptedOfferedCardId;
       trade.acceptedWantedCardId = verdict.acceptedWantedCardId;
-      enqueueAcceptedTradeNotice(owner, trade, {
-        acceptedAt,
-        accepterName: accepter.displayName,
-        ownerName: owner.displayName,
-        receivedCardIds: verdict.wantedCardIds,
-        givenCardIds: verdict.offeredCardIds,
-      });
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = sessionToken;
+      let accepterMoved = movedCardIdsFromVerdict(verdict);
+      try {
+        const ownerMoved = movedCardIdsFromVerdict(verdict, { viewer: "owner" });
+        accepterMoved = movedCardIdsFromVerdict(verdict);
+        enqueueAcceptedTradeNotice(owner, trade, {
+          acceptedAt,
+          accepterName: accepter.displayName,
+          ownerName: owner.displayName,
+          receivedCardIds: ownerMoved.receivedCardIds,
+          givenCardIds: ownerMoved.givenCardIds,
+        });
+      } catch {
+        /* Notice / id shaping is display-only. The transfer already happened. */
+      }
       await this.saveSession(trade.ownerToken, owner, previousOwner);
       await this.saveSession(sessionToken, accepter, previousAccepter);
       await this.executor().query(
@@ -1225,8 +1233,7 @@ export class PostgresStore {
       );
       return {
         ...trade,
-        receivedCardIds: [...verdict.offeredCardIds],
-        givenCardIds: [...verdict.wantedCardIds],
+        ...accepterMoved,
       };
     });
   }

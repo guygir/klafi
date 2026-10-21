@@ -1,3 +1,5 @@
+import { cardsMovedOnSide, parseCardIds } from "../public/trade-result.js";
+
 /** Max cards per side of a trade (bundle or choice). */
 export const TRADE_SIDE_MAX = 3;
 
@@ -27,15 +29,14 @@ function cleanMode(mode) {
 }
 
 function cleanIds(cardIds) {
-  if (!Array.isArray(cardIds)) return [];
-  return cardIds.map((id) => String(id || "").trim()).filter(Boolean);
+  return parseCardIds(cardIds);
 }
 
 /** Normalize a stored or in-flight trade record (legacy single-card fields included). */
 export function normalizeStoredTrade(trade) {
   if (!trade || typeof trade !== "object") return trade;
-  const offeredCardIds = cleanIds(trade.offeredCardIds?.length ? trade.offeredCardIds : [trade.offeredCardId]);
-  const wantedCardIds = cleanIds(trade.wantedCardIds?.length ? trade.wantedCardIds : [trade.wantedCardId]);
+  const offeredCardIds = parseCardIds(trade.offeredCardIds, trade.offeredCardId);
+  const wantedCardIds = parseCardIds(trade.wantedCardIds, trade.wantedCardId);
   trade.offeredMode = cleanMode(trade.offeredMode);
   trade.wantedMode = cleanMode(trade.wantedMode);
   trade.offeredCardIds = offeredCardIds.slice(0, TRADE_SIDE_MAX);
@@ -181,6 +182,19 @@ export function ownerHasOfferedSide(ownerSession, trade, at, trades, regularCopy
   return ids.every(checkOne);
 }
 
+/** Verdict move lists → dialog ids. One function for both stores. Never throws. */
+export function movedCardIdsFromVerdict(verdict, { viewer = "accepter" } = {}) {
+  try {
+    const offered = parseCardIds(verdict?.offeredCardIds, verdict?.acceptedOfferedCardId || verdict?.offeredCardId);
+    const wanted = parseCardIds(verdict?.wantedCardIds, verdict?.acceptedWantedCardId || verdict?.wantedCardId);
+    return viewer === "owner"
+      ? { receivedCardIds: wanted, givenCardIds: offered }
+      : { receivedCardIds: offered, givenCardIds: wanted };
+  } catch {
+    return { receivedCardIds: [], givenCardIds: [] };
+  }
+}
+
 export function canAcceptTrade(trade, { owner, accepter, trades, at, regularCopyCountFn, offeredCardId = null, wantedCardId = null }) {
   const normalized = normalizeStoredTrade(trade);
   if (!isOpenTrade(normalized, at) || normalized.ownerToken === accepter?.token) {
@@ -188,12 +202,21 @@ export function canAcceptTrade(trade, { owner, accepter, trades, at, regularCopy
   }
   const resolved = resolveAcceptCards(normalized, { offeredCardId, wantedCardId });
   if (!resolved.ok) return resolved;
-  const cardsToMoveOffered = normalized.offeredMode === TRADE_SIDE_MODES.AND
-    ? normalized.offeredCardIds
-    : [resolved.offeredCardId];
-  const cardsToMoveWanted = normalized.wantedMode === TRADE_SIDE_MODES.AND
-    ? normalized.wantedCardIds
-    : [resolved.wantedCardId];
+  const cardsToMoveOffered = cardsMovedOnSide({
+    mode: normalized.offeredMode,
+    cardIds: normalized.offeredCardIds,
+    cardId: normalized.offeredCardId,
+    acceptedCardId: resolved.offeredCardId,
+  }, resolved.offeredCardId);
+  const cardsToMoveWanted = cardsMovedOnSide({
+    mode: normalized.wantedMode,
+    cardIds: normalized.wantedCardIds,
+    cardId: normalized.wantedCardId,
+    acceptedCardId: resolved.wantedCardId,
+  }, resolved.wantedCardId);
+  if (!cardsToMoveOffered.length || !cardsToMoveWanted.length) {
+    return { ok: false, code: "EMPTY_SIDE", messageHe: TRADE_MESSAGES_HE.EMPTY_SIDE };
+  }
   for (const cardId of cardsToMoveOffered) {
     if (regularCopyCountFn(owner, cardId) < 1) {
       return { ok: false, code: "ACCEPT_OWNER_MISSING", messageHe: TRADE_MESSAGES_HE.ACCEPT_OWNER_MISSING, cardId };
