@@ -117,6 +117,23 @@ async function api(base, route, { token, method = "GET", body } = {}) {
   return { status: response.status, body: parsed };
 }
 
+test("referral claim grants unseen like the calendar and credits on open", async () => {
+  const source = await readFile(path.join(appRoot, "server/app.js"), "utf8");
+  const claimAt = source.indexOf("async function claimReferral");
+  const nextAt = source.indexOf("function ensureReferralPack");
+  assert.ok(claimAt >= 0 && nextAt > claimAt);
+  const claim = source.slice(claimAt, nextAt);
+  assert.match(claim, /warehouse: false/);
+  assert.doesNotMatch(claim, /creditNow/);
+  assert.match(claim, /creditStreakInstance/);
+  assert.match(claim, /grantCard\(inviter, pull, \{/);
+  const grantAt = source.indexOf("async function grantRewardInstance");
+  const grantEnd = source.indexOf("async function grantPendingStreakReward");
+  const calendarGrant = source.slice(grantAt, grantEnd);
+  assert.match(calendarGrant, /warehouse: false/);
+  assert.doesNotMatch(calendarGrant, /creditNow/);
+});
+
 test("a numbered copy is worth four stars, and a plain copy of the same card still counts once", () => {
   const cards = [{ id: "rare-card", rarity: "Rare" }];
   const numberedOnly = {
@@ -281,8 +298,8 @@ test("referral pack is paid once to the inviter at 15 collection stars", async (
     const afterClaim = await api(running.base, "/api/state", { token: inviter.body.token });
     const paid = referralPacks(afterClaim.body, state.referralCode);
     assert.equal(paid.length, 1);
-    assert.ok(paid[0].seenAt);
-    assert.equal(afterClaim.body.unseenCount, unseenBefore);
+    assert.ok(paid[0].seenAt, "calendar-style open credits the copy in the same claim");
+    assert.equal(afterClaim.body.unseenCount, unseenBefore, "referral packs are not warehouse holds");
     assert.equal(afterClaim.body.lastPack.mode, "referral");
     assert.equal(paid[0].cardId, afterClaim.body.lastPack.cards[0].cardId);
     assert.equal(claimed.body.cards[0].instanceId, paid[0].instanceId);
@@ -550,6 +567,56 @@ function claimOnce(base, token, code, headers = {}) {
     body: JSON.stringify({ code }),
   }).then(async (response) => ({ status: response.status, body: await response.json() }));
 }
+
+test("an unseen referral grant is credited on claim like a calendar open", async () => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-referral-unseen-"));
+  const studioPath = await writeOneStarStudio(dataDir);
+  const clock = { value: Date.parse("2026-10-21T08:00:00+03:00") };
+  const store = new JsonStore(path.join(dataDir, "state.json"), { now: () => clock.value, numberedRandom: () => 0.99 });
+  const running = await start(dataDir, clock, studioPath, null, { store });
+  try {
+    const ready = await readyOneStarInvite(running);
+    const catalog = await api(running.base, "/api/catalog");
+    const card = catalog.body.cards.find((item) => item.rarity === "Common");
+    const plantedId = "referral-unseen-open";
+    const pulledAt = new Date(clock.value).toISOString();
+    await store.withSession(ready.inviterToken, (inviter) => {
+      inviter.instances ??= [];
+      inviter.instances.push({
+        instanceId: plantedId,
+        cardId: card.id,
+        finish: card.rarity,
+        pulledAt,
+        isNew: true,
+        acquiredBy: marker(ready.inviteeCode),
+        seenAt: null,
+      });
+    });
+    const before = await api(running.base, "/api/state", { token: ready.inviterToken });
+    assert.equal(before.body.inventory?.[card.id] || 0, 0);
+    assert.equal(referralPacks(before.body, ready.inviteeCode).length, 1);
+    assert.equal(referralPacks(before.body, ready.inviteeCode)[0].seenAt, null);
+    const claimed = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
+    assert.equal(claimed.status, 200);
+    assert.equal(claimed.body.cards[0].instanceId, plantedId);
+    assert.ok(claimed.body.cards[0].seenAt);
+    const after = await api(running.base, "/api/state", { token: ready.inviterToken });
+    const paid = referralPacks(after.body, ready.inviteeCode);
+    assert.equal(paid.length, 1);
+    assert.equal(paid[0].instanceId, plantedId);
+    assert.ok(paid[0].seenAt);
+    assert.ok(after.body.inventory[card.id] >= 1);
+    assert.equal(after.body.lastPack.mode, "referral");
+    assert.equal(after.body.lastPack.packId, `referral-${plantedId}`);
+    const again = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
+    assert.equal(again.status, 200);
+    assert.equal(again.body.cards[0].instanceId, plantedId);
+    assert.equal(referralPacks(store.getSession(ready.inviterToken), ready.inviteeCode).length, 1);
+  } finally {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  }
+});
 
 test("file store: a mid-grant failure rolls back and a retry pays once", async () => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-referral-fail-"));

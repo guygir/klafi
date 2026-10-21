@@ -1073,36 +1073,35 @@ export async function createKalpiApp({
       const stars = collectionStarCount(invitee, allCards);
       const granted = await store.withSession(inviterToken, async (inviter) => {
         const existing = (inviter.instances || []).find((item) => item?.acquiredBy === marker);
-        if (existing) {
-          rewardInstance = existing;
-          return "exists";
+        let instance = existing;
+        if (!instance) {
+          if (!invitee.referralRewardedAt && stars < gate) return "early";
+          const pool = activeIdleCards(allCards, now());
+          if (!pool.length) return "empty";
+          const pulledAt = new Date(now()).toISOString();
+          const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(inviter), inviter.idleDuplicateStreak || 0));
+          // Same as grantRewardInstance: unseen, not warehoused. Credit happens on this
+          // open, the way /api/streak/open credits a calendar pack.
+          instance = await grantCard(inviter, pull, {
+            acquiredBy: marker,
+            pulledAt,
+            warehouse: false,
+          });
         }
-        if (!invitee.referralRewardedAt && stars < gate) return "early";
-        const pool = activeIdleCards(allCards, now());
-        if (!pool.length) return "empty";
-        const pulledAt = new Date(now()).toISOString();
-        const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(inviter), inviter.idleDuplicateStreak || 0));
-        const instance = await grantCard(inviter, pull, {
-          acquiredBy: marker,
-          pulledAt,
-          creditNow: true,
-          warehouse: false,
-        });
-        inviter.packs ??= [];
-        inviter.packs.push({
-          packId: `referral-${instance.instanceId}`,
-          mode: "referral",
-          pulledAt,
-          nextDailyAt: null,
-          cards: [instance],
-        });
-        inviter.packs = inviter.packs.slice(-100);
+        ensureReferralPack(inviter, instance);
+        if (!instance.seenAt) {
+          if (creditStreakInstance(inviter, instance, new Date(now()).toISOString())) {
+            syncProgression(inviter, allCards, studioContent?.gameConfig?.progression, now());
+          }
+        }
         rewardInstance = instance;
-        if (failAfterGrant) throw new Error("DEBUG_REFERRAL_GRANT_FAIL");
-        if (typeof testHooks.beforeReferralCommit === "function") {
-          await testHooks.beforeReferralCommit({ inviter, invitee, instance });
+        if (!existing) {
+          if (failAfterGrant) throw new Error("DEBUG_REFERRAL_GRANT_FAIL");
+          if (typeof testHooks.beforeReferralCommit === "function") {
+            await testHooks.beforeReferralCommit({ inviter, invitee, instance });
+          }
         }
-        return "granted";
+        return existing ? "exists" : "granted";
       });
       if (granted !== "granted" && granted !== "exists") return granted;
       if (!invitee.referralRewardedAt) {
@@ -1129,6 +1128,21 @@ export async function createKalpiApp({
     if (outcome === "early") return { status: 409, body: { error: "REFERRAL_NOT_READY" } };
     if (outcome === "empty") return { status: 503, body: { error: "NO_ACTIVE_RELEASE" } };
     return { status: 200, body: responseBody };
+  }
+
+  function ensureReferralPack(session, instance) {
+    if (!instance) return;
+    const packId = `referral-${instance.instanceId}`;
+    session.packs ??= [];
+    if (session.packs.some((pack) => pack?.packId === packId)) return;
+    session.packs.push({
+      packId,
+      mode: "referral",
+      pulledAt: instance.pulledAt || new Date(now()).toISOString(),
+      nextDailyAt: null,
+      cards: [instance],
+    });
+    session.packs = session.packs.slice(-100);
   }
 
   function publicGameConfig() {

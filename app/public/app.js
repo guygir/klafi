@@ -4867,27 +4867,31 @@ function consumeDebugReferralFail() {
   }
 }
 
-async function revealReferralPack(cards, packId) {
-  const rip = playHomePackRip();
-  if (elements.profileDialog?.open) elements.profileDialog.close();
+async function playGrantedPackReveal({ cards, packId, mode, rip: shouldRip = true }) {
+  const rip = shouldRip ? playHomePackRip() : null;
   try {
-    await rip.finished;
+    if (rip) await rip.finished;
     await cardArtGate(cards);
     model.currentPack = {
-      packId: packId || `referral-${cards[0].instanceId}`,
-      mode: "referral",
+      packId: packId || `${mode}-${cards[0].instanceId}`,
+      mode,
       pulledAt: cards[0].pulledAt || new Date().toISOString(),
       cards,
     };
     model.currentCardIndex = 0;
     model.previewMode = false;
-    rip.release({ revealing: true });
+    if (rip) rip.release({ revealing: true });
     showView("pack");
     startWalkout();
   } catch (error) {
-    rip.release();
+    rip?.release();
     throw error;
   }
+}
+
+async function revealReferralPack(cards, packId) {
+  if (elements.profileDialog?.open) elements.profileDialog.close();
+  await playGrantedPackReveal({ cards, packId, mode: "referral" });
 }
 
 async function recoverReferralReward(code) {
@@ -6974,7 +6978,6 @@ async function openServerPrize({ body, reward, packId }) {
   homePackRipBusy = true;
   model.streakRewardOpening = true;
   const isPack = reward?.kind === "pack";
-  let rip = null;
   try {
     if (elements.streakDialog?.open) elements.streakDialog.close();
     // Loading popup first. The rip page is the reveal, not the wait.
@@ -6986,7 +6989,6 @@ async function openServerPrize({ body, reward, packId }) {
     });
     hideWait();
     if (pulled.already) {
-      rip?.release();
       if (pulled.state) setServerState(pulled.state, { merge: true });
       // Keep the table honest: reopen it painted from the server's answer (נלקח), and say so.
       if (pulled.state?.streakCalendar && model.serverState) model.serverState.streakCalendar = pulled.state.streakCalendar;
@@ -6999,25 +7001,14 @@ async function openServerPrize({ body, reward, packId }) {
     if (pulled.state) setServerState(pulled.state, { merge: true });
     if (elements.streakDialog?.open) elements.streakDialog.close();
     if (!model.catalog.length) await loadStaticCatalog();
-    if (isPack) {
-      rip = playHomePackRip();
-      await rip.finished;
-    }
-    await cardArtGate(pulled.cards);
-    model.currentPack = {
+    await playGrantedPackReveal({
+      cards: pulled.cards,
       packId: pulled.packId || packId,
       mode: "streak",
-      pulledAt: new Date().toISOString(),
-      cards: pulled.cards,
-    };
-    model.currentCardIndex = 0;
-    model.previewMode = false;
-    if (isPack) rip.release({ revealing: true });
-    showView("pack");
-    startWalkout();
+      rip: isPack,
+    });
   } catch (error) {
     hideWait();
-    rip?.release();
     const code = error?.body?.error || error?.message || "";
     const calendar = model.serverState?.streakCalendar;
     if (calendar && elements.streakDialog?.open) paintStreakCalendar(calendar);
