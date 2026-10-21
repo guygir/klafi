@@ -1,4 +1,4 @@
-/** Cards that actually moved in an accept, for the result dialog and owner notice. */
+/** Cards that actually moved in an accept. One function for every side combo. */
 
 function cleanIds(cardIds, fallback) {
   const list = Array.isArray(cardIds)
@@ -9,11 +9,6 @@ function cleanIds(cardIds, fallback) {
   return legacy ? [legacy] : [];
 }
 
-function orPick(mode, ids, acceptedId, pickId) {
-  if (mode === "or") return cleanIds([acceptedId || pickId], ids[0]);
-  return ids;
-}
-
 function mergeMoved(primary, fallback) {
   return {
     receivedCardIds: primary.receivedCardIds.length ? primary.receivedCardIds : fallback.receivedCardIds,
@@ -21,34 +16,74 @@ function mergeMoved(primary, fallback) {
   };
 }
 
-/** Accepter view: received = offered side that moved; given = wanted side that moved. */
-export function movedCardsFromTrade(trade, { offeredCardId = null, wantedCardId = null } = {}) {
-  const offered = cleanIds(trade?.offeredCardIds, trade?.offeredCardId);
-  const wanted = cleanIds(trade?.wantedCardIds, trade?.wantedCardId);
+/**
+ * Cards that move on one trade side. 1-card OR and 1-card AND are the same:
+ * the mode flag is ignored. OR with many cards uses the pick; AND with many
+ * uses every id. A side that has ids never returns empty.
+ */
+export function cardsMovedOnSide(side = {}, pickId = null) {
+  const ids = cleanIds(side.cardIds, side.cardId);
+  if (ids.length <= 1) return ids;
+  if (side.mode !== "or") return ids;
+  const chosen = String(side.acceptedCardId || pickId || "").trim();
+  if (chosen) return [chosen];
+  return [ids[0]];
+}
+
+function sideFromTrade(trade, which) {
+  if (which === "offered") {
+    return {
+      mode: trade?.offeredMode,
+      cardIds: trade?.offeredCardIds,
+      cardId: trade?.offeredCardId,
+      acceptedCardId: trade?.acceptedOfferedCardId,
+    };
+  }
   return {
-    receivedCardIds: orPick(trade?.offeredMode, offered, trade?.acceptedOfferedCardId, offeredCardId),
-    givenCardIds: orPick(trade?.wantedMode, wanted, trade?.acceptedWantedCardId, wantedCardId),
+    mode: trade?.wantedMode,
+    cardIds: trade?.wantedCardIds,
+    cardId: trade?.wantedCardId,
+    acceptedCardId: trade?.acceptedWantedCardId,
   };
 }
 
-/** Prefer explicit accept-payload arrays; fall back to the listed trade, then the pre-accept snapshot + pick. */
+/** Accepter view: received = offered side that moved; given = wanted side that moved. */
+export function movedCardsFromTrade(trade, { offeredCardId = null, wantedCardId = null } = {}) {
+  return {
+    receivedCardIds: cardsMovedOnSide(sideFromTrade(trade, "offered"), offeredCardId),
+    givenCardIds: cardsMovedOnSide(sideFromTrade(trade, "wanted"), wantedCardId),
+  };
+}
+
+/** Prefer explicit accept-payload arrays; else the same cardsMovedOnSide math on the trade / snapshot. */
 export function movedCardsFromAccept(result, pick = {}, snapshot = null) {
-  const received = cleanIds(result?.receivedCardIds);
-  const given = cleanIds(result?.givenCardIds);
-  const explicit = { receivedCardIds: received, givenCardIds: given };
+  const explicit = acceptDialogCards(result);
   if (explicit.receivedCardIds.length && explicit.givenCardIds.length) return explicit;
   const fromResult = mergeMoved(explicit, movedCardsFromTrade(result?.trade || result, pick));
   if (fromResult.receivedCardIds.length && fromResult.givenCardIds.length) return fromResult;
   return mergeMoved(fromResult, movedCardsFromTrade(snapshot, pick));
 }
 
-export function acceptMovedCardIds(verdict, { viewer = "accepter" } = {}) {
-  const offered = cleanIds(verdict?.offeredCardIds);
-  const wanted = cleanIds(verdict?.wantedCardIds);
-  return viewer === "owner"
+/**
+ * Verdict or accept payload → dialog ids. One mapping for store, handler, and client.
+ * Prefer explicit received/given (already the cards that moved). Otherwise the
+ * verdict's offered/wanted lists are the moved ids from cardsMovedOnSide.
+ */
+export function acceptDialogCards(source, { viewer = "accepter" } = {}) {
+  const explicitReceived = cleanIds(source?.receivedCardIds, source?.receivedCardId);
+  const explicitGiven = cleanIds(source?.givenCardIds, source?.givenCardId);
+  const offered = cleanIds(source?.offeredCardIds);
+  const wanted = cleanIds(source?.wantedCardIds);
+  const fromVerdict = viewer === "owner"
     ? { receivedCardIds: wanted, givenCardIds: offered }
     : { receivedCardIds: offered, givenCardIds: wanted };
+  return {
+    receivedCardIds: explicitReceived.length ? explicitReceived : fromVerdict.receivedCardIds,
+    givenCardIds: explicitGiven.length ? explicitGiven : fromVerdict.givenCardIds,
+  };
 }
+
+export const acceptMovedCardIds = acceptDialogCards;
 
 function catalogHas(catalog, cardId) {
   if (!catalog || !cardId) return false;

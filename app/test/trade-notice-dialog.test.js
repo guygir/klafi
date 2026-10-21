@@ -68,6 +68,39 @@ test("accepted-trade dialog never paints an empty קיבלתם/נתתם side", (
       pick: {},
       snapshot: null,
     },
+    {
+      name: "Guy OR/3 receive + 1-card AND give",
+      result: { receivedCardIds: [], givenCardIds: [], trade: { offeredCardIds: [], wantedCardIds: [] } },
+      pick: { offeredCardId: "B" },
+      snapshot: {
+        offeredMode: "or",
+        wantedMode: "and",
+        offeredCardIds: ["A", "B", "C"],
+        wantedCardIds: ["X"],
+      },
+    },
+    {
+      name: "Guy OR/3 receive + 1-card OR give",
+      result: { receivedCardIds: [], givenCardIds: [], trade: { offeredCardIds: [], wantedCardIds: [] } },
+      pick: { offeredCardId: "C" },
+      snapshot: {
+        offeredMode: "or",
+        wantedMode: "or",
+        offeredCardIds: ["A", "B", "C"],
+        wantedCardIds: ["X"],
+      },
+    },
+    {
+      name: "1-card OR equals 1-card AND",
+      result: { receivedCardIds: [], givenCardIds: [] },
+      pick: {},
+      snapshot: {
+        offeredMode: "or",
+        wantedMode: "or",
+        offeredCardIds: ["A"],
+        wantedCardIds: ["X"],
+      },
+    },
   ];
 
   for (const fixture of cases) {

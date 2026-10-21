@@ -1,3 +1,5 @@
+import { cardsMovedOnSide } from "../public/trade-result.js";
+
 /** Max cards per side of a trade (bundle or choice). */
 export const TRADE_SIDE_MAX = 3;
 
@@ -188,12 +190,21 @@ export function canAcceptTrade(trade, { owner, accepter, trades, at, regularCopy
   }
   const resolved = resolveAcceptCards(normalized, { offeredCardId, wantedCardId });
   if (!resolved.ok) return resolved;
-  const cardsToMoveOffered = normalized.offeredMode === TRADE_SIDE_MODES.AND
-    ? normalized.offeredCardIds
-    : [resolved.offeredCardId];
-  const cardsToMoveWanted = normalized.wantedMode === TRADE_SIDE_MODES.AND
-    ? normalized.wantedCardIds
-    : [resolved.wantedCardId];
+  const cardsToMoveOffered = cardsMovedOnSide({
+    mode: normalized.offeredMode,
+    cardIds: normalized.offeredCardIds,
+    cardId: normalized.offeredCardId,
+    acceptedCardId: resolved.offeredCardId,
+  }, resolved.offeredCardId);
+  const cardsToMoveWanted = cardsMovedOnSide({
+    mode: normalized.wantedMode,
+    cardIds: normalized.wantedCardIds,
+    cardId: normalized.wantedCardId,
+    acceptedCardId: resolved.wantedCardId,
+  }, resolved.wantedCardId);
+  if (!cardsToMoveOffered.length || !cardsToMoveWanted.length) {
+    return { ok: false, code: "EMPTY_SIDE", messageHe: TRADE_MESSAGES_HE.EMPTY_SIDE };
+  }
   for (const cardId of cardsToMoveOffered) {
     if (regularCopyCountFn(owner, cardId) < 1) {
       return { ok: false, code: "ACCEPT_OWNER_MISSING", messageHe: TRADE_MESSAGES_HE.ACCEPT_OWNER_MISSING, cardId };

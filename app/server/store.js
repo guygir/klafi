@@ -26,6 +26,7 @@ import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-bind
 import { newReferralCode, normalizeInviteCode } from "./referral.js";
 import { collectionStars, numberedHeldByCard } from "./stars.js";
 import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
+import { acceptDialogCards } from "../public/trade-result.js";
 import {
   TRADE_MESSAGES_HE,
   canAcceptTrade as canCompleteTrade,
@@ -605,12 +606,14 @@ export class JsonStore {
       accepter.tradeCount += 1;
       trade.acceptedOfferedCardId = verdict.acceptedOfferedCardId;
       trade.acceptedWantedCardId = verdict.acceptedWantedCardId;
+      const ownerMoved = acceptDialogCards(verdict, { viewer: "owner" });
+      const accepterMoved = acceptDialogCards(verdict);
       enqueueAcceptedTradeNotice(owner, trade, {
         acceptedAt,
         accepterName: accepter.displayName,
         ownerName: owner.displayName,
-        receivedCardIds: verdict.wantedCardIds,
-        givenCardIds: verdict.offeredCardIds,
+        receivedCardIds: ownerMoved.receivedCardIds,
+        givenCardIds: ownerMoved.givenCardIds,
       });
       bumpStateRevision(owner);
       bumpStateRevision(accepter);
@@ -621,8 +624,7 @@ export class JsonStore {
       await this.persist();
       return {
         ...trade,
-        receivedCardIds: [...verdict.offeredCardIds],
-        givenCardIds: [...verdict.wantedCardIds],
+        ...accepterMoved,
       };
     });
   }

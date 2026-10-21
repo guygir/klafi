@@ -147,10 +147,14 @@ function inventoryDelta(before, after) {
 
 const CASES = [
   { name: "1↔1 legacy", offeredMode: "and", offered: [0], wantedMode: "and", wanted: [1] },
+  { name: "1-card OR↔1-card AND", offeredMode: "or", offered: [0], wantedMode: "and", wanted: [1] },
+  { name: "1-card OR↔1-card OR", offeredMode: "or", offered: [0], wantedMode: "or", wanted: [1] },
   { name: "AND/AND", offeredMode: "and", offered: [0, 1], wantedMode: "and", wanted: [2, 3] },
   { name: "OR/OR", offeredMode: "or", offered: [0, 1, 2], wantedMode: "or", wanted: [3, 4, 5], pick: { offered: 2, wanted: 4 } },
   { name: "AND/OR", offeredMode: "and", offered: [0, 1], wantedMode: "or", wanted: [2, 3, 4], pick: { wanted: 4 } },
   { name: "OR/AND", offeredMode: "or", offered: [0, 1, 2], wantedMode: "and", wanted: [3, 4], pick: { offered: 1 } },
+  { name: "Guy OR3↔1 AND", offeredMode: "or", offered: [0, 1, 2], wantedMode: "and", wanted: [3], pick: { offered: 1 } },
+  { name: "Guy OR3↔1 OR", offeredMode: "or", offered: [0, 1, 2], wantedMode: "or", wanted: [3], pick: { offered: 2 } },
   { name: "2-for-3", offeredMode: "and", offered: [0, 1], wantedMode: "and", wanted: [2, 3, 4] },
   { name: "3-for-3", offeredMode: "and", offered: [0, 1, 2], wantedMode: "and", wanted: [3, 4, 5] },
 ];
@@ -295,6 +299,7 @@ test("slim community never accepts; production fat handler keeps the accept rewr
   const app = await readFile(path.resolve(here, "../server/app.js"), "utf8");
   assert.doesNotMatch(slim, /\/accept/);
   assert.match(vercel, /__kalpi_path/);
-  assert.match(app, /movedCardsFromAccept\(trade, pick, currentTrade \|\| listed \|\| trade\)/);
+  assert.match(app, /acceptDialogCards\(trade\)/);
   assert.doesNotMatch(app, /trade: listed \|\| trade/);
+  assert.doesNotMatch(app, /movedCardsFromAccept\(trade,/);
 });

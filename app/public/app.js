@@ -19,7 +19,7 @@ import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
-import { movedCardsFromAccept, tradeNoticeFallbackThumb } from "./trade-result.js";
+import { acceptDialogCards, movedCardsFromAccept, tradeNoticeFallbackThumb } from "./trade-result.js";
 import { offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
 import {
   TRADE_SIDE_MAX,
@@ -7069,18 +7069,13 @@ function paintTradeNoticeThumb(node, cardId, { warnLastCopy = false } = {}) {
   paintTradeNoticeThumbs(node, [cardId], { warnLastCopy });
 }
 
-function showAcceptedTradeNotice({
-  otherName,
-  receivedCardId,
-  givenCardId,
-  receivedCardIds = null,
-  givenCardIds = null,
-  noticeId = "",
-}) {
+function showAcceptedTradeNotice(input = {}) {
   const dialog = elements.tradeNoticeDialog;
   if (!dialog) return;
-  const received = (Array.isArray(receivedCardIds) && receivedCardIds.length ? receivedCardIds : [receivedCardId]).filter(Boolean);
-  const given = (Array.isArray(givenCardIds) && givenCardIds.length ? givenCardIds : [givenCardId]).filter(Boolean);
+  const { otherName, noticeId = "" } = input;
+  const moved = acceptDialogCards(input);
+  const received = moved.receivedCardIds;
+  const given = moved.givenCardIds;
   noteCardsOpened(received.map((cardId) => ({ cardId })));
   const lines = tradeApprovedLines({
     otherName,
@@ -7129,13 +7124,8 @@ function maybeShowTradeNotice() {
   if (playerDialogOpen()) return;
   const notice = pendingTradeNotices()[0];
   if (!notice) return;
-  const received = (Array.isArray(notice.receivedCardIds) && notice.receivedCardIds.length
-    ? notice.receivedCardIds
-    : [notice.receivedCardId]).filter(Boolean);
-  const given = (Array.isArray(notice.givenCardIds) && notice.givenCardIds.length
-    ? notice.givenCardIds
-    : [notice.givenCardId]).filter(Boolean);
-  if ((received.length || given.length) && !catalogReady() && !model.tradeNoticeCatalogWait) {
+  const moved = acceptDialogCards(notice);
+  if ((moved.receivedCardIds.length || moved.givenCardIds.length) && !catalogReady() && !model.tradeNoticeCatalogWait) {
     model.tradeNoticeCatalogWait = true;
     loadStaticCatalog().catch(() => null).finally(() => {
       model.tradeNoticeCatalogWait = false;
@@ -7145,10 +7135,7 @@ function maybeShowTradeNotice() {
   }
   showAcceptedTradeNotice({
     otherName: notice.accepterName,
-    receivedCardId: notice.receivedCardId,
-    givenCardId: notice.givenCardId,
-    receivedCardIds: notice.receivedCardIds,
-    givenCardIds: notice.givenCardIds,
+    ...moved,
     noticeId: notice.id,
   });
 }

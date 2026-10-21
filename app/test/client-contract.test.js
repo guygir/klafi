@@ -511,6 +511,8 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /function showAcceptedTradeNotice/);
   assert.match(javascript, /from "\.\/trade-result\.js"/);
   assert.match(javascript, /movedCardsFromAccept\(result, pick, snapshot\)/);
+  assert.match(javascript, /acceptDialogCards\(input\)/);
+  assert.match(javascript, /acceptDialogCards\(notice\)/);
   assert.match(javascript, /function snapshotTradeForAccept/);
   assert.match(javascript, /tradeNoticeFallbackThumb\(cardId\)/);
   assert.match(javascript, /noteCardsOpened\(received\.map\(\(cardId\) => \(\{ cardId \}\)\)\)/);

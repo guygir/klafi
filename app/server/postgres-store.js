@@ -30,6 +30,7 @@ import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-bind
 import { newReferralCode, normalizeInviteCode } from "./referral.js";
 import { collectionStars } from "./stars.js";
 import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
+import { acceptDialogCards } from "../public/trade-result.js";
 import {
   TRADE_MESSAGES_HE,
   canAcceptTrade as canCompleteTrade,
@@ -1204,12 +1205,14 @@ export class PostgresStore {
       accepter.tradeCount += 1;
       trade.acceptedOfferedCardId = verdict.acceptedOfferedCardId;
       trade.acceptedWantedCardId = verdict.acceptedWantedCardId;
+      const ownerMoved = acceptDialogCards(verdict, { viewer: "owner" });
+      const accepterMoved = acceptDialogCards(verdict);
       enqueueAcceptedTradeNotice(owner, trade, {
         acceptedAt,
         accepterName: accepter.displayName,
         ownerName: owner.displayName,
-        receivedCardIds: verdict.wantedCardIds,
-        givenCardIds: verdict.offeredCardIds,
+        receivedCardIds: ownerMoved.receivedCardIds,
+        givenCardIds: ownerMoved.givenCardIds,
       });
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
@@ -1225,8 +1228,7 @@ export class PostgresStore {
       );
       return {
         ...trade,
-        receivedCardIds: [...verdict.offeredCardIds],
-        givenCardIds: [...verdict.wantedCardIds],
+        ...accepterMoved,
       };
     });
   }

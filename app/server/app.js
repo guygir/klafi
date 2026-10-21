@@ -67,7 +67,7 @@ import {
 } from "./achievements.js";
 import { normalizePublicBinderSlug, publicBinderView } from "./public-binder.js";
 import { ackTradeNotices, publicTradeNotices } from "./trade-notices.js";
-import { movedCardsFromAccept } from "../public/trade-result.js";
+import { acceptDialogCards } from "../public/trade-result.js";
 import { PARTY_BALLOTS } from "../public/avatar-ballot.js";
 import { normalizeNumberedCopiesByRarity } from "../public/numbered-copies.js";
 import { acquiredAtByCard, lastAcquiredAtByCard } from "../public/binder-order.js";
@@ -2520,14 +2520,11 @@ export async function createKalpiApp({
             return;
           }
           const trades = await store.listTrades(token);
-          const listed = trades.find(({ tradeId }) => tradeId === tradeAccept[1]);
-          const pick = { offeredCardId: input.offeredCardId || null, wantedCardId: input.wantedCardId || null };
-          const moved = movedCardsFromAccept(trade, pick, currentTrade || listed || trade);
+          const moved = acceptDialogCards(trade);
           const acceptedTrade = {
             ...(currentTrade || {}),
             ...trade,
-            receivedCardIds: moved.receivedCardIds,
-            givenCardIds: moved.givenCardIds,
+            ...moved,
           };
           json(response, 200, {
             trade: acceptedTrade,
