@@ -19,7 +19,7 @@ import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
-import { acceptDialogCards, movedCardsFromAccept, tradeNoticeFallbackThumb } from "./trade-result.js";
+import { acceptDialogCards, movedCardsFromAccept, movedCardsFromNotice, tradeNoticeFallbackThumb } from "./trade-result.js";
 import { offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
 import {
   TRADE_SIDE_MAX,
@@ -113,6 +113,9 @@ const model = {
   specials: { sets: [] },
   events: [],
   catalog: [],
+  catalogById: new Map(),
+  catalogIds: new Set(),
+  fullCatalog: false,
   byId: new Map(),
   serverState: null,
   currentPack: null,
@@ -667,12 +670,13 @@ function captureStudioSecret() {
 }
 
 async function request(path, options = {}) {
+  const { skipCatalog = false, ...fetchOptions } = options;
   const response = await fetch(path, {
-    ...options,
+    ...fetchOptions,
     headers: {
       ...(model.token ? { authorization: `Bearer ${model.token}` } : {}),
       ...(studioSecret() ? { "x-kalpi-studio": studioSecret() } : {}),
-      ...options.headers,
+      ...fetchOptions.headers,
     },
   });
   const body = await response.json();
@@ -682,7 +686,7 @@ async function request(path, options = {}) {
     error.body = body;
     throw error;
   }
-  await ensureCatalogKnows(body);
+  if (!skipCatalog) await ensureCatalogKnows(body);
   return body;
 }
 
@@ -737,7 +741,7 @@ async function reloadStaticCatalog() {
   const response = await fetch(`/catalog.json?v=${STATIC_DATA_VERSION}`, { cache: "reload" });
   if (!response.ok) throw new Error("CATALOG_MISSING");
   const payload = await response.json();
-  applyCatalog(payload.cards || payload);
+  applyCatalog(payload.allCards || payload.cards || payload);
   catalogFailed = false;
   if (model.showcase) return;
   renderProfile();
@@ -1136,12 +1140,17 @@ async function loadShell() {
   applyVisualConfig();
 }
 
-function applyCatalog(cards) {
+function applyCatalog(cards, { source = "static" } = {}) {
   if (!cards?.length) return;
-  model.catalogIds = new Set(cards.map((card) => card?.id).filter(Boolean));
-  const visible = cards.filter((card) => isLiveReleaseSet(card.releaseSetId));
+  model.catalogById ??= new Map();
+  for (const card of cards) {
+    if (card?.id) model.catalogById.set(card.id, card);
+  }
+  model.catalogIds = new Set(model.catalogById.keys());
+  const visible = [...model.catalogById.values()].filter((card) => isLiveReleaseSet(card.releaseSetId));
   model.catalog = visible;
   model.byId = new Map(visible.map((card) => [card.id, card]));
+  if (source === "static") model.fullCatalog = true;
   renderSiteCardPeeks();
 }
 
@@ -1175,7 +1184,7 @@ function applyFullBoot(boot) {
   model.idleQueue = boot.idleReturn.cards || [];
   if (Array.isArray(boot.trades)) setTrades(boot.trades);
   model.events = boot.events || [];
-  applyCatalog(cards);
+  applyCatalog(cards, { source: "live" });
   populateRevealTimingInputs();
   populateLevelIncrements();
   populateStudioMeta();
@@ -1252,7 +1261,7 @@ function setEmptyNote(element, copy, { pending = false, failed = false, hidden =
 }
 
 async function loadStaticCatalog() {
-  if (model.catalog.length) return model;
+  if (model.fullCatalog && model.catalog.length) return model;
   if (!catalogHydrate) {
     const warmedCatalog = window.__kalpiWarmup?.catalog;
     if (window.__kalpiWarmup) window.__kalpiWarmup.catalog = null;
@@ -1261,7 +1270,7 @@ async function loadStaticCatalog() {
       return response.json();
     })).then((payload) => {
       catalogFailed = false;
-      applyCatalog(payload.cards || payload);
+      applyCatalog(payload.allCards || payload.cards || payload);
       prefetchIdleAssets();
       if (model.showcase) {
         renderShowcaseBinder();
@@ -1688,11 +1697,11 @@ async function hydrateLookOnlyCatalog() {
   try {
     const live = await request("/api/catalog");
     const liveCards = (live.cards || []).filter((card) => isLiveReleaseSet(card.releaseSetId));
-    if (!model.catalog.length) applyCatalog(liveCards);
+    if (!model.catalog.length) applyCatalog(liveCards, { source: "live" });
     else {
       mergeLiveCatalogFields(liveCards);
       const extras = liveCards.filter((card) => !model.byId.has(card.id));
-      if (extras.length) applyCatalog([...model.catalog, ...extras]);
+      if (extras.length) applyCatalog([...model.catalog, ...extras], { source: "live" });
     }
   } catch {
     /* Static catalog.json stays until the live list slots arrive. */
@@ -6425,7 +6434,10 @@ function concealRenderedTradeThumbs(root) {
 function tradeHasCards(trade) {
   const offered = offeredCardIds(trade);
   const wanted = wantedCardIds(trade);
-  return offered.length && wanted.length && offered.every((id) => model.byId.has(id)) && wanted.every((id) => model.byId.has(id));
+  if (!offered.length || !wanted.length) return false;
+  if (!model.fullCatalog && !model.catalog?.length) return true;
+  const known = (id) => Boolean(noticeCard(id) || model.catalogIds?.has(id));
+  return offered.every(known) && wanted.every(known);
 }
 
 function tradeComposeSide(sideKey) {
@@ -6538,7 +6550,7 @@ function tradeSideCardsMarkup(trade, sideKey, role, { canPick = false } = {}) {
   const pick = pickable ? tradeAcceptPick(trade.tradeId) : null;
   const pickKey = sideKey === "offered" ? "offeredCardId" : "wantedCardId";
   const slots = ids.filter(Boolean).slice(0, TRADE_SIDE_MAX).map((cardId) => {
-    const card = model.byId.get(cardId);
+    const card = noticeCard(cardId) || model.byId.get(cardId);
     const conceal = Boolean(card) && tradeCardUnowned(cardId);
     const selected = Boolean(pick && pick[pickKey] === cardId);
     const pickBlocked = pickable && !tradeRailPickEnabled(trade, sideKey, cardId);
@@ -6548,7 +6560,7 @@ function tradeSideCardsMarkup(trade, sideKey, role, { canPick = false } = {}) {
     const title = card ? cardTitle(card) : cardId;
     return `<div class="trade-rail-slot">
       <button type="button" class="trade-thumb trade-stack-chip${conceal ? " is-concealed" : ""}${selected ? " is-picked" : ""}${pickBlocked ? " is-pick-disabled" : ""}" data-trade-choice-card="${escapeHtml(cardId)}"${pickAttr} aria-label="${escapeHtml(title)}">
-        ${card ? tradeThumbMarkup(card, { warnLastCopy: role === "give" }) : ""}
+        ${card ? tradeThumbMarkup(card, { warnLastCopy: role === "give" }) : tradeNoticeFallbackThumb(cardId)}
       </button>
     </div>`;
   }).join("");
@@ -6767,7 +6779,7 @@ function applyTradeResult(result) {
   watchOpenTrade();
   renderBinder();
   renderGrowth();
-  maybeShowTradeNotice();
+  if (!model.acceptingTrade) maybeShowTradeNotice();
 }
 
 function tipsOverlayOpen() {
@@ -7061,8 +7073,16 @@ function pendingTradeNotices() {
   return [...(model.serverState?.pendingTradeNotices || [])].filter((notice) => notice?.id);
 }
 
+function noticeCard(cardId) {
+  try {
+    return model.catalogById?.get(cardId) || model.byId.get(cardId) || null;
+  } catch {
+    return null;
+  }
+}
+
 function cardTitleHe(cardId) {
-  return model.byId.get(cardId)?.titleHe || "";
+  return noticeCard(cardId)?.titleHe || "";
 }
 
 function paintTradeNoticeThumb(node, cardId, { warnLastCopy = false } = {}) {
@@ -7070,26 +7090,34 @@ function paintTradeNoticeThumb(node, cardId, { warnLastCopy = false } = {}) {
 }
 
 function showAcceptedTradeNotice(input = {}) {
-  const dialog = elements.tradeNoticeDialog;
-  if (!dialog) return;
-  const { otherName, noticeId = "" } = input;
-  const moved = acceptDialogCards(input);
-  const received = moved.receivedCardIds;
-  const given = moved.givenCardIds;
-  noteCardsOpened(received.map((cardId) => ({ cardId })));
-  const lines = tradeApprovedLines({
-    otherName,
-    receivedTitle: cardTitleHe(received[0]),
-    givenTitle: cardTitleHe(given[0]),
-  });
-  if (elements.tradeNoticeTitle) elements.tradeNoticeTitle.textContent = lines.title;
-  if (elements.tradeNoticeCopy) elements.tradeNoticeCopy.textContent = lines.who;
-  paintTradeNoticeThumbs(elements.tradeNoticeReceived, received);
-  paintTradeNoticeThumbs(elements.tradeNoticeGiven, given, { warnLastCopy: true });
-  dialog.dataset.noticeId = noticeId || "";
-  dialog.dataset.receivedCardId = received[0] || "";
-  dialog.dataset.givenCardId = given[0] || "";
-  if (!dialog.open) dialog.showModal();
+  try {
+    const dialog = elements.tradeNoticeDialog;
+    if (!dialog) return;
+    const { otherName, noticeId = "" } = input;
+    const moved = acceptDialogCards(input);
+    const received = moved.receivedCardIds;
+    const given = moved.givenCardIds;
+    try {
+      noteCardsOpened(received.map((cardId) => ({ cardId })));
+    } catch {
+      /* Display-only. */
+    }
+    const lines = tradeApprovedLines({
+      otherName,
+      receivedTitle: cardTitleHe(received[0]),
+      givenTitle: cardTitleHe(given[0]),
+    });
+    if (elements.tradeNoticeTitle) elements.tradeNoticeTitle.textContent = lines.title;
+    if (elements.tradeNoticeCopy) elements.tradeNoticeCopy.textContent = lines.who;
+    paintTradeNoticeThumbs(elements.tradeNoticeReceived, received);
+    paintTradeNoticeThumbs(elements.tradeNoticeGiven, given, { warnLastCopy: true });
+    dialog.dataset.noticeId = noticeId || "";
+    dialog.dataset.receivedCardId = received[0] || "";
+    dialog.dataset.givenCardId = given[0] || "";
+    if (!dialog.open) dialog.showModal();
+  } catch {
+    /* Dialog paint is best-effort. The trade already went through. */
+  }
 }
 
 function paintTradeNoticeThumbs(node, cardIds, { warnLastCopy = false } = {}) {
@@ -7101,16 +7129,29 @@ function paintTradeNoticeThumbs(node, cardIds, { warnLastCopy = false } = {}) {
   const side = node.closest(".trade-side");
   if (side) side.hidden = !ids.length;
   node.innerHTML = ids.map((cardId) => {
-    const card = model.byId.get(cardId);
-    return card
-      ? `<div class="trade-thumb" data-card-id="${escapeHtml(cardId)}">${tradeThumbMarkup(card, { warnLastCopy })}</div>`
-      : tradeNoticeFallbackThumb(cardId);
+    let card = null;
+    try {
+      card = noticeCard(cardId);
+    } catch {
+      card = null;
+    }
+    try {
+      return card
+        ? `<div class="trade-thumb" data-card-id="${escapeHtml(cardId)}">${tradeThumbMarkup(card, { warnLastCopy })}</div>`
+        : tradeNoticeFallbackThumb(cardId);
+    } catch {
+      return tradeNoticeFallbackThumb(cardId);
+    }
   }).join("");
-  if (ids.some((cardId) => !model.byId.get(cardId)) && !node.dataset.noticeCatalogTried) {
+  if (ids.some((cardId) => !noticeCard(cardId)) && !node.dataset.noticeCatalogTried) {
     node.dataset.noticeCatalogTried = "1";
     loadStaticCatalog().catch(() => reloadStaticCatalog()).catch(() => null).finally(() => {
       if (!node.isConnected) return;
-      paintTradeNoticeThumbs(node, ids, { warnLastCopy });
+      try {
+        paintTradeNoticeThumbs(node, ids, { warnLastCopy });
+      } catch {
+        /* Keep the fallback thumbs already painted. */
+      }
     });
   }
   if (ids.length) queueCardTextFit(node);
@@ -7124,20 +7165,20 @@ function maybeShowTradeNotice() {
   if (playerDialogOpen()) return;
   const notice = pendingTradeNotices()[0];
   if (!notice) return;
-  const moved = acceptDialogCards(notice);
-  if ((moved.receivedCardIds.length || moved.givenCardIds.length) && !catalogReady() && !model.tradeNoticeCatalogWait) {
-    model.tradeNoticeCatalogWait = true;
-    loadStaticCatalog().catch(() => null).finally(() => {
-      model.tradeNoticeCatalogWait = false;
-      maybeShowTradeNotice();
+  const listed = (model.trades || []).find((row) => row.tradeId === notice.tradeId) || null;
+  const moved = movedCardsFromNotice(notice, listed);
+  try {
+    showAcceptedTradeNotice({
+      otherName: notice.accepterName,
+      ...moved,
+      noticeId: notice.id,
     });
-    return;
+  } catch {
+    /* Creator notice is display-only. */
   }
-  showAcceptedTradeNotice({
-    otherName: notice.accepterName,
-    ...moved,
-    noticeId: notice.id,
-  });
+  if ((moved.receivedCardIds.length || moved.givenCardIds.length) && !model.fullCatalog) {
+    loadStaticCatalog().catch(() => null);
+  }
 }
 
 async function dismissTradeNotice() {
@@ -8683,10 +8724,12 @@ async function acceptTradeOffer(tradeId) {
   const pick = tradeAcceptPick(tradeId);
   model.acceptingTrade = true;
   showWait("מאשרים…");
+  let result;
   try {
-    const result = await request(`/api/trades/${encodeURIComponent(tradeId)}/accept`, {
+    result = await request(`/api/trades/${encodeURIComponent(tradeId)}/accept`, {
       method: "POST",
       headers: { "content-type": "application/json" },
+      skipCatalog: true,
       body: JSON.stringify({
         offeredCardId: pick.offeredCardId
           || (trade && !sideNeedsPick(trade.offeredMode, offeredCardIds(trade)) ? offeredCardIds(trade)[0] : undefined),
@@ -8694,8 +8737,26 @@ async function acceptTradeOffer(tradeId) {
           || (trade && !sideNeedsPick(trade.wantedMode, wantedCardIds(trade)) ? wantedCardIds(trade)[0] : undefined),
       }),
     });
-    applyTradeResult(result);
+  } catch (error) {
+    showToast(error.body?.messageHe || "ההצעה כבר לא זמינה או שחסר לכם הקלף.");
     hideWait();
+    model.acceptingTrade = false;
+    return;
+  }
+  hideWait();
+  model.acceptingTrade = false;
+  try {
+    applyTradeResult(result);
+  } catch {
+    try {
+      if (result?.state) setServerState(result.state, { merge: true });
+      if (result?.trades) setTrades(result.trades.trades || result.trades);
+    } catch {
+      /* Server already accepted. Keep going so the board does not look open. */
+    }
+  }
+  try {
+    ensureCatalogKnows(result).catch(() => null);
     let moved = movedCardsFromAccept(result, pick, snapshot);
     if (!moved.receivedCardIds.length || !moved.givenCardIds.length) {
       moved = await refillMovedFromListedTrade(tradeId, pick, snapshot, moved);
@@ -8707,13 +8768,10 @@ async function acceptTradeOffer(tradeId) {
       receivedCardIds: moved.receivedCardIds,
       givenCardIds: moved.givenCardIds,
     });
-    delete model.tradeAcceptPick[tradeId];
-  } catch (error) {
-    showToast(error.body?.messageHe || "ההצעה כבר לא זמינה או שחסר לכם הקלף.");
-  } finally {
-    hideWait();
-    model.acceptingTrade = false;
+  } catch {
+    /* Visuals only. The accept and inventory transfer already committed. */
   }
+  delete model.tradeAcceptPick[tradeId];
 }
 
 function hiddenTradeStorageKey() {

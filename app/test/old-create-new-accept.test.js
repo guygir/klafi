@@ -249,26 +249,21 @@ test("old-create a1fb4db / new-accept current: OR/3 ↔ 1 through api/ routing",
     const pgAccepter = (await api(pgRunning.base, "/api/session", { method: "POST" })).body.token;
     await unlockMany(pgRunning.base, pgOwner, offered);
     await unlockMany(pgRunning.base, pgAccepter, wanted);
-    const pgId = `old-shape-${wantedMode}-${Date.now()}`;
-    await db.query(
-      `INSERT INTO kalpi_trades (
-         trade_id, owner_token, offered_card_id, wanted_card_id, status, created_at, expires_at,
-         offered_mode, wanted_mode, offered_card_ids, wanted_card_ids
-       ) VALUES ($1,$2,$3,$4,'open',$5,$6,$7,$8,$9::jsonb,$10::jsonb)`,
-      [
-        pgId,
-        pgOwner,
-        offered[0],
-        wanted[0],
-        new Date(clock.value).toISOString(),
-        new Date(clock.value + 86_400_000).toISOString(),
-        "or",
-        wantedMode,
-        JSON.stringify(offered),
-        JSON.stringify(wanted),
-      ],
-    );
-    const pgAccepted = await api(pgRunning.base, `/api/trades/${pgId}/accept`, {
+    const { PostgresStore: OldPg } = await import(pathToFileURL(path.join(pre170, "app/server/postgres-store.js")).href);
+    const oldPg = new OldPg("postgres://qa@127.0.0.1:1/none", {
+      now: () => clock.value,
+      numberedRandom: () => 0.99,
+    });
+    oldPg.pool = pglitePool(db);
+    const oldCreated = await oldPg.createTrade({
+      sessionToken: pgOwner,
+      offered: { mode: "or", cardIds: offered },
+      wanted: { mode: wantedMode, cardIds: wanted },
+      createdAt: new Date(clock.value).toISOString(),
+      expiresAt: new Date(clock.value + 86_400_000).toISOString(),
+    });
+    assert.ok(oldCreated?.tradeId, `pglite ${wantedMode} old createTrade`);
+    const pgAccepted = await api(pgRunning.base, `/api/trades/${oldCreated.tradeId}/accept`, {
       token: pgAccepter,
       method: "POST",
       body: { offeredCardId: pick },

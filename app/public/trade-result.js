@@ -63,12 +63,13 @@ function sideFromTrade(trade, which) {
   };
 }
 
-/** Accepter view: received = offered side that moved; given = wanted side that moved. */
-export function movedCardsFromTrade(trade, { offeredCardId = null, wantedCardId = null } = {}) {
-  return {
-    receivedCardIds: cardsMovedOnSide(sideFromTrade(trade, "offered"), offeredCardId),
-    givenCardIds: cardsMovedOnSide(sideFromTrade(trade, "wanted"), wantedCardId),
-  };
+/** Cards that moved. Accepter received the offered side; owner received the wanted side. */
+export function movedCardsFromTrade(trade, { offeredCardId = null, wantedCardId = null, viewer = "accepter" } = {}) {
+  const received = cardsMovedOnSide(sideFromTrade(trade, "offered"), offeredCardId);
+  const given = cardsMovedOnSide(sideFromTrade(trade, "wanted"), wantedCardId);
+  return viewer === "owner"
+    ? { receivedCardIds: given, givenCardIds: received }
+    : { receivedCardIds: received, givenCardIds: given };
 }
 
 /** Prefer explicit accept-payload arrays; else the same cardsMovedOnSide math on the trade / snapshot. */
@@ -86,26 +87,41 @@ export function movedCardsFromAccept(result, pick = {}, snapshot = null) {
  * verdict's offered/wanted lists are the moved ids from cardsMovedOnSide.
  */
 export function acceptDialogCards(source, { viewer = "accepter" } = {}) {
-  const explicitReceived = cleanIds(source?.receivedCardIds, source?.receivedCardId);
-  const explicitGiven = cleanIds(source?.givenCardIds, source?.givenCardId);
-  const offered = cleanIds(source?.offeredCardIds);
-  const wanted = cleanIds(source?.wantedCardIds);
-  const fromVerdict = viewer === "owner"
-    ? { receivedCardIds: wanted, givenCardIds: offered }
-    : { receivedCardIds: offered, givenCardIds: wanted };
-  return {
-    receivedCardIds: explicitReceived.length ? explicitReceived : fromVerdict.receivedCardIds,
-    givenCardIds: explicitGiven.length ? explicitGiven : fromVerdict.givenCardIds,
-  };
+  try {
+    const explicitReceived = cleanIds(source?.receivedCardIds, source?.receivedCardId);
+    const explicitGiven = cleanIds(source?.givenCardIds, source?.givenCardId);
+    const offered = cleanIds(source?.offeredCardIds);
+    const wanted = cleanIds(source?.wantedCardIds);
+    const fromVerdict = viewer === "owner"
+      ? { receivedCardIds: wanted, givenCardIds: offered }
+      : { receivedCardIds: offered, givenCardIds: wanted };
+    return {
+      receivedCardIds: explicitReceived.length ? explicitReceived : fromVerdict.receivedCardIds,
+      givenCardIds: explicitGiven.length ? explicitGiven : fromVerdict.givenCardIds,
+    };
+  } catch {
+    return { receivedCardIds: [], givenCardIds: [] };
+  }
+}
+
+/** Creator-side notice: owner received the wanted cards and gave the offered cards. */
+export function movedCardsFromNotice(notice, trade = null) {
+  const explicit = acceptDialogCards(notice, { viewer: "owner" });
+  if (explicit.receivedCardIds.length && explicit.givenCardIds.length) return explicit;
+  return mergeMoved(explicit, movedCardsFromTrade(trade, { viewer: "owner" }));
 }
 
 export const acceptMovedCardIds = acceptDialogCards;
 
 function catalogHas(catalog, cardId) {
-  if (!catalog || !cardId) return false;
-  if (typeof catalog.has === "function") return catalog.has(cardId);
-  if (typeof catalog.get === "function") return Boolean(catalog.get(cardId));
-  return Boolean(catalog[cardId]);
+  try {
+    if (!catalog || !cardId) return false;
+    if (typeof catalog.has === "function") return catalog.has(cardId);
+    if (typeof catalog.get === "function") return Boolean(catalog.get(cardId));
+    return Boolean(catalog[cardId]);
+  } catch {
+    return false;
+  }
 }
 
 /** One dialog side: hidden only when there are no ids. A missing catalog card is still a filled thumb. */

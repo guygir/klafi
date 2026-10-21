@@ -40,7 +40,7 @@ test("a changed catalog card list ships with a new STATIC_DATA_VERSION", async (
 
 test("a stale cached catalog is reloaded past the HTTP cache when the server sends an unknown card", async () => {
   const app = await readFile(path.join(appRoot, "public/app.js"), "utf8");
-  assert.match(app, /await ensureCatalogKnows\(body\);\n  return body;/, "every request() response is checked for unknown cards");
+  assert.match(app, /if \(!skipCatalog\) await ensureCatalogKnows\(body\);\n  return body;/, "request() still hydrates the catalog except for accept, which commits first");
   assert.match(app, /fetch\(`\/catalog\.json\?v=\$\{STATIC_DATA_VERSION\}`, \{ cache: "reload" \}\)/);
-  assert.match(app, /model\.catalogIds = new Set\(cards\.map/);
+  assert.match(app, /model\.catalogIds = new Set\(model\.catalogById\.keys\(\)\)/);
 });

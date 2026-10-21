@@ -2519,19 +2519,37 @@ export async function createKalpiApp({
             });
             return;
           }
-          const trades = await store.listTrades(token);
-          const moved = acceptDialogCards(trade);
-          const acceptedTrade = {
-            ...(currentTrade || {}),
-            ...trade,
-            ...moved,
-          };
+          let moved = { receivedCardIds: [], givenCardIds: [] };
+          try {
+            moved = acceptDialogCards(trade);
+          } catch {
+            moved = {
+              receivedCardIds: Array.isArray(trade.receivedCardIds) ? trade.receivedCardIds : [],
+              givenCardIds: Array.isArray(trade.givenCardIds) ? trade.givenCardIds : [],
+            };
+          }
+          let trades = [];
+          let state = null;
+          try {
+            trades = await store.listTrades(token);
+          } catch {
+            /* Display-only. The accept already transferred cards. */
+          }
+          try {
+            state = await stateForToken(token);
+          } catch {
+            /* Display-only. The accept already transferred cards. */
+          }
           json(response, 200, {
-            trade: acceptedTrade,
+            trade: {
+              ...(currentTrade || {}),
+              ...trade,
+              ...moved,
+            },
             receivedCardIds: moved.receivedCardIds,
             givenCardIds: moved.givenCardIds,
             trades,
-            state: await stateForToken(token),
+            state,
             simulated: false,
           });
           return;

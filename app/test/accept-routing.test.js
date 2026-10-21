@@ -273,6 +273,51 @@ async function runMatrix(t, label, setup) {
   });
 }
 
+test("accept still transfers inventory when owner notice enqueue throws", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-accept-notice-throw-"));
+  const clock = { value: Date.parse("2026-10-21T12:00:00.000Z") };
+  const store = new JsonStore(path.join(dataDir, "state.json"), { now: () => clock.value, numberedRandom: () => 0.99 });
+  const running = await startVercelLike(dataDir, clock, { store });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const cards = (await api(running.base, "/api/catalog")).body.cards.filter(({ eventOnly }) => !eventOnly);
+  const offered = [cards[0].id];
+  const wanted = [cards[1].id];
+  const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const accepter = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await unlockMany(running.base, owner, offered);
+  await unlockMany(running.base, accepter, wanted);
+  const created = await api(running.base, "/api/trades", {
+    token: owner,
+    method: "POST",
+    body: { offered: { mode: "and", cardIds: offered }, wanted: { mode: "and", cardIds: wanted } },
+  });
+  assert.equal(created.status, 201);
+  const ownerSession = store.getSession(owner);
+  Object.defineProperty(ownerSession, "pendingTradeNotices", {
+    configurable: true,
+    enumerable: true,
+    get() { return this.__brokenNotices || []; },
+    set() { throw new Error("dialog / catalog boom"); },
+  });
+  const beforeAccepter = inventoryOf((await api(running.base, "/api/state", { token: accepter })).body);
+  const beforeOwner = inventoryOf((await api(running.base, "/api/state", { token: owner })).body);
+  clock.value += 60_000;
+  const accepted = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+    token: accepter,
+    method: "POST",
+  });
+  assert.equal(accepted.status, 200, `accept must succeed when notice throws ${JSON.stringify(accepted.body)}`);
+  assert.notEqual(accepted.body?.error, "TRADE_NOT_ACCEPTABLE");
+  const afterAccepter = inventoryOf(accepted.body.state || (await api(running.base, "/api/state", { token: accepter })).body);
+  const afterOwner = inventoryOf((await api(running.base, "/api/state", { token: owner })).body);
+  assert.deepEqual(inventoryDelta(beforeAccepter, afterAccepter), { gained: offered, lost: wanted });
+  assert.deepEqual(inventoryDelta(beforeOwner, afterOwner), { gained: wanted, lost: offered });
+  assert.equal(store.state.trades.find((row) => row.tradeId === created.body.trade.tradeId)?.status, "accepted");
+});
+
 test("vercel routing + file store: every accept path returns moved ids matching inventory", async (t) => {
   await runMatrix(t, "file", async (dataDir, clock) => ({
     store: new JsonStore(path.join(dataDir, "state.json"), { now: () => clock.value, numberedRandom: () => 0.99 }),
@@ -300,6 +345,13 @@ test("slim community never accepts; production fat handler keeps the accept rewr
   assert.doesNotMatch(slim, /\/accept/);
   assert.match(vercel, /__kalpi_path/);
   assert.match(app, /acceptDialogCards\(trade\)/);
+  assert.match(app, /Display-only\. The accept already transferred cards/);
+  const fileStore = await readFile(path.resolve(here, "../server/store.js"), "utf8");
+  const pgStore = await readFile(path.resolve(here, "../server/postgres-store.js"), "utf8");
+  assert.match(fileStore, /movedCardIdsFromVerdict\(verdict\)/);
+  assert.match(pgStore, /movedCardIdsFromVerdict\(verdict\)/);
+  assert.match(fileStore, /Notice \/ id shaping is display-only/);
+  assert.match(pgStore, /Notice \/ id shaping is display-only/);
   assert.doesNotMatch(app, /trade: listed \|\| trade/);
   assert.doesNotMatch(app, /movedCardsFromAccept\(trade,/);
 });

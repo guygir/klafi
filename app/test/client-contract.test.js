@@ -512,9 +512,17 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(javascript, /from "\.\/trade-result\.js"/);
   assert.match(javascript, /movedCardsFromAccept\(result, pick, snapshot\)/);
   assert.match(javascript, /acceptDialogCards\(input\)/);
-  assert.match(javascript, /acceptDialogCards\(notice\)/);
+  assert.match(javascript, /movedCardsFromNotice\(notice, listed\)/);
   assert.match(javascript, /function snapshotTradeForAccept/);
   assert.match(javascript, /tradeNoticeFallbackThumb\(cardId\)/);
+  assert.match(javascript, /function noticeCard/);
+  assert.match(javascript, /model\.catalogById\?\.get\(cardId\) \|\| model\.byId\.get\(cardId\)/);
+  assert.match(javascript, /if \(!model\.acceptingTrade\) maybeShowTradeNotice/);
+  assert.match(javascript, /skipCatalog: true/);
+  assert.match(javascript, /const \{ skipCatalog = false, \.\.\.fetchOptions \} = options/);
+  assert.match(javascript, /Visuals only\. The accept and inventory transfer already committed/);
+  assert.match(javascript, /model\.fullCatalog/);
+  assert.match(javascript, /payload\.allCards \|\| payload\.cards \|\| payload/);
   assert.match(javascript, /noteCardsOpened\(received\.map\(\(cardId\) => \(\{ cardId \}\)\)\)/);
   assert.match(css, /\.trade-notice-cards \.trade-notice-stack \.trade-thumb/);
   assert.match(css, /\.trade-notice-cards \.trade-side\[hidden\]/);

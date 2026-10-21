@@ -1,21 +1,26 @@
 import { randomUUID } from "node:crypto";
+import { parseCardIds } from "../public/trade-result.js";
 
 const TRADE_NOTICE_CAP = 20;
 
 export function publicTradeNotices(session) {
   return (Array.isArray(session?.pendingTradeNotices) ? session.pendingTradeNotices : [])
-    .map((notice) => ({
-      id: String(notice?.id || ""),
-      tradeId: String(notice?.tradeId || ""),
-      receivedCardId: String(notice?.receivedCardId || ""),
-      givenCardId: String(notice?.givenCardId || ""),
-      receivedCardIds: Array.isArray(notice?.receivedCardIds) ? notice.receivedCardIds.map(String) : [],
-      givenCardIds: Array.isArray(notice?.givenCardIds) ? notice.givenCardIds.map(String) : [],
-      acceptedAt: notice?.acceptedAt || null,
-      accepterName: String(notice?.accepterName || "").trim() || "שחקן",
-      ownerName: String(notice?.ownerName || "").trim() || "שחקן",
-    }))
-    .filter((notice) => notice.id && (notice.receivedCardId || notice.receivedCardIds.length));
+    .map((notice) => {
+      const receivedCardIds = parseCardIds(notice?.receivedCardIds, notice?.receivedCardId);
+      const givenCardIds = parseCardIds(notice?.givenCardIds, notice?.givenCardId);
+      return {
+        id: String(notice?.id || ""),
+        tradeId: String(notice?.tradeId || ""),
+        receivedCardId: receivedCardIds[0] || String(notice?.receivedCardId || ""),
+        givenCardId: givenCardIds[0] || String(notice?.givenCardId || ""),
+        receivedCardIds,
+        givenCardIds,
+        acceptedAt: notice?.acceptedAt || null,
+        accepterName: String(notice?.accepterName || "").trim() || "שחקן",
+        ownerName: String(notice?.ownerName || "").trim() || "שחקן",
+      };
+    })
+    .filter((notice) => notice.id && (notice.receivedCardId || notice.givenCardId || notice.receivedCardIds.length || notice.givenCardIds.length));
 }
 
 export function enqueueAcceptedTradeNotice(owner, trade, {
@@ -25,30 +30,30 @@ export function enqueueAcceptedTradeNotice(owner, trade, {
   receivedCardIds = null,
   givenCardIds = null,
 } = {}) {
-  if (!owner || !trade) return null;
-  owner.pendingTradeNotices = Array.isArray(owner.pendingTradeNotices) ? owner.pendingTradeNotices : [];
-  const received = Array.isArray(receivedCardIds) && receivedCardIds.length
-    ? receivedCardIds.map(String)
-    : [String(trade.acceptedWantedCardId || trade.wantedCardId || "")].filter(Boolean);
-  const given = Array.isArray(givenCardIds) && givenCardIds.length
-    ? givenCardIds.map(String)
-    : [String(trade.acceptedOfferedCardId || trade.offeredCardId || "")].filter(Boolean);
-  const notice = {
-    id: randomUUID(),
-    tradeId: trade.tradeId,
-    receivedCardId: received[0] || "",
-    givenCardId: given[0] || "",
-    receivedCardIds: received,
-    givenCardIds: given,
-    acceptedAt: acceptedAt || null,
-    accepterName: String(accepterName || "").trim() || "שחקן",
-    ownerName: String(ownerName || owner.displayName || "").trim() || "שחקן",
-  };
-  owner.pendingTradeNotices.push(notice);
-  if (owner.pendingTradeNotices.length > TRADE_NOTICE_CAP) {
-    owner.pendingTradeNotices = owner.pendingTradeNotices.slice(-TRADE_NOTICE_CAP);
+  try {
+    if (!owner || !trade) return null;
+    owner.pendingTradeNotices = Array.isArray(owner.pendingTradeNotices) ? owner.pendingTradeNotices : [];
+    const received = parseCardIds(receivedCardIds, trade.acceptedWantedCardId || trade.wantedCardId);
+    const given = parseCardIds(givenCardIds, trade.acceptedOfferedCardId || trade.offeredCardId);
+    const notice = {
+      id: randomUUID(),
+      tradeId: trade.tradeId,
+      receivedCardId: received[0] || "",
+      givenCardId: given[0] || "",
+      receivedCardIds: received,
+      givenCardIds: given,
+      acceptedAt: acceptedAt || null,
+      accepterName: String(accepterName || "").trim() || "שחקן",
+      ownerName: String(ownerName || owner.displayName || "").trim() || "שחקן",
+    };
+    owner.pendingTradeNotices.push(notice);
+    if (owner.pendingTradeNotices.length > TRADE_NOTICE_CAP) {
+      owner.pendingTradeNotices = owner.pendingTradeNotices.slice(-TRADE_NOTICE_CAP);
+    }
+    return notice;
+  } catch {
+    return null;
   }
-  return notice;
 }
 
 export function ackTradeNotices(session, ids) {

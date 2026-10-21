@@ -5,6 +5,7 @@ import {
   acceptMovedCardIds,
   cardsMovedOnSide,
   movedCardsFromAccept,
+  movedCardsFromNotice,
   movedCardsFromTrade,
   parseCardIds,
   tradeNoticeFallbackThumb,
@@ -12,6 +13,7 @@ import {
   tradeNoticeSides,
   tradeNoticeSidesFilled,
 } from "../public/trade-result.js";
+import { movedCardIdsFromVerdict } from "../server/trade-core.js";
 
 test("moved cards: OR shows the chosen copy, AND shows every copy, empty arrays fall back", () => {
   assert.deepEqual(movedCardsFromTrade({
@@ -128,6 +130,52 @@ test("accept dialog derives moved cards from the pre-accept snapshot when the pa
     offeredCardIds: [],
     wantedCardIds: [],
   }), { receivedCardIds: ["LEGACY-OFFER"], givenCardIds: ["LEGACY-WANT"] });
+});
+
+test("movedCardIdsFromVerdict maps the accept verdict for accepter and owner", () => {
+  const verdict = { offeredCardIds: ["B"], wantedCardIds: ["X"] };
+  assert.deepEqual(movedCardIdsFromVerdict(verdict), { receivedCardIds: ["B"], givenCardIds: ["X"] });
+  assert.deepEqual(movedCardIdsFromVerdict(verdict, { viewer: "owner" }), { receivedCardIds: ["X"], givenCardIds: ["B"] });
+  const boom = new Proxy({}, { get() { throw new Error("verdict boom"); } });
+  assert.deepEqual(movedCardIdsFromVerdict(boom), { receivedCardIds: [], givenCardIds: [] });
+  assert.deepEqual(movedCardIdsFromVerdict(boom, { viewer: "owner" }), { receivedCardIds: [], givenCardIds: [] });
+});
+
+test("creator notice uses the same moved-cards function from the owner's side", () => {
+  const notice = { receivedCardIds: ["X"], givenCardIds: ["B"], accepterName: "שר לענייני דלית" };
+  assert.deepEqual(movedCardsFromNotice(notice), { receivedCardIds: ["X"], givenCardIds: ["B"] });
+  assert.deepEqual(movedCardsFromNotice({ receivedCardId: "X", givenCardId: "B" }), { receivedCardIds: ["X"], givenCardIds: ["B"] });
+  assert.deepEqual(movedCardsFromNotice({ receivedCardIds: [], givenCardIds: [] }, {
+    offeredMode: "or",
+    wantedMode: "and",
+    offeredCardIds: ["A", "B", "C"],
+    wantedCardIds: ["X"],
+    acceptedOfferedCardId: "B",
+  }), { receivedCardIds: ["X"], givenCardIds: ["B"] });
+  assert.deepEqual(movedCardsFromTrade({
+    offeredMode: "or",
+    wantedMode: "or",
+    offeredCardIds: ["A", "B", "C"],
+    wantedCardIds: ["X", "Y", "Z"],
+    acceptedOfferedCardId: "B",
+    acceptedWantedCardId: "Y",
+  }, { viewer: "owner" }), { receivedCardIds: ["Y"], givenCardIds: ["B"] });
+  const boom = new Proxy({}, { get() { throw new Error("notice boom"); } });
+  assert.deepEqual(acceptDialogCards(boom), { receivedCardIds: [], givenCardIds: [] });
+  assert.deepEqual(movedCardsFromNotice(boom, null), { receivedCardIds: [], givenCardIds: [] });
+});
+
+test("dialog thumbs stay filled when byId is empty or the card is not live", () => {
+  const emptyById = new Map();
+  const unloaded = tradeNoticeSides({ receivedCardIds: ["A"], givenCardIds: ["X"] }, emptyById);
+  assert.equal(unloaded.received.thumbs[0].found, false);
+  assert.equal(unloaded.given.thumbs[0].found, false);
+  assert.ok(tradeNoticeSidesFilled(unloaded), "catalog not yet loaded still fills a thumb");
+
+  const fullCatalog = new Map([["SYS-C-01", { id: "SYS-C-01", titleHe: "הכנסת" }]]);
+  const nonLive = tradeNoticeSides({ receivedCardIds: ["SYS-C-01"], givenCardIds: ["SYS-C-01"] }, fullCatalog);
+  assert.equal(nonLive.received.thumbs[0].found, true);
+  assert.ok(tradeNoticeSidesFilled(nonLive), "non-live set card is found in the full catalog");
 });
 
 test("parseCardIds reads leftover JSON strings the same as arrays", () => {

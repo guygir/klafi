@@ -42,6 +42,8 @@ test("static catalog.json matches the public card expansion", async () => {
   assert.ok(catalog.cards.some(({ eventOnly }) => eventOnly));
   assert.ok(!catalog.cards.some(({ releaseSetId }) => releaseSetId === "editorial-backlog"));
   assert.ok(!catalog.cards.some(({ releaseSetId }) => String(releaseSetId).startsWith("party-position")));
+  assert.ok(Array.isArray(catalog.allCards) && catalog.allCards.length > catalog.cards.length);
+  assert.ok(catalog.allCards.some(({ releaseSetId }) => releaseSetId === "foundations"));
 });
 
 test("live walkout quotes stay on the published wording", async () => {

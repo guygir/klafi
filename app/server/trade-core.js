@@ -182,6 +182,19 @@ export function ownerHasOfferedSide(ownerSession, trade, at, trades, regularCopy
   return ids.every(checkOne);
 }
 
+/** Verdict move lists → dialog ids. One function for both stores. Never throws. */
+export function movedCardIdsFromVerdict(verdict, { viewer = "accepter" } = {}) {
+  try {
+    const offered = parseCardIds(verdict?.offeredCardIds, verdict?.acceptedOfferedCardId || verdict?.offeredCardId);
+    const wanted = parseCardIds(verdict?.wantedCardIds, verdict?.acceptedWantedCardId || verdict?.wantedCardId);
+    return viewer === "owner"
+      ? { receivedCardIds: wanted, givenCardIds: offered }
+      : { receivedCardIds: offered, givenCardIds: wanted };
+  } catch {
+    return { receivedCardIds: [], givenCardIds: [] };
+  }
+}
+
 export function canAcceptTrade(trade, { owner, accepter, trades, at, regularCopyCountFn, offeredCardId = null, wantedCardId = null }) {
   const normalized = normalizeStoredTrade(trade);
   if (!isOpenTrade(normalized, at) || normalized.ownerToken === accepter?.token) {

@@ -30,10 +30,10 @@ import { ensurePublicBinderSlug, normalizePublicBinderSlug } from "./public-bind
 import { newReferralCode, normalizeInviteCode } from "./referral.js";
 import { collectionStars } from "./stars.js";
 import { enqueueAcceptedTradeNotice } from "./trade-notices.js";
-import { acceptDialogCards } from "../public/trade-result.js";
 import {
   TRADE_MESSAGES_HE,
   canAcceptTrade as canCompleteTrade,
+  movedCardIdsFromVerdict,
   normalizeStoredTrade,
   ownerCanOfferCards,
   parseCreateTradeInput,
@@ -1205,18 +1205,23 @@ export class PostgresStore {
       accepter.tradeCount += 1;
       trade.acceptedOfferedCardId = verdict.acceptedOfferedCardId;
       trade.acceptedWantedCardId = verdict.acceptedWantedCardId;
-      const ownerMoved = acceptDialogCards(verdict, { viewer: "owner" });
-      const accepterMoved = acceptDialogCards(verdict);
-      enqueueAcceptedTradeNotice(owner, trade, {
-        acceptedAt,
-        accepterName: accepter.displayName,
-        ownerName: owner.displayName,
-        receivedCardIds: ownerMoved.receivedCardIds,
-        givenCardIds: ownerMoved.givenCardIds,
-      });
       trade.status = "accepted";
       trade.acceptedAt = acceptedAt;
       trade.acceptedBy = sessionToken;
+      let accepterMoved = movedCardIdsFromVerdict(verdict);
+      try {
+        const ownerMoved = movedCardIdsFromVerdict(verdict, { viewer: "owner" });
+        accepterMoved = movedCardIdsFromVerdict(verdict);
+        enqueueAcceptedTradeNotice(owner, trade, {
+          acceptedAt,
+          accepterName: accepter.displayName,
+          ownerName: owner.displayName,
+          receivedCardIds: ownerMoved.receivedCardIds,
+          givenCardIds: ownerMoved.givenCardIds,
+        });
+      } catch {
+        /* Notice / id shaping is display-only. The transfer already happened. */
+      }
       await this.saveSession(trade.ownerToken, owner, previousOwner);
       await this.saveSession(sessionToken, accepter, previousAccepter);
       await this.executor().query(
