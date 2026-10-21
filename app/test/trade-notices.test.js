@@ -26,3 +26,25 @@ test("accepted-trade notices stay public-safe and can be acknowledged", () => {
   ackTradeNotices(owner, notice.id);
   assert.deepEqual(publicTradeNotices(owner), []);
 });
+
+test("owner notices keep every card that moved on an AND/OR accept", () => {
+  const owner = { displayName: "שיר", pendingTradeNotices: [] };
+  const trade = {
+    tradeId: "bundle",
+    offeredCardId: "A",
+    wantedCardId: "X",
+    acceptedOfferedCardId: "B",
+    acceptedWantedCardId: "X",
+  };
+  const notice = enqueueAcceptedTradeNotice(owner, trade, {
+    acceptedAt: "2026-10-10T12:00:00.000Z",
+    accepterName: "גיא",
+    receivedCardIds: ["X", "Y"],
+    givenCardIds: ["B"],
+  });
+  assert.deepEqual(notice.receivedCardIds, ["X", "Y"]);
+  assert.deepEqual(notice.givenCardIds, ["B"]);
+  const published = publicTradeNotices(owner);
+  assert.deepEqual(published[0].receivedCardIds, ["X", "Y"]);
+  assert.deepEqual(published[0].givenCardIds, ["B"]);
+});

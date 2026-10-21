@@ -2490,8 +2490,11 @@ export async function createKalpiApp({
             return;
           }
           const trades = await store.listTrades(token);
+          const listed = trades.find(({ tradeId }) => tradeId === tradeAccept[1]);
           json(response, 200, {
-            trade: trades.find(({ tradeId }) => tradeId === tradeAccept[1]),
+            trade: listed || trade,
+            receivedCardIds: Array.isArray(trade.receivedCardIds) ? trade.receivedCardIds : [],
+            givenCardIds: Array.isArray(trade.givenCardIds) ? trade.givenCardIds : [],
             trades,
             state: await stateForToken(token),
             simulated: false,

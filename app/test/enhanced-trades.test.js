@@ -1253,3 +1253,104 @@ test("legacy 1↔1 accept conserves inventory and stays a single-card AND trade"
   assert.equal(after.accepter.inventory[a.id], 1);
   assert.equal(after.owner.inventory[a.id] || 0, 0);
 });
+
+function tradedCopies(state) {
+  return (state.instances || []).filter((item) => item.acquiredBy === "trade-accepted");
+}
+
+test("accept payload names the cards that moved for OR/OR, AND/AND, AND/OR, OR/AND, and 1↔1", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-accept-result-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const cards = (await api(running.base, "/api/catalog")).body.cards.filter(({ eventOnly }) => !eventOnly).slice(0, 10);
+  const ids = cards.map(({ id }) => id);
+
+  async function play(offeredMode, offered, wantedMode, wanted, pick = {}) {
+    const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+    const accepter = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+    await unlockMany(running.base, owner, offered);
+    await unlockMany(running.base, accepter, wanted);
+    const created = await api(running.base, "/api/trades", {
+      token: owner,
+      method: "POST",
+      body: { offered: { mode: offeredMode, cardIds: offered }, wanted: { mode: wantedMode, cardIds: wanted } },
+    });
+    assert.equal(created.status, 201);
+    clock.value += 60_000;
+    const acceptedAt = new Date(clock.value).toISOString();
+    const accepted = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+      token: accepter,
+      method: "POST",
+      body: pick,
+    });
+    assert.equal(accepted.status, 200, `${offeredMode}/${wantedMode} accept`);
+    const expectReceived = offeredMode === "or" ? [pick.offeredCardId || offered[0]] : offered;
+    const expectGiven = wantedMode === "or" ? [pick.wantedCardId || wanted[0]] : wanted;
+    assert.deepEqual(accepted.body.receivedCardIds, expectReceived);
+    assert.deepEqual(accepted.body.givenCardIds, expectGiven);
+    const ownerState = (await api(running.base, "/api/state", { token: owner })).body;
+    const accepterState = accepted.body.state;
+    const notice = ownerState.pendingTradeNotices[0];
+    assert.ok(notice, `${offeredMode}/${wantedMode} owner notice`);
+    assert.deepEqual(notice.receivedCardIds, expectGiven);
+    assert.deepEqual(notice.givenCardIds, expectReceived);
+    for (const cardId of expectReceived) {
+      assert.equal(accepterState.lastAcquiredAt[cardId], acceptedAt, `${cardId} newest under חדש for accepter`);
+      const copy = tradedCopies(accepterState).find((item) => item.cardId === cardId);
+      assert.ok(copy, `${cardId} moved onto accepter`);
+      assert.equal(copy.isNew, true);
+      assert.equal(copy.pulledAt, acceptedAt);
+      assert.equal(copy.acquiredBy, "trade-accepted");
+    }
+    for (const cardId of expectGiven) {
+      assert.equal(ownerState.lastAcquiredAt[cardId], acceptedAt, `${cardId} newest under חדש for owner`);
+    }
+    return { accepted, ownerState, accepterState };
+  }
+
+  await play("or", ids.slice(0, 3), "or", ids.slice(3, 6), { offeredCardId: ids[2], wantedCardId: ids[4] });
+  await play("and", ids.slice(0, 3), "and", ids.slice(3, 6));
+  await play("and", ids.slice(0, 2), "or", ids.slice(3, 6), { wantedCardId: ids[5] });
+  await play("or", ids.slice(0, 3), "and", ids.slice(3, 5), { offeredCardId: ids[1] });
+  await play("and", [ids[6]], "and", [ids[7]]);
+});
+
+test("a traded first copy is new; a traded dupe is not, same as a pack dupe", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-accept-new-"));
+  const clock = { value: Date.parse("2026-10-10T12:00:00.000Z") };
+  const running = await start(dataDir, clock);
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  const cards = (await api(running.base, "/api/catalog")).body.cards.filter(({ eventOnly }) => !eventOnly).slice(0, 3);
+  const [giveNew, giveDupe, take] = cards.map(({ id }) => id);
+  const owner = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  const accepter = (await api(running.base, "/api/session", { method: "POST" })).body.token;
+  await unlockMany(running.base, owner, [giveNew, giveDupe]);
+  await unlockMany(running.base, accepter, [giveDupe, take]);
+  const created = await api(running.base, "/api/trades", {
+    token: owner,
+    method: "POST",
+    body: {
+      offered: { mode: "and", cardIds: [giveNew, giveDupe] },
+      wanted: { mode: "and", cardIds: [take] },
+    },
+  });
+  clock.value += 60_000;
+  const accepted = await api(running.base, `/api/trades/${created.body.trade.tradeId}/accept`, {
+    token: accepter,
+    method: "POST",
+  });
+  assert.equal(accepted.status, 200);
+  const copies = tradedCopies(accepted.body.state);
+  assert.equal(copies.find((item) => item.cardId === giveNew)?.isNew, true, "first copy of a card is new");
+  assert.equal(copies.find((item) => item.cardId === giveDupe)?.isNew, false, "a dupe is not new, same as a pack dupe");
+  assert.equal(accepted.body.state.lastAcquiredAt[giveNew], new Date(clock.value).toISOString());
+  assert.equal(accepted.body.state.lastAcquiredAt[giveDupe], new Date(clock.value).toISOString());
+});
+

@@ -19,6 +19,7 @@ import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
+import { movedCardsFromAccept } from "./trade-result.js";
 import { offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
 import {
   TRADE_SIDE_MAX,
@@ -7008,6 +7009,7 @@ function showAcceptedTradeNotice({
   if (!dialog) return;
   const received = (Array.isArray(receivedCardIds) && receivedCardIds.length ? receivedCardIds : [receivedCardId]).filter(Boolean);
   const given = (Array.isArray(givenCardIds) && givenCardIds.length ? givenCardIds : [givenCardId]).filter(Boolean);
+  noteCardsOpened(received.map((cardId) => ({ cardId })));
   const lines = tradeApprovedLines({
     otherName,
     receivedTitle: cardTitleHe(received[0]),
@@ -7028,6 +7030,9 @@ function paintTradeNoticeThumbs(node, cardIds, { warnLastCopy = false } = {}) {
   const ids = (Array.isArray(cardIds) ? cardIds : [cardIds]).filter(Boolean);
   node.hidden = !ids.length;
   node.classList.toggle("trade-notice-stack", ids.length > 1);
+  node.dataset.count = String(ids.length);
+  const side = node.closest(".trade-side");
+  if (side) side.hidden = !ids.length;
   node.innerHTML = ids.map((cardId) => {
     const card = model.byId.get(cardId);
     return card ? `<div class="trade-thumb">${tradeThumbMarkup(card, { warnLastCopy })}</div>` : "";
@@ -8580,18 +8585,13 @@ async function acceptTradeOffer(tradeId) {
     });
     applyTradeResult(result);
     hideWait();
-    const receivedIds = result.trade?.offeredMode === "or"
-      ? [result.trade?.acceptedOfferedCardId || result.trade?.offeredCardId]
-      : (result.trade?.offeredCardIds || [result.trade?.acceptedOfferedCardId || result.trade?.offeredCardId]);
-    const givenIds = result.trade?.wantedMode === "or"
-      ? [result.trade?.acceptedWantedCardId || result.trade?.wantedCardId]
-      : (result.trade?.wantedCardIds || [result.trade?.acceptedWantedCardId || result.trade?.wantedCardId]);
+    const moved = movedCardsFromAccept(result, pick);
     showAcceptedTradeNotice({
       otherName: result.trade?.ownerLabel,
-      receivedCardId: receivedIds[0],
-      givenCardId: givenIds[0],
-      receivedCardIds: receivedIds,
-      givenCardIds: givenIds,
+      receivedCardId: moved.receivedCardIds[0],
+      givenCardId: moved.givenCardIds[0],
+      receivedCardIds: moved.receivedCardIds,
+      givenCardIds: moved.givenCardIds,
     });
     delete model.tradeAcceptPick[tradeId];
   } catch (error) {

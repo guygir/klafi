@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { sessionDeltas } from "../server/postgres-store.js";
+import { PGlite } from "@electric-sql/pglite";
+import { lastAcquiredAtByCard } from "../public/binder-order.js";
+import { PostgresStore, sessionDeltas } from "../server/postgres-store.js";
+import { loadSession as loadSlimHome } from "../server/slim-home.js";
 import { postgresPoolOptions, runtimeConnectionString } from "../server/postgres-pool.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -137,6 +141,15 @@ test("transaction-pooler boot applies leftover IF NOT EXISTS migrations", async 
   assert.match(source, /006_numbered_grant_cadence/);
   assert.match(source, /007_instances_seen_at_index/);
   assert.match(source, /008_numbered_chance/);
+  const upserts = [...source.matchAll(/ON CONFLICT \(instance_id\) DO UPDATE SET([\s\S]*?)numbered_of = EXCLUDED\.numbered_of/g)];
+  assert.equal(upserts.length, 2, "insertSessionRow and saveSession both upsert instances");
+  for (const [, clause] of upserts) {
+    assert.match(clause, /pulled_at = EXCLUDED\.pulled_at/, "a moved trade copy must keep the accept time");
+    assert.match(clause, /card_id = EXCLUDED\.card_id/);
+    assert.match(clause, /is_new = EXCLUDED\.is_new/);
+    assert.match(clause, /acquired_by = EXCLUDED\.acquired_by/);
+    assert.match(clause, /seen_at = EXCLUDED\.seen_at/);
+  }
 });
 
 test("serverless Supabase traffic uses transaction pooling", () => {
@@ -184,4 +197,69 @@ test("postgres leagues: one per player under an advisory lock; leave passes the 
   assert.deepEqual(await store.leaveLeague("friend", "ROOMA1"), { left: true, deleted: true });
   assert.equal(leagues.has("ROOMA1"), false, "an empty league is deleted");
   await store.pool.end().catch(() => {});
+});
+
+test("postgres: moving a trade copy persists pulled_at, is_new, and the slim חדש date", async (t) => {
+  const db = new PGlite();
+  t.after(() => db.close());
+  const migrations = path.join(here, "../server/migrations");
+  for (const file of (await readdir(migrations)).filter((name) => name.endsWith(".sql")).sort()) {
+    await db.exec(await readFile(path.join(migrations, file), "utf8"));
+  }
+  const query = (sql, params) => db.query(sql, params);
+  const store = Object.create(PostgresStore.prototype);
+  store.pool = { query, connect: async () => ({ query, release() {} }) };
+  store.transaction = new AsyncLocalStorage();
+  store.requestSessions = new AsyncLocalStorage();
+  store.sessionCache = new Map();
+  store.now = () => Date.parse("2026-10-10T12:00:00.000Z");
+  store.numberedRandom = () => 0.99;
+  store.holderRefresh = null;
+  store.holderSnapshot = null;
+  store.holderTableReady = false;
+  store.leaguesTableReady = false;
+  store.invalidateCardHolderSnapshot = () => {};
+
+  const oldAt = "2026-09-01T00:00:00.000Z";
+  const tradeAt = "2026-10-10T12:05:00.000Z";
+  await store.insertSessionRow(store.pool, "alice", {
+    displayName: "alice",
+    createdAt: oldAt,
+    inventory: { A: 1 },
+    instances: [{
+      instanceId: "inst-a",
+      cardId: "A",
+      finish: "Common",
+      pulledAt: oldAt,
+      isNew: false,
+      acquiredBy: "idle",
+      seenAt: oldAt,
+    }],
+  });
+  const previous = await store.loadSession("alice");
+  assert.equal(previous.instances[0].pulledAt, oldAt);
+  const next = structuredClone(previous);
+  next.inventory = { B: 1 };
+  next.instances = [{
+    instanceId: "inst-a",
+    cardId: "B",
+    finish: "Common",
+    pulledAt: tradeAt,
+    isNew: true,
+    acquiredBy: "trade-accepted",
+    seenAt: null,
+  }];
+  await store.saveSession("alice", next, previous);
+  store.sessionCache.clear();
+  const loaded = await store.loadSession("alice");
+  assert.equal(loaded.instances[0].cardId, "B");
+  assert.equal(loaded.instances[0].pulledAt, tradeAt);
+  assert.equal(loaded.instances[0].isNew, true);
+  assert.equal(loaded.instances[0].acquiredBy, "trade-accepted");
+  assert.equal(loaded.instances[0].seenAt, null);
+  assert.equal(lastAcquiredAtByCard(loaded.instances, loaded.inventory).B, tradeAt);
+
+  const slim = await loadSlimHome(db, "alice");
+  assert.equal(slim.lastAcquiredAt.B, tradeAt, "slim /api/home חדש uses the trade time after reload");
+  assert.equal(slim.lastAcquiredAt.A, undefined);
 });

@@ -101,6 +101,11 @@ test("production slim community handler maps trade side arrays", async () => {
   assert.match(slim, /export async function listSlimCommunityTrades/);
   assert.match(slim, /listSlimCommunityTrades\(db, token, now\)/);
   assert.doesNotMatch(slim, /canAccept: row\.status === "open"\s*&& row\.owner_token !== token\s*&& ownerHasOffered\.has\(`\$\{row\.owner_token\}:\$\{row\.offered_card_id\}`\)/);
+  assert.doesNotMatch(slim, /\/accept/);
+  const vercelIndex = await readFile(path.resolve(here, "../../api/index.js"), "utf8");
+  const vercelHome = await readFile(path.resolve(here, "../../api/home.js"), "utf8");
+  assert.match(vercelIndex, /createRuntimeHandler/, "production accept is the full app handler");
+  assert.match(vercelHome, /handleSlimHome/, "production home is slim");
 });
 
 test("slim community trade view keeps 2↔3 sides instead of the first card only", () => {

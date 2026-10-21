@@ -418,7 +418,12 @@ export class PostgresStore {
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
          ON CONFLICT (instance_id) DO UPDATE SET
            session_token = EXCLUDED.session_token,
+           card_id = EXCLUDED.card_id,
            finish = EXCLUDED.finish,
+           pulled_at = EXCLUDED.pulled_at,
+           is_new = EXCLUDED.is_new,
+           acquired_by = EXCLUDED.acquired_by,
+           seen_at = EXCLUDED.seen_at,
            numbered_index = EXCLUDED.numbered_index,
            numbered_of = EXCLUDED.numbered_of`,
         [
@@ -660,7 +665,9 @@ export class PostgresStore {
          FROM instance_input
          ON CONFLICT (instance_id) DO UPDATE SET
            session_token = EXCLUDED.session_token,
+           card_id = EXCLUDED.card_id,
            finish = EXCLUDED.finish,
+           pulled_at = EXCLUDED.pulled_at,
            is_new = EXCLUDED.is_new,
            acquired_by = EXCLUDED.acquired_by,
            seen_at = EXCLUDED.seen_at,
@@ -1211,7 +1218,11 @@ export class PostgresStore {
          WHERE trade_id = $1`,
         [tradeId, trade.status, trade.acceptedAt, trade.acceptedBy, trade.acceptedOfferedCardId, trade.acceptedWantedCardId],
       );
-      return trade;
+      return {
+        ...trade,
+        receivedCardIds: [...verdict.offeredCardIds],
+        givenCardIds: [...verdict.wantedCardIds],
+      };
     });
   }
 
