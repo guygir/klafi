@@ -150,6 +150,11 @@ async function unlockMany(base, token, cardIds) {
 }
 
 async function checkoutPre170() {
+  try {
+    await execFileAsync("git", ["cat-file", "-e", `${PRE170}^{commit}`], { cwd: projectRoot });
+  } catch {
+    return null;
+  }
   const dest = "/tmp/klafi-pre170";
   try {
     await readFile(path.join(dest, "app/server/app.js"));
@@ -185,6 +190,10 @@ test("parseCardIds normalises leftover strings, objects, and empty arrays", () =
 
 test("old-create a1fb4db / new-accept current: OR/3 ↔ 1 through api/ routing", async (t) => {
   const pre170 = await checkoutPre170();
+  if (!pre170) {
+    t.skip(`${PRE170} is not in this git clone`);
+    return;
+  }
   for (const wantedMode of ["and", "or"]) {
     const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-oldnew-file-"));
     t.after(() => rm(dataDir, { recursive: true, force: true }));
