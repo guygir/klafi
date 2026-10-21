@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
 import { createRuntimeHandler } from "../server/runtime.js";
 import { handleSlimHealth, handleSlimHome, useSlimHomePool } from "../server/slim-home.js";
+import { handleSlimCommunity, useSlimCommunityPool } from "../server/slim-community.js";
 import { PostgresStore } from "../server/postgres-store.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -70,6 +71,7 @@ if (db) {
     numberedRandom: () => 0.99,
   });
   useSlimHomePool(pglitePool(db));
+  useSlimCommunityPool(pglitePool(db));
   fatHandler = await createRuntimeHandler({
     store,
     now: () => clock.value,
@@ -107,9 +109,12 @@ const server = createServer(async (request, response) => {
     }
 
     const useSlimHome = mode === "pglite" && url.pathname === "/api/home";
+    const useSlimCommunity = mode === "pglite" && url.pathname === "/api/community";
     const useSlimHealth = url.pathname === "/api/health";
     if (useSlimHome) {
       await handleSlimHome(request, response);
+    } else if (useSlimCommunity) {
+      await handleSlimCommunity(request, response);
     } else if (useSlimHealth) {
       await handleSlimHealth(request, response);
     } else {
@@ -152,6 +157,7 @@ console.log(JSON.stringify({
   mode,
   port,
   slimHome: mode === "pglite",
+  slimCommunity: mode === "pglite",
   now: new Date(clock.value).toISOString(),
   logPath,
 }));

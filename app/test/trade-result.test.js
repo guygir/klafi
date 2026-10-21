@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { acceptMovedCardIds, movedCardsFromAccept, movedCardsFromTrade } from "../public/trade-result.js";
+import {
+  acceptMovedCardIds,
+  movedCardsFromAccept,
+  movedCardsFromTrade,
+  tradeNoticeFallbackThumb,
+  tradeNoticeSide,
+  tradeNoticeSides,
+  tradeNoticeSidesFilled,
+} from "../public/trade-result.js";
 
 test("moved cards: OR shows the chosen copy, AND shows every copy, empty arrays fall back", () => {
   assert.deepEqual(movedCardsFromTrade({
@@ -90,4 +98,51 @@ test("accept payload arrays win over a listed trade that is missing or legacy-on
     offeredCardIds: ["B"],
     wantedCardIds: ["X", "Y"],
   }, { viewer: "owner" }), { receivedCardIds: ["X", "Y"], givenCardIds: ["B"] });
+});
+
+test("accept dialog derives moved cards from the pre-accept snapshot when the payload is empty", () => {
+  const snapshot = {
+    offeredMode: "or",
+    wantedMode: "and",
+    offeredCardIds: ["A", "B", "C"],
+    wantedCardIds: ["X", "Y"],
+    offeredCardId: "A",
+    wantedCardId: "X",
+  };
+  assert.deepEqual(movedCardsFromAccept({
+    receivedCardIds: [],
+    givenCardIds: [],
+    trade: { offeredCardIds: [], wantedCardIds: [], ownerLabel: "שר לענייני דלית" },
+  }, { offeredCardId: "C" }, snapshot), { receivedCardIds: ["C"], givenCardIds: ["X", "Y"] });
+
+  assert.deepEqual(movedCardsFromAccept({
+    receivedCardIds: [],
+    givenCardIds: [],
+    trade: { offeredCardIds: [], wantedCardIds: [] },
+  }, {}, {
+    offeredCardId: "LEGACY-OFFER",
+    wantedCardId: "LEGACY-WANT",
+    offeredCardIds: [],
+    wantedCardIds: [],
+  }), { receivedCardIds: ["LEGACY-OFFER"], givenCardIds: ["LEGACY-WANT"] });
+});
+
+test("dialog sides never render empty: missing catalog still fills a fallback thumb", () => {
+  const emptyCatalog = new Map();
+  const sides = tradeNoticeSides({ receivedCardIds: ["A"], givenCardIds: ["X"] }, emptyCatalog);
+  assert.equal(sides.received.hidden, false);
+  assert.equal(sides.given.hidden, false);
+  assert.equal(sides.received.empty, false);
+  assert.equal(sides.given.empty, false);
+  assert.equal(sides.received.thumbs.length, 1);
+  assert.equal(sides.given.thumbs.length, 1);
+  assert.equal(sides.received.thumbs[0].found, false);
+  assert.ok(tradeNoticeSidesFilled(sides));
+  assert.match(tradeNoticeFallbackThumb("A"), /trade-thumb-pending/);
+  assert.match(tradeNoticeFallbackThumb("A"), /data-card-id="A"/);
+
+  const hidden = tradeNoticeSide([], emptyCatalog);
+  assert.equal(hidden.hidden, true);
+  assert.equal(hidden.empty, false);
+  assert.deepEqual(hidden.thumbs, []);
 });

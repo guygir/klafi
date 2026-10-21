@@ -19,7 +19,7 @@ import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
-import { movedCardsFromAccept } from "./trade-result.js";
+import { movedCardsFromAccept, tradeNoticeFallbackThumb } from "./trade-result.js";
 import { offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
 import {
   TRADE_SIDE_MAX,
@@ -694,7 +694,15 @@ function responseCardIds(value, depth = 0, found = new Set()) {
     return found;
   }
   if (typeof value.cardId === "string") found.add(value.cardId);
-  for (const key of ["cards", "instances", "pulls", "pack", "packs", "state", "idleReturn", "preparedPulls", "idleQueue"]) {
+  for (const key of ["receivedCardId", "givenCardId", "offeredCardId", "wantedCardId", "acceptedOfferedCardId", "acceptedWantedCardId"]) {
+    if (typeof value[key] === "string" && value[key]) found.add(value[key]);
+  }
+  for (const key of ["receivedCardIds", "givenCardIds", "offeredCardIds", "wantedCardIds"]) {
+    if (Array.isArray(value[key])) {
+      for (const id of value[key]) if (id) found.add(String(id));
+    }
+  }
+  for (const key of ["cards", "instances", "pulls", "pack", "packs", "state", "idleReturn", "preparedPulls", "idleQueue", "trade", "trades", "pendingTradeNotices"]) {
     if (value[key] && typeof value[key] === "object") responseCardIds(value[key], depth + 1, found);
   }
   return found;
@@ -707,9 +715,13 @@ let catalogReloadAt = 0;
  * Reload it past the HTTP cache before anything renders that card. Every grant path goes through request().
  */
 async function ensureCatalogKnows(body) {
+  const ids = responseCardIds(body);
+  if (!ids.size) return;
+  if (!model.catalogIds?.size) {
+    await loadStaticCatalog().catch(() => null);
+  }
   const known = model.catalogIds;
   if (!known?.size) return;
-  const ids = responseCardIds(body);
   const unknown = [...ids].filter((id) => !known.has(id));
   if (!unknown.length) return;
   if (Date.now() - catalogReloadAt < 15000) return;
@@ -7095,8 +7107,17 @@ function paintTradeNoticeThumbs(node, cardIds, { warnLastCopy = false } = {}) {
   if (side) side.hidden = !ids.length;
   node.innerHTML = ids.map((cardId) => {
     const card = model.byId.get(cardId);
-    return card ? `<div class="trade-thumb">${tradeThumbMarkup(card, { warnLastCopy })}</div>` : "";
+    return card
+      ? `<div class="trade-thumb" data-card-id="${escapeHtml(cardId)}">${tradeThumbMarkup(card, { warnLastCopy })}</div>`
+      : tradeNoticeFallbackThumb(cardId);
   }).join("");
+  if (ids.some((cardId) => !model.byId.get(cardId)) && !node.dataset.noticeCatalogTried) {
+    node.dataset.noticeCatalogTried = "1";
+    loadStaticCatalog().catch(() => reloadStaticCatalog()).catch(() => null).finally(() => {
+      if (!node.isConnected) return;
+      paintTradeNoticeThumbs(node, ids, { warnLastCopy });
+    });
+  }
   if (ids.length) queueCardTextFit(node);
 }
 
@@ -7108,6 +7129,20 @@ function maybeShowTradeNotice() {
   if (playerDialogOpen()) return;
   const notice = pendingTradeNotices()[0];
   if (!notice) return;
+  const received = (Array.isArray(notice.receivedCardIds) && notice.receivedCardIds.length
+    ? notice.receivedCardIds
+    : [notice.receivedCardId]).filter(Boolean);
+  const given = (Array.isArray(notice.givenCardIds) && notice.givenCardIds.length
+    ? notice.givenCardIds
+    : [notice.givenCardId]).filter(Boolean);
+  if ((received.length || given.length) && !catalogReady() && !model.tradeNoticeCatalogWait) {
+    model.tradeNoticeCatalogWait = true;
+    loadStaticCatalog().catch(() => null).finally(() => {
+      model.tradeNoticeCatalogWait = false;
+      maybeShowTradeNotice();
+    });
+    return;
+  }
   showAcceptedTradeNotice({
     otherName: notice.accepterName,
     receivedCardId: notice.receivedCardId,
@@ -8626,9 +8661,38 @@ async function simulateTradeAcceptance(tradeId) {
   }
 }
 
+function snapshotTradeForAccept(trade) {
+  if (!trade) return null;
+  return {
+    tradeId: trade.tradeId,
+    ownerLabel: trade.ownerLabel,
+    offeredMode: trade.offeredMode,
+    wantedMode: trade.wantedMode,
+    offeredCardIds: offeredCardIds(trade),
+    wantedCardIds: wantedCardIds(trade),
+    offeredCardId: trade.offeredCardId,
+    wantedCardId: trade.wantedCardId,
+    acceptedOfferedCardId: trade.acceptedOfferedCardId,
+    acceptedWantedCardId: trade.acceptedWantedCardId,
+  };
+}
+
+async function refillMovedFromListedTrade(tradeId, pick, snapshot, partial) {
+  try {
+    const payload = await request("/api/trades");
+    const listed = (payload.trades || payload).find((row) => row.tradeId === tradeId);
+    const again = movedCardsFromAccept({ ...partial, trade: listed }, pick, snapshot);
+    if (again.receivedCardIds.length && again.givenCardIds.length) return again;
+  } catch {
+    /* Keep the snapshot-derived ids rather than an empty box. */
+  }
+  return movedCardsFromAccept(partial, pick, snapshot);
+}
+
 async function acceptTradeOffer(tradeId) {
   if (model.acceptingTrade) return;
   const trade = model.trades.find((entry) => entry.tradeId === tradeId);
+  const snapshot = snapshotTradeForAccept(trade);
   const pick = tradeAcceptPick(tradeId);
   model.acceptingTrade = true;
   showWait("מאשרים…");
@@ -8645,9 +8709,12 @@ async function acceptTradeOffer(tradeId) {
     });
     applyTradeResult(result);
     hideWait();
-    const moved = movedCardsFromAccept(result, pick);
+    let moved = movedCardsFromAccept(result, pick, snapshot);
+    if (!moved.receivedCardIds.length || !moved.givenCardIds.length) {
+      moved = await refillMovedFromListedTrade(tradeId, pick, snapshot, moved);
+    }
     showAcceptedTradeNotice({
-      otherName: result.trade?.ownerLabel,
+      otherName: result.trade?.ownerLabel || snapshot?.ownerLabel,
       receivedCardId: moved.receivedCardIds[0],
       givenCardId: moved.givenCardIds[0],
       receivedCardIds: moved.receivedCardIds,

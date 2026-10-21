@@ -2424,6 +2424,14 @@ img.mini-art {
 .trade-notice-cards .trade-side[hidden] {
   display: none;
 }
+.trade-notice-cards .trade-thumb-pending .kalpi-card.is-notice-fallback {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  background: var(--paper, #f4efe4);
+  color: var(--ink, #1c1916);
+  font: 700 13px/1.2 "IBM Plex Sans Hebrew", "IBM Plex Sans", sans-serif;
+}
 .trade-notice-cards .trade-thumb,
 .trade-notice-cards .trade-notice-stack {
   margin-top: 0;
