@@ -19,7 +19,7 @@ import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
-import { acceptDialogCards, movedCardsFromAccept, movedCardsFromNotice, tradeNoticeFallbackThumb } from "./trade-result.js";
+import { acceptDialogCards, movedCardsFromAccept, movedCardsFromNotice, paintAcceptDialogSafely, tradeNoticeFallbackThumb } from "./trade-result.js";
 import { offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
 import {
   TRADE_SIDE_MAX,
@@ -115,6 +115,7 @@ const model = {
   catalog: [],
   catalogById: new Map(),
   catalogIds: new Set(),
+  fullById: new Map(),
   fullCatalog: false,
   byId: new Map(),
   serverState: null,
@@ -1143,8 +1144,12 @@ async function loadShell() {
 function applyCatalog(cards, { source = "static" } = {}) {
   if (!cards?.length) return;
   model.catalogById ??= new Map();
+  model.fullById ??= new Map();
   for (const card of cards) {
-    if (card?.id) model.catalogById.set(card.id, card);
+    if (card?.id) {
+      model.catalogById.set(card.id, card);
+      model.fullById.set(card.id, card);
+    }
   }
   model.catalogIds = new Set(model.catalogById.keys());
   const visible = [...model.catalogById.values()].filter((card) => isLiveReleaseSet(card.releaseSetId));
@@ -1152,6 +1157,11 @@ function applyCatalog(cards, { source = "static" } = {}) {
   model.byId = new Map(visible.map((card) => [card.id, card]));
   if (source === "static") model.fullCatalog = true;
   renderSiteCardPeeks();
+  try {
+    repaintOpenTradeNotice();
+  } catch {
+    /* Display-only. Catalog arrival must never touch the accepted trade. */
+  }
 }
 
 function mergeLiveCatalogFields(liveCards = []) {
@@ -7073,13 +7083,15 @@ function pendingTradeNotices() {
   return [...(model.serverState?.pendingTradeNotices || [])].filter((notice) => notice?.id);
 }
 
-function noticeCard(cardId) {
+function tradeNoticeCard(cardId) {
   try {
-    return model.catalogById?.get(cardId) || model.byId.get(cardId) || null;
+    return model.byId.get(cardId) || model.fullById?.get(cardId) || model.catalogById?.get(cardId) || null;
   } catch {
     return null;
   }
 }
+
+const noticeCard = tradeNoticeCard;
 
 function cardTitleHe(cardId) {
   return noticeCard(cardId)?.titleHe || "";
@@ -7090,13 +7102,14 @@ function paintTradeNoticeThumb(node, cardId, { warnLastCopy = false } = {}) {
 }
 
 function showAcceptedTradeNotice(input = {}) {
-  try {
+  paintAcceptDialogSafely(() => {
     const dialog = elements.tradeNoticeDialog;
     if (!dialog) return;
     const { otherName, noticeId = "" } = input;
     const moved = acceptDialogCards(input);
     const received = moved.receivedCardIds;
     const given = moved.givenCardIds;
+    model.tradeNoticePaint = { otherName, noticeId, receivedCardIds: received, givenCardIds: given };
     try {
       noteCardsOpened(received.map((cardId) => ({ cardId })));
     } catch {
@@ -7115,9 +7128,15 @@ function showAcceptedTradeNotice(input = {}) {
     dialog.dataset.receivedCardId = received[0] || "";
     dialog.dataset.givenCardId = given[0] || "";
     if (!dialog.open) dialog.showModal();
-  } catch {
-    /* Dialog paint is best-effort. The trade already went through. */
-  }
+  });
+}
+
+function repaintOpenTradeNotice() {
+  const dialog = elements.tradeNoticeDialog;
+  if (!dialog?.open || !model.tradeNoticePaint) return;
+  paintAcceptDialogSafely(() => {
+    showAcceptedTradeNotice(model.tradeNoticePaint);
+  });
 }
 
 function paintTradeNoticeThumbs(node, cardIds, { warnLastCopy = false } = {}) {
@@ -7157,27 +7176,32 @@ function paintTradeNoticeThumbs(node, cardIds, { warnLastCopy = false } = {}) {
   if (ids.length) queueCardTextFit(node);
 }
 
-function maybeShowTradeNotice() {
-  if (model.showcase || model.tradeNoticeBusy || model.streakRewardOpening || !stateFreshAt) return;
-  if (revealInProgress()) return;
-  if (elements.waitDialog?.open || tipsOverlayOpen()) return;
-  if (elements.tradeNoticeDialog?.open) return;
-  if (playerDialogOpen()) return;
-  const notice = pendingTradeNotices()[0];
-  if (!notice) return;
-  const listed = (model.trades || []).find((row) => row.tradeId === notice.tradeId) || null;
-  const moved = movedCardsFromNotice(notice, listed);
+async function maybeShowTradeNotice() {
   try {
+    if (model.showcase || model.tradeNoticeBusy || model.streakRewardOpening || !stateFreshAt) return;
+    if (revealInProgress()) return;
+    if (elements.waitDialog?.open || tipsOverlayOpen()) return;
+    if (elements.tradeNoticeDialog?.open) return;
+    if (playerDialogOpen()) return;
+    const notice = pendingTradeNotices()[0];
+    if (!notice) return;
+    const listed = (model.trades || []).find((row) => row.tradeId === notice.tradeId) || null;
+    const moved = movedCardsFromNotice(notice, listed);
+    const ids = [...moved.receivedCardIds, ...moved.givenCardIds];
+    if (ids.some((cardId) => !tradeNoticeCard(cardId))) {
+      try {
+        await loadStaticCatalog();
+      } catch {
+        /* Open anyway with fallback thumbs. */
+      }
+    }
     showAcceptedTradeNotice({
       otherName: notice.accepterName,
       ...moved,
       noticeId: notice.id,
     });
   } catch {
-    /* Creator notice is display-only. */
-  }
-  if ((moved.receivedCardIds.length || moved.givenCardIds.length) && !model.fullCatalog) {
-    loadStaticCatalog().catch(() => null);
+    /* Creator notice is display-only. Never touches the accepted trade. */
   }
 }
 

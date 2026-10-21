@@ -7,6 +7,7 @@ import {
   movedCardsFromAccept,
   movedCardsFromNotice,
   movedCardsFromTrade,
+  paintAcceptDialogSafely,
   parseCardIds,
   tradeNoticeFallbackThumb,
   tradeNoticeSide,
@@ -163,6 +164,37 @@ test("creator notice uses the same moved-cards function from the owner's side", 
   const boom = new Proxy({}, { get() { throw new Error("notice boom"); } });
   assert.deepEqual(acceptDialogCards(boom), { receivedCardIds: [], givenCardIds: [] });
   assert.deepEqual(movedCardsFromNotice(boom, null), { receivedCardIds: [], givenCardIds: [] });
+});
+
+test("paintAcceptDialogSafely swallows catalog and dialog throws without touching inventory", () => {
+  const inventory = { A: 2, X: 0 };
+  assert.equal(paintAcceptDialogSafely(() => {
+    throw new Error("catalog lookup");
+  }), false);
+  assert.equal(paintAcceptDialogSafely(() => {
+    throw new Error("dialog rendering");
+  }), false);
+  assert.equal(paintAcceptDialogSafely(() => {
+    tradeNoticeSides({ receivedCardIds: ["A"], givenCardIds: ["X"] }, {
+      get() { throw new Error("catalog lookup"); },
+    });
+  }), true);
+  assert.deepEqual(inventory, { A: 2, X: 0 });
+});
+
+test("creator notice that fires before the catalog loads still ends with thumbs", () => {
+  const empty = new Map();
+  const first = tradeNoticeSides({ receivedCardIds: ["SYS-C-01"], givenCardIds: ["SYS-C-02"] }, empty);
+  assert.ok(tradeNoticeSidesFilled(first), "unresolved ids still fill fallback thumbs");
+  assert.equal(first.received.thumbs[0].found, false);
+  const fullById = new Map([
+    ["SYS-C-01", { id: "SYS-C-01", titleHe: "הכנסת" }],
+    ["SYS-C-02", { id: "SYS-C-02", titleHe: "הקלפי" }],
+  ]);
+  const later = tradeNoticeSides({ receivedCardIds: ["SYS-C-01"], givenCardIds: ["SYS-C-02"] }, fullById);
+  assert.ok(tradeNoticeSidesFilled(later));
+  assert.equal(later.received.thumbs[0].found, true);
+  assert.equal(later.given.thumbs[0].found, true);
 });
 
 test("dialog thumbs stay filled when byId is empty or the card is not live", () => {

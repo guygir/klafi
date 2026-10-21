@@ -166,8 +166,10 @@ test("client accept path snapshots the trade and never paints empty markup for a
   assert.match(javascript, /refillMovedFromListedTrade/);
   assert.match(javascript, /tradeNoticeFallbackThumb\(cardId\)/);
   assert.match(javascript, /skipCatalog: true/);
-  assert.match(javascript, /function noticeCard/);
-  assert.match(javascript, /model\.catalogById\?\.get\(cardId\) \|\| model\.byId\.get\(cardId\)/);
+  assert.match(javascript, /function tradeNoticeCard/);
+  assert.match(javascript, /model\.byId\.get\(cardId\) \|\| model\.fullById\?\.get\(cardId\)/);
+  assert.match(javascript, /function repaintOpenTradeNotice/);
+  assert.match(javascript, /await loadStaticCatalog/);
   assert.doesNotMatch(
     javascript,
     /return card \? `<div class="trade-thumb">\$\{tradeThumbMarkup\(card, \{ warnLastCopy \}\)\}<\/div>` : "";/,

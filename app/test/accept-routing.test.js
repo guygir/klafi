@@ -316,6 +316,20 @@ test("accept still transfers inventory when owner notice enqueue throws", async 
   assert.deepEqual(inventoryDelta(beforeAccepter, afterAccepter), { gained: offered, lost: wanted });
   assert.deepEqual(inventoryDelta(beforeOwner, afterOwner), { gained: wanted, lost: offered });
   assert.equal(store.state.trades.find((row) => row.tradeId === created.body.trade.tradeId)?.status, "accepted");
+  const { paintAcceptDialogSafely, tradeNoticeSides } = await import("../public/trade-result.js");
+  const committedInventory = { ...afterAccepter };
+  assert.equal(paintAcceptDialogSafely(() => {
+    throw new Error("dialog rendering");
+  }), false);
+  assert.equal(paintAcceptDialogSafely(() => {
+    tradeNoticeSides({
+      receivedCardIds: accepted.body.receivedCardIds,
+      givenCardIds: accepted.body.givenCardIds,
+    }, { get() { throw new Error("catalog lookup"); } });
+    throw new Error("catalog lookup");
+  }), false);
+  assert.deepEqual(afterAccepter, committedInventory);
+  assert.deepEqual(inventoryDelta(beforeAccepter, afterAccepter), { gained: offered, lost: wanted });
 });
 
 test("vercel routing + file store: every accept path returns moved ids matching inventory", async (t) => {

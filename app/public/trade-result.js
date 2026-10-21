@@ -156,3 +156,13 @@ export function tradeNoticeFallbackThumb(cardId) {
   const id = String(cardId || "").trim();
   return `<div class="trade-thumb trade-thumb-pending" data-card-id="${id}"><span class="trade-thumb-frame"><span class="kalpi-card is-notice-fallback" aria-label="קלף">קלף</span></span></div>`;
 }
+
+/** Display-only. A throw here must never roll back an already-committed accept. */
+export function paintAcceptDialogSafely(paint) {
+  try {
+    paint();
+    return true;
+  } catch {
+    return false;
+  }
+}
