@@ -118,6 +118,8 @@ export function normalizeState(value = {}) {
     session.referralCode = normalizeInviteCode(session.referralCode);
     session.invitedBy ??= null;
     session.referralRewardedAt ??= null;
+    session.instances ??= [];
+    session.packs ??= [];
   }
   return state;
 }
@@ -335,15 +337,22 @@ export class JsonStore {
   }
 
   async withSession(token, mutator) {
+    const nested = Boolean(this.transaction.getStore());
     return this.exclusive(async () => {
       const session = this.getSession(token);
       if (!session) return null;
-      const before = { inventory: { ...(session.inventory || {}) } };
-      const result = await mutator(session);
-      if (holderInventoryChanged(before, session)) this.invalidateCardHolderSnapshot();
-      bumpStateRevision(session);
-      await this.persist();
-      return result;
+      const snapshot = nested ? null : structuredClone(this.state);
+      try {
+        const before = { inventory: { ...(session.inventory || {}) } };
+        const result = await mutator(session);
+        if (holderInventoryChanged(before, session)) this.invalidateCardHolderSnapshot();
+        bumpStateRevision(session);
+        if (!nested) await this.persist();
+        return result;
+      } catch (error) {
+        if (snapshot) this.state = snapshot;
+        throw error;
+      }
     });
   }
 

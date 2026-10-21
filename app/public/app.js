@@ -4854,23 +4854,102 @@ async function loadReferrals() {
   }
 }
 
+function consumeDebugReferralFail() {
+  try {
+    const params = new URLSearchParams(location.search);
+    if (!params.has("failReferralGrant")) return false;
+    params.delete("failReferralGrant");
+    const query = params.toString();
+    history.replaceState(null, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function playGrantedPackReveal({ cards, packId, mode, rip: shouldRip = true }) {
+  const rip = shouldRip ? playHomePackRip() : null;
+  try {
+    if (rip) await rip.finished;
+    await cardArtGate(cards);
+    model.currentPack = {
+      packId: packId || `${mode}-${cards[0].instanceId}`,
+      mode,
+      pulledAt: cards[0].pulledAt || new Date().toISOString(),
+      cards,
+    };
+    model.currentCardIndex = 0;
+    model.previewMode = false;
+    if (rip) rip.release({ revealing: true });
+    showView("pack");
+    startWalkout();
+  } catch (error) {
+    rip?.release();
+    throw error;
+  }
+}
+
+async function revealReferralPack(cards, packId) {
+  if (elements.profileDialog?.open) elements.profileDialog.close();
+  await playGrantedPackReveal({ cards, packId, mode: "referral" });
+}
+
+async function recoverReferralReward(code) {
+  try {
+    const [state, list] = await Promise.all([
+      request("/api/state"),
+      request("/api/referrals"),
+    ]);
+    if (state) setServerState(state);
+    renderReferralList(list.referrals || []);
+    if (!model.catalog.length) await loadStaticCatalog();
+    const marker = `referral-${code}`;
+    const cards = (state.instances || []).filter((item) => (
+      item?.acquiredBy === marker && item.cardId && model.byId.has(item.cardId)
+    ));
+    if (!cards.length) return false;
+    const last = state.lastPack;
+    const packId = last?.mode === "referral" && last.cards?.some((card) => card.instanceId === cards[0].instanceId)
+      ? last.packId
+      : `referral-${cards[0].instanceId}`;
+    await revealReferralPack(cards, packId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function referralClaimToast(error) {
+  const errorCode = error?.body?.error || error?.message || "";
+  if (errorCode === "REFERRAL_CLAIMED") return "כבר קיבלתם את החבילה הזאת.";
+  if (errorCode === "REFERRAL_NOT_READY") return "החבילה עדיין לא מוכנה.";
+  if (!error?.status || error.status >= 500) return "השרת לא סיים. נסו שוב.";
+  return "החבילה עדיין לא מוכנה.";
+}
+
 async function claimReferralReward(code, button) {
   if (homePackRipBusy) return;
   sfx.unlock();
   if (button) button.disabled = true;
   homePackRipBusy = true;
-  let rip = null;
   try {
     // Same path as any other pack: "opening…" wait, then the rip and reveal in place.
     showWait("פותחים…");
     const body = await request("/api/referrals/claim", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        ...(consumeDebugReferralFail() ? { "x-kalpi-debug": "fail-referral-grant" } : {}),
+      },
       body: JSON.stringify({ code }),
     });
     hideWait();
     if (body.state) setServerState(body.state);
-    renderReferralList(body.referrals || []);
+    else {
+      try { setServerState(await request("/api/state")); } catch { /* reveal still uses body.cards */ }
+    }
+    if (body.referrals?.length) renderReferralList(body.referrals);
+    else await loadReferrals();
     if (!model.catalog.length) await loadStaticCatalog();
     const cards = (body.cards || []).filter(({ cardId }) => cardId && model.byId.has(cardId));
     if (!cards.length) {
@@ -4882,29 +4961,23 @@ async function claimReferralReward(code, button) {
       showToast("החבילה נכנסה לאוסף.");
       return;
     }
-    // Start the rip first so closing the profile does not let a deferred popup jump in.
-    rip = playHomePackRip();
-    if (elements.profileDialog?.open) elements.profileDialog.close();
-    await rip.finished;
-    await cardArtGate(cards);
-    model.currentPack = {
-      packId: body.packId || `referral-${cards[0].instanceId}`,
-      mode: "referral",
-      pulledAt: cards[0].pulledAt || new Date().toISOString(),
-      cards,
-    };
-    model.currentCardIndex = 0;
-    model.previewMode = false;
-    rip.release({ revealing: true });
-    showView("pack");
-    startWalkout();
+    await revealReferralPack(cards, body.packId);
   } catch (error) {
     hideWait();
-    rip?.release();
+    const recovered = await recoverReferralReward(code);
+    if (recovered) return;
+    if (!error?.status) {
+      if (elements.profileDialog?.open) elements.profileDialog.close();
+      renderHome();
+      renderBinder();
+      showView("binder");
+      showToast("החבילה נכנסה לאוסף.");
+      await loadReferrals();
+      return;
+    }
     if (button) button.disabled = false;
-    const errorCode = error?.body?.error || error?.message || "";
-    showToast(errorCode === "REFERRAL_CLAIMED" ? "כבר קיבלתם את החבילה הזאת." : "החבילה עדיין לא מוכנה.");
-    loadReferrals();
+    showToast(referralClaimToast(error));
+    await loadReferrals();
   } finally {
     hideWait();
     homePackRipBusy = false;
@@ -6905,7 +6978,6 @@ async function openServerPrize({ body, reward, packId }) {
   homePackRipBusy = true;
   model.streakRewardOpening = true;
   const isPack = reward?.kind === "pack";
-  let rip = null;
   try {
     if (elements.streakDialog?.open) elements.streakDialog.close();
     // Loading popup first. The rip page is the reveal, not the wait.
@@ -6917,7 +6989,6 @@ async function openServerPrize({ body, reward, packId }) {
     });
     hideWait();
     if (pulled.already) {
-      rip?.release();
       if (pulled.state) setServerState(pulled.state, { merge: true });
       // Keep the table honest: reopen it painted from the server's answer (נלקח), and say so.
       if (pulled.state?.streakCalendar && model.serverState) model.serverState.streakCalendar = pulled.state.streakCalendar;
@@ -6930,25 +7001,14 @@ async function openServerPrize({ body, reward, packId }) {
     if (pulled.state) setServerState(pulled.state, { merge: true });
     if (elements.streakDialog?.open) elements.streakDialog.close();
     if (!model.catalog.length) await loadStaticCatalog();
-    if (isPack) {
-      rip = playHomePackRip();
-      await rip.finished;
-    }
-    await cardArtGate(pulled.cards);
-    model.currentPack = {
+    await playGrantedPackReveal({
+      cards: pulled.cards,
       packId: pulled.packId || packId,
       mode: "streak",
-      pulledAt: new Date().toISOString(),
-      cards: pulled.cards,
-    };
-    model.currentCardIndex = 0;
-    model.previewMode = false;
-    if (isPack) rip.release({ revealing: true });
-    showView("pack");
-    startWalkout();
+      rip: isPack,
+    });
   } catch (error) {
     hideWait();
-    rip?.release();
     const code = error?.body?.error || error?.message || "";
     const calendar = model.serverState?.streakCalendar;
     if (calendar && elements.streakDialog?.open) paintStreakCalendar(calendar);

@@ -627,7 +627,7 @@ function publicState(session, now, cards, config = {}) {
     lastAcquiredAt: lastAcquiredAtByCard(session.instances, session.inventory, session.unseenPulls || []),
     instances: session.instances,
     favorites: session.favorites ?? [],
-    lastPack: session.packs.at(-1) ?? null,
+    lastPack: (session.packs || []).at(-1) ?? null,
     ownedUnique: Object.keys(regularInventoryOf(session)).filter((id) => eligibleCards.some((card) => card.id === id)).length,
     ownedUniqueAll: Object.keys(regularInventoryOf(session)).length,
     starCount: collectionStarCount(session, cards),
@@ -840,6 +840,8 @@ export async function createKalpiApp({
   rng = randomInt,
   holderWarm = false,
   holderSyncMs = CARD_HOLDER_SYNC_MS,
+  store: providedStore = null,
+  testHooks = {},
 } = {}) {
   const cards = JSON.parse(await readFile(cardsPath, "utf8"));
   const advocacy = JSON.parse(await readFile(advocacyPath, "utf8"));
@@ -923,9 +925,9 @@ export async function createKalpiApp({
       throw new Error("Demo pack must preserve the 3C / 2U / 1R composition");
     }
   }
-  const store = databaseUrl
+  const store = providedStore || (databaseUrl
     ? new PostgresStore(databaseUrl, { ssl: databaseSsl, now, numberedRandom })
-    : new JsonStore(path.join(dataDir, "state.json"), { now, numberedRandom });
+    : new JsonStore(path.join(dataDir, "state.json"), { now, numberedRandom }));
   const initialized = await store.init();
   const studioOverlay = initialized && Object.hasOwn(initialized, "studioConfig")
     ? initialized.studioConfig
@@ -1050,7 +1052,7 @@ export async function createKalpiApp({
       .sort((left, right) => Number(right.ready) - Number(left.ready) || right.stars - left.stars || left.name.localeCompare(right.name, "he"));
   }
 
-  async function claimReferral(inviterToken, code) {
+  async function claimReferral(inviterToken, code, { failAfterGrant = false } = {}) {
     const normalized = normalizeInviteCode(code);
     if (!normalized) return { status: 400, body: { error: "INVALID_INVITE" } };
     const inviteeToken = await store.tokenForReferralCode(normalized);
@@ -1062,59 +1064,85 @@ export async function createKalpiApp({
     const gate = referralStarGate(studioContent?.gameConfig);
     const marker = referralMarker(normalized);
     if (!marker) return { status: 400, body: { error: "INVALID_INVITE" } };
-    // The granted copy goes back to the client so the claim plays the normal in-place pack reveal.
+    // Pack + claimed flag commit together. A retry after a failed persist grants once;
+    // a retry after a successful grant returns the same copy instead of 409.
     let rewardInstance = null;
+    let responseBody = null;
     const outcome = await store.withSession(inviteeToken, async (invitee) => {
       if (invitee.invitedBy !== inviterToken) return "missing";
-      if (invitee.referralRewardedAt) return "claimed";
-      if (collectionStarCount(invitee, allCards) < gate) return "early";
+      const stars = collectionStarCount(invitee, allCards);
       const granted = await store.withSession(inviterToken, async (inviter) => {
         const existing = (inviter.instances || []).find((item) => item?.acquiredBy === marker);
-        if (existing) {
-          rewardInstance = existing;
-          return "exists";
+        let instance = existing;
+        if (!instance) {
+          if (!invitee.referralRewardedAt && stars < gate) return "early";
+          const pool = activeIdleCards(allCards, now());
+          if (!pool.length) return "empty";
+          const pulledAt = new Date(now()).toISOString();
+          const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(inviter), inviter.idleDuplicateStreak || 0));
+          // Same as grantRewardInstance: unseen, not warehoused. Credit happens on this
+          // open, the way /api/streak/open credits a calendar pack.
+          instance = await grantCard(inviter, pull, {
+            acquiredBy: marker,
+            pulledAt,
+            warehouse: false,
+          });
         }
-        const pool = activeIdleCards(allCards, now());
-        if (!pool.length) return "empty";
-        const pulledAt = new Date(now()).toISOString();
-        const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(inviter), inviter.idleDuplicateStreak || 0));
-        const instance = await grantCard(inviter, pull, {
-          acquiredBy: marker,
-          pulledAt,
-          creditNow: true,
-          warehouse: false,
-        });
-        inviter.packs ??= [];
-        inviter.packs.push({
-          packId: `referral-${instance.instanceId}`,
-          mode: "referral",
-          pulledAt,
-          nextDailyAt: null,
-          cards: [instance],
-        });
-        inviter.packs = inviter.packs.slice(-100);
+        ensureReferralPack(inviter, instance);
+        if (!instance.seenAt) {
+          if (creditStreakInstance(inviter, instance, new Date(now()).toISOString())) {
+            syncProgression(inviter, allCards, studioContent?.gameConfig?.progression, now());
+          }
+        }
         rewardInstance = instance;
-        return "granted";
+        if (!existing) {
+          if (failAfterGrant) throw new Error("DEBUG_REFERRAL_GRANT_FAIL");
+          if (typeof testHooks.beforeReferralCommit === "function") {
+            await testHooks.beforeReferralCommit({ inviter, invitee, instance });
+          }
+        }
+        return existing ? "exists" : "granted";
       });
       if (granted !== "granted" && granted !== "exists") return granted;
-      invitee.referralRewardedAt = new Date(now()).toISOString();
-      return granted;
-    });
-    if (outcome === "missing" || outcome == null) return { status: 404, body: { error: "REFERRAL_NOT_FOUND" } };
-    if (outcome === "early") return { status: 409, body: { error: "REFERRAL_NOT_READY" } };
-    if (outcome === "claimed") return { status: 409, body: { error: "REFERRAL_CLAIMED" } };
-    if (outcome === "empty") return { status: 503, body: { error: "NO_ACTIVE_RELEASE" } };
-    return {
-      status: 200,
-      body: {
+      if (!invitee.referralRewardedAt) {
+        invitee.referralRewardedAt = new Date(now()).toISOString();
+      }
+      // Keep this body small: a full publicState after persist is how a 10s
+      // function times out (504) with the pack already written.
+      responseBody = {
         claimed: true,
         mode: "referral",
         packId: rewardInstance ? `referral-${rewardInstance.instanceId}` : `referral-${normalized}`,
         cards: rewardInstance ? [rewardInstance] : [],
-        referrals: await listReferralRows(inviterToken),
-        state: stateFor(store.getSession(inviterToken)),
-      },
-    };
+        referrals: [{
+          code: normalized,
+          name: invitee.displayName || "שחקן",
+          stars: collectionStarCount(invitee, allCards),
+          ready: false,
+          claimed: true,
+        }],
+      };
+      return granted;
+    });
+    if (outcome === "missing" || outcome == null) return { status: 404, body: { error: "REFERRAL_NOT_FOUND" } };
+    if (outcome === "early") return { status: 409, body: { error: "REFERRAL_NOT_READY" } };
+    if (outcome === "empty") return { status: 503, body: { error: "NO_ACTIVE_RELEASE" } };
+    return { status: 200, body: responseBody };
+  }
+
+  function ensureReferralPack(session, instance) {
+    if (!instance) return;
+    const packId = `referral-${instance.instanceId}`;
+    session.packs ??= [];
+    if (session.packs.some((pack) => pack?.packId === packId)) return;
+    session.packs.push({
+      packId,
+      mode: "referral",
+      pulledAt: instance.pulledAt || new Date(now()).toISOString(),
+      nextDailyAt: null,
+      cards: [instance],
+    });
+    session.packs = session.packs.slice(-100);
   }
 
   function publicGameConfig() {
@@ -1951,7 +1979,8 @@ export async function createKalpiApp({
 
         if (request.method === "POST" && url.pathname === "/api/referrals/claim") {
           const input = await readJson(request);
-          const result = await claimReferral(token, input?.code);
+          const debugFail = debugRequest && String(request.headers["x-kalpi-debug"] || "") === "fail-referral-grant";
+          const result = await claimReferral(token, input?.code, { failAfterGrant: debugFail });
           json(response, result.status, result.body);
           return;
         }
