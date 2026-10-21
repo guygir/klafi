@@ -610,7 +610,11 @@ export class JsonStore {
       trade.acceptedBy = sessionToken;
       this.invalidateCardHolderSnapshot();
       await this.persist();
-      return trade;
+      return {
+        ...trade,
+        receivedCardIds: [...verdict.offeredCardIds],
+        givenCardIds: [...verdict.wantedCardIds],
+      };
     });
   }
 

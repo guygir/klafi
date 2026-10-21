@@ -143,6 +143,20 @@ test("a trade moves a regular copy and leaves the numbered stamp", () => {
   assert.equal(to.inventory["SET5-01"], 1);
   assert.equal(to.instances[0].numberedIndex, undefined);
   assert.equal(to.instances[0].acquiredBy, "trade-accepted");
+  assert.equal(to.instances[0].isNew, true);
+  assert.equal(to.instances[0].pulledAt, "2026-09-21T12:00:00.000Z");
+  assert.equal(to.instances[0].seenAt, null);
+  const dupeTo = { inventory: { "SET5-01": 1 }, instances: [] };
+  moveOwnedCard({
+    inventory: { "SET5-01": 1 },
+    instances: [{ instanceId: "plain-2", cardId: "SET5-01", finish: "Common" }],
+  }, dupeTo, "SET5-01", {
+    acquiredBy: "trade-accepted",
+    pulledAt: "2026-09-21T13:00:00.000Z",
+    finish: "Common",
+    instanceId: "fresh-2",
+  });
+  assert.equal(dupeTo.instances[0].isNew, false, "a traded dupe is not new, same as a pack dupe");
 });
 
 test("a numbered-only copy cannot be given in a trade", () => {
