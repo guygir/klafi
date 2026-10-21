@@ -1108,17 +1108,20 @@ export async function createKalpiApp({
       if (!invitee.referralRewardedAt) {
         invitee.referralRewardedAt = new Date(now()).toISOString();
       }
-      const inviter = store.getSession(inviterToken);
-      const referrals = (await listReferralRows(inviterToken)).map((row) => (
-        row.code === normalized ? { ...row, claimed: true, ready: false } : row
-      ));
+      // Keep this body small: a full publicState after persist is how a 10s
+      // function times out (504) with the pack already written.
       responseBody = {
         claimed: true,
         mode: "referral",
         packId: rewardInstance ? `referral-${rewardInstance.instanceId}` : `referral-${normalized}`,
         cards: rewardInstance ? [rewardInstance] : [],
-        referrals,
-        state: stateFor(inviter),
+        referrals: [{
+          code: normalized,
+          name: invitee.displayName || "שחקן",
+          stars: collectionStarCount(invitee, allCards),
+          ready: false,
+          claimed: true,
+        }],
       };
       return granted;
     });

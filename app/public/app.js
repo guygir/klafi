@@ -4941,7 +4941,11 @@ async function claimReferralReward(code, button) {
     });
     hideWait();
     if (body.state) setServerState(body.state);
-    renderReferralList(body.referrals || []);
+    else {
+      try { setServerState(await request("/api/state")); } catch { /* reveal still uses body.cards */ }
+    }
+    if (body.referrals?.length) renderReferralList(body.referrals);
+    else await loadReferrals();
     if (!model.catalog.length) await loadStaticCatalog();
     const cards = (body.cards || []).filter(({ cardId }) => cardId && model.byId.has(cardId));
     if (!cards.length) {
@@ -4958,6 +4962,15 @@ async function claimReferralReward(code, button) {
     hideWait();
     const recovered = await recoverReferralReward(code);
     if (recovered) return;
+    if (!error?.status) {
+      if (elements.profileDialog?.open) elements.profileDialog.close();
+      renderHome();
+      renderBinder();
+      showView("binder");
+      showToast("החבילה נכנסה לאוסף.");
+      await loadReferrals();
+      return;
+    }
     if (button) button.disabled = false;
     showToast(referralClaimToast(error));
     await loadReferrals();

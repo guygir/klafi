@@ -272,20 +272,24 @@ test("referral pack is paid once to the inviter at 15 collection stars", async (
       body: { code: state.referralCode },
     });
     assert.equal(claimed.status, 200);
-    const paid = referralPacks(claimed.body.state, state.referralCode);
-    assert.equal(paid.length, 1);
-    assert.ok(paid[0].seenAt);
-    assert.equal(claimed.body.state.unseenCount, unseenBefore);
-    assert.equal(claimed.body.state.lastPack.mode, "referral");
-    assert.equal(paid[0].cardId, claimed.body.state.lastPack.cards[0].cardId);
+    assert.equal(claimed.body.state, undefined);
     // The claim hands back the granted copy so the client plays the normal in-place reveal.
     assert.equal(claimed.body.mode, "referral");
     assert.equal(claimed.body.cards.length, 1);
+    const paidId = claimed.body.cards[0].instanceId;
+    assert.ok(paidId);
+    const afterClaim = await api(running.base, "/api/state", { token: inviter.body.token });
+    const paid = referralPacks(afterClaim.body, state.referralCode);
+    assert.equal(paid.length, 1);
+    assert.ok(paid[0].seenAt);
+    assert.equal(afterClaim.body.unseenCount, unseenBefore);
+    assert.equal(afterClaim.body.lastPack.mode, "referral");
+    assert.equal(paid[0].cardId, afterClaim.body.lastPack.cards[0].cardId);
     assert.equal(claimed.body.cards[0].instanceId, paid[0].instanceId);
     assert.equal(claimed.body.cards[0].cardId, paid[0].cardId);
     assert.equal(claimed.body.packId, `referral-${paid[0].instanceId}`);
-    assert.ok(claimed.body.state.inventory[paid[0].cardId] >= 1);
-    assert.ok(claimed.body.state.acquiredAt[paid[0].cardId]);
+    assert.ok(afterClaim.body.inventory[paid[0].cardId] >= 1);
+    assert.ok(afterClaim.body.acquiredAt[paid[0].cardId]);
     // Still there on a fresh read (a refresh).
     const reread = await api(running.base, "/api/state", { token: inviter.body.token });
     assert.equal(referralPacks(reread.body, state.referralCode).length, 1);
@@ -302,8 +306,10 @@ test("referral pack is paid once to the inviter at 15 collection stars", async (
       body: { code: state.referralCode },
     });
     assert.equal(repeatClaim.status, 200);
+    assert.equal(repeatClaim.body.state, undefined);
     assert.equal(repeatClaim.body.cards[0].instanceId, paid[0].instanceId);
-    assert.equal(referralPacks(repeatClaim.body.state, state.referralCode).length, 1);
+    const afterRepeat = await api(running.base, "/api/state", { token: inviter.body.token });
+    assert.equal(referralPacks(afterRepeat.body, state.referralCode).length, 1);
 
     const extra = cards.find((card) => !owned.has(card.id));
     const again = await api(running.base, "/api/debug/unlock-card", {
@@ -398,7 +404,9 @@ test("a referral link on first entrance uses the configured star gate", async ()
       body: { code: invitee.body.referralCode },
     });
     assert.equal(claimed.status, 200);
-    assert.equal(referralPacks(claimed.body.state, invitee.body.referralCode).length, 1);
+    assert.equal(claimed.body.cards.length, 1);
+    const afterNamed = await api(running.base, "/api/state", { token: inviter.body.token });
+    assert.equal(referralPacks(afterNamed.body, invitee.body.referralCode).length, 1);
     assert.equal(referralPacks(invitee.body, invitee.body.referralCode).length, 0);
     const second = await api(running.base, "/api/session", {
       method: "POST",
@@ -422,7 +430,9 @@ test("a referral link on first entrance uses the configured star gate", async ()
       body: { code: invitee.body.referralCode },
     });
     assert.equal(repeat.status, 200);
-    assert.equal(referralPacks(repeat.body.state, invitee.body.referralCode).length, 1);
+    assert.equal(repeat.body.cards[0].instanceId, afterNamed.body.instances.find((item) => item.acquiredBy === marker(invitee.body.referralCode))?.instanceId);
+    const afterNamedRepeat = await api(running.base, "/api/state", { token: inviter.body.token });
+    assert.equal(referralPacks(afterNamedRepeat.body, invitee.body.referralCode).length, 1);
     const still = await api(running.base, "/api/state", { token: inviter.body.token });
     assert.equal(referralPacks(still.body, invitee.body.referralCode).length, 1);
     assert.equal(referralPacks(still.body, secondUnlocked.body.referralCode).length, 0);
@@ -485,7 +495,9 @@ test("a shared card ref is the invite on a new player's first entrance", async (
       body: { code: invitee.body.referralCode },
     });
     assert.equal(claimed.status, 200);
-    assert.equal(referralPacks(claimed.body.state, invitee.body.referralCode).length, 1);
+    assert.equal(claimed.body.cards.length, 1);
+    const afterShare = await api(running.base, "/api/state", { token: sharer.body.token });
+    assert.equal(referralPacks(afterShare.body, invitee.body.referralCode).length, 1);
     const again = await api(running.base, "/api/referrals/claim", {
       token: sharer.body.token,
       method: "POST",
@@ -557,7 +569,10 @@ test("file store: a mid-grant failure rolls back and a retry pays once", async (
     assert.equal(referralPacks(store.getSession(ready.inviterToken), ready.inviteeCode).length, 0);
     const retried = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
     assert.equal(retried.status, 200);
-    assert.equal(referralPacks(retried.body.state, ready.inviteeCode).length, 1);
+    assert.equal(retried.body.state, undefined);
+    assert.equal(retried.body.cards.length, 1);
+    const afterRetry = await api(running.base, "/api/state", { token: ready.inviterToken });
+    assert.equal(referralPacks(afterRetry.body, ready.inviteeCode).length, 1);
     const again = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
     assert.equal(again.status, 200);
     assert.equal(again.body.cards[0].instanceId, retried.body.cards[0].instanceId);
@@ -583,7 +598,9 @@ test("file store: claimed-without-pack self-heals on the next tap", async () => 
     assert.equal(referralPacks(store.getSession(ready.inviterToken), ready.inviteeCode).length, 0);
     const healed = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
     assert.equal(healed.status, 200);
-    assert.equal(referralPacks(healed.body.state, ready.inviteeCode).length, 1);
+    assert.equal(healed.body.cards.length, 1);
+    const afterHeal = await api(running.base, "/api/state", { token: ready.inviterToken });
+    assert.equal(referralPacks(afterHeal.body, ready.inviteeCode).length, 1);
     assert.ok(healed.body.cards[0].instanceId);
   } finally {
     await running.close();
@@ -615,7 +632,9 @@ test("postgres store: a mid-grant failure rolls back and a retry pays once", asy
     assert.equal(referralPacks(inviter, ready.inviteeCode).length, 0);
     const retried = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
     assert.equal(retried.status, 200);
-    assert.equal(referralPacks(retried.body.state, ready.inviteeCode).length, 1);
+    assert.equal(retried.body.cards.length, 1);
+    const afterPgRetry = await api(running.base, "/api/state", { token: ready.inviterToken });
+    assert.equal(referralPacks(afterPgRetry.body, ready.inviteeCode).length, 1);
     const again = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
     assert.equal(again.status, 200);
     assert.equal(again.body.cards[0].instanceId, retried.body.cards[0].instanceId);
@@ -652,7 +671,9 @@ test("postgres store: claimed-without-pack self-heals on the next tap", async ()
     assert.equal(referralPacks(before, ready.inviteeCode).length, 0);
     const healed = await claimOnce(running.base, ready.inviterToken, ready.inviteeCode);
     assert.equal(healed.status, 200);
-    assert.equal(referralPacks(healed.body.state, ready.inviteeCode).length, 1);
+    assert.equal(healed.body.cards.length, 1);
+    const afterPgHeal = await api(running.base, "/api/state", { token: ready.inviterToken });
+    assert.equal(referralPacks(afterPgHeal.body, ready.inviteeCode).length, 1);
   } finally {
     await running.close();
     await db.close();
