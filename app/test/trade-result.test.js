@@ -6,6 +6,7 @@ import {
   cardsMovedOnSide,
   movedCardsFromAccept,
   movedCardsFromTrade,
+  parseCardIds,
   tradeNoticeFallbackThumb,
   tradeNoticeSide,
   tradeNoticeSides,
@@ -127,6 +128,18 @@ test("accept dialog derives moved cards from the pre-accept snapshot when the pa
     offeredCardIds: [],
     wantedCardIds: [],
   }), { receivedCardIds: ["LEGACY-OFFER"], givenCardIds: ["LEGACY-WANT"] });
+});
+
+test("parseCardIds reads leftover JSON strings the same as arrays", () => {
+  assert.deepEqual(parseCardIds('["A","B","C"]'), ["A", "B", "C"]);
+  assert.deepEqual(parseCardIds("[]", "X"), ["X"]);
+  assert.deepEqual(movedCardsFromTrade({
+    offeredMode: "or",
+    wantedMode: "or",
+    offeredCardIds: '["A","B","C"]',
+    wantedCardIds: "[]",
+    wantedCardId: "X",
+  }, { offeredCardId: "B" }), { receivedCardIds: ["B"], givenCardIds: ["X"] });
 });
 
 test("1-card OR and 1-card AND move the same card; mode never empties a side that has ids", () => {

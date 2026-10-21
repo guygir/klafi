@@ -1,4 +1,4 @@
-import { cardsMovedOnSide } from "../public/trade-result.js";
+import { cardsMovedOnSide, parseCardIds } from "../public/trade-result.js";
 
 /** Max cards per side of a trade (bundle or choice). */
 export const TRADE_SIDE_MAX = 3;
@@ -29,15 +29,14 @@ function cleanMode(mode) {
 }
 
 function cleanIds(cardIds) {
-  if (!Array.isArray(cardIds)) return [];
-  return cardIds.map((id) => String(id || "").trim()).filter(Boolean);
+  return parseCardIds(cardIds);
 }
 
 /** Normalize a stored or in-flight trade record (legacy single-card fields included). */
 export function normalizeStoredTrade(trade) {
   if (!trade || typeof trade !== "object") return trade;
-  const offeredCardIds = cleanIds(trade.offeredCardIds?.length ? trade.offeredCardIds : [trade.offeredCardId]);
-  const wantedCardIds = cleanIds(trade.wantedCardIds?.length ? trade.wantedCardIds : [trade.wantedCardId]);
+  const offeredCardIds = parseCardIds(trade.offeredCardIds, trade.offeredCardId);
+  const wantedCardIds = parseCardIds(trade.wantedCardIds, trade.wantedCardId);
   trade.offeredMode = cleanMode(trade.offeredMode);
   trade.wantedMode = cleanMode(trade.wantedMode);
   trade.offeredCardIds = offeredCardIds.slice(0, TRADE_SIDE_MAX);

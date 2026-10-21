@@ -1,13 +1,29 @@
 /** Cards that actually moved in an accept. One function for every side combo. */
 
-function cleanIds(cardIds, fallback) {
-  const list = Array.isArray(cardIds)
-    ? cardIds.map((id) => String(id || "").trim()).filter(Boolean)
+/** Arrays, JSON strings, and leftover single ids all become a clean id list. */
+export function parseCardIds(cardIds, fallback) {
+  let value = cardIds;
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!text) value = [];
+    else if (text.startsWith("[") || text.startsWith("{")) {
+      try { value = JSON.parse(text); } catch { value = [text]; }
+    } else {
+      value = [text];
+    }
+  }
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    value = Object.values(value);
+  }
+  const list = Array.isArray(value)
+    ? value.map((id) => String(id || "").trim()).filter(Boolean)
     : [];
   if (list.length) return list;
   const legacy = String(fallback || "").trim();
   return legacy ? [legacy] : [];
 }
+
+const cleanIds = parseCardIds;
 
 function mergeMoved(primary, fallback) {
   return {
