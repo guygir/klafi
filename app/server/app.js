@@ -1036,11 +1036,14 @@ export async function createKalpiApp({
    */
   async function listReferralRows(inviterToken) {
     const gate = referralStarGate(studioContent?.gameConfig);
-    const invited = await store.listInvited(inviterToken);
+    const invited = store.listInvitedSummaries
+      ? await store.listInvitedSummaries(inviterToken)
+      : await store.listInvited(inviterToken);
+    const cardsById = new Map(allCards.map((card) => [card.id, card]));
     return invited
       .filter((session) => session?.referralCode && session.invitedBy === inviterToken)
       .map((session) => {
-        const stars = collectionStarCount(session, allCards);
+        const stars = collectionStarCount(session, cardsById);
         const claimed = Boolean(session.referralRewardedAt);
         return {
           code: session.referralCode,

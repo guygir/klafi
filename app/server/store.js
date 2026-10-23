@@ -257,6 +257,18 @@ export class JsonStore {
     });
   }
 
+  /** Same shape as the Postgres summaries: only what the referrals list reads. */
+  async listInvitedSummaries(inviterToken) {
+    return (await this.listInvited(inviterToken)).map((session) => ({
+      displayName: session.displayName,
+      referralCode: session.referralCode,
+      invitedBy: session.invitedBy,
+      referralRewardedAt: session.referralRewardedAt || null,
+      inventory: session.inventory || {},
+      numberedByCard: numberedHeldByCard(session),
+    }));
+  }
+
   async createSession(now, { inviteCode } = {}) {
     return this.exclusive(async () => {
       const token = randomUUID();
