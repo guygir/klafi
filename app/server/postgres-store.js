@@ -786,6 +786,52 @@ export class PostgresStore {
     return sessions;
   }
 
+  /**
+   * The referrals list in two queries, whatever the invite count:
+   * no full-session loads, just what listReferralRows reads.
+   */
+  async listInvitedSummaries(inviterToken) {
+    if (!inviterToken) return [];
+    const [found, numbered] = await Promise.all([
+      this.executor().query(
+        `SELECT s.token, s.display_name,
+                s.extras->>'referralCode' AS referral_code,
+                s.extras->>'referralRewardedAt' AS referral_rewarded_at,
+                COALESCE(json_object_agg(i.card_id, i.copies) FILTER (WHERE i.card_id IS NOT NULL), '{}') AS inventory
+         FROM kalpi_sessions s
+         LEFT JOIN kalpi_inventory i ON i.session_token = s.token
+         WHERE s.extras->>'invitedBy' = $1
+         GROUP BY s.token`,
+        [inviterToken],
+      ),
+      this.executor().query(
+        `SELECT i.session_token, i.card_id, COUNT(*)::int AS copies
+         FROM kalpi_instances i
+         JOIN kalpi_sessions s ON s.token = i.session_token
+         WHERE s.extras->>'invitedBy' = $1
+           AND i.numbered_index > 0
+           AND NOT (COALESCE(s.extras->'unseenPulls', '[]'::jsonb) ? i.instance_id)
+         GROUP BY i.session_token, i.card_id`,
+        [inviterToken],
+      ),
+    ]);
+    const numberedByToken = new Map();
+    for (const row of numbered.rows) {
+      const bag = numberedByToken.get(row.session_token) || {};
+      bag[row.card_id] = Number(row.copies) || 0;
+      numberedByToken.set(row.session_token, bag);
+    }
+    return found.rows.map((row) => ({
+      token: row.token,
+      displayName: row.display_name,
+      referralCode: normalizeInviteCode(row.referral_code),
+      invitedBy: inviterToken,
+      referralRewardedAt: row.referral_rewarded_at || null,
+      inventory: row.inventory || {},
+      numberedByCard: numberedByToken.get(row.token) || {},
+    }));
+  }
+
   async ensureReferralCode(token) {
     const session = this.getSession(token) || await this.loadSession(token);
     if (!session) return null;
