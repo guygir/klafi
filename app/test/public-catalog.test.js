@@ -36,8 +36,14 @@ test("static catalog.json matches the public card expansion", async () => {
   const expanded = expandPublicCatalog(cards, specials, extras);
   const visible = visiblePlayerCards(expanded);
   assert.equal(catalog.cards.length, visible.length);
-  assert.deepEqual([...new Set(catalog.cards.map(({ releaseSetId }) => releaseSetId))].sort(), [...LIVE_RELEASE_SET_IDS].sort());
-  assert.ok(catalog.cards.every(({ releaseSetId }) => LIVE_RELEASE_SET_IDS.includes(releaseSetId)));
+  const promo = catalog.cards.find(({ id }) => id === "PROMO-ELECTION-0629-01");
+  assert.ok(promo, "election promo is in the player catalog");
+  assert.equal(catalog.allCards.some(({ id }) => id === "PROMO-ELECTION-0629-01"), true);
+  assert.deepEqual(
+    [...new Set(catalog.cards.map(({ releaseSetId }) => releaseSetId))].sort(),
+    [...LIVE_RELEASE_SET_IDS, "special-events"].sort(),
+  );
+  assert.ok(catalog.cards.every((card) => LIVE_RELEASE_SET_IDS.includes(card.releaseSetId) || card.id === "PROMO-ELECTION-0629-01"));
   assert.ok(catalog.cards.some(({ idleEligible }) => idleEligible));
   assert.ok(catalog.cards.some(({ eventOnly }) => eventOnly));
   assert.ok(!catalog.cards.some(({ releaseSetId }) => releaseSetId === "editorial-backlog"));
@@ -258,7 +264,7 @@ test("player shell only publishes the live release sets", async () => {
   assert.equal(shell.gameConfig.idle.capacity, IDLE_BACKLOG_CAP);
   assert.equal(shell.gameConfig.idle.intervalMs, IDLE_INTERVAL_MS);
   assert.ok(shell.cardIndex?.length);
-  assert.ok(shell.cardIndex.every(({ releaseSetId }) => LIVE_RELEASE_SET_IDS.includes(releaseSetId)));
+  assert.ok(shell.cardIndex.every((card) => LIVE_RELEASE_SET_IDS.includes(card.releaseSetId) || card.id === "PROMO-ELECTION-0629-01"));
   assert.equal(shell.totals.collectible, shell.cardIndex.length);
 });
 

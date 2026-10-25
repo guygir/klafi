@@ -13,7 +13,55 @@ const SPECIAL_TYPE_BY_SET = {
   "current-ministers": { type: "Ministerial record", typeHe: "שר בתפקיד" },
 };
 
+function runtimePromoCard(card, specials) {
+  const set = (specials.sets || []).find((item) => item.id === card.setId);
+  return {
+    id: card.id,
+    set: "special-promo",
+    setName: set?.nameHe || "אסים",
+    setNameHe: set?.nameHe || "אסים",
+    title: card.nameHe,
+    titleHe: card.nameHe,
+    subtitle: "",
+    subtitleHe: "",
+    type: "Promo",
+    typeHe: "פרומו",
+    rarity: "Promotion",
+    pip: "#c4a35a",
+    artKey: card.artKey,
+    body: "",
+    whyItMatters: card.flavor || "Election Day promo card.",
+    source: "",
+    letters: "אס",
+    displayCode: card.displayCode || "אס-01",
+    walkout: {
+      kind: "promo",
+      text: "",
+      speaker: card.nameHe,
+      date: card.date || "",
+      quoteStatus: "none",
+      sourceUrl: "",
+      sourceLabel: "",
+      contentStatus: card.contentStatus || "approved",
+      editorialRole: "promo",
+      releasePhase: "event",
+      flavorDisclosure: "editorial-symbolism-not-evidence",
+    },
+    eventOnly: true,
+    packEligible: false,
+    idleEligible: false,
+    releaseSetId: "special-events",
+    releaseOrder: 99,
+    releaseTier: "event",
+    availableFrom: null,
+    binderGroup: "special-events",
+    subjectSet: null,
+    fullartFrame: true,
+  };
+}
+
 export function runtimeSpecialCard(card, specials) {
+  if (card.kind === "promo" || card.quoteStatus === "none") return runtimePromoCard(card, specials);
   const set = (specials.sets || []).find((item) => item.id === card.setId);
   const setIndex = (specials.cards || []).filter((candidate) => candidate.setId === card.setId).findIndex(({ id }) => id === card.id) + 1;
   const specialLetters = SPECIAL_LETTERS_BY_SET[card.setId] || "מיוחד";

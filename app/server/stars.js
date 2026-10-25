@@ -1,4 +1,4 @@
-/** Collection stars. One plain copy of a card adds its rarity once. One numbered copy adds four once. */
+/** Collection stars. One plain copy adds its rarity once. One numbered copy adds four, except a promo, which keeps its rarity (5). */
 
 export const NUMBERED_STARS = 4;
 
@@ -7,6 +7,12 @@ export function rarityStars(card) {
   if (card?.rarity?.startsWith("Rare")) return 3;
   if (card?.rarity?.startsWith("Uncommon")) return 2;
   return 1;
+}
+
+/** Numbered copies are worth four stars. A promo keeps the five stars printed on the card. */
+export function numberedStarValue(card) {
+  if (card?.rarity === "Promotion") return rarityStars(card);
+  return NUMBERED_STARS;
 }
 
 /** Seen numbered copies, once the warehouse has been opened. A waiting pull does not count. */
@@ -39,7 +45,7 @@ export function collectionStars(inventory = {}, cards = [], numberedByCard = {},
       continue;
     }
     if (plain > 0) sum += rarityStars(card);
-    if (numbered > 0) sum += NUMBERED_STARS;
+    if (numbered > 0) sum += numberedStarValue(card);
   }
   return sum;
 }

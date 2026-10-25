@@ -34,7 +34,21 @@ function prizeFromToken(token) {
 export const BONUS_DAYS = Object.freeze({
   "2026-10-11": Object.freeze({ kind: "pack", label: "סט חדש", sublabel: "העצמה נשית", setId: "set-7" }),
   "2026-10-18": Object.freeze({ kind: "pack", label: "סט חדש", sublabel: "צדיקים", setId: "set-8" }),
+  "2026-10-27": Object.freeze({
+    kind: "pack",
+    label: "יום",
+    sublabel: "הבחירות",
+    cardId: "PROMO-ELECTION-0629-01",
+    stamp: Object.freeze({ index: 7, of: 10 }),
+  }),
 });
+
+/** Calendar payloads keep kind, label, and cardId. The stamp stays on the server. */
+export function publicDateReward(reward) {
+  if (!reward || typeof reward !== "object" || !Object.hasOwn(reward, "stamp")) return reward || null;
+  const { stamp, ...rest } = reward;
+  return rest;
+}
 
 export function bonusDayFor(date) {
   return BONUS_DAYS[date] || null;
@@ -293,7 +307,7 @@ export function publicNextDatePrize(session) {
       return {
         date: today,
         wait: 0,
-        reward: todayReward,
+        reward: publicDateReward(todayReward),
         waiting: true,
         claimed: claims.has(today),
         opened: false,
@@ -306,7 +320,7 @@ export function publicNextDatePrize(session) {
   return {
     date,
     wait: daysBetween(today, date),
-    reward: datePrizeFor(date),
+    reward: publicDateReward(datePrizeFor(date)),
     waiting: false,
     claimed: false,
     opened: false,
@@ -318,7 +332,7 @@ function monthChip(date) {
   return "";
 }
 
-export function publicStreakCalendar(session) {
+export function publicStreakCalendar(session, { electionPreview = false } = {}) {
   if (session && typeof session === "object") normalizeVisitStreak(session);
   const streak = Math.max(0, Number(session?.visitStreak) || 0);
   const today = session?.visitDay || null;
@@ -344,9 +358,18 @@ export function publicStreakCalendar(session) {
         checked: visited.has(date) && !(bonusDayFor(date) && !dateClaims.has(date) && !granted?.seenAt),
         current: date === today,
         election: date === ELECTION_DAY,
-        reward,
+        reward: publicDateReward(reward),
         claimed: Boolean(reward && dateClaims.has(date)),
         opened: Boolean(granted?.seenAt),
+        // Localhost only: the election cell can be opened before 27 Oct. Production never sets this.
+        previewOpen: Boolean(
+          electionPreview
+          && date === ELECTION_DAY
+          && date !== today
+          && reward
+          && !dateClaims.has(date)
+          && !granted?.seenAt
+        ),
       };
     }),
     ladder: publicStreakLadder(session),

@@ -131,6 +131,13 @@ export function stampKey(card) {
   return String(card.id);
 }
 
+/** Fixed promo stamps are not drawn from, or returned to, a numbered pool. */
+export const NON_POOLED_STAMP_KEYS = new Set(["PROMO-ELECTION-0629-01"]);
+
+export function usesNumberedPool(key) {
+  return !NON_POOLED_STAMP_KEYS.has(String(key || ""));
+}
+
 export function numberedCopies(instances = []) {
   return (instances || []).filter((item) => Number(item?.numberedIndex) > 0);
 }

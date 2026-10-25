@@ -40,9 +40,17 @@ function incompleteSets(cards, inventory) {
   );
 }
 
+function isOrdinaryPullCard(card) {
+  return Boolean(card)
+    && card.eventOnly !== true
+    && card.packEligible !== false
+    && card.walkout?.kind !== "promo";
+}
+
 function poolFor(cards, tier, selected) {
-  const available = cards.filter((card) => rarityTier(card) === tier && !selected.has(card.id));
-  return available.length ? available : cards.filter((card) => rarityTier(card) === tier);
+  const ordinary = cards.filter(isOrdinaryPullCard);
+  const available = ordinary.filter((card) => rarityTier(card) === tier && !selected.has(card.id));
+  return available.length ? available : ordinary.filter((card) => rarityTier(card) === tier);
 }
 
 export function generatePack({
@@ -80,7 +88,7 @@ export function generatePack({
 
   const alreadyHasNewCard = pulls.some(({ cardId }) => !inventory[cardId]);
   if (dryPacks >= 3 && !alreadyHasNewCard) {
-    const unowned = cards.filter((card) => !inventory[card.id]);
+    const unowned = cards.filter((card) => isOrdinaryPullCard(card) && !inventory[card.id]);
     const guaranteed = choose(unowned, rng);
     if (guaranteed) {
       const tier = rarityTier(guaranteed);
@@ -108,12 +116,13 @@ export function generateIdlePull({
   now = Date.now(),
   rng = randomInt,
 }) {
-  if (!cards.length) throw new Error("No idle-eligible cards available");
+  const ordinary = (cards || []).filter(isOrdinaryPullCard);
+  if (!ordinary.length) throw new Error("No idle-eligible cards available");
   const config = pack ? normalizePackConfig(pack) : null;
   const threshold = config?.pityAfter ?? pityAfter;
-  let pool = cards;
+  let pool = ordinary;
   if (duplicateStreak >= threshold) {
-    const unowned = cards.filter((card) => !inventory[card.id]);
+    const unowned = ordinary.filter((card) => !inventory[card.id]);
     if (unowned.length) pool = unowned;
   }
   const card = config

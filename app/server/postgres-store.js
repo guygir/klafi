@@ -14,6 +14,7 @@ import {
   regularInventory,
   returnNumberedIndex,
   rollNumberedStamp,
+  usesNumberedPool,
   takePlainInstanceForCard,
 } from "./numbered.js";
 import { emptyTodayPulse } from "../public/today-pulse.js";
@@ -1519,6 +1520,7 @@ export class PostgresStore {
   }
 
   async claimNumberedStamp(key, max, every = 30) {
+    if (!usesNumberedPool(key)) return null;
     const cap = Math.max(0, Math.round(Number(max) || 0));
     if (!cap) return null;
     const draw = async (db) => {
@@ -1546,6 +1548,7 @@ export class PostgresStore {
   }
 
   async returnNumberedStamp(key, index, max) {
+    if (!usesNumberedPool(key)) return [];
     const cap = Math.max(0, Math.round(Number(max) || 0));
     if (!cap) return [];
     const putBack = async (db) => {

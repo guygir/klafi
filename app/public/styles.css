@@ -3619,7 +3619,9 @@ h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1.05; letter-spacing: -0.03
   overflow: hidden;
   font-family: "IBM Plex Sans Hebrew", sans-serif;
 }
-.card-quote-zone { bottom: 2.5%; height: 13%; display: grid; place-items: center; text-align: center; font-size: clamp(8px, 4.2cqw, 19px); font-weight: 600; line-height: 1.16; }
+.card-quote-zone { bottom: 2.5%; height: 13%; display: grid; place-items: center; text-align: center; font-size: clamp(8px, 4.2cqw, 19px); font-weight: 600; line-height: 1.16; quotes: none; }
+.card-quote-zone.is-blank::before,
+.card-quote-zone.is-blank::after { content: none; }
 .card-party-zone { bottom: 15.4%; height: 5.8%; display: flex; align-items: center; gap: clamp(3px, 1.8cqw, 6px); white-space: nowrap; font-size: clamp(8px, 4cqw, 11px); font-weight: 500; line-height: 1; }
 .card-face.front .card-name-zone { bottom: 21.2%; height: 7.4%; display: flex; align-items: center; margin: 0; padding: 0 3cqw; white-space: nowrap; background: var(--civic); color: var(--paper); font-size: clamp(9px, 7cqw, 23px); line-height: 1; }
 .card-face.front > .card-pip { display: none; }
@@ -7003,6 +7005,9 @@ body {
 .streak-cell.is-checked {
   background: color-mix(in srgb, var(--civic) 12%, var(--paper));
   border-color: color-mix(in srgb, var(--civic) 42%, var(--rule));
+}
+.streak-cell.is-openable {
+  cursor: pointer;
 }
 .streak-cell.is-today {
   outline: 2px solid var(--civic);

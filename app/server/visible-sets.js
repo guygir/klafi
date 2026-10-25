@@ -15,8 +15,12 @@ export function isLiveReleaseSet(id) {
   return LIVE_RELEASE_SET_IDS.includes(id);
 }
 
+export function isPlayerPromoCard(card) {
+  return card?.walkout?.kind === "promo" && card?.eventOnly === true;
+}
+
 export function visiblePlayerCards(cards = []) {
-  return cards.filter((card) => isLiveReleaseSet(card.releaseSetId));
+  return cards.filter((card) => isLiveReleaseSet(card.releaseSetId) || isPlayerPromoCard(card));
 }
 
 export function visibleReleaseSets(sets = []) {

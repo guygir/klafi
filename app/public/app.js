@@ -15,6 +15,7 @@ import {
 import { binderOpenReleaseIds, binderReleaseOk } from "./binder-filter.js";
 import { binderInventorySignature, binderSlotSignature, planBinderGrid } from "./binder-grid.js";
 import { ART_GATE_TIMEOUT_MS, createArtPreloader } from "./card-art.js";
+import { cardFrameFor, cardRequestsFullartFrame, isPromoCard, partyZoneLabel, rarityMark as rarityMarkOf, rarityNameHe as rarityNameHeOf } from "./card-face.js";
 import { collectionStarsFrom, regularInventoryFrom } from "./regular-copies.js";
 import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleClock, mergeLeaderboards, overlayPendingSeen, seenAckDecision, stateRevision, withLateFields } from "./state-sync.js";
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
@@ -64,7 +65,7 @@ const EVENT_PREDICTION_STALE_MS = 60_000;
 const PENDING_IDLE_SEEN_KEY = "kalpi-pending-idle-seen";
 const PENDING_REPORTS_KEY = "kalpi-pending-reports";
 const PENDING_MUTATIONS_KEY = "kalpi-pending-mutations";
-const STATIC_DATA_VERSION = "visible-sets-8";
+const STATIC_DATA_VERSION = "visible-sets-8-promo-02";
 const LIVE_RELEASE_SET_IDS = ["party-leaders", "party-slot-2", "decisions", "records", "set-5", "set-6", "set-7", "set-8"];
 const TRADE_BOARD_PAGE_SIZE = 3;
 const WALKOUT_STAGES = ["blank", "quote", "party", "identity", "portrait"];
@@ -546,7 +547,7 @@ function isLiveReleaseSet(id) {
 }
 
 function usesFullartFrame(card) {
-  return isLiveReleaseSet(card?.releaseSetId);
+  return cardFrameFor(card, LIVE_RELEASE_SET_IDS) === "fullart-v1";
 }
 
 function playerCatalog() {
@@ -1152,9 +1153,11 @@ function applyCatalog(cards, { source = "static" } = {}) {
     }
   }
   model.catalogIds = new Set(model.catalogById.keys());
-  const visible = [...model.catalogById.values()].filter((card) => isLiveReleaseSet(card.releaseSetId));
+  const loaded = [...model.catalogById.values()];
+  const visible = loaded.filter((card) => isLiveReleaseSet(card.releaseSetId));
+  const promos = loaded.filter((card) => isPromoCard(card) && !visible.some((item) => item.id === card.id));
   model.catalog = visible;
-  model.byId = new Map(visible.map((card) => [card.id, card]));
+  model.byId = new Map([...visible, ...promos].map((card) => [card.id, card]));
   if (source === "static") model.fullCatalog = true;
   renderSiteCardPeeks();
   try {
@@ -2066,6 +2069,9 @@ function localStarCount() {
   const cards = playerCatalog();
   if (!cards.length) return model.serverState?.starCount ?? 0;
   const playable = new Set(cards.map(({ id }) => id));
+  for (const card of model.byId.values()) {
+    if (isPromoCard(card)) playable.add(card.id);
+  }
   const inventory = Object.fromEntries(Object.entries(model.serverState?.inventory || {}).filter(([id]) => playable.has(id)));
   return collectionStarsFrom(inventory, model.serverState?.numberedCopies, model.byId);
 }
@@ -4104,22 +4110,11 @@ function partyLetters(card) {
 }
 
 function rarityMark(rarity) {
-  const normalized = String(rarity).toLowerCase();
-  if (normalized.includes("ממוספר") || normalized.includes("numbered")) return "★★★★";
-  if (normalized.includes("promo") || normalized.includes("legendary") || normalized.includes("event")) return "P";
-  if (normalized.includes("rare") || normalized.includes("holo")) return "★★★";
-  if (normalized.includes("uncommon")) return "★★";
-  return "★";
+  return rarityMarkOf(rarity);
 }
 
 function rarityNameHe(rarity) {
-  const normalized = String(rarity).toLowerCase();
-  if (normalized.includes("ממוספר") || normalized.includes("numbered")) return "ממוספר";
-  if (normalized.includes("promo")) return "קידום";
-  if (normalized.includes("holo")) return "הולו";
-  if (normalized.includes("rare")) return "נדיר";
-  if (normalized.includes("uncommon")) return "לא נפוץ";
-  return "נפוץ";
+  return rarityNameHeOf(rarity);
 }
 
 function artMarkup(card, mini = false, eager = false, { deferSrc = false } = {}) {
@@ -4278,6 +4273,24 @@ function binderScopeCards() {
   return playerCatalog().filter((card) => openIds.has(card.releaseSetId) && !card.eventOnly);
 }
 
+function playerOwnsCard(cardId) {
+  if (!cardId) return false;
+  if (Number(binderInventory()[cardId]) > 0) return true;
+  return binderNumberedCopies().some((item) => item.cardId === cardId && Number(item.numberedIndex) > 0);
+}
+
+/** Live catalog plus promo cards the player already holds. Unowned promos stay out of the binder. */
+function binderPlayerCards() {
+  const base = playerCatalog();
+  const known = new Set(base.map((card) => card.id));
+  const extras = [];
+  for (const card of model.byId.values()) {
+    if (!isPromoCard(card) || known.has(card.id) || !playerOwnsCard(card.id)) continue;
+    extras.push(card);
+  }
+  return extras.length ? [...base, ...extras] : base;
+}
+
 function binderProgress(inventory = binderRegularInventory()) {
   const scope = binderScopeCards();
   const total = scope.length;
@@ -4304,9 +4317,12 @@ function binderSetChipCount(set, cards, { inventory = null, ownedOnly = false, m
     return list;
   };
   if (set === "ALL") return counted(pool).length;
+  if (set === "SPECIALS") return binderPlayerCards().filter((card) => isPromoCard(card) && playerOwnsCard(card.id)).length;
   if (set === "NUMBERED") {
     if (numberedCards) return counted(binderPartyPool(numberedCards)).length;
-    return counted(pool.filter((card) => numberedIds?.has(card.id))).length;
+    // A promo is event-only, so the live party pool drops it. The numbered filter still shows the stamped copy.
+    const held = cards.filter((card) => numberedIds?.has(card.id) && (!model.binderParty || card.set === model.binderParty));
+    return counted(held).length;
   }
   return counted(pool.filter((card) => card.releaseSetId === set.slice(8))).length;
 }
@@ -4314,6 +4330,7 @@ function binderSetChipCount(set, cards, { inventory = null, ownedOnly = false, m
 function displayedCardQuote(card) {
   const text = String(card.walkout?.text || "").trim();
   if (!text) return "";
+  if (isPromoCard(card) || card.walkout?.quoteStatus === "none") return "";
   if (card.type !== "Quote") return text;
   const bare = text.replace(/^״|״$/g, "");
   const needsMarker = ["shortened", "attributed-paraphrase"].includes(card.walkout?.quoteStatus);
@@ -4374,6 +4391,7 @@ function cardTrustReceipt(card) {
 
 function cardTrustLine(card) {
   const walkout = card.walkout || {};
+  if (isPromoCard(card) || walkout.quoteStatus === "none") return "";
   const contentClass = card.releaseTier === "critique"
     ? "פרשנות/ביקורת"
     : walkout.kind === "quote" ? "ציטוט" : "עובדתי";
@@ -4412,18 +4430,22 @@ function configureSourceLink(link, card) {
 
 function cardPresentation(card, instance = {}) {
   const numbered = Number(instance.numberedIndex) > 0;
+  const promo = card?.rarity === "Promotion" || Boolean(instance?.forcedStamp);
   const finishLabel = numbered ? "Holo" : (instance.finish ?? card.rarity);
-  const rarityLabel = numbered ? "ממוספר" : finishLabel;
+  const rarityLabel = promo ? (card?.rarity || "Promotion") : (numbered ? "ממוספר" : finishLabel);
   const listSlot = Number(card?.listSlot);
   const slotLabel = Number.isInteger(listSlot) && listSlot > 0 ? `מקום ${listSlot}` : "";
   const membershipNote = String(card.membershipNote || "").trim();
+  const subtitle = [slotLabel || card.subtitleHe || card.subtitle || "", membershipNote].filter(Boolean).join(" · ");
+  const setName = cardSetName(card);
   return {
     title: cardTitle(card),
-    subtitle: [slotLabel || card.subtitleHe || card.subtitle || "", membershipNote].filter(Boolean).join(" · "),
+    subtitle,
     quote: displayedCardQuote(card),
-    rawQuote: String(card.walkout?.text || "").trim(),
+    rawQuote: isPromoCard(card) || card?.walkout?.quoteStatus === "none" ? "" : String(card.walkout?.text || "").trim(),
     code: cardCode(card),
-    setName: cardSetName(card),
+    setName,
+    partyLabel: partyZoneLabel(card, setName, subtitle),
     typeLabel: card.typeHe || "קלף",
     finishLabel,
     finishClass: [
@@ -4437,6 +4459,7 @@ function cardPresentation(card, instance = {}) {
     trustLabel: cardTrustSummary(card),
     pip: card.pip,
     artKey: card.artKey || null,
+    frame: cardRequestsFullartFrame(card) ? "fullart-v1" : "",
   };
 }
 
@@ -4658,6 +4681,7 @@ function displayCardMarkup(card, surface = "display", { tradeCopies = false, rec
 
 function canRecycleCard(card) {
   return Boolean(card)
+    && !isPromoCard(card)
     && !model.showcase
     && !model.guestBinder
     && plainOwnedCount(card) >= 3
@@ -4705,9 +4729,9 @@ function cardMarkup(card, instance = {}, { reveal = false, progressiveStage = nu
         </div>
         <div class="card-identity-stack">
           <h2 class="card-name-zone" data-fit-card-text="name" dir="rtl" lang="he">${escapeHtml(presentation.title)}</h2>
-          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.setName)}${card.type === "Quote" ? ` · ${escapeHtml(presentation.subtitle)}` : ""}</p>
+          <p class="card-party-zone" data-fit-card-text="party" dir="rtl" lang="he" style="--pip:${presentation.pip}">${escapeHtml(presentation.partyLabel)}</p>
           <p class="card-rarity-zone" dir="rtl" lang="he"><span class="card-rarity-run" data-fit-card-text="rarity"><strong aria-hidden="true">${presentation.rarityMark}</strong> ${escapeHtml(presentation.rarityName)}</span></p>
-          <blockquote class="card-quote-zone" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
+          <blockquote class="card-quote-zone${presentation.quote ? "" : " is-blank"}" data-fit-card-text="quote" dir="rtl" lang="he">${escapeHtml(presentation.quote)}</blockquote>
         </div>
       </section>
     </article>`;
@@ -5442,6 +5466,20 @@ function syncBinderGridInventory(previous, next) {
 }
 
 function binderSlotSpec(card, { numberedView, regularInventory, numberedIds, guest, listMode }) {
+  // A promo exists only as its stamped copy. Show that face; never a grey missing slot.
+  if (isPromoCard(card)) {
+    if (!playerOwnsCard(card.id)) return null;
+    const stamp = binderStamp(card);
+    return {
+      card,
+      mode: listMode ? "numbered-list" : "numbered",
+      count: 1,
+      recycle: false,
+      concealed: false,
+      extra: "",
+      stamp,
+    };
+  }
   // Numbered-only card outside ממוספרים: the greyed missing slot plus the gold # ribbon (opens the numbered popup).
   if (!numberedView && !(regularInventory[card.id] > 0) && numberedIds.has(card.id)) {
     return { card, mode: "missing", count: 0, recycle: false, concealed: false, extra: "numbered-only" };
@@ -5717,7 +5755,7 @@ function renderBinder() {
     { pending: waitingOwnership, hidden: !waitingOwnership && owned > 0 },
   );
 
-  const playerCards = playerCatalog();
+  const playerCards = binderPlayerCards();
   const releaseOrder = openBinderReleaseIds();
   const numberedIds = new Set(binderNumberedCopies()
     .filter((item) => item.numberedIndex)
@@ -5725,6 +5763,7 @@ function renderBinder() {
   const regularInventory = binderRegularInventory(inventory);
   const numberedView = model.binderFilter === "NUMBERED";
   const setOrder = ["ALL", ...releaseOrder.map((id) => `RELEASE:${id}`)];
+  if (playerCards.some((card) => isPromoCard(card))) setOrder.push("SPECIALS");
   if (numberedIds.size) setOrder.push("NUMBERED");
   if (model.binderFilter.startsWith("RELEASE:") && !releaseOrder.includes(model.binderFilter.slice(8))) {
     model.binderFilter = "ALL";
@@ -5734,7 +5773,7 @@ function renderBinder() {
     setLabels[`RELEASE:${release.id}`] = FILTER_SET_SHORT[release.id] || release.nameHe;
   }
   setLabels.ALL = "כל הקלפים";
-  setLabels.SPECIALS = "מיוחדים";
+  setLabels.SPECIALS = "אסים";
   setLabels.NUMBERED = "ממוספרים";
   if (model.binderFilter === "FAVORITES") model.binderFilter = "ALL";
   if (model.binderFilter !== "ALL" && model.binderFilter !== "SPECIALS" && model.binderFilter !== "NUMBERED" && !model.binderFilter.startsWith("RELEASE:")) {
@@ -5793,6 +5832,14 @@ function renderBinder() {
   ].join("");
 
   const visible = playerCards.filter((card) => {
+    if (isPromoCard(card)) {
+      if (!playerOwnsCard(card.id) || model.binderMissingOnly) return false;
+      if (model.binderFilter === "ALL") return false;
+      if (model.binderParty && card.set !== model.binderParty) return false;
+      if (model.binderFilter === "SPECIALS") return true;
+      if (model.binderFilter === "NUMBERED") return numberedIds.has(card.id);
+    }
+    if (model.binderFilter === "SPECIALS") return false;
     const releaseOk = binderReleaseOk(card, model.binderFilter, {
       openReleaseIds: releaseOrder,
       numberedIds,
@@ -6889,6 +6936,10 @@ function todayDateOpenable(cell) {
   return Boolean(cell?.current && cell.reward && !datePrizeGranted(cell));
 }
 
+function dateCellOpenable(cell) {
+  return todayDateOpenable(cell) || Boolean(cell?.previewOpen && cell.reward && !datePrizeGranted(cell));
+}
+
 function paintStreakCalendar(calendar, { stamp = false } = {}) {
   const dialog = elements.streakDialog;
   if (!dialog || !calendar) return;
@@ -6896,11 +6947,11 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
   if (elements.streakDialogTitle) elements.streakDialogTitle.textContent = "הפרסים החודש";
   if (elements.streakCalendar) {
     elements.streakCalendar.innerHTML = (calendar.days || []).map((cell) => {
-      const openable = todayDateOpenable(cell);
+      const openable = dateCellOpenable(cell);
       const granted = datePrizeGranted(cell);
       const dormant = Boolean(cell.reward && !openable && calendar.today && cell.date < calendar.today);
       const monthName = String(cell.date || "").slice(5, 7) === "09" ? "בספטמבר" : "באוקטובר";
-      const election = cell.election ? `<span class="streak-cell-election">יום הבחירות</span>` : "";
+      const election = cell.election && !cell.reward?.label ? `<span class="streak-cell-election">יום הבחירות</span>` : "";
       const month = cell.monthChip ? `<span class="streak-cell-month">${cell.monthChip}</span>` : "";
       const aria = cell.election
         ? ` aria-label="${cell.day} ${monthName}, יום הבחירות"`
@@ -6943,8 +6994,10 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
     if (elements.streakLadderNext) elements.streakLadderNext.innerHTML = upcoming.map(rung).join("");
   }
   const todayCell = (calendar.days || []).find((cell) => cell.current) || null;
+  const previewCell = (calendar.days || []).find((cell) => cell.previewOpen && !datePrizeGranted(cell)) || null;
+  const redeemCell = previewCell || todayCell;
   paintRedeemButton(elements.streakCalendarRedeem, {
-    openable: todayDateOpenable(todayCell),
+    openable: dateCellOpenable(redeemCell),
     taken: Boolean(todayCell && datePrizeGranted(todayCell)),
   });
   const todayRung = (calendar.ladder || []).find((cell) => cell.current) || null;
@@ -7026,7 +7079,7 @@ async function openTodayLadderPrize(day) {
 async function openTodayDatePrize(date) {
   const calendar = model.serverState?.streakCalendar;
   const cell = calendar?.days?.find((item) => item.date === date);
-  if (!todayDateOpenable(cell) || homePackRipBusy) return;
+  if (!dateCellOpenable(cell) || homePackRipBusy) return;
   await openServerPrize({
     body: { date: cell.date },
     reward: cell.reward,
@@ -9508,10 +9561,7 @@ function paintFullartShareIdentity(context, card, presentation, { x, y, width, h
   const centerX = x + width / 2;
   const nameSize = width * 0.08;
   const metaSize = width * 0.035;
-  const partyLine = [
-    presentation.setName,
-    card.type === "Quote" ? presentation.subtitle : "",
-  ].filter(Boolean).join(" · ");
+  const partyLine = presentation.partyLabel || presentation.setName;
   const nameBand = { top: y + height * 0.69, height: height * 0.06 };
   const partyY = y + height * 0.775;
   const rarityY = y + height * 0.825;
@@ -9576,10 +9626,7 @@ function paintTallShareIdentity(context, card, presentation, { x, y, width, heig
   context.font = `600 ${nameSize}px 'Noto Serif Hebrew', Fraunces, serif`;
   context.fillText(presentation.title, centerX, nameTop + nameHeight * 0.7);
 
-  const partyLine = [
-    presentation.setName,
-    card.type === "Quote" ? presentation.subtitle : "",
-  ].filter(Boolean).join(" · ");
+  const partyLine = presentation.partyLabel || presentation.setName;
   const partyY = y + height * 0.83;
   context.fillStyle = "#1a1f1c";
   context.font = `500 ${partySize}px 'IBM Plex Sans Hebrew', 'IBM Plex Sans', sans-serif`;
@@ -10034,8 +10081,15 @@ elements.streakDialogOk?.addEventListener("click", () => dismissStreakCalendar()
 elements.closeStreakDialog?.addEventListener("click", () => dismissStreakCalendar());
 elements.streakCalendarRedeem?.addEventListener("click", () => {
   if (elements.streakCalendarRedeem.disabled) return;
-  const cell = (model.serverState?.streakCalendar?.days || []).find((item) => item.current);
+  const days = model.serverState?.streakCalendar?.days || [];
+  const cell = days.find((item) => item.previewOpen && !datePrizeGranted(item))
+    || days.find((item) => item.current);
   if (cell?.date) openTodayDatePrize(cell.date);
+});
+elements.streakCalendar?.addEventListener("click", (event) => {
+  const cell = event.target.closest("[data-date].is-openable");
+  if (!cell) return;
+  openTodayDatePrize(cell.dataset.date);
 });
 elements.streakLadderRedeem?.addEventListener("click", () => {
   if (elements.streakLadderRedeem.disabled) return;

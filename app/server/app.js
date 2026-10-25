@@ -42,6 +42,7 @@ import {
   dateAcquiredBy,
   bonusDayFor,
   datePrizeFor,
+  ELECTION_DAY,
   publicStreakCalendar,
   streakAcquiredBy,
   streakRewardForDay,
@@ -656,7 +657,7 @@ function publicState(session, now, cards, config = {}) {
     loginStreak: session.loginStreak || 0,
     loginDay: session.loginDay || null,
     visitStreak: session.visitStreak || 0,
-    streakCalendar: publicStreakCalendar(session),
+    streakCalendar: publicStreakCalendar(session, { electionPreview: Boolean(config.electionPreview) }),
     numberedCopies: heldNumberedCopies(session),
     progression: progressionState(session, cards, config, now),
     quizAvailable: Boolean(config.quizEnabled)
@@ -690,7 +691,7 @@ function publicIdleState(session, now, cards, config = {}) {
     avatars: publicAvatars(session, config.avatars, progression.level),
     loginStreak: session.loginStreak || 0,
     visitStreak: session.visitStreak || 0,
-    streakCalendar: publicStreakCalendar(session),
+    streakCalendar: publicStreakCalendar(session, { electionPreview: Boolean(config.electionPreview) }),
     factionId: session.factionId || null,
     numberedCopies: heldNumberedCopies(session),
     // The binder's חדש/ישן sort reads this. Idle settle/seen replace the client state, so a
@@ -832,6 +833,7 @@ export async function createKalpiApp({
   databaseUrl,
   databaseSsl = false,
   debugEnabled = false,
+  electionPreview = false,
   quizEnabled = false,
   studioSecret = process.env.STUDIO_SECRET || null,
   studioSecretEnabled = studioSecretPathEnabled(),
@@ -997,7 +999,7 @@ export async function createKalpiApp({
     quizEnabled,
     referralStars: referralStarGate(studioContent?.gameConfig),
   });
-  const stateFor = (session) => publicState(session, now(), allCards, runtimeProgression());
+  const stateFor = (session) => publicState(session, now(), allCards, { ...runtimeProgression(), electionPreview });
   /**
    * Stamps newly earned achievements into the session so they stay earned (streaks reset, trades
    * move cards, league membership changes). Writes only when something is new. Not for use inside a
@@ -1270,7 +1272,7 @@ export async function createKalpiApp({
         readyCount: session.unseenPulls?.length ?? 0,
         mode: "idle-return",
         cards: (session.unseenPulls || []).map((id) => instancesById.get(id)).filter(Boolean),
-        state: publicIdleState(session, now(), allCards, runtimeProgression()),
+        state: publicIdleState(session, now(), allCards, { ...runtimeProgression(), electionPreview }),
         specialWindow: openSpecialWindow(events.events, now(), session),
       },
     };
@@ -1391,7 +1393,7 @@ export async function createKalpiApp({
       mode: "idle-return",
       newlySettledCount: result.granted.length,
       cards: result.queue,
-      state: publicIdleState(session, currentMs, allCards, runtimeProgression()),
+      state: publicIdleState(session, currentMs, allCards, { ...runtimeProgression(), electionPreview }),
     };
   }
   function numberedCopiesTable() {
@@ -1448,19 +1450,24 @@ export async function createKalpiApp({
     });
   }
 
-  async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID(), creditNow = false, warehouse = true }) {
+  async function grantCard(session, pull, { acquiredBy, pulledAt, instanceId = randomUUID(), creditNow = false, warehouse = true, forcedStamp = null }) {
     const isNew = !grantedCopyCounts(session)[pull.cardId];
     if (creditNow) {
       session.inventory[pull.cardId] = (session.inventory[pull.cardId] ?? 0) + 1;
     }
     const card = cardsById.get(pull.cardId);
-    const stamp = stampFromGrant(card, numberedSetIds(), acquiredBy, numberedCopiesTable())
-      ? await store.claimNumberedStamp(
+    let stamp = null;
+    if (forcedStamp) {
+      const index = Math.round(Number(forcedStamp.index));
+      const of = Math.round(Number(forcedStamp.of));
+      stamp = index > 0 && of > 0 ? { index, of } : null;
+    } else if (stampFromGrant(card, numberedSetIds(), acquiredBy, numberedCopiesTable())) {
+      stamp = await store.claimNumberedStamp(
         stampKey(card),
         stampMax(card, numberedCopiesTable()),
         normalizeNumberedEvery(studioContent?.gameConfig?.progression?.numberedEvery),
-      )
-      : null;
+      );
+    }
     const instance = pullInstance(pull, {
       instanceId,
       pulledAt,
@@ -1538,15 +1545,28 @@ export async function createKalpiApp({
 
   async function grantRewardInstance(session, reward, { acquiredBy, packPrefix }) {
     const currentMs = now();
-    const pool = streakRewardPool(rewardSetPool(activeIdleCards(allCards, currentMs), reward), reward);
-    if (!pool.length) return null;
-    const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(session), session.idleDuplicateStreak || 0));
     const pulledAt = new Date(currentMs).toISOString();
-    const instance = await grantCard(session, pull, {
-      acquiredBy,
-      pulledAt,
-      warehouse: false,
-    });
+    let instance = null;
+    if (reward?.cardId) {
+      const card = cardsById.get(reward.cardId);
+      if (!card) return null;
+      instance = await grantCard(session, { cardId: card.id, finish: "Promotion" }, {
+        acquiredBy,
+        pulledAt,
+        warehouse: false,
+        forcedStamp: reward.stamp || null,
+      });
+    } else {
+      const pool = streakRewardPool(rewardSetPool(activeIdleCards(allCards, currentMs), reward), reward);
+      if (!pool.length) return null;
+      const pull = generateIdlePull(idlePullOptions(pool, grantedCopyCounts(session), session.idleDuplicateStreak || 0));
+      instance = await grantCard(session, pull, {
+        acquiredBy,
+        pulledAt,
+        warehouse: false,
+      });
+    }
+    if (!instance) return null;
     session.packs ??= [];
     session.packs.push({
       packId: `${packPrefix}-${instance.instanceId}`,
@@ -2426,9 +2446,27 @@ export async function createKalpiApp({
           });
           async function openCalendarPrize(current) {
             if (date) {
-              if (date !== current.visitDay) return { already: true };
+              // Localhost can open the election cell before 27 Oct. Production still requires that day.
+              const preview = electionPreview && date === ELECTION_DAY && jerusalemDay(now()) !== ELECTION_DAY;
+              if (!preview && date !== current.visitDay) return { already: true };
               // A bonus-day gift ends at Jerusalem midnight even if the app stayed open.
-              if (bonusDayFor(date) && date !== jerusalemDay(now())) return { already: true };
+              if (!preview && bonusDayFor(date) && date !== jerusalemDay(now())) return { already: true };
+              if (preview) {
+                const reward = datePrizeFor(ELECTION_DAY);
+                const acquiredBy = dateAcquiredBy(ELECTION_DAY);
+                const existing = (current.instances || []).find((item) => item.acquiredBy === acquiredBy);
+                if (!reward || existing?.seenAt || (current.visitDateClaims || []).includes(ELECTION_DAY)) return { already: true };
+                const instance = await grantRewardInstance(current, reward, {
+                  acquiredBy,
+                  packPrefix: `date-${ELECTION_DAY}`,
+                });
+                if (!instance) return { already: true };
+                current.visitDateClaims = [...new Set([...(current.visitDateClaims || []), ELECTION_DAY])];
+                const credited = creditStreakInstance(current, instance, new Date(now()).toISOString());
+                if (credited) syncProgression(current, allCards, studioContent?.gameConfig?.progression, now());
+                ackStreakCalendar(current);
+                return { instance, reward };
+              }
               const reward = datePrizeFor(date);
               if (!reward) return { already: true };
               const acquiredBy = dateAcquiredBy(date);
@@ -2564,6 +2602,10 @@ export async function createKalpiApp({
           const card = cardsById.get(cardId);
           if (!card) {
             json(response, 400, { error: "INVALID_CARD" });
+            return;
+          }
+          if (card.walkout?.kind === "promo") {
+            json(response, 409, { error: "PROMO_NOT_RECYCLABLE", messageHe: "קלף פרומו לא ניתן למיחזור." });
             return;
           }
           const bucket = rarityBucket(card);
