@@ -247,7 +247,7 @@ async function playAccept(running, clock, cards, fixture, { ownerName = null, vi
 
 async function runMatrix(t, label, setup) {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), `klafi-accept-${label}-`));
-  const clock = { value: Date.parse("2026-10-21T12:00:00.000Z") };
+  const clock = { value: Date.now() };
   const ctx = await setup(dataDir, clock);
   const running = await startVercelLike(dataDir, clock, ctx);
   t.after(async () => {
@@ -275,7 +275,7 @@ async function runMatrix(t, label, setup) {
 
 test("accept still transfers inventory when owner notice enqueue throws", async (t) => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), "klafi-accept-notice-throw-"));
-  const clock = { value: Date.parse("2026-10-21T12:00:00.000Z") };
+  const clock = { value: Date.now() };
   const store = new JsonStore(path.join(dataDir, "state.json"), { now: () => clock.value, numberedRandom: () => 0.99 });
   const running = await startVercelLike(dataDir, clock, { store });
   t.after(async () => {
