@@ -20,7 +20,7 @@ import { canOpenFromLastSettle, confirmedIdleInstance, isStaleState, mergeIdleCl
 import { attachKlafiTips, markPageSeen, readSeenPages, readTipsPref, shouldAutoOpenPage, shouldShowRecycleTip } from "./tips.js";
 import { tradeApprovedLines } from "./trade-approved.js";
 import { acceptDialogCards, movedCardsFromAccept, movedCardsFromNotice, paintAcceptDialogSafely, tradeNoticeFallbackThumb } from "./trade-result.js";
-import { offersForTradeList, readTradeCache, writeTradeCache, wantedCardIds } from "./trade-list.js";
+import { offersForTradeList, readTradeCache, tradeBoardPaintMatches, tradeBoardPaintSignature, writeTradeCache, wantedCardIds } from "./trade-list.js";
 import {
   TRADE_SIDE_MAX,
   emptyTradeSide,
@@ -6718,9 +6718,36 @@ function renderTradeBoard() {
   const start = model.tradeBoardPage * pageSize;
   const page = filtered.slice(start, start + pageSize);
   const remaining = Math.max(0, filtered.length - start - page.length);
+  const signature = tradeBoardPaintSignature({
+    offered: model.tradeBoardOffered,
+    wanted: model.tradeBoardWanted,
+    page: model.tradeBoardPage,
+    empty: !page.length,
+    emptyKind: openOffers.length ? "filter" : "none",
+    rows: page.map((trade) => [
+      trade.tradeId,
+      trade.status,
+      Boolean(trade.canAccept),
+      Boolean(trade.needsAcceptChoice),
+      trade.offeredMode || "and",
+      trade.wantedMode || "and",
+      offeredCardIds(trade).join(","),
+      wantedCardIds(trade).join(","),
+      JSON.stringify(trade.acceptChoices || null),
+      JSON.stringify(model.tradeAcceptPick[trade.tradeId] || null),
+      Boolean(trade.ownedByCurrent),
+    ]),
+  });
+  if (tradeBoardPaintMatches(elements.tradeBoard, signature)) {
+    queueMicrotask(() => {
+      hydrateMissingAcceptChoices().catch(() => {});
+    });
+    return;
+  }
   elements.tradeBoard.innerHTML = page.length
     ? page.map((trade) => tradeRowMarkup(trade)).join("")
     : `<p class="work-note">${openOffers.length ? "אין הצעות שמתאימות לסינון." : "אין כרגע הצעות פתוחות."}</p>`;
+  elements.tradeBoard.dataset.paintSig = signature;
   concealRenderedTradeThumbs(elements.tradeBoard);
   if (elements.tradeBoardPager) elements.tradeBoardPager.innerHTML = tradeBoardPagerMarkup(model.tradeBoardPage, pages, remaining, pageSize);
   queueCardTextFit(elements.tradeBoard);
@@ -10772,10 +10799,13 @@ elements.communitySections?.addEventListener("click", (event) => {
 elements.communityTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-community-page]");
   if (!button) return;
-  model.communityPage = button.dataset.communityPage;
-  model.communitySection = communitySectionFor(button.dataset.communityPage);
-  renderGrowth();
-  pollWatchedTrade().catch(() => {});
+  const next = button.dataset.communityPage;
+  if (next === model.communityPage) return;
+  model.communityPage = next;
+  model.communitySection = communitySectionFor(next);
+  // Board/compose were painted by the last renderGrowth; only flip visibility.
+  syncCommunityPage();
+  if (model.watchedTrade) pollWatchedTrade().catch(() => {});
 });
 
 elements.binderGrid.addEventListener("click", (event) => {

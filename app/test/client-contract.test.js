@@ -653,6 +653,11 @@ test("client selectors match the HTML and preserve Alpha UX constraints", async 
   assert.match(css, /\.challenge-hist-plot[\s\S]{0,220}?height:\s*min\(110px,\s*20dvh\)/);
   assert.match(javascript, /TRADE_BOARD_PAGE_SIZE = 3/);
   assert.match(javascript, /function renderTradeBoard/);
+  assert.match(javascript, /tradeBoardPaintMatches\(elements\.tradeBoard, signature\)/);
+  assert.match(javascript, /dataset\.paintSig = signature/);
+  assert.match(javascript, /communityTabs\.addEventListener\("click"[\s\S]*?if \(next === model\.communityPage\) return;[\s\S]*?syncCommunityPage\(\);[\s\S]*?if \(model\.watchedTrade\) pollWatchedTrade/);
+  assert.doesNotMatch(javascript, /communityTabs\.addEventListener\("click"[\s\S]*?model\.communityPage = button\.dataset\.communityPage;[\s\S]*?renderGrowth\(\);/);
+
   assert.match(javascript, /function tradeHasCards/);
   assert.match(javascript, /function tradeSideMarkup/);
   assert.match(javascript, /נותנים/);
