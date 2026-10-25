@@ -58,6 +58,14 @@
       "description": "Current ministerial office paired with a measured adverse outcome reported during the tenure. Temporal overlap is not presented as proof of personal causation.",
       "packEligible": false,
       "rightsNote": "Research-ready Studio drafts. Office, measurement period and methodology must remain visible; use only cleared or original editorial artwork."
+    },
+    {
+      "id": "election-promo",
+      "nameHe": "אסים",
+      "nameEn": "Aces",
+      "description": "One-day Election Day promo. Granted once on 27 October 2026, Jerusalem time. It never enters pack or idle odds.",
+      "packEligible": false,
+      "rightsNote": "Original editorial illustration, digitally generated and disclosed the same way as other card art. Not a photograph and not a sourced quotation."
     }
   ],
   "cards": [
@@ -688,6 +696,28 @@
       "flavor": "ראשון דתי בתפקיד, מסיעה של שבעה מנדטים.",
       "artKey": "hero-art-naftali-bennett-record.jpg",
       "quoteStatus": "fact-record",
+      "rightsStatus": "generated-art-approved",
+      "contentStatus": "approved"
+    },
+    {
+      "id": "PROMO-ELECTION-0629-01",
+      "setId": "election-promo",
+      "nameHe": "בנימין נתניהו",
+      "nameEn": "Benjamin Netanyahu",
+      "rarity": "Promotion",
+      "mark": "P",
+      "kind": "promo",
+      "displayText": "",
+      "originalText": "",
+      "quoteStatus": "none",
+      "date": "2026-10-27",
+      "sourceUrl": "",
+      "sourceTitle": "",
+      "context": "",
+      "scene": "Election Day promo illustration. The 6:29 clock stays in the frame.",
+      "flavor": "Election Day promo card.",
+      "artKey": "hero-art-bibi-election-0629.jpg",
+      "displayCode": "אס-01",
       "rightsStatus": "generated-art-approved",
       "contentStatus": "approved"
     }

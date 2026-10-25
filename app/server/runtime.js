@@ -74,6 +74,7 @@ export async function createRuntimeHandler({
     databaseUrl: store ? null : (process.env.DATABASE_URL || null),
     databaseSsl: process.env.DATABASE_SSL === "1",
     debugEnabled,
+    electionPreview: process.env.NODE_ENV !== "production" && process.env.VERCEL_ENV !== "production",
     quizEnabled: process.env.QUIZ_ENABLED === "1",
     studioSecret: process.env.STUDIO_SECRET || null,
     ...(store ? { store } : {}),

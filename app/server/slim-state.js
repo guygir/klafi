@@ -6,7 +6,7 @@ import { publicStreakCalendar } from "./streak-calendar.js";
 import { referralStarGate } from "./referral.js";
 import { heldNumberedCopies, progressionUnique, regularInventory } from "./numbered.js";
 
-export function slimPublicState(session, shell, now = Date.now()) {
+export function slimPublicState(session, shell, now = Date.now(), { electionPreview = false } = {}) {
   const idleIds = new Set(shell.idleCardIds || []);
   const inventory = session.inventory || {};
   // Numbered copies are not regular copies (level progress, unique counts).
@@ -47,7 +47,7 @@ export function slimPublicState(session, shell, now = Date.now()) {
     highestRank: session.highestRank || 1,
     loginStreak: session.loginStreak || 0,
     visitStreak: session.visitStreak || 0,
-    streakCalendar: publicStreakCalendar(session),
+    streakCalendar: publicStreakCalendar(session, { electionPreview }),
     factionId: session.factionId || null,
     binderSlug: session.publicBinderSlug || null,
     referralCode: session.referralCode || null,

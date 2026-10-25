@@ -75,14 +75,18 @@ test("a long run keeps streak claims and does not open a second month", () => {
 
 test("reward days stay on the ladder without a warehouse hold", () => {
   assert.equal(Object.keys(DATE_PRIZES).length, 28);
-  assert.deepEqual(Object.keys(BONUS_DAYS).sort(), ["2026-10-11", "2026-10-18"]);
+  assert.deepEqual(Object.keys(BONUS_DAYS).sort(), ["2026-10-11", "2026-10-18", "2026-10-27"]);
   assert.deepEqual(DATE_PRIZES["2026-10-11"], { kind: "pack", label: "סט חדש", sublabel: "העצמה נשית", setId: "set-7" });
   assert.deepEqual(DATE_PRIZES["2026-10-18"], { kind: "pack", label: "סט חדש", sublabel: "צדיקים", setId: "set-8" });
   assert.equal(DATE_PRIZES["2026-10-01"].stars, 1);
   assert.equal(DATE_PRIZES["2026-10-02"].kind, "pack");
   assert.equal(DATE_PRIZES["2026-10-03"], undefined);
   assert.equal(DATE_PRIZES["2026-09-30"], undefined);
-  assert.equal(DATE_PRIZES[ELECTION_DAY].stars, 3);
+  assert.equal(DATE_PRIZES[ELECTION_DAY].kind, "pack");
+  assert.equal(DATE_PRIZES[ELECTION_DAY].label, "יום");
+  assert.equal(DATE_PRIZES[ELECTION_DAY].sublabel, "הבחירות");
+  assert.equal(DATE_PRIZES[ELECTION_DAY].cardId, "PROMO-ELECTION-0629-01");
+  assert.deepEqual(DATE_PRIZES[ELECTION_DAY].stamp, { index: 7, of: 10 });
   assert.equal(DATE_PRIZES["2026-10-31"].stars, 3);
   assert.equal(ELECTION_GRID_DATES.length, 35);
   assert.equal(ELECTION_GRID_DATES[0], "2026-09-27");
@@ -150,7 +154,11 @@ test("a mid-grid start checks only stored visit dates", () => {
   assert.equal(calendar.days.find((cell) => cell.date === "2026-10-04").checked, false);
   assert.equal(calendar.days.find((cell) => cell.date === "2026-10-16").checked, false);
   assert.equal(calendar.days.find((cell) => cell.election).date, ELECTION_DAY);
-  assert.equal(calendar.days.find((cell) => cell.election).reward.stars, 3);
+  assert.equal(calendar.days.find((cell) => cell.election).reward.kind, "pack");
+  assert.equal(calendar.days.find((cell) => cell.election).reward.label, "יום");
+  assert.equal(calendar.days.find((cell) => cell.election).reward.sublabel, "הבחירות");
+  assert.equal(calendar.days.find((cell) => cell.election).reward.cardId, "PROMO-ELECTION-0629-01");
+  assert.equal(calendar.days.find((cell) => cell.election).reward.stamp, undefined);
   assert.equal(calendar.ladder[0].runDay, 3);
   assert.equal(calendar.ladder[0].reward, null);
   assert.equal(calendar.ladder[1].runDay, 4);
@@ -190,7 +198,8 @@ test("1 November keeps the October grid and the run ladder", () => {
   assert.equal(calendar.days.some((cell) => cell.current), false);
   assert.deepEqual(
     calendar.days.filter((cell) => cell.checked).map((cell) => cell.date),
-    ["2026-10-20", "2026-10-27"],
+    // 2026-10-27 is the election bonus: its V waits until the gift is taken.
+    ["2026-10-20"],
   );
   assert.equal(calendar.ladder[0].runDay, 40);
   assert.equal(calendar.ladder[0].reward.kind, "pack");

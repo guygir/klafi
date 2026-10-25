@@ -152,7 +152,7 @@ test("runtime catalog omits blank slots and keeps all party card families dynami
 });
 
 test("Specials remain sourced showcase cards outside daily pack odds", () => {
-  assert.equal(specials.sets.length, 7);
+  assert.equal(specials.sets.length, 8);
   assert.ok(specials.sets.every(({ packEligible }) => packEligible === false));
   const setIds = new Set(specials.sets.map(({ id }) => id));
   for (const card of specials.cards) {
@@ -163,7 +163,8 @@ test("Specials remain sourced showcase cards outside daily pack odds", () => {
       assert.equal(card.mark, "P");
       assert.equal(card.rarity, "Promotion");
     }
-    assert.ok(card.sourceUrl.startsWith("http"));
+    if (card.kind === "promo" || card.quoteStatus === "none") assert.equal(String(card.sourceUrl || ""), "");
+    else assert.ok(card.sourceUrl.startsWith("http"));
     assert.ok(!runtimeCards.some(({ id }) => id === card.id));
   }
   assert.ok(specials.cards.some(({ id }) => id === "PRE-OREN-HAZAN-01"));

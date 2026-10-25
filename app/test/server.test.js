@@ -942,7 +942,7 @@ test("server owns sessions, idle pulls, inventory, and persistence", async (t) =
   assert.ok(catalog.body.cards.every(({ titleHe, setNameHe, typeHe, displayCode }) => titleHe && setNameHe && typeHe && displayCode));
   const specials = await api(running.base, "/api/specials");
   assert.equal(specials.status, 200);
-  assert.equal(specials.body.sets.length, 7);
+  assert.equal(specials.body.sets.length, 8);
   assert.ok(specials.body.cards.length >= 17);
   assert.ok(specials.body.sets.every(({ packEligible }) => packEligible === false));
   assert.ok(specials.body.cards.some(({ id }) => id === "REC-BEN-GVIR-LEGAL-01"));
@@ -1556,7 +1556,12 @@ test("first enter of a Jerusalem day stamps the visit calendar and grants reward
   assert.equal(home.body.state.streakCalendar.days[0].reward, null);
   assert.equal(home.body.state.streakCalendar.days.find((cell) => cell.date === "2026-10-01").reward.stars, 1);
   assert.equal(home.body.state.streakCalendar.days.find((cell) => cell.election).date, "2026-10-27");
-  assert.equal(home.body.state.streakCalendar.days.find((cell) => cell.election).reward.stars, 3);
+  assert.deepEqual(home.body.state.streakCalendar.days.find((cell) => cell.election).reward, {
+    kind: "pack",
+    label: "יום",
+    sublabel: "הבחירות",
+    cardId: "PROMO-ELECTION-0629-01",
+  });
   assert.equal(home.body.state.streakCalendar.ladder[0].runDay, 1);
   assert.equal(home.body.state.streakCalendar.ladder[0].reward, null);
   assert.equal(home.body.state.streakCalendar.ladder[1].runDay, 2);

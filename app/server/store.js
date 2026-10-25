@@ -11,6 +11,7 @@ import {
   regularInventory,
   returnNumberedIndex,
   rollNumberedStamp,
+  usesNumberedPool,
   takePlainInstanceForCard,
 } from "./numbered.js";
 import { countTodayPulse } from "../public/today-pulse.js";
@@ -813,6 +814,7 @@ export class JsonStore {
   }
 
   async claimNumberedStamp(key, max, every = 30) {
+    if (!usesNumberedPool(key)) return null;
     const cap = Math.max(0, Math.round(Number(max) || 0));
     if (!cap) return null;
     this.state.numberedIssued ??= {};
@@ -825,6 +827,7 @@ export class JsonStore {
   }
 
   async returnNumberedStamp(key, index, max) {
+    if (!usesNumberedPool(key)) return [];
     const cap = Math.max(0, Math.round(Number(max) || 0));
     if (!cap) return [];
     return this.exclusive(async () => {

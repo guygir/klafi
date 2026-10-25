@@ -18,7 +18,7 @@ export function regularInventoryFrom(inventory = {}, numberedCopies = []) {
   return regular;
 }
 
-/** Collection stars, same rule as the server: one regular copy adds its rarity, one numbered copy adds 4. */
+/** Collection stars, same rule as the server: one regular copy adds its rarity, one numbered copy adds 4, a promo keeps 5. */
 export function collectionStarsFrom(inventory = {}, numberedCopies = [], cardsById = new Map()) {
   const regular = regularInventoryFrom(inventory, numberedCopies);
   const numberedIds = new Set((numberedCopies || []).filter((item) => Number(item?.numberedIndex) > 0 && (Number(inventory?.[item.cardId]) || 0) > 0).map((item) => item.cardId));
@@ -29,7 +29,7 @@ export function collectionStarsFrom(inventory = {}, numberedCopies = [], cardsBy
       const rarity = String(card?.rarity || "");
       sum += rarity === "Promotion" ? 5 : rarity.startsWith("Rare") ? 3 : rarity.startsWith("Uncommon") ? 2 : 1;
     }
-    if (numberedIds.has(cardId)) sum += 4;
+    if (numberedIds.has(cardId)) sum += card?.rarity === "Promotion" ? 5 : 4;
   }
   return sum;
 }
