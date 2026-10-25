@@ -92,3 +92,18 @@ export function writeTradeCache(storage, token, trades) {
     /* A full storage only costs the instant first paint. */
   }
 }
+
+
+/** Stable paint key for the open-trades board. Same key → keep the DOM (no img flash). */
+export function tradeBoardPaintSignature({ offered, wanted, page, empty, emptyKind, rows }) {
+  return JSON.stringify({ offered, wanted, page, empty, emptyKind, rows });
+}
+
+export function tradeBoardPaintMatches(board, signature) {
+  return Boolean(
+    board
+    && board.dataset?.paintSig === signature
+    && typeof board.querySelector === "function"
+    && board.querySelector(".trade-offer, .work-note")
+  );
+}
