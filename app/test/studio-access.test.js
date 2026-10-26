@@ -140,6 +140,46 @@ test("studio allowlist parsing: default, raw ids, and sha256 digests", () => {
   assert.match(DEFAULT_STUDIO_USER_HASHES[0], /^[0-9a-f]{64}$/);
 });
 
+test("studio specific-card pull rolls the numbered chance instead of forcing copy 1", async (t) => {
+  const miss = await withOwner(t, { numberedRandom: () => 0.99 });
+  const catalog = (await api(miss.running.base, "/api/catalog")).body.cards;
+  const miri = catalog.find((card) => card.id === "SET5-03");
+  const set7Common = catalog.find((card) => card.id === "SET7-01");
+  assert.equal(miri?.rarity, "Common");
+  assert.equal(set7Common?.rarity, "Common");
+
+  const plain = await api(miss.running.base, "/api/studio/debug-pull", {
+    method: "POST",
+    body: { rarity: 1, cardId: "SET5-03" },
+    token: miss.owner,
+  });
+  assert.equal(plain.status, 200);
+  assert.equal(plain.body.cards[0].cardId, "SET5-03");
+  assert.equal(plain.body.cards[0].finish, "Common");
+  assert.equal(plain.body.cards[0].numberedIndex, undefined);
+
+  const hit = await withOwner(t, { numberedRandom: () => 0 });
+  const before = await api(hit.running.base, "/api/state", { token: hit.owner });
+  const numbered = await api(hit.running.base, "/api/studio/debug-pull", {
+    method: "POST",
+    body: { cardId: "SET5-03" },
+    token: hit.owner,
+  });
+  assert.equal(numbered.status, 200);
+  assert.equal(numbered.body.cards[0].finish, "Holo");
+  assert.equal(numbered.body.cards[0].numberedIndex, 1);
+  assert.equal(numbered.body.cards[0].numberedOf, miri.listSlot);
+  const stillPlain = await api(hit.running.base, "/api/studio/debug-pull", {
+    method: "POST",
+    body: { cardId: "SET7-01" },
+    token: hit.owner,
+  });
+  assert.equal(stillPlain.body.cards[0].finish, "Common");
+  assert.equal(stillPlain.body.cards[0].numberedIndex, undefined);
+  const after = await api(hit.running.base, "/api/state", { token: hit.owner });
+  assert.deepEqual(after.body, before.body);
+});
+
 test("studio debug pull: an optional cardId pulls exactly that catalog card and saves nothing", async (t) => {
   const { running, owner, other } = await withOwner(t, { studioSecretEnabled: false });
   const catalog = (await api(running.base, "/api/catalog")).body.cards;

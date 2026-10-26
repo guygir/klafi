@@ -23,11 +23,14 @@ import {
   jerusalemDay,
   normalizeNumberedEvery,
   normalizeNumberedSets,
-  numberedCopies,
+  drawNumberedIndex,
   heldNumberedCopies,
-  regularCopyCount,
+  numberedCopies,
+  openNumberPool,
   progressionUnique,
+  regularCopyCount,
   regularInventoryOf,
+  rollNumberedStamp,
   stampEligible,
   stampFromGrant,
   stampKey,
@@ -1436,17 +1439,26 @@ export async function createKalpiApp({
 
   /**
    * Studio debug pull of one chosen catalog card: same instance shape and no-save semantics as
-   * studioDebugPull. A numbered-eligible card previews copy 1 without claiming a stamp.
+   * studioDebugPull. A numbered-eligible card uses the idle 1-in-N roll and does not claim a stamp.
    */
+  function studioPreviewStamp(card) {
+    const copies = numberedCopiesTable();
+    if (!stampEligible(card, numberedSetIds(), copies)) return null;
+    const max = stampMax(card, copies);
+    const every = normalizeNumberedEvery(studioContent?.gameConfig?.progression?.numberedEvery);
+    if (!rollNumberedStamp(0, max, every, numberedRandom)) return null;
+    const drawn = drawNumberedIndex(openNumberPool(0, max), numberedRandom);
+    return drawn ? { index: drawn.index, of: max } : null;
+  }
+
   function studioDebugPullCard(card) {
     const pulledAt = new Date(now()).toISOString();
-    const stamp = stampEligible(card, numberedSetIds(), numberedCopiesTable()) ? { index: 1, of: stampMax(card, numberedCopiesTable()) } : null;
     return pullInstance({ cardId: card.id, finish: rarityTier(card) }, {
       instanceId: `studio-debug-${randomUUID()}`,
       pulledAt,
       isNew: false,
       acquiredBy: "studio-debug",
-      stamp,
+      stamp: studioPreviewStamp(card),
     });
   }
 
