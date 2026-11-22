@@ -37,9 +37,9 @@ export function nextCollectionAt(serverState, now = Date.now(), intervalMs = idl
   if (future[0]) return future[0];
   const latest = times.at(-1);
   if (latest != null) {
-    let slot = latest;
-    while (slot <= now) slot += intervalMs;
-    return slot;
+    const safeInterval = Math.max(1, Number(intervalMs) || IDLE_INTERVAL_MS);
+    const steps = Math.floor((now - latest) / safeInterval) + 1;
+    return latest + steps * safeInterval;
   }
   return now + intervalMs;
 }

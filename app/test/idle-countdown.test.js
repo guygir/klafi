@@ -11,6 +11,8 @@ import {
   HOME_SETTLE_HINT,
   idleCountdownCopy,
   idleScheduleIsDue,
+  nextCollectionAt,
+  predictedUnseenCount,
   nextCollectionRemaining,
 } from "../public/idle-countdown.js";
 import { IDLE_STARTER_READY } from "../server/idle-config.js";
@@ -565,4 +567,19 @@ test("formatCountdown clamps zero and sub-second leftovers to 00:00:01", () => {
     assert.equal(formatCountdown(ms), "00:00:01");
     assert.notEqual(formatCountdown(ms), "00:00:00");
   }
+});
+
+test("nextCollectionAt and predictedUnseenCount stay O(1) even years after nextIdleAt", () => {
+  const past2026 = Date.parse("2026-10-01T00:00:00.000Z");
+  const far2030 = Date.parse("2030-06-15T10:30:00.000Z");
+  const state = {
+    unseenCount: 1,
+    idleCapacity: IDLE_BACKLOG_CAP,
+    nextIdleAt: new Date(past2026).toISOString(),
+    preparedPulls: [],
+  };
+  const next = nextCollectionAt(state, far2030);
+  assert.ok(next > far2030 && next <= far2030 + IDLE_INTERVAL_MS);
+  assert.equal((next - past2026) % IDLE_INTERVAL_MS, 0);
+  assert.equal(predictedUnseenCount(state, { now: far2030 }), IDLE_BACKLOG_CAP);
 });
