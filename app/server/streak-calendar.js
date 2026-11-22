@@ -19,6 +19,7 @@ const STREAK_REWARD_TAIL = Object.freeze([RARITY(3), PACK, PACK]);
  * October 2026, from the 1st.
  */
 const OCTOBER_DATE_PATTERN = "1,p,n,p,1,p,n,p,2,p,n,2,p,2,n,p,3,n,p,3,p,p,2,2,3,3,3,p,3,p,3";
+const MONTHLY_DATE_TOKENS = Object.freeze(OCTOBER_DATE_PATTERN.split(",").map(prizeFromToken));
 
 function prizeFromToken(token) {
   if (token === "p") return PACK;
@@ -97,6 +98,32 @@ function buildElectionGridDates() {
 
 export const ELECTION_GRID_DATES = buildElectionGridDates();
 
+function buildMonthGridDates(yearMonth) {
+  const [year, month] = String(yearMonth || "").split("-").map(Number);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return ELECTION_GRID_DATES;
+  }
+  const firstOfMonth = `${yearMonth}-01`;
+  const firstDow = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const lastDayOfMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const lastDow = new Date(Date.UTC(year, month - 1, lastDayOfMonth)).getUTCDay();
+  const lastOfMonth = `${yearMonth}-${String(lastDayOfMonth).padStart(2, "0")}`;
+  const gridStart = shiftJerusalemDay(firstOfMonth, -firstDow);
+  const gridEnd = shiftJerusalemDay(lastOfMonth, 6 - lastDow);
+  const dates = [];
+  for (let offset = 0; offset < 49; offset += 1) {
+    const date = shiftJerusalemDay(gridStart, offset);
+    dates.push(date);
+    if (date === gridEnd) break;
+  }
+  return dates;
+}
+
+export function calendarGridDates(today) {
+  if (!today || today <= ELECTION_GRID_END) return ELECTION_GRID_DATES;
+  return buildMonthGridDates(today.slice(0, 7));
+}
+
 /** The run day itself. Streak prizes do not wrap onto a 30-day table. */
 export function calendarDay(streak) {
   return Math.max(0, Math.round(Number(streak) || 0));
@@ -134,7 +161,11 @@ export function currentRunStreakInstance(session, cellDay) {
 }
 
 export function datePrizeFor(date) {
-  return DATE_PRIZES[date] || null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return null;
+  if (BONUS_DAYS[date]) return BONUS_DAYS[date];
+  if (date < "2026-10-01") return null;
+  const day = Number(date.slice(8, 10));
+  return MONTHLY_DATE_TOKENS[day - 1] || null;
 }
 
 export function dateAcquiredBy(date) {
@@ -314,8 +345,14 @@ export function publicNextDatePrize(session) {
       };
     }
   }
-  const upcoming = Object.keys(DATE_PRIZES).filter((date) => date > today).sort();
-  const date = upcoming[0];
+  let date = null;
+  for (let offset = 1; offset <= 40; offset += 1) {
+    const candidate = shiftJerusalemDay(today, offset);
+    if (datePrizeFor(candidate)) {
+      date = candidate;
+      break;
+    }
+  }
   if (!date) return null;
   return {
     date,
@@ -327,9 +364,24 @@ export function publicNextDatePrize(session) {
   };
 }
 
+const SHORT_MONTHS = Object.freeze({
+  "01": "ינו׳",
+  "02": "פבר׳",
+  "03": "מרץ",
+  "04": "אפר׳",
+  "05": "מאי",
+  "06": "יוני",
+  "07": "יולי",
+  "08": "אוג׳",
+  "09": "ספט׳",
+  "10": "אוק׳",
+  "11": "נוב׳",
+  "12": "דצמ׳",
+});
+
 function monthChip(date) {
-  if (date === "2026-10-01") return "אוק׳";
-  return "";
+  if (!String(date || "").endsWith("-01")) return "";
+  return SHORT_MONTHS[String(date).slice(5, 7)] || "";
 }
 
 export function publicStreakCalendar(session, { electionPreview = false } = {}) {
@@ -344,10 +396,10 @@ export function publicStreakCalendar(session, { electionPreview = false } = {}) 
     day: streak,
     cycleDay: calendarDay(streak),
     today,
-    closed: Boolean(today && today > ELECTION_GRID_END),
+    closed: false,
     // Day 1 is the tutorial day: no auto popup until the second visit day.
     showPopup: Boolean(today && streak >= 2 && session?.streakCalendarAckDay !== calendarAckFor(today)),
-    days: ELECTION_GRID_DATES.map((date) => {
+    days: calendarGridDates(today).map((date) => {
       const reward = datePrizeFor(date);
       const granted = reward ? instances.find((item) => item?.acquiredBy === dateAcquiredBy(date)) : null;
       return {

@@ -181,7 +181,7 @@ test("an old run length does not invent visit dates", () => {
   );
 });
 
-test("1 November keeps the October grid and the run ladder", () => {
+test("1 November rolls forward to the November grid, keeps the run ladder, and never closes", () => {
   const session = {
     visitStreak: 40,
     visitDay: "2026-11-01",
@@ -190,16 +190,18 @@ test("1 November keeps the October grid and the run ladder", () => {
     instances: [],
   };
   const calendar = publicStreakCalendar(session);
-  assert.equal(calendar.closed, true);
+  assert.equal(calendar.closed, false);
   assert.equal(calendar.streak, 40);
   assert.equal(calendar.day, 40);
   assert.equal(calendar.days.length, 35);
-  assert.equal(calendar.days.some((cell) => cell.date.startsWith("2026-11")), false);
-  assert.equal(calendar.days.some((cell) => cell.current), false);
+  assert.equal(calendar.days[0].date, "2026-11-01");
+  assert.equal(calendar.days.at(-1).date, "2026-12-05");
+  assert.equal(calendar.days.find((cell) => cell.date === "2026-11-01").current, true);
+  assert.equal(calendar.days.find((cell) => cell.date === "2026-11-01").monthChip, "נוב׳");
+  assert.equal(calendar.days.find((cell) => cell.date === "2026-12-01").monthChip, "דצמ׳");
   assert.deepEqual(
     calendar.days.filter((cell) => cell.checked).map((cell) => cell.date),
-    // 2026-10-27 is the election bonus: its V waits until the gift is taken.
-    ["2026-10-20"],
+    ["2026-11-01"],
   );
   assert.equal(calendar.ladder[0].runDay, 40);
   assert.equal(calendar.ladder[0].reward.kind, "pack");
@@ -207,9 +209,46 @@ test("1 November keeps the October grid and the run ladder", () => {
   assert.equal(calendar.ladder[1].reward.stars, 3);
   assert.equal(calendar.ladder[2].runDay, 44);
   assert.equal(calendar.ladder[2].reward.kind, "pack");
-  assert.equal(calendar.nextDatePrize, null);
-  assert.equal(calendar.days.find((cell) => cell.date === "2026-09-27").reward, null);
-  assert.equal(calendar.days.find((cell) => cell.date === "2026-10-01").reward.stars, 1);
+  assert.equal(calendar.nextDatePrize.date, "2026-11-01");
+  assert.equal(calendar.nextDatePrize.waiting, true);
+  assert.equal(calendar.nextDatePrize.reward.stars, 1);
+});
+
+test("future months (Dec 2026, Feb 2028 leap, 2027, 2030) roll forever without repeating 2026 one-off bonus days", () => {
+  const dec = publicStreakCalendar({ visitStreak: 5, visitDay: "2026-12-31", visitDates: ["2026-12-31"] });
+  assert.equal(dec.closed, false);
+  assert.equal(dec.days[0].date, "2026-11-29");
+  assert.equal(dec.days.at(-1).date, "2027-01-02");
+  assert.equal(dec.days.find((cell) => cell.date === "2026-12-01").monthChip, "דצמ׳");
+  assert.equal(dec.days.find((cell) => cell.date === "2027-01-01").monthChip, "ינו׳");
+  assert.equal(dec.days.find((cell) => cell.date === "2026-12-31").current, true);
+  assert.equal(dec.nextDatePrize.date, "2026-12-31");
+  assert.equal(dec.nextDatePrize.reward.stars, 3);
+
+  const oct2027 = publicStreakCalendar({ visitStreak: 12, visitDay: "2027-10-27", visitDates: ["2027-10-27"] });
+  assert.equal(oct2027.closed, false);
+  for (const day of ["2027-10-11", "2027-10-18", "2027-10-27"]) {
+    const cell = oct2027.days.find((item) => item.date === day);
+    assert.ok(cell, `missing ${day}`);
+    assert.equal(cell.election, false);
+    assert.equal(cell.reward?.cardId, undefined);
+    assert.equal(cell.reward?.setId, undefined);
+  }
+  assert.equal(oct2027.days.find((item) => item.date === "2027-10-27").reward.stars, 3);
+
+  const feb2028 = publicStreakCalendar({ visitStreak: 2, visitDay: "2028-02-29", visitDates: ["2028-02-29"] });
+  assert.equal(feb2028.closed, false);
+  assert.equal(feb2028.days[0].date, "2028-01-30");
+  assert.equal(feb2028.days.at(-1).date, "2028-03-04");
+  const leapDay = feb2028.days.find((item) => item.date === "2028-02-29");
+  assert.equal(leapDay.current, true);
+  assert.equal(leapDay.reward.stars, 3);
+
+  const y2030 = publicStreakCalendar({ visitStreak: 20, visitDay: "2030-07-04", visitDates: ["2030-07-04"] });
+  assert.equal(y2030.closed, false);
+  assert.equal(y2030.days.find((item) => item.date === "2030-07-01").monthChip, "יולי");
+  assert.equal(y2030.days.find((item) => item.date === "2030-07-04").current, true);
+  assert.equal(y2030.days.find((item) => item.date === "2030-07-04").reward.kind, "pack");
 });
 
 test("closing the table on an unopened prize marks the skip; opening it does not", () => {

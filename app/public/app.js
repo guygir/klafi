@@ -245,6 +245,7 @@ const elements = {
   todayLeaderMeta: document.querySelector("#today-leader-meta"),
   homePack: document.querySelector("#home-pack"),
   openPack: document.querySelector("#open-pack"),
+  openAllPacks: document.querySelector("#open-all-packs"),
   openPackFancy: document.querySelector("#open-pack-fancy"),
   openBibiPack: document.querySelector("#open-bibi-pack"),
   cooldownCopy: document.querySelector("#cooldown-copy"),
@@ -2983,6 +2984,17 @@ function renderHome() {
     elements.openPack.disabled = !available;
     elements.openPack.textContent = readyCopy.action;
   }
+  if (elements.openAllPacks) {
+    const showAll = unseen >= 2;
+    elements.openAllPacks.hidden = !showAll;
+    if (packConfirming) {
+      elements.openAllPacks.disabled = true;
+      elements.openAllPacks.textContent = "פותחים…";
+    } else {
+      elements.openAllPacks.disabled = !showAll;
+      elements.openAllPacks.textContent = showAll ? `פתחו הכל (${unseen})` : "פתחו הכל";
+    }
+  }
   if (available) {
     preloadPackRipAssets();
     sfx.preload();
@@ -3737,8 +3749,18 @@ function acknowledgeRevealedPack(pack) {
     pack.openedNoted = true;
     noteCardsOpened(pack.cards);
   }
-  if (!pack || pack.seenAck || model.previewMode || !SEEN_ACK_MODES.has(pack.mode)) return pack?.seenAck;
-  const instanceIds = (pack.cards || []).map(({ instanceId }) => instanceId).filter(Boolean);
+  if (!pack || model.previewMode || !SEEN_ACK_MODES.has(pack.mode)) return pack?.seenAck;
+  const perCard = pack.mode === "idle-return" && (pack.cards?.length || 0) > 1;
+  if (!perCard && pack.seenAck) return pack.seenAck;
+  const candidates = perCard
+    ? [pack.cards[model.currentCardIndex]].filter(Boolean)
+    : (pack.cards || []);
+  if (!pack.acknowledgedIds) pack.acknowledgedIds = new Set();
+  const instanceIds = candidates
+    .map(({ instanceId }) => instanceId)
+    .filter((id) => id && !pack.acknowledgedIds.has(id));
+  if (!instanceIds.length) return pack.seenAck;
+  for (const id of instanceIds) pack.acknowledgedIds.add(id);
   const opened = new Set(instanceIds);
   const ownershipReady = pack.mode === "idle-return" && pack.preparedReveal
     ? pack.settlement.then((outcome) => {
@@ -3747,7 +3769,8 @@ function acknowledgeRevealedPack(pack) {
       }
     })
     : Promise.resolve();
-  pack.seenAck = ownershipReady.then(() => {
+  const chain = pack.seenAck ? pack.seenAck.catch(() => {}) : Promise.resolve();
+  pack.seenAck = chain.then(() => ownershipReady).then(() => {
     const alreadyPending = new Set(pendingIdleSeen());
     const fresh = instanceIds.filter((instanceId) => !alreadyPending.has(instanceId));
     rememberPendingIdleSeen(instanceIds);
@@ -4066,8 +4089,9 @@ function renderWalkoutStage() {
   }[stage];
 
   let walkoutCard = elements.ripStage.querySelector(".walkout .kalpi-card");
-  if (!walkoutCard || elements.ripStage.dataset.cardId !== card.id) {
+  if (!walkoutCard || elements.ripStage.dataset.cardId !== card.id || elements.ripStage.dataset.cardIndex !== String(model.currentCardIndex)) {
     elements.ripStage.dataset.cardId = card.id;
+    elements.ripStage.dataset.cardIndex = String(model.currentCardIndex);
     elements.ripStage.innerHTML = `
       <div class="walkout" style="--walkout-pip:${card.pip}">
         <div class="walkout-content">
@@ -4941,6 +4965,50 @@ async function playGrantedPackReveal({ cards, packId, mode, rip: shouldRip = tru
   } catch (error) {
     rip?.release();
     throw error;
+  }
+}
+
+async function openAllIdleCards() {
+  sfx.unlock();
+  if (homePackRipBusy) return;
+  homePackRipBusy = true;
+  if (!model.catalog.length) loadStaticCatalog().catch(() => {});
+  elements.openPack.disabled = true;
+  if (elements.openAllPacks) {
+    elements.openAllPacks.disabled = true;
+    elements.openAllPacks.textContent = "פותחים…";
+  }
+  if (elements.openPackFancy) elements.openPackFancy.disabled = true;
+  packConfirming = true;
+  try {
+    const settled = await hydrateIdleQueue();
+    const unopened = overlayPendingSeen(
+      { state: settled?.state || {}, cards: settled?.cards || [] },
+      pendingIdleSeen(),
+    ).cards;
+    packConfirming = false;
+    if (!unopened.length) {
+      renderHome();
+      showView("home");
+      const unseen = model.serverState?.unseenCount ?? 0;
+      if (!unseen) showToast("הקלף הבא עדיין נאסף.");
+      return;
+    }
+    prefetchCardArt(unopened.map(({ cardId }) => model.byId.get(cardId)).filter(Boolean));
+    await playGrantedPackReveal({
+      cards: unopened,
+      packId: `idle-return-${Date.now()}`,
+      mode: "idle-return",
+      rip: true,
+    });
+  } catch {
+    packConfirming = false;
+    renderHome();
+    showView("home");
+    showToast("לא הצלחנו לטעון את הקלפים שנאספו.");
+  } finally {
+    packConfirming = false;
+    homePackRipBusy = false;
   }
 }
 
@@ -6950,7 +7018,21 @@ function paintStreakCalendar(calendar, { stamp = false } = {}) {
       const openable = dateCellOpenable(cell);
       const granted = datePrizeGranted(cell);
       const dormant = Boolean(cell.reward && !openable && calendar.today && cell.date < calendar.today);
-      const monthName = String(cell.date || "").slice(5, 7) === "09" ? "בספטמבר" : "באוקטובר";
+      const monthNames = {
+        "01": "בינואר",
+        "02": "בפברואר",
+        "03": "במרץ",
+        "04": "באפריל",
+        "05": "במאי",
+        "06": "ביוני",
+        "07": "ביולי",
+        "08": "באוגוסט",
+        "09": "בספטמבר",
+        "10": "באוקטובר",
+        "11": "בנובמבר",
+        "12": "בדצמבר",
+      };
+      const monthName = monthNames[String(cell.date || "").slice(5, 7)] || "";
       const election = cell.election && !cell.reward?.label ? `<span class="streak-cell-election">יום הבחירות</span>` : "";
       const month = cell.monthChip ? `<span class="streak-cell-month">${cell.monthChip}</span>` : "";
       const aria = cell.election
@@ -10049,6 +10131,7 @@ async function offerDuplicate() {
 }
 
 elements.openPack.addEventListener("click", openIdleReturn);
+elements.openAllPacks?.addEventListener("click", openAllIdleCards);
 elements.openPackFancy.addEventListener("click", () => openIdleReturn("fancy"));
 elements.sharedOpenGame.addEventListener("click", leaveSharedCard);
 elements.showcaseOpenGame?.addEventListener("click", leaveShowcase);

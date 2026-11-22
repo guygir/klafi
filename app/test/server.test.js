@@ -2719,3 +2719,104 @@ test("streak run after a reset: same run day opens this run's prize, not the old
   const recovered = await api(running.base, "/api/streak/open", { token: stuck, method: "POST", body: { day: 2 } });
   assert.equal(recovered.body.cards?.length, 1, "the stuck player gets this run's prize");
 });
+
+test("lifetime future clocks (Dec 2026, mid-2027, 2030): packs draw, calendar rolls & grants, Election promo stays excluded", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-lifetime-future-"));
+  const clock = { value: Date.parse("2026-12-15T10:00:00.000Z") };
+  const running = await start(dataDir, clock, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const homeDec = await api(running.base, "/api/home");
+  assert.equal(homeDec.status, 200);
+  const token = homeDec.body.token;
+  assert.equal(homeDec.body.state.streakCalendar.closed, false);
+  assert.equal(homeDec.body.state.streakCalendar.today, "2026-12-15");
+  assert.equal(homeDec.body.state.streakCalendar.days.some((cell) => cell.date === "2026-12-15" && cell.current), true);
+  const settleDec = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(settleDec.body.state.unseenCount, IDLE_STARTER_READY);
+  assert.equal(settleDec.body.cards.length, IDLE_STARTER_READY);
+  assert.equal(settleDec.body.cards.some((card) => card.cardId === "PROMO-ELECTION-0629-01"), false);
+
+  // Jump to 2027-06-16 (date 16 has pack prize)
+  clock.value = Date.parse("2027-06-16T10:00:00.000Z");
+  const home2027 = await api(running.base, "/api/home", { token });
+  assert.equal(home2027.body.state.streakCalendar.closed, false);
+  assert.equal(home2027.body.state.streakCalendar.today, "2027-06-16");
+  const settle2027 = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(settle2027.status, 200);
+  assert.equal(settle2027.body.cards.length, IDLE_BACKLOG_CAP);
+  assert.equal(settle2027.body.cards.some((card) => card.cardId === "PROMO-ELECTION-0629-01"), false);
+  const open2027 = await api(running.base, "/api/streak/open", { token, method: "POST", body: { date: "2027-06-16" } });
+  assert.equal(open2027.status, 200);
+  assert.equal(open2027.body.cards.length, 1);
+
+  // Jump to 2027-10-27: Election Day promo must NEVER repeat in 2027
+  clock.value = Date.parse("2027-10-27T10:00:00.000Z");
+  const homeOct2027 = await api(running.base, "/api/home", { token });
+  const oct27Cell = homeOct2027.body.state.streakCalendar.days.find((cell) => cell.date === "2027-10-27");
+  assert.equal(oct27Cell.election, false);
+  assert.equal(oct27Cell.reward?.cardId, undefined);
+  const openOct27 = await api(running.base, "/api/streak/open", { token, method: "POST", body: { date: "2027-10-27" } });
+  assert.equal(openOct27.status, 200);
+  assert.notEqual(openOct27.body.cards[0].cardId, "PROMO-ELECTION-0629-01");
+
+  // Jump to 2030-03-10
+  clock.value = Date.parse("2030-03-10T10:00:00.000Z");
+  const home2030 = await api(running.base, "/api/home", { token });
+  assert.equal(home2030.body.state.streakCalendar.closed, false);
+  assert.equal(home2030.body.state.streakCalendar.today, "2030-03-10");
+  const open2030 = await api(running.base, "/api/streak/open", { token, method: "POST", body: { date: "2030-03-10" } });
+  assert.equal(open2030.status, 200);
+  assert.equal(open2030.body.cards.length, 1);
+});
+
+test("open-all sequential per-card /api/idle/seen is idempotent across mid-sequence refresh and credits accurately", async (t) => {
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), "kalpi-open-all-seen-"));
+  const clock = { value: Date.parse("2026-12-01T08:00:00.000Z") };
+  const running = await start(dataDir, clock, { debugEnabled: false });
+  t.after(async () => {
+    await running.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+
+  const boot = await api(running.base, "/api/home");
+  const token = boot.body.token;
+  clock.value += 10 * IDLE_INTERVAL_MS;
+  const settled = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  const queue = settled.body.cards;
+  assert.equal(queue.length, IDLE_BACKLOG_CAP);
+
+  // Simulate opening cards 1 & 2 of 8 one-by-one, then refreshing mid-sequence
+  const seen1 = await api(running.base, "/api/idle/seen", { token, method: "POST", body: { instanceIds: [queue[0].instanceId] } });
+  assert.deepEqual(seen1.body.acceptedInstanceIds, [queue[0].instanceId]);
+  assert.equal(seen1.body.unseenCount, IDLE_BACKLOG_CAP - 1);
+
+  const seen2 = await api(running.base, "/api/idle/seen", { token, method: "POST", body: { instanceIds: [queue[1].instanceId] } });
+  assert.deepEqual(seen2.body.acceptedInstanceIds, [queue[1].instanceId]);
+  assert.equal(seen2.body.unseenCount, IDLE_BACKLOG_CAP - 2);
+
+  // Re-sending an already seen id must be a no-op (no double grant)
+  const replay = await api(running.base, "/api/idle/seen", { token, method: "POST", body: { instanceIds: [queue[0].instanceId, queue[1].instanceId] } });
+  assert.deepEqual(replay.body.acceptedInstanceIds, []);
+  const afterRefresh = await api(running.base, "/api/home", { token });
+  assert.equal(afterRefresh.body.state.unseenCount, IDLE_BACKLOG_CAP - 2);
+  const afterRefreshSettle = await api(running.base, "/api/idle/settle", { token, method: "POST" });
+  assert.equal(afterRefreshSettle.body.cards.length, IDLE_BACKLOG_CAP - 2);
+  assert.deepEqual(
+    afterRefreshSettle.body.cards.map((card) => card.instanceId),
+    queue.slice(2).map((card) => card.instanceId),
+  );
+
+  // Open remaining 6 cards one-by-one
+  for (const card of queue.slice(2)) {
+    const res = await api(running.base, "/api/idle/seen", { token, method: "POST", body: { instanceIds: [card.instanceId] } });
+    assert.deepEqual(res.body.acceptedInstanceIds, [card.instanceId]);
+  }
+  const finalState = await api(running.base, "/api/state", { token });
+  assert.equal(finalState.body.unseenCount, 0);
+  const totalOwned = Object.values(finalState.body.inventory || {}).reduce((sum, count) => sum + count, 0);
+  assert.equal(totalOwned, IDLE_BACKLOG_CAP);
+});
